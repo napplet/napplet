@@ -1,6 +1,6 @@
-// @napplet/shim — NIP-DB window.nostrdb proxy — exposes all NIP-DB spec methods
-// to napp iframes. Proxies query, add, event, replaceable, count, supports,
-// subscribe through postMessage to the shell pseudo-relay.
+// @napplet/shim — NIP-DB window.nostrdb proxy
+// Proxies query, add, event, replaceable, count, supports, subscribe through postMessage
+// to the shell pseudo-relay, which dispatches to WorkerRelayService (OPFS cache).
 
 import { finalizeEvent } from 'nostr-tools/pure';
 import { BusKind } from './types.js';
@@ -140,6 +140,12 @@ function handleNipdbMessage(msgEvent: MessageEvent): void {
   handleNipdbResponse(event as NostrEvent);
 }
 
+/**
+ * Install window.nostrdb with the full NIP-DB spec surface.
+ *
+ * @param keypair - Optional keypair for signing NIPDB_REQUEST events.
+ * @returns cleanup function that removes window.nostrdb.
+ */
 export function installNostrDb(keypair?: NappKeypair): () => void {
   if (keypair) {
     _keypair = keypair;

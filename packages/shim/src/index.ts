@@ -1,4 +1,5 @@
-// @napplet/shim — NIP-01 relay client shim for napplet iframes.
+// @napplet/shim — Napplet SDK
+// NIP-01 relay client shim for napplet iframes.
 // Communicates with the shell pseudo-relay using NIP-01 wire format over postMessage.
 // Completes NIP-42 AUTH handshake and proxies window.nostr NIP-07 calls as signed events.
 
@@ -12,7 +13,7 @@ import { subscribe, publish } from './relay-shim.js';
 import { BusKind, AUTH_KIND, PSEUDO_RELAY_URI, PROTOCOL_VERSION } from './types.js';
 import type { NostrEvent } from './types.js';
 
-// ─── Public API re-exports ──────────────────────────────────────────────────
+// ─── Public API exports ─────────────────────────────────────────────────────
 
 export { subscribe, publish, query } from './relay-shim.js';
 export type { Subscription, EventTemplate } from './relay-shim.js';
@@ -102,6 +103,10 @@ const NIPDB_SUB_ID = '__nipdb__';
 
 // ─── Napp type resolution ──────────────────────────────────────────────────────
 
+/**
+ * Determine napp type from a meta tag in the document head.
+ * Falls back to 'unknown' if the meta tag is absent.
+ */
 function getNappType(): string {
   const meta = document.querySelector('meta[name="hyprgate-napp-type"]');
   return meta?.getAttribute('content') ?? 'unknown';
@@ -109,6 +114,9 @@ function getNappType(): string {
 
 // ─── Outbound helpers ─────────────────────────────────────────────────────────
 
+/**
+ * Finalize and post a signed NIP-01 event to the parent shell.
+ */
 function sendEvent(kind: number, tags: string[][], content: string = ''): NostrEvent | null {
   if (!keypair) return null;
   const event = finalizeEvent({
@@ -121,6 +129,9 @@ function sendEvent(kind: number, tags: string[][], content: string = ''): NostrE
   return event;
 }
 
+/**
+ * Send a signer request as a signed kind 29001 event.
+ */
 async function sendSignerRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
   await keypairReady;
 
@@ -176,6 +187,9 @@ function handleRelayMessage(event: MessageEvent): void {
 
 // ─── Aggregate hash resolution ────────────────────────────────────────────────
 
+/**
+ * Read the napp's NIP-5A aggregate hash from a meta tag in the document head.
+ */
 function getAggregateHash(): string {
   const meta = document.querySelector('meta[name="hyprgate-aggregate-hash"]');
   return meta?.getAttribute('content') ?? '';
@@ -275,12 +289,20 @@ function handleSignerResponse(event: NostrEvent): void {
 
 // ─── Initialize ───────────────────────────────────────────────────────────────
 
+// Install relay message listener
 window.addEventListener('message', handleRelayMessage);
+
+// Install window.nostrdb NIP-DB proxy
 installNostrDb();
+
+// Install keyboard forwarding (hotkeys work when iframe has focus)
 installKeyboardShim();
+
+// Install napp-side storage proxy (wire sender to break circular dep)
 _setInterPaneEventSender(emit);
 installStorageShim();
 
+// Initialize keypair eagerly so it is ready before AUTH challenge arrives
 {
   const nappType = getNappType();
   keypair = loadOrCreateKeypair(nappType);
