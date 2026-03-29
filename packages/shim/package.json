@@ -1,0 +1,38 @@
+{
+  "name": "@napplet/shim",
+  "version": "0.1.0",
+  "description": "Napplet SDK — subscribe, publish, query, emit, on, nappStorage for Nostr-native iframe applications",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "nostr-tools": ">=2.23.3 <3.0.0"
+  },
+  "devDependencies": {
+    "nostr-tools": "^2.23.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/napplet/napplet.git",
+    "directory": "packages/shim"
+  },
+  "keywords": ["nostr", "napplet", "iframe", "sdk", "nip-01"]
+}

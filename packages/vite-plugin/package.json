@@ -1,0 +1,42 @@
+{
+  "name": "@napplet/vite-plugin",
+  "version": "0.1.0",
+  "description": "Vite plugin for NIP-5A manifest generation — computes aggregate hash and signs kind 35128 manifest events at build time",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "vite": ">=5.0.0"
+  },
+  "dependencies": {
+    "nostr-tools": "^2.23.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "vite": "^6.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/napplet/napplet.git",
+    "directory": "packages/vite-plugin"
+  },
+  "keywords": ["nostr", "napplet", "vite", "plugin", "nip-5a", "manifest"]
+}

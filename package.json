@@ -1,0 +1,19 @@
+{
+  "name": "napplet",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "version-packages": "changeset version",
+    "publish-packages": "turbo run build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.30.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.8.0"
+}
