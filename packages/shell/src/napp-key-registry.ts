@@ -1,13 +1,11 @@
 /**
  * NappKeyRegistry — windowId to verified napp pubkey bidirectional mapping.
  *
- * After a successful AUTH handshake, the pseudo-relay registers
- * the napp's verified pubkey here.
+ * After a successful AUTH handshake, the pseudo-relay registers the napp's
+ * verified pubkey here. Both mappings are kept in sync.
  */
 
 import type { NappKeyEntry } from './types.js';
-
-// ─── Pending Update Types ────────────────────────────────────────────────────
 
 export interface PendingUpdate {
   windowId: string;
@@ -18,16 +16,12 @@ export interface PendingUpdate {
   resolve: (action: 'accept' | 'block') => void;
 }
 
-// ─── Storage ──────────────────────────────────────────────────────────────────
-
 const byWindowId = new Map<string, string>();
 const byPubkey = new Map<string, NappKeyEntry>();
 const pendingUpdates = new Map<string, PendingUpdate>();
 
 let _pendingVersion = 0;
 export function getPendingUpdateVersion(): number { return _pendingVersion; }
-
-// ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const nappKeyRegistry = {
   register(windowId: string, entry: NappKeyEntry): void {
@@ -68,7 +62,7 @@ export const nappKeyRegistry = {
     pendingUpdates.set(windowId, update);
     _pendingVersion++;
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('napplet:pending-update', { detail: { windowId } }));
+      window.dispatchEvent(new CustomEvent('hyprgate:pending-update', { detail: { windowId } }));
     }
   },
 
@@ -80,7 +74,7 @@ export const nappKeyRegistry = {
     pendingUpdates.delete(windowId);
     _pendingVersion++;
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('napplet:pending-update', { detail: { windowId } }));
+      window.dispatchEvent(new CustomEvent('hyprgate:pending-update', { detail: { windowId } }));
     }
   },
 

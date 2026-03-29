@@ -1,8 +1,8 @@
 /**
  * ACL Store — composite-keyed capability registry for napp identity.
  *
- * ACL entries are keyed by `pubkey:dTag:aggregateHash`. When a napp updates
- * (new aggregateHash), it gets a fresh ACL entry with permissive defaults.
+ * ACL entries are keyed by pubkey:dTag:aggregateHash — a composite key
+ * that ties permissions to a specific napp build.
  *
  * Default policy is PERMISSIVE: unknown identities have all capabilities granted.
  */
@@ -12,7 +12,6 @@ import { ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
 
 const STORAGE_KEY = 'hyprgate:acl';
 
-/** Default per-napp storage quota in bytes (512 KB). */
 export const DEFAULT_STORAGE_QUOTA = 512 * 1024;
 
 interface InternalAclEntry {
@@ -121,7 +120,7 @@ export const aclStore = {
       ]);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
     } catch {
-      // localStorage unavailable — silent
+      // localStorage unavailable
     }
   },
 
