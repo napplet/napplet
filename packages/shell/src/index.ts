@@ -1,5 +1,5 @@
 // @napplet/shell — Shell runtime for hosting napplet iframes.
-// Framework-agnostic. Host app supplies all dependencies via ShellHooks.
+// Framework-agnostic. Host app provides hooks for relay pool, auth, WM, etc.
 
 // Factory function — main entry point
 export { createPseudoRelay } from './pseudo-relay.js';
@@ -25,16 +25,17 @@ export type {
   NappKeyEntry,
   AclEntry,
   Capability,
-  BusKindValue,
 } from './types.js';
 
 // Standalone utilities (usable without full shell)
 export { originRegistry } from './origin-registry.js';
 export { nappKeyRegistry } from './napp-key-registry.js';
 export type { PendingUpdate } from './napp-key-registry.js';
-export { aclStore, DEFAULT_STORAGE_QUOTA, aclKey } from './acl-store.js';
+export { aclStore, DEFAULT_STORAGE_QUOTA } from './acl-store.js';
 export { audioManager } from './audio-manager.js';
 export type { AudioSource } from './audio-manager.js';
+export { manifestCache } from './manifest-cache.js';
+export type { ManifestCacheEntry } from './manifest-cache.js';
 export { handleStorageRequest, cleanupNappStorage } from './storage-proxy.js';
 
 // Protocol constants
