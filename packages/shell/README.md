@@ -11,7 +11,7 @@ npm install @napplet/shell
 ## Usage
 
 ```ts
-import { createPseudoRelay, originRegistry } from '@napplet/shell';
+import { createPseudoRelay } from '@napplet/shell';
 import type { ShellHooks } from '@napplet/shell';
 
 const hooks: ShellHooks = {
@@ -25,19 +25,18 @@ const hooks: ShellHooks = {
   crypto: { verifyEvent: async (e) => verify(e) },
 };
 
-const relay = createPseudoRelay(hooks, (consent) => {
-  // Show consent dialog for destructive signing kinds
-  consent.resolve(true);
-});
-
-// Register an iframe window
-originRegistry.register(iframe.contentWindow, 'window-1');
+const relay = createPseudoRelay(hooks);
 
 // Wire up iframe message handling
-window.addEventListener('message', relay.handleMessage);
+window.addEventListener('message', (event) => {
+  relay.handleMessage(event);
+});
 
-// Send AUTH challenge to start the handshake
-relay.sendChallenge('window-1');
+// Send AUTH challenge when iframe loads
+relay.sendChallenge(windowId);
+
+// Inject shell-created events
+relay.injectEvent('auth:identity-changed', { pubkey: '...' });
 ```
 
 ## License
