@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via NIP-01 postMessage wire format. Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) into standalone `@napplet/*` npm packages that any Nostr developer can install and build with.
+A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via NIP-01 postMessage wire format. Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) into standalone `@napplet/*` npm packages. Includes a 66-test protocol conformance suite and an interactive Chat + Bot demo playground.
 
 ## Core Value
 
@@ -12,8 +12,6 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ### Validated
 
-<!-- Shipped and confirmed valuable — these exist in the extracted codebase. -->
-
 - ✓ Pseudo-relay message router (NIP-01 REQ/EVENT/CLOSE/COUNT dispatch) — existing
 - ✓ NIP-42 AUTH handshake with ephemeral session keypairs — existing
 - ✓ ACL capability system (relay:read, relay:write, sign:*, storage:*) — existing
@@ -22,28 +20,22 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Inter-pane pubsub via kind 29003 topic events — existing
 - ✓ Napplet-side SDK (subscribe, publish, query, emit, on, nappStorage) — existing
 - ✓ Shell-side runtime (createPseudoRelay factory, ShellHooks DI) — existing
-- ✓ Vite plugin for NIP-5A manifest generation and signing — existing
+- ✓ Vite plugin for NIP-5A dev-mode manifest injection — existing
 - ✓ Replay attack detection on incoming events — existing
 - ✓ ConsentRequest flow for destructive signing kinds — existing
+- ✓ Decoupled packages working end-to-end with wiring fixes — v0.1.0
+- ✓ 66 behavioral tests covering full protocol surface (AUTH, routing, replay, lifecycle, ACL, storage, signer, IPC) — v0.1.0
+- ✓ Interactive Chat + Bot demo with visual protocol debugger — v0.1.0
+- ✓ Refined NIP-5A specification with implementation learnings — v0.1.0
+- ✓ Packages validated (publint + arethetypeswrong) at v0.1.0-alpha.1 — v0.1.0
 
 ### Active
 
-<!-- Current scope. Building toward these for v1.0. -->
-
-- [ ] Get decoupled packages building and working end-to-end (wiring fixes)
-- [ ] Multi-napplet demo: 2 napplets + shell + visual message debugger
-- [ ] ACL enforcement demo: allow/block flows visible in debugger
-- [ ] Inter-napplet communication demo: napplet1 ↔ napplet2 messaging
-- [ ] Signing delegation demo: napplet requests signature, shell proxies to signer
-- [ ] Behavioral test matrix covering full capability surface
-- [ ] Runtime tests for ACL allow/block scenarios
-- [ ] Runtime tests for inter-napplet messaging (approved vs blocked)
-- [ ] Runtime tests for storage scoping isolation
-- [ ] Runtime tests for AUTH handshake success/failure paths
-- [ ] Visual test runner showing pass/fail with message flow
-- [ ] Refined NIP-5A specification based on working implementation
-- [ ] Published @napplet/shim, @napplet/shell, @napplet/vite-plugin packages
-- [ ] Napplet boilerplate / starter template
+- [ ] Publish @napplet/shim, @napplet/shell, @napplet/vite-plugin to npm (needs npm auth)
+- [ ] Napplet boilerplate / starter template (@napplet/create CLI)
+- [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
+- [ ] Event-ID triggered aggregate hash revalidation
+- [ ] Salt-based deterministic keypair derivation
 
 ### Out of Scope
 
@@ -53,14 +45,17 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - IndexedDB storage backend — localStorage sufficient for v1
 - Key rotation for ephemeral keypairs — complexity not justified yet
 - Rate limiting on signer requests — document expected behavior, don't enforce yet
+- Restrictive ACL default mode — permissive default for developer adoption, add restrictive option later
+- Manifest signature verification in shell — deferred to post-v1 security hardening
+- NIP PR submission — spec needs iterations before community submission
 
 ## Context
 
-- **Origin**: Extracted from hyprgate Phases 26-27 (v1.4 milestone). Hyprgate is the Svelte reference implementation; this repo is the portable SDK.
-- **Existing codebase**: Three packages (shim, shell, vite-plugin) already extracted. Builds pass (`pnpm build`, `pnpm type-check`). No test suite exists yet.
-- **Known issues**: Permissive ACL default, fake event IDs on injected events, lossy storage quota calculation, AUTH race condition with queued messages, postMessage origin '*' trust boundary. See `.planning/codebase/CONCERNS.md`.
-- **NIP-5A spec**: Draft lives in hyprgate at `specs/NIP-napplet-shell-protocol.md`. Will be refined here based on implementation learnings.
-- **Protocol wire format**: NIP-01 relay messages (REQ, EVENT, CLOSE, COUNT, AUTH, NOTICE, EOSE, OK, CLOSED) over postMessage. Custom kinds: 29001 (signer/storage requests), 29002 (signer responses), 29003 (inter-pane events), 35128 (manifests).
+- **Current state**: v0.1.0-alpha.1 with 8,690 LOC TypeScript across 3 packages + demo app + test suite. 78 commits, 201 files.
+- **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
+- **Test coverage**: 66 Playwright e2e tests covering AUTH (9), message routing (9), replay (5), lifecycle (5), ACL (9), storage (9), signer (7), inter-pane (6), infrastructure (7).
+- **Known remaining issues**: Permissive ACL default still in place. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events (documented as synthetic).
+- **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash.
 
 ## Constraints
 
@@ -74,10 +69,18 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Extract from hyprgate rather than rewrite | Proven protocol implementation, minimize risk | — Pending |
-| Behavioral tests over unit tests first | Visually confirm protocol works end-to-end before testing internals | — Pending |
-| Refine existing NIP-5A spec, not write new | Spec already captures protocol; implementation will surface needed changes | — Pending |
-| Permissive ACL default kept for v1 | Ease of development; document risk, add restrictive mode later | — Pending |
+| Extract from hyprgate rather than rewrite | Proven protocol implementation, minimize risk | ✓ Good — packages working with targeted fixes |
+| Behavioral tests over unit tests first | Visually confirm protocol works end-to-end before testing internals | ✓ Good — 66 Playwright tests prove the protocol |
+| Refine existing NIP-5A spec, not write new | Spec already captures protocol; implementation surfaced 11 needed changes | ✓ Good — SPEC.md refined with all implementation learnings |
+| Permissive ACL default kept for v0.1 | Ease of development; document risk, add restrictive mode later | ✓ Good — tests verify permissive behavior, restrictive mode deferred |
+| Relay URI `shell://` | Clear direction signal (napplet → shell) | ✓ Good |
+| Storage keys() uses repeated NIP tags | Follows Nostr convention, eliminates comma-join delimiter bug | ✓ Good |
+| Missing AUTH tags fail (strict) | Napplets must build correctly; prevents misconfigured apps | ✓ Good — AUTH-08/09 tests verify |
+| Pre-AUTH queue capped at 50 | Prevents memory abuse, configurable globally and per-napp | ✓ Good |
+| Vite plugin is dev-only | Community deploy tools handle production manifests | ✓ Good — clear separation of concerns |
+| Chat + Bot demo napplets | Interactive, demonstrates all capabilities, teachable bot | ✓ Good |
+| UnoCSS for demo styling | Tailwind-compatible, Vite ecosystem, easy to modify | ✓ Good |
+| UTF-8 byte count for storage quota | Consistent cross-platform, replaces inconsistent Blob approach | ✓ Good |
 
 ## Evolution
 
@@ -97,4 +100,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 after initialization*
+*Last updated: 2026-03-30 after v0.1.0 milestone*
