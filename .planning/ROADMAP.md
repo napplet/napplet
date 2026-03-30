@@ -42,7 +42,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. A shell test harness boots @napplet/shell with mock ShellHooks and loads at least one test napplet that completes AUTH
   3. The message tap captures all postMessage traffic between shell and napplet and exposes it for programmatic assertions
   4. At least two test napplets exist (auth-napplet, publish-napplet) and work in the harness
-**Plans**: TBD
+**Plans**: 6 plans in 3 waves
 
 ### Phase 3: Core Protocol Tests
 **Goal**: The fundamental protocol mechanics -- authentication, message routing, replay protection, and lifecycle management -- are proven correct by automated tests
@@ -98,8 +98,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Wiring Fixes | 0/TBD | Not started | - |
-| 2. Test Infrastructure | 0/TBD | Not started | - |
+| 1. Wiring Fixes | 0/5 | Planned | - |
+| 2. Test Infrastructure | 0/6 | Planned | - |
 | 3. Core Protocol Tests | 0/TBD | Not started | - |
 | 4. Capability Tests | 0/TBD | Not started | - |
 | 5. Demo Playground | 0/TBD | Not started | - |
