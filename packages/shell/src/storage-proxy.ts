@@ -127,7 +127,7 @@ export function handleStorageRequest(
         const lsKey = localStorage.key(i);
         if (lsKey?.startsWith(prefix)) userKeys.push(lsKey.slice(prefix.length));
       }
-      sendResponse(sourceWindow, correlationId, [['keys', userKeys.join(',')]]);
+      sendResponse(sourceWindow, correlationId, userKeys.map(k => ['key', k]));
       break;
     }
     default:
