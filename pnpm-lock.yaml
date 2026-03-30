@@ -76,6 +76,54 @@ importers:
         specifier: ^6.3.0
         version: 6.4.1(@types/node@22.19.15)
 
+  tests/e2e/harness:
+    dependencies:
+      '@napplet/shell':
+        specifier: workspace:*
+        version: link:../../../packages/shell
+    devDependencies:
+      nostr-tools:
+        specifier: ^2.23.3
+        version: 2.23.3(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.3.0
+        version: 6.4.1(@types/node@22.19.15)
+
+  tests/fixtures/napplets/auth-napplet:
+    dependencies:
+      '@napplet/shim':
+        specifier: workspace:*
+        version: link:../../../../packages/shim
+    devDependencies:
+      '@napplet/vite-plugin':
+        specifier: workspace:*
+        version: link:../../../../packages/vite-plugin
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.3.0
+        version: 6.4.1(@types/node@22.19.15)
+
+  tests/fixtures/napplets/publish-napplet:
+    dependencies:
+      '@napplet/shim':
+        specifier: workspace:*
+        version: link:../../../../packages/shim
+    devDependencies:
+      '@napplet/vite-plugin':
+        specifier: workspace:*
+        version: link:../../../../packages/vite-plugin
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.3.0
+        version: 6.4.1(@types/node@22.19.15)
+
 packages:
 
   '@babel/helper-string-parser@7.27.1':

@@ -1,2 +1,4 @@
 packages:
   - packages/*
+  - tests/fixtures/napplets/*
+  - tests/e2e/harness
