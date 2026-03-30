@@ -103,6 +103,105 @@ The shell identifies napplet senders via the `MessageEvent.source` property, whi
 
 Messages are delivered asynchronously via the browser event loop. Napplets MUST NOT assume ordering between `EVENT` deliveries from different subscriptions. Within a single subscription, events MAY arrive in any order.
 
+### 1.8 Protocol Message Examples
+
+**Napplet-to-Shell messages:**
+
+`EVENT` (publish a note):
+```json
+["EVENT", {"kind": 1, "content": "Hello from napplet!", "tags": [], "created_at": 1711800000, "pubkey": "abc123...", "id": "def456...", "sig": "ghi789..."}]
+```
+
+`REQ` (open subscription):
+```json
+["REQ", "sub-1", {"kinds": [1], "limit": 10}]
+```
+
+`CLOSE` (close subscription):
+```json
+["CLOSE", "sub-1"]
+```
+
+`AUTH` (respond to challenge):
+```json
+["AUTH", {"kind": 22242, "created_at": 1711800000, "tags": [["relay", "napplet://shell"], ["challenge", "a1b2c3d4-uuid"], ["type", "feed"], ["version", "2.0.0"], ["aggregateHash", "e3b0c44298fc1c14..."]], "content": "", "pubkey": "abc123...", "id": "def456...", "sig": "ghi789..."}]
+```
+
+`COUNT` (request event count):
+```json
+["COUNT", "count-1", {"kinds": [1], "authors": ["abc123..."]}]
+```
+
+**Shell-to-Napplet messages:**
+
+`EVENT` (deliver matching event):
+```json
+["EVENT", "sub-1", {"kind": 1, "content": "Hello!", "tags": [], "created_at": 1711800000, "pubkey": "xyz...", "id": "evt...", "sig": "sig..."}]
+```
+
+`OK` (event accepted):
+```json
+["OK", "event-id-hex", true, ""]
+```
+
+`OK` (event rejected -- pre-AUTH):
+```json
+["OK", "event-id-hex", false, "auth-required: complete AUTH first"]
+```
+
+`OK` (event rejected -- blocked):
+```json
+["OK", "event-id-hex", false, "blocked: relay:write capability denied"]
+```
+
+`EOSE` (end of stored events):
+```json
+["EOSE", "sub-1"]
+```
+
+`CLOSED` (subscription closed normally):
+```json
+["CLOSED", "sub-1", ""]
+```
+
+`CLOSED` (subscription closed -- blocked napp):
+```json
+["CLOSED", "sub-1", "blocked: relay:read denied"]
+```
+
+`AUTH` (challenge):
+```json
+["AUTH", "a1b2c3d4-uuid-challenge"]
+```
+
+`NOTICE` (dropped messages after AUTH failure):
+```json
+["NOTICE", "3 queued message(s) dropped due to auth failure"]
+```
+
+`COUNT` (count result):
+```json
+["COUNT", "count-1", {"count": 42}]
+```
+
+**Inter-pane event (kind 29003):**
+
+```json
+["EVENT", {"kind": 29003, "tags": [["t", "profile:open"]], "content": "{\"pubkey\":\"abc123...\"}", "created_at": 1711800000, "pubkey": "sender...", "id": "evt...", "sig": "sig..."}]
+```
+
+**Storage request (get) and response:**
+
+Request:
+```json
+["EVENT", {"kind": 29003, "tags": [["t", "shell:storage-get"], ["id", "corr-uuid"], ["key", "theme"]], "content": "", "created_at": 1711800000, "pubkey": "napp...", "id": "evt...", "sig": "sig..."}]
+```
+
+Response:
+```json
+["EVENT", "__shell__", {"kind": 29003, "tags": [["t", "napp:storage-response"], ["id", "corr-uuid"], ["value", "dark"], ["found", "true"]], "content": ""}]
+```
+
 ---
 
 ## 2. Authentication Handshake [LOCKED]
@@ -150,9 +249,29 @@ The shell MUST challenge each napplet iframe exactly once after load. The napple
 
    f. If `aggregateHash` is non-empty, the shell SHOULD verify it against the napp's published NIP-5A manifest on relays. If verification fails, the shell MUST reject AUTH. If no manifest is found on relays, the shell SHOULD accept (dev mode).
 
-5. **Shell sends OK:** `["OK", <event_id>, true, ""]` on success, or `["OK", <event_id>, false, "auth-required: <reason>"]` on failure.
+5. **Shell sends OK:**
 
-6. **Post-AUTH message replay:** Any messages the napplet sent before AUTH completed MUST be queued by the shell and replayed after successful AUTH, preserving order.
+   - On success: `["OK", <event_id>, true, ""]`
+   - On failure: `["OK", <event_id>, false, "auth-required: <reason>"]` followed by `["NOTICE", "N queued message(s) dropped due to auth failure"]` where N is the number of pending messages that were discarded.
+
+   All AUTH rejection paths MUST clear the pre-AUTH message queue for that windowId before sending the failure response.
+
+   **Error reason strings follow NIP-01 prefix conventions:**
+
+   | Prefix | Usage |
+   |--------|-------|
+   | `auth-required:` | Pre-AUTH failures (missing tags, bad signature, challenge mismatch) |
+   | `error:` | Post-AUTH validation failures (replay, malformed events) |
+   | `blocked:` | ACL denials (capability revoked or napp blocked) |
+
+6. **Mandatory AUTH tags:** The following tags in the AUTH response event are REQUIRED. If any are missing, the shell MUST reject AUTH:
+
+   - `type` tag: If missing, reject with `"auth-required: missing required type tag"`
+   - `aggregateHash` tag: If missing, reject with `"auth-required: missing required aggregateHash tag"`
+
+   Shells MUST NOT use default values (e.g., `"unknown"` or `""`) for missing required tags. A missing tag indicates the napplet did not build correctly.
+
+7. **Post-AUTH message replay:** Any messages the napplet sent before AUTH completed MUST be queued by the shell and replayed after successful AUTH, preserving order.
 
 ### 2.3 Napp Type Resolution
 
@@ -180,9 +299,11 @@ After AUTH:
 - Sender identity is established by the unforgeable `MessageEvent.source` Window reference
 - This "verify once, trust source" model avoids per-message cryptographic overhead while maintaining security through the browser's iframe isolation
 
-### 2.7 Pre-AUTH Message Queueing
+### 2.8 Pre-AUTH Message Queueing
 
 Messages arriving before AUTH completion MUST be queued per windowId. The shell tracks AUTH-in-flight state to distinguish between "not yet challenged" and "challenge sent, awaiting response." After successful AUTH, queued messages MUST be replayed in original order. If AUTH fails, queued messages MUST be discarded.
+
+**Queue cap:** The pre-AUTH queue MUST be capped at 50 messages by default. This cap is configurable both globally (shell-wide) and per-napp. Messages exceeding the cap MUST be rejected with a `["NOTICE", "pre-AUTH queue full"]` message. The cap prevents memory exhaustion from napplets that send a burst of messages before completing AUTH.
 
 ---
 
@@ -252,9 +373,18 @@ When a napplet sends `["COUNT", <count_id>, <filter>, ...]`:
 
 Events are delivered to subscriptions via `["EVENT", <sub_id>, <event>]`. Delivery rules:
 
-- **Self-exclusion:** events are NOT delivered back to the window that sent them
+- **Sender exclusion (kind 29003 only):** For inter-pane topic events (kind 29003), the sender is NOT included in delivery. This prevents echo. For standard relay events (kind 1, etc.), events MAY be delivered back to the sender if they match a subscription filter. Sender exclusion applies ONLY to kind 29003.
 - **p-tag routing:** if an event has a `p` tag, it is delivered ONLY to the napplet whose pubkey matches
 - **Multiple subscriptions** on the same window receive independent delivery
+
+### 3.6.1 Blocked Napp Behavior
+
+When a blocked napp attempts any operation:
+
+- **REQ from blocked napp:** The shell MUST respond with `["CLOSED", <sub_id>, "blocked: relay:read denied"]`
+- **EVENT from blocked napp:** The shell MUST respond with `["OK", <event_id>, false, "blocked: capability denied"]`
+
+The `blocked:` prefix is distinct from `error:` and `auth-required:` so napplets can programmatically identify ACL denials versus other failure types.
 
 ### 3.7 Replay Protection
 
@@ -407,24 +537,42 @@ The response uses NIP-01 tags to carry result data (e.g., `["value", "..."]`, `[
 
 ### 5.3 Operations
 
-| Topic | Content (request) | Response Tags | ACL |
+Storage requests use NIP-01 tags in the request event for parameters (not JSON content):
+
+| Topic | Request Tags | Response Tags | ACL |
 |---|---|---|---|
-| `shell:storage-get` | `{"key":"<key>"}` | `["value", "<string or null>"]` | `storage:read` |
-| `shell:storage-set` | `{"key":"<key>","value":"<string>"}` | `["ok", "true"]` or `["error", "quota exceeded"]` | `storage:write` |
-| `shell:storage-remove` | `{"key":"<key>"}` | `["ok", "true"]` | `storage:write` |
-| `shell:storage-keys` | `{}` | `["keys", "<key1>", "<key2>", ...]` | `storage:read` |
-| `shell:storage-clear` | `{}` | `["ok", "true"]` | `storage:write` |
+| `shell:storage-get` | `["key", "<key>"]` | `["value", "<string>"]`, `["found", "true"\|"false"]` | `storage:read` |
+| `shell:storage-set` | `["key", "<key>"]`, `["value", "<string>"]` | `["ok", "true"]` or `["error", "quota exceeded: ..."]` | `storage:write` |
+| `shell:storage-remove` | `["key", "<key>"]` | `["ok", "true"]` | `storage:write` |
+| `shell:storage-keys` | (none) | One `["key", "<name>"]` tag per key | `storage:read` |
+| `shell:storage-clear` | (none) | `["ok", "true"]` | `storage:write` |
+
+**Note on `storage-keys` response format:** The response uses repeated NIP-01 tags, one `["key", <name>]` per stored key. This avoids delimiter-based serialization bugs (e.g., keys containing commas). Example:
+
+```json
+{
+  "kind": 29003,
+  "tags": [
+    ["t", "napp:storage-response"],
+    ["id", "<correlation_id>"],
+    ["key", "theme"],
+    ["key", "preferences"],
+    ["key", "history"]
+  ],
+  "content": ""
+}
+```
 
 ### 5.4 Quota Enforcement
 
 Each napp identity has a storage quota (default: 512 KB = 524,288 bytes). The shell MUST:
 
-1. Calculate total bytes before each `shell:storage-set` operation
-2. Include both key and value sizes in the byte count (UTF-8 encoded)
+1. Calculate total bytes before each `shell:storage-set` operation using **UTF-8 byte count**: `new TextEncoder().encode(key + value).length`
+2. Include both key and value sizes in the byte count
 3. Exclude the current value of the same key (replacement, not addition)
-4. Reject with `["error", "quota exceeded"]` if the write would exceed the quota
+4. Reject with `["error", "quota exceeded: napp storage limit is <N> bytes"]` if the write would exceed the quota
 
-The per-napp quota MAY be configured via the ACL entry's `storageQuota` field.
+The per-napp quota MAY be configured via the ACL entry's `storageQuota` field. UTF-8 byte counting ensures consistent quota enforcement across platforms (character count differs from byte count for non-ASCII content).
 
 ### 5.5 Key Scoping
 
@@ -763,7 +911,37 @@ When a previously verified napplet presents a different `aggregateHash`:
 - The shell MAY implement update policies: `"auto-grant"` (copy capabilities from old key), `"banner"` (show update UI and pause until user acts), or `"silent-reprompt"` (accept with fresh permissive defaults)
 - The choice of update policy is implementation-specific; the spec only requires that the shell recognize hash changes as identity transitions
 
-### 12.8 Storage Quota
+### 12.8 ACL Persistence Format [LOCKED]
+
+The ACL store MUST persist to `localStorage` under the key `"napplet:acl"`. The value is a JSON-encoded array of `[compositeKey, entry]` tuples:
+
+```json
+[
+  [
+    "<pubkey>:<dTag>:<aggregateHash>",
+    {
+      "pubkey": "<hex pubkey>",
+      "dTag": "<derived dtag>",
+      "aggregateHash": "<hex hash or empty string>",
+      "capabilities": ["relay:read", "relay:write", "storage:read", "storage:write", "sign:event", ...],
+      "blocked": false,
+      "storageQuota": 524288
+    }
+  ]
+]
+```
+
+**This format is LOCKED as part of the protocol contract.** Implementations MUST be able to load ACL state persisted by other conforming implementations. Changes to the persistence format require a new protocol version.
+
+Field definitions:
+- `pubkey`: The napplet's ephemeral pubkey from AUTH
+- `dTag`: Derived tag (see Section 2.5)
+- `aggregateHash`: NIP-5A content hash (empty string for dev mode)
+- `capabilities`: Array of granted capability strings (see Section 12.2)
+- `blocked`: Boolean indicating whether all operations are denied
+- `storageQuota`: Per-napp storage quota in bytes (default: 524,288 = 512 KB)
+
+### 12.9 Storage Quota
 
 Each napplet identity has a per-napp storage quota. The default is 512 KB (524,288 bytes). The quota MAY be configured per-napplet via the ACL system. The shell MUST reject storage writes that would exceed the quota.
 
@@ -826,7 +1004,54 @@ This kind is used for napp directory listings. The exact kind number is subject 
 | `KIND_NSITE_MANIFEST` | 34128 | Draft |
 | `KIND_NSITE_INDEX` | 35128 | Draft |
 
-### 14.3 Spec Revision Tracking
+### 14.3 NIP-5A Manifest Format and Aggregate Hash
+
+Napplet builds are identified by their aggregate hash, computed from the NIP-5A manifest event (kind 35128). The aggregate hash ties a napplet's ACL identity to a specific build.
+
+**Manifest Event Structure (kind 35128):**
+
+```json
+{
+  "kind": 35128,
+  "pubkey": "<napp publisher hex pubkey>",
+  "created_at": 1711800000,
+  "tags": [
+    ["d", "<napp_type>"],
+    ["x", "<sha256_of_file_1>", "<relative_path_1>"],
+    ["x", "<sha256_of_file_2>", "<relative_path_2>"],
+    ["x", "<sha256_of_file_3>", "<relative_path_3>"]
+  ],
+  "content": "",
+  "id": "...",
+  "sig": "..."
+}
+```
+
+Each `x` tag contains `[sha256hex, relativePath]` for one file in the build output.
+
+**Aggregate Hash Computation Algorithm:**
+
+1. Walk all files in the build output directory
+2. For each file, compute SHA-256 of file contents
+3. Create lines: `"<sha256hex> <relativePath>\n"`
+4. Sort lines lexicographically
+5. Concatenate sorted lines into a single string
+6. SHA-256 the concatenated string = aggregate hash
+
+The aggregate hash is stored in the NIP-5A event's `x` tag (see [nostr-protocol/nips#2287](https://github.com/nostr-protocol/nips/pull/2287), not yet merged). It is also injected into the napplet's HTML as `<meta name="napplet-aggregate-hash" content="<hash>">` for development convenience.
+
+**Shell verification model:**
+
+- The NIP-5A event on relays is the source of truth for production verification
+- The HTML meta tag is a local convenience for the shim during development
+- The shell uses the aggregate hash as part of the ACL composite key `(pubkey, dTag, aggregateHash)`
+- Changes to any component of the composite key create a new identity
+
+**Note:** The `@napplet/vite-plugin` package is a **development convenience** for computing aggregate hashes locally during development. Production deployment of napplets to nsites uses community deploy tools (e.g., [nsyte](https://github.com/nicefarm/nsyte)) which handle NIP-5A event creation and relay publishing.
+
+For the full NIP-5A specification, see [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md).
+
+### 14.4 Spec Revision Tracking
 
 Implementations SHOULD track the NIP-C4 spec revision they target. The current reference revision is `draft-2026-03-21`. When NIP-C4 finalizes, implementations MUST update their kind number constants.
 
@@ -969,14 +1194,13 @@ window.addEventListener('message', (event) => {
 
 ### 16.1 Reference Implementation
 
-The reference implementation is [hyprgate](https://github.com/hyprgate/gui). Key source files:
+The portable SDK packages are in the [napplet](https://github.com/sandwichfarm/napplet) monorepo:
 
-- **Napplet-side shim:** `packages/nostr-shim/src/` (relay-shim.ts, index.ts, storage-shim.ts, keyboard-shim.ts)
-- **Shell-side pseudo-relay:** `apps/shell/src/lib/bus/pseudo-relay.ts`
-- **Storage proxy:** `apps/shell/src/lib/bus/storage-proxy.ts`
-- **Audio manager:** `apps/shell/src/lib/audio/audio-manager.ts`
-- **ACL store:** `apps/shell/src/lib/identity/acl-store.ts`
-- **Protocol types:** `packages/types/src/protocol.ts`
+- **@napplet/shim** (napplet-side SDK): `packages/shim/src/` (relay-shim.ts, index.ts, storage-shim.ts, keyboard-shim.ts)
+- **@napplet/shell** (shell-side runtime): `packages/shell/src/` (pseudo-relay.ts, storage-proxy.ts, acl-store.ts, audio-manager.ts)
+- **@napplet/vite-plugin** (dev tooling): `packages/vite-plugin/src/` (NIP-5A manifest generation)
+
+The Svelte reference implementation using these packages is [hyprgate](https://github.com/sandwichfarm/hyprgate).
 
 ### 16.2 Conformance
 
@@ -996,4 +1220,5 @@ An implementation is conforming if:
 ---
 
 *This NIP was drafted from the hyprgate reference implementation, v1.4.*
-*Draft date: 2026-03-29*
+*Refined with implementation learnings from @napplet SDK v0.1.0-alpha.1.*
+*Draft date: 2026-03-30*
