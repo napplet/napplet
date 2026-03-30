@@ -6,11 +6,11 @@
  */
 
 import {
-  createPseudoRelay,
+  createShellBridge,
   originRegistry,
   aclStore,
   nappKeyRegistry,
-  type PseudoRelay,
+  type ShellBridge,
   type ShellHooks,
   type Capability,
   type NostrEvent,
@@ -242,15 +242,15 @@ let nappletCounter = 0;
 // --- Public API ---
 
 export let tap: MessageTap;
-export let relay: PseudoRelay;
+export let relay: ShellBridge;
 
 export function getNapplets(): Map<string, NappletInfo> { return napplets; }
 export function getNapplet(windowId: string): NappletInfo | undefined { return napplets.get(windowId); }
 
 /**
- * Boot the shell: create pseudo-relay, install tap, wire up proxy.
+ * Boot the shell: create ShellBridge, install tap, wire up proxy.
  */
-export function bootShell(): { tap: MessageTap; relay: PseudoRelay } {
+export function bootShell(): { tap: MessageTap; relay: ShellBridge } {
   const hooks = createDemoHooks();
   tap = createMessageTap();
   tap.install(window);
@@ -272,7 +272,7 @@ export function bootShell(): { tap: MessageTap; relay: PseudoRelay } {
     return undefined;
   };
 
-  relay = createPseudoRelay(hooks);
+  relay = createShellBridge(hooks);
 
   // Set consent handler for destructive kinds
   // In the demo, auto-approve after 500ms to show the flow
