@@ -2,7 +2,7 @@
 
 > Shell runtime for hosting Nostr-native napplet iframes. Framework-agnostic.
 
-The shell acts as a NIP-01 pseudo-relay between napplet iframes and real Nostr relays. It handles AUTH handshake, ACL enforcement, state isolation, signer delegation, and inter-pane communication. You provide the hooks for your relay pool, signer, and window manager -- the shell handles the protocol.
+The shell acts as a NIP-01 ShellBridge between napplet iframes and real Nostr relays. It handles AUTH handshake, ACL enforcement, state isolation, signer delegation, and inter-pane communication. You provide the hooks for your relay pool, signer, and window manager -- the shell handles the protocol.
 
 ## Getting Started
 
@@ -14,10 +14,10 @@ The shell acts as a NIP-01 pseudo-relay between napplet iframes and real Nostr r
 
 ### How It Works
 
-1. Create a `PseudoRelay` by calling `createPseudoRelay(hooks)` with your application's hooks
+1. Create a `ShellBridge` by calling `createShellBridge(hooks)` with your application's hooks
 2. Wire up `window.addEventListener('message', relay.handleMessage)` to capture iframe messages
 3. When an iframe loads, register its window reference and call `relay.sendChallenge(windowId)`
-4. The pseudo-relay handles AUTH verification, subscription management, event routing, and all protocol details
+4. The ShellBridge handles AUTH verification, subscription management, event routing, and all protocol details
 
 ## Installation
 
@@ -28,7 +28,7 @@ npm install @napplet/shell nostr-tools
 ## Quick Start
 
 ```ts
-import { createPseudoRelay, originRegistry } from '@napplet/shell';
+import { createShellBridge, originRegistry } from '@napplet/shell';
 import type { ShellHooks } from '@napplet/shell';
 
 // Provide your application's hooks
@@ -73,7 +73,7 @@ const hooks: ShellHooks = {
   },
 };
 
-const relay = createPseudoRelay(hooks);
+const relay = createShellBridge(hooks);
 
 // Listen for messages from napplet iframes
 window.addEventListener('message', (event) => {
@@ -95,9 +95,9 @@ relay.onConsentNeeded((request) => {
 
 ## API Reference
 
-### createPseudoRelay(hooks)
+### createShellBridge(hooks)
 
-Create a pseudo-relay instance with dependency injection.
+Create a ShellBridge instance with dependency injection.
 
 **Parameters:**
 
@@ -105,9 +105,9 @@ Create a pseudo-relay instance with dependency injection.
 |-----------|------|-------------|
 | `hooks` | `ShellHooks` | Host application integration hooks |
 
-**Returns:** `PseudoRelay`
+**Returns:** `ShellBridge`
 
-### PseudoRelay
+### ShellBridge
 
 | Method | Description |
 |--------|-------------|
@@ -135,7 +135,7 @@ The `ShellHooks` interface is the main integration point. Implementors provide r
 
 ### Standalone Utilities
 
-These exports can be used independently without creating a full pseudo-relay.
+These exports can be used independently without creating a full ShellBridge.
 
 | Export | Description |
 |--------|-------------|
@@ -153,7 +153,7 @@ These exports can be used independently without creating a full pseudo-relay.
 |----------|-------|-------------|
 | `BusKind` | `{ REGISTRATION: 29000, SIGNER_REQUEST: 29001, ... }` | Ephemeral bus kind numbers |
 | `AUTH_KIND` | `22242` | NIP-42 authentication event kind |
-| `PSEUDO_RELAY_URI` | `'napplet://shell'` | Pseudo-relay URI for AUTH relay tag |
+| `SHELL_BRIDGE_URI` | `'napplet://shell'` | ShellBridge URI for AUTH relay tag |
 | `PROTOCOL_VERSION` | `'2.0.0'` | Protocol version string |
 | `ALL_CAPABILITIES` | `['relay:read', 'relay:write', ...]` | Complete list of ACL capabilities |
 | `DESTRUCTIVE_KINDS` | `Set([0, 3, 5, 10002])` | Event kinds requiring user consent |
@@ -171,7 +171,7 @@ import type {
   WorkerRelayHooks, WorkerRelayLike,
   CryptoHooks, DmHooks,
   ConsentRequest,
-  PseudoRelay,
+  ShellBridge,
   NostrEvent, NostrFilter,
   NappKeyEntry, AclEntry,
   Capability,
