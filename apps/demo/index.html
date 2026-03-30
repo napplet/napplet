@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>napplet playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-surface-dark text-gray-300 font-mono min-h-screen">
+  <!-- Shell controls bar -->
+  <header id="shell-controls" class="px-4 py-2 bg-surface-mid border-b border-surface-border flex items-center gap-4">
+    <h1 class="text-neon-blue text-sm font-bold tracking-wider uppercase">napplet playground</h1>
+    <div id="acl-controls" class="flex gap-2 ml-auto"></div>
+  </header>
+
+  <!-- Main layout: left napplets, right debugger -->
+  <main class="flex h-[calc(100vh-40px)]">
+    <!-- Left panel: napplet iframes -->
+    <section id="napplet-panel" class="w-[400px] min-w-[300px] flex flex-col border-r border-surface-border">
+      <div id="napplet-chat" class="flex-1 flex flex-col border-b border-surface-border">
+        <div class="panel-header flex items-center justify-between">
+          <span>chat</span>
+          <span id="chat-status" class="text-xs text-gray-500">loading...</span>
+        </div>
+        <div id="chat-frame-container" class="flex-1 relative"></div>
+      </div>
+      <div id="napplet-bot" class="flex-1 flex flex-col">
+        <div class="panel-header flex items-center justify-between">
+          <span>bot</span>
+          <span id="bot-status" class="text-xs text-gray-500">loading...</span>
+        </div>
+        <div id="bot-frame-container" class="flex-1 relative"></div>
+      </div>
+    </section>
+
+    <!-- Right panel: protocol debugger -->
+    <section id="debugger-panel" class="flex-1 flex flex-col">
+      <napplet-debugger id="debugger"></napplet-debugger>
+    </section>
+  </main>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
