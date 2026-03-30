@@ -6,14 +6,18 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
+    "test:e2e": "playwright test",
     "type-check": "turbo run type-check",
     "version-packages": "changeset version",
     "publish-packages": "turbo run build && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
+    "@playwright/test": "^1.58.2",
+    "nostr-tools": "^2.23.3",
     "turbo": "^2.5.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^6.3.0"
   },
   "packageManager": "pnpm@10.8.0"
 }

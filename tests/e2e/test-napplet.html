@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="napplet-napp-type" content="test">
+  <meta name="napplet-aggregate-hash" content="">
+  <title>Test Napplet</title>
+</head>
+<body>
+  <div id="status">loading</div>
+  <script type="module">
+    import '@napplet/shim';
+    document.getElementById('status').textContent = 'shim-loaded';
+  </script>
+</body>
+</html>
