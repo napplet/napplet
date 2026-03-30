@@ -32,7 +32,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 ### Active
 
 - [x] Rename pseudo-relay → ShellBridge across all packages, tests, spec, demo — Phase 7
-- [ ] Redesign ACL as pure WASM-ready module — deterministic (identity, capability, action) → allow | deny
+- [x] Redesign ACL as pure WASM-ready module — deterministic (identity, capability, action) → allow | deny — Phase 8
 - [ ] Single ACL enforcement point in ShellBridge — every message passes through one gate
 - [ ] Exhaustive behavioral ACL test suite — capability × action matrix
 - [ ] Shell code cleanup — consistent method names, clean interfaces
@@ -87,7 +87,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 | Chat + Bot demo napplets | Interactive, demonstrates all capabilities, teachable bot | ✓ Good |
 | UnoCSS for demo styling | Tailwind-compatible, Vite ecosystem, easy to modify | ✓ Good |
 | UTF-8 byte count for storage quota | Consistent cross-platform, replaces inconsistent Blob approach | ✓ Good |
-| @napplet/acl as separate package | Package boundary enforces zero deps, WASM-ready | — Pending (v0.2.0) |
+| @napplet/acl as separate package | Package boundary enforces zero deps, WASM-ready | ✓ Good — Phase 8 delivered zero-dep pure module |
 | Target architecture: acl → core → runtime → shell | Multi-shell support. Third-party shells depend on @napplet/runtime, not @napplet/shell. Runtime extraction when second shell exists. | — Pending (v0.3.0+) |
 
 ## Evolution
@@ -119,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 - Consistent naming and clean interfaces throughout shell
 
 ---
-*Last updated: 2026-03-30 after v0.2.0 milestone kickoff*
+*Last updated: 2026-03-31 after Phase 8 (ACL Pure Module) completion*
