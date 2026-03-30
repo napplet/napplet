@@ -7,21 +7,21 @@
 
 ### Rename: pseudo-relay → ShellBridge
 
-- [ ] **REN-01**: `createPseudoRelay()` renamed to `createShellBridge()` in @napplet/shell
-- [ ] **REN-02**: `PseudoRelay` type renamed to `ShellBridge` in @napplet/shell
-- [ ] **REN-03**: `pseudo-relay.ts` file renamed to `shell-bridge.ts`
-- [ ] **REN-04**: All references in tests updated (import paths, variable names, comments)
-- [ ] **REN-05**: All references in demo app updated
-- [ ] **REN-06**: SPEC.md updated — "pseudo-relay" → "ShellBridge" throughout
-- [ ] **REN-07**: PSEUDO_RELAY_URI constant renamed to SHELL_BRIDGE_URI
-- [ ] **REN-08**: Package README updated with new API name
+- [x] **REN-01**: `createPseudoRelay()` renamed to `createShellBridge()` in @napplet/shell
+- [x] **REN-02**: `PseudoRelay` type renamed to `ShellBridge` in @napplet/shell
+- [x] **REN-03**: `pseudo-relay.ts` file renamed to `shell-bridge.ts`
+- [x] **REN-04**: All references in tests updated (import paths, variable names, comments)
+- [x] **REN-05**: All references in demo app updated
+- [x] **REN-06**: SPEC.md updated — "pseudo-relay" → "ShellBridge" throughout
+- [x] **REN-07**: PSEUDO_RELAY_URI constant renamed to SHELL_BRIDGE_URI
+- [x] **REN-08**: Package README updated with new API name
 
 ### Rename: storage → state (completion)
 
-- [ ] **STA-01**: All test files updated — storage:read/write → state:read/write capability strings
-- [ ] **STA-02**: Test file `storage-isolation.spec.ts` renamed to `state-isolation.spec.ts`
-- [ ] **STA-03**: All test assertions updated for `shell:state-*` topics and `napp:state-response`
-- [ ] **STA-04**: Test harness globals updated if they reference storage
+- [x] **STA-01**: All test files updated — storage:read/write → state:read/write capability strings
+- [x] **STA-02**: Test file `storage-isolation.spec.ts` renamed to `state-isolation.spec.ts`
+- [x] **STA-03**: All test assertions updated for `shell:state-*` topics and `napp:state-response`
+- [x] **STA-04**: Test harness globals updated if they reference storage
 
 ### ACL Redesign — Pure Module
 
@@ -77,18 +77,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REN-01 | Phase 7 | Pending |
-| REN-02 | Phase 7 | Pending |
-| REN-03 | Phase 7 | Pending |
-| REN-04 | Phase 7 | Pending |
-| REN-05 | Phase 7 | Pending |
-| REN-06 | Phase 7 | Pending |
-| REN-07 | Phase 7 | Pending |
-| REN-08 | Phase 7 | Pending |
-| STA-01 | Phase 7 | Pending |
-| STA-02 | Phase 7 | Pending |
-| STA-03 | Phase 7 | Pending |
-| STA-04 | Phase 7 | Pending |
+| REN-01 | Phase 7 | Complete |
+| REN-02 | Phase 7 | Complete |
+| REN-03 | Phase 7 | Complete |
+| REN-04 | Phase 7 | Complete |
+| REN-05 | Phase 7 | Complete |
+| REN-06 | Phase 7 | Complete |
+| REN-07 | Phase 7 | Complete |
+| REN-08 | Phase 7 | Complete |
+| STA-01 | Phase 7 | Complete |
+| STA-02 | Phase 7 | Complete |
+| STA-03 | Phase 7 | Complete |
+| STA-04 | Phase 7 | Complete |
 | ACL-01 | Phase 8 | Pending |
 | ACL-02 | Phase 8 | Pending |
 | ACL-03 | Phase 8 | Pending |

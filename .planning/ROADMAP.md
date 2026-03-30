@@ -32,8 +32,8 @@
 **Plans**: 2 plans, 1 wave, 14 tasks total
 
 Plans:
-- [ ] 07-01: Rename pseudo-relay to ShellBridge (11 tasks, wave 1)
-- [ ] 07-02: Complete storage-to-state rename in tests (3 tasks, wave 1)
+- [x] 07-01: Rename pseudo-relay to ShellBridge (11 tasks, wave 1)
+- [x] 07-02: Complete storage-to-state rename in tests (3 tasks, wave 1)
 
 ### Phase 8: ACL Pure Module
 **Goal**: ACL decisions are computed by a standalone module that has no runtime dependencies, no side effects, and could be compiled to WASM without modification
