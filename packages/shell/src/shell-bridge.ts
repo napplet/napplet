@@ -108,7 +108,10 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
       if (senderId !== null && sub.windowId === senderId) continue;
       // Check relay:read ACL on the recipient at delivery time (not just subscription time)
       const recipientPubkey = nappKeyRegistry.getPubkey(sub.windowId);
-      if (recipientPubkey && !checkAcl(recipientPubkey, 'relay:read')) continue;
+      if (recipientPubkey) {
+        const recipientResult = enforce(recipientPubkey, 'relay:read');
+        if (!recipientResult.allowed) continue;  // Silently skip delivery (D-08)
+      }
       if (targetPubkey) {
         const subPubkey = recipientPubkey;
         if (subPubkey !== targetPubkey) continue;
