@@ -1,16 +1,33 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: '*.spec.ts',
-  timeout: 30_000,
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'list',
   use: {
-    browserName: 'chromium',
-    headless: true,
+    baseURL: 'http://localhost:4173',
+    trace: 'on-first-retry',
   },
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use system Chromium -- do NOT use bundled browser
+        launchOptions: {
+          executablePath: '/usr/bin/chromium',
+        },
+      },
+    },
+  ],
+  // Web server for serving the test harness and napplets
   webServer: {
-    command: 'npx vite --config tests/e2e/vite.config.ts --port 4173',
-    port: 4173,
-    reuseExistingServer: true,
+    command: 'pnpm test:serve',
+    url: 'http://localhost:4173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 60000,
   },
 });
