@@ -7,6 +7,28 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    .flow-arrow { stroke: #2a2a3a; stroke-width: 3; fill: none; transition: stroke 0.3s, filter 0.3s; }
+    .flow-arrow.active { stroke: #39ff14; filter: drop-shadow(0 0 4px #39ff1460); }
+    .flow-arrow.blocked { stroke: #ff3b3b; filter: drop-shadow(0 0 4px #ff3b3b60); }
+    .flow-arrowhead { fill: #2a2a3a; transition: fill 0.3s; }
+    .flow-arrowhead.active { fill: #39ff14; }
+    .flow-arrowhead.blocked { fill: #ff3b3b; }
+    .node-box { border: 3px solid #3a3a4a; transition: border-color 0.3s, box-shadow 0.3s; }
+    .node-box.active { border-color: #39ff14; box-shadow: 0 0 12px #39ff1430; }
+    .node-box.blocked { border-color: #ff3b3b; box-shadow: 0 0 12px #ff3b3b30; }
+    .acl-btn { transition: all 0.15s; }
+    .acl-btn-on { background: rgba(57,255,20,0.2); border-color: rgba(57,255,20,0.5); color: #39ff14; }
+    .acl-btn-off { background: rgba(255,59,59,0.2); border-color: rgba(255,59,59,0.5); color: #ff3b3b; }
+    .acl-btn-block { background: transparent; border-color: #3a3a4a; color: #666; }
+    .acl-btn-block:hover { border-color: rgba(255,59,59,0.4); color: #ff3b3b; }
+    .acl-btn-blocked { background: rgba(255,59,59,0.2); border-color: rgba(255,59,59,0.5); color: #ff3b3b; }
+    @media (max-width: 768px) {
+      .flow-row { flex-direction: column !important; }
+      .flow-row .node-box { width: 100% !important; min-width: 0 !important; }
+      .arrow-col { transform: rotate(90deg); width: 60px !important; height: 40px !important; align-self: center; }
+    }
+  </style>
 </head>
 <body class="bg-surface-dark text-gray-300 font-mono min-h-screen flex flex-col overflow-hidden">
   <!-- Header -->
@@ -14,74 +36,111 @@
     <h1 class="text-neon-blue text-sm font-bold tracking-wider uppercase">napplet playground</h1>
   </header>
 
-  <!-- Top: Visual flow — Chat | lines | ACL/Shell | lines | Bot -->
-  <section id="flow-area" class="shrink-0 px-4 py-3">
-    <div class="flex items-stretch gap-0 h-[280px]">
+  <!-- Flow area: Chat | → | Shell/ACL | → | Bot -->
+  <section id="flow-area" class="flex-1 min-h-0 p-4">
+    <div class="flow-row flex items-stretch gap-0 h-full">
 
-      <!-- Chat napplet box -->
-      <div id="chat-box" class="flex flex-col w-[300px] min-w-[240px] border-2 border-surface-border rounded-lg overflow-hidden transition-colors duration-300">
-        <div class="px-3 py-1.5 bg-surface-mid border-b border-surface-border flex items-center justify-between shrink-0">
-          <span class="text-neon-blue text-xs font-bold">chat</span>
+      <!-- Chat napplet -->
+      <div id="chat-box" class="node-box flex flex-col flex-1 min-w-[200px] rounded-lg overflow-hidden">
+        <div class="px-3 py-2 bg-surface-mid border-b border-surface-border flex items-center justify-between shrink-0">
+          <span class="text-neon-blue text-xs font-bold uppercase">chat</span>
           <span id="chat-status" class="text-[10px] text-gray-500">loading...</span>
         </div>
-        <div id="chat-acl" class="px-2 py-1 bg-surface-dark border-b border-surface-border shrink-0"></div>
+        <div id="chat-acl" class="px-2 py-2 bg-surface-dark border-b border-surface-border shrink-0"></div>
         <div id="chat-frame-container" class="flex-1 relative min-h-0"></div>
       </div>
 
-      <!-- Connecting lines: Chat → Shell -->
-      <div class="flex flex-col justify-center w-[40px] shrink-0">
-        <div class="flex flex-col items-center gap-1">
-          <div id="line-chat-out" class="w-full h-[2px] bg-surface-border transition-colors duration-300"></div>
-          <span class="text-[8px] text-gray-600">→</span>
-          <div id="line-chat-in" class="w-full h-[2px] bg-surface-border transition-colors duration-300"></div>
-          <span class="text-[8px] text-gray-600">←</span>
-        </div>
+      <!-- Arrow: Chat ↔ Shell -->
+      <div class="arrow-col flex flex-col justify-center w-[60px] shrink-0">
+        <svg viewBox="0 0 60 80" class="w-full h-[80px]">
+          <defs>
+            <marker id="ah-right" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" class="flow-arrowhead" id="ahf-chat-out"/>
+            </marker>
+            <marker id="ah-left-chat" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+              <polygon points="8 0, 0 3, 8 6" class="flow-arrowhead" id="ahf-chat-in"/>
+            </marker>
+          </defs>
+          <!-- Chat → Shell (right arrow) -->
+          <line x1="4" y1="25" x2="52" y2="25" class="flow-arrow" id="line-chat-out" marker-end="url(#ah-right)"/>
+          <!-- Shell → Chat (left arrow) -->
+          <line x1="56" y1="55" x2="8" y2="55" class="flow-arrow" id="line-chat-in" marker-end="url(#ah-left-chat)"/>
+        </svg>
       </div>
 
-      <!-- ACL / Shell box (center) -->
-      <div id="shell-box" class="flex flex-col w-[200px] min-w-[160px] border-2 border-surface-border rounded-lg overflow-hidden transition-colors duration-300">
-        <div class="px-3 py-1.5 bg-surface-mid border-b border-surface-border shrink-0">
-          <span class="text-neon-purple text-xs font-bold">shell / acl</span>
+      <!-- Shell / ACL (center) -->
+      <div id="shell-box" class="node-box flex flex-col w-[220px] min-w-[180px] shrink-0 rounded-lg overflow-hidden">
+        <div class="px-3 py-2 bg-surface-mid border-b border-surface-border shrink-0">
+          <span class="text-neon-purple text-xs font-bold uppercase">shell / acl</span>
         </div>
-        <div class="flex-1 flex flex-col p-2 gap-2 overflow-y-auto">
-          <div id="shell-info" class="text-[10px] text-gray-500">
+        <div class="flex-1 flex flex-col p-3 gap-2 overflow-y-auto">
+          <div class="text-[10px] text-gray-500">
             <div>relay: <span class="text-neon-blue">shell://</span></div>
             <div id="shell-pubkey" class="truncate">pubkey: ...</div>
           </div>
           <div class="border-t border-surface-border pt-2">
-            <div class="text-[10px] text-gray-400 mb-1 font-semibold">Message Flow</div>
-            <div id="shell-flow-log" class="text-[9px] text-gray-600 space-y-0.5 max-h-[160px] overflow-y-auto"></div>
+            <div class="text-[10px] text-gray-400 mb-1 font-semibold uppercase">Message Flow</div>
+            <div id="shell-flow-log" class="text-[9px] text-gray-600 space-y-0.5 overflow-y-auto flex-1"></div>
           </div>
         </div>
       </div>
 
-      <!-- Connecting lines: Shell → Bot -->
-      <div class="flex flex-col justify-center w-[40px] shrink-0">
-        <div class="flex flex-col items-center gap-1">
-          <div id="line-bot-in" class="w-full h-[2px] bg-surface-border transition-colors duration-300"></div>
-          <span class="text-[8px] text-gray-600">→</span>
-          <div id="line-bot-out" class="w-full h-[2px] bg-surface-border transition-colors duration-300"></div>
-          <span class="text-[8px] text-gray-600">←</span>
-        </div>
+      <!-- Arrow: Shell ↔ Bot -->
+      <div class="arrow-col flex flex-col justify-center w-[60px] shrink-0">
+        <svg viewBox="0 0 60 80" class="w-full h-[80px]">
+          <defs>
+            <marker id="ah-right-bot" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" class="flow-arrowhead" id="ahf-bot-in"/>
+            </marker>
+            <marker id="ah-left-bot" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+              <polygon points="8 0, 0 3, 8 6" class="flow-arrowhead" id="ahf-bot-out"/>
+            </marker>
+          </defs>
+          <!-- Shell → Bot (right arrow) -->
+          <line x1="4" y1="25" x2="52" y2="25" class="flow-arrow" id="line-bot-in" marker-end="url(#ah-right-bot)"/>
+          <!-- Bot → Shell (left arrow) -->
+          <line x1="56" y1="55" x2="8" y2="55" class="flow-arrow" id="line-bot-out" marker-end="url(#ah-left-bot)"/>
+        </svg>
       </div>
 
-      <!-- Bot napplet box -->
-      <div id="bot-box" class="flex flex-col w-[300px] min-w-[240px] border-2 border-surface-border rounded-lg overflow-hidden transition-colors duration-300">
-        <div class="px-3 py-1.5 bg-surface-mid border-b border-surface-border flex items-center justify-between shrink-0">
-          <span class="text-neon-pink text-xs font-bold">bot</span>
+      <!-- Bot napplet -->
+      <div id="bot-box" class="node-box flex flex-col flex-1 min-w-[200px] rounded-lg overflow-hidden">
+        <div class="px-3 py-2 bg-surface-mid border-b border-surface-border flex items-center justify-between shrink-0">
+          <span class="text-neon-pink text-xs font-bold uppercase">bot</span>
           <span id="bot-status" class="text-[10px] text-gray-500">loading...</span>
         </div>
-        <div id="bot-acl" class="px-2 py-1 bg-surface-dark border-b border-surface-border shrink-0"></div>
+        <div id="bot-acl" class="px-2 py-2 bg-surface-dark border-b border-surface-border shrink-0"></div>
         <div id="bot-frame-container" class="flex-1 relative min-h-0"></div>
       </div>
 
     </div>
   </section>
 
-  <!-- Bottom: Protocol debugger (live log + sequence) -->
-  <section class="flex-1 flex flex-col min-h-0 border-t border-surface-border">
+  <!-- Bottom: Protocol debugger (resizable) -->
+  <div id="resize-handle" style="height:6px;cursor:ns-resize;background:#2a2a3a;border-top:1px solid #3a3a4a;border-bottom:1px solid #3a3a4a;flex-shrink:0"></div>
+  <section id="debugger-section" style="height:45vh;min-height:120px" class="shrink-0 flex flex-col overflow-hidden">
     <napplet-debugger id="debugger"></napplet-debugger>
   </section>
+  <script>
+    (function() {
+      const handle = document.getElementById('resize-handle');
+      const section = document.getElementById('debugger-section');
+      let dragging = false, startY = 0, startH = 0;
+      handle.addEventListener('mousedown', (e) => {
+        dragging = true; startY = e.clientY; startH = section.offsetHeight;
+        document.body.style.cursor = 'ns-resize'; document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const delta = startY - e.clientY;
+        section.style.height = Math.max(120, startH + delta) + 'px';
+      });
+      document.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = '';
+      });
+    })();
+  </script>
 
   <script type="module" src="/src/main.ts"></script>
 </body>

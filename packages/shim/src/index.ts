@@ -8,7 +8,7 @@ import { loadOrCreateKeypair } from './napp-keypair.js';
 import type { NappKeypair } from './napp-keypair.js';
 import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
-import { installStorageShim, _setInterPaneEventSender } from './storage-shim.js';
+import { installStateShim, _setInterPaneEventSender } from './state-shim.js';
 import { subscribe, publish } from './relay-shim.js';
 import { BusKind, AUTH_KIND, PSEUDO_RELAY_URI, PROTOCOL_VERSION } from './types.js';
 import type { NostrEvent } from './types.js';
@@ -19,8 +19,8 @@ export { subscribe, publish, query } from './relay-shim.js';
 export type { Subscription, EventTemplate } from './relay-shim.js';
 export type { NostrEvent, NostrFilter } from './types.js';
 
-// Storage shim (napp-side localStorage proxy)
-export { nappStorage } from './storage-shim.js';
+// State shim (napp-side localStorage proxy)
+export { nappState, nappStorage } from './state-shim.js';
 
 /**
  * Broadcast an inter-pane event to other napps via the shell.
@@ -301,7 +301,7 @@ installKeyboardShim();
 
 // Install napp-side storage proxy (wire sender to break circular dep)
 _setInterPaneEventSender(emit);
-installStorageShim();
+installStateShim();
 
 // Initialize keypair eagerly so it is ready before AUTH challenge arrives
 {

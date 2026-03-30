@@ -2,7 +2,7 @@
 
 > Shell runtime for hosting Nostr-native napplet iframes. Framework-agnostic.
 
-The shell acts as a NIP-01 pseudo-relay between napplet iframes and real Nostr relays. It handles AUTH handshake, ACL enforcement, storage isolation, signer delegation, and inter-pane communication. You provide the hooks for your relay pool, signer, and window manager -- the shell handles the protocol.
+The shell acts as a NIP-01 pseudo-relay between napplet iframes and real Nostr relays. It handles AUTH handshake, ACL enforcement, state isolation, signer delegation, and inter-pane communication. You provide the hooks for your relay pool, signer, and window manager -- the shell handles the protocol.
 
 ## Getting Started
 
@@ -144,8 +144,8 @@ These exports can be used independently without creating a full pseudo-relay.
 | `aclStore` | ACL entry management: `grant`, `revoke`, `block`, `unblock`, `check`, `persist`, `load` |
 | `audioManager` | Track which napplets are producing audio |
 | `manifestCache` | Cache NIP-5A manifest verification results |
-| `handleStorageRequest` | Handle storage proxy requests from napplets |
-| `cleanupNappStorage` | Remove all storage for a specific napp identity |
+| `handleStateRequest` | Handle state proxy requests from napplets |
+| `cleanupNappState` | Remove all state for a specific napp identity |
 
 ### Protocol Constants
 

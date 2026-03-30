@@ -15,7 +15,7 @@ A napplet is a sandboxed iframe app that communicates with a host shell over `po
 
 1. Import `@napplet/shim` in your napplet's entry point
 2. The shim automatically generates an ephemeral keypair and completes the NIP-42 AUTH handshake with the shell
-3. Once authenticated, use `subscribe`, `publish`, `query`, `emit`, `on`, and `nappStorage` to interact with Nostr relays and other napplets
+3. Once authenticated, use `subscribe`, `publish`, `query`, `emit`, `on`, and `nappState` to interact with Nostr relays and other napplets
 
 The shim also installs a `window.nostr` NIP-07 compatible interface that routes signing requests through the shell's signer proxy.
 
@@ -28,7 +28,7 @@ npm install @napplet/shim nostr-tools
 ## Quick Start
 
 ```ts
-import { subscribe, publish, on, nappStorage } from '@napplet/shim';
+import { subscribe, publish, on, nappState } from '@napplet/shim';
 
 // Subscribe to kind 1 notes
 const sub = subscribe(
@@ -51,8 +51,8 @@ const ipc = on('profile:open', (payload) => {
 });
 
 // Use scoped storage (proxied through the shell)
-await nappStorage.setItem('theme', 'dark');
-const theme = await nappStorage.getItem('theme'); // 'dark'
+await nappState.setItem('theme', 'dark');
+const theme = await nappState.getItem('theme'); // 'dark'
 
 // Clean up
 sub.close();
@@ -161,48 +161,48 @@ const sub = on('stream:channel-switch', (payload) => {
 sub.close();
 ```
 
-### nappStorage
+### nappState
 
 Async localStorage-like API for sandboxed napplets. All operations are proxied through the shell and scoped by napplet identity -- napplets cannot read each other's data. Each napplet has a 512 KB quota enforced by the shell.
 
-#### nappStorage.getItem(key: string): Promise\<string | null\>
+#### nappState.getItem(key: string): Promise\<string | null\>
 
 Retrieve a stored value. Returns `null` if the key does not exist.
 
 ```ts
-const value = await nappStorage.getItem('my-key');
+const value = await nappState.getItem('my-key');
 ```
 
-#### nappStorage.setItem(key: string, value: string): Promise\<void\>
+#### nappState.setItem(key: string, value: string): Promise\<void\>
 
 Store a key-value pair. Throws if the 512 KB quota is exceeded.
 
 ```ts
-await nappStorage.setItem('my-key', 'my-value');
+await nappState.setItem('my-key', 'my-value');
 ```
 
-#### nappStorage.removeItem(key: string): Promise\<void\>
+#### nappState.removeItem(key: string): Promise\<void\>
 
 Remove a stored key.
 
 ```ts
-await nappStorage.removeItem('my-key');
+await nappState.removeItem('my-key');
 ```
 
-#### nappStorage.clear(): Promise\<void\>
+#### nappState.clear(): Promise\<void\>
 
 Remove all stored data for this napplet. Does not affect other napplets.
 
 ```ts
-await nappStorage.clear();
+await nappState.clear();
 ```
 
-#### nappStorage.keys(): Promise\<string[]\>
+#### nappState.keys(): Promise\<string[]\>
 
 List all keys stored by this napplet.
 
 ```ts
-const allKeys = await nappStorage.keys();
+const allKeys = await nappState.keys();
 ```
 
 ## Types

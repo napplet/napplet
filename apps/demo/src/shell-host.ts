@@ -27,6 +27,7 @@ export interface TappedMessage {
   timestamp: number;
   direction: 'napplet->shell' | 'shell->napplet';
   verb: string;
+  windowId?: string;
   raw: unknown[];
   parsed: {
     subId?: string;
@@ -41,7 +42,7 @@ export interface TappedMessage {
 
 export interface MessageTap {
   messages: TappedMessage[];
-  recordOutbound(msg: unknown[]): void;
+  recordOutbound(msg: unknown[], windowId?: string): void;
   install(shellWindow: Window): void;
   onMessage(callback: (msg: TappedMessage) => void): () => void;
   filter(criteria: { verb?: string; direction?: string }): TappedMessage[];
@@ -112,13 +113,14 @@ function createMessageTap(): MessageTap {
   const listeners: Array<(msg: TappedMessage) => void> = [];
   let idx = 0;
 
-  function record(direction: TappedMessage['direction'], raw: unknown[]): void {
+  function record(direction: TappedMessage['direction'], raw: unknown[], windowId?: string): void {
     const verb = (typeof raw[0] === 'string' && KNOWN_VERBS.has(raw[0])) ? raw[0] : 'UNKNOWN';
     const msg: TappedMessage = {
       index: idx++,
       timestamp: Date.now(),
       direction,
       verb,
+      windowId,
       raw,
       parsed: parseMessage(raw),
     };
@@ -128,11 +130,16 @@ function createMessageTap(): MessageTap {
 
   return {
     messages,
-    recordOutbound(msg: unknown[]) { if (Array.isArray(msg)) record('shell->napplet', msg); },
+    recordOutbound(msg: unknown[], windowId?: string) { if (Array.isArray(msg)) record('shell->napplet', msg, windowId); },
     install(shellWindow: Window) {
       shellWindow.addEventListener('message', (event: MessageEvent) => {
         if (!Array.isArray(event.data)) return;
-        record('napplet->shell', event.data);
+        // Resolve windowId from event.source
+        let wid: string | undefined;
+        for (const [id, info] of napplets) {
+          if (info.iframe?.contentWindow === event.source) { wid = id; break; }
+        }
+        record('napplet->shell', event.data, wid);
       }, true);
     },
     onMessage(callback) {
@@ -198,12 +205,12 @@ function createDemoHooks(): ShellHooks {
 
 const proxyToReal = new WeakMap<object, Window>();
 
-function createPostMessageProxy(realWin: Window, messageTap: MessageTap): Window {
+function createPostMessageProxy(realWin: Window, messageTap: MessageTap, windowId?: string): Window {
   const proxy = new Proxy(realWin, {
     get(target, prop) {
       if (prop === 'postMessage') {
         return (msg: unknown, targetOrigin: string, transfer?: Transferable[]) => {
-          if (Array.isArray(msg)) messageTap.recordOutbound(msg);
+          if (Array.isArray(msg)) messageTap.recordOutbound(msg, windowId);
           return target.postMessage(msg, targetOrigin, transfer);
         };
       }
@@ -253,7 +260,7 @@ export function bootShell(): { tap: MessageTap; relay: PseudoRelay } {
   originRegistry.getIframeWindow = (windowId: string) => {
     const win = _origGetIframeWindow(windowId);
     if (!win) return null;
-    return createPostMessageProxy(win, tap);
+    return createPostMessageProxy(win, tap, windowId);
   };
 
   const _origGetWindowId = originRegistry.getWindowId.bind(originRegistry);
@@ -356,12 +363,18 @@ export function loadNapplet(name: string, containerId: string): NappletInfo {
  */
 export function toggleCapability(windowId: string, capability: Capability, enabled: boolean): void {
   const info = napplets.get(windowId);
-  if (!info?.pubkey) return;
+  if (!info?.pubkey) { console.warn('[acl] toggleCapability: no pubkey for', windowId); return; }
+  const dTag = info.dTag || '';
+  const hash = info.aggregateHash || '';
+  console.log(`[acl] ${enabled ? 'GRANT' : 'REVOKE'} ${capability} for ${info.name} (pubkey=${info.pubkey.substring(0, 8)}... dTag=${dTag} hash=${hash})`);
   if (enabled) {
-    aclStore.grant(info.pubkey, info.dTag || '', info.aggregateHash || '', capability);
+    aclStore.grant(info.pubkey, dTag, hash, capability);
   } else {
-    aclStore.revoke(info.pubkey, info.dTag || '', info.aggregateHash || '', capability);
+    aclStore.revoke(info.pubkey, dTag, hash, capability);
   }
+  // Verify the change took effect
+  const check = aclStore.check(info.pubkey, dTag, hash, capability);
+  console.log(`[acl] check ${capability} after ${enabled ? 'grant' : 'revoke'}: ${check}`);
 }
 
 /**

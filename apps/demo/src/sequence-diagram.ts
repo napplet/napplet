@@ -2,17 +2,15 @@
  * sequence-diagram.ts -- SVG swimlane renderer for protocol message flow.
  *
  * Renders a vertical sequence diagram with three lanes:
- * - Left lane: Chat napplet (napplet->shell messages from chat)
- * - Center lane: Shell (routing layer)
- * - Right lane: Bot napplet (messages to/from bot)
+ * - Left lane: Chat napplet
+ * - Center lane: Shell
+ * - Right lane: Bot napplet
  *
- * Messages are drawn as arrows between lanes, color-coded by verb type.
- * The SVG auto-extends vertically as new messages arrive.
+ * Uses full container width. Lanes spaced at 20%, 50%, 80%.
  */
 
 import type { TappedMessage } from './shell-host.js';
 
-/** Verb-to-color mapping (matches debugger live log colors) */
 const VERB_COLORS: Record<string, string> = {
   AUTH: '#b388ff',
   EVENT: '#39ff14',
@@ -26,116 +24,89 @@ const VERB_COLORS: Record<string, string> = {
   SYSTEM: '#ff00ff',
 };
 
-/** Lane positions (x coordinates) */
-const LANES = {
-  chat: 80,
-  shell: 220,
-  bot: 360,
-};
-
 const LANE_NAMES = ['Chat', 'Shell', 'Bot'];
-const LANE_XS = [LANES.chat, LANES.shell, LANES.bot];
+const LANE_PCTS = [0.15, 0.50, 0.85]; // percentage of width
 
-const SVG_WIDTH = 440;
 const HEADER_HEIGHT = 40;
 const ROW_HEIGHT = 28;
-const ARROW_HEAD_SIZE = 6;
+const ARROW_HEAD_SIZE = 7;
 
-/**
- * Determine which lane a message belongs to based on direction and context.
- */
-function getLanes(msg: TappedMessage): { from: number; to: number } {
-  // Shell is always the center
+function getLanePct(msg: TappedMessage): { from: number; to: number } {
   if (msg.direction === 'napplet->shell') {
-    // Could be from chat or bot -- use topic/kind to guess
     if (msg.parsed.topic === 'bot:response') {
-      return { from: LANES.bot, to: LANES.shell };
+      return { from: LANE_PCTS[2], to: LANE_PCTS[1] };
     }
-    return { from: LANES.chat, to: LANES.shell };
+    return { from: LANE_PCTS[0], to: LANE_PCTS[1] };
   } else {
-    // shell->napplet
     if (msg.parsed.topic === 'bot:response' || msg.parsed.topic === 'chat:message') {
-      // Inter-pane delivery -- shell routes to the other napplet
       if (msg.parsed.topic === 'chat:message') {
-        return { from: LANES.shell, to: LANES.bot };
+        return { from: LANE_PCTS[1], to: LANE_PCTS[2] };
       }
-      return { from: LANES.shell, to: LANES.chat };
+      return { from: LANE_PCTS[1], to: LANE_PCTS[0] };
     }
-    // Default: shell to chat (most responses go to the initiator)
-    return { from: LANES.shell, to: LANES.chat };
+    return { from: LANE_PCTS[1], to: LANE_PCTS[0] };
   }
 }
 
-/**
- * Create an SVG arrow line with arrowhead.
- */
-function createArrow(fromX: number, toX: number, y: number, color: string): string {
-  const direction = toX > fromX ? 1 : -1;
+function createArrow(fromPct: number, toPct: number, y: number, color: string): string {
+  const direction = toPct > fromPct ? 1 : -1;
+  // Use percentage-based coordinates in viewBox
+  const fromX = fromPct * 1000;
+  const toX = toPct * 1000;
   const endX = toX - (ARROW_HEAD_SIZE * direction);
 
-  // Arrow line
-  let svg = `<line x1="${fromX}" y1="${y}" x2="${endX}" y2="${y}" stroke="${color}" stroke-width="1.5" />`;
-
-  // Arrowhead
+  let svg = `<line x1="${fromX}" y1="${y}" x2="${endX}" y2="${y}" stroke="${color}" stroke-width="2" />`;
   svg += `<polygon points="${toX},${y} ${endX},${y - ARROW_HEAD_SIZE / 2} ${endX},${y + ARROW_HEAD_SIZE / 2}" fill="${color}" />`;
-
   return svg;
 }
 
-/**
- * Render a sequence diagram SVG from a list of tapped messages.
- */
 export function renderSequenceDiagram(messages: TappedMessage[]): string {
-  // Filter out SYSTEM messages since they don't have protocol direction
   const protocolMessages = messages.filter(m => m.verb !== 'SYSTEM');
   const height = HEADER_HEIGHT + (protocolMessages.length * ROW_HEIGHT) + 20;
+  const vbWidth = 1000; // virtual viewBox width — maps to 100% actual width
 
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SVG_WIDTH}" height="${height}" viewBox="0 0 ${SVG_WIDTH} ${height}">`;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="${height}" viewBox="0 0 ${vbWidth} ${height}" preserveAspectRatio="xMidYMin meet">`;
 
-  // Background
-  svg += `<rect width="${SVG_WIDTH}" height="${height}" fill="#0a0a0f" />`;
+  svg += `<rect width="${vbWidth}" height="${height}" fill="#0a0a0f" />`;
 
   // Lane headers
   for (let i = 0; i < LANE_NAMES.length; i++) {
-    svg += `<text x="${LANE_XS[i]}" y="16" text-anchor="middle" fill="#00f0ff" font-family="monospace" font-size="11" font-weight="bold">${LANE_NAMES[i]}</text>`;
+    const x = LANE_PCTS[i] * vbWidth;
+    svg += `<text x="${x}" y="16" text-anchor="middle" fill="#00f0ff" font-family="monospace" font-size="13" font-weight="bold">${LANE_NAMES[i]}</text>`;
   }
 
-  // Lane lifelines (vertical dashed lines)
-  for (const x of LANE_XS) {
+  // Lane lifelines
+  for (const pct of LANE_PCTS) {
+    const x = pct * vbWidth;
     svg += `<line x1="${x}" y1="${HEADER_HEIGHT - 10}" x2="${x}" y2="${height}" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="4,4" />`;
   }
 
-  // Header separator
-  svg += `<line x1="0" y1="${HEADER_HEIGHT - 5}" x2="${SVG_WIDTH}" y2="${HEADER_HEIGHT - 5}" stroke="#2a2a3a" stroke-width="1" />`;
+  svg += `<line x1="0" y1="${HEADER_HEIGHT - 5}" x2="${vbWidth}" y2="${HEADER_HEIGHT - 5}" stroke="#2a2a3a" stroke-width="1" />`;
 
   // Messages
   for (let i = 0; i < protocolMessages.length; i++) {
     const msg = protocolMessages[i];
     const y = HEADER_HEIGHT + (i * ROW_HEIGHT) + ROW_HEIGHT / 2;
     const color = VERB_COLORS[msg.verb] || '#555555';
-    const { from, to } = getLanes(msg);
+    const { from, to } = getLanePct(msg);
 
-    // Arrow
     if (from !== to) {
       svg += createArrow(from, to, y, color);
     } else {
-      // Self-arrow (rare) -- draw a small loop
-      svg += `<path d="M${from},${y - 4} C${from + 30},${y - 12} ${from + 30},${y + 12} ${from},${y + 4}" stroke="${color}" stroke-width="1.5" fill="none" />`;
+      const x = from * vbWidth;
+      svg += `<path d="M${x},${y - 4} C${x + 40},${y - 14} ${x + 40},${y + 14} ${x},${y + 4}" stroke="${color}" stroke-width="2" fill="none" />`;
     }
 
-    // Label
-    const labelX = Math.min(from, to) + Math.abs(to - from) / 2;
+    // Label centered between lanes
+    const labelX = (Math.min(from, to) + Math.abs(to - from) / 2) * vbWidth;
     const label = formatLabel(msg);
-    svg += `<text x="${labelX}" y="${y - 5}" text-anchor="middle" fill="${color}" font-family="monospace" font-size="9">${escapeXml(label)}</text>`;
+    svg += `<text x="${labelX}" y="${y - 6}" text-anchor="middle" fill="${color}" font-family="monospace" font-size="10">${escapeXml(label)}</text>`;
   }
 
   svg += '</svg>';
   return svg;
 }
 
-/**
- * Format a short label for a message arrow.
- */
 function formatLabel(msg: TappedMessage): string {
   switch (msg.verb) {
     case 'AUTH':
@@ -161,9 +132,6 @@ function formatLabel(msg: TappedMessage): string {
   }
 }
 
-/**
- * Escape XML special characters for SVG text content.
- */
 function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

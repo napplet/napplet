@@ -194,12 +194,12 @@ Messages are delivered asynchronously via the browser event loop. Napplets MUST 
 
 Request:
 ```json
-["EVENT", {"kind": 29003, "tags": [["t", "shell:storage-get"], ["id", "corr-uuid"], ["key", "theme"]], "content": "", "created_at": 1711800000, "pubkey": "napp...", "id": "evt...", "sig": "sig..."}]
+["EVENT", {"kind": 29003, "tags": [["t", "shell:state-get"], ["id", "corr-uuid"], ["key", "theme"]], "content": "", "created_at": 1711800000, "pubkey": "napp...", "id": "evt...", "sig": "sig..."}]
 ```
 
 Response:
 ```json
-["EVENT", "__shell__", {"kind": 29003, "tags": [["t", "napp:storage-response"], ["id", "corr-uuid"], ["value", "dark"], ["found", "true"]], "content": ""}]
+["EVENT", "__shell__", {"kind": 29003, "tags": [["t", "napp:state-response"], ["id", "corr-uuid"], ["value", "dark"], ["found", "true"]], "content": ""}]
 ```
 
 ---
@@ -501,11 +501,11 @@ The signer proxy protocol is independent of the backing provider -- napplets int
 
 ### 5.1 Overview
 
-Sandboxed napplets (without `allow-same-origin`) cannot access localStorage directly. The shell provides a storage proxy that scopes data by napp composite identity `(pubkey, dTag, aggregateHash)`. When a napp updates (new aggregateHash), it receives a fresh, empty storage namespace.
+Sandboxed napplets (without `allow-same-origin`) cannot access localStorage directly. The shell provides a state proxy that scopes data by napp composite identity `(pubkey, dTag, aggregateHash)`. When a napp updates (new aggregateHash), it receives a fresh, empty state namespace.
 
 ### 5.2 Request-Response Protocol
 
-All storage operations use kind 29003 (INTER_PANE) events with topic-based routing.
+All state operations use kind 29003 (INTER_PANE) events with topic-based routing.
 
 **Request (napplet to shell):**
 
@@ -526,7 +526,7 @@ All storage operations use kind 29003 (INTER_PANE) events with topic-based routi
 {
   "kind": 29003,
   "tags": [
-    ["t", "napp:storage-response"],
+    ["t", "napp:state-response"],
     ["id", "<correlation_id>"]
   ],
   "content": ""
@@ -541,19 +541,19 @@ Storage requests use NIP-01 tags in the request event for parameters (not JSON c
 
 | Topic | Request Tags | Response Tags | ACL |
 |---|---|---|---|
-| `shell:storage-get` | `["key", "<key>"]` | `["value", "<string>"]`, `["found", "true"\|"false"]` | `storage:read` |
-| `shell:storage-set` | `["key", "<key>"]`, `["value", "<string>"]` | `["ok", "true"]` or `["error", "quota exceeded: ..."]` | `storage:write` |
-| `shell:storage-remove` | `["key", "<key>"]` | `["ok", "true"]` | `storage:write` |
-| `shell:storage-keys` | (none) | One `["key", "<name>"]` tag per key | `storage:read` |
-| `shell:storage-clear` | (none) | `["ok", "true"]` | `storage:write` |
+| `shell:state-get` | `["key", "<key>"]` | `["value", "<string>"]`, `["found", "true"\|"false"]` | `state:read` |
+| `shell:state-set` | `["key", "<key>"]`, `["value", "<string>"]` | `["ok", "true"]` or `["error", "quota exceeded: ..."]` | `state:write` |
+| `shell:state-remove` | `["key", "<key>"]` | `["ok", "true"]` | `state:write` |
+| `shell:state-keys` | (none) | One `["key", "<name>"]` tag per key | `state:read` |
+| `shell:state-clear` | (none) | `["ok", "true"]` | `state:write` |
 
-**Note on `storage-keys` response format:** The response uses repeated NIP-01 tags, one `["key", <name>]` per stored key. This avoids delimiter-based serialization bugs (e.g., keys containing commas). Example:
+**Note on `state-keys` response format:** The response uses repeated NIP-01 tags, one `["key", <name>]` per stored key. This avoids delimiter-based serialization bugs (e.g., keys containing commas). Example:
 
 ```json
 {
   "kind": 29003,
   "tags": [
-    ["t", "napp:storage-response"],
+    ["t", "napp:state-response"],
     ["id", "<correlation_id>"],
     ["key", "theme"],
     ["key", "preferences"],
@@ -565,21 +565,21 @@ Storage requests use NIP-01 tags in the request event for parameters (not JSON c
 
 ### 5.4 Quota Enforcement
 
-Each napp identity has a storage quota (default: 512 KB = 524,288 bytes). The shell MUST:
+Each napp identity has a state quota (default: 512 KB = 524,288 bytes). The shell MUST:
 
-1. Calculate total bytes before each `shell:storage-set` operation using **UTF-8 byte count**: `new TextEncoder().encode(key + value).length`
+1. Calculate total bytes before each `shell:state-set` operation using **UTF-8 byte count**: `new TextEncoder().encode(key + value).length`
 2. Include both key and value sizes in the byte count
 3. Exclude the current value of the same key (replacement, not addition)
-4. Reject with `["error", "quota exceeded: napp storage limit is <N> bytes"]` if the write would exceed the quota
+4. Reject with `["error", "quota exceeded: napp state limit is <N> bytes"]` if the write would exceed the quota
 
-The per-napp quota MAY be configured via the ACL entry's `storageQuota` field. UTF-8 byte counting ensures consistent quota enforcement across platforms (character count differs from byte count for non-ASCII content).
+The per-napp quota MAY be configured via the ACL entry's `stateQuota` field. UTF-8 byte counting ensures consistent quota enforcement across platforms (character count differs from byte count for non-ASCII content).
 
 ### 5.5 Key Scoping
 
-The shell MUST scope storage keys internally using the format:
+The shell MUST scope state keys internally using the format:
 
 ```
-napp-storage:{pubkey}:{dTag}:{aggregateHash}:{userKey}
+napp-state:{pubkey}:{dTag}:{aggregateHash}:{userKey}
 ```
 
 Napplets only see their own `userKey` namespace -- the scoping prefix is invisible to the napplet.
@@ -863,8 +863,8 @@ The following capabilities control napplet access:
 | `sign:event` | Request event signing via signer proxy | Granted |
 | `sign:nip04` | Use NIP-04 encrypt/decrypt via signer | Granted |
 | `sign:nip44` | Use NIP-44 encrypt/decrypt via signer | Granted |
-| `storage:read` | Read from storage proxy | Granted |
-| `storage:write` | Write to storage proxy | Granted |
+| `state:read` | Read from state proxy | Granted |
+| `state:write` | Write to state proxy | Granted |
 
 ### 12.3 Default Policy
 
@@ -923,9 +923,9 @@ The ACL store MUST persist to `localStorage` under the key `"napplet:acl"`. The 
       "pubkey": "<hex pubkey>",
       "dTag": "<derived dtag>",
       "aggregateHash": "<hex hash or empty string>",
-      "capabilities": ["relay:read", "relay:write", "storage:read", "storage:write", "sign:event", ...],
+      "capabilities": ["relay:read", "relay:write", "state:read", "state:write", "sign:event", ...],
       "blocked": false,
-      "storageQuota": 524288
+      "stateQuota": 524288
     }
   ]
 ]
@@ -939,11 +939,11 @@ Field definitions:
 - `aggregateHash`: NIP-5A content hash (empty string for dev mode)
 - `capabilities`: Array of granted capability strings (see Section 12.2)
 - `blocked`: Boolean indicating whether all operations are denied
-- `storageQuota`: Per-napp storage quota in bytes (default: 524,288 = 512 KB)
+- `stateQuota`: Per-napp state quota in bytes (default: 524,288 = 512 KB)
 
 ### 12.9 Storage Quota
 
-Each napplet identity has a per-napp storage quota. The default is 512 KB (524,288 bytes). The quota MAY be configured per-napplet via the ACL system. The shell MUST reject storage writes that would exceed the quota.
+Each napplet identity has a per-napp state quota. The default is 512 KB (524,288 bytes). The quota MAY be configured per-napplet via the ACL system. The shell MUST reject state writes that would exceed the quota.
 
 ---
 
@@ -960,7 +960,7 @@ The protocol assumes:
 
 ### 13.2 Security Layers
 
-1. **Iframe sandbox:** `allow-scripts allow-forms allow-popups allow-modals allow-downloads` -- no `allow-same-origin`. Napplets have opaque origins, no direct storage access, no direct network access beyond `fetch` to their serving origin.
+1. **Iframe sandbox:** `allow-scripts allow-forms allow-popups allow-modals allow-downloads` -- no `allow-same-origin`. Napplets have opaque origins, no direct state access, no direct network access beyond `fetch` to their serving origin.
 
 2. **NIP-42 AUTH:** One-time Schnorr signature verification establishes napplet identity. The shell verifies kind 22242 signatures using secp256k1. This is the only cryptographic verification in the protocol -- all subsequent identification uses Window references.
 
@@ -1196,8 +1196,8 @@ window.addEventListener('message', (event) => {
 
 The portable SDK packages are in the [napplet](https://github.com/sandwichfarm/napplet) monorepo:
 
-- **@napplet/shim** (napplet-side SDK): `packages/shim/src/` (relay-shim.ts, index.ts, storage-shim.ts, keyboard-shim.ts)
-- **@napplet/shell** (shell-side runtime): `packages/shell/src/` (pseudo-relay.ts, storage-proxy.ts, acl-store.ts, audio-manager.ts)
+- **@napplet/shim** (napplet-side SDK): `packages/shim/src/` (relay-shim.ts, index.ts, state-shim.ts, keyboard-shim.ts)
+- **@napplet/shell** (shell-side runtime): `packages/shell/src/` (pseudo-relay.ts, state-proxy.ts, acl-store.ts, audio-manager.ts)
 - **@napplet/vite-plugin** (dev tooling): `packages/vite-plugin/src/` (NIP-5A manifest generation)
 
 The Svelte reference implementation using these packages is [hyprgate](https://github.com/sandwichfarm/hyprgate).

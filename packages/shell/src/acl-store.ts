@@ -12,7 +12,7 @@ import { ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
 
 const STORAGE_KEY = 'napplet:acl';
 
-export const DEFAULT_STORAGE_QUOTA = 512 * 1024;
+export const DEFAULT_STATE_QUOTA = 512 * 1024;
 
 interface InternalAclEntry {
   key: string;
@@ -21,7 +21,7 @@ interface InternalAclEntry {
   aggregateHash: string;
   capabilities: Set<Capability>;
   blocked: boolean;
-  storageQuota: number;
+  stateQuota: number;
 }
 
 export function aclKey(pubkey: string, dTag: string, aggregateHash: string): string {
@@ -41,7 +41,7 @@ function getOrCreate(pubkey: string, dTag: string, aggregateHash: string): Inter
       aggregateHash,
       capabilities: new Set(ALL_CAPABILITIES),
       blocked: false,
-      storageQuota: DEFAULT_STORAGE_QUOTA,
+      stateQuota: DEFAULT_STATE_QUOTA,
     };
     store.set(key, entry);
   }
@@ -92,7 +92,7 @@ export const aclStore = {
       pubkey: internal.pubkey,
       capabilities: Array.from(internal.capabilities),
       blocked: internal.blocked,
-      storageQuota: internal.storageQuota,
+      stateQuota: internal.stateQuota,
     };
   },
 
@@ -101,7 +101,7 @@ export const aclStore = {
       pubkey: e.pubkey,
       capabilities: Array.from(e.capabilities),
       blocked: e.blocked,
-      storageQuota: e.storageQuota,
+      stateQuota: e.stateQuota,
     }));
   },
 
@@ -115,7 +115,7 @@ export const aclStore = {
           aggregateHash: val.aggregateHash,
           capabilities: Array.from(val.capabilities),
           blocked: val.blocked,
-          storageQuota: val.storageQuota,
+          stateQuota: val.stateQuota,
         },
       ]);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
@@ -135,7 +135,7 @@ export const aclStore = {
           aggregateHash?: string;
           capabilities: Capability[];
           blocked: boolean;
-          storageQuota?: number;
+          stateQuota?: number;
         }]
       >;
       store.clear();
@@ -148,7 +148,7 @@ export const aclStore = {
           aggregateHash: val.aggregateHash,
           capabilities: new Set(val.capabilities),
           blocked: val.blocked,
-          storageQuota: val.storageQuota ?? DEFAULT_STORAGE_QUOTA,
+          stateQuota: val.stateQuota ?? DEFAULT_STATE_QUOTA,
         });
       }
     } catch {
@@ -156,9 +156,9 @@ export const aclStore = {
     }
   },
 
-  getStorageQuota(pubkey: string, dTag: string, aggregateHash: string): number {
+  getStateQuota(pubkey: string, dTag: string, aggregateHash: string): number {
     const key = aclKey(pubkey, dTag, aggregateHash);
-    return store.get(key)?.storageQuota ?? DEFAULT_STORAGE_QUOTA;
+    return store.get(key)?.stateQuota ?? DEFAULT_STATE_QUOTA;
   },
 
   clear(): void {

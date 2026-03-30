@@ -215,12 +215,12 @@ test.describe('ACL Enforcement', () => {
     expect(check).toBe(true);
   });
 
-  test('ACL-06: revoke storage:read -- getItem denied', async ({ page }) => {
+  test('ACL-06: revoke state:read -- getItem denied', async ({ page }) => {
     const { pubkey, dTag, aggregateHash } = nappEntry;
 
-    // Revoke storage:read
+    // Revoke state:read
     await page.evaluate(
-      ([p, d, h]) => (window as any).__aclRevoke__(p, d, h, 'storage:read'),
+      ([p, d, h]) => (window as any).__aclRevoke__(p, d, h, 'state:read'),
       [pubkey, dTag, aggregateHash]
     );
 
@@ -263,15 +263,15 @@ test.describe('ACL Enforcement', () => {
     const respEvt = response!.raw[2] as { tags?: string[][] };
     const errorTag = respEvt.tags?.find(t => t[0] === 'error');
     expect(errorTag).toBeTruthy();
-    expect(errorTag![1]).toBe('storage:read capability denied');
+    expect(errorTag![1]).toBe('state:read capability denied');
   });
 
-  test('ACL-07: revoke storage:write -- setItem denied', async ({ page }) => {
+  test('ACL-07: revoke state:write -- setItem denied', async ({ page }) => {
     const { pubkey, dTag, aggregateHash } = nappEntry;
 
-    // Revoke storage:write
+    // Revoke state:write
     await page.evaluate(
-      ([p, d, h]) => (window as any).__aclRevoke__(p, d, h, 'storage:write'),
+      ([p, d, h]) => (window as any).__aclRevoke__(p, d, h, 'state:write'),
       [pubkey, dTag, aggregateHash]
     );
 
@@ -314,7 +314,7 @@ test.describe('ACL Enforcement', () => {
     const respEvt = response!.raw[2] as { tags?: string[][] };
     const errorTag = respEvt.tags?.find(t => t[0] === 'error');
     expect(errorTag).toBeTruthy();
-    expect(errorTag![1]).toBe('storage:write capability denied');
+    expect(errorTag![1]).toBe('state:write capability denied');
   });
 
   test('ACL-08: revoke sign:event -- signer request denied', async ({ page }) => {

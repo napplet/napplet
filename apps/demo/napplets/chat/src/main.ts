@@ -1,15 +1,15 @@
 /**
  * Chat demo napplet.
  *
- * Exercises: relay:write, relay:read, sign:event, storage:read, storage:write, inter-pane emit.
+ * Exercises: relay:write, relay:read, sign:event, state:read, state:write, inter-pane emit.
  *
  * - Sends messages via publish() to relay (relay:write + sign:event)
  * - Subscribes to incoming messages via subscribe() (relay:read)
- * - Stores chat history via nappStorage (storage:read + storage:write)
+ * - Stores chat history via nappState (state:read + state:write)
  * - Emits messages to bot via emit('chat:message') (inter-pane)
  * - Listens for bot responses via on('bot:response') (inter-pane)
  */
-import { publish, subscribe, emit, on, nappStorage } from '@napplet/shim';
+import { publish, subscribe, emit, on, nappState } from '@napplet/shim';
 import type { EventTemplate } from '@napplet/shim';
 
 const statusEl = document.getElementById('status')!;
@@ -41,7 +41,7 @@ function escapeHtml(s: string): string {
 
 async function loadHistory(): Promise<void> {
   try {
-    const raw = await nappStorage.getItem(HISTORY_KEY);
+    const raw = await nappState.getItem(HISTORY_KEY);
     if (raw) {
       const entries: string[] = JSON.parse(raw);
       for (const entry of entries.slice(-10)) {
@@ -56,11 +56,11 @@ async function loadHistory(): Promise<void> {
 
 async function saveToHistory(text: string): Promise<void> {
   try {
-    const raw = await nappStorage.getItem(HISTORY_KEY);
+    const raw = await nappState.getItem(HISTORY_KEY);
     const entries: string[] = raw ? JSON.parse(raw) : [];
     entries.push(text);
     if (entries.length > MAX_HISTORY) entries.splice(0, entries.length - MAX_HISTORY);
-    await nappStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+    await nappState.setItem(HISTORY_KEY, JSON.stringify(entries));
   } catch {
     // Storage may be denied by ACL -- silently ignore
   }

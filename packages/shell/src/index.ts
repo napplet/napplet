@@ -31,12 +31,12 @@ export type {
 export { originRegistry } from './origin-registry.js';
 export { nappKeyRegistry } from './napp-key-registry.js';
 export type { PendingUpdate } from './napp-key-registry.js';
-export { aclStore, DEFAULT_STORAGE_QUOTA } from './acl-store.js';
+export { aclStore, DEFAULT_STATE_QUOTA } from './acl-store.js';
 export { audioManager } from './audio-manager.js';
 export type { AudioSource } from './audio-manager.js';
 export { manifestCache } from './manifest-cache.js';
 export type { ManifestCacheEntry } from './manifest-cache.js';
-export { handleStorageRequest, cleanupNappStorage } from './storage-proxy.js';
+export { handleStateRequest, cleanupNappState } from './state-proxy.js';
 
 // Protocol constants
 export { BusKind, AUTH_KIND, PSEUDO_RELAY_URI, PROTOCOL_VERSION, ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';

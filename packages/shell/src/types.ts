@@ -34,8 +34,8 @@ export type Capability =
   | 'sign:event'
   | 'sign:nip04'
   | 'sign:nip44'
-  | 'storage:read'
-  | 'storage:write';
+  | 'state:read'
+  | 'state:write';
 
 export const ALL_CAPABILITIES: readonly Capability[] = [
   'relay:read',
@@ -46,8 +46,8 @@ export const ALL_CAPABILITIES: readonly Capability[] = [
   'sign:event',
   'sign:nip04',
   'sign:nip44',
-  'storage:read',
-  'storage:write',
+  'state:read',
+  'state:write',
 ] as const;
 
 // ─── NIP-01 Types ─────────────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ export interface AclEntry {
   pubkey: string;
   capabilities: Capability[];
   blocked: boolean;
-  storageQuota?: number;
+  stateQuota?: number;
 }
 
 /**

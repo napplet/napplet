@@ -1,15 +1,15 @@
 /**
  * Bot demo napplet -- teachable auto-responder.
  *
- * Exercises: sign:event (for response signing), storage:read, storage:write, inter-pane on/emit.
+ * Exercises: sign:event (for response signing), state:read, state:write, inter-pane on/emit.
  *
  * - Listens via on('chat:message') for messages from chat napplet
  * - Auto-responds based on learned rules or default personality
  * - Supports /teach command: "/teach hello Hi there!"
- * - Stores learned rules in nappStorage
+ * - Stores learned rules in nappState
  * - Emits responses via emit('bot:response')
  */
-import { emit, on, nappStorage } from '@napplet/shim';
+import { emit, on, nappState } from '@napplet/shim';
 
 const statusEl = document.getElementById('status-text')!;
 const ruleCountEl = document.getElementById('rule-count')!;
@@ -56,7 +56,7 @@ function log(text: string, type: 'heard' | 'replied' | 'learned' | 'error' | 'in
 
 async function loadRules(): Promise<void> {
   try {
-    const raw = await nappStorage.getItem(RULES_KEY);
+    const raw = await nappState.getItem(RULES_KEY);
     if (raw) {
       rules = JSON.parse(raw);
       log(`loaded ${Object.keys(rules).length} rules from storage`, 'info');
@@ -69,7 +69,7 @@ async function loadRules(): Promise<void> {
 
 async function saveRules(): Promise<void> {
   try {
-    await nappStorage.setItem(RULES_KEY, JSON.stringify(rules));
+    await nappState.setItem(RULES_KEY, JSON.stringify(rules));
   } catch {
     log('failed to save rules (check storage ACL)', 'error');
   }

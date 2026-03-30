@@ -1,7 +1,7 @@
 /**
- * Storage Isolation Tests (STR-01 through STR-09)
+ * State Isolation Tests (STR-01 through STR-09)
  *
- * Proves that the storage proxy correctly implements scoped CRUD operations,
+ * Proves that the state proxy correctly implements scoped CRUD operations,
  * cross-napp isolation, quota enforcement with UTF-8 byte counting, and
  * data persistence across shell reloads.
  */
@@ -83,7 +83,7 @@ async function storageRequest(
   return response!;
 }
 
-test.describe('Storage Isolation', () => {
+test.describe('State Isolation', () => {
   let windowId: string;
   let nappEntry: { pubkey: string; dTag: string; aggregateHash: string };
 
@@ -114,7 +114,7 @@ test.describe('Storage Isolation', () => {
     const { pubkey } = nappEntry;
 
     // Set a value
-    const setResp = await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    const setResp = await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'test-key'], ['value', 'hello-world']], 'corr-set-1');
     expect(getResponseTag(setResp, 'ok')).toBe('true');
 
@@ -122,7 +122,7 @@ test.describe('Storage Isolation', () => {
     await page.evaluate(() => (window as any).__clearMessages__());
 
     // Get the value
-    const getResp = await storageRequest(page, windowId, pubkey, 'shell:storage-get',
+    const getResp = await storageRequest(page, windowId, pubkey, 'shell:state-get',
       [['key', 'test-key']], 'corr-get-1');
     expect(getResponseTag(getResp, 'value')).toBe('hello-world');
     expect(getResponseTag(getResp, 'found')).toBe('true');
@@ -131,7 +131,7 @@ test.describe('Storage Isolation', () => {
   test('STR-02: getItem for missing key returns not found', async ({ page }) => {
     const { pubkey } = nappEntry;
 
-    const resp = await storageRequest(page, windowId, pubkey, 'shell:storage-get',
+    const resp = await storageRequest(page, windowId, pubkey, 'shell:state-get',
       [['key', 'nonexistent']], 'corr-miss-1');
     expect(getResponseTag(resp, 'found')).toBe('false');
   });
@@ -140,18 +140,18 @@ test.describe('Storage Isolation', () => {
     const { pubkey } = nappEntry;
 
     // Set a key
-    await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'rm-key'], ['value', 'temp']], 'corr-rm-set');
     await page.evaluate(() => (window as any).__clearMessages__());
 
     // Remove the key
-    const rmResp = await storageRequest(page, windowId, pubkey, 'shell:storage-remove',
+    const rmResp = await storageRequest(page, windowId, pubkey, 'shell:state-remove',
       [['key', 'rm-key']], 'corr-rm-1');
     expect(getResponseTag(rmResp, 'ok')).toBe('true');
     await page.evaluate(() => (window as any).__clearMessages__());
 
     // Get the removed key
-    const getResp = await storageRequest(page, windowId, pubkey, 'shell:storage-get',
+    const getResp = await storageRequest(page, windowId, pubkey, 'shell:state-get',
       [['key', 'rm-key']], 'corr-rm-get');
     expect(getResponseTag(getResp, 'found')).toBe('false');
   });
@@ -160,18 +160,18 @@ test.describe('Storage Isolation', () => {
     const { pubkey } = nappEntry;
 
     // Set 3 keys
-    await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'k1'], ['value', 'v1']], 'corr-k1');
     await page.evaluate(() => (window as any).__clearMessages__());
-    await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'k2'], ['value', 'v2']], 'corr-k2');
     await page.evaluate(() => (window as any).__clearMessages__());
-    await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'k3'], ['value', 'v3']], 'corr-k3');
     await page.evaluate(() => (window as any).__clearMessages__());
 
     // Get keys
-    const keysResp = await storageRequest(page, windowId, pubkey, 'shell:storage-keys',
+    const keysResp = await storageRequest(page, windowId, pubkey, 'shell:state-keys',
       [], 'corr-keys-1');
     const keys = getResponseTags(keysResp, 'key');
     expect(keys).toContain('k1');
@@ -183,21 +183,21 @@ test.describe('Storage Isolation', () => {
     const { pubkey } = nappEntry;
 
     // Set 2 keys
-    await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'c1'], ['value', 'v1']], 'corr-c1');
     await page.evaluate(() => (window as any).__clearMessages__());
-    await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'c2'], ['value', 'v2']], 'corr-c2');
     await page.evaluate(() => (window as any).__clearMessages__());
 
     // Clear napp storage
-    const clearResp = await storageRequest(page, windowId, pubkey, 'shell:storage-clear',
+    const clearResp = await storageRequest(page, windowId, pubkey, 'shell:state-clear',
       [], 'corr-clear-1');
     expect(getResponseTag(clearResp, 'ok')).toBe('true');
     await page.evaluate(() => (window as any).__clearMessages__());
 
     // Verify keys are empty
-    const keysResp = await storageRequest(page, windowId, pubkey, 'shell:storage-keys',
+    const keysResp = await storageRequest(page, windowId, pubkey, 'shell:state-keys',
       [], 'corr-keys-after-clear');
     const keys = getResponseTags(keysResp, 'key');
     expect(keys.length).toBe(0);
@@ -207,7 +207,7 @@ test.describe('Storage Isolation', () => {
     const { pubkey: pubkeyA } = nappEntry;
 
     // Napp A sets a key
-    await storageRequest(page, windowId, pubkeyA, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkeyA, 'shell:state-set',
       [['key', 'shared-name'], ['value', 'napp-a-data']], 'corr-iso-set');
     await page.evaluate(() => (window as any).__clearMessages__());
 
@@ -229,7 +229,7 @@ test.describe('Storage Isolation', () => {
     await page.evaluate(() => (window as any).__clearMessages__());
 
     // Napp B reads the same key name
-    const getResp = await storageRequest(page, windowId2, nappEntry2.pubkey, 'shell:storage-get',
+    const getResp = await storageRequest(page, windowId2, nappEntry2.pubkey, 'shell:state-get',
       [['key', 'shared-name']], 'corr-iso-get');
     // Different scoped key because different pubkey/dTag/aggregateHash
     expect(getResponseTag(getResp, 'found')).toBe('false');
@@ -247,7 +247,7 @@ test.describe('Storage Isolation', () => {
           pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
           kind: 29003,
-          tags: [['t', 'shell:storage-set'], ['key', 'big'], ['value', val], ['id', 'corr-quota-1']],
+          tags: [['t', 'shell:state-set'], ['key', 'big'], ['value', val], ['id', 'corr-quota-1']],
           content: '',
           sig: '0'.repeat(128),
         };
@@ -291,7 +291,7 @@ test.describe('Storage Isolation', () => {
           pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
           kind: 29003,
-          tags: [['t', 'shell:storage-set'], ['key', 'fill'], ['value', val], ['id', 'corr-boundary-1']],
+          tags: [['t', 'shell:state-set'], ['key', 'fill'], ['value', val], ['id', 'corr-boundary-1']],
           content: '',
           sig: '0'.repeat(128),
         };
@@ -332,7 +332,7 @@ test.describe('Storage Isolation', () => {
           pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
           kind: 29003,
-          tags: [['t', 'shell:storage-set'], ['key', 'overflow'], ['value', val], ['id', 'corr-boundary-2']],
+          tags: [['t', 'shell:state-set'], ['key', 'overflow'], ['value', val], ['id', 'corr-boundary-2']],
           content: '',
           sig: '0'.repeat(128),
         };
@@ -368,7 +368,7 @@ test.describe('Storage Isolation', () => {
     const { pubkey } = nappEntry;
 
     // Set a value
-    await storageRequest(page, windowId, pubkey, 'shell:storage-set',
+    await storageRequest(page, windowId, pubkey, 'shell:state-set',
       [['key', 'persist-test'], ['value', 'survive-reload']], 'corr-persist-set');
     await page.evaluate(() => (window as any).__clearMessages__());
 

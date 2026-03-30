@@ -17,7 +17,7 @@ import { originRegistry } from './origin-registry.js';
 import { nappKeyRegistry } from './napp-key-registry.js';
 import { aclStore } from './acl-store.js';
 import { manifestCache } from './manifest-cache.js';
-import { handleStorageRequest } from './storage-proxy.js';
+import { handleStateRequest } from './state-proxy.js';
 import { audioManager } from './audio-manager.js';
 
 // ─── Public interface ────────────────────────────────────────────────────────
@@ -57,7 +57,13 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
 
   function checkAcl(pubkey: string, capability: Capability): boolean {
     const entry = nappKeyRegistry.getEntry(pubkey);
-    return aclStore.check(pubkey, entry?.dTag ?? '', entry?.aggregateHash ?? '', capability);
+    const dTag = entry?.dTag ?? '';
+    const hash = entry?.aggregateHash ?? '';
+    const result = aclStore.check(pubkey, dTag, hash, capability);
+    if (!result) {
+      console.log(`[checkAcl] DENIED ${capability} for pubkey=${pubkey.substring(0, 8)}... dTag=${dTag} hash=${hash}`);
+    }
+    return result;
   }
 
   function checkReplay(event: NostrEvent): string | null {
@@ -98,8 +104,11 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
     const targetPubkey = pTag?.[1];
     for (const [subKey, sub] of subscriptions) {
       if (senderId !== null && sub.windowId === senderId) continue;
+      // Check relay:read ACL on the recipient at delivery time (not just subscription time)
+      const recipientPubkey = nappKeyRegistry.getPubkey(sub.windowId);
+      if (recipientPubkey && !checkAcl(recipientPubkey, 'relay:read')) continue;
       if (targetPubkey) {
-        const subPubkey = nappKeyRegistry.getPubkey(sub.windowId);
+        const subPubkey = recipientPubkey;
         if (subPubkey !== targetPubkey) continue;
       }
       if (!matchesAnyFilter(event, sub.filters)) continue;
@@ -256,7 +265,7 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
         break;
       case BusKind.INTER_PANE: {
         const topic = event.tags?.find((t) => t[0] === 't')?.[1];
-        if (topic?.startsWith('shell:storage-')) { handleStorageRequest(windowId, sourceWindow, event); return; }
+        if (topic?.startsWith('shell:state-')) { handleStateRequest(windowId, sourceWindow, event); return; }
         if (topic?.startsWith('shell:audio-')) { handleAudioCommand(event, windowId); return; }
         if (topic?.startsWith('shell:') || topic === 'shell:create-window' || topic === 'shell:send-dm') {
           handleShellCommand(event, windowId, topic!, sourceWindow); return;
