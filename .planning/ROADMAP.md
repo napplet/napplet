@@ -77,7 +77,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Napplet-to-napplet communication is visible: napplet 1 publishes, napplet 2 receives, and the message flow appears in the debugger
   4. ACL controls are interactive: toggling grant/revoke/block produces an immediate visible effect on napplet operations
   5. Signer delegation and storage operations are visible: signature request/response flow and set/get with scoped isolation between napplets are both demonstrated
-**Plans**: TBD
+**Plans**: 5 plans in 3 waves
 **UI hint**: yes
 
 ### Phase 6: Specification and Publish
@@ -102,5 +102,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Test Infrastructure | 6/6 | Executing | - |
 | 3. Core Protocol Tests | 0/5 | Planned | - |
 | 4. Capability Tests | 0/TBD | Not started | - |
-| 5. Demo Playground | 0/TBD | Not started | - |
+| 5. Demo Playground | 0/5 | Planned | - |
 | 6. Specification and Publish | 0/TBD | Not started | - |
