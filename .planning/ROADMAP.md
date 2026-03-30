@@ -45,11 +45,12 @@ Plans:
   3. ACL state mutations return new state objects (never mutate in place) and the type system enforces immutability
   4. localStorage persistence is handled by a separate adapter that the ACL module does not import or reference
   5. A developer can describe the ACL module's behavior in under 100 words
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [ ] 08-01: Package scaffold and types (wave 1)
+- [ ] 08-02: Pure check and mutation functions (wave 2)
+- [ ] 08-03: Public API barrel and build verification (wave 3)
 
 ### Phase 9: ACL Enforcement Gate
 **Goal**: Every message that flows through ShellBridge passes through exactly one enforcement function -- no message reaches a napplet iframe or exits to a relay without an ACL check
@@ -111,7 +112,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 5. Demo Playground | v0.1.0 | 5/5 | Complete | 2026-03-30 |
 | 6. Specification and Publish | v0.1.0 | 4/4 | Complete | 2026-03-30 |
 | 7. Nomenclature | v0.2.0 | 0/2 | Planned | - |
-| 8. ACL Pure Module | v0.2.0 | 0/TBD | Not started | - |
+| 8. ACL Pure Module | v0.2.0 | 0/3 | Planned | - |
 | 9. ACL Enforcement Gate | v0.2.0 | 0/TBD | Not started | - |
 | 10. ACL Behavioral Tests | v0.2.0 | 0/TBD | Not started | - |
 | 11. Shell Code Cleanup | v0.2.0 | 0/TBD | Not started | - |
