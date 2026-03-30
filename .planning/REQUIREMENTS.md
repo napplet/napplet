@@ -38,15 +38,15 @@ Requirements for initial release (v0.1.0). Each maps to roadmap phases.
 
 ### Behavioral Tests — Permission Enforcement
 
-- [ ] **ACL-01**: Default permissive — unknown napp publishes successfully
-- [ ] **ACL-02**: Explicit grant relay:write → publish succeeds
-- [ ] **ACL-03**: Revoke relay:write → publish denied
-- [ ] **ACL-04**: Block entire napp → all operations denied
-- [ ] **ACL-05**: Unblock previously blocked napp → operations resume
-- [ ] **ACL-06**: Revoke storage:read → getItem denied
-- [ ] **ACL-07**: Revoke storage:write → setItem denied
-- [ ] **ACL-08**: Revoke sign:event → signEvent denied
-- [ ] **ACL-09**: ACL persist/load round-trip — entries survive save and restore
+- [x] **ACL-01**: Default permissive — unknown napp publishes successfully *(Phase 4, 2026-03-30)*
+- [x] **ACL-02**: Explicit grant relay:write → publish succeeds *(Phase 4, 2026-03-30)*
+- [x] **ACL-03**: Revoke relay:write → publish denied *(Phase 4, 2026-03-30)*
+- [x] **ACL-04**: Block entire napp → all operations denied *(Phase 4, 2026-03-30)*
+- [x] **ACL-05**: Unblock previously blocked napp → operations resume *(Phase 4, 2026-03-30)*
+- [x] **ACL-06**: Revoke storage:read → getItem denied *(Phase 4, 2026-03-30)*
+- [x] **ACL-07**: Revoke storage:write → setItem denied *(Phase 4, 2026-03-30)*
+- [x] **ACL-08**: Revoke sign:event → signEvent denied *(Phase 4, 2026-03-30)*
+- [x] **ACL-09**: ACL persist/load round-trip — entries survive save and restore *(Phase 4, 2026-03-30)*
 
 ### Behavioral Tests — Message Routing
 
@@ -70,34 +70,34 @@ Requirements for initial release (v0.1.0). Each maps to roadmap phases.
 
 ### Behavioral Tests — Storage Isolation
 
-- [ ] **STR-01**: setItem + getItem round-trip returns correct value
-- [ ] **STR-02**: getItem missing key returns null
-- [ ] **STR-03**: removeItem removes key
-- [ ] **STR-04**: keys() lists all napp keys
-- [ ] **STR-05**: clear() removes all napp keys
-- [ ] **STR-06**: Cross-napp isolation — napp A key not visible to napp B
-- [ ] **STR-07**: Quota enforcement — write >512 KB returns error
-- [ ] **STR-08**: Quota accuracy — write at limit succeeds, one byte more fails
-- [ ] **STR-09**: Storage persistence — values survive shell reload
+- [x] **STR-01**: setItem + getItem round-trip returns correct value *(Phase 4, 2026-03-30)*
+- [x] **STR-02**: getItem missing key returns null *(Phase 4, 2026-03-30)*
+- [x] **STR-03**: removeItem removes key *(Phase 4, 2026-03-30)*
+- [x] **STR-04**: keys() lists all napp keys *(Phase 4, 2026-03-30)*
+- [x] **STR-05**: clear() removes all napp keys *(Phase 4, 2026-03-30)*
+- [x] **STR-06**: Cross-napp isolation — napp A key not visible to napp B *(Phase 4, 2026-03-30)*
+- [x] **STR-07**: Quota enforcement — write >512 KB returns error *(Phase 4, 2026-03-30)*
+- [x] **STR-08**: Quota accuracy — write at limit succeeds, one byte more fails *(Phase 4, 2026-03-30)*
+- [x] **STR-09**: Storage persistence — values survive shell reload *(Phase 4, 2026-03-30)*
 
 ### Behavioral Tests — Signer Delegation
 
-- [ ] **SGN-01**: getPublicKey returns host pubkey
-- [ ] **SGN-02**: signEvent (non-destructive kind) returns signed event
-- [ ] **SGN-03**: signEvent (destructive kind, approved) returns signed event
-- [ ] **SGN-04**: signEvent (destructive kind, denied) returns error
-- [ ] **SGN-05**: No signer configured → error "no signer configured"
-- [ ] **SGN-06**: Request timeout → error after 30s
-- [ ] **SGN-07**: Concurrent requests with different IDs resolved independently
+- [x] **SGN-01**: getPublicKey returns host pubkey *(Phase 4, 2026-03-30)*
+- [x] **SGN-02**: signEvent (non-destructive kind) returns signed event *(Phase 4, 2026-03-30)*
+- [x] **SGN-03**: signEvent (destructive kind, approved) returns signed event *(Phase 4, 2026-03-30)*
+- [x] **SGN-04**: signEvent (destructive kind, denied) returns error *(Phase 4, 2026-03-30)*
+- [x] **SGN-05**: No signer configured → error "no signer configured" *(Phase 4, 2026-03-30)*
+- [x] **SGN-06**: Request timeout → error after 30s *(Phase 4, 2026-03-30)*
+- [x] **SGN-07**: Concurrent requests with different IDs resolved independently *(Phase 4, 2026-03-30)*
 
 ### Behavioral Tests — Inter-Pane Communication
 
-- [ ] **IPC-01**: emit() + on() — subscriber receives event with correct payload
-- [ ] **IPC-02**: Topic filtering — unsubscribed topic does not fire callback
-- [ ] **IPC-03**: Multiple subscribers — all receive event
-- [ ] **IPC-04**: Unsubscribe (close) — no further events received
-- [ ] **IPC-05**: Malformed content — on() callback receives graceful fallback
-- [ ] **IPC-06**: Shell-injected events — injectEvent() delivered to matching subscribers
+- [x] **IPC-01**: emit() + on() — subscriber receives event with correct payload *(Phase 4, 2026-03-30)*
+- [x] **IPC-02**: Topic filtering — unsubscribed topic does not fire callback *(Phase 4, 2026-03-30)*
+- [x] **IPC-03**: Multiple subscribers — all receive event *(Phase 4, 2026-03-30)*
+- [x] **IPC-04**: Unsubscribe (close) — no further events received *(Phase 4, 2026-03-30)*
+- [x] **IPC-05**: Malformed content — on() callback receives graceful fallback *(Phase 4, 2026-03-30)*
+- [x] **IPC-06**: Shell-injected events — injectEvent() delivered to matching subscribers *(Phase 4, 2026-03-30)*
 
 ### Behavioral Tests — Lifecycle & Edge Cases
 
@@ -205,15 +205,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-07 | Phase 3 | Complete |
 | AUTH-08 | Phase 3 | Complete |
 | AUTH-09 | Phase 3 | Complete |
-| ACL-01 | Phase 4 | Pending |
-| ACL-02 | Phase 4 | Pending |
-| ACL-03 | Phase 4 | Pending |
-| ACL-04 | Phase 4 | Pending |
-| ACL-05 | Phase 4 | Pending |
-| ACL-06 | Phase 4 | Pending |
-| ACL-07 | Phase 4 | Pending |
-| ACL-08 | Phase 4 | Pending |
-| ACL-09 | Phase 4 | Pending |
+| ACL-01 | Phase 4 | Complete |
+| ACL-02 | Phase 4 | Complete |
+| ACL-03 | Phase 4 | Complete |
+| ACL-04 | Phase 4 | Complete |
+| ACL-05 | Phase 4 | Complete |
+| ACL-06 | Phase 4 | Complete |
+| ACL-07 | Phase 4 | Complete |
+| ACL-08 | Phase 4 | Complete |
+| ACL-09 | Phase 4 | Complete |
 | MSG-01 | Phase 3 | Complete |
 | MSG-02 | Phase 3 | Complete |
 | MSG-03 | Phase 3 | Complete |
@@ -228,28 +228,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RPL-03 | Phase 3 | Complete |
 | RPL-04 | Phase 3 | Complete |
 | RPL-05 | Phase 3 | Complete |
-| STR-01 | Phase 4 | Pending |
-| STR-02 | Phase 4 | Pending |
-| STR-03 | Phase 4 | Pending |
-| STR-04 | Phase 4 | Pending |
-| STR-05 | Phase 4 | Pending |
-| STR-06 | Phase 4 | Pending |
-| STR-07 | Phase 4 | Pending |
-| STR-08 | Phase 4 | Pending |
-| STR-09 | Phase 4 | Pending |
-| SGN-01 | Phase 4 | Pending |
-| SGN-02 | Phase 4 | Pending |
-| SGN-03 | Phase 4 | Pending |
-| SGN-04 | Phase 4 | Pending |
-| SGN-05 | Phase 4 | Pending |
-| SGN-06 | Phase 4 | Pending |
-| SGN-07 | Phase 4 | Pending |
-| IPC-01 | Phase 4 | Pending |
-| IPC-02 | Phase 4 | Pending |
-| IPC-03 | Phase 4 | Pending |
-| IPC-04 | Phase 4 | Pending |
-| IPC-05 | Phase 4 | Pending |
-| IPC-06 | Phase 4 | Pending |
+| STR-01 | Phase 4 | Complete |
+| STR-02 | Phase 4 | Complete |
+| STR-03 | Phase 4 | Complete |
+| STR-04 | Phase 4 | Complete |
+| STR-05 | Phase 4 | Complete |
+| STR-06 | Phase 4 | Complete |
+| STR-07 | Phase 4 | Complete |
+| STR-08 | Phase 4 | Complete |
+| STR-09 | Phase 4 | Complete |
+| SGN-01 | Phase 4 | Complete |
+| SGN-02 | Phase 4 | Complete |
+| SGN-03 | Phase 4 | Complete |
+| SGN-04 | Phase 4 | Complete |
+| SGN-05 | Phase 4 | Complete |
+| SGN-06 | Phase 4 | Complete |
+| SGN-07 | Phase 4 | Complete |
+| IPC-01 | Phase 4 | Complete |
+| IPC-02 | Phase 4 | Complete |
+| IPC-03 | Phase 4 | Complete |
+| IPC-04 | Phase 4 | Complete |
+| IPC-05 | Phase 4 | Complete |
+| IPC-06 | Phase 4 | Complete |
 | LCY-01 | Phase 3 | Complete |
 | LCY-02 | Phase 3 | Complete |
 | LCY-03 | Phase 3 | Complete |
