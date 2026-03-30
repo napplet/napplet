@@ -26,15 +26,15 @@ Requirements for initial release (v0.1.0). Each maps to roadmap phases.
 
 ### Behavioral Tests — Identity & Authentication
 
-- [ ] **AUTH-01**: Valid AUTH handshake — correct challenge, valid signature, correct relay tag → napp registered
-- [ ] **AUTH-02**: Bad signature → AUTH rejected with "invalid signature"
-- [ ] **AUTH-03**: Expired timestamp (>60s ago) → AUTH rejected
-- [ ] **AUTH-04**: Future timestamp (>now+60s) → AUTH rejected
-- [ ] **AUTH-05**: Wrong challenge value → AUTH rejected with "challenge mismatch"
-- [ ] **AUTH-06**: Wrong relay tag → AUTH rejected
-- [ ] **AUTH-07**: Wrong event kind (!=22242) → AUTH rejected
-- [ ] **AUTH-08**: Missing type tag → defaults to 'unknown', succeeds
-- [ ] **AUTH-09**: Missing aggregateHash tag → empty string hash, succeeds
+- [x] **AUTH-01**: Valid AUTH handshake — correct challenge, valid signature, correct relay tag → napp registered *(Phase 3, 2026-03-30)*
+- [x] **AUTH-02**: Bad signature → AUTH rejected with "invalid signature" *(Phase 3, 2026-03-30)*
+- [x] **AUTH-03**: Expired timestamp (>60s ago) → AUTH rejected *(Phase 3, 2026-03-30)*
+- [x] **AUTH-04**: Future timestamp (>now+60s) → AUTH rejected *(Phase 3, 2026-03-30)*
+- [x] **AUTH-05**: Wrong challenge value → AUTH rejected with "challenge mismatch" *(Phase 3, 2026-03-30)*
+- [x] **AUTH-06**: Wrong relay tag → AUTH rejected *(Phase 3, 2026-03-30)*
+- [x] **AUTH-07**: Wrong event kind (!=22242) → AUTH rejected *(Phase 3, 2026-03-30)*
+- [x] **AUTH-08**: Missing type tag → AUTH rejected (strict validation per D-02) *(Phase 3, 2026-03-30)*
+- [x] **AUTH-09**: Missing aggregateHash tag → AUTH rejected (strict validation per D-02) *(Phase 3, 2026-03-30)*
 
 ### Behavioral Tests — Permission Enforcement
 
@@ -50,23 +50,23 @@ Requirements for initial release (v0.1.0). Each maps to roadmap phases.
 
 ### Behavioral Tests — Message Routing
 
-- [ ] **MSG-01**: REQ creates subscription, buffer events delivered
-- [ ] **MSG-02**: EVENT matching filter delivered to subscriber
-- [ ] **MSG-03**: EVENT not matching filter — no delivery
-- [ ] **MSG-04**: CLOSE removes subscription — no further events
-- [ ] **MSG-05**: EOSE sent after buffer scan
-- [ ] **MSG-06**: Sender excluded from own inter-pane delivery
-- [ ] **MSG-07**: p-tag targeted delivery — only tagged napp receives
-- [ ] **MSG-08**: REQ before AUTH — message queued, replayed after AUTH
-- [ ] **MSG-09**: REQ from blocked napp → CLOSED "relay:read denied"
+- [x] **MSG-01**: REQ creates subscription, buffer events delivered *(Phase 3, 2026-03-30)*
+- [x] **MSG-02**: EVENT matching filter delivered to subscriber *(Phase 3, 2026-03-30)*
+- [x] **MSG-03**: EVENT not matching filter — no delivery *(Phase 3, 2026-03-30)*
+- [x] **MSG-04**: CLOSE removes subscription — no further events *(Phase 3, 2026-03-30)*
+- [x] **MSG-05**: EOSE sent after buffer scan *(Phase 3, 2026-03-30)*
+- [x] **MSG-06**: Sender excluded from own inter-pane delivery *(Phase 3, 2026-03-30)*
+- [x] **MSG-07**: p-tag targeted delivery — only tagged napp receives *(Phase 3, 2026-03-30)*
+- [x] **MSG-08**: REQ before AUTH — message queued, replayed after AUTH *(Phase 3, 2026-03-30)*
+- [x] **MSG-09**: REQ from blocked napp → CLOSED "relay:read denied" *(Phase 3, 2026-03-30)*
 
 ### Behavioral Tests — Replay & Integrity
 
-- [ ] **RPL-01**: Event with old timestamp (>30s ago) rejected
-- [ ] **RPL-02**: Event with future timestamp (>now+10s) rejected
-- [ ] **RPL-03**: Duplicate event ID rejected
-- [ ] **RPL-04**: Seen ID cleanup — ID removed from set after expiry window
-- [ ] **RPL-05**: Event from unregistered window ignored
+- [x] **RPL-01**: Event with old timestamp (>30s ago) rejected *(Phase 3, 2026-03-30)*
+- [x] **RPL-02**: Event with future timestamp (>now+10s) rejected *(Phase 3, 2026-03-30)*
+- [x] **RPL-03**: Duplicate event ID rejected *(Phase 3, 2026-03-30)*
+- [x] **RPL-04**: Seen ID cleanup — ID removed from set after expiry window *(Phase 3, 2026-03-30)*
+- [x] **RPL-05**: Event from unregistered window ignored *(Phase 3, 2026-03-30)*
 
 ### Behavioral Tests — Storage Isolation
 
@@ -101,11 +101,11 @@ Requirements for initial release (v0.1.0). Each maps to roadmap phases.
 
 ### Behavioral Tests — Lifecycle & Edge Cases
 
-- [ ] **LCY-01**: Messages queued during AUTH — replayed after AUTH succeeds
-- [ ] **LCY-02**: AUTH rejection clears queue — queued messages not processed
-- [ ] **LCY-03**: cleanup() removes all subscriptions, buffers, registries
-- [ ] **LCY-04**: Non-array postMessage silently ignored
-- [ ] **LCY-05**: Null source window silently ignored
+- [x] **LCY-01**: Messages queued during AUTH — replayed after AUTH succeeds *(Phase 3, 2026-03-30)*
+- [x] **LCY-02**: AUTH rejection clears queue — queued messages not processed *(Phase 3, 2026-03-30)*
+- [x] **LCY-03**: cleanup() removes all subscriptions, buffers, registries *(Phase 3, 2026-03-30)*
+- [x] **LCY-04**: Non-array postMessage silently ignored *(Phase 3, 2026-03-30)*
+- [x] **LCY-05**: Null source window silently ignored *(Phase 3, 2026-03-30)*
 
 ### Demo Application
 
@@ -196,15 +196,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-04 | Phase 2 | Pending |
 | TEST-05 | Phase 2 | Pending |
 | TEST-06 | Phase 2 | Pending |
-| AUTH-01 | Phase 3 | Pending |
-| AUTH-02 | Phase 3 | Pending |
-| AUTH-03 | Phase 3 | Pending |
-| AUTH-04 | Phase 3 | Pending |
-| AUTH-05 | Phase 3 | Pending |
-| AUTH-06 | Phase 3 | Pending |
-| AUTH-07 | Phase 3 | Pending |
-| AUTH-08 | Phase 3 | Pending |
-| AUTH-09 | Phase 3 | Pending |
+| AUTH-01 | Phase 3 | Complete |
+| AUTH-02 | Phase 3 | Complete |
+| AUTH-03 | Phase 3 | Complete |
+| AUTH-04 | Phase 3 | Complete |
+| AUTH-05 | Phase 3 | Complete |
+| AUTH-06 | Phase 3 | Complete |
+| AUTH-07 | Phase 3 | Complete |
+| AUTH-08 | Phase 3 | Complete |
+| AUTH-09 | Phase 3 | Complete |
 | ACL-01 | Phase 4 | Pending |
 | ACL-02 | Phase 4 | Pending |
 | ACL-03 | Phase 4 | Pending |
@@ -214,20 +214,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACL-07 | Phase 4 | Pending |
 | ACL-08 | Phase 4 | Pending |
 | ACL-09 | Phase 4 | Pending |
-| MSG-01 | Phase 3 | Pending |
-| MSG-02 | Phase 3 | Pending |
-| MSG-03 | Phase 3 | Pending |
-| MSG-04 | Phase 3 | Pending |
-| MSG-05 | Phase 3 | Pending |
-| MSG-06 | Phase 3 | Pending |
-| MSG-07 | Phase 3 | Pending |
-| MSG-08 | Phase 3 | Pending |
-| MSG-09 | Phase 3 | Pending |
-| RPL-01 | Phase 3 | Pending |
-| RPL-02 | Phase 3 | Pending |
-| RPL-03 | Phase 3 | Pending |
-| RPL-04 | Phase 3 | Pending |
-| RPL-05 | Phase 3 | Pending |
+| MSG-01 | Phase 3 | Complete |
+| MSG-02 | Phase 3 | Complete |
+| MSG-03 | Phase 3 | Complete |
+| MSG-04 | Phase 3 | Complete |
+| MSG-05 | Phase 3 | Complete |
+| MSG-06 | Phase 3 | Complete |
+| MSG-07 | Phase 3 | Complete |
+| MSG-08 | Phase 3 | Complete |
+| MSG-09 | Phase 3 | Complete |
+| RPL-01 | Phase 3 | Complete |
+| RPL-02 | Phase 3 | Complete |
+| RPL-03 | Phase 3 | Complete |
+| RPL-04 | Phase 3 | Complete |
+| RPL-05 | Phase 3 | Complete |
 | STR-01 | Phase 4 | Pending |
 | STR-02 | Phase 4 | Pending |
 | STR-03 | Phase 4 | Pending |
@@ -250,11 +250,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IPC-04 | Phase 4 | Pending |
 | IPC-05 | Phase 4 | Pending |
 | IPC-06 | Phase 4 | Pending |
-| LCY-01 | Phase 3 | Pending |
-| LCY-02 | Phase 3 | Pending |
-| LCY-03 | Phase 3 | Pending |
-| LCY-04 | Phase 3 | Pending |
-| LCY-05 | Phase 3 | Pending |
+| LCY-01 | Phase 3 | Complete |
+| LCY-02 | Phase 3 | Complete |
+| LCY-03 | Phase 3 | Complete |
+| LCY-04 | Phase 3 | Complete |
+| LCY-05 | Phase 3 | Complete |
 | DEMO-01 | Phase 5 | Pending |
 | DEMO-02 | Phase 5 | Pending |
 | DEMO-03 | Phase 5 | Pending |
