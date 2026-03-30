@@ -1,6 +1,6 @@
 // @napplet/shim — Napplet SDK
 // NIP-01 relay client shim for napplet iframes.
-// Communicates with the shell pseudo-relay using NIP-01 wire format over postMessage.
+// Communicates with the ShellBridge using NIP-01 wire format over postMessage.
 // Completes NIP-42 AUTH handshake and proxies window.nostr NIP-07 calls as signed events.
 
 import { finalizeEvent } from 'nostr-tools/pure';
@@ -10,7 +10,7 @@ import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js'
 import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _setInterPaneEventSender } from './state-shim.js';
 import { subscribe, publish } from './relay-shim.js';
-import { BusKind, AUTH_KIND, PSEUDO_RELAY_URI, PROTOCOL_VERSION } from './types.js';
+import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION } from './types.js';
 import type { NostrEvent } from './types.js';
 
 // ─── Public API exports ─────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ export { nappState, nappStorage } from './state-shim.js';
  * Broadcast an inter-pane event to other napps via the shell.
  *
  * Creates a signed kind 29003 event with the given topic as a 't' tag
- * and posts it to the shell pseudo-relay for delivery to matching subscribers.
+ * and posts it to the ShellBridge for delivery to matching subscribers.
  *
  * @param topic     The 't' tag value (e.g., 'profile:open', 'stream:channel-switch')
  * @param extraTags Additional NIP-01 tags beyond the 't' tag (default: [])
@@ -210,7 +210,7 @@ function handleAuthChallenge(challenge: string): void {
     kind: AUTH_KIND,
     created_at: Math.floor(Date.now() / 1000),
     tags: [
-      ['relay', PSEUDO_RELAY_URI],
+      ['relay', SHELL_BRIDGE_URI],
       ['challenge', challenge],
       ['type', getNappType()],
       ['version', PROTOCOL_VERSION],

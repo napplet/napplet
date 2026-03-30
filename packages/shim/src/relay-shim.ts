@@ -1,5 +1,5 @@
 // @napplet/shim — Napp relay API
-// NIP-01 wire format over postMessage to the shell pseudo-relay.
+// NIP-01 wire format over postMessage to the ShellBridge.
 
 import type { NostrEvent, NostrFilter } from './types.js';
 

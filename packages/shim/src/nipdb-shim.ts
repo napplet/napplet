@@ -1,6 +1,6 @@
 // @napplet/shim — NIP-DB window.nostrdb proxy
 // Proxies query, add, event, replaceable, count, supports, subscribe through postMessage
-// to the shell pseudo-relay, which dispatches to WorkerRelayService (OPFS cache).
+// to the ShellBridge, which dispatches to WorkerRelayService (OPFS cache).
 
 import { finalizeEvent } from 'nostr-tools/pure';
 import { BusKind } from './types.js';

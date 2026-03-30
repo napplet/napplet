@@ -26,7 +26,7 @@ export interface NostrFilter {
 /**
  * Ephemeral event kinds (29000-29999) used by the napplet bus.
  * Ephemeral events are auto-discarded by real relays per NIP-01 spec —
- * perfect for bus traffic that should never persist beyond the pseudo-relay.
+ * perfect for bus traffic that should never persist beyond the ShellBridge.
  */
 export const BusKind = {
   REGISTRATION: 29000,
@@ -44,8 +44,8 @@ export type BusKindValue = (typeof BusKind)[keyof typeof BusKind];
 /** NIP-42 authentication event kind. */
 export const AUTH_KIND = 22242 as const;
 
-/** The pseudo-relay URI used in NIP-42 AUTH challenges. */
-export const PSEUDO_RELAY_URI = 'napplet://shell' as const;
+/** The ShellBridge URI used in NIP-42 AUTH challenges. */
+export const SHELL_BRIDGE_URI = 'napplet://shell' as const;
 
 /** Protocol version string. */
 export const PROTOCOL_VERSION = '2.0.0' as const;
