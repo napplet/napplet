@@ -39,6 +39,7 @@ const REQUEST_TIMEOUT_MS = 5000;
 // ─── Response listener ──────────────────────────────────────────────────────
 
 function handleStorageResponse(event: MessageEvent): void {
+  if (event.source !== window.parent) return;
   const msg = event.data;
   if (!Array.isArray(msg) || msg[0] !== 'EVENT') return;
 
@@ -157,9 +158,8 @@ export const nappStorage = {
     const response = await sendStorageRequest('shell:storage-keys', []);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const event = response as any;
-    const keysTag = event.tags?.find((t: string[]) => t[0] === 'keys');
-    const raw = keysTag?.[1] ?? '';
-    return raw === '' ? [] : raw.split(',');
+    const keyTags = event.tags?.filter((t: string[]) => t[0] === 'key') ?? [];
+    return keyTags.map((t: string[]) => t[1]);
   },
 };
 

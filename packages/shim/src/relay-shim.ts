@@ -57,6 +57,7 @@ export function subscribe(
   const subId = crypto.randomUUID();
 
   function handleMessage(msgEvent: MessageEvent): void {
+    if (msgEvent.source !== window.parent) return;
     const msg = msgEvent.data;
     if (!Array.isArray(msg) || msg.length < 2) return;
     const [verb, msgSubId] = msg;

@@ -108,7 +108,7 @@ const NIPDB_SUB_ID = '__nipdb__';
  * Falls back to 'unknown' if the meta tag is absent.
  */
 function getNappType(): string {
-  const meta = document.querySelector('meta[name="hyprgate-napp-type"]');
+  const meta = document.querySelector('meta[name="napplet-napp-type"]');
   return meta?.getAttribute('content') ?? 'unknown';
 }
 
@@ -157,6 +157,7 @@ async function sendSignerRequest(method: string, params?: Record<string, unknown
 // ─── Inbound message handler ──────────────────────────────────────────────────
 
 function handleRelayMessage(event: MessageEvent): void {
+  if (event.source !== window.parent) return;
   const msg = event.data;
   if (!Array.isArray(msg) || msg.length < 2) return;
 
@@ -191,7 +192,7 @@ function handleRelayMessage(event: MessageEvent): void {
  * Read the napp's NIP-5A aggregate hash from a meta tag in the document head.
  */
 function getAggregateHash(): string {
-  const meta = document.querySelector('meta[name="hyprgate-aggregate-hash"]');
+  const meta = document.querySelector('meta[name="napplet-aggregate-hash"]');
   return meta?.getAttribute('content') ?? '';
 }
 
