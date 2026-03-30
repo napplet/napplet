@@ -114,5 +114,5 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 7. Nomenclature | v0.2.0 | 0/2 | Planned | - |
 | 8. ACL Pure Module | v0.2.0 | 0/3 | Planned | - |
 | 9. ACL Enforcement Gate | v0.2.0 | 0/2 | Planned | - |
-| 10. ACL Behavioral Tests | v0.2.0 | 0/TBD | Not started | - |
+| 10. ACL Behavioral Tests | v0.2.0 | 0/2 | Planned | - |
 | 11. Shell Code Cleanup | v0.2.0 | 0/TBD | Not started | - |
