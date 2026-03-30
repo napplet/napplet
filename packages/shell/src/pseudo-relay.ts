@@ -164,10 +164,12 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
     if (!sigValid) { rejectAuth('invalid signature'); return; }
 
     const typeTag = authEvent.tags?.find((t) => t[0] === 'type');
-    const nappType = typeTag?.[1] ?? 'unknown';
+    if (!typeTag) { rejectAuth('missing required type tag'); return; }
+    const nappType = typeTag[1];
     const dTag = parseInt(authEvent.pubkey.slice(0, 8), 16).toString(36) + nappType;
     const hashTag = authEvent.tags?.find((t) => t[0] === 'aggregateHash');
-    const aggregateHash = hashTag?.[1] ?? '';
+    if (!hashTag) { rejectAuth('missing required aggregateHash tag'); return; }
+    const aggregateHash = hashTag[1];
 
     const entry: NappKeyEntry = {
       pubkey: authEvent.pubkey, windowId, origin: '*',
