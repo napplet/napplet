@@ -185,97 +185,97 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | TBD | Pending |
-| FIX-02 | TBD | Pending |
-| FIX-03 | TBD | Pending |
-| FIX-04 | TBD | Pending |
-| FIX-05 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| TEST-04 | TBD | Pending |
-| TEST-05 | TBD | Pending |
-| TEST-06 | TBD | Pending |
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| AUTH-04 | TBD | Pending |
-| AUTH-05 | TBD | Pending |
-| AUTH-06 | TBD | Pending |
-| AUTH-07 | TBD | Pending |
-| AUTH-08 | TBD | Pending |
-| AUTH-09 | TBD | Pending |
-| ACL-01 | TBD | Pending |
-| ACL-02 | TBD | Pending |
-| ACL-03 | TBD | Pending |
-| ACL-04 | TBD | Pending |
-| ACL-05 | TBD | Pending |
-| ACL-06 | TBD | Pending |
-| ACL-07 | TBD | Pending |
-| ACL-08 | TBD | Pending |
-| ACL-09 | TBD | Pending |
-| MSG-01 | TBD | Pending |
-| MSG-02 | TBD | Pending |
-| MSG-03 | TBD | Pending |
-| MSG-04 | TBD | Pending |
-| MSG-05 | TBD | Pending |
-| MSG-06 | TBD | Pending |
-| MSG-07 | TBD | Pending |
-| MSG-08 | TBD | Pending |
-| MSG-09 | TBD | Pending |
-| RPL-01 | TBD | Pending |
-| RPL-02 | TBD | Pending |
-| RPL-03 | TBD | Pending |
-| RPL-04 | TBD | Pending |
-| RPL-05 | TBD | Pending |
-| STR-01 | TBD | Pending |
-| STR-02 | TBD | Pending |
-| STR-03 | TBD | Pending |
-| STR-04 | TBD | Pending |
-| STR-05 | TBD | Pending |
-| STR-06 | TBD | Pending |
-| STR-07 | TBD | Pending |
-| STR-08 | TBD | Pending |
-| STR-09 | TBD | Pending |
-| SGN-01 | TBD | Pending |
-| SGN-02 | TBD | Pending |
-| SGN-03 | TBD | Pending |
-| SGN-04 | TBD | Pending |
-| SGN-05 | TBD | Pending |
-| SGN-06 | TBD | Pending |
-| SGN-07 | TBD | Pending |
-| IPC-01 | TBD | Pending |
-| IPC-02 | TBD | Pending |
-| IPC-03 | TBD | Pending |
-| IPC-04 | TBD | Pending |
-| IPC-05 | TBD | Pending |
-| IPC-06 | TBD | Pending |
-| LCY-01 | TBD | Pending |
-| LCY-02 | TBD | Pending |
-| LCY-03 | TBD | Pending |
-| LCY-04 | TBD | Pending |
-| LCY-05 | TBD | Pending |
-| DEMO-01 | TBD | Pending |
-| DEMO-02 | TBD | Pending |
-| DEMO-03 | TBD | Pending |
-| DEMO-04 | TBD | Pending |
-| DEMO-05 | TBD | Pending |
-| DEMO-06 | TBD | Pending |
-| DEMO-07 | TBD | Pending |
-| SPEC-01 | TBD | Pending |
-| SPEC-02 | TBD | Pending |
-| SPEC-03 | TBD | Pending |
-| SPEC-04 | TBD | Pending |
-| PUB-01 | TBD | Pending |
-| PUB-02 | TBD | Pending |
-| PUB-03 | TBD | Pending |
-| PUB-04 | TBD | Pending |
+| FIX-01 | Phase 1 | Pending |
+| FIX-02 | Phase 1 | Pending |
+| FIX-03 | Phase 1 | Pending |
+| FIX-04 | Phase 1 | Pending |
+| FIX-05 | Phase 1 | Pending |
+| TEST-01 | Phase 2 | Pending |
+| TEST-02 | Phase 2 | Pending |
+| TEST-03 | Phase 2 | Pending |
+| TEST-04 | Phase 2 | Pending |
+| TEST-05 | Phase 2 | Pending |
+| TEST-06 | Phase 2 | Pending |
+| AUTH-01 | Phase 3 | Pending |
+| AUTH-02 | Phase 3 | Pending |
+| AUTH-03 | Phase 3 | Pending |
+| AUTH-04 | Phase 3 | Pending |
+| AUTH-05 | Phase 3 | Pending |
+| AUTH-06 | Phase 3 | Pending |
+| AUTH-07 | Phase 3 | Pending |
+| AUTH-08 | Phase 3 | Pending |
+| AUTH-09 | Phase 3 | Pending |
+| ACL-01 | Phase 4 | Pending |
+| ACL-02 | Phase 4 | Pending |
+| ACL-03 | Phase 4 | Pending |
+| ACL-04 | Phase 4 | Pending |
+| ACL-05 | Phase 4 | Pending |
+| ACL-06 | Phase 4 | Pending |
+| ACL-07 | Phase 4 | Pending |
+| ACL-08 | Phase 4 | Pending |
+| ACL-09 | Phase 4 | Pending |
+| MSG-01 | Phase 3 | Pending |
+| MSG-02 | Phase 3 | Pending |
+| MSG-03 | Phase 3 | Pending |
+| MSG-04 | Phase 3 | Pending |
+| MSG-05 | Phase 3 | Pending |
+| MSG-06 | Phase 3 | Pending |
+| MSG-07 | Phase 3 | Pending |
+| MSG-08 | Phase 3 | Pending |
+| MSG-09 | Phase 3 | Pending |
+| RPL-01 | Phase 3 | Pending |
+| RPL-02 | Phase 3 | Pending |
+| RPL-03 | Phase 3 | Pending |
+| RPL-04 | Phase 3 | Pending |
+| RPL-05 | Phase 3 | Pending |
+| STR-01 | Phase 4 | Pending |
+| STR-02 | Phase 4 | Pending |
+| STR-03 | Phase 4 | Pending |
+| STR-04 | Phase 4 | Pending |
+| STR-05 | Phase 4 | Pending |
+| STR-06 | Phase 4 | Pending |
+| STR-07 | Phase 4 | Pending |
+| STR-08 | Phase 4 | Pending |
+| STR-09 | Phase 4 | Pending |
+| SGN-01 | Phase 4 | Pending |
+| SGN-02 | Phase 4 | Pending |
+| SGN-03 | Phase 4 | Pending |
+| SGN-04 | Phase 4 | Pending |
+| SGN-05 | Phase 4 | Pending |
+| SGN-06 | Phase 4 | Pending |
+| SGN-07 | Phase 4 | Pending |
+| IPC-01 | Phase 4 | Pending |
+| IPC-02 | Phase 4 | Pending |
+| IPC-03 | Phase 4 | Pending |
+| IPC-04 | Phase 4 | Pending |
+| IPC-05 | Phase 4 | Pending |
+| IPC-06 | Phase 4 | Pending |
+| LCY-01 | Phase 3 | Pending |
+| LCY-02 | Phase 3 | Pending |
+| LCY-03 | Phase 3 | Pending |
+| LCY-04 | Phase 3 | Pending |
+| LCY-05 | Phase 3 | Pending |
+| DEMO-01 | Phase 5 | Pending |
+| DEMO-02 | Phase 5 | Pending |
+| DEMO-03 | Phase 5 | Pending |
+| DEMO-04 | Phase 5 | Pending |
+| DEMO-05 | Phase 5 | Pending |
+| DEMO-06 | Phase 5 | Pending |
+| DEMO-07 | Phase 5 | Pending |
+| SPEC-01 | Phase 6 | Pending |
+| SPEC-02 | Phase 6 | Pending |
+| SPEC-03 | Phase 6 | Pending |
+| SPEC-04 | Phase 6 | Pending |
+| PUB-01 | Phase 6 | Pending |
+| PUB-02 | Phase 6 | Pending |
+| PUB-03 | Phase 6 | Pending |
+| PUB-04 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 75 total
-- Mapped to phases: 0
-- Unmapped: 75
+- v1 requirements: 85 total
+- Mapped to phases: 85
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after initial definition*
+*Last updated: 2026-03-30 after roadmap creation (phase mappings added)*
