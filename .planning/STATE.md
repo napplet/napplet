@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 02 (test-infrastructure) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 02
-Last activity: 2026-03-30 -- Phase 02 execution started
+Phase: 02 (test-infrastructure) — ALL PLANS COMPLETE, AWAITING VERIFICATION
+Plan: 6 of 6
+Status: Phase 02 all plans executed
+Last activity: 2026-03-30 -- Phase 02 execution complete (6/6 plans)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -70,10 +70,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 2 may need a spike to validate Playwright postMessage interception for sandboxed (no allow-same-origin) iframes. Research flagged this as MEDIUM confidence.
+- RESOLVED: Playwright postMessage interception for sandboxed iframes required Proxy-based wrapping of originRegistry and relay.handleMessage (not Window.prototype.postMessage monkey-patching, which doesn't work for cross-origin windows).
+- RESOLVED: Sandboxed iframes need CORS headers and relative asset paths for script loading.
 
 ## Session Continuity
 
-Last session: 2026-03-30T13:32:33.327Z
-Stopped at: Phase 3 planned
-Resume file: .planning/phases/03-core-protocol-tests/03-01-PLAN.md
+Last session: 2026-03-30
+Stopped at: Phase 02 execution complete, awaiting verification
+Resume file: .planning/phases/02-test-infrastructure/02-06-SUMMARY.md
