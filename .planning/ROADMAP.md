@@ -64,8 +64,8 @@ Plans:
 **Plans**: 2 plans, 2 waves, 7 tasks total
 
 Plans:
-- [ ] 09-01: Enforcement gate module — enforce(), resolveCapabilities(), audit hooks (3 tasks, wave 1)
-- [ ] 09-02: Wire enforce gate into all ShellBridge handlers (4 tasks, wave 2)
+- [x] 09-01: Enforcement gate module — enforce(), resolveCapabilities(), audit hooks (3 tasks, wave 1)
+- [x] 09-02: Wire enforce gate into all ShellBridge handlers (4 tasks, wave 2)
 
 ### Phase 10: ACL Behavioral Tests
 **Goal**: A comprehensive test matrix proves that every capability-action combination is enforced, and no message path bypasses the ACL gate
@@ -111,8 +111,8 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 4. Capability Tests | v0.1.0 | 5/5 | Complete | 2026-03-30 |
 | 5. Demo Playground | v0.1.0 | 5/5 | Complete | 2026-03-30 |
 | 6. Specification and Publish | v0.1.0 | 4/4 | Complete | 2026-03-30 |
-| 7. Nomenclature | v0.2.0 | 0/2 | Planned | - |
-| 8. ACL Pure Module | v0.2.0 | 0/3 | Planned | - |
-| 9. ACL Enforcement Gate | v0.2.0 | 0/2 | Planned | - |
+| 7. Nomenclature | v0.2.0 | 2/2 | Complete | 2026-03-30 |
+| 8. ACL Pure Module | v0.2.0 | 3/3 | Complete | 2026-03-30 |
+| 9. ACL Enforcement Gate | v0.2.0 | 2/2 | Complete | 2026-03-30 |
 | 10. ACL Behavioral Tests | v0.2.0 | 0/2 | Planned | - |
 | 11. Shell Code Cleanup | v0.2.0 | 0/2 | Planned | - |
