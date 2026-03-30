@@ -99,8 +99,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Wiring Fixes | 0/5 | Planned | - |
-| 2. Test Infrastructure | 6/6 | Executing | - |
-| 3. Core Protocol Tests | 0/5 | Planned | - |
+| 2. Test Infrastructure | 6/6 | Complete | - |
+| 3. Core Protocol Tests | 5/5 | Executing | - |
 | 4. Capability Tests | 0/TBD | Not started | - |
 | 5. Demo Playground | 0/5 | Planned | - |
 | 6. Specification and Publish | 0/TBD | Not started | - |
