@@ -11,9 +11,9 @@
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 7: Nomenclature** - Rename pseudo-relay to ShellBridge and complete storage-to-state rename across all packages, tests, spec, and demo
-- [ ] **Phase 8: ACL Pure Module** - Extract ACL logic into a standalone, pure, WASM-ready module with zero side effects
-- [ ] **Phase 9: ACL Enforcement Gate** - Wire the pure ACL module into ShellBridge as the single enforcement point for all message paths
+- [x] **Phase 7: Nomenclature** - Rename pseudo-relay to ShellBridge and complete storage-to-state rename across all packages, tests, spec, and demo
+- [x] **Phase 8: ACL Pure Module** - Extract ACL logic into a standalone, pure, WASM-ready module with zero side effects
+- [x] **Phase 9: ACL Enforcement Gate** - Wire the pure ACL module into ShellBridge as the single enforcement point for all message paths
 - [ ] **Phase 10: ACL Behavioral Tests** - Exhaustive capability-by-action test matrix proving every message path respects ACL decisions
 - [ ] **Phase 11: Shell Code Cleanup** - Consistent naming, minimal public API, clean internals, and no debug artifacts
 
