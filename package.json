@@ -8,7 +8,7 @@
     "test:unit": "turbo run test:unit",
     "test:e2e": "pnpm test:build && npx playwright test",
     "test:build": "pnpm build && pnpm --filter @test/auth-napplet build && pnpm --filter @test/publish-napplet build && pnpm --filter @test/harness build",
-    "test:serve": "pnpm --filter @test/harness preview",
+    "test:serve": "pnpm --filter @test/harness dev",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "version-packages": "changeset version",

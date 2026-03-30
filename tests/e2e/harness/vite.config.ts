@@ -25,6 +25,9 @@ function serveNappletFile(req: IncomingMessage, res: ServerResponse, next: () =>
   if (fs.existsSync(fullPath)) {
     const ext = path.extname(fullPath);
     res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+    // CORS headers required for sandboxed iframes (origin: null) to load scripts
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
     fs.createReadStream(fullPath).pipe(res);
   } else {
     res.statusCode = 404;
@@ -58,10 +61,18 @@ export default defineConfig({
   server: {
     port: 4173,
     strictPort: true,
+    cors: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
   },
   preview: {
     port: 4173,
     strictPort: true,
+    cors: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
   },
   build: {
     outDir: 'dist',

@@ -34,29 +34,97 @@ declare global {
 // --- Initialize ---
 
 const mockResult = createMockHooks();
-const relay = createPseudoRelay(mockResult.hooks);
 const tap = createMessageTap();
+
+// --- Outbound message interception ---
+//
+// The pseudo-relay sends messages to napplets via:
+//   1. originRegistry.getIframeWindow(windowId).postMessage() -- for sendChallenge, deliverToSubscriptions
+//   2. sourceWindow.postMessage() -- for handleAuth, handleEvent (sourceWindow = event.source)
+//
+// For cross-origin sandboxed iframes, we can't monkey-patch Window.prototype.postMessage
+// because cross-origin windows use their own prototype chain. Instead, we:
+//   1. Wrap originRegistry.getIframeWindow to return a postMessage-intercepting Proxy
+//   2. Wrap relay.handleMessage to proxy event.source with postMessage interception
+//      while keeping a side-channel so originRegistry.getWindowId still resolves
+
+// Map from proxy to real window for origin registry resolution
+const proxyToReal = new WeakMap<object, Window>();
+
+function createPostMessageProxy(realWin: Window): Window {
+  const proxy = new Proxy(realWin, {
+    get(target, prop) {
+      if (prop === 'postMessage') {
+        return (msg: unknown, targetOrigin: string, transfer?: Transferable[]) => {
+          if (Array.isArray(msg)) {
+            tap.recordOutbound(msg);
+          }
+          return target.postMessage(msg, targetOrigin, transfer);
+        };
+      }
+      // For everything else, return the real property
+      try {
+        const val = (target as any)[prop];
+        return typeof val === 'function' ? val.bind(target) : val;
+      } catch {
+        // Cross-origin property access can throw -- return undefined
+        return undefined;
+      }
+    },
+  });
+  proxyToReal.set(proxy, realWin);
+  return proxy as unknown as Window;
+}
+
+// Wrap originRegistry.getIframeWindow to return proxied windows
+const _origGetIframeWindow = originRegistry.getIframeWindow.bind(originRegistry);
+originRegistry.getIframeWindow = (windowId: string): Window | null => {
+  const win = _origGetIframeWindow(windowId);
+  if (!win) return null;
+  return createPostMessageProxy(win);
+};
+
+// Wrap originRegistry.getWindowId to handle both real and proxied windows
+const _origGetWindowId = originRegistry.getWindowId.bind(originRegistry);
+originRegistry.getWindowId = (win: Window): string | undefined => {
+  // First try the real window
+  const result = _origGetWindowId(win);
+  if (result) return result;
+  // If not found, check if it's a proxy and try the real window
+  const real = proxyToReal.get(win);
+  if (real) return _origGetWindowId(real);
+  return undefined;
+};
+
+const relay = createPseudoRelay(mockResult.hooks);
 
 // Install the message tap (captures napplet->shell messages via addEventListener)
 tap.install(window);
 
-// Monkey-patch Window.prototype.postMessage to intercept outbound (shell->napplet) messages.
-// The pseudo-relay calls sourceWindow.postMessage() and win.postMessage() internally.
-// We need to capture these without modifying the relay code.
-const _origPostMessage = Window.prototype.postMessage;
-Window.prototype.postMessage = function (this: Window, message: unknown, targetOriginOrOptions?: unknown, transfer?: Transferable[]) {
-  // Only capture messages sent to iframe windows (not to self/parent)
-  if (this !== window && this !== window.parent && Array.isArray(message)) {
-    tap.recordOutbound(message);
+// Wrap relay.handleMessage to proxy event.source for outbound capture.
+const _origHandleMessage = relay.handleMessage;
+relay.handleMessage = (event: MessageEvent) => {
+  if (!event.source || !Array.isArray(event.data)) {
+    _origHandleMessage(event);
+    return;
   }
-  // Call original -- handle both overload signatures
-  if (typeof targetOriginOrOptions === 'string') {
-    return _origPostMessage.call(this, message, targetOriginOrOptions, transfer);
-  }
-  return _origPostMessage.call(this, message, targetOriginOrOptions as WindowPostMessageOptions);
+
+  // Create a proxied version of event.source for postMessage interception
+  const proxiedSource = createPostMessageProxy(event.source as Window);
+
+  // Create a synthetic MessageEvent-like object with the proxied source
+  const syntheticEvent = new Proxy(event, {
+    get(target, prop) {
+      if (prop === 'source') return proxiedSource;
+      const val = (target as any)[prop];
+      return typeof val === 'function' ? val.bind(target) : val;
+    },
+  });
+
+  _origHandleMessage(syntheticEvent);
 };
 
-// Attach the relay's message handler
+// Attach the relay's wrapped message handler
 window.addEventListener('message', relay.handleMessage);
 
 // --- Napplet Management ---
