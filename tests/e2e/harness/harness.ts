@@ -28,6 +28,12 @@ declare global {
     __clearMessages__: () => void;
     __getRelay__: () => PseudoRelay;
     __getMockHooks__: () => MockHooksResult;
+    __injectMessage__: (windowId: string, data: unknown[]) => void;
+    __createSubscription__: (windowId: string, subId: string, filters: unknown[]) => void;
+    __publishEvent__: (windowId: string, event: unknown) => void;
+    __closeSubscription__: (windowId: string, subId: string) => void;
+    __getChallenge__: (windowId: string) => string | undefined;
+    __getNappletFrames__: () => string[];
   }
 }
 
@@ -198,6 +204,69 @@ window.__unloadNapplet__ = unloadNapplet;
 window.__clearMessages__ = () => tap.clear();
 window.__getRelay__ = () => relay;
 window.__getMockHooks__ = () => mockResult;
+
+// --- Protocol Control Functions (Phase 3) ---
+
+/**
+ * Inject a raw NIP-01 message as if it came from the specified napplet iframe.
+ * Constructs a MessageEvent with the iframe's contentWindow as source.
+ */
+window.__injectMessage__ = (windowId: string, data: unknown[]) => {
+  const iframe = nappletFrames.get(windowId);
+  if (!iframe?.contentWindow) throw new Error(`No iframe for windowId: ${windowId}`);
+  const event = new MessageEvent('message', {
+    data,
+    source: iframe.contentWindow,
+    origin: 'null',
+  });
+  window.dispatchEvent(event);
+};
+
+/**
+ * Shorthand: inject a REQ message from the specified napplet.
+ */
+window.__createSubscription__ = (windowId: string, subId: string, filters: unknown[]) => {
+  window.__injectMessage__(windowId, ['REQ', subId, ...filters]);
+};
+
+/**
+ * Shorthand: inject an EVENT message from the specified napplet.
+ */
+window.__publishEvent__ = (windowId: string, event: unknown) => {
+  window.__injectMessage__(windowId, ['EVENT', event]);
+};
+
+/**
+ * Shorthand: inject a CLOSE message from the specified napplet.
+ */
+window.__closeSubscription__ = (windowId: string, subId: string) => {
+  window.__injectMessage__(windowId, ['CLOSE', subId]);
+};
+
+/**
+ * Get the pending AUTH challenge string for a windowId.
+ * Finds challenges from the tap's outbound messages, indexed by napplet load order.
+ */
+window.__getChallenge__ = (windowId: string): string | undefined => {
+  const challenges = tap.messages.filter(
+    m => m.verb === 'AUTH' && m.direction === 'shell->napplet'
+      && typeof m.raw[1] === 'string'
+  );
+  // Match challenge to windowId by napplet load order
+  const nappletIndex = Array.from(nappletFrames.keys()).indexOf(windowId);
+  if (nappletIndex >= 0 && nappletIndex < challenges.length) {
+    return challenges[nappletIndex].raw[1] as string;
+  }
+  // Fallback: return the last challenge
+  return challenges.length > 0 ? challenges[challenges.length - 1].raw[1] as string : undefined;
+};
+
+/**
+ * Get list of all loaded napplet windowIds.
+ */
+window.__getNappletFrames__ = (): string[] => {
+  return Array.from(nappletFrames.keys());
+};
 
 // --- Debug Logging ---
 
