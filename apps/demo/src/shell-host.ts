@@ -299,12 +299,15 @@ export function bootShell(): { tap: MessageTap; relay: PseudoRelay } {
       // Find which napplet this OK belongs to by checking nappKeyRegistry
       for (const [wid, info] of napplets) {
         if (!info.authenticated) {
-          const entry = nappKeyRegistry.getByWindowId(wid);
-          if (entry) {
-            info.authenticated = true;
-            info.pubkey = entry.pubkey;
-            info.dTag = entry.dTag;
-            info.aggregateHash = entry.aggregateHash;
+          const pubkey = nappKeyRegistry.getPubkey(wid);
+          if (pubkey) {
+            const entry = nappKeyRegistry.getEntry(pubkey);
+            if (entry) {
+              info.authenticated = true;
+              info.pubkey = entry.pubkey;
+              info.dTag = entry.dTag;
+              info.aggregateHash = entry.aggregateHash;
+            }
           }
         }
       }

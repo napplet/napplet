@@ -7,7 +7,7 @@ import 'virtual:uno.css';
 import { bootShell, loadNapplet, getDemoHostPubkey } from './shell-host.js';
 import './debugger.js';
 import type { NappletDebugger } from './debugger.js';
-import { renderAclPanel, setDebugger } from './acl-panel.js';
+import { renderAclPanels, setDebugger } from './acl-panel.js';
 
 // Boot the shell (now includes signer)
 const { tap } = bootShell();
@@ -28,7 +28,7 @@ const botInfo = loadNapplet('bot', 'bot-frame-container');
 tap.onMessage((msg) => {
   if (msg.verb === 'OK' && msg.parsed.success === true && msg.direction === 'shell->napplet') {
     setTimeout(() => {
-      renderAclPanel('acl-controls');
+      renderAclPanels();
 
       const chatStatus = document.getElementById('chat-status');
       const botStatus = document.getElementById('bot-status');

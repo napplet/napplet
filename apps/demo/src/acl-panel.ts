@@ -1,7 +1,7 @@
 /**
  * acl-panel.ts -- Per-napplet ACL control panel.
  *
- * Renders toggle switches for each capability on each loaded napplet.
+ * Renders toggle buttons for each capability above each napplet.
  * Toggles call shell-host.toggleCapability() and log changes to the debugger.
  */
 
@@ -9,12 +9,12 @@ import { getNapplets, toggleCapability, toggleBlock } from './shell-host.js';
 import type { NappletDebugger } from './debugger.js';
 import type { Capability } from '@napplet/shell';
 
-const DEMO_CAPABILITIES: Capability[] = [
-  'relay:read',
-  'relay:write',
-  'sign:event',
-  'storage:read',
-  'storage:write',
+const DEMO_CAPABILITIES: { cap: Capability; label: string }[] = [
+  { cap: 'relay:read', label: 'Read Relay' },
+  { cap: 'relay:write', label: 'Write Relay' },
+  { cap: 'sign:event', label: 'Sign' },
+  { cap: 'storage:read', label: 'Read Storage' },
+  { cap: 'storage:write', label: 'Write Storage' },
 ];
 
 let debugger_: NappletDebugger | null = null;
@@ -24,100 +24,94 @@ export function setDebugger(dbg: NappletDebugger): void {
 }
 
 /**
- * Render ACL controls for all loaded napplets into the target container.
+ * Render ACL controls for a specific napplet into its dedicated container.
  */
-export function renderAclPanel(containerId: string): void {
+function renderNappletAcl(containerId: string, windowId: string, info: { name: string; authenticated: boolean }): void {
   const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const napplets = getNapplets();
+  if (!container || !info.authenticated) return;
 
   container.innerHTML = '';
 
-  for (const [windowId, info] of napplets) {
-    if (!info.authenticated) continue;
+  const row = document.createElement('div');
+  row.className = 'flex flex-wrap gap-1';
 
-    const panel = document.createElement('div');
-    panel.className = 'flex items-center gap-2 text-xs font-mono';
-    panel.innerHTML = `<span class="text-neon-blue">${info.name}</span>`;
+  // Capability toggles
+  for (const { cap, label } of DEMO_CAPABILITIES) {
+    const toggle = document.createElement('button');
+    toggle.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors toggle-on text-neon-green';
+    toggle.textContent = label;
+    toggle.title = `${cap} — click to revoke`;
+    toggle.dataset.enabled = 'true';
 
-    // Capability toggles
-    for (const cap of DEMO_CAPABILITIES) {
-      const label = cap.split(':')[1]; // 'read', 'write', 'event'
-      const prefix = cap.split(':')[0]; // 'relay', 'sign', 'storage'
-      const shortLabel = `${prefix[0]}:${label[0]}`; // 'r:r', 'r:w', 's:e', etc.
-
-      const toggle = document.createElement('button');
-      toggle.className = 'px-1.5 py-0.5 rounded text-[10px] border cursor-pointer transition-colors toggle-on';
-      toggle.textContent = shortLabel;
-      toggle.title = cap;
-      toggle.dataset.enabled = 'true';
-      toggle.dataset.windowId = windowId;
-      toggle.dataset.capability = cap;
-
-      toggle.addEventListener('click', () => {
-        const enabled = toggle.dataset.enabled === 'true';
-        const newState = !enabled;
-        toggle.dataset.enabled = String(newState);
-
-        if (newState) {
-          toggle.className = 'px-1.5 py-0.5 rounded text-[10px] border cursor-pointer transition-colors toggle-on';
-        } else {
-          toggle.className = 'px-1.5 py-0.5 rounded text-[10px] border cursor-pointer transition-colors toggle-off text-gray-600';
-        }
-
-        toggleCapability(windowId, cap, newState);
-        debugger_?.addSystemMessage(
-          `${newState ? 'GRANT' : 'REVOKE'} ${cap} on ${info.name}`
-        );
-      });
-
-      panel.appendChild(toggle);
-    }
-
-    // Block toggle
-    const blockBtn = document.createElement('button');
-    blockBtn.className = 'px-1.5 py-0.5 rounded text-[10px] border cursor-pointer transition-colors bg-surface-dark border-surface-border text-gray-500 hover:text-neon-red hover:border-neon-red/40';
-    blockBtn.textContent = 'block';
-    blockBtn.dataset.blocked = 'false';
-
-    blockBtn.addEventListener('click', () => {
-      const blocked = blockBtn.dataset.blocked === 'true';
-      const newState = !blocked;
-      blockBtn.dataset.blocked = String(newState);
+    toggle.addEventListener('click', () => {
+      const enabled = toggle.dataset.enabled === 'true';
+      const newState = !enabled;
+      toggle.dataset.enabled = String(newState);
 
       if (newState) {
-        blockBtn.className = 'px-1.5 py-0.5 rounded text-[10px] border cursor-pointer transition-colors bg-neon-red/20 border-neon-red/40 text-neon-red';
-        blockBtn.textContent = 'blocked';
+        toggle.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors toggle-on text-neon-green';
+        toggle.title = `${cap} — click to revoke`;
       } else {
-        blockBtn.className = 'px-1.5 py-0.5 rounded text-[10px] border cursor-pointer transition-colors bg-surface-dark border-surface-border text-gray-500 hover:text-neon-red hover:border-neon-red/40';
-        blockBtn.textContent = 'block';
+        toggle.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors toggle-off text-neon-red';
+        toggle.title = `${cap} — click to grant`;
       }
 
-      toggleBlock(windowId, newState);
+      toggleCapability(windowId, cap, newState);
       debugger_?.addSystemMessage(
-        `${newState ? 'BLOCK' : 'UNBLOCK'} ${info.name}`
+        `${newState ? 'GRANT' : 'REVOKE'} ${cap} on ${info.name}`
       );
     });
 
-    panel.appendChild(blockBtn);
-
-    // Scenario hints
-    const hints = document.createElement('div');
-    hints.className = 'text-[9px] text-gray-600 ml-1';
-    if (info.name === 'chat') {
-      hints.textContent = 'try: revoke r:w (publish fails) | revoke r:r (no incoming)';
-    } else if (info.name === 'bot') {
-      hints.textContent = 'try: block (chat cant reach) | revoke s:e (cant respond)';
-    }
-    panel.appendChild(hints);
-
-    container.appendChild(panel);
+    row.appendChild(toggle);
   }
 
-  // Schedule a re-render if any napplets are not yet authenticated
-  const hasUnauthenticated = Array.from(getNapplets().values()).some(n => !n.authenticated);
+  // Block toggle
+  const blockBtn = document.createElement('button');
+  blockBtn.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors bg-surface-dark border-surface-border text-gray-500 hover:text-neon-red hover:border-neon-red/40';
+  blockBtn.textContent = 'Block';
+  blockBtn.dataset.blocked = 'false';
+
+  blockBtn.addEventListener('click', () => {
+    const blocked = blockBtn.dataset.blocked === 'true';
+    const newState = !blocked;
+    blockBtn.dataset.blocked = String(newState);
+
+    if (newState) {
+      blockBtn.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors bg-neon-red/20 border-neon-red/40 text-neon-red';
+      blockBtn.textContent = 'Blocked';
+    } else {
+      blockBtn.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold border cursor-pointer transition-colors bg-surface-dark border-surface-border text-gray-500 hover:text-neon-red hover:border-neon-red/40';
+      blockBtn.textContent = 'Block';
+    }
+
+    toggleBlock(windowId, newState);
+    debugger_?.addSystemMessage(
+      `${newState ? 'BLOCK' : 'UNBLOCK'} ${info.name}`
+    );
+  });
+
+  row.appendChild(blockBtn);
+  container.appendChild(row);
+}
+
+/**
+ * Render ACL controls for all napplets into their respective containers.
+ * Call this after AUTH completes.
+ */
+export function renderAclPanels(): void {
+  const napplets = getNapplets();
+
+  for (const [windowId, info] of napplets) {
+    if (info.name === 'chat') {
+      renderNappletAcl('chat-acl', windowId, info);
+    } else if (info.name === 'bot') {
+      renderNappletAcl('bot-acl', windowId, info);
+    }
+  }
+
+  // Re-render if any napplets not yet authenticated
+  const hasUnauthenticated = Array.from(napplets.values()).some(n => !n.authenticated);
   if (hasUnauthenticated) {
-    setTimeout(() => renderAclPanel(containerId), 1000);
+    setTimeout(() => renderAclPanels(), 1000);
   }
 }
