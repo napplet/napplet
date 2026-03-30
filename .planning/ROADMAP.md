@@ -14,7 +14,7 @@
 - [x] **Phase 7: Nomenclature** - Rename pseudo-relay to ShellBridge and complete storage-to-state rename across all packages, tests, spec, and demo
 - [x] **Phase 8: ACL Pure Module** - Extract ACL logic into a standalone, pure, WASM-ready module with zero side effects
 - [x] **Phase 9: ACL Enforcement Gate** - Wire the pure ACL module into ShellBridge as the single enforcement point for all message paths
-- [ ] **Phase 10: ACL Behavioral Tests** - Exhaustive capability-by-action test matrix proving every message path respects ACL decisions
+- [x] **Phase 10: ACL Behavioral Tests** - Exhaustive capability-by-action test matrix proving every message path respects ACL decisions (completed 2026-03-30)
 - [ ] **Phase 11: Shell Code Cleanup** - Consistent naming, minimal public API, clean internals, and no debug artifacts
 
 ## Phase Details
@@ -80,8 +80,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 10-01: Capability × Action matrix tests — relay, signer, state, hotkey (4 tasks, wave 1)
-- [ ] 10-02: ACL lifecycle tests — mid-session revoke, revoke-all, persistence (1 task, wave 2)
+- [x] 10-01: Capability × Action matrix tests — relay, signer, state, hotkey (4 tasks, wave 1)
+- [x] 10-02: ACL lifecycle tests — mid-session revoke, revoke-all, persistence (1 task, wave 2)
 
 ### Phase 11: Shell Code Cleanup
 **Goal**: ShellBridge has a minimal, consistent, well-documented public API with clean internals and no development artifacts
@@ -114,5 +114,5 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 7. Nomenclature | v0.2.0 | 2/2 | Complete | 2026-03-30 |
 | 8. ACL Pure Module | v0.2.0 | 3/3 | Complete | 2026-03-30 |
 | 9. ACL Enforcement Gate | v0.2.0 | 2/2 | Complete | 2026-03-30 |
-| 10. ACL Behavioral Tests | v0.2.0 | 0/2 | Planned | - |
+| 10. ACL Behavioral Tests | v0.2.0 | 2/2 | Complete   | 2026-03-30 |
 | 11. Shell Code Cleanup | v0.2.0 | 0/2 | Planned | - |
