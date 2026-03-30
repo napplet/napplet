@@ -65,7 +65,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Storage isolation is airtight: CRUD operations work correctly, napp A cannot see napp B's keys, quota enforcement rejects writes over 512KB, and values survive shell reload
   3. Signer delegation works: getPublicKey returns host key, signEvent succeeds for non-destructive kinds, consent flow gates destructive kinds (approve and deny paths), missing signer returns clear error, timeout fires after 30s, concurrent requests resolve independently
   4. Inter-pane communication works: emit/on delivers events with correct payload, topic filtering excludes unsubscribed topics, multiple subscribers all receive, unsubscribe stops delivery, malformed content produces graceful fallback, and shell-injected events reach matching subscribers
-**Plans**: TBD
+**Plans**: 5 plans in 2 waves
 
 ### Phase 5: Demo Playground
 **Goal**: An interactive vanilla TypeScript playground demonstrates every protocol capability visually, proving the SDK is usable and the developer experience is sound
@@ -101,6 +101,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Wiring Fixes | 0/5 | Planned | - |
 | 2. Test Infrastructure | 6/6 | Complete | - |
 | 3. Core Protocol Tests | 5/5 | Executing | - |
-| 4. Capability Tests | 0/TBD | Not started | - |
+| 4. Capability Tests | 5/5 | Executing | - |
 | 5. Demo Playground | 0/5 | Planned | - |
 | 6. Specification and Publish | 0/TBD | Not started | - |
