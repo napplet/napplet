@@ -124,6 +124,12 @@ importers:
         specifier: ^6.3.0
         version: 6.4.1(@types/node@22.19.15)
 
+  tests/fixtures/napplets/pure-napplet:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
 packages:
 
   '@babel/helper-string-parser@7.27.1':
