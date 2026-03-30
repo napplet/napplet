@@ -254,16 +254,20 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
 
     const replayResult = checkReplay(event);
     if (replayResult !== null) { sendOk(false, replayResult); return; }
-    if (!checkAcl(pubkey, 'relay:write')) { sendOk(false, 'auth-required: relay:write capability denied'); return; }
+
+    // Resolve and enforce the required capability for this message
+    const caps = resolveCapabilities(msg);
+    if (caps.senderCap) {
+      const result = enforce(pubkey, caps.senderCap);
+      if (!result.allowed) { sendOk(false, formatDenialReason(result.capability)); return; }
+    }
 
     switch (event.kind) {
       case BusKind.SIGNER_REQUEST:
         handleSignerRequest(event, windowId, pubkey, sourceWindow);
         return;
       case BusKind.HOTKEY_FORWARD:
-        if (checkAcl(pubkey, 'hotkey:forward')) {
-          try { handleHotkeyForward(event); } catch { /* best-effort */ }
-        }
+        try { handleHotkeyForward(event); } catch { /* best-effort */ }
         break;
       case BusKind.INTER_PANE: {
         const topic = event.tags?.find((t) => t[0] === 't')?.[1];
@@ -288,7 +292,10 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     const filters = (msg.slice(2) as NostrFilter[]) ?? [];
     const pubkey = nappKeyRegistry.getPubkey(windowId);
     if (!pubkey) { sourceWindow.postMessage(['CLOSED', subId, 'auth-required'], '*'); return; }
-    if (!checkAcl(pubkey, 'relay:read')) { sourceWindow.postMessage(['CLOSED', subId, 'relay:read denied'], '*'); return; }
+    {
+      const result = enforce(pubkey, 'relay:read');
+      if (!result.allowed) { sourceWindow.postMessage(['CLOSED', subId, formatDenialReason(result.capability)], '*'); return; }
+    }
 
     const subKey = `${windowId}:${subId}`;
     subscriptions.set(subKey, { windowId, filters });
@@ -358,6 +365,10 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     const filters = (msg.slice(2) as NostrFilter[]) ?? [];
     const pubkey = nappKeyRegistry.getPubkey(windowId);
     if (!pubkey) { sourceWindow.postMessage(['CLOSED', countId, 'auth-required'], '*'); return; }
+    {
+      const result = enforce(pubkey, 'relay:read');
+      if (!result.allowed) { sourceWindow.postMessage(['CLOSED', countId, formatDenialReason(result.capability)], '*'); return; }
+    }
     let count = 0;
     for (const event of eventBuffer) if (matchesAnyFilter(event, filters)) count++;
     sourceWindow.postMessage(['COUNT', countId, { count }], '*');
@@ -372,7 +383,6 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
 
     const signer = hooks.auth.getSigner();
     if (!signer) { sendOk(false, 'error: no signer configured'); return; }
-    if (!checkAcl(pubkey, 'sign:event')) { sendOk(false, 'sign:event capability denied'); return; }
 
     function dispatch(eventToSign: NostrEvent | null): void {
       const signerPromise: Promise<unknown> = (() => {
