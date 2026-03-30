@@ -135,24 +135,33 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
     function sendOkFail(reason: string): void {
       sourceWindow.postMessage(['OK', eventId, false, `auth-required: ${reason}`], '*');
     }
+    function rejectAuth(reason: string): void {
+      const queue = pendingAuthQueue.get(windowId);
+      const queueSize = queue?.length ?? 0;
+      pendingAuthQueue.delete(windowId);
+      sendOkFail(reason);
+      if (queueSize > 0) {
+        sourceWindow.postMessage(['NOTICE', `${queueSize} queued message(s) dropped due to auth failure`], '*');
+      }
+    }
 
-    if (authEvent.kind !== AUTH_KIND) { sendOkFail('event kind must be 22242'); return; }
+    if (authEvent.kind !== AUTH_KIND) { rejectAuth('event kind must be 22242'); return; }
 
     const challengeTag = authEvent.tags?.find((t) => t[0] === 'challenge');
     const pendingChallenge = pendingChallenges.get(windowId);
-    if (!challengeTag || challengeTag[1] !== pendingChallenge) { sendOkFail('challenge mismatch'); return; }
+    if (!challengeTag || challengeTag[1] !== pendingChallenge) { rejectAuth('challenge mismatch'); return; }
 
     const relayTag = authEvent.tags?.find((t) => t[0] === 'relay');
-    if (!relayTag || relayTag[1] !== PSEUDO_RELAY_URI) { sendOkFail('relay tag must be napplet://shell'); return; }
+    if (!relayTag || relayTag[1] !== PSEUDO_RELAY_URI) { rejectAuth('relay tag must be napplet://shell'); return; }
 
     const now = Math.floor(Date.now() / 1000);
-    if (Math.abs(now - authEvent.created_at) > 60) { sendOkFail('event created_at too far from now'); return; }
+    if (Math.abs(now - authEvent.created_at) > 60) { rejectAuth('event created_at too far from now'); return; }
 
     authInFlight.add(windowId);
     let sigValid: boolean;
     try { sigValid = await hooks.crypto.verifyEvent(authEvent); }
     finally { authInFlight.delete(windowId); }
-    if (!sigValid) { pendingAuthQueue.delete(windowId); sendOkFail('invalid signature'); return; }
+    if (!sigValid) { rejectAuth('invalid signature'); return; }
 
     const typeTag = authEvent.tags?.find((t) => t[0] === 'type');
     const nappType = typeTag?.[1] ?? 'unknown';
