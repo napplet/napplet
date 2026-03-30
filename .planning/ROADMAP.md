@@ -54,7 +54,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Inter-pane routing rules are enforced: sender excluded from own delivery, p-tag targeting reaches only the tagged napp, pre-AUTH messages queue and replay after AUTH, blocked napp gets CLOSED with denial reason
   4. Replay detection rejects old timestamps, future timestamps, and duplicate event IDs; seen IDs are cleaned up after expiry
   5. Lifecycle edge cases handled: cleanup removes all state, non-array postMessages and null source windows are silently ignored
-**Plans**: TBD
+**Plans**: 5 plans in 2 waves
 
 ### Phase 4: Capability Tests
 **Goal**: All delegated capabilities -- ACL enforcement, storage isolation, signer proxy, and inter-pane communication -- are proven correct by automated tests
@@ -100,7 +100,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Wiring Fixes | 0/5 | Planned | - |
 | 2. Test Infrastructure | 0/6 | Planned | - |
-| 3. Core Protocol Tests | 0/TBD | Not started | - |
+| 3. Core Protocol Tests | 0/5 | Planned | - |
 | 4. Capability Tests | 0/TBD | Not started | - |
 | 5. Demo Playground | 0/TBD | Not started | - |
 | 6. Specification and Publish | 0/TBD | Not started | - |
