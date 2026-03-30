@@ -92,11 +92,11 @@ Plans:
   2. Every exported function and type has JSDoc with @param, @returns, and @example
   3. No `console.log` debug statements from v0.1.0 development remain in any shell package source file
   4. All internal helpers are unexported, clearly named, and single-responsibility (verified by checking that the package's public API surface matches documentation)
-**Plans**: TBD
+**Plans**: 2 plans, 2 waves, 10 tasks total
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01: Method naming, API surface, and internal visibility cleanup (4 tasks, wave 1)
+- [ ] 11-02: JSDoc documentation, debug removal, and error handling cleanup (6 tasks, wave 2)
 
 ## Progress
 
@@ -115,4 +115,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 8. ACL Pure Module | v0.2.0 | 0/3 | Planned | - |
 | 9. ACL Enforcement Gate | v0.2.0 | 0/2 | Planned | - |
 | 10. ACL Behavioral Tests | v0.2.0 | 0/2 | Planned | - |
-| 11. Shell Code Cleanup | v0.2.0 | 0/TBD | Not started | - |
+| 11. Shell Code Cleanup | v0.2.0 | 0/2 | Planned | - |
