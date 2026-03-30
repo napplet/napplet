@@ -19,6 +19,7 @@ import { aclStore } from './acl-store.js';
 import { manifestCache } from './manifest-cache.js';
 import { handleStateRequest } from './state-proxy.js';
 import { audioManager } from './audio-manager.js';
+import { createEnforceGate, resolveCapabilities, formatDenialReason } from './enforce.js';
 
 // ─── Public interface ────────────────────────────────────────────────────────
 
@@ -53,18 +54,19 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
   const eventBuffer: NostrEvent[] = [];
   let _onConsentNeeded: ((request: ConsentRequest) => void) | null = null;
 
-  // ─── Helpers ─────────────────────────────────────────────────────────────
+  // ─── Enforcement Gate ─────────────────────────────────────────────────
+  const enforce = createEnforceGate({
+    checkAcl: (pubkey, dTag, aggregateHash, capability) =>
+      aclStore.check(pubkey, dTag, aggregateHash, capability),
+    resolveIdentity: (pubkey) => {
+      const entry = nappKeyRegistry.getEntry(pubkey);
+      return entry ? { dTag: entry.dTag, aggregateHash: entry.aggregateHash } : undefined;
+    },
+    onAclCheck: hooks.onAclCheck,
+    emitAuditEvent: (topic, payload) => relay.injectEvent(topic, payload),
+  });
 
-  function checkAcl(pubkey: string, capability: Capability): boolean {
-    const entry = nappKeyRegistry.getEntry(pubkey);
-    const dTag = entry?.dTag ?? '';
-    const hash = entry?.aggregateHash ?? '';
-    const result = aclStore.check(pubkey, dTag, hash, capability);
-    if (!result) {
-      console.log(`[checkAcl] DENIED ${capability} for pubkey=${pubkey.substring(0, 8)}... dTag=${dTag} hash=${hash}`);
-    }
-    return result;
-  }
+  // ─── Helpers ─────────────────────────────────────────────────────────────
 
   function checkReplay(event: NostrEvent): string | null {
     const now = Math.floor(Date.now() / 1000);
