@@ -9,7 +9,7 @@ Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) (Phases 26-2
 ## Packages
 
 - `packages/shim` — **@napplet/shim** — Napplet-side SDK (subscribe, publish, query, emit, on, nappStorage)
-- `packages/shell` — **@napplet/shell** — Shell-side runtime (createPseudoRelay factory, ACL, signer proxy, storage proxy, audio manager)
+- `packages/shell` — **@napplet/shell** — Shell-side runtime (createShellBridge factory, ACL, signer proxy, state proxy, audio manager)
 - `packages/vite-plugin` — **@napplet/vite-plugin** — NIP-5A manifest generation at build time
 
 ## Tech Stack
@@ -23,7 +23,7 @@ Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) (Phases 26-2
 
 ## Key Concepts
 
-- **Pseudo-relay**: The shell acts as a NIP-01 relay to the napplet. The napplet sends REQ/EVENT/CLOSE messages via postMessage; the shell routes them to real relays, local cache, or other napplets.
+- **ShellBridge**: The shell acts as a NIP-01 relay to the napplet. The napplet sends REQ/EVENT/CLOSE messages via postMessage; the shell routes them to real relays, local cache, or other napplets.
 - **AUTH handshake**: NIP-42 challenge-response with ephemeral Ed25519 keypair per napplet session. Shell verifies Schnorr signature.
 - **ACL**: Capabilities keyed on `(nappType, aggregateHash)`. Controls signing, storage, relay access.
 - **Storage scoping**: nappStorage keys are scoped by `nappType:aggregateHash` so different napplets (and different versions of the same napplet) have isolated storage.
@@ -122,19 +122,19 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 ## Conventions
 
 ## Naming Patterns
-- TypeScript source files use lowercase with hyphens: `relay-shim.ts`, `origin-registry.ts`, `pseudo-relay.ts`, `audio-manager.ts`, `acl-store.ts`, `storage-proxy.ts`
+- TypeScript source files use lowercase with hyphens: `relay-shim.ts`, `origin-registry.ts`, `shell-bridge.ts`, `audio-manager.ts`, `acl-store.ts`, `state-proxy.ts`
 - Type-specific suffix: `types.ts` for interface/type definitions
 - Configuration files: `tsup.config.ts`, `turbo.json`, `tsconfig.json`
-- Exported functions use camelCase: `createPseudoRelay()`, `subscribe()`, `publish()`, `query()`, `emit()`, `on()`
+- Exported functions use camelCase: `createShellBridge()`, `subscribe()`, `publish()`, `query()`, `emit()`, `on()`
 - Internal/private helper functions use camelCase with leading underscore when unexported: `sendEvent()`, `handleRelayMessage()`, `handleAuthChallenge()`
 - Initialization functions: `installStorageShim()`, `installKeyboardShim()`, `installNostrDb()`
 - Getter functions: `getPublicKey()`, `getPublicKey()`, `getUserPubkey()`
-- Factory function names: `createPseudoRelay()` for main entry points
+- Factory function names: `createShellBridge()` for main entry points
 - camelCase for local variables and module-level state: `pendingRequests`, `keypair`, `eventBuffer`, `seenEventIds`
 - UPPER_SNAKE_CASE for constants: `REQUEST_TIMEOUT_MS`, `RING_BUFFER_SIZE`, `DEFAULT_STORAGE_QUOTA`, `SIGNER_SUB_ID`
 - Map/Set names: descriptive nouns without prefix, e.g., `subscriptions`, `pendingChallenges`, `sources`
 - Private state uses underscore prefix if exported: `_setInterPaneEventSender()`, `_resolveKeypairReady`
-- PascalCase for interfaces and types: `NostrEvent`, `NostrFilter`, `ShellHooks`, `PseudoRelay`, `NappKeypair`, `AclEntry`, `ConsentRequest`, `AudioSource`
+- PascalCase for interfaces and types: `NostrEvent`, `NostrFilter`, `ShellHooks`, `ShellBridge`, `NappKeypair`, `AclEntry`, `ConsentRequest`, `AudioSource`
 - Suffix conventions: `*Hooks` for integration point interfaces, `*Like` for minimal protocol interfaces (e.g., `RelayPoolLike`, `WorkerRelayLike`)
 ## Code Style
 - No explicit linter/formatter configured in package (ESLint/Prettier)
@@ -174,7 +174,7 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 - Example blocks using markdown triple-backticks
 ## Function Design
 - Functions range from 5-100 lines
-- Helper functions in `pseudo-relay.ts` (e.g., `checkReplay()`, `matchesFilter()`) are typically 10-15 lines
+- Helper functions in `shell-bridge.ts` (e.g., `checkReplay()`, `matchesFilter()`) are typically 10-15 lines
 - Main message handlers (`handleEvent()`, `handleAuth()`) span 50-100 lines due to complex protocol handling
 - Prefer explicit parameters over object spreading
 - Use single object parameter for optional settings: `options?: { relay?: string; group?: string }`
@@ -182,7 +182,7 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 - Type parameters for flexibility: `hooks: ShellHooks` for dependency injection
 - Functions return Promise for async operations: `Promise<NostrEvent>`, `Promise<unknown>`
 - Subscription functions return objects with teardown methods: `{ close(): void }`
-- Factory functions return interface types: `createPseudoRelay(): PseudoRelay`
+- Factory functions return interface types: `createShellBridge(): ShellBridge`
 - Early returns for validation failures: `if (!condition) return;`
 ## Module Design
 - Prefer named exports: `export function subscribe()`, `export const audioManager = { ... }`
@@ -216,7 +216,7 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 - Depends on: nostr-tools (peer dependency) for event signing
 - Used by: Napplet iframe applications running within a shell host
 - Purpose: NIP-01 message router and protocol handler. Core of the shell runtime. Handles AUTH, REQ, EVENT, CLOSE messages; routes to relay pool or local cache; enforces ACL
-- Location: `packages/shell/src/pseudo-relay.ts`
+- Location: `packages/shell/src/shell-bridge.ts`
 - Contains: Message dispatch logic, subscription lifecycle, event delivery, ACL checks, replay attack prevention
 - Depends on: All registries and proxy handlers in shell
 - Used by: Shell host to attach to window.message listener
@@ -235,7 +235,7 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 - Pattern: Stored in sessionStorage; loaded/created deterministically per nappType; used to sign all outbound events
 - Purpose: Framework-agnostic integration point. Host app provides relay pool, auth state, window manager, etc.
 - Examples: `packages/shell/src/types.ts` (ShellHooks, RelayPoolHooks, AuthHooks, WindowManagerHooks, etc.)
-- Pattern: createPseudoRelay(hooks) accepts all hooks; implementations are async-aware to allow real relay subscriptions
+- Pattern: createShellBridge(hooks) accepts all hooks; implementations are async-aware to allow real relay subscriptions
 - Purpose: Fine-grained access control per napplet version
 - Examples: 'relay:read', 'relay:write', 'sign:event', 'sign:nip04', 'sign:nip44', 'storage:read', 'storage:write', 'hotkey:forward'
 - Pattern: Checked on every sensitive operation (publish, subscribe, signer request, storage access)
