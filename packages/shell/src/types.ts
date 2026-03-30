@@ -198,6 +198,16 @@ export interface DmHooks {
   sendDm(recipientPubkey: string, message: string): Promise<{ success: boolean; eventId?: string; error?: string }>;
 }
 
+/** Event emitted on every ACL enforcement check. */
+export interface AclCheckEvent {
+  /** The identity being checked. */
+  identity: { pubkey: string; dTag: string; hash: string };
+  /** The capability being checked (e.g., 'relay:write', 'state:read'). */
+  capability: string;
+  /** The enforcement decision. */
+  decision: 'allow' | 'deny';
+}
+
 /** All hooks that the shell requires from the host application. */
 export interface ShellHooks {
   relayPool: RelayPoolHooks;
@@ -209,4 +219,6 @@ export interface ShellHooks {
   workerRelay: WorkerRelayHooks;
   crypto: CryptoHooks;
   dm?: DmHooks;
+  /** Called on every ACL enforcement check. Both allows and denials are reported. */
+  onAclCheck?: (event: AclCheckEvent) => void;
 }
