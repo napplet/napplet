@@ -1,17 +1,48 @@
 /**
  * main.ts -- Demo playground entry point.
  *
- * Boots the shell with mock hooks, loads demo napplets,
- * installs the message tap, and wires up the debugger.
- *
- * Subsequent plans fill in the actual implementation.
+ * Boots shell, loads napplets, wires debugger and ACL panel.
  */
 import 'virtual:uno.css';
+import { bootShell, loadNapplet } from './shell-host.js';
+import './debugger.js';
+import type { NappletDebugger } from './debugger.js';
+import { renderAclPanel, setDebugger } from './acl-panel.js';
 
-// Placeholder -- shell host setup goes here in Plan 02
-console.log('[napplet playground] initializing...');
+// Boot the shell
+const { tap } = bootShell();
 
-const app = document.getElementById('debugger-panel');
-if (app) {
-  // Debugger web component will be registered in Plan 02
+// Connect debugger to tap
+const debuggerEl = document.getElementById('debugger') as NappletDebugger;
+if (debuggerEl) {
+  debuggerEl.connectTap(tap);
+  setDebugger(debuggerEl);
 }
+
+// Load demo napplets
+const chatInfo = loadNapplet('chat', 'chat-frame-container');
+const botInfo = loadNapplet('bot', 'bot-frame-container');
+
+// Update status indicators when napplets AUTH
+tap.onMessage((msg) => {
+  if (msg.verb === 'OK' && msg.parsed.success === true && msg.direction === 'shell->napplet') {
+    // Re-render ACL panel when a napplet authenticates
+    setTimeout(() => {
+      renderAclPanel('acl-controls');
+
+      // Update status text
+      const chatStatus = document.getElementById('chat-status');
+      const botStatus = document.getElementById('bot-status');
+      if (chatInfo.authenticated && chatStatus) {
+        chatStatus.textContent = 'authenticated';
+        chatStatus.style.color = '#39ff14';
+      }
+      if (botInfo.authenticated && botStatus) {
+        botStatus.textContent = 'authenticated';
+        botStatus.style.color = '#39ff14';
+      }
+    }, 100);
+  }
+});
+
+console.log('[napplet playground] initialized');
