@@ -1,7 +1,7 @@
 /**
- * pseudo-relay.ts — NIP-01 pseudo-relay message handler.
+ * shell-bridge.ts — NIP-01 ShellBridge message handler.
  *
- * Factory function that creates a framework-agnostic pseudo-relay instance.
+ * Factory function that creates a framework-agnostic ShellBridge instance.
  * All external dependencies are injected via ShellHooks.
  */
 
@@ -10,7 +10,7 @@ import type {
   ShellHooks, ConsentRequest,
 } from './types.js';
 import {
-  AUTH_KIND, PSEUDO_RELAY_URI, REPLAY_WINDOW_SECONDS,
+  AUTH_KIND, SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS,
   BusKind, ALL_CAPABILITIES, DESTRUCTIVE_KINDS,
 } from './types.js';
 import { originRegistry } from './origin-registry.js';
@@ -22,7 +22,7 @@ import { audioManager } from './audio-manager.js';
 
 // ─── Public interface ────────────────────────────────────────────────────────
 
-export interface PseudoRelay {
+export interface ShellBridge {
   /** The main message handler — attach to window.addEventListener('message', ...) */
   handleMessage(event: MessageEvent): void;
   /** Send a NIP-42 AUTH challenge to a napp window. */
@@ -36,12 +36,12 @@ export interface PseudoRelay {
 }
 
 /**
- * Create a pseudo-relay instance with dependency injection via hooks.
+ * Create a ShellBridge instance with dependency injection via hooks.
  *
  * @param hooks - Host application provides relay pool, auth, config, etc.
- * @returns A PseudoRelay instance ready to handle napp messages.
+ * @returns A ShellBridge instance ready to handle napp messages.
  */
-export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
+export function createShellBridge(hooks: ShellHooks): ShellBridge {
   // ─── Module-level state ──────────────────────────────────────────────────
 
   const pendingChallenges = new Map<string, string>();
@@ -161,7 +161,7 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
     if (!challengeTag || challengeTag[1] !== pendingChallenge) { rejectAuth('challenge mismatch'); return; }
 
     const relayTag = authEvent.tags?.find((t) => t[0] === 'relay');
-    if (!relayTag || relayTag[1] !== PSEUDO_RELAY_URI) { rejectAuth('relay tag must be napplet://shell'); return; }
+    if (!relayTag || relayTag[1] !== SHELL_BRIDGE_URI) { rejectAuth('relay tag must be napplet://shell'); return; }
 
     const now = Math.floor(Date.now() / 1000);
     if (Math.abs(now - authEvent.created_at) > 60) { rejectAuth('event created_at too far from now'); return; }
@@ -604,7 +604,7 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
 
   // ─── Public interface ────────────────────────────────────────────────────
 
-  const relay: PseudoRelay = {
+  const relay: ShellBridge = {
     handleMessage,
 
     sendChallenge(windowId: string): void {
