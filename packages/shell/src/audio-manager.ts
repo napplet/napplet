@@ -21,7 +21,7 @@ let version = 0;
 function bump(): void {
   version++;
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('hyprgate:audio-changed'));
+    window.dispatchEvent(new CustomEvent('napplet:audio-changed'));
   }
 }
 

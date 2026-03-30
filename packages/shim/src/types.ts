@@ -1,5 +1,5 @@
-// @napplet/shim internal types — inlined from @hyprgate/types to remove monorepo dependency.
-// These constants and interfaces must match the hyprgate shell protocol exactly.
+// @napplet/shim internal types — inlined protocol constants and interfaces.
+// These constants and interfaces must match the napplet shell protocol exactly.
 
 /** NIP-01 nostr event. */
 export interface NostrEvent {
@@ -24,7 +24,7 @@ export interface NostrFilter {
 }
 
 /**
- * Ephemeral event kinds (29000-29999) used by the hyprgate bus.
+ * Ephemeral event kinds (29000-29999) used by the napplet bus.
  * Ephemeral events are auto-discarded by real relays per NIP-01 spec —
  * perfect for bus traffic that should never persist beyond the pseudo-relay.
  */
@@ -45,7 +45,7 @@ export type BusKindValue = (typeof BusKind)[keyof typeof BusKind];
 export const AUTH_KIND = 22242 as const;
 
 /** The pseudo-relay URI used in NIP-42 AUTH challenges. */
-export const PSEUDO_RELAY_URI = 'hyprgate://shell' as const;
+export const PSEUDO_RELAY_URI = 'napplet://shell' as const;
 
 /** Protocol version string. */
 export const PROTOCOL_VERSION = '2.0.0' as const;

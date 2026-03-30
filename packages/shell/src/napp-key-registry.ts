@@ -62,7 +62,7 @@ export const nappKeyRegistry = {
     pendingUpdates.set(windowId, update);
     _pendingVersion++;
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('hyprgate:pending-update', { detail: { windowId } }));
+      window.dispatchEvent(new CustomEvent('napplet:pending-update', { detail: { windowId } }));
     }
   },
 
@@ -74,7 +74,7 @@ export const nappKeyRegistry = {
     pendingUpdates.delete(windowId);
     _pendingVersion++;
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('hyprgate:pending-update', { detail: { windowId } }));
+      window.dispatchEvent(new CustomEvent('napplet:pending-update', { detail: { windowId } }));
     }
   },
 

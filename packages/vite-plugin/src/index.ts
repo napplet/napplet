@@ -1,7 +1,7 @@
 /**
  * @napplet/vite-plugin — NIP-5A manifest generation plugin for Vite.
  *
- * - transformIndexHtml: injects <meta name="hyprgate-aggregate-hash"> into HTML
+ * - transformIndexHtml: injects <meta name="napplet-aggregate-hash"> into HTML
  * - closeBundle (build only): walks dist/, computes per-file SHA-256 hashes,
  *   computes aggregate hash, signs a kind 35128 manifest event, writes it to
  *   dist/.nip5a-manifest.json, and updates the meta tag in dist/index.html.
@@ -77,7 +77,7 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         {
           tag: 'meta',
           attrs: {
-            name: 'hyprgate-aggregate-hash',
+            name: 'napplet-aggregate-hash',
             content: '',
           },
           injectTo: 'head',
@@ -161,8 +161,8 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       if (fs.existsSync(indexPath)) {
         let html = fs.readFileSync(indexPath, 'utf-8');
         html = html.replace(
-          /<meta name="hyprgate-aggregate-hash" content="">/,
-          `<meta name="hyprgate-aggregate-hash" content="${aggregateHash}">`,
+          /<meta name="napplet-aggregate-hash" content="">/,
+          `<meta name="napplet-aggregate-hash" content="${aggregateHash}">`,
         );
         fs.writeFileSync(indexPath, html);
         console.log(`[nip5a-manifest] ${options.nappType}: hash ${aggregateHash.slice(0, 12)}... injected into index.html`);

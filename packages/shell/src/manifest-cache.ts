@@ -9,7 +9,7 @@ export interface ManifestCacheEntry {
   verifiedAt: number;
 }
 
-const STORAGE_KEY = 'hyprgate:manifest-cache';
+const STORAGE_KEY = 'napplet:manifest-cache';
 const cache = new Map<string, ManifestCacheEntry>();
 
 function cacheKey(pubkey: string, dTag: string): string {

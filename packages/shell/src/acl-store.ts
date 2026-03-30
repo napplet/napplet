@@ -10,7 +10,7 @@
 import type { Capability, AclEntry } from './types.js';
 import { ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
 
-const STORAGE_KEY = 'hyprgate:acl';
+const STORAGE_KEY = 'napplet:acl';
 
 export const DEFAULT_STORAGE_QUOTA = 512 * 1024;
 

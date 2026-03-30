@@ -143,7 +143,7 @@ export function createPseudoRelay(hooks: ShellHooks): PseudoRelay {
     if (!challengeTag || challengeTag[1] !== pendingChallenge) { sendOkFail('challenge mismatch'); return; }
 
     const relayTag = authEvent.tags?.find((t) => t[0] === 'relay');
-    if (!relayTag || relayTag[1] !== PSEUDO_RELAY_URI) { sendOkFail('relay tag must be hyprgate://shell'); return; }
+    if (!relayTag || relayTag[1] !== PSEUDO_RELAY_URI) { sendOkFail('relay tag must be napplet://shell'); return; }
 
     const now = Math.floor(Date.now() / 1000);
     if (Math.abs(now - authEvent.created_at) > 60) { sendOkFail('event created_at too far from now'); return; }

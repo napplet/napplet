@@ -28,7 +28,7 @@ export default defineConfig({
 
 ## What it does
 
-1. **transformIndexHtml** — Injects `<meta name="hyprgate-aggregate-hash" content="">` into HTML head
+1. **transformIndexHtml** — Injects `<meta name="napplet-aggregate-hash" content="">` into HTML head
 2. **closeBundle** (build only) — Walks dist/, computes per-file SHA-256 hashes, computes aggregate hash, signs a kind 35128 manifest event, writes `.nip5a-manifest.json`, and updates the meta tag in `index.html`
 
 ## License
