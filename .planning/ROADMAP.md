@@ -61,11 +61,11 @@ Plans:
   2. Both sender capabilities (relay:write, sign:event, state:write) and recipient capabilities (relay:read, state:read) are checked on every message
   3. A denied publish produces an `OK false` response, a denied subscription produces a `CLOSED` with machine-readable reason, and denied state operations produce error tags
   4. Enforcement decisions are logged with identity, capability, action, and decision for every check (auditable trail)
-**Plans**: TBD
+**Plans**: 2 plans, 2 waves, 7 tasks total
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01: Enforcement gate module — enforce(), resolveCapabilities(), audit hooks (3 tasks, wave 1)
+- [ ] 09-02: Wire enforce gate into all ShellBridge handlers (4 tasks, wave 2)
 
 ### Phase 10: ACL Behavioral Tests
 **Goal**: A comprehensive test matrix proves that every capability-action combination is enforced, and no message path bypasses the ACL gate
@@ -77,11 +77,11 @@ Plans:
   3. Revoking ALL capabilities for a napplet results in zero messages delivered to or from that napplet
   4. ACL state survives a simulated reload -- revoke, reload test harness, verify still revoked
   5. Block and unblock are tested for every action type and produce correct error responses on block
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01: Capability × Action matrix tests — relay, signer, state, hotkey (4 tasks, wave 1)
+- [ ] 10-02: ACL lifecycle tests — mid-session revoke, revoke-all, persistence (1 task, wave 2)
 
 ### Phase 11: Shell Code Cleanup
 **Goal**: ShellBridge has a minimal, consistent, well-documented public API with clean internals and no development artifacts
@@ -113,6 +113,6 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 6. Specification and Publish | v0.1.0 | 4/4 | Complete | 2026-03-30 |
 | 7. Nomenclature | v0.2.0 | 0/2 | Planned | - |
 | 8. ACL Pure Module | v0.2.0 | 0/3 | Planned | - |
-| 9. ACL Enforcement Gate | v0.2.0 | 0/TBD | Not started | - |
+| 9. ACL Enforcement Gate | v0.2.0 | 0/2 | Planned | - |
 | 10. ACL Behavioral Tests | v0.2.0 | 0/TBD | Not started | - |
 | 11. Shell Code Cleanup | v0.2.0 | 0/TBD | Not started | - |
