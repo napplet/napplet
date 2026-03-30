@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.1.0
 milestone_name: milestone
-status: Phase 02 all plans executed
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-30T13:55:53.401Z"
-last_activity: 2026-03-30 -- Phase 02 execution complete (6/6 plans)
+status: executing
+stopped_at: Phase 5 context gathered
+last_updated: "2026-03-30T16:17:40.131Z"
+last_activity: 2026-03-30 -- Phase 03 execution started
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 16
-  completed_plans: 11
+  total_plans: 18
+  completed_plans: 12
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 02 — test-infrastructure
+**Current focus:** Phase 03 — core-protocol-tests
 
 ## Current Position
 
-Phase: 02 (test-infrastructure) — ALL PLANS COMPLETE, AWAITING VERIFICATION
-Plan: 6 of 6
-Status: Phase 02 all plans executed
-Last activity: 2026-03-30 -- Phase 02 execution complete (6/6 plans)
+Phase: 03 (core-protocol-tests) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 03
+Last activity: 2026-03-30 -- Phase 03 execution started
 
 Progress: [██████████] 100%
 
@@ -75,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T13:55:53.398Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-capability-tests/04-CONTEXT.md
+Last session: 2026-03-30T16:17:40.128Z
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-demo-playground/05-CONTEXT.md
