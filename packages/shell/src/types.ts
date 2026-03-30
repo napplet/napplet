@@ -5,7 +5,7 @@
 
 export const PROTOCOL_VERSION = '2.0.0' as const;
 export const AUTH_KIND = 22242 as const;
-export const PSEUDO_RELAY_URI = 'napplet://shell' as const;
+export const SHELL_BRIDGE_URI = 'napplet://shell' as const;
 export const REPLAY_WINDOW_SECONDS = 30 as const;
 
 export const DESTRUCTIVE_KINDS = new Set([0, 3, 5, 10002]);
