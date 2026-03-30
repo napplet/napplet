@@ -14,8 +14,10 @@ import {
   type ShellHooks,
   type Capability,
   type NostrEvent,
+  type ConsentRequest,
   ALL_CAPABILITIES,
 } from '@napplet/shell';
+import { createSignerHooks, getDemoHostPubkey } from './signer-demo.js';
 
 // Inline a simplified message tap since we can't import from tests/helpers in apps/
 // (they are not a published package)
@@ -154,7 +156,7 @@ function createMessageTap(): MessageTap {
 // --- Mock ShellHooks (simplified from tests/helpers/mock-hooks.ts) ---
 
 function createDemoHooks(): ShellHooks {
-  const pubkey = '0'.repeat(64);
+  const signerHooks = createSignerHooks();
   return {
     relayPool: {
       getRelayPool: () => ({
@@ -177,8 +179,8 @@ function createDemoHooks(): ShellHooks {
     },
     windowManager: { createWindow: () => null },
     auth: {
-      getUserPubkey: () => pubkey,
-      getSigner: () => null,
+      getUserPubkey: signerHooks.getUserPubkey,
+      getSigner: signerHooks.getSigner,
     },
     config: { getNappUpdateBehavior: () => 'auto-grant' },
     hotkeys: { executeHotkeyFromForward: () => {} },
@@ -264,6 +266,12 @@ export function bootShell(): { tap: MessageTap; relay: PseudoRelay } {
   };
 
   relay = createPseudoRelay(hooks);
+
+  // Set consent handler for destructive kinds
+  // In the demo, auto-approve after 500ms to show the flow
+  relay.onConsentNeeded((request: ConsentRequest) => {
+    setTimeout(() => request.resolve(true), 500);
+  });
 
   // Wrap handleMessage for outbound capture
   const _origHandle = relay.handleMessage;
@@ -365,3 +373,5 @@ export function toggleBlock(windowId: string, blocked: boolean): void {
     aclStore.unblock(info.pubkey, info.dTag || '', info.aggregateHash || '');
   }
 }
+
+export { getDemoHostPubkey } from './signer-demo.js';

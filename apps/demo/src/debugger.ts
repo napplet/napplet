@@ -10,6 +10,7 @@
  */
 
 import type { TappedMessage, MessageTap } from './shell-host.js';
+import { renderSequenceDiagram } from './sequence-diagram.js';
 
 /** Verb-to-color mapping for the dark terminal theme */
 const VERB_COLORS: Record<string, string> = {
@@ -339,9 +340,7 @@ export class NappletDebugger extends HTMLElement {
     if (this.activeTab !== 'sequence') return;
     const container = this.shadow.getElementById('sequence-container');
     if (!container) return;
-    // Sequence diagram rendering will be wired in Plan 05-05
-    // For now, show a message count placeholder
-    container.innerHTML = `<div style="color:#555;padding:20px;text-align:center;">${this.allMessages.length} messages captured -- sequence diagram loading...</div>`;
+    container.innerHTML = renderSequenceDiagram(this.allMessages);
     container.scrollTop = container.scrollHeight;
   }
 
