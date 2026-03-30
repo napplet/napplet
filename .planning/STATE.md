@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1.0
-milestone_name: milestone
-status: completed
-stopped_at: Phase 06 plans 01-03 complete, plan 04 blocked on npm auth
-last_updated: "2026-03-30T18:05:30.114Z"
+milestone: v0.2.0
+milestone_name: shell-architecture-cleanup
+status: ready-to-plan
+stopped_at: Roadmap created, Phase 7 ready to plan
+last_updated: "2026-03-30"
 last_activity: 2026-03-30
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 30
-  completed_plans: 30
-  percent: 97
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,22 +20,21 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-03-30)
 
-**Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 06 — specification-and-publish
+**Core value:** The shell's security boundary (ACL) must be deterministic, auditable, and enforce on every code path -- no bypasses, no gaps.
+**Current focus:** Phase 7 -- Nomenclature
 
 ## Current Position
 
-Phase: 06 (specification-and-publish) — 3/4 PLANS COMPLETE (plan 04 blocked)
-Plan: 4 of 4 (blocked on human npm auth)
-Status: Plans 01-03 complete, Plan 04 requires human npm login
-Last activity: 2026-03-30
+Phase: 7 of 11 (Nomenclature) -- first phase of v0.2.0
+Plan: 0 of TBD (not yet planned)
+Status: Ready to plan
+Last activity: 2026-03-30 -- Roadmap created for v0.2.0
 
-Progress: [█████████░] 97%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: 0 hours
@@ -47,7 +46,6 @@ Progress: [█████████░] 97%
 | - | - | - | - |
 
 **Recent Trend:**
-
 - Last 5 plans: -
 - Trend: -
 
@@ -60,9 +58,9 @@ Progress: [█████████░] 97%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Roadmap]: Fix wiring bugs before writing any tests (research-informed)
-- [Roadmap]: Standalone Playwright for protocol tests, Vitest Node mode for unit tests (avoid jsdom postMessage issues)
-- [Roadmap]: Split behavioral tests into core protocol (auth/routing/replay/lifecycle) and capabilities (ACL/storage/signer/IPC) phases
+- [Roadmap v0.2.0]: Renames (Phase 7) before ACL redesign so new code uses correct names from the start
+- [Roadmap v0.2.0]: ACL redesign is the critical path (Phases 8-9), tests validate after (Phase 10), cleanup last (Phase 11)
+- [Roadmap v0.2.0]: Tests written against new architecture, not retrofitted onto old code
 
 ### Pending Todos
 
@@ -70,12 +68,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- RESOLVED: Playwright postMessage interception for sandboxed iframes required Proxy-based wrapping of originRegistry and relay.handleMessage (not Window.prototype.postMessage monkey-patching, which doesn't work for cross-origin windows).
-- RESOLVED: Sandboxed iframes need CORS headers and relative asset paths for script loading.
-- ACTIVE: Plan 06-04 (npm publish) requires human npm authentication. All packages are validated and dry-run tested. Human must run: `npm login` then publish commands per 06-04-SUMMARY.md.
+- CARRIED: npm publish (v0.1.0 plan 06-04) still blocked on human npm auth. Deferred to v0.3.0 per REQUIREMENTS.md.
 
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Phase 06 plans 01-03 complete, plan 04 blocked on npm auth
-Resume file: .planning/phases/06-specification-and-publish/06-04-SUMMARY.md
+Stopped at: v0.2.0 roadmap created, Phase 7 ready to plan
+Resume file: None

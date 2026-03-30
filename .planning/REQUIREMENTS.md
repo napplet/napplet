@@ -77,46 +77,46 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REN-01 | TBD | Pending |
-| REN-02 | TBD | Pending |
-| REN-03 | TBD | Pending |
-| REN-04 | TBD | Pending |
-| REN-05 | TBD | Pending |
-| REN-06 | TBD | Pending |
-| REN-07 | TBD | Pending |
-| REN-08 | TBD | Pending |
-| STA-01 | TBD | Pending |
-| STA-02 | TBD | Pending |
-| STA-03 | TBD | Pending |
-| STA-04 | TBD | Pending |
-| ACL-01 | TBD | Pending |
-| ACL-02 | TBD | Pending |
-| ACL-03 | TBD | Pending |
-| ACL-04 | TBD | Pending |
-| ACL-05 | TBD | Pending |
-| ACL-06 | TBD | Pending |
-| ENF-01 | TBD | Pending |
-| ENF-02 | TBD | Pending |
-| ENF-03 | TBD | Pending |
-| ENF-04 | TBD | Pending |
-| ENF-05 | TBD | Pending |
-| TST-01 | TBD | Pending |
-| TST-02 | TBD | Pending |
-| TST-03 | TBD | Pending |
-| TST-04 | TBD | Pending |
-| TST-05 | TBD | Pending |
-| TST-06 | TBD | Pending |
-| CLN-01 | TBD | Pending |
-| CLN-02 | TBD | Pending |
-| CLN-03 | TBD | Pending |
-| CLN-04 | TBD | Pending |
-| CLN-05 | TBD | Pending |
+| REN-01 | Phase 7 | Pending |
+| REN-02 | Phase 7 | Pending |
+| REN-03 | Phase 7 | Pending |
+| REN-04 | Phase 7 | Pending |
+| REN-05 | Phase 7 | Pending |
+| REN-06 | Phase 7 | Pending |
+| REN-07 | Phase 7 | Pending |
+| REN-08 | Phase 7 | Pending |
+| STA-01 | Phase 7 | Pending |
+| STA-02 | Phase 7 | Pending |
+| STA-03 | Phase 7 | Pending |
+| STA-04 | Phase 7 | Pending |
+| ACL-01 | Phase 8 | Pending |
+| ACL-02 | Phase 8 | Pending |
+| ACL-03 | Phase 8 | Pending |
+| ACL-04 | Phase 8 | Pending |
+| ACL-05 | Phase 8 | Pending |
+| ACL-06 | Phase 8 | Pending |
+| ENF-01 | Phase 9 | Pending |
+| ENF-02 | Phase 9 | Pending |
+| ENF-03 | Phase 9 | Pending |
+| ENF-04 | Phase 9 | Pending |
+| ENF-05 | Phase 9 | Pending |
+| TST-01 | Phase 10 | Pending |
+| TST-02 | Phase 10 | Pending |
+| TST-03 | Phase 10 | Pending |
+| TST-04 | Phase 10 | Pending |
+| TST-05 | Phase 10 | Pending |
+| TST-06 | Phase 10 | Pending |
+| CLN-01 | Phase 11 | Pending |
+| CLN-02 | Phase 11 | Pending |
+| CLN-03 | Phase 11 | Pending |
+| CLN-04 | Phase 11 | Pending |
+| CLN-05 | Phase 11 | Pending |
 
 **Coverage:**
 - v0.2.0 requirements: 34 total
-- Mapped to phases: 0
-- Unmapped: 34
+- Mapped to phases: 34
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after initial definition*
+*Last updated: 2026-03-30 after roadmap creation*
