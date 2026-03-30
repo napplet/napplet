@@ -11,8 +11,8 @@
  *   await page.evaluate(() => window.__clearMessages__())
  */
 
-import { createPseudoRelay, originRegistry, aclStore, nappKeyRegistry } from '@napplet/shell';
-import type { PseudoRelay, Capability } from '@napplet/shell';
+import { createShellBridge, originRegistry, aclStore, nappKeyRegistry } from '@napplet/shell';
+import type { ShellBridge, Capability } from '@napplet/shell';
 import { createMockHooks } from '@test/helpers';
 import type { MockHooksResult } from '@test/helpers';
 import { createMessageTap } from '@test/helpers';
@@ -26,7 +26,7 @@ declare global {
     __loadNapplet__: (name: string, params?: Record<string, string>) => string;
     __unloadNapplet__: (windowId: string) => void;
     __clearMessages__: () => void;
-    __getRelay__: () => PseudoRelay;
+    __getRelay__: () => ShellBridge;
     __getMockHooks__: () => MockHooksResult;
     __injectMessage__: (windowId: string, data: unknown[]) => void;
     __createSubscription__: (windowId: string, subId: string, filters: unknown[]) => void;
@@ -63,7 +63,7 @@ const tap = createMessageTap();
 
 // --- Outbound message interception ---
 //
-// The pseudo-relay sends messages to napplets via:
+// The ShellBridge sends messages to napplets via:
 //   1. originRegistry.getIframeWindow(windowId).postMessage() -- for sendChallenge, deliverToSubscriptions
 //   2. sourceWindow.postMessage() -- for handleAuth, handleEvent (sourceWindow = event.source)
 //
@@ -121,7 +121,7 @@ originRegistry.getWindowId = (win: Window): string | undefined => {
   return undefined;
 };
 
-const relay = createPseudoRelay(mockResult.hooks);
+const relay = createShellBridge(mockResult.hooks);
 
 // Install the message tap (captures napplet->shell messages via addEventListener)
 tap.install(window);

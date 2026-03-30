@@ -175,7 +175,7 @@ function matchesCriteria(msg: TappedMessage, criteria: MessageCriteria): boolean
  * The tap captures inbound messages (napplet->shell) by listening for 'message'
  * events on the shell window. Outbound messages (shell->napplet) must be recorded
  * explicitly by calling tap.recordOutbound() -- the test harness wraps the
- * pseudo-relay's postMessage calls to do this.
+ * ShellBridge's postMessage calls to do this.
  */
 export function createMessageTap(): MessageTap {
   const messages: TappedMessage[] = [];
@@ -213,7 +213,7 @@ export function createMessageTap(): MessageTap {
         if (event.data[0] === '__TEST_DONE__') return;
         record('napplet->shell', event.data);
       };
-      // Use capture phase to see messages before the pseudo-relay
+      // Use capture phase to see messages before the ShellBridge
       shellWindow.addEventListener('message', messageHandler, true);
     },
 

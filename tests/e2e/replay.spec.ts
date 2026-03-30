@@ -1,7 +1,7 @@
 /**
  * Phase 3 -- Replay & Integrity behavioral tests.
  *
- * RPL-01 through RPL-05: Proves that the pseudo-relay's replay detection
+ * RPL-01 through RPL-05: Proves that the ShellBridge's replay detection
  * correctly rejects old timestamps, future timestamps, and duplicate event IDs,
  * cleans up expired IDs, and ignores events from unregistered windows.
  */

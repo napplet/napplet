@@ -1,7 +1,7 @@
 /**
  * Inter-Pane Communication Tests (IPC-01 through IPC-06)
  *
- * Proves that the pseudo-relay's subscription-based event routing correctly
+ * Proves that the ShellBridge's subscription-based event routing correctly
  * delivers events between napplets by topic, excludes senders from self-delivery,
  * handles multiple subscribers, respects unsubscribe, passes through arbitrary
  * content, and supports shell-injected events.
