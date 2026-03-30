@@ -28,7 +28,7 @@ function calculateNappStorageBytes(
     if (!key?.startsWith(prefix)) continue;
     if (excludeScopedKey && key === excludeScopedKey) continue;
     const value = localStorage.getItem(key) ?? '';
-    totalBytes += new Blob([key, value]).size;
+    totalBytes += new TextEncoder().encode(key + value).length;
   }
   return totalBytes;
 }
@@ -84,7 +84,7 @@ export function handleStorageRequest(
         sendError(sourceWindow, correlationId, 'storage:write capability denied'); return;
       }
       const quota = aclStore.getStorageQuota(pubkey, dTag, aggregateHash);
-      const newWriteBytes = new Blob([scopedKey(pubkey, dTag, aggregateHash, key), value]).size;
+      const newWriteBytes = new TextEncoder().encode(scopedKey(pubkey, dTag, aggregateHash, key) + value).length;
       const existingBytes = calculateNappStorageBytes(pubkey, dTag, aggregateHash, key);
       if (existingBytes + newWriteBytes > quota) {
         sendError(sourceWindow, correlationId, `quota exceeded: napp storage limit is ${quota} bytes`);

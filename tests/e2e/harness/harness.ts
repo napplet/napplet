@@ -11,8 +11,8 @@
  *   await page.evaluate(() => window.__clearMessages__())
  */
 
-import { createPseudoRelay, originRegistry } from '@napplet/shell';
-import type { PseudoRelay } from '@napplet/shell';
+import { createPseudoRelay, originRegistry, aclStore, nappKeyRegistry } from '@napplet/shell';
+import type { PseudoRelay, Capability } from '@napplet/shell';
 import { createMockHooks } from '@test/helpers';
 import type { MockHooksResult } from '@test/helpers';
 import { createMessageTap } from '@test/helpers';
@@ -34,6 +34,25 @@ declare global {
     __closeSubscription__: (windowId: string, subId: string) => void;
     __getChallenge__: (windowId: string) => string | undefined;
     __getNappletFrames__: () => string[];
+    // --- Phase 4: Capability test globals ---
+    __aclRevoke__: (pubkey: string, dTag: string, hash: string, cap: string) => void;
+    __aclGrant__: (pubkey: string, dTag: string, hash: string, cap: string) => void;
+    __aclBlock__: (pubkey: string, dTag: string, hash: string) => void;
+    __aclUnblock__: (pubkey: string, dTag: string, hash: string) => void;
+    __aclPersist__: () => void;
+    __aclLoad__: () => void;
+    __aclClear__: () => void;
+    __aclCheck__: (pubkey: string, dTag: string, hash: string, cap: string) => boolean;
+    __aclGetEntry__: (pubkey: string, dTag: string, hash: string) => unknown;
+    __getNappPubkey__: (windowId: string) => string | undefined;
+    __getNappEntry__: (windowId: string) => { pubkey: string; dTag: string; aggregateHash: string } | undefined;
+    __setSigner__: (signer: unknown) => void;
+    __setConsentHandler__: (mode: 'auto-approve' | 'auto-deny') => void;
+    __injectShellEvent__: (topic: string, payload: unknown) => void;
+    __getLocalStorageKeys__: () => string[];
+    __getLocalStorageItem__: (key: string) => string | null;
+    __setLocalStorageItem__: (key: string, value: string) => void;
+    __clearLocalStorage__: () => void;
   }
 }
 
@@ -267,6 +286,53 @@ window.__getChallenge__ = (windowId: string): string | undefined => {
 window.__getNappletFrames__ = (): string[] => {
   return Array.from(nappletFrames.keys());
 };
+
+// --- Phase 4: Capability Test Control Functions ---
+
+// ACL manipulation globals
+window.__aclRevoke__ = (pubkey, dTag, hash, cap) => aclStore.revoke(pubkey, dTag, hash, cap as Capability);
+window.__aclGrant__ = (pubkey, dTag, hash, cap) => aclStore.grant(pubkey, dTag, hash, cap as Capability);
+window.__aclBlock__ = (pubkey, dTag, hash) => aclStore.block(pubkey, dTag, hash);
+window.__aclUnblock__ = (pubkey, dTag, hash) => aclStore.unblock(pubkey, dTag, hash);
+window.__aclPersist__ = () => aclStore.persist();
+window.__aclLoad__ = () => aclStore.load();
+window.__aclClear__ = () => aclStore.clear();
+window.__aclCheck__ = (pubkey, dTag, hash, cap) => aclStore.check(pubkey, dTag, hash, cap as Capability);
+window.__aclGetEntry__ = (pubkey, dTag, hash) => aclStore.getEntry(pubkey, dTag, hash);
+
+// Napplet identity globals
+window.__getNappPubkey__ = (windowId: string) => nappKeyRegistry.getPubkey(windowId);
+window.__getNappEntry__ = (windowId: string) => {
+  const pubkey = nappKeyRegistry.getPubkey(windowId);
+  if (!pubkey) return undefined;
+  const entry = nappKeyRegistry.getEntry(pubkey);
+  if (!entry) return undefined;
+  return { pubkey: entry.pubkey, dTag: entry.dTag, aggregateHash: entry.aggregateHash };
+};
+
+// Signer and consent globals
+window.__setSigner__ = (signer: unknown) => mockResult.setSigner(signer);
+window.__setConsentHandler__ = (mode: 'auto-approve' | 'auto-deny') => {
+  relay.onConsentNeeded((request) => {
+    request.resolve(mode === 'auto-approve');
+  });
+};
+
+// Shell event injection
+window.__injectShellEvent__ = (topic: string, payload: unknown) => relay.injectEvent(topic, payload);
+
+// localStorage access globals
+window.__getLocalStorageKeys__ = () => {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) keys.push(key);
+  }
+  return keys;
+};
+window.__getLocalStorageItem__ = (key: string) => localStorage.getItem(key);
+window.__setLocalStorageItem__ = (key: string, value: string) => localStorage.setItem(key, value);
+window.__clearLocalStorage__ = () => localStorage.clear();
 
 // --- Debug Logging ---
 
