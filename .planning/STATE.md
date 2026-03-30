@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.2.0
 milestone_name: Shell Architecture Cleanup
-status: verifying
+status: executing
 stopped_at: Phase 07 plans complete, ready for verification
-last_updated: "2026-03-30T22:23:30.151Z"
+last_updated: "2026-03-30T22:45:49.659Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 11
-  completed_plans: 2
+  completed_plans: 5
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** The shell's security boundary (ACL) must be deterministic, auditable, and enforce on every code path -- no bypasses, no gaps.
-**Current focus:** Phase 07 — nomenclature
+**Current focus:** Phase 08 — acl-pure-module
 
 ## Current Position
 
-Phase: 08
+Phase: 09
 Plan: Not started
-Status: Phase complete — ready for verification
+Status: Executing Phase 08
 Last activity: 2026-03-30
 
 Progress: [░░░░░░░░░░] 0%

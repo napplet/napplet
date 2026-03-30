@@ -48,9 +48,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 08-01: Package scaffold and types (wave 1)
-- [ ] 08-02: Pure check and mutation functions (wave 2)
-- [ ] 08-03: Public API barrel and build verification (wave 3)
+- [x] 08-01: Package scaffold and types (wave 1)
+- [x] 08-02: Pure check and mutation functions (wave 2)
+- [x] 08-03: Public API barrel and build verification (wave 3)
 
 ### Phase 9: ACL Enforcement Gate
 **Goal**: Every message that flows through ShellBridge passes through exactly one enforcement function -- no message reaches a napplet iframe or exits to a relay without an ACL check
