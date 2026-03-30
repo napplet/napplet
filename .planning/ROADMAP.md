@@ -29,11 +29,11 @@
   3. All 66 existing tests pass with the new names (no regressions from rename)
   4. SPEC.md contains zero occurrences of "pseudo-relay" and uses "ShellBridge" throughout
   5. All test capability strings use `state:read`/`state:write` (not `storage:*`) and the test file is named `state-isolation.spec.ts`
-**Plans**: TBD
+**Plans**: 2 plans, 1 wave, 14 tasks total
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01: Rename pseudo-relay to ShellBridge (11 tasks, wave 1)
+- [ ] 07-02: Complete storage-to-state rename in tests (3 tasks, wave 1)
 
 ### Phase 8: ACL Pure Module
 **Goal**: ACL decisions are computed by a standalone module that has no runtime dependencies, no side effects, and could be compiled to WASM without modification
@@ -110,7 +110,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11
 | 4. Capability Tests | v0.1.0 | 5/5 | Complete | 2026-03-30 |
 | 5. Demo Playground | v0.1.0 | 5/5 | Complete | 2026-03-30 |
 | 6. Specification and Publish | v0.1.0 | 4/4 | Complete | 2026-03-30 |
-| 7. Nomenclature | v0.2.0 | 0/TBD | Not started | - |
+| 7. Nomenclature | v0.2.0 | 0/2 | Planned | - |
 | 8. ACL Pure Module | v0.2.0 | 0/TBD | Not started | - |
 | 9. ACL Enforcement Gate | v0.2.0 | 0/TBD | Not started | - |
 | 10. ACL Behavioral Tests | v0.2.0 | 0/TBD | Not started | - |
