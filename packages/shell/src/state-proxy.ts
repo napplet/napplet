@@ -9,7 +9,7 @@
 import type { NostrEvent } from './types.js';
 import { BusKind } from './types.js';
 import { nappKeyRegistry } from './napp-key-registry.js';
-import { aclStore, DEFAULT_STATE_QUOTA } from './acl-store.js';
+import { aclStore } from './acl-store.js';
 
 function scopedKey(pubkey: string, dTag: string, aggregateHash: string, userKey: string): string {
   return `napp-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
@@ -67,9 +67,6 @@ export function handleStateRequest(
   switch (topic) {
     case 'shell:state-get': {
       if (!key) { sendError(sourceWindow, correlationId, 'missing key tag'); return; }
-      if (!aclStore.check(pubkey, dTag, aggregateHash, 'state:read')) {
-        sendError(sourceWindow, correlationId, 'state:read capability denied'); return;
-      }
       const sk = scopedKey(pubkey, dTag, aggregateHash, key);
       const result = localStorage.getItem(sk);
       sendResponse(sourceWindow, correlationId, [
@@ -80,9 +77,6 @@ export function handleStateRequest(
     case 'shell:state-set': {
       if (!key) { sendError(sourceWindow, correlationId, 'missing key tag'); return; }
       const value = event.tags?.find((t) => t[0] === 'value')?.[1] ?? '';
-      if (!aclStore.check(pubkey, dTag, aggregateHash, 'state:write')) {
-        sendError(sourceWindow, correlationId, 'state:write capability denied'); return;
-      }
       const quota = aclStore.getStateQuota(pubkey, dTag, aggregateHash);
       const newWriteBytes = new TextEncoder().encode(scopedKey(pubkey, dTag, aggregateHash, key) + value).length;
       const existingBytes = calculateNappStateBytes(pubkey, dTag, aggregateHash, key);
@@ -101,26 +95,17 @@ export function handleStateRequest(
     }
     case 'shell:state-remove': {
       if (!key) { sendError(sourceWindow, correlationId, 'missing key tag'); return; }
-      if (!aclStore.check(pubkey, dTag, aggregateHash, 'state:write')) {
-        sendError(sourceWindow, correlationId, 'state:write capability denied'); return;
-      }
       const sk = scopedKey(pubkey, dTag, aggregateHash, key);
       localStorage.removeItem(sk);
       sendResponse(sourceWindow, correlationId, [['ok', 'true']]);
       break;
     }
     case 'shell:state-clear': {
-      if (!aclStore.check(pubkey, dTag, aggregateHash, 'state:write')) {
-        sendError(sourceWindow, correlationId, 'state:write capability denied'); return;
-      }
       cleanupNappState(pubkey, dTag, aggregateHash);
       sendResponse(sourceWindow, correlationId, [['ok', 'true']]);
       break;
     }
     case 'shell:state-keys': {
-      if (!aclStore.check(pubkey, dTag, aggregateHash, 'state:read')) {
-        sendError(sourceWindow, correlationId, 'state:read capability denied'); return;
-      }
       const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
       const userKeys: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
