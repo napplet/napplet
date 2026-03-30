@@ -1,7 +1,7 @@
 /**
  * Origin Registry — Window reference to windowId mapping.
  *
- * Used by the pseudo-relay to validate that postMessage senders are known
+ * Used by the ShellBridge to validate that postMessage senders are known
  * napp iframes. event.source (a Window reference) is the only unforgeable
  * origin — never trust event.origin from the message payload.
  */

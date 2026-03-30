@@ -1,7 +1,7 @@
 /**
  * NappKeyRegistry — windowId to verified napp pubkey bidirectional mapping.
  *
- * After a successful AUTH handshake, the pseudo-relay registers the napp's
+ * After a successful AUTH handshake, the ShellBridge registers the napp's
  * verified pubkey here. Both mappings are kept in sync.
  */
 
