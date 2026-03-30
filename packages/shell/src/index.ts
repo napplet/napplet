@@ -2,8 +2,8 @@
 // Framework-agnostic. Host app provides hooks for relay pool, auth, WM, etc.
 
 // Factory function — main entry point
-export { createPseudoRelay } from './pseudo-relay.js';
-export type { PseudoRelay } from './pseudo-relay.js';
+export { createShellBridge } from './shell-bridge.js';
+export type { ShellBridge } from './shell-bridge.js';
 
 // Types for host app integration
 export type {
@@ -39,7 +39,7 @@ export type { ManifestCacheEntry } from './manifest-cache.js';
 export { handleStateRequest, cleanupNappState } from './state-proxy.js';
 
 // Protocol constants
-export { BusKind, AUTH_KIND, PSEUDO_RELAY_URI, PROTOCOL_VERSION, ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
+export { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
 
 // Topic constants for shell command routing
 export { TOPICS } from './topics.js';
