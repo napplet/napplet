@@ -25,6 +25,7 @@ export type {
   NappKeyEntry,
   AclEntry,
   Capability,
+  AclCheckEvent,
 } from './types.js';
 
 // Standalone utilities (usable without full shell)
@@ -37,6 +38,10 @@ export type { AudioSource } from './audio-manager.js';
 export { manifestCache } from './manifest-cache.js';
 export type { ManifestCacheEntry } from './manifest-cache.js';
 export { handleStateRequest, cleanupNappState } from './state-proxy.js';
+
+// Enforcement gate
+export { createEnforceGate, resolveCapabilities, formatDenialReason } from './enforce.js';
+export type { CapabilityResolution, EnforceResult, EnforceConfig, IdentityResolver, AclChecker } from './enforce.js';
 
 // Protocol constants
 export { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
