@@ -1,0 +1,12 @@
+{
+  "name": "@test/pure-napplet",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "mkdir -p dist && cp src/index.html dist/index.html"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

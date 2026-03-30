@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="napplet-napp-type" content="pure-test" />
+  <meta name="napplet-aggregate-hash" content="" />
+  <title>Pure Test Napplet</title>
+</head>
+<body>
+  <div id="app">Pure napplet (no shim)</div>
+  <script>
+    // Minimal napplet that does NOT auto-respond to AUTH.
+    // Used for testing defective AUTH injection where the test
+    // needs full control over the AUTH response.
+    //
+    // Unlike auth-napplet, this does NOT import @napplet/shim,
+    // so no automatic AUTH handshake occurs.
+    window.parent.postMessage(['__TEST_DONE__', 'pure', 'loaded'], '*');
+  </script>
+</body>
+</html>

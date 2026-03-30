@@ -7,7 +7,7 @@
     "test": "pnpm test:build && turbo run test:unit && npx playwright test",
     "test:unit": "turbo run test:unit",
     "test:e2e": "pnpm test:build && npx playwright test",
-    "test:build": "pnpm build && pnpm --filter @test/auth-napplet build && pnpm --filter @test/publish-napplet build && pnpm --filter @test/harness build",
+    "test:build": "pnpm build && pnpm --filter @test/auth-napplet build && pnpm --filter @test/publish-napplet build && pnpm --filter @test/pure-napplet build && pnpm --filter @test/harness build",
     "test:serve": "pnpm --filter @test/harness dev",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
