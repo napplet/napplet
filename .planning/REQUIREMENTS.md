@@ -9,11 +9,11 @@ Requirements for initial release (v0.1.0). Each maps to roadmap phases.
 
 ### Bug Fixes & Wiring
 
-- [ ] **FIX-01**: AUTH race condition fixed — pendingAuthQueue cleared on all rejection paths
-- [ ] **FIX-02**: Shim-side postMessage source validation — handleRelayMessage and handleStorageResponse check event.source === window.parent
-- [ ] **FIX-03**: Storage key serialization — comma-in-key bug fixed in storage proxy scoped key computation
-- [ ] **FIX-04**: Hyprgate references renamed to napplet throughout codebase (URIs, meta tags, variable names)
-- [ ] **FIX-05**: Packages work end-to-end standalone — shell creates pseudo-relay, napplet loads shim, AUTH completes, messages flow
+- [x] **FIX-01**: AUTH race condition fixed — pendingAuthQueue cleared on all rejection paths *(Phase 1, 2026-03-30)*
+- [x] **FIX-02**: Shim-side postMessage source validation — handleRelayMessage and handleStorageResponse check event.source === window.parent *(Phase 1, 2026-03-30)*
+- [x] **FIX-03**: Storage key serialization — comma-in-key bug fixed in storage proxy scoped key computation *(Phase 1, 2026-03-30)*
+- [x] **FIX-04**: Hyprgate references renamed to napplet throughout codebase (URIs, meta tags, variable names) *(Phase 1, 2026-03-30)*
+- [x] **FIX-05**: Packages work end-to-end standalone — shell creates pseudo-relay, napplet loads shim, AUTH completes, messages flow *(Phase 1, 2026-03-30)*
 
 ### Test Infrastructure
 
