@@ -224,7 +224,7 @@ test.describe('ACL Enforcement', () => {
       [pubkey, dTag, aggregateHash]
     );
 
-    // Send a storage-get request
+    // Send a state-get request
     const corrId = 'corr-acl06';
     await page.evaluate(
       ([wid, pk, cid]) => {
@@ -233,7 +233,7 @@ test.describe('ACL Enforcement', () => {
           pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
           kind: 29003,
-          tags: [['t', 'shell:storage-get'], ['key', 'test-key'], ['id', cid]],
+          tags: [['t', 'shell:state-get'], ['key', 'test-key'], ['id', cid]],
           content: '',
           sig: '0'.repeat(128),
         };
@@ -275,7 +275,7 @@ test.describe('ACL Enforcement', () => {
       [pubkey, dTag, aggregateHash]
     );
 
-    // Send a storage-set request
+    // Send a state-set request
     const corrId = 'corr-acl07';
     await page.evaluate(
       ([wid, pk, cid]) => {
@@ -284,7 +284,7 @@ test.describe('ACL Enforcement', () => {
           pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
           kind: 29003,
-          tags: [['t', 'shell:storage-set'], ['key', 'test-key'], ['value', 'test-val'], ['id', cid]],
+          tags: [['t', 'shell:state-set'], ['key', 'test-key'], ['value', 'test-val'], ['id', cid]],
           content: '',
           sig: '0'.repeat(128),
         };
