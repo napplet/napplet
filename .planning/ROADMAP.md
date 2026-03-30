@@ -89,7 +89,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. All three packages pass publint and arethetypeswrong validation with zero errors
   3. @napplet/shim, @napplet/shell, and @napplet/vite-plugin are published to npm at v0.1.0
   4. Each package README includes usage examples, API reference, and a getting-started guide
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
 
 ## Progress
 
@@ -103,4 +103,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Core Protocol Tests | 5/5 | Executing | - |
 | 4. Capability Tests | 5/5 | Executing | - |
 | 5. Demo Playground | 5/5 | Executing | - |
-| 6. Specification and Publish | 0/TBD | Not started | - |
+| 6. Specification and Publish | 3/4 | Executing (publish blocked) | - |
