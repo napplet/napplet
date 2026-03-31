@@ -14,6 +14,8 @@
  *   await nappState.clear();
  */
 
+import { TOPICS } from '@napplet/core';
+
 // Avoid circular import with index.ts — use a late-bound reference
 let _sendInterPaneEvent: ((topic: string, tags: string[][], content?: string) => void) | null = null;
 
@@ -47,7 +49,7 @@ function handleStateResponse(event: MessageEvent): void {
   if (!nostrEvent?.tags) return;
 
   const topicTag = nostrEvent.tags.find((t: string[]) => t[0] === 't');
-  if (topicTag?.[1] !== 'napp:state-response') return;
+  if (topicTag?.[1] !== TOPICS.STATE_RESPONSE) return;
 
   const idTag = nostrEvent.tags.find((t: string[]) => t[0] === 'id');
   const correlationId = idTag?.[1];
@@ -112,7 +114,7 @@ export const nappState = {
    * @returns The stored value, or null if not found
    */
   async getItem(key: string): Promise<string | null> {
-    const response = await sendStateRequest('shell:state-get', [['key', key]]);
+    const response = await sendStateRequest(TOPICS.STATE_GET, [['key', key]]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const event = response as any;
     const foundTag = event.tags?.find((t: string[]) => t[0] === 'found');
@@ -129,7 +131,7 @@ export const nappState = {
    * @throws If the napp exceeds its 512 KB state quota
    */
   async setItem(key: string, value: string): Promise<void> {
-    await sendStateRequest('shell:state-set', [['key', key], ['value', value]]);
+    await sendStateRequest(TOPICS.STATE_SET, [['key', key], ['value', value]]);
   },
 
   /**
@@ -138,7 +140,7 @@ export const nappState = {
    * @param key  The state key to remove
    */
   async removeItem(key: string): Promise<void> {
-    await sendStateRequest('shell:state-remove', [['key', key]]);
+    await sendStateRequest(TOPICS.STATE_REMOVE, [['key', key]]);
   },
 
   /**
@@ -146,7 +148,7 @@ export const nappState = {
    * Does not affect other napps' state.
    */
   async clear(): Promise<void> {
-    await sendStateRequest('shell:state-clear', []);
+    await sendStateRequest(TOPICS.STATE_CLEAR, []);
   },
 
   /**
@@ -155,7 +157,7 @@ export const nappState = {
    * @returns Array of state key strings
    */
   async keys(): Promise<string[]> {
-    const response = await sendStateRequest('shell:state-keys', []);
+    const response = await sendStateRequest(TOPICS.STATE_KEYS, []);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const event = response as any;
     const keyTags = event.tags?.filter((t: string[]) => t[0] === 'key') ?? [];

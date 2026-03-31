@@ -13,9 +13,12 @@
     }
   },
   "files": ["dist"],
-  "sideEffects": false,
+  "sideEffects": true,
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@napplet/core": "workspace:*"
   },
   "peerDependencies": {
     "nostr-tools": ">=2.23.3 <3.0.0"
