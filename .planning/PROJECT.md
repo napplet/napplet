@@ -127,15 +127,15 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
-## Current Milestone: v0.5.0 (TBD)
+## Current Milestone: v0.5.0 Documentation & Developer Skills
 
-Next milestone to be defined via `/gsd:new-milestone`.
+**Goal:** Make the napplet SDK self-documenting — every package has a README, the spec reflects v0.4.0 reality, and agents/developers have portable skills they can pull to build with napplet reliably.
 
-Likely candidates (from Active requirements and Future Requirements in v0.4.0):
-- npm publish across all 7 packages
-- Service ACL (per-service capability strings)
-- @napplet/create CLI / starter template
-- Production demo deployment (nsite)
+**Target features:**
+- Root README.md — full rewrite for 7-package architecture, correct API names, service discovery
+- Package READMEs — create 4 missing (acl, core, runtime, services) + update 3 outdated (shim, shell, vite-plugin)
+- SPEC.md — update Section 11 (kind 29010) and any sections that diverged during v0.4.0
+- skills/ directory — agentskills.io format portable skills: build-napplet, integrate-shell, add-service
 
 ---
-*Last updated: 2026-03-31 after v0.4.0 milestone archived*
+*Last updated: 2026-03-31 after v0.5.0 milestone defined*

@@ -21,13 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31 after v0.4.0 archive)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.4.0 archived — define v0.5.0 milestone via `/gsd:new-milestone`
+**Current focus:** v0.5.0 milestone defined — defining requirements and roadmap
 
 ## Current Position
 
-Phase: —
-Status: v0.4.0 complete and archived. Ready for next milestone.
-Last activity: 2026-03-31
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v0.5.0 Documentation & Developer Skills
+Last activity: 2026-03-31 — Milestone v0.5.0 started
 
 ## Accumulated Context
 
