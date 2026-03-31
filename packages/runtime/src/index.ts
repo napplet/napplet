@@ -51,3 +51,10 @@ export type { ReplayDetector } from './replay.js';
 // ─── Event Buffer ──────────────────────────────────────────────────────────
 export { createEventBuffer, matchesFilter, matchesAnyFilter, RING_BUFFER_SIZE } from './event-buffer.js';
 export type { EventBuffer, SubscriptionEntry } from './event-buffer.js';
+
+// ─── Runtime Factory (primary entry point) ─────────────────────────────────
+export { createRuntime } from './runtime.js';
+export type { Runtime } from './runtime.js';
+
+// ─── State Handler ─────────────────────────────────────────────────────────
+export { handleStateRequest, cleanupNappState } from './state-handler.js';
