@@ -40,6 +40,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - [x] Extract @napplet/runtime — enforcement gate, message router, state management — Validated in Phase 13: Runtime Package
 - [x] Shell adapter + shim rewire — createShellBridge delegates to createRuntime(adaptHooks(hooks)); shim imports from @napplet/core — Validated in Phase 14: Shell Adapter and Shim Rewire
 - [x] Service extension design — ServiceRegistry types, SERVICE_DISCOVERY kind 29010, SPEC.md Section 11 — Validated in Phase 15: Service Extension Design
+- [x] Full test suite green with four-package structure; new unit and integration tests — Validated in Phase 16: Verification
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
@@ -62,7 +63,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 - **Current state**: v0.1.0-alpha.1 with 8,690 LOC TypeScript across 3 packages + demo app + test suite. 78 commits, 201 files.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
-- **Test coverage**: 122 Playwright e2e tests covering AUTH (9), message routing (9), replay (5), lifecycle (5), ACL (9), storage (9), signer (7), inter-pane (6), infrastructure (7), ACL behavioral matrix (56+).
+- **Test coverage**: 122 Playwright e2e tests + 58 vitest unit/integration tests. Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, and four-package chain integration.
 - **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events.
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash.
 
