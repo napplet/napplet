@@ -5,7 +5,7 @@
  * to host napplets. No DOM types, no browser APIs.
  */
 
-import type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
+import type { NostrEvent, NostrFilter, Capability, ServiceDescriptor } from '@napplet/core';
 
 // ─── ACL Check Event ──────────────────────────────────────────────────────
 
@@ -296,6 +296,63 @@ export interface AclEntryExternal {
   stateQuota?: number;
 }
 
+// ─── Service Types ──────────────────────────────────────────────────────────
+
+/**
+ * Handler for service-specific messages from napplets.
+ * Services receive raw NIP-01 message arrays and respond via the `send` callback.
+ * The same interface is used for all services regardless of what NIP-01 verbs they handle.
+ *
+ * @example
+ * ```ts
+ * const audioHandler: ServiceHandler = {
+ *   descriptor: { name: 'audio', version: '1.0.0' },
+ *   handleMessage(windowId, message, send) {
+ *     const [verb, ...rest] = message;
+ *     if (verb === 'EVENT') {
+ *       const event = rest[0] as NostrEvent;
+ *       // process audio event...
+ *       send(['OK', event.id, true, '']);
+ *     }
+ *   },
+ * };
+ * ```
+ */
+export interface ServiceHandler {
+  /** Metadata describing this service. */
+  descriptor: ServiceDescriptor;
+  /**
+   * Handle a raw NIP-01 message from a napplet.
+   *
+   * @param windowId - The requesting napplet's window identifier
+   * @param message - Raw NIP-01 message array (e.g., ['EVENT', event], ['REQ', subId, ...filters])
+   * @param send - Callback to send NIP-01 response messages back to the napplet
+   */
+  handleMessage(windowId: string, message: unknown[], send: (msg: unknown[]) => void): void;
+  /**
+   * Called when a napplet window is destroyed. Services should clean up
+   * any state associated with the window.
+   *
+   * @param windowId - The destroyed napplet's window identifier
+   */
+  onWindowDestroyed?(windowId: string): void;
+}
+
+/**
+ * Registry of services available to napplets.
+ * Each key is a service name (e.g., 'audio', 'notifications').
+ * Napplets discover available services via kind 29010 service discovery events.
+ *
+ * @example
+ * ```ts
+ * const services: ServiceRegistry = {
+ *   audio: audioHandler,
+ *   notifications: notificationHandler,
+ * };
+ * ```
+ */
+export type ServiceRegistry = Record<string, ServiceHandler>;
+
 // ─── RuntimeHooks ──────────────────────────────────────────────────────────
 
 /**
@@ -373,4 +430,21 @@ export interface RuntimeHooks {
 
   /** Called when a pending napp update is set or cleared. */
   onPendingUpdate?: PendingUpdateNotifier;
+
+  /**
+   * Optional service extensions. Shell/host registers service handlers here
+   * for static initialization. Services can also be added dynamically via
+   * runtime.registerService(). Each key is a service name (e.g., 'audio').
+   *
+   * @example
+   * ```ts
+   * const hooks: RuntimeHooks = {
+   *   // ... required hooks ...
+   *   services: {
+   *     audio: myAudioServiceHandler,
+   *   },
+   * };
+   * ```
+   */
+  services?: ServiceRegistry;
 }

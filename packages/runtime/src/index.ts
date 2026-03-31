@@ -26,6 +26,8 @@ export type {
   ManifestCacheEntry,
   AclEntryExternal,
   AclCheckEvent,
+  ServiceHandler,
+  ServiceRegistry,
 } from './types.js';
 
 // ─── Enforcement Gate ──────────────────────────────────────────────────────
@@ -58,3 +60,6 @@ export type { Runtime } from './runtime.js';
 
 // ─── State Handler ─────────────────────────────────────────────────────────
 export { handleStateRequest, cleanupNappState } from './state-handler.js';
+
+// ─── Service Dispatch ─────────────────────────────────────────────────────
+export { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';

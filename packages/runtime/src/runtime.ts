@@ -21,7 +21,9 @@ declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
 import type {
   RuntimeHooks, NappKeyEntry, ConsentRequest, ConsentHandler,
+  ServiceHandler, ServiceRegistry,
 } from './types.js';
+import { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
 import { createNappKeyRegistry } from './napp-key-registry.js';
 import type { NappKeyRegistry } from './napp-key-registry.js';
 import { createAclState } from './acl-state.js';
@@ -79,6 +81,30 @@ export interface Runtime {
   /** Register a handler for consent requests on destructive signing kinds. */
   registerConsentHandler(handler: ConsentHandler): void;
 
+  /**
+   * Register a service handler dynamically after runtime creation.
+   * If a handler is already registered for this name, it is replaced.
+   *
+   * @param name - Service name (e.g., 'audio', 'notifications')
+   * @param handler - The service handler implementation
+   */
+  registerService(name: string, handler: ServiceHandler): void;
+
+  /**
+   * Unregister a service handler by name. No-op if the name is not registered.
+   *
+   * @param name - Service name to remove
+   */
+  unregisterService(name: string): void;
+
+  /**
+   * Clean up all state associated with a napplet window.
+   * Removes subscriptions, pending state, and notifies service handlers.
+   *
+   * @param windowId - The window to clean up
+   */
+  destroyWindow(windowId: string): void;
+
   /** Access the identity registry (for shell adapter to read napp state). */
   readonly nappKeyRegistry: NappKeyRegistry;
 
@@ -112,6 +138,9 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
   const pendingAuthQueue = new Map<string, Array<{ msg: unknown[]; windowId: string }>>();
   const authInFlight = new Set<string>();
   let _consentHandler: ConsentHandler | null = null;
+
+  // ─── Service Registry (static from hooks + dynamic from registerService) ──
+  const serviceRegistry: ServiceRegistry = { ...(hooks.services ?? {}) };
 
   // ─── Sub-module instances ────────────────────────────────────────────────
 
@@ -291,14 +320,12 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
           handleStateRequest(windowId, event, hooks.sendToNapplet, nappKeyRegistry, aclState, hooks.statePersistence);
           return;
         }
-        if (topic?.startsWith('shell:audio-')) {
-          // Audio events are forwarded as inter-pane events — the runtime
-          // does not manage audio state (that stays in the shell adapter)
-          eventBuffer.bufferAndDeliver(event, windowId);
-          break;
-        }
         if (topic?.startsWith('shell:') || topic === 'shell:create-window' || topic === 'shell:send-dm') {
           handleShellCommand(event, windowId, topic!);
+          return;
+        }
+        // Service dispatch — route by topic prefix to registered handlers
+        if (topic && routeServiceMessage(windowId, event, topic, serviceRegistry, hooks.sendToNapplet)) {
           return;
         }
         eventBuffer.bufferAndDeliver(event, windowId);
@@ -663,6 +690,30 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     registerConsentHandler(handler: ConsentHandler): void {
       _consentHandler = handler;
+    },
+
+    registerService(name: string, handler: ServiceHandler): void {
+      serviceRegistry[name] = handler;
+    },
+
+    unregisterService(name: string): void {
+      delete serviceRegistry[name];
+    },
+
+    destroyWindow(windowId: string): void {
+      // Clean up subscriptions for this window
+      for (const [key] of subscriptions) {
+        if (key.startsWith(`${windowId}:`)) {
+          subscriptions.delete(key);
+          hooks.relayPool.untrackSubscription(key);
+        }
+      }
+      // Clean up pending auth state
+      pendingChallenges.delete(windowId);
+      pendingAuthQueue.delete(windowId);
+      authInFlight.delete(windowId);
+      // Notify service handlers
+      notifyServiceWindowDestroyed(windowId, serviceRegistry);
     },
 
     get nappKeyRegistry() { return nappKeyRegistry; },
