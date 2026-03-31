@@ -142,5 +142,5 @@
 | 22.1. Core Infrastructure Services | v0.4.0 | 4/4 | Complete | 2026-03-31 |
 | 23. New Package READMEs | v0.5.0 | 4/4 | Complete | 2026-03-31 |
 | 24. Root and Interface READMEs | v0.5.0 | 0/TBD | Not started | - |
-| 25. SPEC.md Updates | v0.5.0 | 1/1 | Complete   | 2026-03-31 |
+| 25. SPEC.md Updates | v0.5.0 | 1/1 | Complete    | 2026-03-31 |
 | 26. Skills Directory | v0.5.0 | 0/TBD | Not started | - |
