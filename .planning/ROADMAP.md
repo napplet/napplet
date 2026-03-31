@@ -75,7 +75,7 @@
   2. @napplet/core has import verification tests proving types and constants are re-exported correctly
   3. @napplet/runtime has isolated unit tests for message dispatch that run without a browser
   4. An integration test verifies the full chain: shell adapter -> runtime -> acl -> core types
-**Plans**: TBD
+**Plans**: 16-01 (core import verification), 16-02 (runtime dispatch unit tests), 16-03 (shell-runtime-acl-core integration), 16-04 (e2e suite green)
 
 ## Progress
 
@@ -100,4 +100,4 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16
 | 13. Runtime Package | v0.3.0 | 0/0 | Not started | - |
 | 14. Shell Adapter and Shim Rewire | v0.3.0 | 0/0 | Not started | - |
 | 15. Service Extension Design | v0.3.0 | 2/2 | Planned | - |
-| 16. Verification | v0.3.0 | 0/0 | Not started | - |
+| 16. Verification | v0.3.0 | 0/4 | Planned | - |
