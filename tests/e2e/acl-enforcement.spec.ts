@@ -150,7 +150,7 @@ test.describe('ACL Enforcement', () => {
     const msgs: TappedMessage[] = await page.evaluate(() => (window as any).__TEST_MESSAGES__);
     const ok = msgs.find(m => m.verb === 'OK' && m.raw[1] === eventId);
     expect(ok!.parsed.success).toBe(false);
-    expect(ok!.parsed.reason).toContain('relay:write capability denied');
+    expect(ok!.parsed.reason).toContain('denied: relay:write');
   });
 
   test('ACL-04: block entire napp -- all operations denied', async ({ page }) => {
@@ -224,46 +224,35 @@ test.describe('ACL Enforcement', () => {
       [pubkey, dTag, aggregateHash]
     );
 
-    // Send a state-get request
-    const corrId = 'corr-acl06';
+    // Send a state-get request -- enforce gate denies at the EVENT handler level
+    // with an OK false response (state-proxy is never reached)
+    const eventId = Math.random().toString(36).slice(2).padEnd(64, '0');
     await page.evaluate(
-      ([wid, pk, cid]) => {
+      ([wid, eid, pk]) => {
         const event = {
-          id: Math.random().toString(36).slice(2).padEnd(64, '0'),
+          id: eid,
           pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
           kind: 29003,
-          tags: [['t', 'shell:state-get'], ['key', 'test-key'], ['id', cid]],
+          tags: [['t', 'shell:state-get'], ['key', 'test-key'], ['id', 'corr-acl06']],
           content: '',
           sig: '0'.repeat(128),
         };
         (window as any).__publishEvent__(wid, event);
       },
-      [windowId, pubkey, corrId]
+      [windowId, eventId, pubkey]
     );
 
-    // Wait for response event with error
+    // Wait for OK response with denial
     await expect.poll(async () => {
       const msgs: TappedMessage[] = await page.evaluate(() => (window as any).__TEST_MESSAGES__);
-      return msgs.some(m =>
-        m.verb === 'EVENT' &&
-        m.direction === 'shell->napplet' &&
-        typeof m.raw[2] === 'object' &&
-        (m.raw[2] as any)?.tags?.some((t: string[]) => t[0] === 'id' && t[1] === corrId)
-      );
+      return msgs.some(m => m.verb === 'OK' && m.direction === 'shell->napplet' && m.raw[1] === eventId);
     }, { timeout: 5000 }).toBe(true);
 
     const msgs: TappedMessage[] = await page.evaluate(() => (window as any).__TEST_MESSAGES__);
-    const response = msgs.find(m =>
-      m.verb === 'EVENT' &&
-      m.direction === 'shell->napplet' &&
-      typeof m.raw[2] === 'object' &&
-      (m.raw[2] as any)?.tags?.some((t: string[]) => t[0] === 'id' && t[1] === corrId)
-    );
-    const respEvt = response!.raw[2] as { tags?: string[][] };
-    const errorTag = respEvt.tags?.find(t => t[0] === 'error');
-    expect(errorTag).toBeTruthy();
-    expect(errorTag![1]).toBe('state:read capability denied');
+    const ok = msgs.find(m => m.verb === 'OK' && m.raw[1] === eventId);
+    expect(ok!.parsed.success).toBe(false);
+    expect(ok!.parsed.reason).toContain('denied: state:read');
   });
 
   test('ACL-07: revoke state:write -- setItem denied', async ({ page }) => {
@@ -275,46 +264,35 @@ test.describe('ACL Enforcement', () => {
       [pubkey, dTag, aggregateHash]
     );
 
-    // Send a state-set request
-    const corrId = 'corr-acl07';
+    // Send a state-set request -- enforce gate denies at the EVENT handler level
+    // with an OK false response (state-proxy is never reached)
+    const eventId = Math.random().toString(36).slice(2).padEnd(64, '0');
     await page.evaluate(
-      ([wid, pk, cid]) => {
+      ([wid, eid, pk]) => {
         const event = {
-          id: Math.random().toString(36).slice(2).padEnd(64, '0'),
+          id: eid,
           pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
           kind: 29003,
-          tags: [['t', 'shell:state-set'], ['key', 'test-key'], ['value', 'test-val'], ['id', cid]],
+          tags: [['t', 'shell:state-set'], ['key', 'test-key'], ['value', 'test-val'], ['id', 'corr-acl07']],
           content: '',
           sig: '0'.repeat(128),
         };
         (window as any).__publishEvent__(wid, event);
       },
-      [windowId, pubkey, corrId]
+      [windowId, eventId, pubkey]
     );
 
-    // Wait for response with error
+    // Wait for OK response with denial
     await expect.poll(async () => {
       const msgs: TappedMessage[] = await page.evaluate(() => (window as any).__TEST_MESSAGES__);
-      return msgs.some(m =>
-        m.verb === 'EVENT' &&
-        m.direction === 'shell->napplet' &&
-        typeof m.raw[2] === 'object' &&
-        (m.raw[2] as any)?.tags?.some((t: string[]) => t[0] === 'id' && t[1] === corrId)
-      );
+      return msgs.some(m => m.verb === 'OK' && m.direction === 'shell->napplet' && m.raw[1] === eventId);
     }, { timeout: 5000 }).toBe(true);
 
     const msgs: TappedMessage[] = await page.evaluate(() => (window as any).__TEST_MESSAGES__);
-    const response = msgs.find(m =>
-      m.verb === 'EVENT' &&
-      m.direction === 'shell->napplet' &&
-      typeof m.raw[2] === 'object' &&
-      (m.raw[2] as any)?.tags?.some((t: string[]) => t[0] === 'id' && t[1] === corrId)
-    );
-    const respEvt = response!.raw[2] as { tags?: string[][] };
-    const errorTag = respEvt.tags?.find(t => t[0] === 'error');
-    expect(errorTag).toBeTruthy();
-    expect(errorTag![1]).toBe('state:write capability denied');
+    const ok = msgs.find(m => m.verb === 'OK' && m.raw[1] === eventId);
+    expect(ok!.parsed.success).toBe(false);
+    expect(ok!.parsed.reason).toContain('denied: state:write');
   });
 
   test('ACL-08: revoke sign:event -- signer request denied', async ({ page }) => {
@@ -353,11 +331,8 @@ test.describe('ACL Enforcement', () => {
       [windowId, pubkey, eventId]
     );
 
-    // Wait for OK false -- signer request goes through handleEvent which checks relay:write first,
-    // then routes to handleSignerRequest which checks sign:event ACL
-    // But wait -- handleEvent checks relay:write BEFORE routing to signer handler.
-    // If relay:write is allowed but sign:event is revoked, handleSignerRequest checks sign:event.
-    // The OK comes from handleSignerRequest with 'sign:event capability denied'.
+    // Wait for OK false -- enforce gate checks sign:event capability in handleEvent
+    // before the signer handler is reached. Returns 'denied: sign:event'.
     await expect.poll(async () => {
       const msgs: TappedMessage[] = await page.evaluate(() => (window as any).__TEST_MESSAGES__);
       return msgs.some(m => m.verb === 'OK' && m.direction === 'shell->napplet' && m.raw[1] === eventId);
@@ -366,7 +341,7 @@ test.describe('ACL Enforcement', () => {
     const msgs: TappedMessage[] = await page.evaluate(() => (window as any).__TEST_MESSAGES__);
     const ok = msgs.find(m => m.verb === 'OK' && m.raw[1] === eventId);
     expect(ok!.parsed.success).toBe(false);
-    expect(ok!.parsed.reason).toContain('sign:event capability denied');
+    expect(ok!.parsed.reason).toContain('denied: sign:event');
   });
 
   test('ACL-09: persist/load round-trip -- ACL state survives', async ({ page }) => {
@@ -392,14 +367,13 @@ test.describe('ACL Enforcement', () => {
     const raw = await page.evaluate(() => (window as any).__getLocalStorageItem__('napplet:acl'));
     expect(raw).not.toBeNull();
     const parsed = JSON.parse(raw);
-    expect(Array.isArray(parsed)).toBe(true);
-    // Each entry is [compositeKey, { pubkey, dTag, aggregateHash, capabilities, blocked, storageQuota }]
-    const entry = parsed.find((e: any) => e[1].pubkey === pubkey);
-    expect(entry).toBeTruthy();
-    expect(entry[1].dTag).toBe(dTag);
-    expect(entry[1].aggregateHash).toBe(aggregateHash);
-    // relay:write should NOT be in capabilities
-    expect(entry[1].capabilities).not.toContain('relay:write');
+    // New ACL format: { defaultPolicy, entries: { compositeKey: { caps, blocked, quota } } }
+    expect(typeof parsed).toBe('object');
+    expect(parsed.defaultPolicy).toBe('permissive');
+    expect(typeof parsed.entries).toBe('object');
+    // There should be at least one entry (the one we revoked from)
+    const keys = Object.keys(parsed.entries);
+    expect(keys.length).toBeGreaterThan(0);
 
     // Save the persisted value, clear the store (which removes from localStorage too),
     // then restore just the localStorage value to simulate a fresh load

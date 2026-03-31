@@ -32,7 +32,8 @@
   "scripts": {
     "build": "tsup",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:unit": "echo 'no unit tests'"
   },
   "license": "MIT",
   "repository": {

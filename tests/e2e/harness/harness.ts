@@ -11,7 +11,7 @@
  *   await page.evaluate(() => window.__clearMessages__())
  */
 
-import { createShellBridge, originRegistry, aclStore, nappKeyRegistry } from '@napplet/shell';
+import { createShellBridge, originRegistry } from '@napplet/shell';
 import type { ShellBridge, Capability } from '@napplet/shell';
 import { createMockHooks } from '@test/helpers';
 import type { MockHooksResult } from '@test/helpers';
@@ -289,23 +289,25 @@ window.__getNappletFrames__ = (): string[] => {
 
 // --- Phase 4: Capability Test Control Functions ---
 
-// ACL manipulation globals
-window.__aclRevoke__ = (pubkey, dTag, hash, cap) => aclStore.revoke(pubkey, dTag, hash, cap as Capability);
-window.__aclGrant__ = (pubkey, dTag, hash, cap) => aclStore.grant(pubkey, dTag, hash, cap as Capability);
-window.__aclBlock__ = (pubkey, dTag, hash) => aclStore.block(pubkey, dTag, hash);
-window.__aclUnblock__ = (pubkey, dTag, hash) => aclStore.unblock(pubkey, dTag, hash);
-window.__aclPersist__ = () => aclStore.persist();
-window.__aclLoad__ = () => aclStore.load();
-window.__aclClear__ = () => aclStore.clear();
-window.__aclCheck__ = (pubkey, dTag, hash, cap) => aclStore.check(pubkey, dTag, hash, cap as Capability);
-window.__aclGetEntry__ = (pubkey, dTag, hash) => aclStore.getEntry(pubkey, dTag, hash);
+// ACL manipulation globals — use the runtime's ACL state (not the shell singleton)
+const runtimeAcl = relay.runtime.aclState;
+window.__aclRevoke__ = (pubkey, dTag, hash, cap) => runtimeAcl.revoke(pubkey, dTag, hash, cap as Capability);
+window.__aclGrant__ = (pubkey, dTag, hash, cap) => runtimeAcl.grant(pubkey, dTag, hash, cap as Capability);
+window.__aclBlock__ = (pubkey, dTag, hash) => runtimeAcl.block(pubkey, dTag, hash);
+window.__aclUnblock__ = (pubkey, dTag, hash) => runtimeAcl.unblock(pubkey, dTag, hash);
+window.__aclPersist__ = () => runtimeAcl.persist();
+window.__aclLoad__ = () => runtimeAcl.load();
+window.__aclClear__ = () => runtimeAcl.clear();
+window.__aclCheck__ = (pubkey, dTag, hash, cap) => runtimeAcl.check(pubkey, dTag, hash, cap as Capability);
+window.__aclGetEntry__ = (pubkey, dTag, hash) => runtimeAcl.getEntry(pubkey, dTag, hash);
 
-// Napplet identity globals
-window.__getNappPubkey__ = (windowId: string) => nappKeyRegistry.getPubkey(windowId);
+// Napplet identity globals — use the runtime's nappKeyRegistry (not the shell singleton)
+const runtimeRegistry = relay.runtime.nappKeyRegistry;
+window.__getNappPubkey__ = (windowId: string) => runtimeRegistry.getPubkey(windowId);
 window.__getNappEntry__ = (windowId: string) => {
-  const pubkey = nappKeyRegistry.getPubkey(windowId);
+  const pubkey = runtimeRegistry.getPubkey(windowId);
   if (!pubkey) return undefined;
-  const entry = nappKeyRegistry.getEntry(pubkey);
+  const entry = runtimeRegistry.getEntry(pubkey);
   if (!entry) return undefined;
   return { pubkey: entry.pubkey, dTag: entry.dTag, aggregateHash: entry.aggregateHash };
 };

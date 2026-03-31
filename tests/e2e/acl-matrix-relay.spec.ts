@@ -387,7 +387,7 @@ test.describe('ACL Matrix — Relay Capabilities', () => {
 
     const eventId = Math.random().toString(36).slice(2).padEnd(64, '0');
     await page.evaluate(
-      ([wid, pk, eid]) => {
+      ([wid, eid, pk]) => {
         const event = {
           id: eid, pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),
@@ -418,7 +418,7 @@ test.describe('ACL Matrix — Relay Capabilities', () => {
 
     const eventId = Math.random().toString(36).slice(2).padEnd(64, '0');
     await page.evaluate(
-      ([wid, pk, eid]) => {
+      ([wid, eid, pk]) => {
         const event = {
           id: eid, pubkey: pk,
           created_at: Math.floor(Date.now() / 1000),

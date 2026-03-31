@@ -128,7 +128,9 @@ export function handleStateRequest(
       break;
     }
     case 'shell:state-keys': {
-      const userKeys = statePersistence.keys(prefix);
+      const scopedKeys = statePersistence.keys(prefix);
+      // Strip the prefix to return user-facing key names (e.g., 'k1' not 'napp-state:pk:dTag:hash:k1')
+      const userKeys = scopedKeys.map(k => k.startsWith(prefix) ? k.slice(prefix.length) : k);
       sendResponse(sendToNapplet, windowId, correlationId, userKeys.map(k => ['key', k]));
       break;
     }
