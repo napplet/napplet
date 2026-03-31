@@ -42,13 +42,13 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ ServiceDescriptor in @napplet/core, ServiceHandler/ServiceRegistry in @napplet/runtime, topic-prefix dispatch — v0.4.0 Phase 18
 - ✓ Service discovery protocol — kind 29010 REQ/EVENT/EOSE flow, synthetic events from registry, live subscriptions — v0.4.0 Phase 19
 - ✓ Shim-side discovery API — window.napplet global with discoverServices/hasService/hasServiceVersion, session cache, ServiceInfo type — v0.4.0 Phase 21
+- ✓ @napplet/services package — createAudioService and createNotificationService as ServiceHandlers, audio:* prefix only, browser-agnostic — v0.4.0 Phase 20
 
 ### Active
 
 - [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
 - [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
 - [ ] Manifest `requires` tags — napplet manifest declares service dependencies for shell to check
-- [ ] Audio service implementation — first concrete service, wraps audio-manager as ServiceHandler
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
@@ -133,4 +133,4 @@ This document evolves at phase transitions and milestone boundaries.
 - Audio service as first concrete ServiceHandler implementation
 
 ---
-*Last updated: 2026-03-31 after Phase 19 (service discovery protocol) complete*
+*Last updated: 2026-03-31 after Phase 20 (concrete services) complete*
