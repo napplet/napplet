@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Feature Negotiation & Service Discovery
-status: ready-to-plan
-stopped_at: Roadmap created
-last_updated: "2026-03-31"
-last_activity: 2026-03-31
+status: planning
+stopped_at: Phase 18 context gathered
+last_updated: "2026-03-31T15:47:29.703Z"
+last_activity: 2026-03-31 — Roadmap created for v0.4.0
 progress:
   total_phases: 5
   completed_phases: 0
@@ -35,6 +35,7 @@ Progress: [..........] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0 (this milestone)
 - Average duration: —
 - Total execution time: —
@@ -72,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31
-Stopped at: Roadmap created for v0.4.0 milestone (5 phases, 27 requirements mapped)
-Resume file: None
+Last session: 2026-03-31T15:47:29.700Z
+Stopped at: Phase 18 context gathered
+Resume file: .planning/phases/18-core-types-runtime-dispatch/18-CONTEXT.md
