@@ -115,7 +115,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SVC-01 | Phase 20 | Pending |
 | SVC-02 | Phase 20 | Pending |
 | SVC-03 | Phase 20 | Pending |
-| SVC-04 | Phase 20 | Pending |
+| SVC-04 | Phase 22.1 | Pending |
 | SHIM-01 | Phase 21 | Pending |
 | SHIM-02 | Phase 21 | Pending |
 | SHIM-03 | Phase 21 | Pending |

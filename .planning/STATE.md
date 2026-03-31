@@ -63,6 +63,10 @@ Recent decisions affecting current work:
 - [v0.4.0]: ServiceDescriptor moves to @napplet/core; ServiceHandler/ServiceRegistry move to @napplet/runtime
 - [v0.4.0]: Audio topic migration (shell:audio-* to audio:*) must be backwards-compatible with dual-prefix handling
 
+### Roadmap Evolution
+
+- Phase 22.1 inserted after Phase 22: Core Infrastructure Services — Migrate relay pool, cache, signer from RuntimeHooks to registered services (URGENT)
+
 ### Pending Todos
 
 None yet.
