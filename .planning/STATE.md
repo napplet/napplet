@@ -70,6 +70,7 @@ None yet.
 ### Blockers/Concerns
 
 - CARRIED: npm publish still blocked on human npm auth. Deferred to post-v0.4.0 per REQUIREMENTS.md.
+- REPLAN: Phase 18 plans need revision — ServiceHandler interface changed from handleRequest(topic-only) to handleMessage(raw NIP-01). Services handle any NIP-01 verb, not just INTER_PANE. Replan after Phase 19 context finalized.
 
 ## Session Continuity
 
