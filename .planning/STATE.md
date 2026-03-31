@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Runtime and Core
 status: executing
-stopped_at: v0.3.0 roadmap created, ready to plan Phase 12
-last_updated: "2026-03-31T11:20:01.469Z"
+stopped_at: Phase 17 context gathered
+last_updated: "2026-03-31T13:14:53.748Z"
 last_activity: 2026-03-31
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
   total_plans: 17
   completed_plans: 17
@@ -75,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31
-Stopped at: v0.3.0 roadmap created, ready to plan Phase 12
-Resume file: None
+Last session: 2026-03-31T13:14:53.746Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-shell-export-cleanup/17-CONTEXT.md
