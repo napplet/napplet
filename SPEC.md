@@ -801,7 +801,113 @@ The shell receives the forwarded key event and executes any matching action from
 
 ---
 
-## 11. Protocol Layers [OPEN]
+## 11. Service Discovery [OPEN]
+
+### 11.1 Overview
+
+The shell MAY expose optional services beyond the core protocol (audio management, notifications, clipboard access, etc.). Napplets discover available services via a dedicated service discovery mechanism using kind 29010 events.
+
+Service discovery is cooperative: the shell advertises what it supports, and napplets adapt their behavior based on available services. A napplet MUST NOT assume a service is available without first checking via discovery.
+
+> **Status:** This section defines the protocol design for service discovery. Implementation is deferred to a future version. Shells and napplets SHOULD NOT implement service discovery until the spec is marked LOCKED.
+
+### 11.2 Service Discovery Event (kind 29010)
+
+| Field | Value |
+|---|---|
+| `kind` | `29010` (BusKind.SERVICE_DISCOVERY) |
+| `pubkey` | Shell's ephemeral pubkey (for responses) or napplet's session pubkey (for requests) |
+| `tags` | See below |
+| `content` | JSON payload |
+
+**Discovery Request (napplet -> shell):**
+
+The napplet sends a REQ for kind 29010 events. The shell responds with one event per registered service, followed by EOSE.
+
+```json
+["REQ", "svc-discovery", {"kinds": [29010]}]
+```
+
+**Discovery Response (shell -> napplet):**
+
+For each registered service, the shell sends:
+
+```json
+["EVENT", "svc-discovery", {
+  "kind": 29010,
+  "pubkey": "__shell__",
+  "created_at": 1711800000,
+  "tags": [
+    ["s", "audio"],
+    ["v", "1.0.0"],
+    ["d", "Audio playback management and mute control"]
+  ],
+  "content": "{}",
+  "id": "...",
+  "sig": ""
+}]
+```
+
+| Tag | Required | Description |
+|---|---|---|
+| `s` | MUST | Service name (unique identifier, e.g., `audio`, `notifications`, `clipboard`) |
+| `v` | MUST | Semver version of the service implementation |
+| `d` | MAY | Human-readable description of the service |
+
+After sending all service descriptors, the shell sends EOSE:
+
+```json
+["EOSE", "svc-discovery"]
+```
+
+### 11.3 Service Message Routing
+
+Services receive messages via INTER_PANE events (kind 29003) with topic strings prefixed by the service name. The topic format is:
+
+```
+{service-name}:{action}
+```
+
+For example, the `audio` service uses topics like:
+- `audio:register` -- Register an audio source
+- `audio:unregister` -- Unregister an audio source
+- `audio:state-changed` -- Update audio metadata
+
+The shell routes INTER_PANE events to service handlers based on the topic prefix. Events with topics that match a registered service's name prefix are dispatched to that service's handler.
+
+### 11.4 Service Lifecycle
+
+1. **Registration:** The shell host registers services at startup via the `services` field in ShellHooks (or RuntimeHooks). Each service provides a `ServiceHandler` with a descriptor and request handler.
+
+2. **Discovery:** After AUTH completes, the napplet MAY send a REQ for kind 29010 to discover available services. The shell responds with descriptors for all registered services.
+
+3. **Interaction:** The napplet sends INTER_PANE events with service-prefixed topics. The shell dispatches these to the appropriate service handler.
+
+4. **Cleanup:** When a napplet window is destroyed, the shell calls `onWindowDestroyed` on each service handler that implements it, allowing services to clean up per-window state.
+
+### 11.5 Built-in vs Custom Services
+
+The protocol distinguishes between built-in and custom services:
+
+**Built-in services** are defined in this specification and have standardized topic formats:
+- `audio` -- Audio playback management (see Section 6)
+- Future: `notifications`, `clipboard`, etc.
+
+**Custom services** are shell-specific extensions. They follow the same topic-prefix pattern but are not standardized. Napplets MUST use service discovery to check for custom service availability before attempting to use them.
+
+### 11.6 ACL Considerations
+
+Service-level ACL gating is NOT defined in this version. Individual services MAY implement their own access control within their handlers. A future version MAY define per-service capability strings (e.g., `service:audio`, `service:notifications`).
+
+### 11.7 Backwards Compatibility
+
+Service discovery is entirely optional. Shells that do not register any services will not respond to kind 29010 REQs (the subscription receives EOSE immediately with no events). Napplets that do not perform service discovery continue to work with the core protocol unchanged.
+
+Existing protocol features (audio management via Section 6 topics, storage proxy, signer proxy) continue to work independently of the service extension system. Migration of these features to the service pattern is a v0.4.0+ concern.
+
+---
+
+## 12. Protocol Layers [OPEN]
 
 The protocol is organized into four layers. Layers 0-2 are REQUIRED for any conforming shell/napplet implementation. Layer 3 capabilities are OPTIONAL -- shells advertise which they support, and napplets degrade gracefully when capabilities are unavailable.
 
@@ -835,13 +941,14 @@ Layer 3: Capabilities & Extensions
   - Hotkey forwarding (kind 29004)
   - Shell configuration (shell:config-get/update)
   - Keybinds protocol (capture mode, update, reset)
+  - Service discovery (kind 29010, optional service extensions)
 ```
 
 ---
 
-## 12. ACL Capabilities [OPEN]
+## 13. ACL Capabilities [OPEN]
 
-### 12.1 Composite Key Model
+### 13.1 Composite Key Model
 
 ACL entries are keyed by the triple `(pubkey, dTag, aggregateHash)`. This ties permissions to a specific napplet build. When a napplet updates (new aggregateHash), the shell creates a fresh ACL entry.
 
@@ -849,7 +956,7 @@ ACL entries are keyed by the triple `(pubkey, dTag, aggregateHash)`. This ties p
 - `dTag`: Derived from `parseInt(pubkey.slice(0, 8), 16).toString(36) + nappType`
 - `aggregateHash`: NIP-5A content hash from the AUTH event (empty string for dev mode)
 
-### 12.2 Capability Types
+### 13.2 Capability Types
 
 The following capabilities control napplet access:
 
@@ -866,15 +973,15 @@ The following capabilities control napplet access:
 | `state:read` | Read from state proxy | Granted |
 | `state:write` | Write to state proxy | Granted |
 
-### 12.3 Default Policy
+### 13.3 Default Policy
 
 The default ACL policy is PERMISSIVE: new napplet identities are granted all capabilities. This matches the UX goal where napplets work immediately after AUTH without requiring user configuration. Users can restrict specific capabilities via the shell's settings UI.
 
-### 12.4 Blocking
+### 13.4 Blocking
 
 A napplet identity can be blocked, which denies ALL capabilities regardless of individual grants. Blocked status is checked before capability checks.
 
-### 12.5 ACL Command Topics
+### 13.5 ACL Command Topics
 
 Napplets can query and modify ACL entries via shell commands (kind 29003):
 
@@ -890,7 +997,7 @@ Grant and revoke operations include `["pubkey", "<hex>"]` and `["cap", "<capabil
 
 Responses contain JSON-serialized ACL entries in the content field, delivered directly to the requesting window.
 
-### 12.6 Aggregate Hash Verification
+### 13.6 Aggregate Hash Verification
 
 When a napplet provides a non-empty `aggregateHash` in its AUTH event:
 
@@ -903,7 +1010,7 @@ When a napplet provides a non-empty `aggregateHash` in its AUTH event:
 
 An empty `aggregateHash` indicates dev mode -- the shell SHOULD accept without manifest verification but MAY mark the napplet as unverified in the UI.
 
-### 12.7 Napp Update Detection
+### 13.7 Napp Update Detection
 
 When a previously verified napplet presents a different `aggregateHash`:
 
@@ -911,7 +1018,7 @@ When a previously verified napplet presents a different `aggregateHash`:
 - The shell MAY implement update policies: `"auto-grant"` (copy capabilities from old key), `"banner"` (show update UI and pause until user acts), or `"silent-reprompt"` (accept with fresh permissive defaults)
 - The choice of update policy is implementation-specific; the spec only requires that the shell recognize hash changes as identity transitions
 
-### 12.8 ACL Persistence Format [LOCKED]
+### 13.8 ACL Persistence Format [LOCKED]
 
 The ACL store MUST persist to `localStorage` under the key `"napplet:acl"`. The value is a JSON-encoded array of `[compositeKey, entry]` tuples:
 
@@ -937,19 +1044,19 @@ Field definitions:
 - `pubkey`: The napplet's ephemeral pubkey from AUTH
 - `dTag`: Derived tag (see Section 2.5)
 - `aggregateHash`: NIP-5A content hash (empty string for dev mode)
-- `capabilities`: Array of granted capability strings (see Section 12.2)
+- `capabilities`: Array of granted capability strings (see Section 13.2)
 - `blocked`: Boolean indicating whether all operations are denied
 - `stateQuota`: Per-napp state quota in bytes (default: 524,288 = 512 KB)
 
-### 12.9 Storage Quota
+### 13.9 Storage Quota
 
 Each napplet identity has a per-napp state quota. The default is 512 KB (524,288 bytes). The quota MAY be configured per-napplet via the ACL system. The shell MUST reject state writes that would exceed the quota.
 
 ---
 
-## 13. Security Model [LOCKED]
+## 14. Security Model [LOCKED]
 
-### 13.1 Threat Model
+### 14.1 Threat Model
 
 The protocol assumes:
 
@@ -958,7 +1065,7 @@ The protocol assumes:
 - The browser enforces iframe sandbox boundaries
 - `MessageEvent.source` provides unforgeable sender identification
 
-### 13.2 Security Layers
+### 14.2 Security Layers
 
 1. **Iframe sandbox:** `allow-scripts allow-forms allow-popups allow-modals allow-downloads` -- no `allow-same-origin`. Napplets have opaque origins, no direct state access, no direct network access beyond `fetch` to their serving origin.
 
@@ -976,7 +1083,7 @@ The protocol assumes:
 
 8. **Storage scoping:** Storage is namespaced by composite key `(pubkey, dTag, aggregateHash)`. Napplets cannot access each other's data. Hash changes create new namespaces.
 
-### 13.3 What the Protocol Does NOT Protect Against
+### 14.3 What the Protocol Does NOT Protect Against
 
 - A compromised browser (same as any web application)
 - A malicious shell implementation (napplets must trust the shell)
@@ -985,11 +1092,11 @@ The protocol assumes:
 
 ---
 
-## 14. Provisional -- NIP-C4 Kind Numbers [OPEN]
+## 15. Provisional -- NIP-C4 Kind Numbers [OPEN]
 
 > **This section is provisional.** NIP-C4 ([PR#2274](https://github.com/nostr-protocol/nips/pull/2274)) is an open, unmerged PR. Kind numbers in this section MAY change when the NIP finalizes. Implementations MUST use named constants rather than raw integer literals for all NIP-C4 kinds.
 
-### 14.1 Napp Listing Kind
+### 15.1 Napp Listing Kind
 
 | Constant | Kind Number | NIP-C4 Status |
 |----------|------------|---------------|
@@ -997,14 +1104,14 @@ The protocol assumes:
 
 This kind is used for napp directory listings. The exact kind number is subject to change.
 
-### 14.2 Nsite Kinds (PR#1538)
+### 15.2 Nsite Kinds (PR#1538)
 
 | Constant | Kind Number | Status |
 |----------|------------|--------|
 | `KIND_NSITE_MANIFEST` | 34128 | Draft |
 | `KIND_NSITE_INDEX` | 35128 | Draft |
 
-### 14.3 NIP-5A Manifest Format and Aggregate Hash
+### 15.3 NIP-5A Manifest Format and Aggregate Hash
 
 Napplet builds are identified by their aggregate hash, computed from the NIP-5A manifest event (kind 35128). The aggregate hash ties a napplet's ACL identity to a specific build.
 
@@ -1051,15 +1158,23 @@ The aggregate hash is stored in the NIP-5A event's `x` tag (see [nostr-protocol/
 
 For the full NIP-5A specification, see [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md).
 
-### 14.4 Spec Revision Tracking
+### 15.4 Spec Revision Tracking
 
 Implementations SHOULD track the NIP-C4 spec revision they target. The current reference revision is `draft-2026-03-21`. When NIP-C4 finalizes, implementations MUST update their kind number constants.
 
+### 15.5 Service Discovery Kind
+
+| Constant | Kind Number | Status |
+|----------|------------|--------|
+| `BusKind.SERVICE_DISCOVERY` | 29010 | Internal (not a NIP kind) |
+
+This kind is used for shell-to-napplet service discovery responses. It is part of the ephemeral bus range (29000-29999) and is NOT a NIP-assigned kind number. It follows the same allocation pattern as the existing BusKind constants (29000-29007).
+
 ---
 
-## 15. Minimal Viable Implementation [OPEN]
+## 16. Minimal Viable Implementation [OPEN]
 
-### 15.1 Minimal Napplet
+### 16.1 Minimal Napplet
 
 A minimal napplet that authenticates, subscribes, and publishes:
 
@@ -1118,7 +1233,7 @@ function publishNote(content) {
 }
 ```
 
-### 15.2 Minimal Shell
+### 16.2 Minimal Shell
 
 A minimal shell that hosts napplets in iframes:
 
@@ -1190,9 +1305,9 @@ window.addEventListener('message', (event) => {
 
 ---
 
-## 16. Implementation Notes
+## 17. Implementation Notes
 
-### 16.1 Reference Implementation
+### 17.1 Reference Implementation
 
 The portable SDK packages are in the [napplet](https://github.com/sandwichfarm/napplet) monorepo:
 
@@ -1202,20 +1317,23 @@ The portable SDK packages are in the [napplet](https://github.com/sandwichfarm/n
 
 The Svelte reference implementation using these packages is [hyprgate](https://github.com/sandwichfarm/hyprgate).
 
-### 16.2 Conformance
+### 17.2 Conformance
 
 An implementation is conforming if:
 
 - It implements Layers 0-2 (transport, NIP-01 wire format, AUTH) completely
-- It correctly handles all MUST-level requirements in Sections 1-3 and 13
+- It correctly handles all MUST-level requirements in Sections 1-3 and 14
 - Layer 3 capabilities are optional; conforming implementations SHOULD document which capabilities they support
 
-### 16.3 Future Work
+### 17.3 Future Work
 
 - NIP upstream submission (requires two independent implementations per nostr convention)
 - Conformance test suite
 - Protocol version negotiation (what happens on major version mismatch)
 - Capability advertisement (shell declares supported optional features during AUTH)
+- Service discovery implementation (Section 11) -- napplets query available shell services via kind 29010
+- Per-service ACL capabilities -- `service:audio`, `service:notifications`, etc.
+- Service dependency declaration in NIP-5A manifests (`requires` tags)
 
 ---
 
