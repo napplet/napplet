@@ -143,13 +143,17 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 20. Concrete Services | v0.4.0 | 0/0 | Not started | - |
 | 21. Shim Discovery API | v0.4.0 | 0/0 | Not started | - |
 | 22. Negotiation & Compatibility | v0.4.0 | 0/4 | Planned | - |
+| 22.1. Core Infrastructure Services | v0.4.0 | 0/4 | Planned | - |
 
 ### Phase 22.1: Core Infrastructure Services (INSERTED)
 
 **Goal:** Migrate relay pool, cache, and signer from hardcoded RuntimeHooks interfaces to registered services — completing the unified service model where all capabilities are discoverable and pluggable
 **Requirements**: SVC-04 (moved from Phase 20)
 **Depends on:** Phase 19 (service dispatch must exist), Phase 20 (pattern proven with audio/notifications)
-**Plans:** 0 plans
+**Plans:** 4 plans in 3 waves
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 22.1 to break down)
+- [ ] 22.1-01 — Signer service: extract handleSignerRequest as ServiceHandler (wave 1)
+- [ ] 22.1-02 — Relay pool and cache services: individual ServiceHandler implementations (wave 2)
+- [ ] 22.1-03 — Coordinated relay helper: createCoordinatedRelay composite service (wave 2)
+- [ ] 22.1-04 — Runtime migration: service dispatch for signer, relay, cache (wave 3)
