@@ -30,7 +30,10 @@
   3. Topic constants (shell:state-*, napp:state-response) are importable from @napplet/core
   4. `pnpm build && pnpm type-check` passes across all packages with core as the single source of protocol types
   5. @napplet/core has zero external dependencies (package.json has no dependencies or peerDependencies)
-**Plans**: TBD
+**Plans**:
+  - Plan 01 (Wave 1): Create @napplet/core package with protocol types, constants, and topics [CORE-01..06, CORE-09]
+  - Plan 02 (Wave 2): Rewire @napplet/shell to import from @napplet/core [CORE-07]
+  - Plan 03 (Wave 2): Rewire @napplet/shim to import from @napplet/core [CORE-08]
 
 ### Phase 13: Runtime Package
 **Goal**: A browser-agnostic @napplet/runtime package owns the full protocol engine — message dispatch, ACL enforcement, AUTH handshake, subscription lifecycle — depending only on @napplet/core and @napplet/acl
@@ -96,7 +99,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16
 | 9. ACL Enforcement Gate | v0.2.0 | 2/2 | Complete | 2026-03-30 |
 | 10. ACL Behavioral Tests | v0.2.0 | 2/2 | Complete | 2026-03-30 |
 | 11. Shell Code Cleanup | v0.2.0 | 2/2 | Complete | 2026-03-31 |
-| 12. Core Package | v0.3.0 | 0/0 | Not started | - |
+| 12. Core Package | v0.3.0 | 0/3 | Planned | - |
 | 13. Runtime Package | v0.3.0 | 0/0 | Not started | - |
 | 14. Shell Adapter and Shim Rewire | v0.3.0 | 0/0 | Not started | - |
 | 15. Service Extension Design | v0.3.0 | 2/2 | Planned | - |
