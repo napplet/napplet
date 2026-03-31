@@ -1,122 +1,133 @@
-# Requirements: Napplet Protocol SDK v0.2.0
+# Requirements: Napplet Protocol SDK v0.3.0
 
-**Defined:** 2026-03-30
-**Core Value:** The shell's security boundary (ACL) must be deterministic, auditable, and enforce on every code path — no bypasses, no gaps.
+**Defined:** 2026-03-31
+**Core Value:** Protocol logic is portable — any environment can host napplets by implementing RuntimeHooks.
 
-## v0.2.0 Requirements
+## v0.3.0 Requirements
 
-### Rename: pseudo-relay → ShellBridge
+### @napplet/core — Shared Protocol Types
 
-- [x] **REN-01**: `createPseudoRelay()` renamed to `createShellBridge()` in @napplet/shell
-- [x] **REN-02**: `PseudoRelay` type renamed to `ShellBridge` in @napplet/shell
-- [x] **REN-03**: `pseudo-relay.ts` file renamed to `shell-bridge.ts`
-- [x] **REN-04**: All references in tests updated (import paths, variable names, comments)
-- [x] **REN-05**: All references in demo app updated
-- [x] **REN-06**: SPEC.md updated — "pseudo-relay" → "ShellBridge" throughout
-- [x] **REN-07**: PSEUDO_RELAY_URI constant renamed to SHELL_BRIDGE_URI
-- [x] **REN-08**: Package README updated with new API name
+- [ ] **CORE-01**: New package `@napplet/core` in `packages/core/` with zero dependencies
+- [ ] **CORE-02**: `NostrEvent`, `NostrFilter` types moved from shell and shim to core
+- [ ] **CORE-03**: `BusKind`, `AUTH_KIND`, `SHELL_BRIDGE_URI`, `PROTOCOL_VERSION` constants moved to core
+- [ ] **CORE-04**: `Capability` type and `ALL_CAPABILITIES` moved to core (string union, not bitfield — bitfield stays in @napplet/acl)
+- [ ] **CORE-05**: `DESTRUCTIVE_KINDS` moved to core
+- [ ] **CORE-06**: Topic constants (`shell:state-*`, `napp:state-response`, etc.) moved to core
+- [ ] **CORE-07**: @napplet/shell imports all protocol types from @napplet/core (no local copies)
+- [ ] **CORE-08**: @napplet/shim imports all protocol types from @napplet/core (no local copies)
+- [ ] **CORE-09**: Package builds, type-checks, zero external dependencies
 
-### Rename: storage → state (completion)
+### @napplet/runtime — Protocol Engine
 
-- [x] **STA-01**: All test files updated — storage:read/write → state:read/write capability strings
-- [x] **STA-02**: Test file `storage-isolation.spec.ts` renamed to `state-isolation.spec.ts`
-- [x] **STA-03**: All test assertions updated for `shell:state-*` topics and `napp:state-response`
-- [x] **STA-04**: Test harness globals updated if they reference storage
+- [ ] **RT-01**: New package `@napplet/runtime` in `packages/runtime/`
+- [ ] **RT-02**: `RuntimeHooks` interface defined — abstract hooks any shell implements (sendToNapplet, getRelayPool, verifyEvent, persistAcl, loadAcl, etc.)
+- [ ] **RT-03**: `createRuntime(hooks: RuntimeHooks)` factory exported — creates the protocol engine
+- [ ] **RT-04**: Message dispatch logic moved from shell-bridge.ts to runtime (handleEvent, handleReq, handleClose, handleAuth, handleCount)
+- [ ] **RT-05**: enforce.ts (enforce gate, resolveCapabilities) moved to runtime
+- [ ] **RT-06**: Subscription management moved to runtime
+- [ ] **RT-07**: AUTH handshake logic moved to runtime
+- [ ] **RT-08**: Replay detection moved to runtime
+- [ ] **RT-09**: Event buffer (ring buffer) and delivery logic moved to runtime
+- [ ] **RT-10**: napp-key-registry moved to runtime (identity tracking is protocol-level, not browser-level)
+- [ ] **RT-11**: ACL state container (wraps @napplet/acl with persistence via RuntimeHooks) moved to runtime
+- [ ] **RT-12**: Runtime depends only on @napplet/core + @napplet/acl (no DOM, no browser APIs)
+- [ ] **RT-13**: Package builds, type-checks, no browser-specific imports
 
-### ACL Redesign — Pure Module
+### @napplet/shell — Browser Adapter
 
-- [ ] **ACL-01**: ACL logic extracted into standalone module with zero side effects (no DOM, no localStorage, no closures over runtime)
-- [ ] **ACL-02**: ACL module exports a single check function: `(identity: {pubkey, dTag, hash}, capability, action) → allow | deny`
-- [ ] **ACL-03**: ACL state is an immutable data structure — mutations return new state, not mutate in place
-- [ ] **ACL-04**: ACL module has no dependencies beyond standard library (WASM-compilable)
-- [ ] **ACL-05**: ACL persistence (localStorage) is a separate adapter layer, not part of the core module
-- [ ] **ACL-06**: ACL module is fully describable in <100 words (spec-friendly)
+- [ ] **SHELL-01**: `createShellBridge(hooks: ShellHooks)` becomes a thin wrapper around `createRuntime(adaptHooks(hooks))`
+- [ ] **SHELL-02**: `ShellHooks` interface preserved for backwards compatibility but internally adapts to `RuntimeHooks`
+- [ ] **SHELL-03**: origin-registry stays in shell (browser-specific Window ↔ windowId)
+- [ ] **SHELL-04**: state-proxy stays in shell (browser localStorage-backed)
+- [ ] **SHELL-05**: manifest-cache stays in shell (browser localStorage-backed)
+- [ ] **SHELL-06**: audio-manager stays in shell (Web Audio API, browser-specific)
+- [ ] **SHELL-07**: Shell depends on @napplet/runtime + @napplet/core
 
-### ACL Enforcement — Single Gate
+### @napplet/shim — Updated Imports
 
-- [ ] **ENF-01**: ShellBridge has ONE enforcement function that all message paths call before acting
-- [ ] **ENF-02**: Enforcement checks both sender capabilities (relay:write, sign:event, state:write) AND recipient capabilities (relay:read, state:read) on every message
-- [ ] **ENF-03**: No postMessage to a napplet iframe occurs without passing through the enforcement gate
-- [ ] **ENF-04**: Denied messages produce explicit responses (OK false, CLOSED with reason, error tags)
-- [ ] **ENF-05**: Enforcement function is auditable — logs every check with identity, capability, and decision
+- [ ] **SHIM-01**: @napplet/shim imports types from @napplet/core instead of local types.ts
+- [ ] **SHIM-02**: Shim's local types.ts deleted or reduced to shim-specific types only
+- [ ] **SHIM-03**: No behavioral changes — shim API remains identical
 
-### ACL Behavioral Tests — Capability × Action Matrix
+### Service Extension Design (stub)
 
-- [ ] **TST-01**: Test matrix covers every capability (relay:read, relay:write, sign:event, sign:nip04, sign:nip44, state:read, state:write, hotkey:forward) × every action type (publish, subscribe, deliver, sign, state-get, state-set, inter-pane emit, inter-pane receive)
-- [ ] **TST-02**: Each cell in the matrix has: grant → action succeeds, revoke → action denied with correct error
-- [ ] **TST-03**: Block/unblock tested for every action type
-- [ ] **TST-04**: ACL changes take effect immediately — revoke mid-session stops delivery on next message
-- [ ] **TST-05**: No message path bypasses ACL — tested by revoking ALL capabilities and verifying zero messages delivered
-- [ ] **TST-06**: ACL state persistence tested — revoke, reload, verify still revoked
+- [ ] **SVC-01**: `RuntimeHooks.services` optional field defined in interface (Record<string, unknown> or typed registry)
+- [ ] **SVC-02**: Event kind 29010 reserved for service discovery in @napplet/core
+- [ ] **SVC-03**: Service discovery message format documented in SPEC.md (even if not yet implemented)
 
-### Shell Code Cleanup
+### Test Suite
 
-- [ ] **CLN-01**: Consistent method naming across ShellBridge (verb-noun pattern: `handleEvent`, `deliverEvent`, `checkCapability`)
-- [ ] **CLN-02**: ShellBridge public API is minimal and well-documented (JSDoc with @param, @returns, @example)
-- [ ] **CLN-03**: Internal helpers are private (not exported), clearly named, single-responsibility
-- [ ] **CLN-04**: Remove debug console.log statements added during v0.1.0 development
-- [ ] **CLN-05**: All ShellBridge methods have consistent error handling (no silent swallows without comment)
+- [ ] **TST-01**: All 122 existing tests pass with new package structure
+- [ ] **TST-02**: @napplet/core has unit tests for type re-exports (import verification)
+- [ ] **TST-03**: @napplet/runtime has unit tests for message dispatch (isolated from browser)
+- [ ] **TST-04**: Integration tests verify shell → runtime → acl chain works end-to-end
 
-## v0.3.0 (Deferred)
+## v0.4.0 (Deferred)
 
-- **WASM compilation** of ACL module — v0.2.0 designs for it, v0.3.0 implements
-- **Restrictive ACL default mode** — opt-in strict mode where unknown identities are denied
-- **Rate limiting on signer requests** — per-napp request frequency caps
-- **npm publish** — v0.2.0 focuses on architecture, publish after stabilization
+- **Audio service implementation** via service extension pattern
+- **Notification service** via service extension pattern
+- **Service discovery protocol** — napplet queries available services
+- **Napplet manifest `requires` tags** — declares service dependencies
+- **WASM compilation** of @napplet/acl
+- **npm publish** all packages
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| WASM build of ACL | v0.2.0 designs for WASM-readiness, actual compilation deferred to v0.3.0 |
-| New protocol features | Architecture cleanup only, no new capabilities |
-| Demo app redesign | Demo gets updated imports but no new features |
-| NIP PR submission | Spec evolves with architecture but PR submission is separate |
+| Actual service implementations | v0.3.0 designs the interface, v0.4.0 implements |
+| WASM compilation | Designed for in v0.2.0, deferred until services are stable |
+| New protocol features | Architecture extraction only |
+| Demo app changes | Demo gets updated imports, no new features |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REN-01 | Phase 7 | Complete |
-| REN-02 | Phase 7 | Complete |
-| REN-03 | Phase 7 | Complete |
-| REN-04 | Phase 7 | Complete |
-| REN-05 | Phase 7 | Complete |
-| REN-06 | Phase 7 | Complete |
-| REN-07 | Phase 7 | Complete |
-| REN-08 | Phase 7 | Complete |
-| STA-01 | Phase 7 | Complete |
-| STA-02 | Phase 7 | Complete |
-| STA-03 | Phase 7 | Complete |
-| STA-04 | Phase 7 | Complete |
-| ACL-01 | Phase 8 | Pending |
-| ACL-02 | Phase 8 | Pending |
-| ACL-03 | Phase 8 | Pending |
-| ACL-04 | Phase 8 | Pending |
-| ACL-05 | Phase 8 | Pending |
-| ACL-06 | Phase 8 | Pending |
-| ENF-01 | Phase 9 | Pending |
-| ENF-02 | Phase 9 | Pending |
-| ENF-03 | Phase 9 | Pending |
-| ENF-04 | Phase 9 | Pending |
-| ENF-05 | Phase 9 | Pending |
-| TST-01 | Phase 10 | Pending |
-| TST-02 | Phase 10 | Pending |
-| TST-03 | Phase 10 | Pending |
-| TST-04 | Phase 10 | Pending |
-| TST-05 | Phase 10 | Pending |
-| TST-06 | Phase 10 | Pending |
-| CLN-01 | Phase 11 | Pending |
-| CLN-02 | Phase 11 | Pending |
-| CLN-03 | Phase 11 | Pending |
-| CLN-04 | Phase 11 | Pending |
-| CLN-05 | Phase 11 | Pending |
+| CORE-01 | TBD | Pending |
+| CORE-02 | TBD | Pending |
+| CORE-03 | TBD | Pending |
+| CORE-04 | TBD | Pending |
+| CORE-05 | TBD | Pending |
+| CORE-06 | TBD | Pending |
+| CORE-07 | TBD | Pending |
+| CORE-08 | TBD | Pending |
+| CORE-09 | TBD | Pending |
+| RT-01 | TBD | Pending |
+| RT-02 | TBD | Pending |
+| RT-03 | TBD | Pending |
+| RT-04 | TBD | Pending |
+| RT-05 | TBD | Pending |
+| RT-06 | TBD | Pending |
+| RT-07 | TBD | Pending |
+| RT-08 | TBD | Pending |
+| RT-09 | TBD | Pending |
+| RT-10 | TBD | Pending |
+| RT-11 | TBD | Pending |
+| RT-12 | TBD | Pending |
+| RT-13 | TBD | Pending |
+| SHELL-01 | TBD | Pending |
+| SHELL-02 | TBD | Pending |
+| SHELL-03 | TBD | Pending |
+| SHELL-04 | TBD | Pending |
+| SHELL-05 | TBD | Pending |
+| SHELL-06 | TBD | Pending |
+| SHELL-07 | TBD | Pending |
+| SHIM-01 | TBD | Pending |
+| SHIM-02 | TBD | Pending |
+| SHIM-03 | TBD | Pending |
+| SVC-01 | TBD | Pending |
+| SVC-02 | TBD | Pending |
+| SVC-03 | TBD | Pending |
+| TST-01 | TBD | Pending |
+| TST-02 | TBD | Pending |
+| TST-03 | TBD | Pending |
+| TST-04 | TBD | Pending |
 
 **Coverage:**
-- v0.2.0 requirements: 34 total
-- Mapped to phases: 34
-- Unmapped: 0
+- v0.3.0 requirements: 38 total
+- Mapped to phases: 0
+- Unmapped: 38
 
 ---
-*Requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after roadmap creation*
+*Requirements defined: 2026-03-31*
