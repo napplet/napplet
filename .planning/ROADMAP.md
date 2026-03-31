@@ -51,7 +51,7 @@
 ### v0.4.0 Feature Negotiation & Service Discovery (In Progress)
 
 - [x] **Phase 18: Core Types & Runtime Dispatch** - ServiceDescriptor in core, ServiceHandler/ServiceRegistry in runtime, topic-prefix routing (3 plans)
-- [ ] **Phase 19: Service Discovery Protocol** - Kind 29010 REQ/EVENT/EOSE synthetic response flow
+- [x] **Phase 19: Service Discovery Protocol** - Kind 29010 REQ/EVENT/EOSE synthetic response flow (completed 2026-03-31)
 - [ ] **Phase 20: Concrete Services** - Audio service (first proof), notification service (generalization proof), core infrastructure as services
 - [ ] **Phase 21: Shim Discovery API** - discoverServices(), hasService(), hasServiceVersion() on window global
 - [ ] **Phase 22: Negotiation & Compatibility** - Manifest requires tags, compatibility reporting, strict/permissive mode, undeclared usage consent
@@ -139,7 +139,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 16. Verification | v0.3.0 | 0/4 | Complete | 2026-03-31 |
 | 17. Shell Export Cleanup | v0.3.0 | 1/1 | Complete | 2026-03-31 |
 | 18. Core Types & Runtime Dispatch | v0.4.0 | 3/3 | Complete | 2026-03-31 |
-| 19. Service Discovery Protocol | v0.4.0 | 0/2 | Planned    |  |
+| 19. Service Discovery Protocol | v0.4.0 | 0/2 | Complete    | 2026-03-31 |
 | 20. Concrete Services | v0.4.0 | 0/0 | Not started | - |
 | 21. Shim Discovery API | v0.4.0 | 0/0 | Not started | - |
 | 22. Negotiation & Compatibility | v0.4.0 | 0/4 | Planned | - |
@@ -150,7 +150,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 **Goal:** Migrate relay pool, cache, and signer from hardcoded RuntimeHooks interfaces to registered services — completing the unified service model where all capabilities are discoverable and pluggable
 **Requirements**: SVC-04 (moved from Phase 20)
 **Depends on:** Phase 19 (service dispatch must exist), Phase 20 (pattern proven with audio/notifications)
-**Plans:** 0/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 22.1-01 — Signer service: extract handleSignerRequest as ServiceHandler (wave 1)
