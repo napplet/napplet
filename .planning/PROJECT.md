@@ -36,7 +36,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ### Active
 
-- [ ] Extract @napplet/core — protocol types, message definitions, capability resolver (shared by all)
+- [x] Extract @napplet/core — protocol types, message definitions, capability resolver (shared by all) — Validated in Phase 12: Core Package
 - [ ] Extract @napplet/runtime — enforcement gate, message router, state management
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
@@ -121,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 - Service discovery event kind reserved
 
 ---
-*Last updated: 2026-03-31 after v0.3.0 milestone kickoff*
+*Last updated: 2026-03-31 after Phase 12 completion*
