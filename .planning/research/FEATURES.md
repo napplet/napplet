@@ -1,336 +1,354 @@
-# Feature Landscape
+# Feature Landscape: Service Discovery & Capability Negotiation
 
-**Domain:** Sandboxed iframe app protocol SDK (Nostr-native)
-**Researched:** 2026-03-30
-**Mode:** Ecosystem research -- what a complete demo and behavioral test matrix needs
+**Domain:** Sandboxed app ecosystems -- service discovery, capability negotiation, compatibility checking, graceful degradation
+**Researched:** 2026-03-31
+**Mode:** Ecosystem research for v0.4.0 milestone (feature negotiation & service discovery)
+**Overall confidence:** HIGH -- patterns are well-established across 6+ ecosystems
 
 ## Context
 
-This is a brownfield project. The protocol is built. The question is: what does a complete demo + test suite need to cover for the decoupled SDK to be credible? Research draws from comparable sandboxed app platforms (Figma plugins, Telegram Mini Apps, Farcaster Mini Apps, Web Extensions MV3, Tauri v2) and maps their tested capabilities back to what the napplet protocol already implements.
+This research maps how real-world sandboxed app ecosystems handle the problems napplet v0.4.0 needs to solve: how does a sandboxed app discover what its host provides, declare what it needs, and handle missing capabilities? The napplet protocol already has SPEC.md Section 11 (kind 29010 service discovery) and typed interfaces (ServiceDescriptor/Handler/Registry) designed but not implemented. This research validates that design against proven patterns and identifies gaps.
+
+### Ecosystems Analyzed
+
+| Ecosystem | Sandbox Model | Relevance to Napplet |
+|-----------|--------------|---------------------|
+| Chrome Extensions MV3 | Process isolation + manifest permissions | Manifest-declared requirements, optional runtime permissions |
+| Android Runtime Permissions | App sandbox + runtime permission requests | Graceful degradation UX when capabilities denied |
+| VS Code Extensions | Extension host + contribution points | extensionDependencies, engines constraint, when-clause feature detection |
+| Model Context Protocol (MCP) | JSON-RPC + capability handshake | Direct analog -- capability negotiation during initialization |
+| Figma Plugins | iframe + WASM sandbox | Dual-sandbox capability model, API surface detection |
+| Nostr NIP-11 | Relay information document | Native Nostr pattern for advertising supported features |
+| Micro-frontend (Module Federation) | Runtime module discovery | Service discovery, version negotiation, capability flags |
+| MCP Apps (ext-apps) | Sandboxed iframe in MCP host | Permission declaration, CSP negotiation, graceful degradation to text |
 
 ---
 
 ## Table Stakes
 
-Features users (SDK consumers and protocol reviewers) expect. Missing = the demo/tests feel incomplete and the protocol is not credible.
+Features that napplet developers and shell implementors will expect from a service discovery system. Missing = the protocol feels half-baked and developers will build ad-hoc workarounds.
 
-### Demo Capabilities
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| AUTH handshake success path | Every sandboxed platform demos identity establishment first. Figma shows plugin registration; Farcaster shows `signin`; Telegram shows `initData` validation. Without this, nothing else works. | Low | Existing code handles this. Needs visual demo showing challenge-response flow. |
-| AUTH handshake failure paths | Telegram patched an iframe isolation vulnerability in Dec 2025 because they missed failure-path testing. Every platform that ships without rejection demos ships insecure. | Med | Test: bad signature, expired timestamp, challenge mismatch, relay tag mismatch. At least 4 negative scenarios. |
-| Single napplet relay pub/sub | Core value proposition. Analogous to Figma plugin reading/writing scene data, or Farcaster Mini App calling `composeCast`. If subscribe/publish does not work end-to-end, nothing else matters. | Low | Existing code. Demo: napplet subscribes to a kind, publishes an event, sees it delivered back via shell relay routing. |
-| Multi-napplet inter-pane messaging | Unique to this protocol vs most competitors. Figma has no inter-plugin messaging. Farcaster Mini Apps are single-instance. This is a protocol differentiator but it must work to be credible. | Med | Demo: Napplet A emits topic event, Napplet B receives it. Visual message flow in debugger. |
-| ACL enforcement (allow/block) | Every comparable platform has permissions. Web Extensions MV3 has granular manifest permissions. Tauri v2's entire security model is ACL capabilities. Farcaster declares `requiredCapabilities` in manifest. | Med | Demo: grant relay:write, publish succeeds. Revoke relay:write, publish is denied with visible error. Block napplet entirely, all operations fail. |
-| Storage proxy round-trip | Telegram has 3 storage tiers (device, secure, cloud). Figma plugins use `figma.clientStorage`. Every sandboxed platform provides some storage. | Low | Demo: setItem, getItem, removeItem, keys, clear. Show scoped isolation between napplets. |
-| Signer delegation (NIP-07 proxy) | This is the Nostr-specific equivalent of Farcaster's wallet provider or Telegram's biometric auth. The napplet asks the shell to sign on its behalf. | Med | Demo: napplet calls `window.nostr.signEvent()`, shell proxies to host signer, signed event returned. |
-| Consent prompt for destructive kinds | Analogous to Android runtime permissions, Web Extension `activeTab` activation, or Tauri capability prompts. Destructive operations (kind 0, 3, 5, 10002) must gate on user approval. | Med | Demo: napplet tries to sign kind 0 (metadata), shell raises consent prompt, user approves/denies, napplet gets result. |
-| Message debugger / visual inspector | Farcaster has Frame Playground. Figma has Plugin Console. Telegram has test environment. Without a way to see what is happening, the protocol is a black box. | Med | This is NOT a standalone tool -- it is a napplet that subscribes to all message types and displays them. Think "relay inspector" as a napplet. |
-| Napplet lifecycle (load, auth, ready, teardown) | Every platform defines lifecycle. Figma: plugin opens, runs, calls `closePlugin()`. Farcaster: Mini App calls `ready()` to dismiss splash. Telegram: `initData` validation on load. | Low | Demo: shell loads iframe, sends challenge, napplet auths, shell confirms OK, napplet is "ready". On close: subscriptions cleaned up, storage persisted. |
-
-### Test Matrix Capabilities
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| AUTH handshake test suite | Tests: valid auth, bad signature, expired timestamp, future timestamp, wrong challenge, wrong relay tag, missing type tag, missing aggregateHash tag. At minimum 8 scenarios. | Med | Pure unit tests against pseudo-relay `handleAuth`. Mock crypto.verifyEvent for speed. |
-| ACL grant/revoke/block test suite | Tests: default permissive grant, explicit grant, revoke single capability, block napplet, unblock napplet, check after persist/load round-trip, overlapping roles. | Med | Unit tests against aclStore. No browser needed. |
-| Storage proxy test suite | Tests: get/set/remove/keys/clear, quota enforcement, quota exceeded error, cross-napplet isolation (napp A cannot read napp B keys), scoped key format validation, malformed request handling. | Med | Needs localStorage mock or browser-mode vitest. |
-| Replay attack detection tests | Tests: event with old timestamp rejected, event with future timestamp rejected, duplicate event ID rejected, event ID cleanup after window expires. | Low | Unit tests against `checkReplay`. |
-| Subscription lifecycle tests | Tests: REQ creates subscription, CLOSE removes it, EOSE delivered after buffer scan, filter matching (kinds, authors, tags, since/until), subscription deduplication. | Med | Unit tests against pseudo-relay `handleReq`/`handleClose`. |
-| Inter-pane delivery tests | Tests: event delivered to matching subscribers only, sender excluded from own delivery, p-tag targeted delivery, no delivery after CLOSE, delivery order consistency. | Med | Integration tests with multiple mock windows. |
-| Signer request/response correlation | Tests: request with correlation ID, response matched by ID, timeout after 30s, error response handling, concurrent requests with different IDs. | Med | Unit tests on both shim and shell sides. |
-| NIP-01 filter matching tests | Tests: kind filter, author filter, id prefix filter, tag filter, since/until filter, combined filters, empty filter matches all. | Low | Pure function tests against `matchesFilter`. |
-| postMessage boundary tests | Tests: messages from non-registered windows ignored, messages without array format ignored, messages during auth-pending are queued, queued messages replayed after auth success, queued messages dropped on auth failure. | Med | Integration tests requiring real Window objects (browser-mode vitest or Playwright). |
-| Storage persistence round-trip | Tests: ACL store persist/load, manifest cache persist/load, data survives page reload, corrupt JSON in localStorage handled gracefully. | Low | Unit tests with mocked localStorage. |
+| Feature | Why Expected | Complexity | Ecosystem Precedent | Notes |
+|---------|--------------|------------|-------------------|-------|
+| Service enumeration (discovery query) | Every capability system starts with "what's available?" Chrome has `permissions.getAll()`. MCP has capability declaration in initialize handshake. NIP-11 has `supported_nips` array. Without this, napplets must guess. | Low | MCP initialize, NIP-11, Chrome `permissions.contains()` | Already designed: kind 29010 REQ/EVENT/EOSE flow. Implementation is the task. |
+| Service descriptor with name + version | Every discoverable service needs an identity. MCP declares tools/resources with names. NIP-11 uses integer NIP identifiers. VS Code extensions use publisher.name. Versions enable compatibility checks. | Low | MCP server capabilities, VS Code `engines.vscode`, Obsidian `minAppVersion` | Already designed: ServiceDescriptor with `name`, `version`, `description`. Semver version string. |
+| Post-AUTH discovery timing | Discovery must happen after authentication. Android permissions are checked at runtime. MCP negotiates during initialize (before operations). Chrome extensions check at runtime. The napplet must know the right time to query. | Low | MCP lifecycle (negotiate then operate), Android `checkSelfPermission()` at runtime | SPEC.md Section 11.4 specifies: "After AUTH completes, the napplet MAY send a REQ for kind 29010." Shim API should make this easy. |
+| Shim-side discovery API | The napplet developer needs a simple function to call, not raw REQ/EVENT parsing. Figma provides `figma.*` globals. Chrome provides `chrome.permissions.*`. Android provides `ContextCompat.checkSelfPermission()`. | Med | Chrome `permissions.contains()`, Android `checkSelfPermission()`, Figma `figma.*` globals | Not yet designed. Needs a `discoverServices()` or `getAvailableServices()` function in @napplet/shim that returns a typed result. |
+| Graceful behavior when no services registered | Shells that don't register services should still work. EOSE with no events = "no optional services." Chrome extensions work without optional_permissions. MCP sessions work if server declares no tools. | Low | MCP (empty capabilities = still functional), SPEC.md Section 11.7 | Already designed in spec: "Shells that do not register any services will not respond to kind 29010 REQs (the subscription receives EOSE immediately with no events)." Zero implementation cost -- this is the default. |
+| Topic-prefix routing to service handlers | Once services are discovered, messages need to reach the right handler. Every plugin system has a dispatch mechanism. VS Code routes contribution points. MCP routes tool calls by name. Android routes intents by action. | Med | VS Code contribution points, MCP tool dispatch, Android intent routing | Already designed: INTER_PANE events with `{service-name}:{action}` topic prefix. Runtime needs to parse prefix and dispatch to ServiceRegistry. |
+| Service cleanup on window destroy | When a napplet closes, service state must be cleaned up. Figma calls cleanup on plugin close. Android calls `onDestroy()`. VS Code deactivates extensions. Memory leaks are the alternative. | Low | Android Activity lifecycle, Figma `closePlugin()`, VS Code `deactivate()` | Already designed: `ServiceHandler.onWindowDestroyed?(windowId)` optional method. Runtime needs to call it on window teardown. |
+| Compatibility surface for missing services | When a napplet needs a service the shell doesn't provide, the developer (and optionally the user) needs to know. Android shows "feature not available" UI. MCP clients conditionally disable UI. PWAs use feature detection with fallback. | Med | Android permission denial UX, MCP graceful degradation, PWA feature detection | Not yet designed. Needs: a way for napplets to check "does service X exist?" and a pattern for surfacing gaps. |
 
 ---
 
 ## Differentiators
 
-Features that set the napplet protocol apart from comparable platforms. Not strictly required for v1 credibility, but high-value for positioning.
+Features that would set napplet's service discovery apart. Not expected by developers, but valuable when present.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| NIP-01 wire format over postMessage | No other sandboxed platform uses an existing open protocol for its IPC. Figma uses proprietary message format. Farcaster uses custom SDK actions. Telegram uses `web_app_*` event types. Napplet reuses NIP-01 relay wire format -- any Nostr developer already knows how to read the messages. | Already built | Demonstrate this explicitly in docs and demo. Show a raw postMessage log that looks like relay traffic. |
-| Aggregate hash versioning | Version-specific ACL tied to content hash of the napplet build. No other platform does this. Web Extensions use version strings. Farcaster uses domain-level identity. This enables per-build permission grants without trusting version strings. | Already built | Demo: deploy updated napplet build, shell detects hash change, triggers update behavior (auto-grant, banner, silent-reprompt). |
-| Protocol-level inter-app messaging | Figma plugins cannot communicate with each other. Farcaster Mini Apps are single-instance. Telegram Mini Apps are isolated per bot. Napplets can pub/sub to each other via kind 29003 with topic-based routing. This enables compositor-style app ecosystems. | Already built | Demo: chat napplet emits `profile:open` topic, profile napplet responds. Show bidirectional flow. |
-| Shell-injectable events | The shell can inject synthetic events into the subscription system. This enables shell-level state broadcasting (e.g., `auth:identity-changed`) without napplets needing to poll. No comparable platform does host-to-app broadcast via the same wire format. | Already built | Demo: user switches identity in shell, all napplets receive `auth:identity-changed` event automatically. |
-| Scoped relay connections (NIP-29) | Napplets can request the shell to open a relay connection scoped to a specific relay URL with specific filters. This is like giving a plugin its own relay "channel" -- comparable to Farcaster's chain-specific providers but for relay-specific access. | Already built | Demo: napplet opens scoped connection to a NIP-29 group relay, receives group events. |
-| NIP-5A manifest with cryptographic signing | The vite plugin generates a manifest with SHA-256 per-file hashes and an aggregate hash, then signs it as a kind 35128 Nostr event. Stronger than Farcaster's domain association or Web Extension's CRX signing because it uses the same Nostr identity infrastructure. | Already built | Demo: build a napplet, show generated manifest, verify signature matches author pubkey. |
-| Keyboard hotkey forwarding | When a napplet iframe has focus, keyboard shortcuts need to reach the shell. The protocol forwards hotkeys as kind 29004 events. No comparable platform handles this -- Figma plugins capture all keyboard input themselves. | Already built | Demo: napplet has focus, user presses shell hotkey, shell receives and executes it. |
-| Visual protocol debugger | See every postMessage in real-time with type coloring and filter inspection. No other Nostr tool has this. Farcaster has Frame Playground but it is external, not an in-protocol app. | New build | A napplet that subscribes to all message types and displays them. The debugger IS a napplet -- dogfooding the protocol. |
-| Behavioral test matrix documentation | Published table of every capability x every scenario with test status. No comparable SDK publishes this level of protocol coverage transparency. | Low | Generated from test results, published in docs. |
+| Feature | Value Proposition | Complexity | Ecosystem Precedent | Notes |
+|---------|-------------------|------------|-------------------|-------|
+| Manifest `requires` tags | Napplet manifest declares service dependencies at build time, not just runtime. Shell can pre-check compatibility before loading the napplet. Chrome has `permissions` in manifest.json. VS Code has `extensionDependencies`. MCP Apps declare permissions in `_meta.ui.permissions`. No other iframe-sandboxed protocol does build-time service dependency declaration. | Med | Chrome manifest `permissions`, VS Code `extensionDependencies`, MCP Apps `_meta.ui.permissions` | Listed in PROJECT.md active requirements. Vite plugin would inject `requires` tags into NIP-5A manifest. Shell reads them on load. |
+| Pre-load compatibility check | Shell checks manifest `requires` before loading iframe, surfaces issues before AUTH. Android pre-checks `<uses-permission>` at install. Chrome blocks install if required permissions unavailable. This prevents the "load, auth, discover, fail" sequence. | Med | Chrome extension install-time permission check, Android install-time feature check | Requires manifest `requires` tags to be implemented first. Shell reads manifest, checks ServiceRegistry, surfaces report before or during napplet load. |
+| Typed discovery result with version info | Discovery returns not just "service exists" but name + version + description in a typed object. Enables semver range checks client-side. NIP-11 returns `supported_nips` as integers only. MCP returns capability booleans. Napplet could return richer ServiceDescriptor. | Low | MCP (capability booleans), NIP-11 (integer array) -- napplet would go further | ServiceDescriptor already has name, version, description. Shim API should return these as typed objects, not raw events. |
+| Version range compatibility checking | Napplet specifies "I need audio >= 1.0.0" and the shim checks if the shell's audio service version satisfies the range. No other sandboxed protocol does semver negotiation at the service level. Chrome uses version strings for the browser, not for individual APIs. | Med | npm semver resolution, VS Code `engines.vscode` range constraint | Would require a semver check utility in the shim. Could use a lightweight semver satisfies function (not the full `semver` npm package). |
+| Compatibility report object | A structured report of "what's available, what's missing, what's incompatible" that the napplet can use for UI decisions. MCP Apps degrade to text-only when UI unavailable. Android returns PERMISSION_GRANTED/DENIED per capability. A napplet could get a full compatibility snapshot. | Med | Android `checkSelfPermission()` per-capability, MCP Apps text fallback | Combines discovery results with manifest `requires` to produce a developer-friendly report. |
+| Service ACL capabilities | Per-service permission gating. A napplet with `service:audio` capability can use the audio service; without it, discovery shows the service but requests are denied. Extends the existing ACL model. Chrome has per-API permissions. Tauri v2 has per-command capabilities. | High | Chrome per-API permissions, Tauri v2 per-command ACL | SPEC.md Section 11.6 explicitly defers this: "Service-level ACL gating is NOT defined in this version." Good differentiator for v0.5.0+, not v0.4.0. |
+| Hot-reload service registration | Shell can register/unregister services at runtime (not just startup). Napplets get notified of service availability changes. No other sandboxed protocol supports dynamic capability changes. | High | Module Federation runtime module discovery | Significant complexity. Would require subscription-based service change notifications. Defer. |
 
 ---
 
 ## Anti-Features
 
-Features to explicitly NOT build for v1. Each has a clear rationale.
+Features to explicitly NOT build for v0.4.0. Each has a clear rationale based on ecosystem analysis.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| Restrictive ACL default mode | The codebase currently defaults to permissive (unknown napplets get all capabilities). Switching to restrictive default would break the developer experience for v1. Telegram and Farcaster both ship permissive-first for developer adoption. | Document the permissive default prominently. Add `mode: 'restrictive'` config option as a follow-up, not a v1 blocker. |
-| Manifest signature verification in shell | Shell currently loads napplets without verifying `.nip5a-manifest.json` signatures. Full supply-chain verification is important but adds complexity that blocks the demo. Figma did not add plugin review until years after launch. | Document that manifest verification is a security hardening feature for post-v1. The vite plugin generates signed manifests -- the verification side can wait. |
-| Rate limiting on signer requests | A malicious napplet could spam signer requests. But rate limiting requires policy decisions (how many per second? per minute?) that should not block v1. Web Extensions defer abuse prevention to the review process. | Document expected behavior. Add rate limiting as a shell hook that implementors can provide. |
-| IndexedDB storage backend | localStorage is 5-10 MB per origin. Sufficient for v1. IndexedDB would add async complexity to the storage proxy. Telegram uses localStorage-equivalent for device storage. | Keep localStorage. Document the limit. Add IndexedDB as a future storage backend option. |
-| Multi-shell federation | Running multiple shell instances on the same page and routing between them. No comparable platform supports this. Complexity is enormous for zero user demand. | Document single-shell-per-page constraint. |
-| Framework-specific bindings | React hooks, Svelte stores, Vue composables for the shim API. Every platform starts framework-agnostic. Figma's plugin API is vanilla JS. Farcaster's SDK is vanilla JS. Community builds the bindings. | Ship vanilla JS SDK. Let community build `@napplet/react`, `@napplet/svelte`. |
-| Key rotation for ephemeral keypairs | Rotating compromised napplet session keys. Important for security but adds significant state management complexity. No comparable platform supports key rotation for embedded app sessions. | Document that keypair is session-scoped and non-rotatable. Recommend clearing sessionStorage if compromise suspected. |
-| Real event ID computation for injected events | Shell-injected events currently use fake IDs (`crypto.randomUUID` padded to 64 chars). Computing real SHA-256 hashes would require importing more of nostr-tools into the shell. | Document that injected events are synthetic and should not be verified by ID. Add a `['synthetic', 'true']` tag to injected events so napplets can distinguish them. |
-| Napplet-to-napplet direct communication | Bypassing the shell for napplet-to-napplet messages. Every sandboxed platform routes through the host for security. Direct iframe-to-iframe postMessage would bypass ACL. | Always route through shell. This is a security invariant, not a missing feature. |
-| E2E tests against real Nostr relays | Flaky, slow, requires network. Tests should be deterministic and fast. | Mock relay responses in test harness. Use real relays only in manual integration testing. |
-| Multi-browser CI matrix | Overkill for v0.1. Chromium is sufficient for initial validation. | Test on Chromium only. Add Firefox/WebKit in CI when user base grows. |
-| Performance benchmarking suite | Premature optimization. Protocol correctness first. | Document known bottlenecks (CONCERNS.md already does this). Benchmark when performance is actually a problem. |
-| Offline/PWA support | Running napplets without network. Adds service worker complexity. No comparable protocol-level SDK supports offline sandboxed apps. | v1 is online-only. |
+| Automatic service installation/provisioning | Chrome auto-downloads required permissions on install. Android auto-provisions system services. But in napplet, the shell is the authority -- napplets cannot force-install services. The shell is not an app store. | Shell declares what it provides. Napplet adapts or reports incompatibility. The shell implementor decides what services to register. |
+| Capability negotiation during AUTH | MCP negotiates capabilities during initialize handshake. Tempting to add capabilities to the AUTH response. But AUTH is already complex (NIP-42 + ephemeral keypair + aggregate hash). Adding service negotiation to AUTH violates single responsibility and makes the handshake fragile. | Keep AUTH for identity only. Service discovery is a separate, optional post-AUTH step. This matches SPEC.md Section 11.4 design. |
+| Complex dependency graphs between services | VS Code extensions can depend on other extensions, creating DAGs. Service A requires Service B. For an SDK with 1-5 services, this is over-engineering. No sandboxed iframe protocol has inter-service dependencies. | Services are independent. If a service needs another service internally, that is the shell implementor's concern, not the protocol's. |
+| Permission prompt UX in the SDK | Android shows system permission dialogs. Chrome shows permission prompts. But napplet is an SDK, not a UI framework. The SDK should report "missing capability" and let the shell implementor decide how to present that to the user (toast, modal, banner, etc.). | Provide the compatibility data. Do not render UI. The shell hook or host app decides presentation. |
+| Bilateral capability negotiation | MCP has both client and server declare capabilities. In napplet, the asymmetry is intentional: the shell is the authority, the napplet is the consumer. Napplets don't "offer" capabilities to the shell. Adding napplet-to-shell capability advertisement adds complexity for zero value. | Unidirectional: shell advertises services, napplet discovers and adapts. Napplet declares requirements in manifest (passive), shell checks them (active). |
+| Service versioning with multiple simultaneous versions | Module Federation supports multiple versions of the same micro-frontend running simultaneously. For shell services, this is unnecessary complexity. One version of `audio` per shell instance. | Single version per service name. If the service API changes, bump the version. Napplets check version compatibility. |
+| Generic extension/plugin system | MCP's 2025-11-25 update added a formal extension negotiation system. Napplet's service system is simpler: named services with topic-prefix routing. Don't build a generic extension registry when the service pattern is sufficient. | Services ARE the extension mechanism. The ServiceRegistry is the extension point. Don't add another layer of abstraction on top. |
+| Offline service caching | Caching discovered services for offline use. Napplets run in iframes that require network. Service discovery is cheap (local in-process, no network). Caching adds state management for zero benefit. | Always discover fresh on each session. Services are registered in-memory at shell startup. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-AUTH Handshake
-  (must succeed before any other operation)
+Existing Protocol (Layers 0-2)
   |
-  +-- ACL Initialization
-  |   (entry created on successful AUTH)
-  |   |
-  |   +-- ACL Enforcement
-  |   |   (checked on every operation)
-  |   |   |
-  |   |   +-- Relay Pub/Sub (requires relay:read, relay:write)
-  |   |   +-- Signer Delegation (requires sign:event, sign:nip04, sign:nip44)
-  |   |   |   +-- Consent Prompt (destructive kinds only)
-  |   |   +-- Inter-pane Messaging (requires relay:write for emit, relay:read for on)
-  |   |   +-- Hotkey Forwarding (requires hotkey:forward)
-  |   |
-  |   +-- Storage Proxy (requires storage:read, storage:write)
-  |
-  +-- Subscription Lifecycle (REQ/CLOSE/EOSE depends on AUTH)
-  +-- Message Debugger Napplet (is itself a napplet, needs AUTH)
+  +-- AUTH Handshake (must complete first)
+      |
+      +-- Service Discovery Protocol (kind 29010)
+      |   (napplet sends REQ, shell responds with descriptors)
+      |   |
+      |   +-- Shim Discovery API
+      |   |   (developer-facing function that wraps the REQ/EVENT/EOSE flow)
+      |   |   |
+      |   |   +-- Compatibility Checking
+      |   |       (compare discovered services against requirements)
+      |   |       |
+      |   |       +-- Compatibility Reporting
+      |   |           (structured report for developer/user consumption)
+      |   |
+      |   +-- Runtime Service Dispatch
+      |       (route INTER_PANE events to ServiceHandler by topic prefix)
+      |       |
+      |       +-- Audio Service Implementation
+      |           (first concrete ServiceHandler, wraps audio-manager)
+      |
+      +-- Manifest `requires` Tags (build-time)
+          (vite plugin injects service dependencies into NIP-5A manifest)
+          |
+          +-- Pre-load Compatibility Check (shell reads manifest before loading)
+              (optional: shell can warn before napplet even loads)
 
-Vite Plugin (manifest generation)
-  +-- Independent of runtime; build-time only
-      +-- Produces aggregateHash used by AUTH
-
-Aggregate Hash Versioning
-  +-- Depends on: Vite Plugin output + AUTH handshake
-      +-- Feeds into: ACL composite key
+ServiceRegistry Interface (already designed)
+  +-- ServiceHandler.handleRequest() (dispatch target)
+  +-- ServiceHandler.onWindowDestroyed() (cleanup hook)
+  +-- ServiceDescriptor (name, version, description)
 ```
 
-### Critical Path for Demo
+### Critical Path for v0.4.0
 
-1. **AUTH handshake** -- nothing works without it
-2. **Relay pub/sub** -- proves the core protocol works
-3. **Multi-napplet + inter-pane messaging** -- proves the compositor model
-4. **ACL enforcement** -- proves the security model
-5. **Storage proxy** -- proves sandboxed persistence
-6. **Signer delegation + consent** -- proves Nostr integration
-7. **Message debugger** -- makes everything visible
+1. **Runtime service dispatch** -- route INTER_PANE to ServiceHandler by topic prefix (enables everything else)
+2. **Service discovery protocol** -- kind 29010 REQ/EVENT/EOSE in the runtime (shell advertises registered services)
+3. **Audio service handler** -- first concrete ServiceHandler wrapping existing audio-manager (proves the pattern)
+4. **Shim discovery API** -- `discoverServices()` function in @napplet/shim (developer ergonomics)
+5. **Manifest `requires` tags** -- vite plugin injects, shell reads (build-time dependency declaration)
+6. **Compatibility reporting** -- shim surfaces missing/incompatible services (graceful degradation)
 
-### Critical Path for Tests
+### Critical Path Rationale
 
-1. **NIP-01 filter matching** (pure function, no deps)
-2. **Replay attack detection** (pure function, no deps)
-3. **ACL store operations** (in-memory, no browser)
-4. **AUTH handshake** (needs crypto mock)
-5. **Subscription lifecycle** (needs mock windows)
-6. **Storage proxy** (needs localStorage mock)
-7. **Signer correlation** (needs mock windows)
-8. **Inter-pane delivery** (needs multiple mock windows)
-9. **postMessage boundary** (needs real browser -- Playwright or vitest browser mode)
+Dispatch first (not discovery first) because the audio-manager already exists and can be wrapped immediately. Discovery without dispatch means napplets can see services but not use them. Dispatch without discovery means services work but napplets must hard-code assumptions. Both are needed, but dispatch has more immediate value.
 
 ---
 
-## Behavioral Test Matrix (Complete)
+## Ecosystem Pattern Analysis
 
-The complete matrix below maps every protocol capability to its test scenarios. This is what "complete coverage" looks like for a sandboxed iframe app protocol. Derived from analysis of: the Iframe Sandbox Breakout Test Suite (9 categories), Tauri v2 ACL penetration test scenarios, Telegram Mini App vulnerability surface, and Web Extension MV3 permission model testing patterns.
+### Pattern 1: Declare-then-Discover (Most Common)
 
-### 1. Identity and Authentication
+**Used by:** Chrome Extensions, Android, VS Code, MCP
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| Valid AUTH handshake | Correct challenge, valid sig, correct relay tag | OK true, napp registered | P0 |
-| Bad signature | Valid challenge, invalid sig | OK false "invalid signature" | P0 |
-| Expired timestamp | created_at > 60s ago | OK false "too far from now" | P0 |
-| Future timestamp | created_at > now + 60s | OK false "too far from now" | P0 |
-| Wrong challenge | Valid sig, wrong challenge value | OK false "challenge mismatch" | P0 |
-| Wrong relay tag | Valid sig, relay tag != hyprgate://shell | OK false "relay tag" | P0 |
-| Wrong event kind | kind != 22242 | OK false "kind must be 22242" | P1 |
-| Missing type tag | No type tag in AUTH event | Defaults to 'unknown', succeeds | P1 |
-| Missing aggregateHash | No hash tag | Empty string hash, succeeds | P1 |
-| Duplicate AUTH from same window | Second AUTH after first succeeded | Re-registration, new entry | P2 |
+The app declares what it needs in a manifest (build-time). The host checks the manifest and the app also checks at runtime.
 
-### 2. Permission Enforcement
+```
+Build time:  manifest declares requirements (permissions, dependencies, engine constraints)
+Install time: host checks manifest, blocks if incompatible (Chrome, Android)
+Runtime:     app queries host for current state (permissions.contains, checkSelfPermission)
+```
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| Default permissive: unknown napp publishes | No ACL entry exists | Publish succeeds (default allow) | P0 |
-| Explicit grant: relay:write | Grant relay:write, then publish | Publish succeeds | P0 |
-| Revoke: relay:write | Revoke relay:write, then publish | OK false "capability denied" | P0 |
-| Block: entire napp | Block napp, then any operation | All operations denied | P0 |
-| Unblock: previously blocked | Block then unblock, then publish | Publish succeeds | P0 |
-| Revoke storage:read | Revoke, then getItem | Error "storage:read denied" | P1 |
-| Revoke storage:write | Revoke, then setItem | Error "storage:write denied" | P1 |
-| Revoke sign:event | Revoke, then signEvent request | Error "sign:event denied" | P1 |
-| ACL persist/load round-trip | Persist, clear, load | Same entries restored | P1 |
-| ACL corrupt data recovery | Load with invalid JSON | Store cleared, no crash | P2 |
+**Napplet mapping:**
+- Build time: NIP-5A manifest with `requires` tags (vite plugin)
+- Load time: Shell reads manifest, checks ServiceRegistry
+- Runtime: Shim calls `discoverServices()` after AUTH
 
-### 3. Message Routing
+**Verdict:** Adopt this pattern. It is the most battle-tested approach across all ecosystems studied.
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| REQ creates subscription | REQ with valid subId and filters | Subscription active, buffer events delivered | P0 |
-| EVENT matches subscription | Publish event matching filter | EVENT delivered to subscriber | P0 |
-| EVENT no match | Publish event not matching filter | No delivery | P0 |
-| CLOSE removes subscription | CLOSE with subId | No further events delivered | P0 |
-| EOSE sent after buffer scan | REQ with buffer containing matches | EOSE sent after stored events | P0 |
-| Sender excluded from delivery | Napp A publishes inter-pane | Napp A does NOT receive own event | P0 |
-| p-tag targeted delivery | Event with p-tag matching Napp B | Only Napp B receives | P1 |
-| REQ before AUTH | Send REQ before AUTH completes | Message queued, replayed after AUTH | P1 |
-| REQ from blocked napp | Blocked napp sends REQ | CLOSED "relay:read denied" | P1 |
-| COUNT returns buffer matches | COUNT with filters | COUNT response with correct count | P2 |
+### Pattern 2: Handshake Negotiation (MCP)
 
-### 4. Replay and Integrity
+**Used by:** MCP (exclusive), SIP
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| Event with old timestamp | created_at > 30s ago | Rejected "too old" | P0 |
-| Event with future timestamp | created_at > now + 10s | Rejected "in the future" | P0 |
-| Duplicate event ID | Same event.id sent twice | Second rejected "already processed" | P0 |
-| Seen ID cleanup | Wait > 30s after first event | ID removed from seen set | P1 |
-| Event from unregistered window | Message from unknown source | Ignored (no windowId match) | P1 |
+Both sides declare capabilities during initialization. Session features are locked after handshake.
 
-### 5. Storage Isolation
+```
+Client sends initialize with client capabilities
+Server responds with server capabilities
+Client sends initialized notification
+Session begins -- only negotiated features may be used
+```
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| setItem + getItem | Set "key1" = "value1", get "key1" | Returns "value1" | P0 |
-| getItem missing key | Get non-existent key | Returns null (found=false) | P0 |
-| removeItem | Set then remove key | getItem returns null | P0 |
-| keys() lists napp keys | Set 3 keys | Returns array of 3 keys | P0 |
-| clear() removes all napp keys | Set 3 keys, clear | keys() returns [] | P0 |
-| Cross-napp isolation | Napp A sets "key1", Napp B gets "key1" | Napp B gets null | P0 |
-| Quota enforcement | Write > 512 KB | Error "quota exceeded" | P1 |
-| Quota calculation accuracy | Write exactly at limit | Succeeds; one byte more fails | P1 |
-| Storage persistence | setItem, reload shell | getItem still returns value | P1 |
-| Malformed request (no key tag) | Send storage-get without key tag | Error "missing key tag" | P2 |
-| Unregistered napp storage request | Request from unauthed window | Error "auth-required" | P2 |
+**Napplet mapping:** This maps poorly to napplet because:
+- AUTH is already the handshake and it handles identity, not capabilities
+- Adding capability negotiation to AUTH makes the handshake do two things
+- MCP is bidirectional (client and server both offer capabilities); napplet is asymmetric
 
-### 6. Signer Delegation
+**Verdict:** Do NOT merge capability negotiation into AUTH. Keep AUTH for identity and service discovery as a separate post-AUTH step. The MCP pattern is elegant but designed for a symmetric client-server relationship, not an asymmetric host-sandbox relationship.
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| getPublicKey | signEvent('getPublicKey') | Returns host pubkey | P0 |
-| signEvent (non-destructive) | Sign kind 1 event | Signed event returned | P0 |
-| signEvent (destructive, approved) | Sign kind 0, user approves | Signed event returned | P0 |
-| signEvent (destructive, denied) | Sign kind 0, user denies | Error "user rejected" | P0 |
-| No signer configured | Request when shell has no signer | Error "no signer configured" | P1 |
-| Request timeout | Signer never responds | Error "timed out" after 30s | P1 |
-| Concurrent requests | 3 requests with different correlation IDs | Each resolved independently | P1 |
-| NIP-44 encrypt/decrypt | Encrypt then decrypt | Round-trip produces original | P2 |
-| NIP-04 encrypt/decrypt | Encrypt then decrypt | Round-trip produces original | P2 |
+### Pattern 3: Feature Detection (PWA, Web Platform)
 
-### 7. Inter-Pane Communication
+**Used by:** PWAs, Web APIs, Modernizr
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| emit() + on() basic | Napp A emits topic, Napp B listens | Napp B callback fires with payload | P0 |
-| Topic filtering | Napp B listens to "profile:open", Napp A emits "chat:message" | Napp B callback does NOT fire | P0 |
-| Multiple subscribers | Napp B and C both listen to same topic | Both receive event | P0 |
-| Unsubscribe (close) | Napp B closes subscription, Napp A emits | Napp B does NOT receive | P1 |
-| Malformed content | emit with non-JSON content | on() callback receives {} | P1 |
-| Shell-injected events | Shell calls injectEvent() | All matching subscribers receive | P1 |
-| Empty subscriber set | emit with no listeners | No error, event stored in buffer | P2 |
+No manifest declaration. App checks for API existence at runtime.
 
-### 8. Lifecycle and Edge Cases
+```
+if ('serviceWorker' in navigator) { ... }
+if (typeof figma.clientStorage !== 'undefined') { ... }
+```
 
-| Scenario | Input | Expected | Priority |
-|----------|-------|----------|----------|
-| Messages queued during AUTH | Send REQ before AUTH completes | Queued, replayed after AUTH OK | P0 |
-| AUTH rejection clears queue | AUTH fails after messages queued | Queue cleared, messages not processed | P0 |
-| Cleanup removes all state | Call cleanup() | All subscriptions, buffers, registries cleared | P1 |
-| Non-array postMessage ignored | Send string via postMessage | Silently ignored | P1 |
-| Null source window | MessageEvent with null source | Silently ignored | P1 |
-| Ring buffer overflow | Publish > 100 inter-pane events | Oldest events dropped, newest retained | P2 |
-| Manifest cache collision | Same pubkey:dTag, different hash | New hash overwrites old | P2 |
+**Napplet mapping:** This is what napplets do WITHOUT service discovery -- they try to use a service and see if it works. The whole point of v0.4.0 is to replace this pattern with explicit discovery.
 
-### Test Count Summary
+**Verdict:** Feature detection is the fallback pattern for napplets that don't use service discovery. Not the primary mechanism.
 
-| Category | P0 | P1 | P2 | Total |
-|----------|----|----|----| ------|
-| Identity and Authentication | 6 | 3 | 1 | 10 |
-| Permission Enforcement | 5 | 4 | 1 | 10 |
-| Message Routing | 6 | 3 | 1 | 10 |
-| Replay and Integrity | 3 | 2 | 0 | 5 |
-| Storage Isolation | 6 | 3 | 2 | 11 |
-| Signer Delegation | 4 | 3 | 2 | 9 |
-| Inter-Pane Communication | 3 | 3 | 1 | 7 |
-| Lifecycle and Edge Cases | 2 | 3 | 2 | 7 |
-| **Total** | **35** | **24** | **10** | **69** |
+### Pattern 4: Information Document (NIP-11)
 
-P0 tests (35) are the minimum viable test suite. P0+P1 (59) is the target for v1.
+**Used by:** Nostr relays
+
+Host publishes a static document describing its capabilities. Client fetches it before connecting.
+
+```
+GET wss://relay.example.com with Accept: application/nostr+json
+Response: { name, supported_nips: [1, 2, 4, 11], limitation: { ... } }
+```
+
+**Napplet mapping:** The kind 29010 discovery response is essentially a per-session NIP-11 for services. The napplet "fetches" service descriptors via REQ, the shell responds with EVENT per service + EOSE. This is conceptually the same pattern adapted to the postMessage transport.
+
+**Verdict:** The existing SPEC.md Section 11 design already follows this pattern. Validate that the implementation stays true to it.
+
+---
+
+## Detailed Feature Specifications
+
+### 1. Shim Discovery API Design
+
+Based on ecosystem analysis, the shim API should follow Android's `checkSelfPermission()` pattern: simple, synchronous-feeling, returns a clear result.
+
+```typescript
+// Proposed API
+interface ServiceInfo {
+  name: string;
+  version: string;
+  description?: string;
+}
+
+// Discover all available services (returns after EOSE)
+function discoverServices(): Promise<ServiceInfo[]>;
+
+// Check if a specific service is available
+function hasService(name: string): Promise<boolean>;
+
+// Check if a service satisfies a version range
+function hasServiceVersion(name: string, range: string): Promise<boolean>;
+```
+
+**Rationale:**
+- `discoverServices()` maps to Chrome's `permissions.getAll()`
+- `hasService()` maps to Chrome's `permissions.contains()` / Android's `checkSelfPermission()`
+- `hasServiceVersion()` maps to VS Code's `engines.vscode` range check
+- All return Promises because they require postMessage round-trip
+
+**Confidence:** MEDIUM -- the API shape is well-informed by precedent, but the exact function signatures need validation against the existing shim patterns (which use `subscribe`/`publish`/`query` naming).
+
+### 2. Manifest `requires` Tags Design
+
+Based on Chrome's `permissions` array and VS Code's `extensionDependencies`:
+
+```json
+{
+  "tags": [
+    ["requires", "audio", ">=1.0.0"],
+    ["requires", "notifications", ">=1.0.0"]
+  ]
+}
+```
+
+**Rationale:**
+- NIP tag format (array of strings) is consistent with Nostr conventions
+- Service name + semver range gives enough info for compatibility checking
+- Optional: shell treats as advisory (like NIP-11 limitations), not blocking
+
+**Confidence:** MEDIUM -- tag format is sound, but whether shell should block loading on missing requirements or just warn needs a design decision. Chrome blocks; Android warns. Recommend: warn (log + report), don't block. Developers need to iterate fast.
+
+### 3. Compatibility Report Design
+
+Based on Android's per-capability GRANTED/DENIED pattern:
+
+```typescript
+interface CompatibilityReport {
+  available: ServiceInfo[];
+  missing: string[];        // service names in requires but not in shell
+  incompatible: Array<{     // service exists but version doesn't satisfy range
+    name: string;
+    required: string;        // semver range from manifest
+    actual: string;          // version from discovery
+  }>;
+  compatible: boolean;       // true if missing.length === 0 && incompatible.length === 0
+}
+```
+
+**Rationale:**
+- `compatible` boolean for quick checks (like Android's `PERMISSION_GRANTED`)
+- Structured `missing` and `incompatible` arrays for detailed UI (like Android's "feature not available" messaging)
+- Shell implementors use this to decide presentation (toast, modal, banner)
+- Napplet developers use this to disable features gracefully
+
+**Confidence:** HIGH -- this pattern is universal across Android, Chrome, MCP, and PWA ecosystems.
+
+---
+
+## Comparison: Napplet vs Comparable Service Discovery Patterns
+
+| Aspect | Chrome MV3 | MCP | NIP-11 | Napplet (v0.4.0) |
+|--------|-----------|-----|--------|------------------|
+| Discovery trigger | Install-time + runtime | Initialize handshake | HTTP request pre-connect | Post-AUTH REQ (runtime) |
+| Declaration format | manifest.json permissions array | JSON capabilities object | JSON document | NIP-5A manifest `requires` tags |
+| Discovery response | Boolean (has/hasn't) | Capability booleans | Integer array (supported_nips) | ServiceDescriptor events (name + version + description) |
+| Version negotiation | Browser version string | Protocol version string | Software version string | Per-service semver range |
+| Graceful degradation | Extension works, feature disabled | Client disables UI for missing capabilities | Client avoids unsupported features | Napplet adapts based on CompatibilityReport |
+| Runtime permission request | `permissions.request()` with user gesture | Not applicable | Not applicable | Not applicable (shell authority model) |
 
 ---
 
 ## MVP Recommendation
 
-### Prioritize (required for credible v1)
+### Prioritize (required for v0.4.0)
 
-1. **AUTH handshake demo + tests** -- 8 scenarios minimum (success + 7 failure paths). This is the front door of the protocol. Every comparable platform leads with identity.
-2. **Relay pub/sub demo + tests** -- single napplet subscribes, publishes, receives. Filter matching tests. This is the core value.
-3. **Multi-napplet inter-pane demo** -- 2 napplets + shell. Topic-based pub/sub. This is the unique differentiator.
-4. **ACL enforcement demo + tests** -- grant, revoke, block visible in debugger. Full ACL store unit test suite.
-5. **Storage proxy demo + tests** -- CRUD operations, quota enforcement, cross-napplet isolation.
-6. **Signer delegation demo + tests** -- signEvent, getPublicKey, consent prompt flow.
-7. **Message debugger napplet** -- subscribe to all kinds, display message flow. This IS the visual test runner.
-8. **Lifecycle tests** -- load, auth, ready, cleanup. Queue behavior during auth pending.
+1. **Runtime service dispatch** -- route INTER_PANE events to ServiceHandler by topic prefix. This is the plumbing that makes services work. Without it, the ServiceRegistry is dead code.
+   - Depends on: existing ServiceRegistry interface, existing INTER_PANE routing
+   - Complexity: Medium (parse topic prefix, lookup handler, dispatch)
 
-### Defer (post-v1)
+2. **Kind 29010 discovery protocol** -- implement REQ/EVENT/EOSE for service discovery in the runtime.
+   - Depends on: ServiceRegistry being populated
+   - Complexity: Low (enumerate registry, emit events, send EOSE)
 
-- **Hotkey forwarding demo**: Works but is a UX concern, not a protocol concern. Test with unit tests only.
-- **Audio management demo**: Niche feature. Unit test only.
-- **Scoped relay connections demo**: Complex to set up (needs NIP-29 relay). Document and unit test.
-- **Aggregate hash update flow demo**: Important but secondary to basic auth. Unit test the 3 update behaviors.
-- **DM proxy demo**: Optional hook. Unit test only.
-- **Napplet boilerplate/starter template**: Useful but not protocol validation. Build after demo is working.
-- **Interactive playground**: Requires working demo first. Phase 2+ feature.
-- **VitePress spec site**: Can ship raw markdown first, build site later.
+3. **Audio ServiceHandler** -- wrap existing audio-manager.ts as a ServiceHandler. Proves the pattern with real code.
+   - Depends on: service dispatch working
+   - Complexity: Low (adapter pattern around existing code)
 
----
+4. **Shim discovery API** -- `discoverServices()` and `hasService()` functions in @napplet/shim.
+   - Depends on: kind 29010 working
+   - Complexity: Medium (async postMessage round-trip, promise resolution on EOSE)
 
-## Comparison to Comparable Platforms
+5. **Manifest `requires` tags** -- vite plugin injects tags, shell reads them.
+   - Depends on: vite plugin, NIP-5A manifest format
+   - Complexity: Medium (vite plugin modification + shell manifest reader)
 
-| Capability | Napplet | Figma Plugin | Telegram Mini App | Farcaster Mini App | Web Extension MV3 |
-|-----------|---------|-------------|-------------------|--------------------|--------------------|
-| Sandbox mechanism | iframe no allow-same-origin | iframe + QuickJS WASM VM | iframe | iframe / WebView | Separate process |
-| Communication | NIP-01 postMessage | postMessage (proprietary) | postMessage (web_app_*) | postMessage (SDK) | chrome.runtime messaging |
-| Identity | Ephemeral Schnorr keypair | Plugin ID | Bot token + initData | Farcaster FID + domain | Extension ID |
-| Permissions | Composite ACL (pubkey:dTag:hash) | Network manifest | Bot-level | Manifest capabilities | Manifest permissions |
-| Storage | Proxied localStorage (512 KB) | clientStorage (async) | 3 tiers: device (5 MB), secure (10 items), cloud (1024 items) | None built-in | chrome.storage (10 MB+) |
-| Inter-app comms | Kind 29003 topic events | None | None | None | Limited (externally_connectable) |
-| Signing delegation | NIP-07 proxy to host signer | N/A | N/A | EIP-1193 wallet provider | N/A |
-| Manifest/integrity | NIP-5A signed manifest | CRX signature | None | Domain association | CRX3 signature |
-| Lifecycle | AUTH challenge-response | closePlugin() required | initData validation | ready() to dismiss splash | Background service worker |
+6. **Compatibility reporting** -- shim generates CompatibilityReport from discovery + requires.
+   - Depends on: discovery API + requires tags
+   - Complexity: Low (compare two arrays)
+
+### Defer (post-v0.4.0)
+
+- **Service ACL capabilities (`service:audio`, `service:notifications`)**: SPEC.md explicitly defers this. Good for v0.5.0 after the discovery pattern is proven.
+- **Pre-load compatibility check**: Nice-to-have. Currently the napplet loads, then discovers. Checking before load requires manifest fetching infrastructure.
+- **Version range compatibility checking with semver**: Start with exact name matching. Add semver range checks when there are multiple service versions in the wild.
+- **Hot-reload service registration**: Zero user demand. Services are registered at shell startup.
+- **Service change notifications**: Subscription-based updates when services come/go. Complex for no current use case.
 
 ---
 
 ## Sources
 
-- [Figma: How Plugins Run](https://developers.figma.com/docs/plugins/how-plugins-run/) -- sandbox model, Realms-to-QuickJS evolution, capability restrictions
-- [Figma: How We Built the Plugin System](https://www.figma.com/blog/how-we-built-the-figma-plugin-system/) -- architecture decisions, security tradeoffs
-- [Figma: Plugin Security Update](https://www.figma.com/blog/an-update-on-plugin-security/) -- sandbox breakout vulnerabilities, VM migration
-- [Telegram Mini Apps Docs](https://core.telegram.org/bots/webapps) -- storage tiers, postMessage events, capabilities
-- [Telegram Mini Apps Methods](https://docs.telegram-mini-apps.com/platform/methods) -- SDK method reference
-- [Telegram Mini Apps Vulnerability (Dec 2025)](https://www.linkedin.com/posts/luis-oria-seidel-%F0%9F%87%BB%F0%9F%87%AA-301a758a_cybersecurity-vulnerabilities-telegram-activity-7405155878124908544-tPm4) -- iframe isolation bypass, patched in 24h
-- [Farcaster Mini Apps Specification](https://miniapps.farcaster.xyz/docs/specification) -- SDK actions, manifest format, trust model
-- [Farcaster Frames v2 Spec](https://docs.farcaster.xyz/developers/frames/v2/spec) -- capabilities, wallet provider
-- [Iframe Sandbox Breakout Test Suite](https://www.storbeck.dev/posts/iframe-sandbox-test-suite) -- 9-category test matrix for iframe sandbox capabilities
-- [PostMessage Security Testing](https://cyb3rlant3rn.medium.com/postmessage-security-testing-6dddc200bf2c) -- origin validation, wildcard risks
-- [Building a Secure Code Sandbox](https://medium.com/@muyiwamighty/building-a-secure-code-sandbox-what-i-learned-about-iframe-isolation-and-postmessage-a6e1c45966df) -- iframe isolation patterns
-- [Tauri v2 Capabilities](https://v2.tauri.app/security/capabilities/) -- ACL-based IPC permission model
-- [Tauri v2 Permissions](https://v2.tauri.app/security/permissions/) -- fine-grained command-level permissions
-- [Tauri v2 Penetration Test Report](https://fossies.org/linux/tauri/audits/Radically_Open_Security-v2-report.pdf) -- ACL bypass scenarios tested
-- [Web Extension MV3 Security](https://developer.chrome.com/docs/extensions/develop/migrate/improve-security) -- CSP restrictions, permission model
-- [Vitest Browser Mode](https://vitest.dev/guide/browser/) -- iframe-based test runner for postMessage testing
-- [Sunpeak MCP App Framework](https://sunpeak.ai/blogs/what-is-an-mcp-app/) -- simulation-based testing for sandboxed iframe apps
+### Primary (HIGH confidence)
+- [MCP Architecture & Capability Negotiation](https://modelcontextprotocol.io/specification/2025-06-18/architecture) -- capability-based negotiation during initialization, session lifecycle
+- [Chrome Extensions Permissions API](https://developer.chrome.com/docs/extensions/reference/api/permissions) -- runtime permission checking, `permissions.contains()`, `permissions.request()`
+- [Chrome Extensions Declare Permissions](https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions) -- manifest-declared vs optional permissions
+- [Android Runtime Permissions](https://developer.android.com/training/permissions/requesting) -- `checkSelfPermission()`, graceful degradation pattern
+- [Android Permissions Best Practices](https://developer.android.com/training/permissions/usage-notes) -- minimize functionality loss, guide user attention
+- [VS Code Extension Manifest](https://code.visualstudio.com/api/references/extension-manifest) -- `extensionDependencies`, `engines.vscode`, capability declarations
+- [NIP-11: Relay Information Document](https://nips.nostr.com/11) -- `supported_nips` array, limitation declaration, feature detection
+- [MCP Apps Extension Specification](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/draft/apps.mdx) -- permission declaration, CSP negotiation, graceful degradation to text
+
+### Secondary (MEDIUM confidence)
+- [Figma: How Plugins Run](https://developers.figma.com/docs/plugins/how-plugins-run/) -- dual-sandbox model, API surface
+- [VS Code When Clause Contexts](https://code.visualstudio.com/api/references/when-clause-contexts) -- runtime feature detection via context keys
+- [AWS Frontend Discovery](https://github.com/awslabs/frontend-discovery) -- micro-frontend registration and discovery schema
+- [Chrome Optional Permissions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/optional_permissions) -- runtime permission request pattern
+- [Obsidian Plugin Development](https://deepwiki.com/obsidianmd/obsidian-api/3-plugin-development) -- `minAppVersion`, `requireApiVersion()` feature detection
+
+### Tertiary (LOW confidence -- patterns only, not verified against official docs)
+- [Microkernel Architecture Pattern](https://dev.to/kishalay_pandey_d5d0cae01f00/microkernel-architecture-design-pattern-n79) -- plugin registry contract pattern
+- [MCP 2025-11-25 Extension Negotiation](https://workos.com/blog/mcp-2025-11-25-spec-update) -- extension capability negotiation
+- [Module Federation Capability Flags](https://www.elysiate.com/blog/micro-frontends-architecture-module-federation-2025) -- runtime negotiation with semver

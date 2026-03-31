@@ -1,578 +1,599 @@
-# Architecture Patterns: Demo + Behavioral Test Suite for Napplet Protocol
+# Architecture Patterns: Service Discovery & Feature Negotiation Integration
 
-**Domain:** Sandboxed iframe protocol SDK (demo playground + conformance tests)
-**Researched:** 2026-03-30
+**Domain:** Service discovery protocol integration into existing four-package napplet SDK
+**Researched:** 2026-03-31
+**Overall confidence:** HIGH (working from existing codebase, SPEC.md Section 11, and established patterns)
 
 ## Recommended Architecture
 
-### Core Insight: Separate Demo App from Test Runner, Share Test Napplets
+### Core Insight: Service Discovery Is a Runtime Concern, Not a Shell Concern
 
-The demo and test suite should be **separate applications that share a common library of test napplets and a protocol message tap**. This is the pattern used successfully by comparable SDK projects:
+The existing service type definitions (`ServiceDescriptor`, `ServiceHandler`, `ServiceRegistry`) live in `@napplet/shell/types.ts`. This was correct for the v0.3.0 design phase, but for implementation, service discovery dispatch **must live in `@napplet/runtime`** because:
 
-- **Figma** separates its plugin sandbox (QuickJS/WASM) from the developer playground (Figlet). The playground is interactive; the test suite runs in CI. Both exercise the same plugin API surface.
-- **Telegram Mini Apps (tma.js)** separates demo apps (`apps/` directory) from the SDK test suite, but provides `mockTelegramEnv()` to simulate the host environment for testing outside Telegram. The mock bridges the gap between "run it for real" and "test it headlessly."
-- **Shopify App Bridge** has a community `mock-bridge` project that provides a mock Shopify Admin iframe host for Playwright-based automated testing, separate from the real embedded app experience.
-- **Nostr relay-tester** (mikedilger/relay-tester) runs as a standalone CLI tool that sends protocol messages and asserts responses, completely separate from any relay UI.
+1. The runtime owns `handleReq()` -- it must intercept `REQ` for kind 29010 and respond with service descriptors instead of forwarding to the relay pool.
+2. The runtime owns `handleEvent()` -- it must route INTER_PANE events with service topic prefixes to the correct handler.
+3. Third-party (non-browser) shells that depend on `@napplet/runtime` must also support service discovery.
+4. The shell's role is to adapt browser APIs into `RuntimeHooks` -- service handlers that use browser APIs (like audioManager) provide their `ServiceHandler` implementation at the shell level, but the dispatch and discovery protocol lives in the runtime.
 
-**Why separate, not combined:**
-
-1. **Different audiences.** The demo is for SDK consumers evaluating the protocol. The test suite is for SDK maintainers verifying conformance. Forcing both into one app compromises both.
-2. **Different lifecycles.** Tests run in CI headlessly (Playwright). The demo runs in a browser interactively. Combining them means the demo must work headlessly (fragile) or tests must work interactively (slow, flaky).
-3. **Different assertion models.** Tests need programmatic pass/fail. The demo needs visual message flow. A combined app would need both, which creates UI complexity that distracts from either purpose.
-4. **Shared napplets reduce duplication.** A `test-napplets/` package contains tiny single-purpose napplets (auth-only, publish-only, subscribe-only, storage-only, inter-pane-only). Both the demo and the test runner load these same napplets.
-
-**Confidence:** HIGH -- this separation pattern is consistent across Figma, Telegram, Shopify, and Nostr relay testing ecosystems.
+**This means:** Core types for service discovery move to `@napplet/core`. The service registry and dispatch logic live in `@napplet/runtime`. The shell provides concrete `ServiceHandler` implementations (audio service) and passes them through `RuntimeHooks.services`.
 
 ### Architecture Diagram
 
 ```
-packages/
-  shell/                    # @napplet/shell (existing)
-  shim/                     # @napplet/shim (existing)
-  vite-plugin/              # @napplet/vite-plugin (existing)
+@napplet/core (zero deps)
+  types.ts:       + ServiceDescriptor
+  constants.ts:   BusKind.SERVICE_DISCOVERY = 29010  (already exists)
+  topics.ts:      + SERVICE_DISCOVER topic constant
 
-apps/
-  demo/                     # Interactive playground (Vite app)
-    src/
-      shell-host.ts         # createPseudoRelay with mock ShellHooks
-      message-tap.ts        # Protocol message interceptor/logger
-      ui/                   # Visual message flow panel
-      napplet-frames.ts     # iframe loader/manager
-    public/
-      index.html
+@napplet/runtime (core + acl)
+  types.ts:       + RuntimeServiceHooks (ServiceHandler, ServiceRegistry)
+                  + RuntimeHooks.services?: RuntimeServiceHooks
+  service-dispatch.ts:  NEW  -- handleServiceDiscovery(), routeServiceMessage()
+  runtime.ts:     MODIFIED -- wire service dispatch into handleReq + handleEvent
 
-  test-napplets/            # Tiny purpose-built napplets (each is a Vite app)
-    auth-napplet/           # Only does AUTH handshake
-    publish-napplet/        # Only publishes events
-    subscribe-napplet/      # Only subscribes to events
-    storage-napplet/        # Only uses nappStorage
-    inter-pane-napplet/     # Only uses emit/on
-    acl-probe-napplet/      # Tries operations across all capabilities
-    signer-napplet/         # Only uses window.nostr proxy
-    malicious-napplet/      # Intentionally violates protocol (replay, bad sig, etc.)
+@napplet/shell (core + runtime)
+  types.ts:       ServiceDescriptor, ServiceHandler, ServiceRegistry  REMOVE (moved to core/runtime)
+                  ShellHooks.services remains, but type refs change to runtime types
+  hooks-adapter.ts: MODIFIED -- pass shellHooks.services through to RuntimeHooks.services
+  audio-service.ts: NEW  -- wraps audioManager as a ServiceHandler
+  audio-manager.ts: UNCHANGED (remains browser-specific singleton)
 
-tests/
-  protocol/                 # Behavioral test suite (Playwright + vitest)
-    auth.spec.ts            # AUTH handshake conformance
-    acl.spec.ts             # ACL enforcement scenarios
-    storage.spec.ts         # Storage proxy conformance
-    inter-pane.spec.ts      # Inter-pane pubsub conformance
-    signer.spec.ts          # Signer proxy conformance
-    replay.spec.ts          # Replay attack prevention
-    lifecycle.spec.ts       # Subscription lifecycle (REQ/EVENT/EOSE/CLOSE)
-    adversarial.spec.ts     # Malicious napplet rejection
-    fixtures/
-      shell-harness.ts      # Reusable Playwright test fixture
-      message-collector.ts  # postMessage tap for assertions
+@napplet/shim (core)
+  discovery.ts:   NEW  -- discoverServices(), hasService(), requireServices()
+  index.ts:       MODIFIED -- export discovery API
 ```
 
 ### Component Boundaries
 
-| Component | Responsibility | Communicates With | Package Type |
-|-----------|---------------|-------------------|-------------|
-| **Demo Shell** (`apps/demo/`) | Interactive playground. Hosts 2+ napplets, shows message flow, ACL controls | Test napplets via postMessage; user via UI | Vite SPA |
-| **Test Napplets** (`apps/test-napplets/`) | Minimal napplets exercising one capability each | Shell host via postMessage | Multiple Vite micro-apps |
-| **Protocol Tests** (`tests/protocol/`) | Headless behavioral tests asserting protocol conformance | Demo shell (or standalone harness) via Playwright page | Vitest + Playwright |
-| **Message Tap** (shared utility) | Intercepts all postMessage traffic for logging/assertion | Sits between shell and napplets | TypeScript module |
-| **Shell Harness** (test fixture) | Boots a shell with mock hooks, loads napplets, exposes message tap | Used by Playwright tests | TypeScript module |
+| Component | Responsibility | Package | New/Modified |
+|-----------|---------------|---------|-------------|
+| **ServiceDescriptor** (type) | Metadata describing a service (name, version, description) | core | MOVED from shell |
+| **ServiceHandler** (interface) | Handler contract for service implementations | runtime | MOVED from shell, adapted |
+| **ServiceRegistry** (type) | Map of service name to handler | runtime | MOVED from shell |
+| **service-dispatch.ts** | Intercept kind 29010 REQ, route service topic messages | runtime | NEW |
+| **audio-service.ts** | Wraps audioManager as a ServiceHandler | shell | NEW |
+| **discovery.ts** | Shim-side API: discover, check, require services | shim | NEW |
+| **Manifest requires** | Napplet declares service dependencies in manifest tags | vite-plugin + shim | MODIFIED |
+| **Compatibility checker** | Compare discovered services against manifest requires | shim | NEW (in discovery.ts) |
 
-## Component Details
+## Detailed Component Design
 
-### 1. Message Tap (the critical shared abstraction)
+### 1. Core Types (what moves to @napplet/core)
 
-The message tap is the architectural lynchpin. Both the demo UI and the test assertions need to observe protocol messages without modifying them. This is a **transparent interceptor** pattern.
-
-**Design:**
+`ServiceDescriptor` must move to core because both the runtime (which creates discovery response events) and the shim (which parses them) need the type. The type is already simple and has no dependencies.
 
 ```typescript
-// message-tap.ts
-export interface TappedMessage {
-  timestamp: number;
-  direction: 'napplet-to-shell' | 'shell-to-napplet';
-  windowId: string;
-  verb: string;             // EVENT, REQ, CLOSE, AUTH, OK, EOSE, etc.
-  raw: unknown[];           // The full NIP-01 message array
-  parsed: {
-    subId?: string;
-    eventKind?: number;
-    eventId?: string;
-    topic?: string;         // For inter-pane events
-    success?: boolean;      // For OK responses
-    reason?: string;        // For OK/CLOSED reasons
-  };
-}
+// @napplet/core/types.ts — additions
 
-export interface MessageTap {
-  /** All captured messages in order */
-  messages: TappedMessage[];
-  /** Wait for a message matching a predicate */
-  waitFor(predicate: (msg: TappedMessage) => boolean, timeoutMs?: number): Promise<TappedMessage>;
-  /** Filter messages by direction, verb, windowId */
-  filter(criteria: Partial<Pick<TappedMessage, 'direction' | 'verb' | 'windowId'>>): TappedMessage[];
-  /** Clear captured messages */
-  clear(): void;
-  /** Subscribe to messages in real-time */
-  onMessage(callback: (msg: TappedMessage) => void): () => void;
+/**
+ * Metadata describing a registered shell service.
+ * Services are optional capabilities a shell provides beyond the core protocol.
+ */
+export interface ServiceDescriptor {
+  /** Unique service identifier (e.g., 'audio', 'notifications'). */
+  name: string;
+  /** Semver version of the service implementation. */
+  version: string;
+  /** Human-readable description of the service. */
+  description?: string;
 }
 ```
 
-**Implementation approach:** Monkey-patch `Window.prototype.postMessage` at the shell host level before any iframes load. Every call goes through the tap, which logs and then calls the original. For shell-to-napplet direction, wrap the `postMessage` calls in the pseudo-relay similarly.
-
-This is the same approach used by [chrome-postMessage-debugger](https://github.com/bdo/chrome-postMessage-debugger) and the general `monitorEvents(window, 'message')` pattern documented in Chrome DevTools.
-
-**Confidence:** HIGH -- postMessage monkey-patching is well-established and reliable.
-
-### 2. Demo Shell (`apps/demo/`)
-
-A standalone Vite SPA that serves as an interactive protocol playground. Not published to npm -- it lives in the monorepo for development and documentation.
-
-**Key design decisions:**
-
-- **Mock ShellHooks, not real relays.** The demo provides stub implementations of `RelayPoolHooks`, `AuthHooks`, etc. that simulate relay behavior with canned data. This means the demo works offline, without a Nostr identity, and without connecting to real relays. This follows the `mockTelegramEnv` pattern from tma.js -- fake the host environment so the SDK works standalone.
-
-- **Visual message flow panel.** A scrolling log showing every protocol message with direction arrows, color-coded by verb (AUTH=purple, EVENT=green, REQ=blue, OK=gray, etc.). This panel consumes the Message Tap's `onMessage` callback.
-
-- **Napplet frame manager.** A UI panel showing loaded napplets with controls: load, unload, block (ACL), unblock. Each napplet gets a labeled iframe with a unique windowId.
-
-- **ACL control panel.** Toggle capabilities per napplet in real-time. Show the effect immediately in the message flow (e.g., revoke `relay:write`, see the next EVENT get `OK false`).
-
-**UI layout:**
-
-```
-+--------------------------------------------------+
-|  Napplet Protocol Playground                      |
-+--------------------------------------------------+
-| [Load Napplet v] [Clear Log] [Pause/Resume]       |
-+-------------------+------------------------------+
-|                   |                              |
-|  Napplet A        |   Protocol Message Flow      |
-|  [iframe]         |   ========================   |
-|                   |   <- AUTH challenge #a1       |
-|  Napplet B        |   -> AUTH response #a1       |
-|  [iframe]         |   <- OK #a1 true             |
-|                   |   -> REQ sub_1 {kinds:[1]}   |
-|  ACL Controls     |   <- EOSE sub_1              |
-|  [ ] relay:read   |   -> EVENT {kind:29003}      |
-|  [ ] relay:write  |   <- EVENT sub_2 {kind:...}  |
-|  [ ] sign:event   |                              |
-|  [ ] storage:*    |                              |
-+-------------------+------------------------------+
-```
-
-**Not a framework app.** The demo should be vanilla TypeScript + minimal DOM manipulation (or at most a tiny reactive library like lit-html). No React, no Svelte. This is an SDK playground -- it should demonstrate the SDK, not a framework.
-
-**Confidence:** HIGH -- this is a standard pattern for SDK playgrounds. Figma's plugin console, Telegram's templates, and Shopify's mock-bridge all follow this model.
-
-### 3. Test Napplets (`apps/test-napplets/`)
-
-Each test napplet is a minimal Vite app that imports `@napplet/shim` and exercises exactly one protocol capability. They are built separately and served as static HTML during tests.
-
-**Design principles:**
-
-- **One napplet per capability.** `auth-napplet` only does AUTH. `publish-napplet` only publishes. This isolation makes test failures unambiguous -- if `publish.spec.ts` fails, the problem is in publish handling, not auth.
-- **Deterministic behavior.** Each napplet performs a fixed sequence of operations on load (after AUTH). No user interaction needed. This enables headless Playwright testing.
-- **Configurable via query params or meta tags.** Tests can control napplet behavior by varying the URL query string (e.g., `?action=publish&kind=1&content=hello`). The napplet reads these params and acts accordingly.
-
-**Example: `auth-napplet`**
+Add a topic constant:
 
 ```typescript
-// auth-napplet/src/main.ts
-import '@napplet/shim';
-// That's it. Importing shim triggers AUTH handshake automatically.
-// The test asserts that AUTH messages were exchanged correctly.
+// @napplet/core/topics.ts — additions
+
+export const TOPICS = {
+  // ... existing ...
+
+  // ─── Service Discovery ─────────────────────────────────────────────────
+  SERVICE_DISCOVER: 'service:discover',
+} as const;
 ```
 
-**Example: `publish-napplet`**
+No new capability string is needed for v0.4.0. Per SPEC.md Section 11.6, service-level ACL is deferred. Discovery itself requires `relay:read` (it's a REQ), and service messages via INTER_PANE require `relay:write` -- both already exist.
+
+### 2. Runtime Service Dispatch (new module: service-dispatch.ts)
+
+The runtime needs two new capabilities:
+
+**A. Handle kind 29010 REQ (discovery)**
+
+When `handleReq()` sees a filter with `kinds: [29010]`, instead of forwarding to the relay pool, it generates synthetic EVENT responses from the service registry. This follows the same pattern as how the runtime handles bus-kind subscriptions today (the `isBusKind` check at line 340 of runtime.ts).
 
 ```typescript
-// publish-napplet/src/main.ts
-import { publish } from '@napplet/shim';
+// @napplet/runtime/service-dispatch.ts
 
-const params = new URLSearchParams(location.search);
-const kind = parseInt(params.get('kind') ?? '1');
-const content = params.get('content') ?? 'test';
+import type { NostrEvent } from '@napplet/core';
+import { BusKind } from '@napplet/core';
+import type { SendToNapplet } from './types.js';
 
-// Wait for AUTH to complete (shim handles this internally)
-setTimeout(async () => {
-  await publish({ kind, content, tags: [], created_at: Math.floor(Date.now() / 1000) });
-  // Signal completion to test harness
-  window.parent.postMessage(['__TEST_DONE__', 'publish'], '*');
-}, 500);
-```
-
-**Example: `malicious-napplet`**
-
-```typescript
-// malicious-napplet/src/main.ts
-// Does NOT import @napplet/shim -- crafts raw messages
-const params = new URLSearchParams(location.search);
-const attack = params.get('attack');
-
-switch (attack) {
-  case 'skip-auth':
-    // Send REQ without completing AUTH
-    window.parent.postMessage(['REQ', 'sub_1', { kinds: [1] }], '*');
-    break;
-  case 'replay':
-    // Send same event twice with same id
-    const event = { /* ... */ };
-    window.parent.postMessage(['EVENT', event], '*');
-    window.parent.postMessage(['EVENT', event], '*');
-    break;
-  case 'bad-verb':
-    window.parent.postMessage(['INVALID_VERB', 'data'], '*');
-    break;
+export interface ServiceDescriptorRuntime {
+  name: string;
+  version: string;
+  description?: string;
 }
-```
 
-**Confidence:** HIGH -- purpose-built test apps are the standard pattern for protocol testing. The nostr relay-tester does exactly this.
+export interface ServiceHandlerRuntime {
+  descriptor: ServiceDescriptorRuntime;
+  handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void;
+  onWindowDestroyed?(windowId: string): void;
+}
 
-### 4. Protocol Test Suite (`tests/protocol/`)
+export type ServiceRegistryRuntime = Record<string, ServiceHandlerRuntime>;
 
-Playwright-based behavioral tests that spin up a real browser, load the demo shell (or a stripped-down shell harness), embed test napplets, and assert protocol conformance by observing messages through the message tap.
-
-**Why Playwright, not jsdom/happy-dom:**
-
-- The protocol relies on real `postMessage` between real iframes. jsdom and happy-dom do not support real iframe `contentWindow` references, cross-origin postMessage delivery, or the `MessageEvent.source` property that `originRegistry` depends on.
-- Playwright provides real browser iframes with real postMessage semantics. This is the only way to test the actual protocol behavior.
-- Vitest browser mode runs tests inside an iframe itself (using BroadcastChannel), which conflicts with testing iframe-to-parent communication.
-
-**Test structure:**
-
-```typescript
-// tests/protocol/auth.spec.ts
-import { test, expect } from '@playwright/test';
-import { ShellHarness } from './fixtures/shell-harness';
-
-test.describe('AUTH handshake', () => {
-  let harness: ShellHarness;
-
-  test.beforeEach(async ({ page }) => {
-    harness = new ShellHarness(page);
-    await harness.boot();
-  });
-
-  test('completes AUTH with valid signature', async () => {
-    const napplet = await harness.loadNapplet('auth-napplet');
-
-    // Assert: shell sent AUTH challenge
-    const challenge = await harness.tap.waitFor(
-      m => m.verb === 'AUTH' && m.direction === 'shell-to-napplet'
-    );
-    expect(challenge.raw[1]).toBeTruthy(); // challenge string
-
-    // Assert: napplet responded with AUTH event
-    const response = await harness.tap.waitFor(
-      m => m.verb === 'AUTH' && m.direction === 'napplet-to-shell'
-    );
-    expect(response.parsed.eventKind).toBe(22242);
-
-    // Assert: shell accepted with OK true
-    const ok = await harness.tap.waitFor(
-      m => m.verb === 'OK' && m.direction === 'shell-to-napplet'
-    );
-    expect(ok.parsed.success).toBe(true);
-  });
-
-  test('rejects AUTH with wrong challenge', async () => {
-    // Load a napplet that sends AUTH with a mismatched challenge
-    const napplet = await harness.loadNapplet('malicious-napplet', {
-      attack: 'wrong-challenge'
-    });
-
-    const ok = await harness.tap.waitFor(
-      m => m.verb === 'OK' && m.direction === 'shell-to-napplet'
-    );
-    expect(ok.parsed.success).toBe(false);
-    expect(ok.parsed.reason).toContain('challenge mismatch');
-  });
-});
-```
-
-**Shell Harness fixture:**
-
-```typescript
-// tests/protocol/fixtures/shell-harness.ts
-export class ShellHarness {
-  private page: Page;
-  tap: MessageCollector;
-
-  constructor(page: Page) {
-    this.page = page;
-    this.tap = new MessageCollector();
+/**
+ * Handle a service discovery REQ.
+ * Sends one kind 29010 EVENT per registered service, then EOSE.
+ */
+export function handleServiceDiscovery(
+  windowId: string,
+  subId: string,
+  services: ServiceRegistryRuntime | undefined,
+  sendToNapplet: SendToNapplet,
+): void {
+  if (services) {
+    for (const handler of Object.values(services)) {
+      const event: NostrEvent = {
+        id: `svc-${handler.descriptor.name}-${Date.now()}`,
+        pubkey: '__shell__',
+        created_at: Math.floor(Date.now() / 1000),
+        kind: BusKind.SERVICE_DISCOVERY,
+        tags: [
+          ['s', handler.descriptor.name],
+          ['v', handler.descriptor.version],
+          ...(handler.descriptor.description ? [['d', handler.descriptor.description]] : []),
+        ],
+        content: '{}',
+        sig: '',
+      };
+      sendToNapplet(windowId, ['EVENT', subId, event]);
+    }
   }
+  sendToNapplet(windowId, ['EOSE', subId]);
+}
 
-  async boot(): Promise<void> {
-    // Navigate to a minimal HTML page that:
-    // 1. Imports @napplet/shell
-    // 2. Creates mock ShellHooks
-    // 3. Calls createPseudoRelay(hooks)
-    // 4. Installs message tap on window
-    // 5. Exposes tap data via window.__TEST_TAP__
-    await this.page.goto('http://localhost:5173/test-harness.html');
-    await this.page.waitForFunction(() => (window as any).__SHELL_READY__);
-  }
+/**
+ * Route an INTER_PANE event to the matching service handler by topic prefix.
+ * Returns true if a service handled the message, false otherwise.
+ */
+export function routeServiceMessage(
+  windowId: string,
+  event: NostrEvent,
+  topic: string,
+  services: ServiceRegistryRuntime | undefined,
+): boolean {
+  if (!services) return false;
+  const colonIndex = topic.indexOf(':');
+  if (colonIndex === -1) return false;
+  const prefix = topic.slice(0, colonIndex);
+  const handler = services[prefix];
+  if (!handler) return false;
 
-  async loadNapplet(name: string, params?: Record<string, string>): Promise<string> {
-    const windowId = await this.page.evaluate(
-      ([name, params]) => (window as any).__loadNapplet__(name, params),
-      [name, params ?? {}]
-    );
-    return windowId;
-  }
+  let content: unknown;
+  try { content = event.content ? JSON.parse(event.content) : {}; }
+  catch { content = {}; }
+
+  handler.handleRequest(windowId, topic, content, event);
+  return true;
 }
 ```
 
-**Message Collector (Playwright side):**
+**B. Integrate into runtime.ts**
 
-The message collector bridges browser-side postMessage interception to Playwright test assertions. The browser-side tap pushes messages to `window.__TEST_TAP__`, and the Playwright test polls or subscribes to this array.
+Two modification points in `createRuntime()`:
+
+1. In `handleReq()`: detect kind 29010 filters, call `handleServiceDiscovery()`, skip relay pool.
+2. In `handleEvent()` under `BusKind.INTER_PANE`: before the `shell:` prefix checks, try `routeServiceMessage()`. If a service handled it, return early.
+
+The integration points are precise:
+
+```
+handleReq():
+  Line 340 (isBusKind check) — add specific check for SERVICE_DISCOVERY kind
+  Before relay pool subscribe — if filters match 29010, call handleServiceDiscovery and return
+
+handleEvent():
+  Line 289 (INTER_PANE case) — add routeServiceMessage() call before shell: prefix checks
+  After topic extraction, before shell:state- check
+```
+
+**RuntimeHooks extension:**
 
 ```typescript
-// tests/protocol/fixtures/message-collector.ts
-export class MessageCollector {
-  constructor(private page: Page) {}
+// @napplet/runtime/types.ts — addition to RuntimeHooks
 
-  async waitFor(
-    predicate: (msg: TappedMessage) => boolean,
-    timeoutMs = 5000
-  ): Promise<TappedMessage> {
-    return this.page.evaluate(
-      ([predFn, timeout]) => {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error('waitFor timeout')), timeout);
-          // Check existing messages
-          for (const msg of (window as any).__TEST_MESSAGES__) {
-            if (predFn(msg)) { clearTimeout(timer); resolve(msg); return; }
-          }
-          // Subscribe to new messages
-          (window as any).__onTestMessage__ = (msg) => {
-            if (predFn(msg)) { clearTimeout(timer); resolve(msg); }
-          };
-        });
-      },
-      // Note: predicate must be serializable for page.evaluate
-      // In practice, pass filter criteria as data, not functions
-      [predicate, timeoutMs]
-    );
-  }
+export interface RuntimeHooks {
+  // ... existing fields ...
+
+  /** Optional service extensions. */
+  services?: ServiceRegistryRuntime;
 }
 ```
 
-**Important constraint:** `page.evaluate` cannot pass closures. The actual implementation should pass filter criteria as plain objects (verb, direction, etc.) and evaluate the predicate inside the browser context.
+### 3. Shell Audio Service (new module: audio-service.ts)
 
-**Confidence:** HIGH for Playwright as the test runner. MEDIUM for the exact message collection mechanism (may need iteration on the browser-to-test-process bridge).
-
-### 5. Mock ShellHooks
-
-Both the demo and test harness need mock implementations of `ShellHooks`. This should be a shared utility.
+The audio manager is currently handled as a special case in `runtime.ts` line 294-298 where `shell:audio-*` topics are just forwarded as inter-pane events. With the service pattern, this becomes a proper `ServiceHandler`:
 
 ```typescript
-// shared/mock-hooks.ts
-export function createMockHooks(overrides?: Partial<ShellHooks>): ShellHooks {
+// @napplet/shell/audio-service.ts
+
+import type { ServiceHandlerRuntime } from '@napplet/runtime';
+import type { NostrEvent } from '@napplet/core';
+import { audioManager } from './audio-manager.js';
+
+export function createAudioService(): ServiceHandlerRuntime {
   return {
-    relayPool: {
-      getRelayPool: () => mockRelayPool,   // In-memory event store
-      trackSubscription: (key, cleanup) => { /* store */ },
-      untrackSubscription: (key) => { /* cleanup */ },
-      openScopedRelay: () => {},
-      closeScopedRelay: () => {},
-      publishToScopedRelay: () => false,
-      selectRelayTier: () => [],
+    descriptor: {
+      name: 'audio',
+      version: '1.0.0',
+      description: 'Audio playback management and mute control',
     },
-    auth: {
-      getUserPubkey: () => '0'.repeat(64),
-      getSigner: () => mockSigner,          // In-memory signer
+
+    handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void {
+      const payload = content as Record<string, string>;
+      switch (topic) {
+        case 'audio:register':
+          audioManager.register(windowId, payload.nappClass ?? '', payload.title ?? '');
+          break;
+        case 'audio:unregister':
+          audioManager.unregister(windowId);
+          break;
+        case 'audio:state-changed':
+          audioManager.updateState(windowId, { title: payload.title });
+          break;
+      }
     },
-    crypto: {
-      verifyEvent: async (event) => {
-        // Use nostr-tools verifyEvent for real signature verification
-        const { verifyEvent } = await import('nostr-tools/pure');
-        return verifyEvent(event);
-      },
+
+    onWindowDestroyed(windowId: string): void {
+      audioManager.unregister(windowId);
     },
-    config: {
-      getNappUpdateBehavior: () => 'auto-grant',
-    },
-    // ... other hooks with no-op defaults
-    ...overrides,
   };
 }
 ```
 
-**Confidence:** HIGH -- the existing `ShellHooks` interface is already designed for dependency injection.
+**Note on backwards compatibility:** The existing `shell:audio-*` topic handling in runtime.ts (lines 294-298) must remain operational during migration. The migration path is:
+
+1. Add service dispatch alongside existing `shell:audio-*` handling.
+2. Register `createAudioService()` as the `audio` service handler.
+3. Service dispatch intercepts `audio:*` topics (not `shell:audio-*`).
+4. Deprecate `shell:audio-*` prefix in a later version.
+5. Both prefixes work during the transition period.
+
+**Decision point:** Either (a) migrate audio topics from `shell:audio-*` to `audio:*` immediately and break the old format, or (b) make the audio service handler respond to both prefixes during migration. Option (b) is safer for backwards compatibility.
+
+### 4. Hooks Adapter Changes
+
+The `adaptHooks()` function in `hooks-adapter.ts` needs to pass services through:
+
+```typescript
+// hooks-adapter.ts — additions
+
+export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHooks {
+  // ... existing adaptation ...
+
+  return {
+    // ... existing fields ...
+    services: shellHooks.services
+      ? Object.fromEntries(
+          Object.entries(shellHooks.services).map(([name, handler]) => [name, handler])
+        )
+      : undefined,
+  };
+}
+```
+
+This is trivial because `ShellHooks.services` already has the right shape -- it just needs to be passed through. The shell's `ServiceHandler` and runtime's `ServiceHandlerRuntime` can share the same interface imported from runtime.
+
+### 5. Shim Discovery API (new module: discovery.ts)
+
+The shim needs a developer-friendly API for service discovery. This is a new module in `@napplet/shim`:
+
+```typescript
+// @napplet/shim/discovery.ts
+
+import { subscribe, query } from './relay-shim.js';
+import { BusKind } from './types.js';
+import type { NostrEvent } from './types.js';
+
+export interface DiscoveredService {
+  name: string;
+  version: string;
+  description?: string;
+}
+
+/**
+ * Discover all services the shell provides.
+ * Sends a REQ for kind 29010, collects responses until EOSE.
+ * Returns a map of service name to descriptor.
+ */
+export async function discoverServices(): Promise<Map<string, DiscoveredService>> {
+  const events = await query({ kinds: [BusKind.SERVICE_DISCOVERY] });
+  const services = new Map<string, DiscoveredService>();
+  for (const event of events) {
+    const name = event.tags.find(t => t[0] === 's')?.[1];
+    const version = event.tags.find(t => t[0] === 'v')?.[1];
+    const description = event.tags.find(t => t[0] === 'd')?.[1];
+    if (name && version) {
+      services.set(name, { name, version, description });
+    }
+  }
+  return services;
+}
+
+/**
+ * Check if a specific service is available.
+ */
+export async function hasService(name: string): Promise<boolean> {
+  const services = await discoverServices();
+  return services.has(name);
+}
+
+/**
+ * Check manifest requires against discovered services.
+ * Returns list of missing services.
+ */
+export async function checkCompatibility(
+  requires?: string[],
+): Promise<{ compatible: boolean; missing: string[] }> {
+  if (!requires || requires.length === 0) {
+    return { compatible: true, missing: [] };
+  }
+  const services = await discoverServices();
+  const missing = requires.filter(name => !services.has(name));
+  return { compatible: missing.length === 0, missing };
+}
+```
+
+**Caching consideration:** `discoverServices()` should cache the result for the session. Service availability does not change after shell startup. A module-level cache with the promise stored avoids redundant REQs:
+
+```typescript
+let _discoveryPromise: Promise<Map<string, DiscoveredService>> | null = null;
+
+export function discoverServices(): Promise<Map<string, DiscoveredService>> {
+  if (!_discoveryPromise) {
+    _discoveryPromise = _doDiscover();
+  }
+  return _discoveryPromise;
+}
+```
+
+### 6. Manifest Requires Tags
+
+Napplet manifests can declare service dependencies via `requires` tags in the NIP-5A manifest. The vite-plugin needs a configuration option:
+
+```typescript
+// @napplet/vite-plugin — config addition
+
+export interface Nip5aManifestOptions {
+  nappType: string;
+  /** Services this napplet requires (e.g., ['audio', 'notifications']). */
+  requires?: string[];
+}
+```
+
+The plugin adds `['requires', 'audio']` tags to the kind 35128 manifest event and injects a meta tag:
+
+```html
+<meta name="napplet-requires" content="audio,notifications">
+```
+
+The shim reads this meta tag and feeds it to `checkCompatibility()`.
+
+### 7. Compatibility Reporting
+
+When a napplet discovers missing services, the shim surfaces this to the developer/user. Two levels:
+
+1. **Console warning** (always): `[napplet] Missing required services: audio, notifications`
+2. **Callback hook** (opt-in): The napplet registers a handler for compatibility issues.
+
+```typescript
+// @napplet/shim — compatibility surface
+
+export function onCompatibilityIssue(
+  callback: (missing: string[]) => void,
+): void {
+  // Called after discovery completes if required services are missing
+}
+```
+
+The napplet developer can choose how to handle this -- show a banner, disable features, etc. The shim does NOT force any UI.
 
 ## Data Flow
 
-### Demo Mode Data Flow
+### Service Discovery Flow (post-AUTH)
 
 ```
-User clicks "Load Napplet"
-  |
-  v
-Demo Shell creates iframe, registers in originRegistry
-  |
-  v
-Shell calls sendChallenge(windowId)
-  |
-  v
-postMessage ['AUTH', challenge] --> napplet iframe
-  |                                    |
-  |  Message Tap intercepts            |  @napplet/shim handles challenge
-  |  Logs to visual panel              |  Signs AUTH event
-  |                                    |
-  v                                    v
-                            postMessage ['AUTH', authEvent] --> shell
-                                       |
-                           Shell verifies, registers nappkey
-                                       |
-                            postMessage ['OK', id, true, ''] --> napplet
-                                       |
-                           Message Tap logs all 3 messages
-                           Visual panel shows AUTH flow complete
+Napplet (shim)                        Shell (runtime)
+     |                                      |
+     |  discoverServices() called           |
+     |                                      |
+     |-- ['REQ', 'svc-xxx', {kinds:[29010]}] -->
+     |                                      |
+     |  handleReq detects kind 29010        |
+     |  calls handleServiceDiscovery()      |
+     |                                      |
+     | <-- ['EVENT', 'svc-xxx', {kind:29010, tags:[['s','audio'],['v','1.0.0']]}]
+     | <-- ['EVENT', 'svc-xxx', {kind:29010, tags:[['s','state'],['v','1.0.0']]}]
+     | <-- ['EOSE', 'svc-xxx']              |
+     |                                      |
+     |  Parse events, build service map     |
+     |  Check against manifest requires     |
+     |  Report missing services             |
 ```
 
-### Test Mode Data Flow
+### Service Message Flow (runtime dispatch)
 
 ```
-Playwright test starts
-  |
-  v
-page.goto('test-harness.html')
-  |
-  v
-Shell boots with mock hooks, installs message tap
-  |
-  v
-Test calls harness.loadNapplet('publish-napplet', { kind: '1' })
-  |
-  v
-Shell creates iframe, sends AUTH challenge
-  |
-  v
-AUTH handshake completes (same as demo flow)
-  |
-  v
-publish-napplet sends ['EVENT', signedEvent]
-  |
-  v
-Message tap captures event, pushes to window.__TEST_MESSAGES__
-  |
-  v
-Playwright test calls waitFor({ verb: 'OK', direction: 'shell-to-napplet' })
-  |
-  v
-Assertion: OK.success === true, event was routed to mock relay pool
-  |
-  v
-Test passes/fails
+Napplet (shim)                        Shell (runtime)                  Service Handler
+     |                                      |                              |
+     |-- ['EVENT', {kind:29003,             |                              |
+     |    tags:[['t','audio:register']],    |                              |
+     |    content:'{"nappClass":"player"}'  |                              |
+     |   }] -------------------------------->                              |
+     |                                      |                              |
+     |  handleEvent: kind 29003, INTER_PANE |                              |
+     |  topic = 'audio:register'            |                              |
+     |  routeServiceMessage():              |                              |
+     |    prefix = 'audio'                  |                              |
+     |    handler = services['audio']       |                              |
+     |    handler.handleRequest() --------------------------------->       |
+     |                                      |                   audioManager.register()
+     |                                      |                              |
+     | <-- ['OK', eventId, true, '']        |                              |
 ```
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Testing postMessage with jsdom
-**What:** Using vitest with jsdom/happy-dom to test the protocol
-**Why bad:** jsdom does not implement real iframe contentWindow, MessageEvent.source, or cross-origin postMessage. The originRegistry depends on `event.source` (Window reference), which jsdom fakes as `null`. Tests would pass on mocks but fail in real browsers.
-**Instead:** Use Playwright for all protocol tests. Reserve vitest+jsdom for pure-function unit tests (filter matching, replay check, ACL logic) that don't involve postMessage.
-
-### Anti-Pattern 2: Combined demo+test app
-**What:** A single app that is both the interactive demo and the test runner
-**Why bad:** The demo needs user interaction (click to load napplet, toggle ACL). The tests need deterministic automation. Making both work in one app means either (a) the demo has test-specific UI clutter, or (b) the tests are brittle because they depend on demo UI elements.
-**Instead:** Share test napplets and mock hooks. Keep the demo and test harness as separate entry points.
-
-### Anti-Pattern 3: Testing against real relays
-**What:** Connecting the demo/test shell to real Nostr relays
-**Why bad:** Flaky tests (relay downtime, network latency, relay-specific behavior differences). Pollutes real relays with test events. Requires a Nostr identity/signer.
-**Instead:** Mock relay pool that stores events in memory. Tests for relay integration belong in hyprgate (the reference implementation), not the SDK.
-
-### Anti-Pattern 4: Monolithic test napplet
-**What:** One big test napplet that exercises all capabilities via query param routing
-**Why bad:** A failure in AUTH handling makes all subsequent tests fail. Test isolation is lost. Hard to attribute failures to specific protocol areas.
-**Instead:** One napplet per capability. Each test file loads only the napplet(s) it needs.
 
 ## Patterns to Follow
 
-### Pattern 1: Message Tap as Observable
-**What:** A transparent message interceptor that both logs and allows subscription
-**When:** Always, for both demo and tests
-**Why:** Decouples observation from the protocol. Neither the shell nor the napplet needs to know they're being observed.
+### Pattern 1: REQ Interception for Bus Kinds
 
-### Pattern 2: Deterministic Test Napplets
-**What:** Napplets that perform a fixed sequence of operations on load, with no user interaction
-**When:** All test napplets
-**Why:** Enables headless Playwright testing. No `page.click()` needed inside iframes (which Playwright handles poorly for sandboxed iframes).
+**What:** Detect bus-kind-only REQs and handle them locally instead of forwarding to relay pool.
+**When:** Kind 29010 discovery requests.
+**Precedent:** The existing `isBusKind` check in `handleReq()` (line 340) already skips relay pool for all 29000-29999 kinds. Service discovery piggybacks on this pattern.
+**Why this matters:** The runtime already sends EOSE for bus-kind-only REQs when the relay pool is unavailable (line 374). Service discovery should send its events BEFORE this EOSE, within the same subscription lifecycle.
 
-### Pattern 3: Mock ShellHooks with Real Crypto
-**What:** Mock everything except `CryptoHooks.verifyEvent`
-**When:** Always in tests and demo
-**Why:** AUTH handshake requires real Schnorr signature verification to test meaningfully. Mocking `verifyEvent` to always return `true` would mask signature bugs. Use `nostr-tools/pure.verifyEvent` for real crypto.
+### Pattern 2: Topic Prefix Routing
 
-### Pattern 4: Test Completion Signaling
-**What:** Napplets post a special `__TEST_DONE__` message when they finish their test operations
-**When:** All test napplets
-**Why:** Playwright tests need to know when the napplet has finished its work before asserting. Without this, tests race against napplet initialization.
+**What:** Extract the prefix before `:` in a topic string and dispatch to a handler map.
+**When:** INTER_PANE events with service-prefixed topics.
+**Precedent:** The existing `shell:state-*`, `shell:audio-*`, `shell:acl-*` routing in `handleEvent()` already does prefix-based dispatch, but with hardcoded `if/else` chains. The service registry generalizes this into a map lookup.
+**Why this matters:** New services can be added without modifying runtime.ts -- they just register a handler.
+
+### Pattern 3: Synthetic Shell Events
+
+**What:** The runtime creates NostrEvent objects with `pubkey: '__shell__'` and empty `sig` for shell-originated responses.
+**When:** Service discovery responses, state responses, audio mute notifications.
+**Precedent:** `handleShellCommand()` already creates synthetic events with `pubkey: ''` (line 488-492). The `audioManager.mute()` creates events with `pubkey: '__shell__'` (line 105 of audio-manager.ts).
+**Standardize:** Use `pubkey: '__shell__'` consistently for all shell-originated events. This is what SPEC.md Section 11.2 specifies.
+
+### Pattern 4: Module-Level Promise Cache (Shim)
+
+**What:** Cache the discovery result as a module-level promise so repeated calls reuse the same query.
+**When:** `discoverServices()` in the shim.
+**Precedent:** The shim already uses module-level state for keypair management (`keypairReady` promise, line 96 of index.ts). Same pattern, same module.
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Service Types in Shell Only
+
+**What:** Keeping `ServiceDescriptor`, `ServiceHandler`, `ServiceRegistry` only in `@napplet/shell/types.ts`
+**Why bad:** The runtime needs these types to perform dispatch, and the shim needs `ServiceDescriptor` to parse discovery responses. Importing from shell would create a circular dependency (shim depends on shell).
+**Instead:** `ServiceDescriptor` lives in core. `ServiceHandler` and `ServiceRegistry` live in runtime. Shell re-exports for backwards compatibility.
+
+### Anti-Pattern 2: Discovery in the Shell Bridge
+
+**What:** Adding service discovery handling to `shell-bridge.ts` or `hooks-adapter.ts` instead of the runtime.
+**Why bad:** This defeats the purpose of the runtime extraction in v0.3.0. Non-browser shells would not get service discovery. Every shell implementation would need to duplicate the discovery logic.
+**Instead:** All protocol logic lives in the runtime. Shell only adapts browser APIs.
+
+### Anti-Pattern 3: New Capability for Service Discovery
+
+**What:** Adding `service:discover` as a new Capability string to gate discovery REQs.
+**Why bad:** Discovery is a standard REQ for kind 29010. The existing `relay:read` capability already gates all REQs. Adding a separate capability for discovery creates unnecessary ACL complexity and breaks the principle that discovery should "just work" for any authenticated napplet.
+**Instead:** Use existing `relay:read` for discovery REQs. Defer per-service capabilities to a future version per SPEC.md Section 11.6.
+
+### Anti-Pattern 4: Automatic Discovery on Shim Init
+
+**What:** Running service discovery automatically during shim initialization (alongside AUTH).
+**Why bad:** Discovery requires AUTH to complete first (unauthenticated REQs are rejected). Adding it to the init sequence introduces timing complexity and delays napplet startup for apps that don't need discovery.
+**Instead:** Discovery is opt-in. The napplet calls `discoverServices()` when it needs to. The shim caches the result.
+
+### Anti-Pattern 5: Breaking Audio Topic Migration
+
+**What:** Changing audio topics from `shell:audio-*` to `audio:*` immediately without a transition period.
+**Why bad:** Existing napplets in the hyprgate reference implementation use `shell:audio-*`. A hard rename would break them.
+**Instead:** Audio service handler responds to both `audio:*` (new, service-routed) and `shell:audio-*` (legacy, direct routing in handleEvent). Deprecate the old prefix in v0.5.0.
+
+## Integration Points: Exact Code Modifications
+
+### @napplet/core
+
+| File | Change | What |
+|------|--------|------|
+| `types.ts` | ADD | `ServiceDescriptor` interface |
+| `topics.ts` | ADD | `SERVICE_DISCOVER` topic constant |
+| `index.ts` | ADD | Export `ServiceDescriptor` and new topic |
+
+### @napplet/runtime
+
+| File | Change | What |
+|------|--------|------|
+| `types.ts` | ADD | `ServiceHandlerRuntime`, `ServiceRegistryRuntime` interfaces |
+| `types.ts` | MODIFY | Add `services?` to `RuntimeHooks` |
+| `service-dispatch.ts` | NEW | `handleServiceDiscovery()`, `routeServiceMessage()` |
+| `runtime.ts` | MODIFY | Wire service dispatch into `handleReq()` and `handleEvent()` |
+| `index.ts` | MODIFY | Export service dispatch types and functions |
+
+### @napplet/shell
+
+| File | Change | What |
+|------|--------|------|
+| `types.ts` | MODIFY | Import service types from runtime instead of defining locally |
+| `hooks-adapter.ts` | MODIFY | Pass `services` through to RuntimeHooks |
+| `audio-service.ts` | NEW | `createAudioService()` wrapping audioManager |
+| `index.ts` | MODIFY | Export `createAudioService`, re-export service types from runtime |
+
+### @napplet/shim
+
+| File | Change | What |
+|------|--------|------|
+| `discovery.ts` | NEW | `discoverServices()`, `hasService()`, `checkCompatibility()` |
+| `index.ts` | MODIFY | Export discovery API |
+
+### @napplet/vite-plugin
+
+| File | Change | What |
+|------|--------|------|
+| `index.ts` | MODIFY | Accept `requires` option, add requires tags to manifest, inject meta tag |
 
 ## Suggested Build Order
 
-Dependencies flow downward. Each layer depends on the layer above it being complete.
+Dependencies flow left to right. Each step depends on the previous.
 
 ```
-Phase 1: Message Tap + Mock ShellHooks
-   |  No dependencies beyond existing @napplet/shell
-   |  Can be tested with minimal manual verification
-   |
-Phase 2: Test Napplets (auth, publish, subscribe first)
-   |  Depends on: @napplet/shim working end-to-end
-   |  Each is a trivial Vite app importing the shim
-   |
-Phase 3: Shell Test Harness (test-harness.html)
-   |  Depends on: Message Tap, Mock ShellHooks
-   |  Boots shell, loads napplets, exposes tap to Playwright
-   |
-Phase 4: Protocol Test Suite (Playwright specs)
-   |  Depends on: Shell Harness, Test Napplets
-   |  AUTH tests first (everything else depends on AUTH)
-   |  Then: subscribe/publish, storage, inter-pane, ACL, adversarial
-   |
-Phase 5: Demo Playground
-   |  Depends on: Message Tap, Mock ShellHooks, Test Napplets
-   |  Can reuse test napplets as demo content
-   |  Adds visual UI layer on top of shell harness
-   |
-Phase 6: CI Integration
-   |  Depends on: Protocol Test Suite passing locally
-   |  Playwright in CI (GitHub Actions)
+Step 1: Core types           Step 2: Runtime dispatch     Step 3: Shell adapter      Step 4: Shim discovery
+ ServiceDescriptor            service-dispatch.ts           hooks-adapter pass-thru    discovery.ts
+ SERVICE_DISCOVER topic       runtime.ts wiring             audio-service.ts           checkCompatibility
+                              RuntimeHooks.services         type migration
+
+Step 5: Vite plugin           Step 6: Integration tests
+ requires option              Discovery e2e test
+ meta tag injection           Audio service test
+                              Compatibility test
 ```
 
-**Phase ordering rationale:**
+**Step ordering rationale:**
 
-1. **Message Tap first** because both demo and tests depend on it. It's also the simplest component (pure function, no dependencies).
-2. **Test napplets before test harness** because napplets validate that `@napplet/shim` works. If shim is broken, discover it here before building the harness.
-3. **Shell harness before tests** because tests can't run without a shell host.
-4. **Tests before demo** because the demo is a nice-to-have; the tests are the deliverable. Also, any protocol bugs found during test development should be fixed before building the demo (which would mask them with visual distraction).
-5. **Demo last** because it consumes everything else and adds a visual layer. If time is short, the test suite alone proves protocol conformance. The demo can be deferred.
+1. **Core types first** because runtime, shell, and shim all need `ServiceDescriptor`.
+2. **Runtime dispatch second** because it is the core protocol change. Everything else is wiring.
+3. **Shell adapter third** because it wires shell's concrete service implementations to the runtime.
+4. **Shim discovery fourth** because it depends on the runtime responding to kind 29010 REQs.
+5. **Vite plugin fifth** because `requires` is additive and doesn't block the discovery flow.
+6. **Integration tests last** because they prove the full chain works end-to-end.
+
+**Parallelism opportunity:** Steps 3 (shell) and 4 (shim) can execute in parallel after step 2, since they both depend only on core types and runtime dispatch being complete.
 
 ## Scalability Considerations
 
-| Concern | 5 napplets (demo) | 20 test napplets | 50+ napplets |
-|---------|-------------------|-------------------|-------------|
-| iframe overhead | Negligible | Noticeable in Playwright CI (~2s per iframe) | Slow. Batch tests, reuse shell instances. |
-| Message tap buffer | Hundreds of msgs, fine | Thousands, needs periodic clear | Needs ring buffer or streaming |
-| Playwright parallelism | Single test file | `test.describe.parallel` across spec files | Workers per spec file, shared test server |
-| Build time | Sub-second per napplet | 10-20s total | Pre-build all, cache in CI |
+| Concern | 3 services (v0.4.0) | 10 services | 50+ services |
+|---------|---------------------|-------------|-------------|
+| Discovery response size | Negligible (3 events) | Tiny (~10 events, each <200 bytes) | May want paged discovery |
+| Topic prefix routing | O(1) map lookup | O(1) map lookup | O(1) map lookup |
+| Service handler map | Static, set at shell startup | Static | May want dynamic registration API |
+| Discovery cache (shim) | Single promise, reused | Same | Same -- services don't change mid-session |
+| Backwards compat | Dual prefix support | Consider removing old prefixes | Must have removed old prefixes |
 
 ## Sources
 
-- [Figma Plugin Architecture](https://developers.figma.com/docs/plugins/how-plugins-run/) -- sandbox model, iframe UI, message passing (HIGH confidence)
-- [Figma Plugin System Blog](https://www.figma.com/blog/how-we-built-the-figma-plugin-system/) -- QuickJS sandbox architecture (HIGH confidence)
-- [tma.js SDK Repository](https://github.com/Telegram-Mini-Apps/telegram-apps) -- monorepo structure, apps/ directory, mockTelegramEnv pattern (HIGH confidence)
-- [Shopify mock-bridge](https://github.com/ctrlaltdylan/mock-bridge) -- mock App Bridge for Playwright testing of iframe apps (MEDIUM confidence)
-- [mikedilger/relay-tester](https://github.com/mikedilger/relay-tester) -- NIP-01 relay conformance test suite pattern (HIGH confidence)
-- [chrome-postMessage-debugger](https://github.com/bdo/chrome-postMessage-debugger) -- postMessage interception for debugging (HIGH confidence)
-- [Playwright iframe testing](https://debbie.codes/blog/testing-iframes-with-playwright/) -- FrameLocator API, iframe interaction patterns (HIGH confidence)
-- [Vitest browser mode](https://vitest.dev/guide/browser/) -- BroadcastChannel limitations, not suitable for iframe protocol testing (HIGH confidence)
-- [Chrome Extension End-to-End Testing](https://developer.chrome.com/docs/extensions/mv3/end-to-end-testing/) -- behavioral test patterns for sandboxed extension APIs (MEDIUM confidence)
-- [postMessage debugging techniques](https://dev.to/arthurdenner/how-to-debug-postmessages-58p7) -- monitorEvents, event inspection (HIGH confidence)
+- SPEC.md Section 11 (Service Discovery protocol definition) -- HIGH confidence, authoritative
+- SPEC.md Section 15.5 (Service Discovery Kind allocation) -- HIGH confidence, authoritative
+- `packages/runtime/src/runtime.ts` (existing dispatch logic) -- HIGH confidence, direct code reading
+- `packages/shell/src/types.ts` (existing service type stubs) -- HIGH confidence, direct code reading
+- `packages/shell/src/audio-manager.ts` (existing audio implementation) -- HIGH confidence, direct code reading
+- `packages/shim/src/relay-shim.ts` (existing query() pattern) -- HIGH confidence, direct code reading
+- `packages/runtime/src/state-handler.ts` (pattern for topic-based handlers) -- HIGH confidence, direct code reading
 
 ---
 
-*Architecture research: 2026-03-30*
+*Architecture research: 2026-03-31*

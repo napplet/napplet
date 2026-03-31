@@ -1,375 +1,425 @@
-# Domain Pitfalls
+# Domain Pitfalls: Service Discovery & Capability Negotiation
 
-**Domain:** Sandboxed Nostr app protocol SDK (iframe postMessage relay)
-**Researched:** 2026-03-30
+**Domain:** Adding service discovery, capability negotiation, and compatibility checking to an existing sandboxed iframe protocol (napplet v0.4.0)
+**Researched:** 2026-03-31
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause security breaches, rewrites, or major breakage.
+Mistakes that cause protocol breaks, backwards incompatibility, or require rewrites.
 
-### Pitfall 1: Permissive-by-Default ACL Grants Full Capabilities to Unknown Napplets
+### Pitfall 1: Discovery REQ Races Against AUTH Queue Drain
 
-**What goes wrong:** The `aclStore.check()` method returns `true` when no entry exists for a napplet identity (`if (!entry) return true`). This means any napplet that connects and completes AUTH automatically gets every capability: signing, storage, relay access. If ACL persistence fails (localStorage unavailable, corrupted data, parsing error in `load()`), all previously restricted napplets silently regain full permissions.
+**What goes wrong:** After AUTH succeeds, the runtime drains `pendingAuthQueue` synchronously at `runtime.ts:253`. The shim currently sends two REQs immediately after the AUTH event (`index.ts:224-225`): `SIGNER_SUB_ID` and `NIPDB_SUB_ID`. A natural v0.4.0 addition would be to send a third REQ for service discovery (`['REQ', 'svc-discovery', { kinds: [29010] }]`) immediately after AUTH. But the AUTH response (`['OK', eventId, true, '']`) is asynchronous -- the shim does not wait for the OK before sending these REQs. The REQs arrive at the runtime while AUTH is still processing (signature verification is async at `runtime.ts:188`), so they get queued in `pendingAuthQueue`. After AUTH succeeds and the queue drains, the REQs execute. This works. The race happens when:
 
-**Why it happens:** Development convenience. During extraction from hyprgate the permissive default made iteration faster. The decision was explicitly deferred in PROJECT.md.
+1. The shim sends AUTH, then immediately sends the discovery REQ.
+2. The discovery REQ enters `pendingAuthQueue`.
+3. AUTH succeeds, queue drains, discovery REQ runs.
+4. Runtime generates kind 29010 events and sends them back.
+5. But the shim's discovery handler is not yet installed (it was supposed to be set up AFTER AUTH OK arrives).
+
+The shim receives the discovery REQ response to a subscription it has not yet set up a handler for. The events are delivered but nobody is listening.
+
+**Why it happens:** The current shim architecture fires REQs optimistically during `handleAuthChallenge()` before AUTH confirmation. This works for signer/nipdb because those subscriptions are long-lived and the handlers are installed at module initialization. But a discovery flow is a one-shot query that the napplet code initiates AFTER the shim is ready.
 
 **Consequences:**
-- A malicious napplet iframe can sign arbitrary events with the user's key (kind 0 profile, kind 3 contact list, kind 5 deletion) if the consent handler is not registered or is poorly implemented.
-- Storage quota is the only brake. Without ACL denial, any napplet can read/write to relay, encrypt/decrypt via NIP-04/NIP-44, and forward hotkeys.
-- If `_onConsentNeeded` is null (shell implementor forgot to register it), destructive signing kinds bypass the consent check entirely -- the code at `pseudo-relay.ts:386` falls through to `dispatch(eventToSign)`.
+- Discovery responses are silently dropped because no handler is listening.
+- Napplets that call `discoverServices()` immediately after import get stale or empty results.
+- The race is timing-dependent -- fast AUTH verification (local mock) exposes it; slow verification (real Schnorr) masks it.
 
 **Prevention:**
-1. Add a `defaultPolicy: 'permissive' | 'restrictive'` config option to `createPseudoRelay`. Default to `restrictive` before v1.0 publish.
-2. In restrictive mode, `check()` returns `false` for unknown entries. Napplets must be explicitly granted capabilities.
-3. Add a startup warning (console.warn) when running in permissive mode to make the risk visible during development.
-4. Make `onConsentNeeded` registration mandatory -- throw if `handleSignerRequest` is called for a destructive kind without a consent handler registered.
+1. Do NOT send the service discovery REQ from `handleAuthChallenge()`. Discovery is napplet-initiated, not shim-internal.
+2. Expose a `discoverServices()` function that returns a `Promise<ServiceDescriptor[]>`. This function internally sends the REQ, listens for kind 29010 events, waits for EOSE, then resolves.
+3. The `discoverServices()` function should await the `keypairReady` promise (already exists) AND await AUTH confirmation before sending the REQ. Currently there is no "AUTH confirmed" promise -- add one.
+4. Alternative: have the shell proactively push service descriptors as part of the post-AUTH flow (like `auth:identity-changed`). This avoids the napplet needing to query at all but changes the protocol design from pull to push.
 
-**Detection:** Audit `aclStore.check()` return path for missing entries. Search for `_onConsentNeeded` null checks in signing flow. Test: what happens if you never call `onConsentNeeded()` and a napplet requests `signEvent` for kind 0?
+**Detection:** Write a test where AUTH takes >50ms (mock slow `verifyEvent`). Call `discoverServices()` immediately after shim import. If discovery returns empty results, the race is present.
 
-**Phase:** Must be addressed before demo phase (ACL enforcement demo is meaningless if default is permissive). Should be phase 1 or 2.
+**Phase:** Must be resolved in the first phase (discovery protocol implementation). Getting the timing wrong here poisons everything built on top.
 
 ---
 
-### Pitfall 2: postMessage Origin Wildcard Leaks Messages to Any Listener
+### Pitfall 2: Service Topic Routing Collision With Existing `shell:audio-*` Topics
 
-**What goes wrong:** Every `postMessage` call in both shell and shim uses `'*'` as targetOrigin: `sourceWindow.postMessage(['EVENT', subId, event], '*')`. While `event.source` (Window reference) is unforgeable and used for sender validation via `origin-registry.ts`, the *outbound* messages are broadcast to all origins. Any script on the page, browser extension, or injected iframe can listen to these messages.
+**What goes wrong:** The runtime currently has hardcoded topic prefix routing at `runtime.ts:289-298`:
 
-**Why it happens:** Sandboxed iframes without `allow-same-origin` have opaque (`null`) origins. You cannot specify a meaningful targetOrigin because the iframe's effective origin is `null`, and `postMessage(msg, 'null')` does not work as a targeted origin -- it still behaves like a wildcard in most browsers. This is a fundamental architectural constraint of the sandbox model chosen.
+```typescript
+if (topic?.startsWith('shell:state-')) {
+  handleStateRequest(...);
+  return;
+}
+if (topic?.startsWith('shell:audio-')) {
+  eventBuffer.bufferAndDeliver(event, windowId);
+  break;
+}
+if (topic?.startsWith('shell:') || ...) {
+  handleShellCommand(event, windowId, topic!);
+  return;
+}
+```
+
+Audio events (`shell:audio-register`, `shell:audio-unregister`, `shell:audio-state-changed`) are currently forwarded as inter-pane events. The SPEC.md Section 11.3 defines the new service routing pattern as `{service-name}:{action}` -- so the audio service would use `audio:register`, `audio:unregister`, `audio:state-changed`. These are DIFFERENT topic strings from the existing `shell:audio-*` topics in `@napplet/core`'s TOPICS constant.
+
+If the audio service handler is registered and the runtime dispatches `audio:register` to it, existing napplets using the old `shell:audio-register` topic will break. If both topic patterns are supported simultaneously, there are now two paths to the same functionality with different semantics.
+
+**Why it happens:** The existing audio topics were designed before the service extension system was specified. They follow the `shell:*` prefix convention used for all shell commands. The service system uses a different convention (`{service-name}:*`) to allow arbitrary service names.
 
 **Consequences:**
-- Signer responses (kind 29002) containing signed events or public keys are broadcast to all listeners. A malicious extension or injected script can intercept signed events.
-- Storage responses containing napplet data are broadcast similarly.
-- AUTH challenge strings are sent via wildcard, potentially allowing a competing listener to race against the legitimate napplet.
+- Existing napplets break if old topics stop working.
+- Two parallel paths to audio functionality create confusion and maintenance burden.
+- The TOPICS constant in `@napplet/core` has the old names hardcoded (`AUDIO_REGISTER: 'shell:audio-register'`). Changing these is a semver-breaking change.
 
 **Prevention:**
-1. Accept the wildcard as unavoidable for sandboxed iframe communication, but add message-level authentication. Each message should include an HMAC or session token derived from the AUTH handshake, verifiable by the recipient.
-2. Use a nonce-based session identifier established during AUTH that both sides validate on every message. Not a crypto signature (too expensive for every postMessage), but a shared secret from the handshake.
-3. Document this trust boundary prominently. SDK consumers must understand that postMessage content is visible to extensions and same-page scripts.
-4. For the shell side: validate `event.source` strictly (already done via origin registry). For the shim side: validate that `event.source === window.parent` (currently not checked in `handleRelayMessage` at `index.ts:159`).
+1. Keep the old `shell:audio-*` topics working during v0.4.0. Route them to the audio service handler as aliases. Add deprecation warnings.
+2. The audio service handler should accept BOTH `audio:register` (new service convention) AND `shell:audio-register` (legacy) during the transition.
+3. In the runtime's topic dispatch, add service routing BEFORE the `shell:audio-*` check. If a service is registered for the `audio` prefix, dispatch `audio:*` topics to it. The old `shell:audio-*` topics are aliased internally.
+4. Do NOT change the TOPICS constants in `@napplet/core` yet. Add new constants alongside: `AUDIO_SVC_REGISTER: 'audio:register'`. Deprecate the old ones in JSDoc.
+5. Plan a clean break in v0.5.0 or v1.0 where legacy topics are removed.
 
-**Detection:** Grep for `postMessage(` calls across both packages. Count how many use `'*'`. Check whether `handleRelayMessage` validates `event.source`.
+**Detection:** Run existing audio e2e tests after adding service dispatch. If audio tests fail, the routing collision is present. Check whether `handleEvent` in runtime.ts dispatches `audio:register` to a service handler or falls through to the `shell:` prefix check.
 
-**Phase:** Phase 1 -- document the constraint. Phase 2 -- add shim-side source validation. Session token can be deferred to a security-focused phase.
+**Phase:** Must be addressed in the service dispatch routing phase. The ordering of `if` checks in `handleEvent()` determines whether old or new topics win.
 
 ---
 
-### Pitfall 3: AUTH Race Condition Allows Pre-AUTH Messages to Execute After Rejection
+### Pitfall 3: Over-Engineering the Negotiation Protocol
 
-**What goes wrong:** When a napplet sends REQ/EVENT before AUTH completes, messages queue in `pendingAuthQueue`. If AUTH fails (signature invalid, challenge mismatch), the queue is deleted in some paths but not all. Specifically:
+**What goes wrong:** It is tempting to design a full capability negotiation protocol inspired by IRCv3 CAP, with multi-round request/acknowledge cycles, atomic enable/disable of service sets, version constraints, and dependency resolution. This adds complexity that:
+- Delays shipping by 2-3 phases.
+- Creates protocol surface area with no consumers (no shell implementors exist yet besides hyprgate).
+- Makes the spec harder for third-party implementors to adopt.
+- Introduces state machine complexity that the simple REQ/EVENT/EOSE flow does not have.
 
-- Signature invalid (`pseudo-relay.ts:155`): queue is deleted. Good.
-- Challenge mismatch (`pseudo-relay.ts:143`): function returns without deleting queue. Queue persists.
-- Relay tag mismatch (`pseudo-relay.ts:146`): function returns without deleting queue. Queue persists.
-- Timestamp too old (`pseudo-relay.ts:149`): function returns without deleting queue. Queue persists.
-- Kind not 22242 (`pseudo-relay.ts:139`): function returns without deleting queue. Queue persists.
-
-In the non-signature failure paths, `sendOkFail()` is called but `pendingAuthQueue.delete(windowId)` is not. If the shell later receives a valid AUTH from the same windowId (legitimate retry or attacker manipulation), the stale queue executes.
-
-**Why it happens:** Each early-return path was written independently. The queue cleanup was only added to the signature verification failure, not to the generic rejection paths.
+**Why it happens:** Protocol designers naturally want to handle every edge case upfront. The IRCv3 CAP negotiation took years to stabilize and required three spec rewrites. The MCP protocol's version negotiation has open issues about backwards compatibility. These are cautionary tales, not templates.
 
 **Consequences:**
-- Pre-authenticated messages from a failed AUTH attempt execute under the credentials of a later successful AUTH attempt.
-- In theory, a napplet could queue up REQ subscriptions or EVENT publications before AUTH, fail AUTH intentionally, then succeed on a second attempt with different credentials while the old messages still execute.
+- Napplet developers get a complex API (`negotiateServices({ require: [...], prefer: [...], versions: {...} })`) when they just need `const services = await discoverServices()`.
+- Shell implementors must implement a state machine instead of "respond to REQ with descriptor events."
+- The spec becomes harder to review and submit as a NIP.
+- Bugs in the negotiation logic are hard to test because they involve multi-round async exchanges.
 
 **Prevention:**
-1. Add `pendingAuthQueue.delete(windowId)` to every early-return path in `handleAuth()`, not just the signature failure path.
-2. Better: refactor `handleAuth()` to have a single cleanup point. Use a try/finally or early-exit pattern where the queue is always cleared on failure.
-3. Add an integration test that verifies: send REQ, then send invalid AUTH, then send valid AUTH. The pre-invalid-AUTH REQ must not execute.
+1. v0.4.0 should implement only the SPEC.md Section 11 design: napplet sends REQ, shell responds with service descriptors, EOSE. No negotiation, no enable/disable, no version constraints.
+2. The shim API should be `discoverServices(): Promise<ServiceDescriptor[]>` and `hasService(name: string): boolean`. That is the entire napplet-facing API.
+3. Compatibility checking (manifest `requires` tags) is a BUILD-TIME check, not a runtime negotiation. The vite-plugin declares required services in the manifest. The shell checks at AUTH time whether it can satisfy the requirements. No round trips needed.
+4. Version negotiation can be deferred to a future version when there are actual version conflicts to resolve. Semver range matching on service versions is complexity with no current users.
+5. If a napplet requires a service the shell does not have, the shell DOES NOT reject AUTH. Instead, it responds to discovery with the services it has, and the napplet decides what to do (degrade, show warning, refuse to start).
 
-**Detection:** Read `handleAuth()` and trace every `return` statement. For each, check whether `pendingAuthQueue.delete(windowId)` is called before the return.
+**Detection:** If the proposed API has more than 3 functions, or if the protocol requires more than one round trip for discovery, it is over-engineered for v0.4.0.
 
-**Phase:** Phase 1 -- this is a security bug. Fix before any demo or test phase.
+**Phase:** Architecture decision that must be locked before any implementation phase begins.
 
 ---
 
-### Pitfall 4: Fake Event IDs on Shell-Injected Events Break Nostr Verification
+### Pitfall 4: Breaking RuntimeHooks Interface for Service Support
 
-**What goes wrong:** `injectEvent()` at `pseudo-relay.ts:600` generates fake event IDs: `crypto.randomUUID().replace(/-/g, '').slice(0, 64).padEnd(64, '0')`. These are not SHA-256 hashes of the event's serialized content (as NIP-01 requires). The signature is similarly fake: `'0'.repeat(128)`.
+**What goes wrong:** Adding service dispatch to the runtime requires the runtime to know about registered services. The natural approach is to add a `services?: ServiceRegistry` field to `RuntimeHooks`. But `RuntimeHooks` is the core integration interface -- every shell implementor must provide it. Adding required fields is a breaking change. Adding optional fields creates confusion about where services live (RuntimeHooks vs ShellHooks vs separate registration).
 
-**Why it happens:** Shell-injected events (like `auth:identity-changed`) are internal bus messages, not relay-published events. The developer reasonably assumed napplets would not verify their IDs/signatures. But the same `deliverToSubscriptions` path delivers these to napplets as `['EVENT', subId, event]` -- identical to real relay events.
+Currently, `ServiceRegistry`, `ServiceHandler`, and `ServiceDescriptor` are defined in `@napplet/shell/types.ts`, not in `@napplet/runtime` or `@napplet/core`. The runtime package cannot import from shell (dependency goes the wrong direction: shell depends on runtime).
+
+**Why it happens:** The service types were designed during v0.3.0 as a shell-level concept. Moving them to runtime or core requires a package boundary change.
 
 **Consequences:**
-- Napplets using `nostr-tools.verifyEvent()` on incoming events will reject shell-injected events (ID hash mismatch, invalid signature).
-- Any napplet that stores received events and later tries to verify integrity will find corruption.
-- The protocol specification will be misleading if it claims all events are NIP-01 compliant but shell events break the standard.
+- If service types stay in shell but the runtime needs them for dispatch, you get a circular dependency (runtime imports shell types).
+- If you duplicate the types in runtime, you have two diverging `ServiceHandler` interfaces.
+- If you move types to core, you change the public API of both core and shell (types removed from shell's exports).
 
 **Prevention:**
-1. Compute proper SHA-256 event IDs for injected events using `nostr-tools`'s event serialization. The pubkey can still be zeroed (system pubkey), but the ID must be a valid hash.
-2. Alternatively, mark shell-injected events with a tag like `['_', 'system']` so napplets can distinguish them and skip verification.
-3. Document clearly in the NIP-5A spec that shell-injected events have pubkey `0x00...00` and should not be verified.
-4. Do NOT fake signatures. Either compute real ones with a shell keypair, or explicitly set `sig` to empty string and document this.
+1. Move `ServiceDescriptor`, `ServiceHandler`, and `ServiceRegistry` to `@napplet/core`. These are protocol-level types, not shell-specific. Core already has `NostrEvent`, `NostrFilter`, `Capability`, `BusKind`, and `TOPICS` -- service types belong there.
+2. Shell re-exports them from core (preserving backwards compatibility for consumers who import from `@napplet/shell`).
+3. Runtime adds an optional `services?: ServiceRegistry` to `RuntimeHooks`. The hooks-adapter in shell passes `shellHooks.services` through.
+4. Make the field optional with a clear default: no services registered = discovery returns EOSE immediately.
+5. Do the type migration as the FIRST step before any implementation, so all downstream code imports from the canonical location.
 
-**Detection:** Search for `randomUUID` in pseudo-relay.ts. Verify whether any consumer calls `verifyEvent` on received events.
+**Detection:** Try importing `ServiceHandler` from `@napplet/runtime` after adding service dispatch. If it requires importing from `@napplet/shell`, the dependency direction is wrong.
 
-**Phase:** Phase 2 -- fix before publishing the spec. The fix is small but has spec implications.
+**Phase:** Must be the first phase action -- move types to core before implementing anything.
 
 ---
 
-### Pitfall 5: localStorage Dependency Creates Silent Failure Cascade
+### Pitfall 5: Kind 29010 REQ Without Service Dispatch Returns Nothing (Silent Failure)
 
-**What goes wrong:** ACL store, manifest cache, and storage proxy all depend on `localStorage`. Without `allow-same-origin`, the *napplet* cannot access localStorage (by design -- this is correct). But the *shell* also depends on localStorage for persistence. If the shell runs in a context where localStorage is unavailable (private browsing in some browsers, storage quota exceeded, iframe within another sandbox), the failure is silent:
+**What goes wrong:** When a napplet sends `['REQ', 'svc-discovery', { kinds: [29010] }]`, the runtime's `handleReq()` at `runtime.ts:314` creates a subscription and then:
+1. Replays buffered events matching the filter.
+2. Queries local cache (if available and not a bus kind).
+3. Subscribes to relay pool (if available and not a bus kind).
 
-- `aclStore.persist()` catches and ignores the error (`acl-store.ts:122-124`).
-- `aclStore.load()` catches the error and clears the store (`acl-store.ts:153-156`), meaning all loaded ACL entries are lost.
-- `manifestCache` similarly swallows errors.
-- The napplet's keypair generation (now ephemeral per page load) no longer uses localStorage, but ACL and manifest persistence breaking means the shell forgets all permission decisions on every page load.
+Kind 29010 is in the bus kind range (29000-29999). The `isBusKind` check at `runtime.ts:340` will be `true`, so cache and relay pool are skipped. The subscription only receives buffered events. But no service descriptor events are in the buffer -- they need to be generated on demand when the REQ arrives.
 
-**Why it happens:** Silent try/catch is a common defensive pattern. But when the entire security model (ACL persistence) depends on the caught operation, silent failure is catastrophic.
+The current architecture has no mechanism for the runtime to generate response events in response to a REQ. REQs only match against buffered events, cache, and relay subscriptions. There is no "synthetic response" path.
+
+**Why it happens:** The runtime was designed as a relay proxy. REQs query existing data stores. Service discovery is different -- it is a request-response pattern where the runtime GENERATES events, not queries for them.
 
 **Consequences:**
-- In private browsing mode, every page load resets ACL to defaults (permissive = full access for all). User revocations and blocks are never remembered.
-- Storage proxy still works for the current session (shell writes to localStorage which may be available but ephemeral in private browsing), but data is lost on tab close.
-- Manifest cache entries lost means every napplet AUTH triggers a "new napp" flow, never detecting updates.
+- Discovery REQ silently returns EOSE with no events. The napplet thinks the shell has zero services.
+- Developers waste hours debugging why discovery "doesn't work" when the issue is architectural.
 
 **Prevention:**
-1. Add a `storage.isAvailable()` check at `createPseudoRelay` initialization time. If localStorage is unavailable, log a prominent warning and expose a flag so the shell implementor can show a UI warning.
-2. Add a `ShellHooks.storage` hook that abstracts the persistence layer. Default implementation uses localStorage. Shell implementors can provide IndexedDB, in-memory, or other backends.
-3. In the shim, the keypair is already ephemeral -- document that this is by design, not a bug. Napplet identity comes from the aggregate hash, not the keypair.
-4. Make `aclStore.load()` return a success/failure indicator so callers know whether persistence is working.
+1. Add a new dispatch path in `handleReq()` specifically for kind 29010 filters. Before the general subscription/cache/relay flow, check if any filter has `kinds: [29010]`. If so, generate service descriptor events from the registered services and deliver them directly.
+2. Implementation pattern:
+   ```typescript
+   // In handleReq, before the general subscription flow:
+   if (filters.some(f => f.kinds?.includes(BusKind.SERVICE_DISCOVERY))) {
+     for (const [name, handler] of Object.entries(registeredServices)) {
+       const descriptorEvent = createServiceDescriptorEvent(handler.descriptor);
+       hooks.sendToNapplet(windowId, ['EVENT', subId, descriptorEvent]);
+     }
+     hooks.sendToNapplet(windowId, ['EOSE', subId]);
+     return; // Do not proceed to relay/cache
+   }
+   ```
+3. Do NOT try to pre-buffer service descriptor events at startup. Services can be registered/deregistered at any time. Discovery must be live.
+4. Ensure the subscription is still tracked so CLOSE can clean it up, even though the response is immediate.
 
-**Detection:** Run the shell in a browser with localStorage disabled (or Firefox private browsing). Check whether ACL decisions persist across page loads. They will not.
+**Detection:** Send a discovery REQ after AUTH. If the response is just EOSE with no events (and services are registered), the synthetic response path is missing.
 
-**Phase:** Phase 2 -- add detection and warning. Phase 3 -- add hooks for alternative storage.
+**Phase:** Core to the service dispatch phase. Without this, discovery is dead on arrival.
 
 ---
 
 ## Moderate Pitfalls
 
-### Pitfall 6: Storage Keys Containing Commas Corrupt `keys()` Response
+### Pitfall 6: Audio Manager Migration Creates Two Audio State Owners
 
-**What goes wrong:** The `storage-keys` response at `storage-proxy.ts:130` joins all keys with commas: `['keys', userKeys.join(',')]`. The shim's `keys()` method at `storage-shim.ts:161` splits on commas: `raw.split(',')`. If a napplet stores a key containing a comma (e.g., `"data,backup"`), the key list is corrupted: one key becomes two.
+**What goes wrong:** The current `audioManager` in `packages/shell/src/audio-manager.ts` is a module-level singleton with its own `Map<string, AudioSource>` state, version counter, and `CustomEvent` dispatch. When converting it to a `ServiceHandler`, the temptation is to create an `AudioServiceHandler` class that wraps `audioManager`. Now there are two objects managing audio state:
+- The `audioManager` singleton (still exported from `@napplet/shell`, used by shell UI components).
+- The `AudioServiceHandler` (registered in the service registry, handling service messages).
 
-**Why it happens:** Quick serialization without considering delimiter collision.
+If the handler updates its own internal state but forgets to call `audioManager.register()`, the shell UI is stale. If the handler delegates to `audioManager` for everything, it is just a pass-through wrapper with no value.
+
+**Why it happens:** The audioManager was designed as a standalone registry with direct browser API access (`window.dispatchEvent`, `originRegistry.getIframeWindow`). The `ServiceHandler` interface has a different shape (`handleRequest(windowId, topic, content, event)`) and runs in the runtime context (no browser APIs).
+
+**Consequences:**
+- State divergence between the service handler and the audioManager singleton.
+- Shell UI components that read `audioManager.getSources()` see stale data.
+- The `audioManager.mute()` method sends postMessage directly to the iframe (bypassing the runtime), creating a second message path.
 
 **Prevention:**
-1. Use JSON serialization for the keys list: `['keys', JSON.stringify(userKeys)]`. Parse with `JSON.parse` on the shim side.
-2. Alternatively, use a delimiter that is unlikely in key names (like `\x00`), but JSON is safer and more standard.
+1. The `AudioServiceHandler` should be a THIN adapter that delegates all state management to the existing `audioManager` singleton. The handler's `handleRequest()` parses the message and calls `audioManager.register()`, `audioManager.unregister()`, etc.
+2. The `audioManager` remains the source of truth for audio state. The service handler is only a message routing layer.
+3. The `audioManager.mute()` method's direct postMessage call (`audio-manager.ts:102-111`) should be migrated to go through the runtime's `sendToNapplet()` path instead. This is a separate cleanup task that should happen in the same phase.
+4. Keep `audioManager` exported from `@napplet/shell` for backwards compatibility. Shell UI code continues to read from it. The service handler writes to it.
+5. Do NOT move audio state management into the runtime. Audio is browser-specific (Web Audio API, CustomEvent). It belongs in the shell adapter layer.
 
-**Detection:** Write a test that stores a key containing a comma and verifies `keys()` returns it correctly.
+**Detection:** After migration, register an audio source via the service handler path. Check `audioManager.getSources()`. If the source is missing, the handler is not delegating correctly.
 
-**Phase:** Phase 1 -- trivial fix, should be caught by storage tests.
+**Phase:** Audio service implementation phase. Get the delegation pattern right before adding more services.
 
 ---
 
-### Pitfall 7: nostr-tools Peer Dependency Range Is Too Wide
+### Pitfall 7: Manifest `requires` Tags Create Chicken-and-Egg With Discovery
 
-**What goes wrong:** Both shim and shell declare `"nostr-tools": ">=2.23.3 <3.0.0"` as peer dependency. The nostr-tools v2.x line has had breaking changes within minor versions (relay.ts and pool.ts were rewritten from scratch in v2.0.0). The `finalizeEvent` API, `verifyEvent`, and subpath imports (`nostr-tools/pure`, `nostr-tools/utils`) could change behavior in future 2.x releases.
+**What goes wrong:** The plan includes manifest `requires` tags where a napplet declares its service dependencies in the NIP-5A manifest:
 
-**Why it happens:** Wide peer ranges are easier for users. But nostr-tools is a fast-moving library with occasional breaking changes in minor versions.
+```json
+{
+  "tags": [
+    ["requires", "audio", ">=1.0.0"],
+    ["requires", "notifications", ">=1.0.0"]
+  ]
+}
+```
+
+The shell is supposed to check these at AUTH time and warn if it cannot satisfy them. But the shell receives the manifest's aggregate hash during AUTH (`aggregateHash` tag), not the full manifest. The manifest itself is fetched separately (or cached). The shell would need to:
+1. Receive AUTH with aggregateHash.
+2. Fetch/lookup the manifest by aggregateHash.
+3. Parse `requires` tags from the manifest.
+4. Check against registered services.
+5. Decide whether to proceed with AUTH or warn.
+
+Step 2 is the problem. The manifest cache (`manifest-cache.ts`) stores `{ pubkey, dTag, aggregateHash, verifiedAt }` -- it does NOT store the full manifest content or requires tags. Fetching the manifest during AUTH adds latency and a network dependency to the critical path.
+
+**Why it happens:** The manifest cache was designed for identity verification (hash matches known build), not for content inspection.
 
 **Consequences:**
-- A user installing `nostr-tools@2.30.0` might get different `finalizeEvent` behavior or type signatures.
-- The shim directly imports from `nostr-tools/pure` and `nostr-tools/utils` subpaths. If nostr-tools reorganizes subpath exports (which they have done before), the shim breaks.
-- The vite-plugin dynamically imports `nostr-tools/pure` and `nostr-tools/utils` at build time. Silent failure means unsigned manifests ship without warning.
+- Compatibility checking during AUTH adds network latency (fetching manifest from relay/blossom).
+- If the manifest is unavailable (relay down, first-time napplet), compatibility cannot be checked.
+- AUTH becomes conditional on an external fetch, which can timeout or fail.
 
 **Prevention:**
-1. Tighten peer dependency to `~2.23.3` (patch-only) or `^2.23.3` (minor + patch) depending on risk tolerance.
-2. Pin the exact version in the monorepo's `pnpm-lock.yaml` and test against that version.
-3. Add a CI matrix that tests against the oldest and newest supported nostr-tools versions.
-4. In the vite-plugin, make the nostr-tools import failure loud (throw with actionable error message) rather than falling through to unsigned manifests.
+1. Do NOT check `requires` tags during AUTH. AUTH should remain fast and self-contained.
+2. Compatibility checking happens AFTER AUTH, as part of the service discovery flow:
+   a. Napplet completes AUTH.
+   b. Napplet calls `discoverServices()`.
+   c. Shim-side code compares discovered services against the napplet's own `requires` tags (read from meta tags, like aggregateHash is today).
+   d. If required services are missing, the shim fires a callback or event that the napplet developer handles.
+3. The shell does NOT need to know about `requires` tags. The compatibility check is entirely napplet-side: "I need these services, do I have them?"
+4. Add `<meta name="napplet-requires" content="audio:>=1.0.0,notifications:>=1.0.0">` alongside the existing aggregate hash meta tag. The vite-plugin generates this from the manifest.
 
-**Detection:** Check `peerDependencies` range in `package.json`. Run `npm info nostr-tools versions` to see how many versions fall within the range.
+**Detection:** If the proposed implementation modifies `handleAuth()` in the runtime to check manifest content, it is over-coupling AUTH with compatibility. AUTH should not change.
 
-**Phase:** Phase 3 (publishing phase) -- tighten before npm publish.
+**Phase:** Compatibility reporting phase (after discovery protocol is working). This is a shim-side feature, not a runtime feature.
 
 ---
 
-### Pitfall 8: Shim Does Not Validate `event.source` on Incoming Messages
+### Pitfall 8: Service Handler `handleRequest` Receives Untrusted Content
 
-**What goes wrong:** The shim's `handleRelayMessage()` at `index.ts:159` and `handleStorageResponse()` at `storage-shim.ts:41` accept messages from any source without checking `event.source === window.parent`. A malicious sibling iframe or injected script could post fake `['AUTH', challenge]` or `['EVENT', subId, event]` messages to the napplet.
+**What goes wrong:** The `ServiceHandler.handleRequest()` signature is:
 
-**Why it happens:** The shell correctly validates `event.source` via origin registry. But the shim side (running inside the napplet iframe) does not reciprocate.
+```typescript
+handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void;
+```
+
+The `content` parameter is `JSON.parse(event.content)`. If the event content is malformed JSON, the parse throws. If it is valid JSON but contains unexpected types (array instead of object, missing fields), the handler crashes or behaves incorrectly.
+
+Service handler authors will assume `content` is a well-structured object matching their expected schema. There is no validation layer between the raw event and the handler.
+
+**Why it happens:** The handler interface was designed for simplicity. Adding schema validation feels like over-engineering. But every handler will need to validate its input independently, leading to inconsistent validation and repeated boilerplate.
 
 **Consequences:**
-- A co-loaded malicious napplet that gains script injection could forge relay responses to another napplet.
-- Fake `AUTH` challenges could trick the shim into generating a signed AUTH event and posting it to an attacker-controlled window.
-- Fake signer responses could resolve pending sign requests with attacker-controlled data.
+- A malicious napplet sends `{ "constructor": { "prototype": { "isAdmin": true } } }` as content, and a careless handler spreads it into an object (prototype pollution).
+- Missing fields cause `undefined` access errors that crash the handler.
+- Each service handler reimplements input validation differently.
 
 **Prevention:**
-1. Add `if (event.source !== window.parent) return;` as the first line of both `handleRelayMessage` and `handleStorageResponse`.
-2. This is a one-line fix in each handler. No performance cost.
-3. Document in the spec that napplets MUST validate message source is `window.parent`.
+1. The runtime should catch `JSON.parse` errors and send an OK with error before calling the handler. If `event.content` is not valid JSON, the handler never sees it.
+2. Pass `event.content` as a raw string to the handler, not as pre-parsed JSON. Let handlers parse and validate in their own context. This avoids surprising type assumptions.
+3. Actually, a better pattern: pass both. `handleRequest(windowId, topic, rawContent: string, event: NostrEvent)`. The handler can parse and validate as needed.
+4. Document that handler authors MUST validate all input. Provide a utility function or pattern example in the SDK.
+5. For built-in services (audio), validate explicitly: check that `nappClass` is a string, `title` is a string, etc.
 
-**Detection:** Read `handleRelayMessage()` and `handleStorageResponse()` -- look for `event.source` checks. There are none.
+**Detection:** Send a service message with `content: "not json"`. If the runtime throws an unhandled exception, parsing is happening at the wrong layer.
 
-**Phase:** Phase 1 -- trivial security fix.
+**Phase:** Service dispatch routing phase. The handler calling convention must be decided before implementing any handlers.
 
 ---
 
-### Pitfall 9: Manifest Hash Race Between Build and Meta Tag Injection
+### Pitfall 9: Discovery Response Contains Stale Service Descriptors After Hot Registration
 
-**What goes wrong:** The vite-plugin computes the aggregate hash over all files in `dist/`, then rewrites `index.html` to inject the hash into the `<meta>` tag. But this rewrite changes the file content, meaning the hash in the meta tag does not match the hash of the file that contains it. The manifest's `x` tag for `index.html` has the pre-rewrite hash, but the file on disk has the post-rewrite content.
+**What goes wrong:** If services can be registered after runtime creation (e.g., a shell plugin system that loads services dynamically), and a napplet has already completed discovery, the napplet's cached service list is stale. The napplet believes it knows what services exist, but new services were added after discovery completed.
 
-**Why it happens:** Chicken-and-egg: the hash must be in the file, but the file's hash changes when the hash is injected.
+**Why it happens:** The SPEC.md Section 11 design is pull-based (napplet sends REQ, gets response). There is no mechanism for the shell to push service additions/removals to napplets that already completed discovery.
 
 **Consequences:**
-- Any integrity verification that re-computes file hashes will find `index.html`'s hash mismatches the manifest.
-- If the shell ever implements manifest verification (currently missing), it will reject the napplet.
-- The aggregate hash itself is technically incorrect because it was computed before the final `index.html` content was determined.
+- A napplet loaded before a service plugin is activated never learns about the new service.
+- If a service is removed, napplets that cached its descriptor continue trying to use it, getting silent failures.
 
 **Prevention:**
-1. Exclude `index.html` from the aggregate hash computation and document this exception in the spec.
-2. Or compute the hash in two passes: first pass computes all hashes, second pass injects the aggregate hash into `index.html` and recomputes only `index.html`'s hash, then recomputes the aggregate. This converges because the hash is a fixed-length string.
-3. Or use a different injection mechanism: instead of modifying `index.html`, generate a separate file (e.g., `.nip5a-hash`) that the shim reads at runtime via fetch.
+1. For v0.4.0, document that services must be registered BEFORE the runtime is created. Dynamic service registration is out of scope.
+2. If dynamic registration is needed later, add a push mechanism: the shell injects a `service:added` or `service:removed` inter-pane event when the registry changes. Napplets that care can subscribe.
+3. The `discoverServices()` shim function should not aggressively cache. Each call should send a fresh REQ. The runtime generates fresh responses from the current registry state.
+4. If caching is added later for performance, add an invalidation mechanism.
 
-**Detection:** Build a napplet with the vite-plugin, then manually re-hash `index.html` and compare to the manifest's `x` tag for `index.html`. They will differ.
+**Detection:** Register a service after a napplet completes AUTH + discovery. Check whether the napplet can discover the new service by calling `discoverServices()` again.
 
-**Phase:** Phase 2 -- spec refinement phase. Must be resolved before the NIP-5A spec is finalized.
+**Phase:** Define the scope clearly in the architecture phase. v0.4.0 = static registration. Dynamic registration = future.
 
 ---
 
-### Pitfall 10: Testing postMessage-Based Protocols Requires Real Browser Contexts
+### Pitfall 10: ACL Does Not Gate Service Discovery or Service Messages
 
-**What goes wrong:** Unit testing with jsdom or happy-dom cannot properly test the napplet protocol because:
-- jsdom does not implement sandboxed iframe behavior. All iframes share the same origin.
-- `postMessage` in jsdom is synchronous, masking async race conditions.
-- `MessageEvent.source` is not properly set in jsdom, breaking origin registry validation.
-- `crypto.randomUUID()` may not be available in Node.js test environments without polyfills.
-- `localStorage` behaves differently in jsdom vs real browsers.
+**What goes wrong:** SPEC.md Section 11.6 explicitly states "Service-level ACL gating is NOT defined in this version." This means:
+1. Any authenticated napplet can discover all registered services.
+2. Any authenticated napplet can send messages to any service.
+3. A napplet that has been blocked or had capabilities revoked can still use services.
 
-**Why it happens:** The protocol is fundamentally about cross-origin iframe communication -- a browser primitive that headless JS environments do not faithfully replicate.
+The existing ACL checks in `enforce.ts` resolve capabilities based on verb and event kind. Service messages arrive as INTER_PANE events (kind 29003), which resolve to `relay:write` for the sender. If a napplet has `relay:write` revoked, it cannot send service messages. But if `relay:write` is granted (the default), all services are accessible.
+
+**Why it happens:** Per-service ACL was explicitly deferred. This is a known design decision, not an oversight. But it creates a gap between the existing fine-grained ACL (per-capability revocation) and the new service system (no granularity).
 
 **Consequences:**
-- Tests pass in jsdom but fail in real browsers.
-- Race conditions (AUTH timing, message ordering) are hidden by synchronous postMessage.
-- Sandbox-related bugs (opaque origin behavior, storage unavailability) are not caught.
-- False confidence in test coverage.
+- A shell that revokes `sign:event` for a napplet still allows that napplet to use all services.
+- No way to allow audio but deny notifications for a specific napplet.
+- If a service performs sensitive operations (clipboard write, file system access), there is no ACL barrier.
 
 **Prevention:**
-1. Use Playwright or Vitest browser mode for all protocol tests. Do NOT use jsdom for any test involving postMessage, iframes, or origin validation.
-2. Create a minimal test harness: a static HTML page that loads the shell, creates a sandboxed iframe, loads the shim, and exercises the protocol. Playwright drives it.
-3. For unit testing pure functions (filter matching, ACL checks, replay detection), jsdom/Node.js is fine. Draw a clear boundary: pure logic = node tests, protocol behavior = browser tests.
-4. Use Vitest's browser mode (stable as of Vitest 4, released Feb 2026) for component-level tests that need real DOM/postMessage.
+1. For v0.4.0, this is acceptable. Audio is not a sensitive operation. Document the limitation.
+2. Plan the capability extension: add `service:audio`, `service:notifications`, etc. to the `Capability` union type and `ALL_CAPABILITIES` array. This is a semver-minor change in `@napplet/core`.
+3. When per-service capabilities are added, the enforce gate needs to resolve service messages to the appropriate capability. The topic prefix determines which `service:*` capability to check.
+4. Do NOT block on per-service ACL for v0.4.0. Ship discovery and audio first, add ACL in a follow-up.
 
-**Detection:** If tests exist that import `postMessage` or create iframes and run under `vitest` with jsdom, they are likely unreliable.
+**Detection:** Revoke all capabilities for a napplet. Attempt to use a service. If it works, per-service ACL is not enforced.
 
-**Phase:** Phase 1 -- establish the test strategy before writing tests. Wrong foundation = wasted work.
+**Phase:** Acknowledge in the roadmap as a known limitation. Address in v0.5.0 or a security-focused follow-up.
 
 ---
 
-### Pitfall 11: ESM-Only Publishing Without `"type": "module"` Verification
+### Pitfall 11: EOSE Semantics Differ Between Relay REQ and Discovery REQ
 
-**What goes wrong:** The packages declare `"type": "module"` and export only ESM. But several gotchas can break consumers:
-- The `exports` field in `package.json` only specifies `"import"` condition, no `"require"` fallback. CJS consumers get a hard error with no guidance.
-- TypeScript consumers using `"moduleResolution": "node"` (old resolution) cannot resolve subpath exports. They need `"moduleResolution": "bundler"` or `"node16"`.
-- The `types` field points to `./dist/index.d.ts`. If tsup generates `.d.mts` instead of `.d.ts`, TypeScript resolution fails silently for some configurations.
-- No `"engines"` field specifying minimum Node.js version (ESM + subpath exports require Node 14+, but `crypto.randomUUID` requires Node 19+).
+**What goes wrong:** For relay REQs, EOSE means "end of stored events, live events may follow." The subscription stays open and continues receiving new events. For discovery REQs, EOSE means "all services have been reported, done." The subscription should be closed because no live updates will arrive (services are static for v0.4.0).
 
-**Why it happens:** ESM-only publishing is still messy in the npm ecosystem. Even in 2026, consumer toolchains vary widely.
+If the napplet treats discovery like a normal subscription (keeping it open after EOSE), it wastes a subscription slot. If it treats a relay subscription like discovery (closing after EOSE), it misses live events.
+
+**Why it happens:** Both use the same NIP-01 REQ/EOSE mechanism. The semantic difference is implicit based on the filter kind.
 
 **Consequences:**
-- Users with CJS projects cannot use the packages without a bundler.
-- TypeScript users with older `tsconfig.json` settings get mysterious "cannot find module" errors.
-- Missing `engines` field means users discover incompatibility at runtime, not install time.
+- Memory leak if discovery subscriptions are never closed.
+- The shim's `query()` function (which wraps subscribe + close-on-EOSE) is the right pattern for discovery but creates a misleading usage: `query({ kinds: [29010] })` looks like it is querying a relay.
 
 **Prevention:**
-1. Add `"engines": { "node": ">=20" }` to all `package.json` files. Node 20 is LTS and supports everything these packages use.
-2. Verify the published package works by running `npm pack` and testing the tarball in a clean project before publishing. Use `publint` and `arethetypeswrong` CLI tools.
-3. Add a `"require"` entry in exports that points to a CJS wrapper stub that throws a clear error: `throw new Error('@napplet/shim is ESM-only. Use import instead of require.')`.
-4. Add a note in package README about required `tsconfig.json` settings.
+1. The `discoverServices()` API in the shim should use the `query()` pattern internally: subscribe, collect, close on EOSE, resolve.
+2. Document that discovery is a one-shot operation. Napplets should call `discoverServices()` once, cache the result, and not re-query unless they have reason to believe services changed.
+3. On the runtime side, the discovery REQ handler should immediately send all descriptors + EOSE, then the subscription can be auto-closed (or the napplet closes it -- both work).
+4. Consider having the runtime auto-CLOSE the discovery subscription after EOSE to prevent leaks if the napplet forgets.
 
-**Detection:** Run `npx publint` and `npx @arethetypeswrong/cli --pack` on each package before publishing.
+**Detection:** Open a discovery subscription and never close it. Check whether it accumulates in the runtime's `subscriptions` Map.
 
-**Phase:** Phase 3 -- publishing phase.
-
----
-
-### Pitfall 12: Changesets Treats Peer Dependency Bumps as Major Versions
-
-**What goes wrong:** When using changesets for versioning in a monorepo, updating a peer dependency (like bumping `nostr-tools` range) triggers a major version bump in dependent packages. This is changesets' default behavior and is often surprising.
-
-**Why it happens:** Changesets considers peer dependency changes as breaking because they change the compatibility contract. This is semantically correct but can lead to premature v2.0.0 before the packages are even stable.
-
-**Consequences:**
-- A minor `nostr-tools` range adjustment forces `@napplet/shim` and `@napplet/shell` to v2.0.0 even if the API is unchanged.
-- Users see a major version bump and assume breaking API changes when there are none.
-- Pre-1.0 packages (current state at v0.1.0) are somewhat protected because semver treats 0.x differently, but post-1.0 this becomes a real problem.
-
-**Prevention:**
-1. Pin the nostr-tools peer dependency range and avoid changing it casually.
-2. Configure changesets to handle peer dependency updates as minor changes if the API surface is unchanged: use the `ignore` config or manual changeset overrides.
-3. Stay at 0.x until the peer dependency relationship is stable. Reaching 1.0 with a wide peer range creates upgrade pressure.
-
-**Detection:** Run `npx changeset` after modifying peer dependencies. Check proposed version bump level.
-
-**Phase:** Phase 3 -- before publishing to npm.
+**Phase:** Discovery protocol implementation phase.
 
 ---
 
 ## Minor Pitfalls
 
-### Pitfall 13: Subscription Cleanup Leaks on Napplet Navigation/Reload
+### Pitfall 12: `ServiceDescriptor.version` Without Semver Parsing
 
-**What goes wrong:** When a napplet iframe navigates away or reloads, the shell's `subscriptions` Map retains entries for the old windowId. The relay pool subscriptions tracked via `hooks.relayPool.trackSubscription` are not cleaned up. Event listeners accumulate.
+**What goes wrong:** The `ServiceDescriptor` interface has `version: string`. Without semver parsing utilities in the SDK, napplet developers must either:
+- Do string comparison (wrong: `"1.10.0" < "1.9.0"` alphabetically).
+- Bring their own semver library (dependency burden).
+- Ignore versions entirely (defeats the purpose of version reporting).
 
 **Prevention:**
-1. Listen for iframe `beforeunload` or use `MutationObserver` to detect when iframes are removed from DOM.
-2. Add a `cleanup(windowId)` method to PseudoRelay that removes all subscriptions, pending auth, and origin registry entries for a given window.
-3. The shell implementor must call this on iframe removal -- document this in the SDK.
+1. For v0.4.0, version is informational only. Document that it follows semver format but do not provide parsing.
+2. If `requires` tags support version ranges (`>=1.0.0`), the shim will need a minimal semver comparison function. A ~30-line `satisfies(version, range)` function covers `>=`, `^`, and `~` operators.
+3. Do NOT add `semver` as a dependency. The shim must remain lightweight.
 
-**Phase:** Phase 2 -- demo will involve loading/unloading napplets.
+**Phase:** Compatibility reporting phase (if version ranges are supported). Can be deferred if `requires` tags only check presence, not version.
 
 ---
 
-### Pitfall 14: Storage Key Serialization Through NIP-01 Tags Limits Key/Value Characters
+### Pitfall 13: Service Name Collision Between Built-in and Custom Services
 
-**What goes wrong:** Storage keys and values are passed as NIP-01 tag values: `['key', userKey]`, `['value', storedValue]`. NIP-01 tags are JSON arrays of strings. If a key or value contains characters that break JSON serialization (though this is unlikely since JSON handles most strings), or if the value is very large, the postMessage payload becomes unwieldy.
-
-More practically: the `value` tag is a single string. Binary data or large JSON blobs must be string-encoded. There is no chunking mechanism for values larger than the browser's postMessage size limit (varies by browser, typically 16MB but can be as low as 256KB in some mobile contexts).
+**What goes wrong:** The `ServiceRegistry` is an open dictionary (`[serviceName: string]: ServiceHandler`). Nothing prevents a shell implementor from registering a custom service called `audio` that conflicts with the built-in audio service, or `state` that conflicts with the state proxy.
 
 **Prevention:**
-1. Document maximum value size in the SDK (aligned with the 512KB quota).
-2. Consider base64 encoding for binary data and document this pattern.
-3. Add a size check in the shim before sending storage requests to fail fast with a clear error.
+1. Reserve built-in service names in the spec: `audio`, `notifications`, `clipboard`, `state`, `signer`. Document that these MUST NOT be used for custom services.
+2. Validate at registration time: if a reserved name is used, warn or throw.
+3. Custom services should use a namespace prefix: `myapp:custom-service` or reverse-domain `com.example:service`.
+4. For v0.4.0, only `audio` is built-in. The reservation list is short and can be documented.
 
-**Phase:** Phase 2 -- documentation and demo phase.
+**Phase:** Spec documentation and service registration validation. Low priority for v0.4.0.
 
 ---
 
-### Pitfall 15: Vite Plugin Silently Produces Unsigned Manifests
+### Pitfall 14: Shim Bundle Size Increase From Discovery API
 
-**What goes wrong:** When `VITE_DEV_PRIVKEY_HEX` is not set, the plugin prints a log message and returns. When it is set but `nostr-tools` import fails, the plugin writes an unsigned manifest. In both cases, the build succeeds. The napplet ships without integrity verification and the developer may not notice.
+**What goes wrong:** The shim is loaded in every napplet iframe. It must be small. Adding discovery API, compatibility checking, version parsing, and requires-tag resolution can bloat the shim significantly.
 
 **Prevention:**
-1. Add a `required: boolean` option (default `false` in dev, `true` in prod). When `required` is true and signing fails, throw and fail the build.
-2. Differentiate between "intentionally unsigned" (dev mode, no key) and "accidentally unsigned" (key set but nostr-tools unavailable). The latter should always be an error.
-3. nostr-tools is already a direct dependency of the vite-plugin package. The dynamic import at line 130 is unnecessary -- use a static import instead.
+1. The discovery API is tiny: one `discoverServices()` function that wraps `query()` (already exists).
+2. Make compatibility checking tree-shakeable. If a napplet does not import `checkCompatibility()`, it should not be in the bundle.
+3. Do NOT add semver parsing to the main shim entry point. Put it in a subpath export: `@napplet/shim/compat`.
+4. Measure bundle size before and after. Target: <1KB added to the shim.
 
-**Phase:** Phase 2 -- fix before spec finalization.
+**Phase:** All shim-side phases. Measure at the end.
 
 ---
 
-### Pitfall 16: `hyprgate` Naming Remnants in Published SDK
+### Pitfall 15: Missing `onWindowDestroyed` Cleanup Creates Memory Leaks
 
-**What goes wrong:** Several identifiers use `hyprgate` naming:
-- `PSEUDO_RELAY_URI = 'hyprgate://shell'`
-- Meta tag names: `hyprgate-aggregate-hash`, `hyprgate-napp-type`
-- localStorage key: `hyprgate:acl`
-- `getNappType()` reads `meta[name="hyprgate-napp-type"]`
+**What goes wrong:** The `ServiceHandler` interface has an optional `onWindowDestroyed?(windowId: string)` method. If the audio service handler registers sources per-window (which it does), failing to call `onWindowDestroyed` when a napplet unloads leaks audio sources.
 
-These are internal protocol identifiers that ship in the published packages. The SDK is called `@napplet/*` but the wire format references `hyprgate`.
+The runtime does not have a "window destroyed" concept. The shell-bridge detects iframe removal (or should -- see existing Pitfall 13 about subscription cleanup leaks). The bridge must call each service handler's `onWindowDestroyed()` when an iframe is removed.
 
 **Prevention:**
-1. Rename to `napplet://shell`, `napplet-aggregate-hash`, `napplet-napp-type`, `napplet:acl`.
-2. Do this before v1.0 publish. After publish, these become breaking changes.
-3. Update the NIP-5A spec simultaneously.
+1. Add a `destroyWindow(windowId: string)` method to the `Runtime` interface that cleans up subscriptions, pending state, AND calls `onWindowDestroyed` on all service handlers.
+2. The shell-bridge calls `runtime.destroyWindow(windowId)` when it detects iframe removal.
+3. The audio service handler's `onWindowDestroyed` calls `audioManager.unregister(windowId)`.
+4. Make `onWindowDestroyed` cleanup idempotent -- calling it twice for the same windowId should be harmless.
 
-**Phase:** Phase 1 or 2 -- rename before any public demo or spec publication. This is branding/identity debt that compounds if deferred.
+**Detection:** Load a napplet that registers an audio source. Remove the iframe. Check `audioManager.getSources()`. If the source persists, cleanup is missing.
 
----
-
-### Pitfall 17: No Message Versioning for Protocol Evolution
-
-**What goes wrong:** The protocol uses NIP-01 wire format directly with no version envelope. The shim sends `PROTOCOL_VERSION = '2.0.0'` in the AUTH event's tags, but subsequent messages carry no version marker. If the protocol evolves (new verbs, changed tag schemas), there is no way for shell and shim to negotiate or detect version mismatch.
-
-**Prevention:**
-1. The AUTH handshake already exchanges version. Use this to set a per-session protocol version.
-2. If shell and shim versions are incompatible, reject AUTH with a clear error: `"auth-required: protocol version mismatch (shell supports 2.x, napp sent 3.x)"`.
-3. Do not add version tags to every message -- that is overhead. The AUTH handshake is the right place for version negotiation.
-
-**Phase:** Phase 2 -- spec refinement.
+**Phase:** Audio service implementation phase. The window lifecycle must be wired up when the first service with per-window state is added.
 
 ---
 
@@ -377,36 +427,34 @@ These are internal protocol identifiers that ship in the published packages. The
 
 | Phase Topic | Likely Pitfall | Mitigation |
 |-------------|---------------|------------|
-| Build fixes / wiring | hyprgate naming remnants (#16) leak into published API surface | Rename before any demo or consumer-facing output |
-| ACL enforcement demo | Permissive default (#1) makes demo meaningless -- everything is allowed | Implement restrictive mode before demo |
-| AUTH handshake tests | Race condition (#3) causes intermittent test failures | Fix queue cleanup before writing tests |
-| Storage tests | Comma-in-key bug (#6) causes subtle test failures | Fix serialization before writing storage tests |
-| Inter-napplet demo | Fake event IDs (#4) cause verification failures if demo napplets use nostr-tools verification | Fix or document before demo |
-| Behavioral test setup | Using jsdom (#10) wastes effort on unreliable tests | Establish Playwright/browser-mode strategy first |
-| NIP-5A spec refinement | Manifest hash race (#9) makes spec unimplementable for verifiers | Resolve chicken-and-egg hash problem before spec publication |
-| npm publish | ESM gotchas (#11), changesets peer dep bumps (#12), nostr-tools range (#7) | Run publint/arethetypeswrong, test with npm pack |
-| Security hardening | postMessage wildcard (#2), missing source validation (#8) | Add source validation to shim, document trust boundary |
-| localStorage reliance | Silent persistence failure (#5) undermines security model in private browsing | Add detection, warning, and abstraction hooks |
+| Type migration (service types to core) | Breaking import paths for shell consumers (#4) | Re-export from shell for backwards compat |
+| Discovery protocol (kind 29010 REQ/EVENT/EOSE) | Silent empty response (#5), timing race (#1) | Add synthetic response path in handleReq, expose auth-confirmed promise in shim |
+| Service dispatch routing | Topic collision with legacy audio topics (#2) | Support both topic conventions, deprecate old |
+| Audio service implementation | Two state owners (#6), cleanup leaks (#15) | Handler delegates to audioManager singleton, wire onWindowDestroyed |
+| Compatibility reporting | Chicken-and-egg with manifest (#7) | Do compatibility checks shim-side, not AUTH-time |
+| Shim discovery API | Over-engineering (#3), bundle bloat (#14) | One function (`discoverServices()`), tree-shake compat utils |
+| ACL integration | No per-service gating (#10) | Document as known limitation, plan for v0.5.0 |
+| EOSE handling | Subscription leak for one-shot discovery (#11) | Use query() pattern, auto-close |
+| Content validation | Untrusted input to handlers (#8) | Pass raw string, validate in handler |
 
 ---
 
 ## Sources
 
-- [MDN: Window.postMessage()](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) -- authoritative reference on targetOrigin, security considerations
-- [MDN: iframe sandbox attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe) -- sandbox token behavior, opaque origin
-- [MSRC: PostMessaged and Compromised](https://msrc.microsoft.com/blog/2025/08/postmessaged-and-compromised/) -- real-world postMessage vulnerability patterns
-- [Excalidraw postMessage wildcard issue](https://github.com/excalidraw/excalidraw/issues/9651) -- comparable project facing same wildcard origin challenge
-- [Iframe Sandbox Bypass (2026)](https://medium.com/@renwa/iframe-sandbox-bypass-cross-origin-drag-drop-unvalidated-postmessage-origin-cookie-bomb-to-21357a4d94f5) -- current attack techniques
-- [Chrome Storage Partitioning](https://developers.google.com/privacy-sandbox/cookies/storage-partitioning) -- iframe storage isolation changes
-- [TypeScript ESM publishing (2025)](https://lirantal.com/blog/typescript-in-2025-with-esm-and-cjs-npm-publishing) -- ESM-only publishing complexity
-- [2ality: Publishing ESM packages](https://2ality.com/2025/02/typescript-esm-packages.html) -- authoritative TypeScript ESM guide
-- [Changesets monorepo guide (2025)](https://jsdev.space/complete-monorepo-guide/) -- peer dependency versioning behavior
-- [nostr-tools v2.0.0 release notes](https://github.com/nbd-wtf/nostr-tools/releases/tag/v2.0.0) -- breaking changes in v2 line
-- [nostr-protocol/nips](https://github.com/nostr-protocol/nips) -- NIP process and requirements
-- [Vitest Browser Mode](https://vitest.dev/guide/browser/) -- stable browser testing for Vitest 4
-- [Playwright iframe testing](https://debbie.codes/blog/testing-iframes-with-playwright/) -- practical iframe test patterns
+- [IRCv3 Capability Negotiation](https://ircv3.net/specs/extensions/capability-negotiation) -- protocol-level lessons on ordering, timing, backwards compat in capability negotiation
+- [MCP Protocol Version Negotiation Issue #546](https://github.com/ibm/mcp-context-forge/issues/546) -- real-world difficulties with protocol version negotiation and backward compatibility
+- [MSRC: PostMessaged and Compromised (2025)](https://msrc.microsoft.com/blog/2025/08/postmessaged-and-compromised/) -- postMessage security patterns relevant to service message routing
+- [MDN: Window.postMessage()](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) -- authoritative reference on postMessage origin and timing
+- [Microservices Service Discovery Patterns](https://microservices.io/patterns/server-side-discovery.html) -- architectural patterns for service discovery versioning
+- [WCF Discovery Versioning](https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/discovery-versioning) -- versioning strategy patterns for discovery protocols
+- SPEC.md Section 11 (local, `/home/sandwich/Develop/napplet/SPEC.md:804`) -- the protocol design being implemented
+- `packages/runtime/src/runtime.ts` (local) -- current verb dispatch, AUTH flow, topic routing
+- `packages/shell/src/audio-manager.ts` (local) -- existing audio singleton being migrated
+- `packages/shim/src/index.ts` (local) -- AUTH handshake timing, REQ firing
+- `packages/core/src/topics.ts` (local) -- existing topic constants including legacy audio topics
+- `packages/shell/src/types.ts` (local) -- current ServiceHandler/ServiceRegistry/ServiceDescriptor definitions
 
 ---
 
-*Pitfalls audit: 2026-03-30*
-*Confidence: HIGH for pitfalls 1-6, 8, 10-11, 16 (verified against source code). MEDIUM for pitfalls 7, 9, 12-15, 17 (verified against documentation and ecosystem patterns).*
+*Pitfalls audit: 2026-03-31 (v0.4.0 milestone research)*
+*Confidence: HIGH for pitfalls 1-6, 10-11, 15 (verified against source code and runtime behavior). MEDIUM for pitfalls 7-9, 12-14 (inferred from architecture and protocol design, not yet tested).*
