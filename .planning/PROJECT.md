@@ -37,7 +37,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 ### Active
 
 - [x] Extract @napplet/core — protocol types, message definitions, capability resolver (shared by all) — Validated in Phase 12: Core Package
-- [ ] Extract @napplet/runtime — enforcement gate, message router, state management
+- [x] Extract @napplet/runtime — enforcement gate, message router, state management — Validated in Phase 13: Runtime Package
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
@@ -89,7 +89,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 | UnoCSS for demo styling | Tailwind-compatible, Vite ecosystem, easy to modify | ✓ Good |
 | UTF-8 byte count for storage quota | Consistent cross-platform, replaces inconsistent Blob approach | ✓ Good |
 | @napplet/acl as separate package | Package boundary enforces zero deps, WASM-ready | ✓ Good — Phase 8 delivered zero-dep pure module |
-| Target architecture: acl → core → runtime → shell | Multi-shell support. Third-party shells depend on @napplet/runtime, not @napplet/shell. Runtime extraction when second shell exists. | — Pending (v0.3.0+) |
+| Target architecture: acl → core → runtime → shell | Multi-shell support. Third-party shells depend on @napplet/runtime, not @napplet/shell. Runtime extraction when second shell exists. | ✓ Good — Phase 13 delivered browser-agnostic runtime with RuntimeHooks interface |
 
 ## Evolution
 
@@ -121,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 - Service discovery event kind reserved
 
 ---
-*Last updated: 2026-03-31 after Phase 12 completion*
+*Last updated: 2026-03-31 after Phase 13 completion*
