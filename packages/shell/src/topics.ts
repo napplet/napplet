@@ -1,7 +1,24 @@
 /**
  * topics.ts — Built-in topic constants for the inter-pane event bus.
+ *
+ * These constants define the topic strings used in inter-pane
+ * INTER_PANE events for shell commands, audio, and UI coordination.
  */
 
+/**
+ * Built-in topic constants for the napplet shell inter-pane protocol.
+ *
+ * @example
+ * ```ts
+ * import { TOPICS } from '@napplet/shell';
+ *
+ * // Subscribe to auth identity changes
+ * shim.subscribe([{ kinds: [29003], '#t': [TOPICS.AUTH_IDENTITY_CHANGED] }]);
+ *
+ * // Use topic constant for audio registration
+ * shim.publish({ kind: 29003, tags: [['t', TOPICS.AUDIO_REGISTER]], content: '{}' });
+ * ```
+ */
 export const TOPICS = {
   AUTH_IDENTITY_CHANGED: 'auth:identity-changed',
   STREAM_CHANNEL_SWITCH: 'stream:channel-switch',
@@ -28,5 +45,8 @@ export const TOPICS = {
   AUDIO_MUTED: 'napp:audio-muted',
 } as const;
 
+/** Key type for the TOPICS constant object. */
 export type TopicKey = keyof typeof TOPICS;
+
+/** Value type for the TOPICS constant object. */
 export type TopicValue = (typeof TOPICS)[TopicKey];

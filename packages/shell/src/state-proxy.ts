@@ -50,6 +50,14 @@ function sendError(sourceWindow: Window, correlationId: string, reason: string):
   sendResponse(sourceWindow, correlationId, [['error', reason]]);
 }
 
+/**
+ * Handle a state request from a napplet iframe.
+ * Routes to the appropriate operation (get, set, remove, clear, keys) based on topic.
+ *
+ * @param windowId - The window identifier of the requesting napp
+ * @param sourceWindow - The Window reference to send responses to
+ * @param event - The NostrEvent containing the state request
+ */
 export function handleStateRequest(
   windowId: string, sourceWindow: Window, event: NostrEvent,
 ): void {
@@ -89,6 +97,7 @@ export function handleStateRequest(
         localStorage.setItem(sk, value);
         sendResponse(sourceWindow, correlationId, [['ok', 'true']]);
       } catch {
+        /* localStorage write failed (quota exceeded or unavailable) */
         sendError(sourceWindow, correlationId, 'state write failed');
       }
       break;
@@ -121,6 +130,14 @@ export function handleStateRequest(
   }
 }
 
+/**
+ * Remove all state entries for a napp identity from localStorage.
+ * Used during napp cleanup when a window is closed.
+ *
+ * @param pubkey - The napp's pubkey
+ * @param dTag - The napp's dTag
+ * @param aggregateHash - The napp's build hash
+ */
 export function cleanupNappState(pubkey: string, dTag: string, aggregateHash: string): void {
   const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
   const keysToRemove: string[] = [];

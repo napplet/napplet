@@ -12,6 +12,7 @@ import { ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
 
 const STORAGE_KEY = 'napplet:acl';
 
+/** Default state quota in bytes (512 KB) per napp identity. */
 export const DEFAULT_STATE_QUOTA = 512 * 1024;
 
 interface InternalAclEntry {
@@ -50,7 +51,29 @@ function getOrCreate(pubkey: string, dTag: string, aggregateHash: string): Inter
 
 export { DESTRUCTIVE_KINDS };
 
+/**
+ * ACL store — manages capability grants, revocations, and blocks for napp identities.
+ * Persists to localStorage and uses a permissive default policy (all capabilities granted).
+ *
+ * @example
+ * ```ts
+ * import { aclStore } from '@napplet/shell';
+ *
+ * aclStore.grant(pubkey, dTag, hash, 'relay:read');
+ * const allowed = aclStore.check(pubkey, dTag, hash, 'relay:read'); // true
+ * ```
+ */
 export const aclStore = {
+  /**
+   * Check if a napp identity has a specific capability.
+   * Returns true for unknown identities (permissive default).
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   * @param capability - The capability to check
+   * @returns True if the capability is granted and the napp is not blocked
+   */
   check(pubkey: string, dTag: string, aggregateHash: string, capability: Capability): boolean {
     const key = aclKey(pubkey, dTag, aggregateHash);
     const entry = store.get(key);
@@ -59,31 +82,83 @@ export const aclStore = {
     return entry.capabilities.has(capability);
   },
 
+  /**
+   * Grant a capability to a napp identity.
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   * @param capability - The capability to grant
+   */
   grant(pubkey: string, dTag: string, aggregateHash: string, capability: Capability): void {
     getOrCreate(pubkey, dTag, aggregateHash).capabilities.add(capability);
   },
 
+  /**
+   * Revoke a capability from a napp identity.
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   * @param capability - The capability to revoke
+   */
   revoke(pubkey: string, dTag: string, aggregateHash: string, capability: Capability): void {
     getOrCreate(pubkey, dTag, aggregateHash).capabilities.delete(capability);
   },
 
+  /**
+   * Block a napp identity entirely (all capabilities denied).
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   */
   block(pubkey: string, dTag: string, aggregateHash: string): void {
     getOrCreate(pubkey, dTag, aggregateHash).blocked = true;
   },
 
+  /**
+   * Unblock a napp identity.
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   */
   unblock(pubkey: string, dTag: string, aggregateHash: string): void {
     getOrCreate(pubkey, dTag, aggregateHash).blocked = false;
   },
 
+  /**
+   * Check if a napp identity is blocked.
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   * @returns True if the identity is blocked
+   */
   isBlocked(pubkey: string, dTag: string, aggregateHash: string): boolean {
     const key = aclKey(pubkey, dTag, aggregateHash);
     return store.get(key)?.blocked ?? false;
   },
 
+  /**
+   * Check if a signing kind requires user consent prompt.
+   *
+   * @param kind - The event kind to check
+   * @returns True if the kind is destructive and requires consent
+   */
   requiresPrompt(kind: number): boolean {
     return DESTRUCTIVE_KINDS.has(kind);
   },
 
+  /**
+   * Get the external ACL entry for a napp identity.
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   * @returns The ACL entry, or undefined if no explicit entry exists
+   */
   getEntry(pubkey: string, dTag: string, aggregateHash: string): AclEntry | undefined {
     const key = aclKey(pubkey, dTag, aggregateHash);
     const internal = store.get(key);
@@ -96,6 +171,11 @@ export const aclStore = {
     };
   },
 
+  /**
+   * Get all ACL entries.
+   *
+   * @returns Array of all ACL entries
+   */
   getAllEntries(): AclEntry[] {
     return Array.from(store.values()).map(e => ({
       pubkey: e.pubkey,
@@ -105,6 +185,7 @@ export const aclStore = {
     }));
   },
 
+  /** Persist the ACL store to localStorage. */
   persist(): void {
     try {
       const entries = Array.from(store.entries()).map(([key, val]) => [
@@ -124,6 +205,7 @@ export const aclStore = {
     }
   },
 
+  /** Load the ACL store from localStorage. */
   load(): void {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -152,21 +234,31 @@ export const aclStore = {
         });
       }
     } catch {
+      /* Corrupted ACL data in localStorage — clear and use defaults */
       store.clear();
     }
   },
 
+  /**
+   * Get the state quota for a napp identity.
+   *
+   * @param pubkey - The napp's pubkey
+   * @param dTag - The napp's dTag
+   * @param aggregateHash - The napp's build hash
+   * @returns The quota in bytes (defaults to DEFAULT_STATE_QUOTA)
+   */
   getStateQuota(pubkey: string, dTag: string, aggregateHash: string): number {
     const key = aclKey(pubkey, dTag, aggregateHash);
     return store.get(key)?.stateQuota ?? DEFAULT_STATE_QUOTA;
   },
 
+  /** Clear all ACL entries and remove from localStorage. */
   clear(): void {
     store.clear();
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
-      // Ignore
+      /* localStorage unavailable — ACL clear is best-effort */
     }
   },
 };

@@ -23,16 +23,84 @@ import { createEnforceGate, resolveCapabilities, formatDenialReason } from './en
 
 // ─── Public interface ────────────────────────────────────────────────────────
 
+/**
+ * Shell-side message bridge that handles NIP-01 communication with napplet iframes.
+ *
+ * The bridge acts as a pseudo-relay: napplets send REQ/EVENT/CLOSE/COUNT messages
+ * via postMessage, and the bridge routes them to real relays, local cache, or
+ * other napplets. All messages pass through the ACL enforcement gate.
+ *
+ * @example
+ * ```ts
+ * import { createShellBridge } from '@napplet/shell';
+ *
+ * const bridge = createShellBridge(hooks);
+ * window.addEventListener('message', bridge.handleMessage);
+ * bridge.sendChallenge('window-1');
+ * ```
+ */
 export interface ShellBridge {
-  /** The main message handler — attach to window.addEventListener('message', ...) */
+  /**
+   * Handle an incoming postMessage from a napplet iframe.
+   * Dispatches to the appropriate verb handler (EVENT, REQ, CLOSE, COUNT, AUTH).
+   *
+   * @param event - The raw MessageEvent from window.addEventListener('message', ...)
+   * @example
+   * ```ts
+   * window.addEventListener('message', bridge.handleMessage);
+   * ```
+   */
   handleMessage(event: MessageEvent): void;
-  /** Send a NIP-42 AUTH challenge to a napp window. */
+
+  /**
+   * Send a NIP-42 AUTH challenge to a napplet window, initiating the handshake.
+   *
+   * @param windowId - The window identifier registered via originRegistry
+   * @example
+   * ```ts
+   * bridge.sendChallenge('napp-window-1');
+   * ```
+   */
   sendChallenge(windowId: string): void;
-  /** Inject a shell-created event into subscription delivery. */
+
+  /**
+   * Inject a shell-originated event into subscription delivery.
+   * Used for broadcasting shell state changes (e.g., auth identity) to napplets.
+   *
+   * @param topic - The event topic tag value (e.g., 'auth:identity-changed')
+   * @param payload - The event content, will be JSON.stringify'd
+   * @example
+   * ```ts
+   * bridge.injectEvent('auth:identity-changed', { pubkey: userPubkey });
+   * ```
+   */
   injectEvent(topic: string, payload: unknown): void;
-  /** Destroy the bridge instance, cleaning up all internal state. */
+
+  /**
+   * Destroy the bridge instance, cleaning up all internal state.
+   * Persists manifest cache and clears all subscriptions, buffers, and registries.
+   * Call when the shell is shutting down or the bridge is no longer needed.
+   *
+   * @example
+   * ```ts
+   * bridge.destroy();
+   * ```
+   */
   destroy(): void;
-  /** Register a consent handler for destructive signing kinds. */
+
+  /**
+   * Register a handler for consent requests on destructive signing kinds.
+   * Called when a napplet requests signing for kinds 0, 3, 5, or 10002.
+   *
+   * @param handler - Callback receiving the consent request with a resolve function
+   * @example
+   * ```ts
+   * bridge.registerConsentHandler((request) => {
+   *   const allowed = confirm(`Allow signing kind ${request.event.kind}?`);
+   *   request.resolve(allowed);
+   * });
+   * ```
+   */
   registerConsentHandler(handler: (request: ConsentRequest) => void): void;
 }
 
@@ -40,7 +108,23 @@ export interface ShellBridge {
  * Create a ShellBridge instance with dependency injection via hooks.
  *
  * @param hooks - Host application provides relay pool, auth, config, etc.
- * @returns A ShellBridge instance ready to handle napp messages.
+ * @returns A ShellBridge instance ready to handle napp messages
+ * @example
+ * ```ts
+ * import { createShellBridge, type ShellHooks } from '@napplet/shell';
+ *
+ * const hooks: ShellHooks = {
+ *   relayPool: myRelayPoolHooks,
+ *   relayConfig: myRelayConfigHooks,
+ *   windowManager: myWindowManagerHooks,
+ *   auth: myAuthHooks,
+ *   config: myConfigHooks,
+ *   hotkeys: myHotkeyHooks,
+ *   workerRelay: myWorkerRelayHooks,
+ *   crypto: myCryptoHooks,
+ * };
+ * const bridge = createShellBridge(hooks);
+ * ```
  */
 export function createShellBridge(hooks: ShellHooks): ShellBridge {
   // ─── Module-level state ──────────────────────────────────────────────────
@@ -269,7 +353,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
         handleSignerRequest(event, windowId, pubkey, sourceWindow);
         return;
       case BusKind.HOTKEY_FORWARD:
-        try { handleHotkeyForward(event); } catch { /* best-effort */ }
+        try { handleHotkeyForward(event); } catch { /* Best-effort hotkey forwarding — napp-reported key data may be malformed */ }
         break;
       case BusKind.INTER_PANE: {
         const topic = event.tags?.find((t) => t[0] === 't')?.[1];
@@ -321,7 +405,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       workerRelay.query(['REQ', crypto.randomUUID(), ...(filters as any[])])
         .then((cachedEvents) => { for (const event of cachedEvents) deliver(event); })
-        .catch(() => {});
+        .catch(() => { /* Worker relay cache query is best-effort — does not affect subscription delivery */ });
     }
 
     const pool = hooks.relayPool.getRelayPool();
@@ -340,7 +424,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
         const event = item as NostrEvent;
         deliver(event);
         if (workerRelay && !isBusKind) {
-          try { workerRelay.event(event)?.catch?.(() => {}); } catch { /* ignore */ }
+          try { workerRelay.event(event)?.catch?.(() => { /* Worker relay cache write is best-effort */ }); } catch { /* Worker relay cache write is best-effort — does not affect subscription delivery */ }
         }
       });
 
@@ -416,14 +500,14 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     const eventTag = event.tags?.find((t) => t[0] === 'event')?.[1];
     if (method === 'signEvent' && eventTag) {
       let eventToSign: NostrEvent;
-      try { eventToSign = JSON.parse(eventTag) as NostrEvent; } catch { sendOk(false, 'error: invalid event JSON'); return; }
+      try { eventToSign = JSON.parse(eventTag) as NostrEvent; } catch { /* Invalid JSON from napp */ sendOk(false, 'error: invalid event JSON'); return; }
       if (aclStore.requiresPrompt(eventToSign.kind) && _consentHandler) {
         new Promise<boolean>((resolve) => {
           _consentHandler!({ windowId, pubkey, event: eventToSign, resolve });
         }).then((allowed) => {
           if (!allowed) { sendOk(false, 'error: user rejected'); return; }
           dispatch(eventToSign);
-        }).catch(() => sendOk(false, 'error: consent check failed'));
+        }).catch(() => { /* Consent handler threw — treat as denial */ sendOk(false, 'error: consent check failed'); });
         return;
       }
       dispatch(eventToSign);
@@ -449,7 +533,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     switch (topic) {
       case 'shell:audio-register': {
         let title = '';
-        try { title = JSON.parse(event.content).title ?? ''; } catch { /* ignore */ }
+        try { title = JSON.parse(event.content).title ?? ''; } catch { /* Malformed audio register content from napp */ }
         const pubkey = nappKeyRegistry.getPubkey(windowId);
         const nappEntry = pubkey ? nappKeyRegistry.getEntry(pubkey) : undefined;
         audioManager.register(windowId, nappEntry?.dTag ?? 'unknown', title);
@@ -458,7 +542,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
       case 'shell:audio-unregister': audioManager.unregister(windowId); break;
       case 'shell:audio-state-changed': {
         let update: { title?: string } = {};
-        try { update = JSON.parse(event.content); } catch { /* ignore */ }
+        try { update = JSON.parse(event.content); } catch { /* Malformed audio state content from napp */ }
         audioManager.updateState(windowId, update);
         break;
       }
@@ -541,7 +625,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
           const filters = JSON.parse(filtersTag) as NostrFilter[];
           hooks.relayPool.openScopedRelay(windowId, url, subId, filters, sourceWindow);
           sendOk(true, '');
-        } catch { sendOk(false, 'error: invalid filters'); }
+        } catch { /* Invalid JSON from napp */ sendOk(false, 'error: invalid filters'); }
         break;
       }
       case 'shell:relay-scoped-close':
@@ -555,7 +639,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
           const signed = JSON.parse(et) as NostrEvent;
           const ok = hooks.relayPool.publishToScopedRelay(windowId, signed);
           sendOk(ok, ok ? '' : 'error: no active scoped relay');
-        } catch { sendOk(false, 'error: invalid event JSON'); }
+        } catch { /* Invalid JSON from napp */ sendOk(false, 'error: invalid event JSON'); }
         break;
       }
       case 'shell:create-window': {
@@ -564,7 +648,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
           if (!payload.title || !payload.class) { sendOk(false, 'error: requires title and class'); break; }
           const id = hooks.windowManager.createWindow({ title: payload.title, class: payload.class, iframeSrc: payload.iframeSrc });
           sendOk(!!id, id ? '' : 'error: window creation failed');
-        } catch { sendOk(false, 'error: invalid JSON'); }
+        } catch { /* Invalid JSON from napp */ sendOk(false, 'error: invalid JSON'); }
         break;
       }
       case 'shell:send-dm': {
@@ -572,7 +656,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
           const corrId = event.tags?.find((t) => t[0] === 'id')?.[1] ?? '';
           const recipient = event.tags?.find((t) => t[0] === 'p')?.[1];
           let message: string | undefined;
-          try { message = JSON.parse(event.content).message; } catch { /* */ }
+          try { message = JSON.parse(event.content).message; } catch { /* Malformed DM content from napp */ }
           if (!recipient || !message) { sendOk(false, 'error: missing recipient or message'); break; }
           hooks.dm.sendDm(recipient, message).then((result) => {
             const payload = result.success
@@ -586,7 +670,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
             };
             sourceWindow.postMessage(['EVENT', '__shell__', response], '*');
             sendOk(result.success, result.success ? '' : `error: ${result.error}`);
-          }).catch(() => sendOk(false, 'error: DM send failed'));
+          }).catch(() => { /* DM hook rejected — report failure to napp */ sendOk(false, 'error: DM send failed'); });
         } else sendOk(false, 'error: DM hooks not configured');
         break;
       }
