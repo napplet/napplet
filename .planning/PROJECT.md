@@ -47,13 +47,15 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Compatibility check at AUTH — runtime reads manifest requires, checks ServiceRegistry, builds CompatibilityReport, fires onCompatibilityIssue; strict mode blocks load — v0.4.0 Phase 22 (NEG-01..04, COMPAT-02, COMPAT-03)
 - ✓ Undeclared service consent — checkUndeclaredService fires at INTER_PANE dispatch time; ConsentRequest type discriminator 'undeclared-service'; per-session consent cache — v0.4.0 Phase 22 (NEG-05)
 - ✓ strictMode configurable via RuntimeHooks — permissive default, strict blocks napplet loading on missing services — v0.4.0 Phase 22 (NEG-06)
+- ✓ Core infra as registered services — signer, relay pool, cache extractable as ServiceHandlers; RuntimeHooks.relayPool/.cache now optional; dual-path dispatch with hook fallback — v0.4.0 Phase 22.1 (SVC-04)
 
 ### Active
-- [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
+- [ ] Publish all @napplet/* packages to npm (@napplet/shim, @napplet/shell, @napplet/acl, @napplet/core, @napplet/runtime, @napplet/services, @napplet/vite-plugin)
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
 - [ ] Event-ID triggered aggregate hash revalidation
 - [ ] Salt-based deterministic keypair derivation
+- [ ] Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ### Out of Scope
 
@@ -69,11 +71,11 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: v0.4.0 in progress (Phase 22 complete). Negotiation and compatibility implemented: vite plugin injects requires tags; runtime checks them post-AUTH; CompatibilityReport surfaced via onCompatibilityIssue; strict/permissive mode; undeclared service consent at dispatch time. All 9 Phase 22 requirements (NEG-01..06, COMPAT-01..03) satisfied.
-- **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core). Runtime is browser-agnostic via RuntimeHooks DI.
+- **Current state**: v0.4.0 shipped (2026-03-31). Full service discovery stack: kind 29010 protocol, @napplet/services package, window.napplet global, manifest requires tags, CompatibilityReport, undeclared service consent. Core infra (signer, relay, cache) extractable as services via dual-path dispatch.
+- **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
-- **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (193 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, and service discovery.
-- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events.
+- **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
+- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. npm publish blocked on human auth.
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
 
 ## Constraints
@@ -102,6 +104,11 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 | UTF-8 byte count for storage quota | Consistent cross-platform, replaces inconsistent Blob approach | ✓ Good |
 | @napplet/acl as separate package | Package boundary enforces zero deps, WASM-ready | ✓ Good — Phase 8 delivered zero-dep pure module |
 | Target architecture: acl → core → runtime → shell | Multi-shell support. Third-party shells depend on @napplet/runtime, not @napplet/shell. Runtime extraction when second shell exists. | ✓ Good — Phase 13 delivered browser-agnostic runtime with RuntimeHooks interface |
+| ServiceDescriptor in @napplet/core, ServiceHandler/Registry in @napplet/runtime | Shared types need no dependency on runtime; handler interface lives where it's consumed | ✓ Good — clean layering across all 7 packages |
+| handleMessage(windowId, message, send) interface for ServiceHandler | Services receive raw NIP-01 arrays + send callback; decoupled from runtime internals | ✓ Good — consistent across all concrete services |
+| Dual-path dispatch for core infra (service → hook fallback) | Backwards-compatible migration; shell hosts using RuntimeHooks directly still work | ✓ Good — zero breaking changes, SVC-04 satisfied |
+| audio:* topic prefix only (shell:audio-* dropped) | Alpha — no external consumers; clean break prevents legacy accumulation | ✓ Good — no compatibility burden |
+| Undeclared service consent reuses ConsentRequest pattern | Same hook, same UX flow as destructive signing kinds — shell hosts get one integration point | ✓ Good — minimal API surface growth |
 
 ## Evolution
 
@@ -120,17 +127,15 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
-## Current Milestone: v0.4.0 Feature Negotiation & Service Discovery
+## Current Milestone: v0.5.0 (TBD)
 
-**Goal:** Enable napplets to discover what services the shell/runtime provides and surface compatibility information to users, so napplets can adapt or inform rather than silently fail.
+Next milestone to be defined via `/gsd:new-milestone`.
 
-**Target features:**
-- Service discovery protocol (kind 29010 REQ/EVENT/EOSE flow)
-- Shim-side discovery API for napplets
-- Compatibility reporting (missing services surfaced to developer/user)
-- Manifest `requires` tags for service dependency declaration
-- Runtime service dispatch to ServiceRegistry handlers
-- Audio service as first concrete ServiceHandler implementation
+Likely candidates (from Active requirements and Future Requirements in v0.4.0):
+- npm publish across all 7 packages
+- Service ACL (per-service capability strings)
+- @napplet/create CLI / starter template
+- Production demo deployment (nsite)
 
 ---
-*Last updated: 2026-03-31 after Phase 20 (concrete services) complete*
+*Last updated: 2026-03-31 after v0.4.0 milestone archived*

@@ -1,5 +1,20 @@
 # Milestones
 
+## v0.4.0 Feature Negotiation & Service Discovery (Shipped: 2026-03-31)
+
+**Phases completed:** 6 phases, 19 plans, 43 tasks
+
+**Key accomplishments:**
+
+- Service dispatch backbone — `ServiceDescriptor` in @napplet/core; `ServiceHandler`, `ServiceRegistry`, and topic-prefix routing in @napplet/runtime
+- Kind 29010 discovery protocol — runtime synthesizes one EVENT per registered service + EOSE; live subscriptions update dynamically when services register
+- `@napplet/services` package — `createAudioService` and `createNotificationService` as first-class `ServiceHandler` implementations proving the pattern
+- `window.napplet` global on shim — `discoverServices()`, `hasService()`, `hasServiceVersion()` with session-scoped cache; no import needed in napplet code
+- Manifest compatibility system — vite-plugin injects `requires` tags; runtime checks at AUTH time; `CompatibilityReport` via `onCompatibilityIssue`; strict/permissive mode
+- Core infra as services — signer, relay pool, and cache extracted as `ServiceHandler`s; `RuntimeHooks.relayPool`/`.cache` now optional; dual-path dispatch with hook fallback
+
+---
+
 ## v0.3.0 Runtime and Core (Shipped: 2026-03-31)
 
 **Phases completed:** 6 phases, 18 plans, 38 tasks
