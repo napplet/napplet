@@ -50,8 +50,8 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 ### Concrete Services
 
-- [ ] **SVC-01**: Audio service wraps existing audio-manager as a ServiceHandler with descriptor (name: 'audio', version, description)
-- [ ] **SVC-02**: Audio service uses audio:* topic prefix only — shell:audio-* legacy prefix deleted (alpha, no external consumers)
+- [x] **SVC-01**: Audio service wraps existing audio-manager as a ServiceHandler with descriptor (name: 'audio', version, description)
+- [x] **SVC-02**: Audio service uses audio:* topic prefix only — shell:audio-* legacy prefix deleted (alpha, no external consumers)
 - [ ] **SVC-03**: Notification service implemented as second ServiceHandler (proves the pattern generalizes beyond audio)
 - [ ] **SVC-04**: Core infrastructure (relay pool, cache) exposed as discoverable services with descriptors
 
@@ -112,8 +112,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-02 | Phase 19 | Pending |
 | DISC-03 | Phase 19 | Pending |
 | DISC-04 | Phase 19 | Pending |
-| SVC-01 | Phase 20 | Pending |
-| SVC-02 | Phase 20 | Pending |
+| SVC-01 | Phase 20 | Complete |
+| SVC-02 | Phase 20 | Complete |
 | SVC-03 | Phase 20 | Pending |
 | SVC-04 | Phase 22.1 | Pending |
 | SHIM-01 | Phase 21 | Pending |
