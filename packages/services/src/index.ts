@@ -40,3 +40,7 @@ export { createAudioService } from './audio-service.js';
 // ─── Notification Service ──────────────────────────────────────────────────
 
 export { createNotificationService } from './notification-service.js';
+
+// ─── Signer Service ───────────────────────────────────────────────────────
+export { createSignerService } from './signer-service.js';
+export type { SignerServiceOptions } from './signer-service.js';
