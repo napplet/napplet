@@ -232,18 +232,99 @@ export interface RuntimeDmHooks {
 // ─── Consent Request ───────────────────────────────────────────────────────
 
 /**
- * A pending consent request for a destructive signing kind.
- * Raised when a signer request arrives for kinds 0, 3, 5, 10002.
+ * A pending consent request — either for a destructive signing kind
+ * or for undeclared service usage.
+ *
+ * When type is 'destructive-signing' (or omitted for backwards compat):
+ *   Raised when a signer request arrives for kinds 0, 3, 5, 10002.
+ *
+ * When type is 'undeclared-service':
+ *   Raised when a napplet uses a service it did not declare in its manifest.
+ *   The serviceName field identifies which service was used without declaration.
+ *
+ * @example
+ * ```ts
+ * // Destructive signing consent (existing behavior)
+ * const signingConsent: ConsentRequest = {
+ *   type: 'destructive-signing',
+ *   windowId: 'win-1', pubkey: 'abc...', event: signingEvent,
+ *   resolve: (allowed) => { ... },
+ * };
+ *
+ * // Undeclared service consent (new)
+ * const serviceConsent: ConsentRequest = {
+ *   type: 'undeclared-service',
+ *   windowId: 'win-1', pubkey: 'abc...', event: serviceEvent,
+ *   serviceName: 'audio',
+ *   resolve: (allowed) => { ... },
+ * };
+ * ```
  */
 export interface ConsentRequest {
+  /** Consent type discriminator. Defaults to 'destructive-signing' if omitted. */
+  type?: 'destructive-signing' | 'undeclared-service';
   windowId: string;
   pubkey: string;
   event: NostrEvent;
   resolve: (allowed: boolean) => void;
+  /** Service name for undeclared-service consent. Only present when type is 'undeclared-service'. */
+  serviceName?: string;
 }
 
 /** Consent handler callback type. */
 export type ConsentHandler = (request: ConsentRequest) => void;
+
+// ─── Service Info ─────────────────────────────────────────────────────────
+
+/**
+ * Information about an available service, as reported in discovery responses.
+ * Mirrors the ServiceDescriptor shape from @napplet/core.
+ *
+ * @example
+ * ```ts
+ * const info: ServiceInfo = {
+ *   name: 'audio',
+ *   version: '1.0.0',
+ *   description: 'Audio playback and mute control',
+ * };
+ * ```
+ */
+export interface ServiceInfo {
+  /** Service identifier (e.g., 'audio', 'notifications'). */
+  name: string;
+  /** Semver version of the service. */
+  version: string;
+  /** Optional human-readable description. */
+  description?: string;
+}
+
+// ─── Compatibility Report ─────────────────────────────────────────────────
+
+/**
+ * Result of checking a napplet's declared service requirements against
+ * the runtime's registered services.
+ *
+ * Surfaced via RuntimeHooks.onCompatibilityIssue when compatible is false.
+ * In strict mode, the runtime blocks loading. In permissive mode (default),
+ * the runtime loads the napplet and the shell host decides UX.
+ *
+ * @example
+ * ```ts
+ * const report: CompatibilityReport = {
+ *   available: [{ name: 'audio', version: '1.0.0' }],
+ *   missing: ['notifications'],
+ *   compatible: false,
+ * };
+ * ```
+ */
+export interface CompatibilityReport {
+  /** Services that the shell provides (full list from service registry). */
+  available: ServiceInfo[];
+  /** Service names declared in manifest requires but not registered in the runtime. */
+  missing: string[];
+  /** True if all required services are available (missing.length === 0). */
+  compatible: boolean;
+}
 
 // ─── NappKeyEntry ──────────────────────────────────────────────────────────
 
@@ -278,12 +359,17 @@ export type PendingUpdateNotifier = (windowId: string) => void;
 
 // ─── Manifest Cache Entry ──────────────────────────────────────────────────
 
-/** A cached manifest entry for a verified napp build. */
+/**
+ * A cached manifest entry for a verified napp build.
+ * Optionally stores the napplet's declared service requirements from its manifest.
+ */
 export interface ManifestCacheEntry {
   pubkey: string;
   dTag: string;
   aggregateHash: string;
   verifiedAt: number;
+  /** Service names declared in the napplet's manifest requires tags. */
+  requires?: string[];
 }
 
 // ─── ACL Entry (external representation) ───────────────────────────────────
@@ -430,6 +516,20 @@ export interface RuntimeHooks {
 
   /** Called when a pending napp update is set or cleared. */
   onPendingUpdate?: PendingUpdateNotifier;
+
+  /**
+   * Called when a napplet's required services are not fully available.
+   * Receives a CompatibilityReport with available/missing services.
+   * In strict mode, the runtime blocks the napplet from loading.
+   * In permissive mode (default), the napplet loads and the host decides UX.
+   */
+  onCompatibilityIssue?: (report: CompatibilityReport) => void;
+
+  /**
+   * When true, missing required services block napplet loading.
+   * When false or omitted (default), napplets load with a warning.
+   */
+  strictMode?: boolean;
 
   /**
    * Optional service extensions. Shell/host registers service handlers here
