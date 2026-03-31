@@ -1,5 +1,21 @@
 # Milestones
 
+## v0.3.0 Runtime and Core (Shipped: 2026-03-31)
+
+**Phases completed:** 6 phases, 18 plans, 38 tasks
+
+**Key accomplishments:**
+
+- Zero-dep @napplet/core package with all shared protocol types, constants, and topic definitions
+- Shell imports all protocol types from @napplet/core — 232 lines of duplicate definitions removed
+- Shim imports all protocol types from @napplet/core — 55 lines of duplicate definitions removed
+- createShellBridge() rewired to delegate to createRuntime(adaptHooks(hooks)) — shell-bridge.ts reduced from 746 to 180 lines
+- Shim types already re-exported from @napplet/core — verified builds and public API unchanged
+- Cross-package dependency graph verified clean — full monorepo builds and type-checks with core -> acl -> runtime -> shell DAG
+- Removed 8 dead exports from @napplet/shell, deleted duplicate enforce.ts, re-pointed enforce re-exports to @napplet/runtime
+
+---
+
 ## v0.2.0 Shell Architecture Cleanup (Shipped: 2026-03-31)
 
 **Phases completed:** 5 phases, 11 plans, 25 tasks

@@ -33,19 +33,22 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Single enforce() gate in ShellBridge — all messages through one ACL checkpoint — v0.2.0
 - ✓ 56 ACL behavioral tests (122 total) — full capability × action matrix — v0.2.0
 - ✓ Shell code cleanup — verb-noun naming, JSDoc, clean internals — v0.2.0
+- ✓ @napplet/core — zero-dep shared protocol types, constants, topics — v0.3.0
+- ✓ @napplet/runtime — browser-agnostic protocol engine with RuntimeHooks — v0.3.0
+- ✓ Shell slimmed to thin browser adapter (746→180 lines), shim rewired to core — v0.3.0
+- ✓ Service extension design — ServiceRegistry types, kind 29010, SPEC.md Section 11 — v0.3.0
+- ✓ 180 tests green across four-package structure (core, runtime, integration, e2e) — v0.3.0
+- ✓ Shell export cleanup — dead code removed, enforce deduplicated, singletons cleaned — v0.3.0
 
 ### Active
 
-- [x] Extract @napplet/core — protocol types, message definitions, capability resolver (shared by all) — Validated in Phase 12: Core Package
-- [x] Extract @napplet/runtime — enforcement gate, message router, state management — Validated in Phase 13: Runtime Package
-- [x] Shell adapter + shim rewire — createShellBridge delegates to createRuntime(adaptHooks(hooks)); shim imports from @napplet/core — Validated in Phase 14: Shell Adapter and Shim Rewire
-- [x] Service extension design — ServiceRegistry types, SERVICE_DISCOVERY kind 29010, SPEC.md Section 11 — Validated in Phase 15: Service Extension Design
-- [x] Full test suite green with four-package structure; new unit and integration tests — Validated in Phase 16: Verification
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
 - [ ] Event-ID triggered aggregate hash revalidation
 - [ ] Salt-based deterministic keypair derivation
+- [ ] Service implementations (audio, notifications) via RuntimeHooks.services
+- [ ] Service discovery protocol — napplet queries available shell services
 
 ### Out of Scope
 
@@ -61,11 +64,12 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: v0.1.0-alpha.1 with 8,690 LOC TypeScript across 3 packages + demo app + test suite. 78 commits, 201 files.
+- **Current state**: v0.3.0 with 7,109 LOC TypeScript across 5 packages (core, acl, runtime, shell, shim) + vite-plugin + demo app + test suite. 121 commits, 86 files changed in v0.3.0 alone.
+- **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core). Runtime is browser-agnostic via RuntimeHooks DI.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
-- **Test coverage**: 122 Playwright e2e tests + 58 vitest unit/integration tests. Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, and four-package chain integration.
+- **Test coverage**: 122 Playwright e2e tests + 58 vitest unit/integration tests (180 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, and four-package chain integration.
 - **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events.
-- **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash.
+- **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
 
 ## Constraints
 
@@ -111,17 +115,22 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
-## Current Milestone: v0.3.0 Runtime and Core
+## Current State (after v0.3.0)
 
-**Goal:** Extract shared protocol types into @napplet/core and the protocol engine into @napplet/runtime, enabling third-party shell implementations. Design the service extension interface for v0.4.0.
+**Shipped:** v0.3.0 Runtime and Core (2026-03-31)
 
-**Target features:**
-- @napplet/core — shared types, protocol constants, message definitions
-- @napplet/runtime — enforcement gate, message router, ACL state container, RuntimeHooks interface
-- @napplet/shell slimmed to browser adapter
-- @napplet/shim imports from @napplet/core
-- RuntimeHooks.services interface designed (stub)
-- Service discovery event kind reserved
+**What was delivered:**
+- @napplet/core — zero-dep shared protocol types, constants, topics
+- @napplet/runtime — browser-agnostic protocol engine (14 exports, RuntimeHooks DI)
+- Shell reduced to thin browser adapter (746→180 lines)
+- Service extension design — ServiceRegistry types, kind 29010, SPEC.md Section 11
+- 180 tests green, shell exports cleaned up
+
+**Next milestone goals (v0.4.0):**
+- Service implementations (audio, notifications) via RuntimeHooks.services
+- Service discovery protocol (kind 29010 message flow)
+- npm publish all packages
+- Production demo deployment
 
 ---
-*Last updated: 2026-03-31 after Phase 14 completion*
+*Last updated: 2026-03-31 after v0.3.0 milestone*
