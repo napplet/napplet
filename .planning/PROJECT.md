@@ -48,6 +48,9 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Undeclared service consent — checkUndeclaredService fires at INTER_PANE dispatch time; ConsentRequest type discriminator 'undeclared-service'; per-session consent cache — v0.4.0 Phase 22 (NEG-05)
 - ✓ strictMode configurable via RuntimeHooks — permissive default, strict blocks napplet loading on missing services — v0.4.0 Phase 22 (NEG-06)
 - ✓ Core infra as registered services — signer, relay pool, cache extractable as ServiceHandlers; RuntimeHooks.relayPool/.cache now optional; dual-path dispatch with hook fallback — v0.4.0 Phase 22.1 (SVC-04)
+- ✓ Package READMEs for all 7 packages — shim, shell, vite-plugin, core, runtime, acl, services — v0.5.0 Phases 23-24
+- ✓ SPEC.md updated for v0.4.0 — Section 11 service discovery, ShellBridge rename, requires/compat protocol — v0.5.0 Phase 25
+- ✓ Skills directory — 3 agentskills.io-format skill files: build-napplet, integrate-shell, add-service — v0.5.0 Phase 26 (SKILL-01, SKILL-02, SKILL-03)
 
 ### Active
 - [ ] Publish all @napplet/* packages to npm (@napplet/shim, @napplet/shell, @napplet/acl, @napplet/core, @napplet/runtime, @napplet/services, @napplet/vite-plugin)
@@ -71,7 +74,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: v0.4.0 shipped (2026-03-31). Full service discovery stack: kind 29010 protocol, @napplet/services package, window.napplet global, manifest requires tags, CompatibilityReport, undeclared service consent. Core infra (signer, relay, cache) extractable as services via dual-path dispatch.
+- **Current state**: v0.5.0 in progress (2026-04-01). All phases 23-26 complete. Skills directory created: 3 agentskills.io-format skill files (build-napplet, integrate-shell, add-service). Full documentation coverage across all 7 packages. SPEC.md updated for v0.4.0 protocol.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
