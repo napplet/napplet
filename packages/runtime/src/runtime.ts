@@ -157,6 +157,10 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     });
   }
 
+  // ─── Undeclared Service Consent Cache (Phase 22) ──────────────────────────
+  /** Tracks consented undeclared service usage per session: "windowId:serviceName" */
+  const undeclaredServiceConsents = new Set<string>();
+
   // ─── Discovery Subscription Tracking ──────────────────────────────────────
   /** Open kind 29010 subscriptions that should receive live service updates. */
   const discoverySubscriptions = new Map<string, DiscoverySubscription>();
@@ -360,6 +364,64 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     return true;
   }
 
+  // ─── Undeclared Service Check (Phase 22) ──────────────────────────────────
+
+  /**
+   * Check if a napplet is using a service it did not declare in its manifest.
+   * If undeclared, raises a consent request via the consent handler.
+   *
+   * Returns true if the service is declared or consent was previously granted.
+   * Returns false if consent is needed (async — caller must wait for resolve).
+   * Calls onApproved when consent is granted, allowing the caller to proceed.
+   */
+  function checkUndeclaredService(
+    windowId: string,
+    pubkey: string,
+    serviceName: string,
+    event: NostrEvent,
+    onApproved: () => void,
+  ): boolean {
+    // If the service is not registered, this is not our concern — let normal dispatch handle it
+    if (!registeredServices.has(serviceName)) return true;
+
+    // Look up the napplet's declared requires via two-step registry lookup
+    const nappPubkey = nappKeyRegistry.getPubkey(windowId);
+    if (!nappPubkey) return true; // No identity yet — skip check
+    const nappEntry = nappKeyRegistry.getEntry(nappPubkey);
+    if (!nappEntry) return true;
+
+    const requires = manifestCache.getRequires(nappEntry.pubkey, nappEntry.dTag);
+
+    // If the service IS declared in requires, no consent needed
+    if (requires.includes(serviceName)) return true;
+
+    // Check consent cache — already approved this session
+    const consentKey = `${windowId}:${serviceName}`;
+    if (undeclaredServiceConsents.has(consentKey)) return true;
+
+    // Raise consent request
+    if (_consentHandler) {
+      _consentHandler({
+        type: 'undeclared-service',
+        windowId,
+        pubkey,
+        event,
+        serviceName,
+        resolve: (allowed: boolean) => {
+          if (allowed) {
+            undeclaredServiceConsents.add(consentKey);
+            onApproved();
+          }
+          // If denied, event is silently dropped
+        },
+      });
+      return false; // Async — caller should not proceed synchronously
+    }
+
+    // No consent handler registered — silently drop undeclared service usage
+    return false;
+  }
+
   function handleEvent(msg: unknown[], windowId: string): void {
     const event = msg[1] as NostrEvent | undefined;
     if (!event || typeof event !== 'object') return;
@@ -383,9 +445,21 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     }
 
     switch (event.kind) {
-      case BusKind.SIGNER_REQUEST:
+      case BusKind.SIGNER_REQUEST: {
+        // Service path: dispatch to registered signer service if available
+        const signerService = serviceRegistry['signer'];
+        if (signerService) {
+          signerService.handleMessage(
+            windowId,
+            ['EVENT', event],
+            (msg) => hooks.sendToNapplet(windowId, msg),
+          );
+          return;
+        }
+        // Fallback: use internal signer handler (requires hooks.auth.getSigner)
         handleSignerRequest(event, windowId, pubkey);
         return;
+      }
       case BusKind.HOTKEY_FORWARD:
         try { handleHotkeyForward(event); } catch { /* Best-effort hotkey forwarding */ }
         break;
@@ -399,6 +473,23 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
           handleShellCommand(event, windowId, topic!);
           return;
         }
+
+        // ─── Undeclared service consent check (Phase 22) ──────────────────────
+        // Extract service name from topic prefix (e.g., 'audio:play' -> 'audio')
+        if (topic && topic.includes(':')) {
+          const serviceName = topic.split(':')[0];
+          // Only check if this looks like a service topic (registered service prefix)
+          if (registeredServices.has(serviceName)) {
+            const pubkeyForCheck = nappKeyRegistry.getPubkey(windowId) ?? '';
+            const allowed = checkUndeclaredService(
+              windowId, pubkeyForCheck, serviceName, event,
+              () => { eventBuffer.bufferAndDeliver(event, windowId); },
+            );
+            if (!allowed) return; // Waiting for consent or denied
+            // If allowed (declared or cached consent), fall through to normal dispatch
+          }
+        }
+
         // Service dispatch — route by topic prefix to registered handlers
         if (topic && routeServiceMessage(windowId, event, topic, serviceRegistry, hooks.sendToNapplet)) {
           return;
@@ -454,22 +545,43 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     const isBusKind = filters.every((f) => f.kinds?.every((k) => k >= 29000 && k < 30000));
 
+    // ─── Service dispatch path: route REQ to registered relay/cache services ──
+    if (!isBusKind) {
+      const relayService = serviceRegistry['relay'] ?? serviceRegistry['relay-pool'];
+      const cacheService = !serviceRegistry['relay'] ? serviceRegistry['cache'] : undefined;
+
+      if (relayService) {
+        const send = (m: unknown[]): void => {
+          if (subscriptions.has(subKey)) hooks.sendToNapplet(windowId, m);
+        };
+        relayService.handleMessage(windowId, msg, send);
+        if (cacheService) {
+          cacheService.handleMessage(windowId, msg, send);
+        }
+        return;
+      }
+    }
+
+    // ─── Fallback: use internal relay pool + cache hooks ──────────────────────
+
     // Query local cache
-    if (hooks.cache.isAvailable() && !isBusKind) {
-      hooks.cache.query(filters)
+    const cache = hooks.cache;
+    if (cache?.isAvailable() && !isBusKind) {
+      cache.query(filters)
         .then((cachedEvents) => { for (const event of cachedEvents) deliver(event); })
         .catch(() => { /* Cache query is best-effort */ });
     }
 
     // Subscribe to relay pool
-    if (hooks.relayPool.isAvailable() && !isBusKind) {
-      const relayUrls = hooks.relayPool.selectRelayTier(filters);
+    const pool = hooks.relayPool;
+    if (pool?.isAvailable() && !isBusKind) {
+      const relayUrls = pool.selectRelayTier(filters);
       let eoseSent = false;
       const eoseFallbackTimer = setTimeout(() => {
         if (!eoseSent) { eoseSent = true; hooks.sendToNapplet(windowId, ['EOSE', subId]); }
       }, 15_000);
 
-      const subscription = hooks.relayPool.subscribe(filters, (item) => {
+      const subscription = pool.subscribe(filters, (item) => {
         if (item === 'EOSE') {
           clearTimeout(eoseFallbackTimer);
           if (!eoseSent) { eoseSent = true; hooks.sendToNapplet(windowId, ['EOSE', subId]); }
@@ -477,12 +589,12 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         }
         const event = item as NostrEvent;
         deliver(event);
-        if (hooks.cache.isAvailable() && !isBusKind) {
-          try { hooks.cache.store(event); } catch { /* Cache write is best-effort */ }
+        if (cache?.isAvailable() && !isBusKind) {
+          try { cache.store(event); } catch { /* Cache write is best-effort */ }
         }
       }, relayUrls);
 
-      hooks.relayPool.trackSubscription(subKey, () => {
+      pool.trackSubscription(subKey, () => {
         clearTimeout(eoseFallbackTimer);
         subscription.unsubscribe();
       });
@@ -497,7 +609,15 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     const subKey = `${windowId}:${subId}`;
     subscriptions.delete(subKey);
     discoverySubscriptions.delete(subKey);
-    hooks.relayPool.untrackSubscription(subKey);
+
+    // Service dispatch: forward CLOSE to registered relay service
+    const relayService = serviceRegistry['relay'] ?? serviceRegistry['relay-pool'];
+    if (relayService) {
+      relayService.handleMessage(windowId, msg, () => { /* CLOSE has no response */ });
+    }
+
+    // Fallback: use internal relay pool hook (no-op if relayPool not provided)
+    hooks.relayPool?.untrackSubscription(subKey);
   }
 
   function handleCount(msg: unknown[], windowId: string): void {
@@ -669,13 +789,13 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         if (!url || !subId || !filtersTag) { sendOk(false, 'error: missing tags'); break; }
         try {
           const filters = JSON.parse(filtersTag) as NostrFilter[];
-          hooks.relayPool.openScopedRelay(windowId, url, subId, filters, hooks.sendToNapplet);
+          hooks.relayPool?.openScopedRelay(windowId, url, subId, filters, hooks.sendToNapplet);
           sendOk(true, '');
         } catch { sendOk(false, 'error: invalid filters'); }
         break;
       }
       case 'shell:relay-scoped-close':
-        hooks.relayPool.closeScopedRelay(windowId);
+        hooks.relayPool?.closeScopedRelay(windowId);
         sendOk(true, '');
         break;
       case 'shell:relay-scoped-publish': {
@@ -683,7 +803,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         if (!et) { sendOk(false, 'error: missing event tag'); break; }
         try {
           const signed = JSON.parse(et) as NostrEvent;
-          const ok = hooks.relayPool.publishToScopedRelay(windowId, signed);
+          const ok = hooks.relayPool?.publishToScopedRelay(windowId, signed) ?? false;
           sendOk(ok, ok ? '' : 'error: no active scoped relay');
         } catch { sendOk(false, 'error: invalid event JSON'); }
         break;
@@ -777,6 +897,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       discoverySubscriptions.clear();
       eventBuffer.clear();
       registeredServices.clear();
+      undeclaredServiceConsents.clear();
     },
 
     registerConsentHandler(handler: ConsentHandler): void {
@@ -815,7 +936,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       for (const [key] of subscriptions) {
         if (key.startsWith(`${windowId}:`)) {
           subscriptions.delete(key);
-          hooks.relayPool.untrackSubscription(key);
+          hooks.relayPool?.untrackSubscription(key);
         }
       }
       // Clean up discovery subscriptions for this window
