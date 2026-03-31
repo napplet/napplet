@@ -33,9 +33,9 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 - [x] Rename pseudo-relay → ShellBridge across all packages, tests, spec, demo — Phase 7
 - [x] Redesign ACL as pure WASM-ready module — deterministic (identity, capability, action) → allow | deny — Phase 8
-- [ ] Single ACL enforcement point in ShellBridge — every message passes through one gate
-- [ ] Exhaustive behavioral ACL test suite — capability × action matrix
-- [ ] Shell code cleanup — consistent method names, clean interfaces
+- [x] Single ACL enforcement point in ShellBridge — every message passes through one gate — Phase 9
+- [x] Exhaustive behavioral ACL test suite — capability × action matrix — Phase 10
+- [x] Shell code cleanup — consistent method names, clean interfaces — Phase 11
 - [x] Complete storage → state rename across all tests — Phase 7
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/vite-plugin to npm (needs npm auth)
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
@@ -59,8 +59,8 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 - **Current state**: v0.1.0-alpha.1 with 8,690 LOC TypeScript across 3 packages + demo app + test suite. 78 commits, 201 files.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
-- **Test coverage**: 66 Playwright e2e tests covering AUTH (9), message routing (9), replay (5), lifecycle (5), ACL (9), storage (9), signer (7), inter-pane (6), infrastructure (7).
-- **Known remaining issues**: ACL enforcement gaps (delivery-time checks missing). Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. ShellBridge naming complete (Phase 7).
+- **Test coverage**: 122 Playwright e2e tests covering AUTH (9), message routing (9), replay (5), lifecycle (5), ACL (9), storage (9), signer (7), inter-pane (6), infrastructure (7), ACL behavioral matrix (56+).
+- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events.
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash.
 
 ## Constraints
@@ -119,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 - Consistent naming and clean interfaces throughout shell
 
 ---
-*Last updated: 2026-03-31 after Phase 8 (ACL Pure Module) completion*
+*Last updated: 2026-03-31 after Phase 11 (Shell Code Cleanup) completion — v0.2.0 milestone complete*
