@@ -67,25 +67,25 @@ Explicitly excluded from v0.5.0 with reasoning.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| README-01 | TBD | Pending |
-| README-02 | TBD | Pending |
-| README-03 | TBD | Pending |
-| README-04 | TBD | Pending |
-| README-05 | TBD | Pending |
-| README-06 | TBD | Pending |
-| README-07 | TBD | Pending |
-| README-08 | TBD | Pending |
-| SPEC-01 | TBD | Pending |
-| SPEC-02 | TBD | Pending |
-| SPEC-03 | TBD | Pending |
-| SKILL-01 | TBD | Pending |
-| SKILL-02 | TBD | Pending |
-| SKILL-03 | TBD | Pending |
+| README-01 | Phase 24 | Pending |
+| README-02 | Phase 24 | Pending |
+| README-03 | Phase 24 | Pending |
+| README-04 | Phase 24 | Pending |
+| README-05 | Phase 23 | Pending |
+| README-06 | Phase 23 | Pending |
+| README-07 | Phase 23 | Pending |
+| README-08 | Phase 23 | Pending |
+| SPEC-01 | Phase 25 | Pending |
+| SPEC-02 | Phase 25 | Pending |
+| SPEC-03 | Phase 25 | Pending |
+| SKILL-01 | Phase 26 | Pending |
+| SKILL-02 | Phase 26 | Pending |
+| SKILL-03 | Phase 26 | Pending |
 
 **Coverage:**
 - v0.5.0 requirements: 14 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-31*
