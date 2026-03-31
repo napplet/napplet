@@ -199,7 +199,7 @@ Request:
 
 Response:
 ```json
-["EVENT", "__shell__", {"kind": 29003, "tags": [["t", "napp:state-response"], ["id", "corr-uuid"], ["value", "dark"], ["found", "true"]], "content": ""}]
+["EVENT", "sub-id", {"kind": 29003, "tags": [["t", "napp:state-response"], ["id", "corr-uuid"], ["value", "dark"], ["found", "true"]], "content": ""}]
 ```
 
 ---
@@ -304,6 +304,36 @@ After AUTH:
 Messages arriving before AUTH completion MUST be queued per windowId. The shell tracks AUTH-in-flight state to distinguish between "not yet challenged" and "challenge sent, awaiting response." After successful AUTH, queued messages MUST be replayed in original order. If AUTH fails, queued messages MUST be discarded.
 
 **Queue cap:** The pre-AUTH queue MUST be capped at 50 messages by default. This cap is configurable both globally (shell-wide) and per-napp. Messages exceeding the cap MUST be rejected with a `["NOTICE", "pre-AUTH queue full"]` message. The cap prevents memory exhaustion from napplets that send a burst of messages before completing AUTH.
+
+### 2.9 Compatibility Check (post-AUTH)
+
+After AUTH verification succeeds (see 2.2), the shell MUST check whether the napplet's declared service requirements (from `requires` tags in the kind 35128 manifest, see Section 15.6) are satisfied by the currently registered services.
+
+The shell produces a `CompatibilityReport`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `available` | `ServiceInfo[]` | Full list of services currently registered in the runtime |
+| `missing` | `string[]` | Service names declared in `requires` but not currently registered |
+| `compatible` | `boolean` | `true` if `missing` is empty |
+
+**Strict mode:** If `strictMode: true` is set in `RuntimeHooks`, the shell MUST reject the napplet load when `compatible` is `false`. The shell sends an `OK false` response to the napplet with a descriptive error and does not complete AUTH.
+
+**Permissive mode (default):** If `strictMode` is false or unset, the shell completes AUTH normally regardless of compatibility status.
+
+In both modes, if `compatible` is `false`, the shell MUST invoke the `onCompatibilityIssue(report)` callback (if provided in `RuntimeHooks`) so the host application can surface the issue to the user.
+
+If the napplet declares no `requires` tags, the compat check is a no-op and `compatible` is always `true`.
+
+### 2.10 Undeclared Service Consent
+
+When a napplet sends a message to a service it did NOT declare in its `requires` tags, the shell MUST treat this as an undeclared service access attempt.
+
+The shell fires a `ConsentRequest` of type `'undeclared-service'` via the registered consent handler. The consent request includes the napplet's `windowId`, `pubkey`, the triggering `event`, and the `serviceName` being accessed.
+
+The host application SHOULD present a consent prompt to the user. If the user approves, the shell caches the consent for the session (keyed on `windowId:serviceName`) — subsequent messages to the same service from the same napplet do not re-prompt. If the user denies, the shell drops the message silently. If no consent handler is registered, the shell drops the message silently.
+
+This mechanism ensures napplets cannot silently access services beyond their declared scope without user awareness.
 
 ---
 
@@ -809,16 +839,17 @@ The shell MAY expose optional services beyond the core protocol (audio managemen
 
 Service discovery is cooperative: the shell advertises what it supports, and napplets adapt their behavior based on available services. A napplet MUST NOT assume a service is available without first checking via discovery.
 
-> **Status:** This section defines the protocol design for service discovery. Implementation is deferred to a future version. Shells and napplets SHOULD NOT implement service discovery until the spec is marked LOCKED.
+Service discovery is implemented in v0.4.0. The section remains `[OPEN]` because per-service ACL capabilities and custom service standards are still evolving.
 
 ### 11.2 Service Discovery Event (kind 29010)
 
 | Field | Value |
 |---|---|
 | `kind` | `29010` (BusKind.SERVICE_DISCOVERY) |
-| `pubkey` | Shell's ephemeral pubkey (for responses) or napplet's session pubkey (for requests) |
+| `pubkey` | `0000000000000000000000000000000000000000000000000000000000000000` — sentinel value (64 hex zeros) for runtime-synthesized events |
+| `sig` | `00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000` — sentinel value (128 hex zeros) |
 | `tags` | See below |
-| `content` | JSON payload |
+| `content` | `"{}"` |
 
 **Discovery Request (napplet -> shell):**
 
@@ -835,7 +866,7 @@ For each registered service, the shell sends:
 ```json
 ["EVENT", "svc-discovery", {
   "kind": 29010,
-  "pubkey": "__shell__",
+  "pubkey": "0000000000000000000000000000000000000000000000000000000000000000",
   "created_at": 1711800000,
   "tags": [
     ["s", "audio"],
@@ -844,7 +875,7 @@ For each registered service, the shell sends:
   ],
   "content": "{}",
   "id": "...",
-  "sig": ""
+  "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 }]
 ```
 
@@ -879,11 +910,15 @@ The shell routes INTER_PANE events to service handlers based on the topic prefix
 
 1. **Registration:** The shell host registers services at startup via the `services` field in ShellHooks (or RuntimeHooks). Each service provides a `ServiceHandler` with a descriptor and request handler.
 
-2. **Discovery:** After AUTH completes, the napplet MAY send a REQ for kind 29010 to discover available services. The shell responds with descriptors for all registered services.
+2. **Discovery:** After AUTH completes, the napplet MAY send a REQ for kind 29010 to discover available services. The shell responds with descriptors for all registered services, followed by EOSE.
 
-3. **Interaction:** The napplet sends INTER_PANE events with service-prefixed topics. The shell dispatches these to the appropriate service handler.
+   **Empty registry:** If no services are registered at discovery time, the shell MUST send EOSE immediately after receiving REQ, with zero EVENT messages.
 
-4. **Cleanup:** When a napplet window is destroyed, the shell calls `onWindowDestroyed` on each service handler that implements it, allowing services to clean up per-window state.
+3. **Live subscriptions:** After the initial REQ/EVENT/EOSE discovery flow, napplets MAY remain subscribed to the discovery subscription. If the shell registers a new service after EOSE, the shell MUST send an additional kind 29010 EVENT to all active discovery subscribers without a new EOSE. This allows napplets to discover services registered after initial load.
+
+4. **Interaction:** The napplet sends INTER_PANE events with service-prefixed topics. The shell dispatches these to the appropriate service handler.
+
+5. **Cleanup:** When a napplet window is destroyed, the shell calls `onWindowDestroyed` on each service handler that implements it, allowing services to clean up per-window state.
 
 ### 11.5 Built-in vs Custom Services
 
@@ -1170,6 +1205,30 @@ Implementations SHOULD track the NIP-C4 spec revision they target. The current r
 
 This kind is used for shell-to-napplet service discovery responses. It is part of the ephemeral bus range (29000-29999) and is NOT a NIP-assigned kind number. It follows the same allocation pattern as the existing BusKind constants (29000-29007).
 
+### 15.6 Service Dependency Declaration (`requires` tags)
+
+Napplet manifests (kind 35128) MAY declare service dependencies using `requires` tags. Each required service is declared as a separate tag:
+
+```json
+["requires", "audio"]
+["requires", "notifications"]
+```
+
+These tags are generated at build time by `@napplet/vite-plugin` when the `requires` option is set:
+
+```js
+// vite.config.ts
+napplet({ requires: ['audio', 'notifications'] })
+```
+
+The plugin also injects a corresponding meta tag into the napplet HTML:
+
+```html
+<meta name="napplet-requires" content="audio,notifications">
+```
+
+The shell reads `requires` tags from the resolved kind 35128 manifest during AUTH. Service names in `requires` tags MUST match the `s` tag value of the corresponding kind 29010 service discovery event (see Section 11.2). If no `requires` tags are present, the napplet is assumed to have no service dependencies.
+
 ---
 
 ## 16. Minimal Viable Implementation [OPEN]
@@ -1331,12 +1390,10 @@ An implementation is conforming if:
 - Conformance test suite
 - Protocol version negotiation (what happens on major version mismatch)
 - Capability advertisement (shell declares supported optional features during AUTH)
-- Service discovery implementation (Section 11) -- napplets query available shell services via kind 29010
 - Per-service ACL capabilities -- `service:audio`, `service:notifications`, etc.
-- Service dependency declaration in NIP-5A manifests (`requires` tags)
 
 ---
 
 *This NIP was drafted from the hyprgate reference implementation, v1.4.*
 *Refined with implementation learnings from @napplet SDK v0.1.0-alpha.1.*
-*Draft date: 2026-03-30*
+*Draft date: 2026-03-31*
