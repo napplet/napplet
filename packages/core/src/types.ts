@@ -89,3 +89,28 @@ export const ALL_CAPABILITIES: readonly Capability[] = [
   'state:read',
   'state:write',
 ] as const;
+
+// ─── Service Types ──────────────────────────────────────────────────────────
+
+/**
+ * Metadata describing a registered shell service.
+ * Services are optional capabilities a shell provides beyond the core protocol.
+ * Napplets discover available services via kind 29010 service discovery events.
+ *
+ * @example
+ * ```ts
+ * const descriptor: ServiceDescriptor = {
+ *   name: 'audio',
+ *   version: '1.0.0',
+ *   description: 'Audio playback management and mute control',
+ * };
+ * ```
+ */
+export interface ServiceDescriptor {
+  /** Unique service identifier (e.g., 'audio', 'notifications', 'clipboard'). */
+  name: string;
+  /** Semver version of the service implementation. */
+  version: string;
+  /** Human-readable description of the service. */
+  description?: string;
+}

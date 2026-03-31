@@ -21,7 +21,7 @@
 
 // ─── Protocol Types ─────────────────────────────────────────────────────────
 
-export type { NostrEvent, NostrFilter, Capability } from './types.js';
+export type { NostrEvent, NostrFilter, Capability, ServiceDescriptor } from './types.js';
 export { ALL_CAPABILITIES } from './types.js';
 
 // ─── Protocol Constants ─────────────────────────────────────────────────────
