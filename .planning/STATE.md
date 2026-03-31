@@ -4,13 +4,13 @@ milestone: v0.2.0
 milestone_name: Shell Architecture Cleanup
 status: executing
 stopped_at: Phase 09 plans complete, ready for verification
-last_updated: "2026-03-30T23:31:21.626Z"
-last_activity: 2026-03-30
+last_updated: "2026-03-31T00:21:31.202Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 11
   percent: 64
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** The shell's security boundary (ACL) must be deterministic, auditable, and enforce on every code path -- no bypasses, no gaps.
-**Current focus:** Phase 10 — acl-behavioral-tests
+**Current focus:** Phase 11 — shell-code-cleanup
 
 ## Current Position
 
 Phase: 11
 Plan: Not started
-Status: Executing Phase 10
-Last activity: 2026-03-30
+Status: Executing Phase 11
+Last activity: 2026-03-31
 
 Progress: [██████░░░░] 64%
 
