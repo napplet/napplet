@@ -25,6 +25,8 @@ export interface ManifestCache {
   set(entry: ManifestCacheEntry): void;
   /** Check if a specific hash is cached for a pubkey/dTag combination. */
   has(pubkey: string, dTag: string, hash: string): boolean;
+  /** Get the requires list for a cached manifest, or empty array if not found. */
+  getRequires(pubkey: string, dTag: string): string[];
   /** Remove a cached entry for a pubkey/dTag and persist. */
   remove(pubkey: string, dTag: string): void;
   /** Load the cache from persistence. */
@@ -61,6 +63,11 @@ export function createManifestCache(persistence: RuntimeManifestPersistence): Ma
     has(pubkey: string, dTag: string, hash: string): boolean {
       const entry = cache.get(cacheKey(pubkey, dTag));
       return !!entry && entry.aggregateHash === hash;
+    },
+
+    getRequires(pubkey: string, dTag: string): string[] {
+      const entry = cache.get(cacheKey(pubkey, dTag));
+      return entry?.requires ?? [];
     },
 
     remove(pubkey: string, dTag: string): void {
