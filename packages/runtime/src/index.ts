@@ -28,6 +28,8 @@ export type {
   AclCheckEvent,
   ServiceHandler,
   ServiceRegistry,
+  CompatibilityReport,
+  ServiceInfo,
 } from './types.js';
 
 // ─── Enforcement Gate ──────────────────────────────────────────────────────

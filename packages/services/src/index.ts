@@ -44,3 +44,15 @@ export { createNotificationService } from './notification-service.js';
 // ─── Signer Service ───────────────────────────────────────────────────────
 export { createSignerService } from './signer-service.js';
 export type { SignerServiceOptions } from './signer-service.js';
+
+// ─── Relay Pool Service ───────────────────────────────────────────────────
+export { createRelayPoolService } from './relay-pool-service.js';
+export type { RelayPoolServiceOptions } from './relay-pool-service.js';
+
+// ─── Cache Service ────────────────────────────────────────────────────────
+export { createCacheService } from './cache-service.js';
+export type { CacheServiceOptions } from './cache-service.js';
+
+// ─── Coordinated Relay (composite service) ────────────────────────────────
+export { createCoordinatedRelay } from './coordinated-relay.js';
+export type { CoordinatedRelayOptions } from './coordinated-relay.js';

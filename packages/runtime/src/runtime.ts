@@ -21,7 +21,7 @@ declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
 import type {
   RuntimeHooks, NappKeyEntry, ConsentRequest, ConsentHandler,
-  ServiceHandler, ServiceRegistry,
+  ServiceHandler, ServiceRegistry, CompatibilityReport, ServiceInfo,
 } from './types.js';
 import { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
 import { handleDiscoveryReq, isDiscoveryReq, createServiceDiscoveryEvent } from './service-discovery.js';
@@ -144,6 +144,19 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
   // ─── Service Registry (static from hooks + dynamic from registerService) ──
   const serviceRegistry: ServiceRegistry = { ...(hooks.services ?? {}) };
 
+  // ─── Registered Services (for compatibility checks) ───────────────────────
+  // Tracks service name → ServiceInfo for compatibility checks (Phase 22).
+  // Populated by registerService / unregisterService.
+  const registeredServices = new Map<string, ServiceInfo>();
+  // Pre-populate from static hooks.services
+  for (const [name, handler] of Object.entries(serviceRegistry)) {
+    registeredServices.set(name, {
+      name: handler.descriptor.name,
+      version: handler.descriptor.version,
+      description: handler.descriptor.description,
+    });
+  }
+
   // ─── Discovery Subscription Tracking ──────────────────────────────────────
   /** Open kind 29010 subscriptions that should receive live service updates. */
   const discoverySubscriptions = new Map<string, DiscoverySubscription>();
@@ -232,6 +245,15 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     if (!hashTag) { rejectAuth('missing required aggregateHash tag'); return; }
     const aggregateHash = hashTag[1];
 
+    // Helper: cache manifest entry while preserving any pre-populated requires.
+    function cacheManifest(pubkey: string, dTag: string, hash: string): void {
+      const existingRequires = manifestCache.getRequires(pubkey, dTag);
+      manifestCache.set({
+        pubkey, dTag, aggregateHash: hash, verifiedAt: Date.now(),
+        requires: existingRequires.length > 0 ? existingRequires : undefined,
+      });
+    }
+
     const entry: NappKeyEntry = {
       pubkey: authEvent.pubkey, windowId, origin: '*',
       type: nappType, dTag, aggregateHash, registeredAt: Date.now(),
@@ -251,7 +273,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
           oldHash: previousCacheEntry!.aggregateHash, newHash: aggregateHash,
           resolve: (action) => {
             if (action === 'accept') {
-              manifestCache.set({ pubkey: authEvent.pubkey, dTag, aggregateHash, verifiedAt: Date.now() });
+              cacheManifest(authEvent.pubkey, dTag, aggregateHash);
               nappKeyRegistry.register(windowId, entry);
               nappKeyRegistry.clearPendingUpdate(windowId);
               const queued = pendingAuthQueue.get(windowId);
@@ -272,15 +294,25 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         const oldAcl = aclState.getEntry(authEvent.pubkey, dTag, previousCacheEntry!.aggregateHash);
         if (oldAcl) for (const cap of oldAcl.capabilities) aclState.grant(authEvent.pubkey, dTag, aggregateHash, cap as Capability);
       }
-      manifestCache.set({ pubkey: authEvent.pubkey, dTag, aggregateHash, verifiedAt: Date.now() });
+      cacheManifest(authEvent.pubkey, dTag, aggregateHash);
     }
 
     if (aggregateHash && !manifestCache.has(authEvent.pubkey, dTag, aggregateHash)) {
-      manifestCache.set({ pubkey: authEvent.pubkey, dTag, aggregateHash, verifiedAt: Date.now() });
+      cacheManifest(authEvent.pubkey, dTag, aggregateHash);
     }
 
     nappKeyRegistry.register(windowId, entry);
     pendingChallenges.delete(windowId);
+
+    // ─── Compatibility check (Phase 22) ─────────────────────────────────────
+    const requires = manifestCache.getRequires(authEvent.pubkey, dTag);
+    const isCompatible = checkCompatibility(requires, windowId, eventId);
+    if (!isCompatible) {
+      // Strict mode: blocked. Do not dispatch queued messages.
+      pendingAuthQueue.delete(windowId);
+      return;
+    }
+
     hooks.sendToNapplet(windowId, ['OK', eventId, true, '']);
 
     const queued = pendingAuthQueue.get(windowId);
@@ -289,6 +321,43 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     const userPubkey = hooks.auth.getUserPubkey();
     if (userPubkey) runtimeInstance.injectEvent('auth:identity-changed', { pubkey: userPubkey });
+  }
+
+  // ─── Compatibility Check (Phase 22) ─────────────────────────────────────
+
+  /**
+   * Check if a napplet's declared service requirements are satisfied.
+   * Called after AUTH succeeds but before queued messages are dispatched.
+   *
+   * Returns true if compatible (or permissive mode allows loading).
+   * Returns false only in strict mode when required services are missing.
+   */
+  function checkCompatibility(
+    requires: string[],
+    windowId: string,
+    eventId: string,
+  ): boolean {
+    if (requires.length === 0) return true;
+
+    const available: ServiceInfo[] = Array.from(registeredServices.values());
+    const registeredNames = new Set(registeredServices.keys());
+    const missing = requires.filter((name) => !registeredNames.has(name));
+    const compatible = missing.length === 0;
+
+    if (!compatible) {
+      const report: CompatibilityReport = { available, missing, compatible };
+      hooks.onCompatibilityIssue?.(report);
+
+      if (hooks.strictMode) {
+        hooks.sendToNapplet(windowId, [
+          'OK', eventId, false,
+          `blocked: missing required services: ${missing.join(', ')}`,
+        ]);
+        return false;
+      }
+    }
+
+    return true;
   }
 
   function handleEvent(msg: unknown[], windowId: string): void {
@@ -707,6 +776,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       subscriptions.clear();
       discoverySubscriptions.clear();
       eventBuffer.clear();
+      registeredServices.clear();
     },
 
     registerConsentHandler(handler: ConsentHandler): void {
@@ -715,6 +785,12 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     registerService(name: string, handler: ServiceHandler): void {
       serviceRegistry[name] = handler;
+      // Populate registeredServices Map for compatibility checks (Phase 22)
+      registeredServices.set(name, {
+        name: handler.descriptor.name,
+        version: handler.descriptor.version,
+        description: handler.descriptor.description,
+      });
       // Push discovery event to all open discovery subscriptions (D-10)
       if (discoverySubscriptions.size > 0) {
         const id = hooks.crypto.randomUUID().replace(/-/g, '').slice(0, 64).padEnd(64, '0');
@@ -730,6 +806,8 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     unregisterService(name: string): void {
       delete serviceRegistry[name];
+      // Remove from registeredServices Map for compatibility checks (Phase 22)
+      registeredServices.delete(name);
     },
 
     destroyWindow(windowId: string): void {
