@@ -42,13 +42,17 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ### Active
 
+- [ ] Service discovery protocol — implement kind 29010 REQ/EVENT/EOSE flow (SPEC.md Section 11)
+- [ ] Shim-side discovery API — napplet discovers available shell services post-AUTH
+- [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
+- [ ] Manifest `requires` tags — napplet manifest declares service dependencies for shell to check
+- [ ] Runtime service dispatch — route kind 29010 REQs to ServiceRegistry, dispatch INTER_PANE to handlers by topic prefix
+- [ ] Audio service implementation — first concrete service, wraps audio-manager as ServiceHandler
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
 - [ ] Event-ID triggered aggregate hash revalidation
 - [ ] Salt-based deterministic keypair derivation
-- [ ] Service implementations (audio, notifications) via RuntimeHooks.services
-- [ ] Service discovery protocol — napplet queries available shell services
 
 ### Out of Scope
 
@@ -115,22 +119,17 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
-## Current State (after v0.3.0)
+## Current Milestone: v0.4.0 Feature Negotiation & Service Discovery
 
-**Shipped:** v0.3.0 Runtime and Core (2026-03-31)
+**Goal:** Enable napplets to discover what services the shell/runtime provides and surface compatibility information to users, so napplets can adapt or inform rather than silently fail.
 
-**What was delivered:**
-- @napplet/core — zero-dep shared protocol types, constants, topics
-- @napplet/runtime — browser-agnostic protocol engine (14 exports, RuntimeHooks DI)
-- Shell reduced to thin browser adapter (746→180 lines)
-- Service extension design — ServiceRegistry types, kind 29010, SPEC.md Section 11
-- 180 tests green, shell exports cleaned up
-
-**Next milestone goals (v0.4.0):**
-- Service implementations (audio, notifications) via RuntimeHooks.services
-- Service discovery protocol (kind 29010 message flow)
-- npm publish all packages
-- Production demo deployment
+**Target features:**
+- Service discovery protocol (kind 29010 REQ/EVENT/EOSE flow)
+- Shim-side discovery API for napplets
+- Compatibility reporting (missing services surfaced to developer/user)
+- Manifest `requires` tags for service dependency declaration
+- Runtime service dispatch to ServiceRegistry handlers
+- Audio service as first concrete ServiceHandler implementation
 
 ---
-*Last updated: 2026-03-31 after v0.3.0 milestone*
+*Last updated: 2026-03-31 after v0.4.0 milestone start*
