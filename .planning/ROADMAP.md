@@ -54,7 +54,7 @@
 - [x] **Phase 19: Service Discovery Protocol** - Kind 29010 REQ/EVENT/EOSE synthetic response flow (completed 2026-03-31)
 - [x] **Phase 20: Concrete Services** - Audio service (first proof), notification service (generalization proof), core infrastructure as services (completed 2026-03-31)
 - [x] **Phase 21: Shim Discovery API** - discoverServices(), hasService(), hasServiceVersion() on window global (completed 2026-03-31)
-- [ ] **Phase 22: Negotiation & Compatibility** - Manifest requires tags, compatibility reporting, strict/permissive mode, undeclared usage consent
+- [x] **Phase 22: Negotiation & Compatibility** - Manifest requires tags, compatibility reporting, strict/permissive mode, undeclared usage consent (completed 2026-03-31)
 
 ## Phase Details
 
@@ -142,7 +142,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 19. Service Discovery Protocol | v0.4.0 | 0/2 | Complete    | 2026-03-31 |
 | 20. Concrete Services | v0.4.0 | 4/4 | Complete    | 2026-03-31 |
 | 21. Shim Discovery API | v0.4.0 | 2/2 | Complete    | 2026-03-31 |
-| 22. Negotiation & Compatibility | v0.4.0 | 3/4 | In Progress|  |
+| 22. Negotiation & Compatibility | v0.4.0 | 4/4 | Complete   | 2026-03-31 |
 | 22.1. Core Infrastructure Services | v0.4.0 | 0/4 | Planned | - |
 
 ### Phase 22.1: Core Infrastructure Services (INSERTED)
@@ -150,7 +150,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 **Goal:** Migrate relay pool, cache, and signer from hardcoded RuntimeHooks interfaces to registered services — completing the unified service model where all capabilities are discoverable and pluggable
 **Requirements**: SVC-04 (moved from Phase 20)
 **Depends on:** Phase 19 (service dispatch must exist), Phase 20 (pattern proven with audio/notifications)
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 22.1-01 — Signer service: extract handleSignerRequest as ServiceHandler (wave 1)

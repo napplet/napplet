@@ -26,7 +26,7 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 - [x] **NEG-02**: Runtime raises onCompatibilityIssue hook callback when required services are missing or version-incompatible
 - [x] **NEG-03**: In strict mode, missing required service blocks napplet loading
 - [x] **NEG-04**: In permissive mode (default), missing required service loads napplet with warning — shell host decides UX
-- [ ] **NEG-05**: Runtime detects undeclared service usage at dispatch time and raises consent-style warning (same pattern as ConsentRequest for destructive signing kinds)
+- [x] **NEG-05**: Runtime detects undeclared service usage at dispatch time and raises consent-style warning (same pattern as ConsentRequest for destructive signing kinds)
 - [x] **NEG-06**: Strict/permissive mode is configurable via RuntimeHooks
 
 ### Runtime Service Dispatch
@@ -124,7 +124,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NEG-02 | Phase 22 | Complete |
 | NEG-03 | Phase 22 | Complete |
 | NEG-04 | Phase 22 | Complete |
-| NEG-05 | Phase 22 | Pending |
+| NEG-05 | Phase 22 | Complete |
 | NEG-06 | Phase 22 | Complete |
 | COMPAT-01 | Phase 22 | Complete |
 | COMPAT-02 | Phase 22 | Complete |
