@@ -9,16 +9,16 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 ### Service Discovery Protocol
 
-- [ ] **DISC-01**: Runtime responds to kind 29010 REQ with EVENT per registered service followed by EOSE
-- [ ] **DISC-02**: Each discovery response event contains service name, semver version, and optional description (s/v/d tags per SPEC.md Section 11.2)
-- [ ] **DISC-03**: Discovery includes both core infrastructure services (relay pool, cache) and optional services (audio, notifications) — unified mechanism
-- [ ] **DISC-04**: Shell with no registered services responds with EOSE immediately (zero events)
+- [x] **DISC-01**: Runtime responds to kind 29010 REQ with EVENT per registered service followed by EOSE
+- [x] **DISC-02**: Each discovery response event contains service name, semver version, and optional description (s/v/d tags per SPEC.md Section 11.2)
+- [x] **DISC-03**: Discovery includes both core infrastructure services (relay pool, cache) and optional services (audio, notifications) — unified mechanism
+- [x] **DISC-04**: Shell with no registered services responds with EOSE immediately (zero events)
 
 ### Core Types & Utilities
 
-- [ ] **CORE-01**: ServiceDescriptor type lives in @napplet/core (shared by shim, runtime, shell)
-- [ ] **CORE-02**: ServiceHandler and ServiceRegistry interfaces live in @napplet/runtime
-- [ ] **CORE-03**: Service matching is name-only (presence/absence check) — no semver version ranges
+- [x] **CORE-01**: ServiceDescriptor type lives in @napplet/core (shared by shim, runtime, shell)
+- [x] **CORE-02**: ServiceHandler and ServiceRegistry interfaces live in @napplet/runtime
+- [x] **CORE-03**: Service matching is name-only (presence/absence check) — no semver version ranges
 
 ### Runtime Negotiation
 
@@ -31,16 +31,16 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 ### Runtime Service Dispatch
 
-- [ ] **DISP-01**: Runtime routes INTER_PANE events to the correct ServiceHandler based on topic prefix ({service-name}:{action})
-- [ ] **DISP-02**: Runtime calls ServiceHandler.onWindowDestroyed() on window teardown for per-window state cleanup
-- [ ] **DISP-03**: RuntimeHooks accepts a services registry for the shell/host to register service handlers
+- [x] **DISP-01**: Runtime routes INTER_PANE events to the correct ServiceHandler based on topic prefix ({service-name}:{action})
+- [x] **DISP-02**: Runtime calls ServiceHandler.onWindowDestroyed() on window teardown for per-window state cleanup
+- [x] **DISP-03**: RuntimeHooks accepts a services registry for the shell/host to register service handlers
 
 ### Shim Discovery API
 
-- [ ] **SHIM-01**: Napplet can call discoverServices() on a window global and receive typed ServiceInfo[]
-- [ ] **SHIM-02**: Napplet can call hasService(name) to check if a specific service is available
-- [ ] **SHIM-03**: Napplet can call hasServiceVersion(name, version) to check if discovered service matches a specific version string
-- [ ] **SHIM-04**: Discovery API is accessible via window global (same access pattern as window.nostr)
+- [x] **SHIM-01**: Napplet can call discoverServices() on a window global and receive typed ServiceInfo[]
+- [x] **SHIM-02**: Napplet can call hasService(name) to check if a specific service is available
+- [x] **SHIM-03**: Napplet can call hasServiceVersion(name, version) to check if discovered service matches a specific version string
+- [x] **SHIM-04**: Discovery API is accessible via window global (same access pattern as window.nostr)
 
 ### Manifest & Compatibility
 
@@ -53,7 +53,7 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 - [x] **SVC-01**: Audio service wraps existing audio-manager as a ServiceHandler with descriptor (name: 'audio', version, description)
 - [x] **SVC-02**: Audio service uses audio:* topic prefix only — shell:audio-* legacy prefix deleted (alpha, no external consumers)
 - [x] **SVC-03**: Notification service implemented as second ServiceHandler (proves the pattern generalizes beyond audio)
-- [ ] **SVC-04**: Core infrastructure (relay pool, cache) exposed as discoverable services with descriptors
+- [x] **SVC-04**: Core infrastructure (relay pool, cache) exposed as discoverable services with descriptors
 
 ## Future Requirements
 
@@ -102,24 +102,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 18 | Pending |
-| CORE-02 | Phase 18 | Pending |
-| CORE-03 | Phase 18 | Pending |
-| DISP-01 | Phase 18 | Pending |
-| DISP-02 | Phase 18 | Pending |
-| DISP-03 | Phase 18 | Pending |
-| DISC-01 | Phase 19 | Pending |
-| DISC-02 | Phase 19 | Pending |
-| DISC-03 | Phase 19 | Pending |
-| DISC-04 | Phase 19 | Pending |
+| CORE-01 | Phase 18 | Complete |
+| CORE-02 | Phase 18 | Complete |
+| CORE-03 | Phase 18 | Complete |
+| DISP-01 | Phase 18 | Complete |
+| DISP-02 | Phase 18 | Complete |
+| DISP-03 | Phase 18 | Complete |
+| DISC-01 | Phase 19 | Complete |
+| DISC-02 | Phase 19 | Complete |
+| DISC-03 | Phase 19 | Complete |
+| DISC-04 | Phase 19 | Complete |
 | SVC-01 | Phase 20 | Complete |
 | SVC-02 | Phase 20 | Complete |
 | SVC-03 | Phase 20 | Complete |
-| SVC-04 | Phase 22.1 | Pending |
-| SHIM-01 | Phase 21 | Pending |
-| SHIM-02 | Phase 21 | Pending |
-| SHIM-03 | Phase 21 | Pending |
-| SHIM-04 | Phase 21 | Pending |
+| SVC-04 | Phase 22.1 | Complete |
+| SHIM-01 | Phase 21 | Complete |
+| SHIM-02 | Phase 21 | Complete |
+| SHIM-03 | Phase 21 | Complete |
+| SHIM-04 | Phase 21 | Complete |
 | NEG-01 | Phase 22 | Complete |
 | NEG-02 | Phase 22 | Complete |
 | NEG-03 | Phase 22 | Complete |
@@ -134,7 +134,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 - v0.4.0 requirements: 27 total (corrected from initial 24 count)
 - Mapped to phases: 27
 - Unmapped: 0
+- Complete: 27/27
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 after roadmap creation*
+*Last updated: 2026-03-31 — all 27 checkboxes synced to audit-confirmed implementations*
