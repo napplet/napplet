@@ -77,7 +77,7 @@
   1. When a napplet sends a REQ filtering for kind 29010, the runtime responds with one synthetic EVENT per registered service containing s (name), v (version), and optional d (description) tags
   2. A shell with no registered services responds with EOSE immediately and zero EVENTs
   3. Both core infrastructure services (relay pool, cache) and optional services (audio, notifications) appear in the same discovery response — napplets see a unified list
-**Plans**: TBD
+**Plans**: 19-01 (discovery logic, wave 1), 19-02 (tests, wave 2)
 
 ### Phase 20: Concrete Services
 **Goal**: Audio and notification services prove the ServiceHandler pattern works end-to-end — audio wraps the existing audio-manager, notifications generalize the pattern, core infrastructure is discoverable
