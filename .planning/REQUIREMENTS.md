@@ -22,10 +22,10 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 ### Runtime Negotiation
 
-- [ ] **NEG-01**: Runtime reads manifest requires tags and checks them against ServiceRegistry at napplet load time
-- [ ] **NEG-02**: Runtime raises onCompatibilityIssue hook callback when required services are missing or version-incompatible
-- [ ] **NEG-03**: In strict mode, missing required service blocks napplet loading
-- [ ] **NEG-04**: In permissive mode (default), missing required service loads napplet with warning — shell host decides UX
+- [x] **NEG-01**: Runtime reads manifest requires tags and checks them against ServiceRegistry at napplet load time
+- [x] **NEG-02**: Runtime raises onCompatibilityIssue hook callback when required services are missing or version-incompatible
+- [x] **NEG-03**: In strict mode, missing required service blocks napplet loading
+- [x] **NEG-04**: In permissive mode (default), missing required service loads napplet with warning — shell host decides UX
 - [ ] **NEG-05**: Runtime detects undeclared service usage at dispatch time and raises consent-style warning (same pattern as ConsentRequest for destructive signing kinds)
 - [x] **NEG-06**: Strict/permissive mode is configurable via RuntimeHooks
 
@@ -46,7 +46,7 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 - [x] **COMPAT-01**: Vite plugin injects requires tags (["requires", "service-name", "version-range"]) into NIP-5A manifest
 - [x] **COMPAT-02**: CompatibilityReport with available/missing/incompatible services and compatible boolean is surfaced via runtime hook
-- [ ] **COMPAT-03**: Shell host receives compatibility info before napplet starts real work (pre-load or post-AUTH, before first user interaction)
+- [x] **COMPAT-03**: Shell host receives compatibility info before napplet starts real work (pre-load or post-AUTH, before first user interaction)
 
 ### Concrete Services
 
@@ -120,15 +120,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SHIM-02 | Phase 21 | Pending |
 | SHIM-03 | Phase 21 | Pending |
 | SHIM-04 | Phase 21 | Pending |
-| NEG-01 | Phase 22 | Pending |
-| NEG-02 | Phase 22 | Pending |
-| NEG-03 | Phase 22 | Pending |
-| NEG-04 | Phase 22 | Pending |
+| NEG-01 | Phase 22 | Complete |
+| NEG-02 | Phase 22 | Complete |
+| NEG-03 | Phase 22 | Complete |
+| NEG-04 | Phase 22 | Complete |
 | NEG-05 | Phase 22 | Pending |
 | NEG-06 | Phase 22 | Complete |
 | COMPAT-01 | Phase 22 | Complete |
 | COMPAT-02 | Phase 22 | Complete |
-| COMPAT-03 | Phase 22 | Pending |
+| COMPAT-03 | Phase 22 | Complete |
 
 **Coverage:**
 - v0.4.0 requirements: 27 total (corrected from initial 24 count)
