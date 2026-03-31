@@ -4,13 +4,13 @@ milestone: v0.3.0
 milestone_name: Runtime and Core
 status: executing
 stopped_at: v0.3.0 roadmap created, ready to plan Phase 12
-last_updated: "2026-03-31T10:54:24.504Z"
-last_activity: 2026-03-31 -- Phase 15 execution started
+last_updated: "2026-03-31T11:00:42.838Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 17
-  completed_plans: 8
+  completed_plans: 13
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 ## Current Position
 
-Phase: 15 (service-extension-design) — EXECUTING
-Plan: 1 of 2
+Phase: 16
+Plan: Not started
 Status: Executing Phase 15
-Last activity: 2026-03-31 -- Phase 15 execution started
+Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
 
