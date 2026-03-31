@@ -24,6 +24,8 @@ import type {
   ServiceHandler, ServiceRegistry,
 } from './types.js';
 import { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
+import { handleDiscoveryReq, isDiscoveryReq, createServiceDiscoveryEvent } from './service-discovery.js';
+import type { DiscoverySubscription } from './service-discovery.js';
 import { createNappKeyRegistry } from './napp-key-registry.js';
 import type { NappKeyRegistry } from './napp-key-registry.js';
 import { createAclState } from './acl-state.js';
@@ -141,6 +143,10 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
   // ─── Service Registry (static from hooks + dynamic from registerService) ──
   const serviceRegistry: ServiceRegistry = { ...(hooks.services ?? {}) };
+
+  // ─── Discovery Subscription Tracking ──────────────────────────────────────
+  /** Open kind 29010 subscriptions that should receive live service updates. */
+  const discoverySubscriptions = new Map<string, DiscoverySubscription>();
 
   // ─── Sub-module instances ────────────────────────────────────────────────
 
@@ -349,6 +355,19 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       if (!result.allowed) { hooks.sendToNapplet(windowId, ['CLOSED', subId, formatDenialReason(result.capability)]); return; }
     }
 
+    // ─── Service Discovery Interception ──────────────────────────────────────
+    if (isDiscoveryReq(filters)) {
+      const send = (msg: unknown[]): void => hooks.sendToNapplet(windowId, msg);
+      const generateId = (): string =>
+        hooks.crypto.randomUUID().replace(/-/g, '').slice(0, 64).padEnd(64, '0');
+      const sub = handleDiscoveryReq(windowId, subId, serviceRegistry, send, generateId);
+      const discSubKey = `${windowId}:${subId}`;
+      discoverySubscriptions.set(discSubKey, sub);
+      // Also track in main subscriptions map for CLOSE handling
+      subscriptions.set(discSubKey, { windowId, filters });
+      return;
+    }
+
     const subKey = `${windowId}:${subId}`;
     subscriptions.set(subKey, { windowId, filters });
 
@@ -408,6 +427,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     if (typeof subId !== 'string') return;
     const subKey = `${windowId}:${subId}`;
     subscriptions.delete(subKey);
+    discoverySubscriptions.delete(subKey);
     hooks.relayPool.untrackSubscription(subKey);
   }
 
@@ -685,6 +705,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       authInFlight.clear();
       replayDetector.clear();
       subscriptions.clear();
+      discoverySubscriptions.clear();
       eventBuffer.clear();
     },
 
@@ -694,6 +715,17 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     registerService(name: string, handler: ServiceHandler): void {
       serviceRegistry[name] = handler;
+      // Push discovery event to all open discovery subscriptions (D-10)
+      if (discoverySubscriptions.size > 0) {
+        const id = hooks.crypto.randomUUID().replace(/-/g, '').slice(0, 64).padEnd(64, '0');
+        const event = createServiceDiscoveryEvent(handler, id);
+        for (const [subKey, sub] of discoverySubscriptions) {
+          // Only push if the subscription is still active
+          if (subscriptions.has(subKey)) {
+            hooks.sendToNapplet(sub.windowId, ['EVENT', sub.subId, event]);
+          }
+        }
+      }
     },
 
     unregisterService(name: string): void {
@@ -706,6 +738,12 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         if (key.startsWith(`${windowId}:`)) {
           subscriptions.delete(key);
           hooks.relayPool.untrackSubscription(key);
+        }
+      }
+      // Clean up discovery subscriptions for this window
+      for (const [key] of discoverySubscriptions) {
+        if (key.startsWith(`${windowId}:`)) {
+          discoverySubscriptions.delete(key);
         }
       }
       // Clean up pending auth state

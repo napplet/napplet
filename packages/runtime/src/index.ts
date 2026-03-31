@@ -63,3 +63,7 @@ export { handleStateRequest, cleanupNappState } from './state-handler.js';
 
 // ─── Service Dispatch ─────────────────────────────────────────────────────
 export { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
+
+// ─── Service Discovery ────────────────────────────────────────────────────────
+export { createServiceDiscoveryEvent, handleDiscoveryReq, isDiscoveryReq } from './service-discovery.js';
+export type { DiscoverySubscription } from './service-discovery.js';
