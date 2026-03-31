@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Feature Negotiation & Service Discovery
-status: defining-requirements
-stopped_at: Milestone started
+status: ready-to-plan
+stopped_at: Roadmap created
 last_updated: "2026-03-31"
 last_activity: 2026-03-31
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Defining requirements for v0.4.0
+**Current focus:** Phase 18 — Core Types & Runtime Dispatch
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-31 — Milestone v0.4.0 started
+Phase: 18 of 22 (Core Types & Runtime Dispatch)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-03-31 — Roadmap created for v0.4.0
+
+Progress: [..........] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0 (this milestone)
+- Average duration: —
+- Total execution time: —
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -42,6 +59,8 @@ Recent decisions affecting current work:
 - [v0.3.0]: ServiceDescriptor, ServiceHandler, ServiceRegistry interfaces defined in @napplet/shell types
 - [v0.3.0]: SPEC.md Section 11 defines kind 29010 service discovery protocol (OPEN status)
 - [v0.3.0]: Two-layer model — ACL = permission, service discovery = availability
+- [v0.4.0]: ServiceDescriptor moves to @napplet/core; ServiceHandler/ServiceRegistry move to @napplet/runtime
+- [v0.4.0]: Audio topic migration (shell:audio-* to audio:*) must be backwards-compatible with dual-prefix handling
 
 ### Pending Todos
 
@@ -49,4 +68,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- CARRIED: npm publish still blocked on human npm auth. Deferred to v0.4.0+ per REQUIREMENTS.md.
+- CARRIED: npm publish still blocked on human npm auth. Deferred to post-v0.4.0 per REQUIREMENTS.md.
+
+## Session Continuity
+
+Last session: 2026-03-31
+Stopped at: Roadmap created for v0.4.0 milestone (5 phases, 27 requirements mapped)
+Resume file: None

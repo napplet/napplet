@@ -102,13 +102,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| CORE-01 | Phase 18 | Pending |
+| CORE-02 | Phase 18 | Pending |
+| CORE-03 | Phase 18 | Pending |
+| DISP-01 | Phase 18 | Pending |
+| DISP-02 | Phase 18 | Pending |
+| DISP-03 | Phase 18 | Pending |
+| DISC-01 | Phase 19 | Pending |
+| DISC-02 | Phase 19 | Pending |
+| DISC-03 | Phase 19 | Pending |
+| DISC-04 | Phase 19 | Pending |
+| SVC-01 | Phase 20 | Pending |
+| SVC-02 | Phase 20 | Pending |
+| SVC-03 | Phase 20 | Pending |
+| SVC-04 | Phase 20 | Pending |
+| SHIM-01 | Phase 21 | Pending |
+| SHIM-02 | Phase 21 | Pending |
+| SHIM-03 | Phase 21 | Pending |
+| SHIM-04 | Phase 21 | Pending |
+| NEG-01 | Phase 22 | Pending |
+| NEG-02 | Phase 22 | Pending |
+| NEG-03 | Phase 22 | Pending |
+| NEG-04 | Phase 22 | Pending |
+| NEG-05 | Phase 22 | Pending |
+| NEG-06 | Phase 22 | Pending |
+| COMPAT-01 | Phase 22 | Pending |
+| COMPAT-02 | Phase 22 | Pending |
+| COMPAT-03 | Phase 22 | Pending |
 
 **Coverage:**
-- v0.4.0 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24
+- v0.4.0 requirements: 27 total (corrected from initial 24 count)
+- Mapped to phases: 27
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 after initial definition*
+*Last updated: 2026-03-31 after roadmap creation*
