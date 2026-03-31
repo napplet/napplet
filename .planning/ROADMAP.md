@@ -4,7 +4,7 @@
 
 - ✅ **v0.1.0 Alpha** — Phases 1-6 (shipped 2026-03-30) — [Archive](milestones/v0.1.0-ROADMAP.md)
 - ✅ **v0.2.0 Shell Architecture Cleanup** — Phases 7-11 (shipped 2026-03-31) — [Archive](milestones/v0.2.0-ROADMAP.md)
-- 🚧 **v0.3.0 Runtime and Core** — Phases 12-16 (in progress)
+- 🚧 **v0.3.0 Runtime and Core** — Phases 12-17 (in progress)
 
 ## Phases
 
@@ -80,10 +80,22 @@
   4. An integration test verifies the full chain: shell adapter -> runtime -> acl -> core types
 **Plans**: 16-01 (core import verification), 16-02 (runtime dispatch unit tests), 16-03 (shell-runtime-acl-core integration), 16-04 (e2e suite green)
 
+### Phase 17: Shell Export Cleanup
+**Goal**: Shell's public API exports only live, tested code — no dead re-exports from pre-runtime refactor, no duplicate modules
+**Depends on**: Phase 16
+**Requirements**: CLEAN-01, CLEAN-02, CLEAN-03
+**Gap Closure**: Closes tech debt from v0.3.0-MILESTONE-AUDIT.md (SHELL-04, SHELL-06)
+**Success Criteria** (what must be TRUE):
+  1. Shell index.ts does not re-export handleStateRequest or cleanupNappState from state-proxy.ts
+  2. Shell's createEnforceGate is re-exported from @napplet/runtime, not from a local duplicate enforce.ts
+  3. Shell singletons (nappKeyRegistry, aclStore) are either removed from public exports or documented as internal-only
+  4. pnpm build && pnpm type-check pass; all 180 tests green
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16
+Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 (Phase 14 and Phase 15 can execute in parallel after Phase 13)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -104,3 +116,4 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16
 | 14. Shell Adapter and Shim Rewire | v0.3.0 | 0/0 | Complete    | 2026-03-31 |
 | 15. Service Extension Design | v0.3.0 | 2/2 | Complete    | 2026-03-31 |
 | 16. Verification | v0.3.0 | 0/4 | Complete    | 2026-03-31 |
+| 17. Shell Export Cleanup | v0.3.0 | 0/0 | Not started | - |
