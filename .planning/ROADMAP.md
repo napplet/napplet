@@ -90,7 +90,9 @@
   2. Shell's createEnforceGate is re-exported from @napplet/runtime, not from a local duplicate enforce.ts
   3. Shell singletons (nappKeyRegistry, aclStore) are either removed from public exports or documented as internal-only
   4. pnpm build && pnpm type-check pass; all 180 tests green
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 17-01-PLAN.md — Clean shell exports: remove dead re-exports, re-point enforce to runtime, remove disconnected singletons
 
 ## Progress
 
@@ -116,4 +118,4 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16 -> 17
 | 14. Shell Adapter and Shim Rewire | v0.3.0 | 0/0 | Complete    | 2026-03-31 |
 | 15. Service Extension Design | v0.3.0 | 2/2 | Complete    | 2026-03-31 |
 | 16. Verification | v0.3.0 | 0/4 | Complete    | 2026-03-31 |
-| 17. Shell Export Cleanup | v0.3.0 | 0/0 | Not started | - |
+| 17. Shell Export Cleanup | v0.3.0 | 0/1 | Not started | - |
