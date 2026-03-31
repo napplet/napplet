@@ -59,7 +59,7 @@ async function authenticateWindow(
   const authEvent = makeAuthEvent(challenge);
   runtime.handleMessage(windowId, ['AUTH', authEvent]);
   // Wait for async verifyEvent
-  await new Promise<void>((resolve) => setTimeout(resolve, 10));
+  await new Promise<void>((resolve) => setTimeout(() => resolve(), 10));
 }
 
 function makeDiscoveryReq(subId: string): unknown[] {
