@@ -10,6 +10,7 @@ import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js'
 import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _setInterPaneEventSender } from './state-shim.js';
 import { subscribe, publish } from './relay-shim.js';
+import { discoverServices, hasService, hasServiceVersion } from './discovery-shim.js';
 import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION } from './types.js';
 import type { NostrEvent } from './types.js';
 
@@ -21,6 +22,10 @@ export type { NostrEvent, NostrFilter } from './types.js';
 
 // State shim (napp-side localStorage proxy)
 export { nappState, nappStorage } from './state-shim.js';
+
+// Service discovery API (window.napplet)
+export { discoverServices, hasService, hasServiceVersion } from './discovery-shim.js';
+export type { ServiceInfo } from './discovery-shim.js';
 
 /**
  * Broadcast an inter-pane event to other napps via the shell.
@@ -286,6 +291,14 @@ function handleSignerResponse(event: NostrEvent): void {
       return sendSignerRequest('nip44.decrypt', { pubkey, ciphertext }) as Promise<string>;
     },
   },
+};
+
+// ─── window.napplet discovery API installation ────────────────────────────────
+
+(window as unknown as { napplet: unknown }).napplet = {
+  discoverServices,
+  hasService,
+  hasServiceVersion,
 };
 
 // ─── Initialize ───────────────────────────────────────────────────────────────
