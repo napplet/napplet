@@ -66,7 +66,7 @@
 - [x] **Phase 23: New Package READMEs** - Create READMEs for the four new packages: @napplet/acl, @napplet/core, @napplet/runtime, @napplet/services
 - [x] **Phase 24: Root and Interface READMEs** - Update root README and existing package READMEs: shim, shell, vite-plugin to reflect v0.4.0 reality
 - [x] **Phase 25: SPEC.md Updates** - Update SPEC.md Section 11, rename legacy identifiers, and document the requires/compat protocol (completed 2026-03-31)
-- [ ] **Phase 26: Skills Directory** - Create agentskills.io-format skill files: build-napplet, integrate-shell, add-service
+- [x] **Phase 26: Skills Directory** - Create agentskills.io-format skill files: build-napplet, integrate-shell, add-service (completed 2026-03-31)
 
 ## Phase Details
 
@@ -143,4 +143,4 @@
 | 23. New Package READMEs | v0.5.0 | 4/4 | Complete | 2026-03-31 |
 | 24. Root and Interface READMEs | v0.5.0 | 0/TBD | Not started | - |
 | 25. SPEC.md Updates | v0.5.0 | 1/1 | Complete    | 2026-03-31 |
-| 26. Skills Directory | v0.5.0 | 0/TBD | Not started | - |
+| 26. Skills Directory | v0.5.0 | 3/3 | Complete    | 2026-03-31 |
