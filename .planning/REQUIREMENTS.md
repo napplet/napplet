@@ -18,7 +18,7 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 - [ ] **CORE-01**: ServiceDescriptor type lives in @napplet/core (shared by shim, runtime, shell)
 - [ ] **CORE-02**: ServiceHandler and ServiceRegistry interfaces live in @napplet/runtime
-- [ ] **CORE-03**: Inline semver utility in @napplet/core supports caret (^), greater-than-or-equal (>=), and exact match ranges (~60 lines, no external deps)
+- [ ] **CORE-03**: Service matching is name-only (presence/absence check) — no semver version ranges
 
 ### Runtime Negotiation
 
@@ -39,7 +39,7 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 - [ ] **SHIM-01**: Napplet can call discoverServices() on a window global and receive typed ServiceInfo[]
 - [ ] **SHIM-02**: Napplet can call hasService(name) to check if a specific service is available
-- [ ] **SHIM-03**: Napplet can call hasServiceVersion(name, range) to check semver compatibility of a discovered service
+- [ ] **SHIM-03**: Napplet can call hasServiceVersion(name, version) to check if discovered service matches a specific version string
 - [ ] **SHIM-04**: Discovery API is accessible via window global (same access pattern as window.nostr)
 
 ### Manifest & Compatibility
@@ -51,7 +51,7 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 ### Concrete Services
 
 - [ ] **SVC-01**: Audio service wraps existing audio-manager as a ServiceHandler with descriptor (name: 'audio', version, description)
-- [ ] **SVC-02**: Both audio:* (new convention) and shell:audio-* (legacy) topic prefixes are handled for backwards compatibility
+- [ ] **SVC-02**: Audio service uses audio:* topic prefix only — shell:audio-* legacy prefix deleted (alpha, no external consumers)
 - [ ] **SVC-03**: Notification service implemented as second ServiceHandler (proves the pattern generalizes beyond audio)
 - [ ] **SVC-04**: Core infrastructure (relay pool, cache) exposed as discoverable services with descriptors
 
