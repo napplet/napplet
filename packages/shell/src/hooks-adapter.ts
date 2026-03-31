@@ -327,5 +327,6 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
     relayConfig,
     dm,
     onAclCheck: shellHooks.onAclCheck,
+    services: shellHooks.services,
   };
 }

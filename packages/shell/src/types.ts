@@ -7,7 +7,11 @@ export { ALL_CAPABILITIES, BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSIO
 export type { BusKindValue } from '@napplet/core';
 
 // Import Capability type locally for use in this file's shell-specific types
-import type { Capability, NostrEvent, NostrFilter } from '@napplet/core';
+import type { Capability, NostrEvent, NostrFilter, ServiceDescriptor } from '@napplet/core';
+import type { ServiceHandler, ServiceRegistry } from '@napplet/runtime';
+
+// Re-export service types so shell consumers can still import from @napplet/shell
+export type { ServiceDescriptor, ServiceHandler, ServiceRegistry };
 
 // ─── Registry Types ─────────────────────────────────────────────────────────
 
@@ -198,92 +202,6 @@ export interface AclCheckEvent {
   capability: string;
   /** The enforcement decision. */
   decision: 'allow' | 'deny';
-}
-
-// ─── Service Extension Types ────────────────────────────────────────────────
-
-/**
- * Metadata describing a registered shell service.
- * Services are optional capabilities a shell provides beyond the core protocol.
- *
- * @example
- * ```ts
- * const descriptor: ServiceDescriptor = {
- *   name: 'audio',
- *   version: '1.0.0',
- *   description: 'Audio playback management and mute control',
- * };
- * ```
- */
-export interface ServiceDescriptor {
-  /** Unique service identifier (e.g., 'audio', 'notifications', 'clipboard'). */
-  name: string;
-  /** Semver version of the service implementation. */
-  version: string;
-  /** Human-readable description of the service. */
-  description?: string;
-}
-
-/**
- * Handler for service-specific messages from napplets.
- * The shell dispatches service messages to the appropriate handler based on the
- * service name extracted from the topic prefix.
- *
- * @example
- * ```ts
- * const handler: ServiceHandler = {
- *   descriptor: { name: 'audio', version: '1.0.0' },
- *   handleRequest(windowId, topic, content, event) {
- *     if (topic === 'audio:register') {
- *       audioManager.register(windowId, content.nappClass, content.title);
- *     }
- *   },
- * };
- * ```
- */
-export interface ServiceHandler {
-  /** Metadata describing this service. */
-  descriptor: ServiceDescriptor;
-  /**
-   * Handle a service request from a napplet.
-   *
-   * @param windowId - The requesting napplet's window identifier
-   * @param topic - The full topic string (e.g., 'audio:register')
-   * @param content - Parsed JSON content from the event
-   * @param event - The raw NostrEvent for advanced use cases
-   */
-  handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void;
-  /**
-   * Called when a napplet window is destroyed. Services should clean up
-   * any state associated with the window.
-   *
-   * @param windowId - The destroyed napplet's window identifier
-   */
-  onWindowDestroyed?(windowId: string): void;
-}
-
-/**
- * Registry of shell services available to napplets.
- * The service registry is the extension point for adding new capabilities
- * to the shell without protocol changes.
- *
- * @example
- * ```ts
- * const services: ServiceRegistry = {
- *   audio: {
- *     descriptor: { name: 'audio', version: '1.0.0' },
- *     handleRequest(windowId, topic, content) { ... },
- *     onWindowDestroyed(windowId) { ... },
- *   },
- *   notifications: {
- *     descriptor: { name: 'notifications', version: '1.0.0' },
- *     handleRequest(windowId, topic, content) { ... },
- *   },
- * };
- * ```
- */
-export interface ServiceRegistry {
-  [serviceName: string]: ServiceHandler;
 }
 
 // ─── Shell Hooks ────────────────────────────────────────────────────────────
