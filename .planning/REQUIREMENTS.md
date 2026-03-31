@@ -44,7 +44,7 @@ Requirements for Feature Negotiation & Service Discovery milestone.
 
 ### Manifest & Compatibility
 
-- [ ] **COMPAT-01**: Vite plugin injects requires tags (["requires", "service-name", "version-range"]) into NIP-5A manifest
+- [x] **COMPAT-01**: Vite plugin injects requires tags (["requires", "service-name", "version-range"]) into NIP-5A manifest
 - [ ] **COMPAT-02**: CompatibilityReport with available/missing/incompatible services and compatible boolean is surfaced via runtime hook
 - [ ] **COMPAT-03**: Shell host receives compatibility info before napplet starts real work (pre-load or post-AUTH, before first user interaction)
 
@@ -126,7 +126,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NEG-04 | Phase 22 | Pending |
 | NEG-05 | Phase 22 | Pending |
 | NEG-06 | Phase 22 | Pending |
-| COMPAT-01 | Phase 22 | Pending |
+| COMPAT-01 | Phase 22 | Complete |
 | COMPAT-02 | Phase 22 | Pending |
 | COMPAT-03 | Phase 22 | Pending |
 

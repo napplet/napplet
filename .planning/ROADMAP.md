@@ -142,7 +142,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 19. Service Discovery Protocol | v0.4.0 | 0/2 | Complete    | 2026-03-31 |
 | 20. Concrete Services | v0.4.0 | 4/4 | Complete    | 2026-03-31 |
 | 21. Shim Discovery API | v0.4.0 | 2/2 | Complete    | 2026-03-31 |
-| 22. Negotiation & Compatibility | v0.4.0 | 0/4 | Planned | - |
+| 22. Negotiation & Compatibility | v0.4.0 | 1/4 | In Progress|  |
 | 22.1. Core Infrastructure Services | v0.4.0 | 0/4 | Planned | - |
 
 ### Phase 22.1: Core Infrastructure Services (INSERTED)
@@ -150,7 +150,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 **Goal:** Migrate relay pool, cache, and signer from hardcoded RuntimeHooks interfaces to registered services — completing the unified service model where all capabilities are discoverable and pluggable
 **Requirements**: SVC-04 (moved from Phase 20)
 **Depends on:** Phase 19 (service dispatch must exist), Phase 20 (pattern proven with audio/notifications)
-**Plans:** 4/4 plans complete
+**Plans:** 1/4 plans executed
 
 Plans:
 - [ ] 22.1-01 — Signer service: extract handleSignerRequest as ServiceHandler (wave 1)
