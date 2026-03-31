@@ -143,7 +143,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 20. Concrete Services | v0.4.0 | 4/4 | Complete    | 2026-03-31 |
 | 21. Shim Discovery API | v0.4.0 | 2/2 | Complete    | 2026-03-31 |
 | 22. Negotiation & Compatibility | v0.4.0 | 4/4 | Complete    | 2026-03-31 |
-| 22.1. Core Infrastructure Services | v0.4.0 | 0/4 | Planned | - |
+| 22.1. Core Infrastructure Services | v0.4.0 | 4/4 | Complete | 2026-03-31 |
 
 ### Phase 22.1: Core Infrastructure Services (INSERTED)
 
@@ -153,7 +153,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 **Plans:** 4/4 plans complete
 
 Plans:
-- [ ] 22.1-01 — Signer service: extract handleSignerRequest as ServiceHandler (wave 1)
-- [ ] 22.1-02 — Relay pool and cache services: individual ServiceHandler implementations (wave 2)
-- [ ] 22.1-03 — Coordinated relay helper: createCoordinatedRelay composite service (wave 2)
-- [ ] 22.1-04 — Runtime migration: service dispatch for signer, relay, cache (wave 3)
+- [x] 22.1-01 — Signer service: extract handleSignerRequest as ServiceHandler (wave 1)
+- [x] 22.1-02 — Relay pool and cache services: individual ServiceHandler implementations (wave 2)
+- [x] 22.1-03 — Coordinated relay helper: createCoordinatedRelay composite service (wave 2)
+- [x] 22.1-04 — Runtime migration: service dispatch for signer, relay, cache (wave 3)

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Feature Negotiation & Service Discovery
-status: verifying
-stopped_at: All phases discussed
-last_updated: "2026-03-31T17:55:50.099Z"
+status: complete
+stopped_at: Phase 22.1 complete
+last_updated: "2026-03-31T18:00:00.000Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 19
-  completed_plans: 19
-  percent: 17
+  completed_phases: 6
+  total_plans: 23
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 22 — negotiation-compatibility
+**Current focus:** Phase 22.1 complete — v0.4.0 milestone complete
 
 ## Current Position
 
 Phase: 22.1
-Plan: Not started
-Status: Phase complete — ready for verification
+Plan: All 4 plans complete
+Status: Phase 22.1 complete — milestone v0.4.0 complete
 Last activity: 2026-03-31
 
 Progress: [██░░░░░░░░] 17%
