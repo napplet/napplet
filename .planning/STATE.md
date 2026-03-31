@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.5.0
 milestone_name: Documentation & Developer Skills
-status: complete
-stopped_at: Phase 24 complete — root + 3 pre-existing package READMEs updated
-last_updated: "2026-03-31T23:30:00.000Z"
-last_activity: 2026-03-31
+status: executing
+stopped_at: Phase 23 complete
+last_updated: "2026-03-31T21:52:23.319Z"
+last_activity: 2026-03-31 -- Phase 25 execution started
 progress:
   total_phases: 4
-  completed_phases: 4
-  total_plans: 16
-  completed_plans: 16
-  percent: 100
+  completed_phases: 1
+  total_plans: 9
+  completed_plans: 4
 ---
 
 # Project State
@@ -21,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31 after v0.4.0 archive)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.5.0 milestone — Phase 24 complete, milestone complete
+**Current focus:** Phase 25 — spec-md-updates
 
 ## Current Position
 
-Phase: 24 — Root and Interface READMEs
-Plan: — complete
-Status: All 4 phases complete — v0.5.0 Documentation & Developer Skills milestone done
-Last activity: 2026-03-31 — Phase 24 complete: README.md, packages/shim/README.md, packages/shell/README.md, packages/vite-plugin/README.md
+Phase: 25 (spec-md-updates) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 25
+Last activity: 2026-03-31 -- Phase 25 execution started
 
 ## Accumulated Context
 
