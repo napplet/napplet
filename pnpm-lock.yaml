@@ -105,6 +105,22 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/runtime:
+    dependencies:
+      '@napplet/acl':
+        specifier: workspace:*
+        version: link:../acl
+      '@napplet/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/shell:
     dependencies:
       '@napplet/core':
