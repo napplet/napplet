@@ -32,3 +32,7 @@ export type {
   Notification,
   NotificationServiceOptions,
 } from './types.js';
+
+// ─── Audio Service ─────────────────────────────────────────────────────────
+
+export { createAudioService } from './audio-service.js';
