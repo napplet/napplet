@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Feature Negotiation & Service Discovery
 status: executing
-stopped_at: Phase 22 planned (4 plans in 2 waves)
-last_updated: "2026-03-31T18:00:00.000Z"
-last_activity: 2026-03-31 — Phase 22 planned (negotiation & compatibility)
+stopped_at: Phase 18 complete — ready for Phase 19
+last_updated: "2026-03-31T17:15:00.000Z"
+last_activity: 2026-03-31 — Phase 18 complete (core types & runtime dispatch)
 progress:
   total_phases: 6
-  completed_phases: 0
-  total_plans: 15
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 19
+  completed_plans: 3
+  percent: 17
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 18 — Core Types & Runtime Dispatch
+**Current focus:** Phase 18 — core-types-runtime-dispatch
 
 ## Current Position
 
-Phase: 18 of 22 (Core Types & Runtime Dispatch)
-Plan: 3 plans in 2 waves
-Status: Replanned — ready to execute
-Last activity: 2026-03-31 — Phase 18 replanned (handleMessage interface)
+Phase: 19 (service-discovery-protocol) — READY TO EXECUTE
+Plan: 0 of 2
+Status: Phase 18 complete — Phase 19 unblocked
+Last activity: 2026-03-31 — Phase 18 complete (3/3 plans)
 
-Progress: [..........] 0%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 

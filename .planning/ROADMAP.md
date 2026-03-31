@@ -50,7 +50,7 @@
 
 ### v0.4.0 Feature Negotiation & Service Discovery (In Progress)
 
-- [ ] **Phase 18: Core Types & Runtime Dispatch** - ServiceDescriptor in core, ServiceHandler/ServiceRegistry in runtime, topic-prefix routing (3 plans)
+- [x] **Phase 18: Core Types & Runtime Dispatch** - ServiceDescriptor in core, ServiceHandler/ServiceRegistry in runtime, topic-prefix routing (3 plans)
 - [ ] **Phase 19: Service Discovery Protocol** - Kind 29010 REQ/EVENT/EOSE synthetic response flow
 - [ ] **Phase 20: Concrete Services** - Audio service (first proof), notification service (generalization proof), core infrastructure as services
 - [ ] **Phase 21: Shim Discovery API** - discoverServices(), hasService(), hasServiceVersion() on window global
@@ -138,7 +138,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 15. Service Extension Design | v0.3.0 | 2/2 | Complete | 2026-03-31 |
 | 16. Verification | v0.3.0 | 0/4 | Complete | 2026-03-31 |
 | 17. Shell Export Cleanup | v0.3.0 | 1/1 | Complete | 2026-03-31 |
-| 18. Core Types & Runtime Dispatch | v0.4.0 | 0/3 | Planned | - |
+| 18. Core Types & Runtime Dispatch | v0.4.0 | 3/3 | Complete | 2026-03-31 |
 | 19. Service Discovery Protocol | v0.4.0 | 0/0 | Not started | - |
 | 20. Concrete Services | v0.4.0 | 0/0 | Not started | - |
 | 21. Shim Discovery API | v0.4.0 | 0/0 | Not started | - |
