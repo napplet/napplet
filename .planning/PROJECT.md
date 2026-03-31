@@ -38,6 +38,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 - [x] Extract @napplet/core — protocol types, message definitions, capability resolver (shared by all) — Validated in Phase 12: Core Package
 - [x] Extract @napplet/runtime — enforcement gate, message router, state management — Validated in Phase 13: Runtime Package
+- [x] Service extension design — ServiceRegistry types, SERVICE_DISCOVERY kind 29010, SPEC.md Section 11 — Validated in Phase 15: Service Extension Design
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
@@ -121,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 - Service discovery event kind reserved
 
 ---
-*Last updated: 2026-03-31 after Phase 13 completion*
+*Last updated: 2026-03-31 after Phase 15 completion*
