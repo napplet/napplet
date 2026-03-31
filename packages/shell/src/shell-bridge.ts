@@ -30,10 +30,10 @@ export interface ShellBridge {
   sendChallenge(windowId: string): void;
   /** Inject a shell-created event into subscription delivery. */
   injectEvent(topic: string, payload: unknown): void;
-  /** Clean up all state and remove listeners. */
-  cleanup(): void;
+  /** Destroy the bridge instance, cleaning up all internal state. */
+  destroy(): void;
   /** Register a consent handler for destructive signing kinds. */
-  onConsentNeeded(handler: (request: ConsentRequest) => void): void;
+  registerConsentHandler(handler: (request: ConsentRequest) => void): void;
 }
 
 /**
@@ -52,7 +52,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
   const authInFlight = new Set<string>();
   const RING_BUFFER_SIZE = 100;
   const eventBuffer: NostrEvent[] = [];
-  let _onConsentNeeded: ((request: ConsentRequest) => void) | null = null;
+  let _consentHandler: ((request: ConsentRequest) => void) | null = null;
 
   // ─── Enforcement Gate ─────────────────────────────────────────────────
   const enforce = createEnforceGate({
@@ -63,7 +63,6 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
       return entry ? { dTag: entry.dTag, aggregateHash: entry.aggregateHash } : undefined;
     },
     onAclCheck: hooks.onAclCheck,
-    emitAuditEvent: (topic, payload) => relay.injectEvent(topic, payload),
   });
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -125,7 +124,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     }
   }
 
-  function storeAndRoute(event: NostrEvent, senderId: string | null): void {
+  function bufferAndDeliver(event: NostrEvent, senderId: string | null): void {
     if (eventBuffer.length >= RING_BUFFER_SIZE) eventBuffer.shift();
     eventBuffer.push(event);
     deliverToSubscriptions(event, senderId);
@@ -279,11 +278,11 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
         if (topic?.startsWith('shell:') || topic === 'shell:create-window' || topic === 'shell:send-dm') {
           handleShellCommand(event, windowId, topic!, sourceWindow); return;
         }
-        storeAndRoute(event, windowId);
+        bufferAndDeliver(event, windowId);
         break;
       }
       default:
-        storeAndRoute(event, windowId);
+        bufferAndDeliver(event, windowId);
         break;
     }
     sendOk(true, '');
@@ -418,9 +417,9 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     if (method === 'signEvent' && eventTag) {
       let eventToSign: NostrEvent;
       try { eventToSign = JSON.parse(eventTag) as NostrEvent; } catch { sendOk(false, 'error: invalid event JSON'); return; }
-      if (aclStore.requiresPrompt(eventToSign.kind) && _onConsentNeeded) {
+      if (aclStore.requiresPrompt(eventToSign.kind) && _consentHandler) {
         new Promise<boolean>((resolve) => {
-          _onConsentNeeded!({ windowId, pubkey, event: eventToSign, resolve });
+          _consentHandler!({ windowId, pubkey, event: eventToSign, resolve });
         }).then((allowed) => {
           if (!allowed) { sendOk(false, 'error: user rejected'); return; }
           dispatch(eventToSign);
@@ -640,10 +639,10 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
         content: JSON.stringify(payload),
         sig: '0'.repeat(128),
       };
-      storeAndRoute(event, null);
+      bufferAndDeliver(event, null);
     },
 
-    cleanup(): void {
+    destroy(): void {
       manifestCache.persist();
       pendingChallenges.clear();
       pendingAuthQueue.clear();
@@ -653,8 +652,8 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
       eventBuffer.length = 0;
     },
 
-    onConsentNeeded(handler: (request: ConsentRequest) => void): void {
-      _onConsentNeeded = handler;
+    registerConsentHandler(handler: (request: ConsentRequest) => void): void {
+      _consentHandler = handler;
     },
   };
 

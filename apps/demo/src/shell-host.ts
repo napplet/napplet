@@ -276,7 +276,7 @@ export function bootShell(): { tap: MessageTap; relay: ShellBridge } {
 
   // Set consent handler for destructive kinds
   // In the demo, auto-approve after 500ms to show the flow
-  relay.onConsentNeeded((request: ConsentRequest) => {
+  relay.registerConsentHandler((request: ConsentRequest) => {
     setTimeout(() => request.resolve(true), 500);
   });
 

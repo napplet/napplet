@@ -24,7 +24,7 @@ interface InternalAclEntry {
   stateQuota: number;
 }
 
-export function aclKey(pubkey: string, dTag: string, aggregateHash: string): string {
+function aclKey(pubkey: string, dTag: string, aggregateHash: string): string {
   return `${pubkey}:${dTag}:${aggregateHash}`;
 }
 

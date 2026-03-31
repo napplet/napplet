@@ -138,7 +138,7 @@ test.describe('Lifecycle & Edge Cases', () => {
     expect(delivered.length).toBe(0);
   });
 
-  test('LCY-03: cleanup() removes all subscriptions, buffers, registries', async ({ page }) => {
+  test('LCY-03: destroy() removes all subscriptions, buffers, registries', async ({ page }) => {
     // Load and auth a napplet
     const windowId = await page.evaluate(() => (window as any).__loadNapplet__('auth-napplet'));
     await expect.poll(async () => {
@@ -160,9 +160,9 @@ test.describe('Lifecycle & Edge Cases', () => {
     await page.waitForTimeout(200);
     await page.evaluate(() => (window as any).__clearMessages__());
 
-    // Call cleanup()
+    // Call destroy()
     await page.evaluate(() => {
-      (window as any).__getRelay__().cleanup();
+      (window as any).__getRelay__().destroy();
     });
 
     // Try to deliver an event -- subscription should be gone

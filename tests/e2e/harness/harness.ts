@@ -313,7 +313,7 @@ window.__getNappEntry__ = (windowId: string) => {
 // Signer and consent globals
 window.__setSigner__ = (signer: unknown) => mockResult.setSigner(signer);
 window.__setConsentHandler__ = (mode: 'auto-approve' | 'auto-deny') => {
-  relay.onConsentNeeded((request) => {
+  relay.registerConsentHandler((request) => {
     request.resolve(mode === 'auto-approve');
   });
 };

@@ -21,7 +21,7 @@ const byPubkey = new Map<string, NappKeyEntry>();
 const pendingUpdates = new Map<string, PendingUpdate>();
 
 let _pendingVersion = 0;
-export function getPendingUpdateVersion(): number { return _pendingVersion; }
+function getPendingUpdateVersion(): number { return _pendingVersion; }
 
 export const nappKeyRegistry = {
   register(windowId: string, entry: NappKeyEntry): void {
