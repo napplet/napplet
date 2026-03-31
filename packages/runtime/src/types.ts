@@ -475,11 +475,20 @@ export interface RuntimeHooks {
   /** Send a NIP-01 message to a napplet by windowId. */
   sendToNapplet: SendToNapplet;
 
-  /** Relay pool operations. */
-  relayPool: RuntimeRelayPoolHooks;
+  /**
+   * Relay pool operations.
+   * Optional when a 'relay' or 'relay-pool' service is registered via
+   * RuntimeHooks.services or runtime.registerService(). If neither hooks
+   * nor service are provided, relay functionality is unavailable.
+   */
+  relayPool?: RuntimeRelayPoolHooks;
 
-  /** Local event cache (worker relay). */
-  cache: RuntimeCacheHooks;
+  /**
+   * Local event cache (worker relay).
+   * Optional when a 'cache' or 'relay' (coordinated) service is registered.
+   * If neither hooks nor service are provided, cache functionality is unavailable.
+   */
+  cache?: RuntimeCacheHooks;
 
   /** Auth state and signing. */
   auth: RuntimeAuthHooks;

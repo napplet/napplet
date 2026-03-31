@@ -534,3 +534,208 @@ describe('runtime message dispatch', () => {
     });
   });
 });
+
+// ─── Service Dispatch Tests ───────────────────────────────────────────────────
+
+describe('service dispatch — signer', () => {
+  it('routes kind 29001 to registered signer service', async () => {
+    const signerCalls: Array<{ windowId: string; message: unknown[] }> = [];
+    const mock = createMockRuntimeHooks({
+      services: {
+        signer: {
+          descriptor: { name: 'signer', version: '1.0.0' },
+          handleMessage(windowId, message, send) {
+            signerCalls.push({ windowId, message });
+            const event = message[1] as NostrEvent;
+            send(['OK', event.id, true, '']);
+          },
+        },
+      },
+    });
+    const runtime = createRuntime(mock.hooks);
+
+    await authenticateWindow(runtime, mock);
+    mock.sent.length = 0;
+
+    const signerEvent = makeEvent({
+      kind: BusKind.SIGNER_REQUEST,
+      tags: [['id', 'corr-1'], ['method', 'getPublicKey']],
+    });
+    runtime.handleMessage(WINDOW_ID, ['EVENT', signerEvent]);
+
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    expect(signerCalls.length).toBe(1);
+    expect(signerCalls[0].windowId).toBe(WINDOW_ID);
+    expect(signerCalls[0].message[0]).toBe('EVENT');
+  });
+
+  it('falls back to internal handler when no signer service registered', async () => {
+    const mock = createMockRuntimeHooks({
+      auth: {
+        getUserPubkey: () => 'user_' + '0'.repeat(60),
+        getSigner: () => ({
+          getPublicKey: () => 'test-pubkey',
+        }),
+      },
+    });
+    const runtime = createRuntime(mock.hooks);
+
+    await authenticateWindow(runtime, mock);
+    mock.sent.length = 0;
+
+    const signerEvent = makeEvent({
+      kind: BusKind.SIGNER_REQUEST,
+      tags: [['id', 'corr-1'], ['method', 'getPublicKey']],
+    });
+    runtime.handleMessage(WINDOW_ID, ['EVENT', signerEvent]);
+
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    // Internal handler sends OK response
+    const okMsg = mock.sent.find(m => m.message[0] === 'OK');
+    expect(okMsg).toBeDefined();
+  });
+
+  it('send callback from signer service is forwarded to napplet', async () => {
+    const mock = createMockRuntimeHooks({
+      services: {
+        signer: {
+          descriptor: { name: 'signer', version: '1.0.0' },
+          handleMessage(_windowId, message, send) {
+            const event = message[1] as NostrEvent;
+            // Send a response event and OK
+            send(['EVENT', '__signer__', { kind: 29002, tags: [['id', 'c1']], content: '' }]);
+            send(['OK', event.id, true, '']);
+          },
+        },
+      },
+    });
+    const runtime = createRuntime(mock.hooks);
+
+    await authenticateWindow(runtime, mock);
+    mock.sent.length = 0;
+
+    const signerEvent = makeEvent({
+      kind: BusKind.SIGNER_REQUEST,
+      tags: [['id', 'c1'], ['method', 'getPublicKey']],
+    });
+    runtime.handleMessage(WINDOW_ID, ['EVENT', signerEvent]);
+
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    // Both EVENT and OK should be forwarded to the napplet
+    const eventMsg = mock.sent.find(m => m.message[0] === 'EVENT');
+    const okMsg = mock.sent.find(m => m.message[0] === 'OK' && m.message[2] === true);
+    expect(eventMsg).toBeDefined();
+    expect(okMsg).toBeDefined();
+  });
+});
+
+describe('service dispatch — relay', () => {
+  it('routes REQ to registered relay service', async () => {
+    const relayCalls: Array<{ windowId: string; message: unknown[] }> = [];
+    const mock = createMockRuntimeHooks({
+      services: {
+        relay: {
+          descriptor: { name: 'relay', version: '1.0.0' },
+          handleMessage(windowId, message, send) {
+            relayCalls.push({ windowId, message });
+            if (message[0] === 'REQ') {
+              send(['EOSE', message[1] as string]);
+            }
+          },
+        },
+      },
+    });
+    const runtime = createRuntime(mock.hooks);
+
+    await authenticateWindow(runtime, mock);
+    mock.sent.length = 0;
+
+    runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-1', { kinds: [1] }]);
+
+    expect(relayCalls.length).toBe(1);
+    expect(relayCalls[0].message[0]).toBe('REQ');
+    expect(relayCalls[0].message[1]).toBe('sub-1');
+  });
+
+  it('routes CLOSE to registered relay service', async () => {
+    const relayCalls: Array<unknown[]> = [];
+    const mock = createMockRuntimeHooks({
+      services: {
+        relay: {
+          descriptor: { name: 'relay', version: '1.0.0' },
+          handleMessage(_windowId, message, send) {
+            relayCalls.push(message);
+            if (message[0] === 'REQ') send(['EOSE', message[1] as string]);
+          },
+        },
+      },
+    });
+    const runtime = createRuntime(mock.hooks);
+
+    await authenticateWindow(runtime, mock);
+    mock.sent.length = 0;
+
+    runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-close', { kinds: [1] }]);
+    relayCalls.length = 0;
+    runtime.handleMessage(WINDOW_ID, ['CLOSE', 'sub-close']);
+
+    expect(relayCalls.length).toBe(1);
+    expect(relayCalls[0][0]).toBe('CLOSE');
+  });
+
+  it('sends EOSE from relay service to napplet', async () => {
+    const mock = createMockRuntimeHooks({
+      services: {
+        relay: {
+          descriptor: { name: 'relay', version: '1.0.0' },
+          handleMessage(_windowId, message, send) {
+            if (message[0] === 'REQ') send(['EOSE', message[1] as string]);
+          },
+        },
+      },
+    });
+    const runtime = createRuntime(mock.hooks);
+
+    await authenticateWindow(runtime, mock);
+    mock.sent.length = 0;
+
+    runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-eose', { kinds: [1] }]);
+
+    const eose = mock.sent.find(m => m.message[0] === 'EOSE' && m.message[1] === 'sub-eose');
+    expect(eose).toBeDefined();
+  });
+});
+
+describe('service dispatch — optional relayPool/cache hooks', () => {
+  it('works without relayPool and cache hooks when relay service is registered', async () => {
+    const mock = createMockRuntimeHooks({
+      services: {
+        relay: {
+          descriptor: { name: 'relay', version: '1.0.0' },
+          handleMessage(_windowId, message, send) {
+            if (message[0] === 'REQ') send(['EOSE', message[1] as string]);
+          },
+        },
+      },
+    });
+    // Remove relayPool and cache hooks to verify service-only path
+    const hooks = { ...mock.hooks };
+    delete (hooks as Record<string, unknown>).relayPool;
+    delete (hooks as Record<string, unknown>).cache;
+
+    const rt = createRuntime(hooks);
+    await authenticateWindow(rt, mock);
+    mock.sent.length = 0;
+
+    // Should not throw — relay service handles it
+    expect(() => {
+      rt.handleMessage(WINDOW_ID, ['REQ', 'sub-nopool', { kinds: [1] }]);
+    }).not.toThrow();
+
+    const eose = mock.sent.find(m => m.message[0] === 'EOSE');
+    expect(eose).toBeDefined();
+  });
+});
