@@ -7,8 +7,9 @@
  * Default policy is PERMISSIVE: unknown identities have all capabilities granted.
  */
 
-import type { Capability, AclEntry } from './types.js';
-import { ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from './types.js';
+import type { Capability } from '@napplet/core';
+import { ALL_CAPABILITIES, DESTRUCTIVE_KINDS } from '@napplet/core';
+import type { AclEntry } from './types.js';
 
 const STORAGE_KEY = 'napplet:acl';
 
@@ -48,8 +49,6 @@ function getOrCreate(pubkey: string, dTag: string, aggregateHash: string): Inter
   }
   return entry;
 }
-
-export { DESTRUCTIVE_KINDS };
 
 /**
  * ACL store — manages capability grants, revocations, and blocks for napp identities.

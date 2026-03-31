@@ -6,8 +6,8 @@
  * napp identity (pubkey:dTag:aggregateHash).
  */
 
-import type { NostrEvent } from './types.js';
-import { BusKind } from './types.js';
+import type { NostrEvent } from '@napplet/core';
+import { BusKind, TOPICS } from '@napplet/core';
 import { nappKeyRegistry } from './napp-key-registry.js';
 import { aclStore } from './acl-store.js';
 
@@ -38,7 +38,7 @@ function sendResponse(sourceWindow: Window, correlationId: string, tags: string[
     kind: BusKind.INTER_PANE,
     pubkey: '',
     created_at: Math.floor(Date.now() / 1000),
-    tags: [['t', 'napp:state-response'], ['id', correlationId], ...tags],
+    tags: [['t', TOPICS.STATE_RESPONSE], ['id', correlationId], ...tags],
     content: '',
     id: '',
     sig: '',
@@ -73,7 +73,7 @@ export function handleStateRequest(
   const { dTag, aggregateHash } = entry;
 
   switch (topic) {
-    case 'shell:state-get': {
+    case TOPICS.STATE_GET: {
       if (!key) { sendError(sourceWindow, correlationId, 'missing key tag'); return; }
       const sk = scopedKey(pubkey, dTag, aggregateHash, key);
       const result = localStorage.getItem(sk);
@@ -82,7 +82,7 @@ export function handleStateRequest(
       ]);
       break;
     }
-    case 'shell:state-set': {
+    case TOPICS.STATE_SET: {
       if (!key) { sendError(sourceWindow, correlationId, 'missing key tag'); return; }
       const value = event.tags?.find((t) => t[0] === 'value')?.[1] ?? '';
       const quota = aclStore.getStateQuota(pubkey, dTag, aggregateHash);
@@ -102,19 +102,19 @@ export function handleStateRequest(
       }
       break;
     }
-    case 'shell:state-remove': {
+    case TOPICS.STATE_REMOVE: {
       if (!key) { sendError(sourceWindow, correlationId, 'missing key tag'); return; }
       const sk = scopedKey(pubkey, dTag, aggregateHash, key);
       localStorage.removeItem(sk);
       sendResponse(sourceWindow, correlationId, [['ok', 'true']]);
       break;
     }
-    case 'shell:state-clear': {
+    case TOPICS.STATE_CLEAR: {
       cleanupNappState(pubkey, dTag, aggregateHash);
       sendResponse(sourceWindow, correlationId, [['ok', 'true']]);
       break;
     }
-    case 'shell:state-keys': {
+    case TOPICS.STATE_KEYS: {
       const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
       const userKeys: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {

@@ -5,13 +5,13 @@
  * All external dependencies are injected via ShellHooks.
  */
 
-import type {
-  NostrEvent, NostrFilter, NappKeyEntry, Capability,
-  ShellHooks, ConsentRequest,
-} from './types.js';
+import type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
 import {
   AUTH_KIND, SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS,
   BusKind, ALL_CAPABILITIES, DESTRUCTIVE_KINDS,
+} from '@napplet/core';
+import type {
+  NappKeyEntry, ShellHooks, ConsentRequest,
 } from './types.js';
 import { originRegistry } from './origin-registry.js';
 import { nappKeyRegistry } from './napp-key-registry.js';

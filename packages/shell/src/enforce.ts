@@ -7,8 +7,9 @@
  * should call @napplet/acl directly.
  */
 
-import type { Capability, AclCheckEvent, NostrEvent } from './types.js';
-import { BusKind } from './types.js';
+import type { Capability, NostrEvent } from '@napplet/core';
+import { BusKind, TOPICS } from '@napplet/core';
+import type { AclCheckEvent } from './types.js';
 
 // ─── Capability Resolution ────────────────────────────────────────────────────
 
@@ -76,14 +77,14 @@ export function resolveCapabilities(msg: unknown[]): CapabilityResolution {
       if (event.kind === BusKind.INTER_PANE) {
         const topic = event.tags?.find((t: string[]) => t[0] === 't')?.[1];
 
-        if (topic === 'shell:state-get' || topic === 'shell:state-keys') {
+        if (topic === TOPICS.STATE_GET || topic === TOPICS.STATE_KEYS) {
           return { senderCap: 'state:read', recipientCap: null };
         }
 
         if (
-          topic === 'shell:state-set' ||
-          topic === 'shell:state-remove' ||
-          topic === 'shell:state-clear'
+          topic === TOPICS.STATE_SET ||
+          topic === TOPICS.STATE_REMOVE ||
+          topic === TOPICS.STATE_CLEAR
         ) {
           return { senderCap: 'state:write', recipientCap: null };
         }
@@ -133,14 +134,15 @@ export type AclChecker = (pubkey: string, dTag: string, aggregateHash: string, c
  *
  * @param checkAcl - The ACL check function (wraps @napplet/acl or legacy aclStore)
  * @param resolveIdentity - Maps pubkey to full identity (dTag, aggregateHash)
- * @param onAclCheck - Optional audit callback (from ShellHooks)
- * @param emitAuditEvent - Optional function to emit acl:check events to subscribers
+ * @param onAclCheck - Optional audit callback (from ShellHooks). Called on every
+ *   enforce() check with the identity, capability, and decision. This is the primary
+ *   audit mechanism — it does not inject events into the routing pipeline, avoiding
+ *   infinite recursion and subscription pollution.
  */
 export interface EnforceConfig {
   checkAcl: AclChecker;
   resolveIdentity: IdentityResolver;
   onAclCheck?: (event: AclCheckEvent) => void;
-  emitAuditEvent?: (topic: string, payload: unknown) => void;
 }
 
 /**
@@ -163,7 +165,7 @@ export interface EnforceConfig {
  * // result.capability === 'relay:write'
  */
 export function createEnforceGate(config: EnforceConfig): (pubkey: string, capability: Capability) => EnforceResult {
-  const { checkAcl, resolveIdentity, onAclCheck, emitAuditEvent } = config;
+  const { checkAcl, resolveIdentity, onAclCheck } = config;
 
   return function enforce(pubkey: string, capability: Capability): EnforceResult {
     const entry = resolveIdentity(pubkey);
@@ -173,15 +175,15 @@ export function createEnforceGate(config: EnforceConfig): (pubkey: string, capab
     const allowed = checkAcl(pubkey, dTag, aggregateHash, capability);
 
     // Audit logging — every check, both allows and denials (ENF-05)
+    // Only use the onAclCheck callback, not emitAuditEvent. Emitting audit
+    // events through injectEvent causes infinite recursion (enforce ->
+    // injectEvent -> deliverToSubscriptions -> enforce) and pollutes
+    // napplet subscriptions with internal audit noise.
     const identity = { pubkey, dTag, hash: aggregateHash };
     const decision = allowed ? 'allow' as const : 'deny' as const;
 
     if (onAclCheck) {
       onAclCheck({ identity, capability, decision });
-    }
-
-    if (emitAuditEvent) {
-      emitAuditEvent('acl:check', { identity, capability, decision });
     }
 
     return { allowed, capability };

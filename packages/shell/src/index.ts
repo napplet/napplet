@@ -7,7 +7,12 @@
 export { createShellBridge } from './shell-bridge.js';
 export type { ShellBridge } from './shell-bridge.js';
 
-// Types for host app integration
+// Protocol types (re-exported from @napplet/core for backwards compatibility)
+export type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
+export { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, ALL_CAPABILITIES, DESTRUCTIVE_KINDS, REPLAY_WINDOW_SECONDS } from '@napplet/core';
+export type { BusKindValue } from '@napplet/core';
+
+// Types for host app integration (shell-specific)
 export type {
   ShellHooks,
   RelayPoolHooks,
@@ -22,11 +27,8 @@ export type {
   CryptoHooks,
   DmHooks,
   ConsentRequest,
-  NostrEvent,
-  NostrFilter,
   NappKeyEntry,
   AclEntry,
-  Capability,
   AclCheckEvent,
 } from './types.js';
 
@@ -45,9 +47,6 @@ export { cleanupNappState } from './state-proxy.js';
 export { createEnforceGate, resolveCapabilities, formatDenialReason } from './enforce.js';
 export type { CapabilityResolution, EnforceResult, EnforceConfig, IdentityResolver, AclChecker } from './enforce.js';
 
-// Protocol constants
-export { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, ALL_CAPABILITIES } from './types.js';
-
 // Topic constants for shell command routing
 export { TOPICS } from './topics.js';
 export type { TopicKey, TopicValue } from './topics.js';
@@ -55,4 +54,4 @@ export type { TopicKey, TopicValue } from './topics.js';
 // ─── Internal re-exports (used by tests/demo, not part of public API) ───────
 
 export { handleStateRequest } from './state-proxy.js';
-export { DEFAULT_STATE_QUOTA, DESTRUCTIVE_KINDS } from './acl-store.js';
+export { DEFAULT_STATE_QUOTA } from './acl-store.js';
