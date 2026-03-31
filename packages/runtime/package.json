@@ -27,7 +27,8 @@
   },
   "scripts": {
     "build": "tsup",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:unit": "vitest run"
   },
   "license": "MIT",
   "repository": {
