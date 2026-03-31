@@ -140,7 +140,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 17. Shell Export Cleanup | v0.3.0 | 1/1 | Complete | 2026-03-31 |
 | 18. Core Types & Runtime Dispatch | v0.4.0 | 3/3 | Complete | 2026-03-31 |
 | 19. Service Discovery Protocol | v0.4.0 | 0/2 | Complete    | 2026-03-31 |
-| 20. Concrete Services | v0.4.0 | 4/4 | Complete   | 2026-03-31 |
+| 20. Concrete Services | v0.4.0 | 4/4 | Complete    | 2026-03-31 |
 | 21. Shim Discovery API | v0.4.0 | 2/2 | Complete    | 2026-03-31 |
 | 22. Negotiation & Compatibility | v0.4.0 | 0/4 | Planned | - |
 | 22.1. Core Infrastructure Services | v0.4.0 | 0/4 | Planned | - |
