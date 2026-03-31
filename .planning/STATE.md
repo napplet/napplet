@@ -4,13 +4,13 @@ milestone: v0.3.0
 milestone_name: Runtime and Core
 status: executing
 stopped_at: v0.3.0 roadmap created, ready to plan Phase 12
-last_updated: "2026-03-31T11:01:19.026Z"
+last_updated: "2026-03-31T11:20:01.469Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 17
-  completed_plans: 13
+  completed_plans: 17
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Protocol logic is portable -- any environment can host napplets by implementing RuntimeHooks.
-**Current focus:** Phase 15 — service-extension-design
+**Current focus:** Phase 16 — verification
 
 ## Current Position
 
-Phase: 15
+Phase: 16
 Plan: Not started
-Status: Executing Phase 15
+Status: Executing Phase 16
 Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
