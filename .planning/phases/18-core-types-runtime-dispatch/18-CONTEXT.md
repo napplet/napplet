@@ -17,20 +17,20 @@ Move service type definitions to the correct packages (ServiceDescriptor to core
 - **D-01:** Hard cut — delete ServiceDescriptor, ServiceHandler, ServiceRegistry from @napplet/shell. Add ServiceDescriptor to @napplet/core. Add ServiceHandler and ServiceRegistry to @napplet/runtime. No re-exports for backwards compat. Consistent with the v0.2.0 ShellBridge rename approach.
 
 ### Service dispatch routing
-- **D-02:** Service dispatch goes AFTER the `shell:*` prefix checks in the INTER_PANE handler. The `shell:` namespace is reserved for core protocol (state, acl, create-window, dm). Service topics use `{service-name}:{action}` format — no `shell:` prefix.
+- **D-02:** The runtime is a message router. It routes NIP-01 messages to the right service. Cross-cutting concerns (ACL, replay, negotiation) are filters applied before dispatch. The `shell:` namespace is reserved for core protocol commands (state, acl, create-window, dm) that stay hardcoded in the runtime.
 - **D-03:** Delete the hardcoded `shell:audio-*` case from runtime.ts. Audio is not special — it will be a registered service like any other. No backwards compat for `shell:audio-*` prefix (alpha, no external consumers).
-- **D-04:** The dispatch is fully generic — runtime parses the topic prefix, looks up the ServiceRegistry, calls `handler.handleRequest()`. No service-specific logic in the runtime.
+- **D-04:** The dispatch is fully generic — runtime routes messages to services based on registration. No service-specific logic in the runtime.
 
 ### Architectural distinction: filters vs services
-- **D-05:** ACL, state management, and shell commands are NOT services. They are core protocol infrastructure (filters that affect routing). They must never be in the ServiceRegistry. Services are optional extensions that shells may or may not provide. Core protocol is required for conformance.
-- **D-06:** The dispatch chain is: enforce() gate → negotiation check (Phase 22) → shell:* core protocol → services[prefix] registered handlers → eventBuffer generic delivery.
+- **D-05:** Enforcement gates (ACL, negotiation) are NOT services — they are filters that affect routing. Everything else that processes requests IS a service, including relay pool, cache, and signer. Shell implementors choose their own implementations. A shell with zero services is valid (local-only inter-pane).
+- **D-06:** The dispatch chain is: enforce() gate → negotiation check (Phase 22) → shell:* core protocol commands → service dispatch → eventBuffer generic delivery. AUTH stays as runtime core (identity, not a service).
 
 ### Semver utility
 - **D-07:** No semver utility in this phase. Service matching is name-only (presence/absence check). Version matching deferred until there's a real need (multiple incompatible service API versions in the wild). The `requires` manifest tag format is `["requires", "service-name"]` with no version range.
 
 ### RuntimeHooks.services shape
 - **D-08:** Both static and dynamic registration. RuntimeHooks accepts an optional `services?: ServiceRegistry` for declaring services at creation time. The runtime object also exposes `registerService(name, handler)` for adding services after creation.
-- **D-09:** ServiceHandler.handleRequest() signature: `(windowId: string, topic: string, content: unknown, event: NostrEvent) => void` — unchanged from the current interface in shell/types.ts.
+- **D-09:** ~~ServiceHandler.handleRequest() signature~~ **REVISED (Phase 19 discussion):** ServiceHandler uses `handleMessage(windowId: string, message: unknown[], send: (msg: unknown[]) => void): void` — services receive raw NIP-01 arrays and respond via `send` callback. Same interface for all services: relay pool handles `['REQ', ...]`, audio handles `['EVENT', event]` with topic prefix. Low-level integration — services manage their own subscription lifecycle.
 
 ### Claude's Discretion
 - Internal naming of the service dispatch function in runtime.ts
