@@ -18,7 +18,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/core": "workspace:*",
+    "@napplet/runtime": "workspace:*"
   },
   "peerDependencies": {
     "nostr-tools": ">=2.23.3 <3.0.0"

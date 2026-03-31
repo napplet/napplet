@@ -126,6 +126,9 @@ importers:
       '@napplet/core':
         specifier: workspace:*
         version: link:../core
+      '@napplet/runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       nostr-tools:
         specifier: ^2.23.3

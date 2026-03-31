@@ -1,11 +1,16 @@
-// @napplet/shell — Shell runtime for hosting napplet iframes.
-// Framework-agnostic. Host app provides hooks for relay pool, auth, WM, etc.
+// @napplet/shell — Browser adapter over @napplet/runtime.
+// Delegates all protocol logic to the runtime engine. Provides browser-specific
+// concerns: Window/postMessage bridging, localStorage persistence, audio manager.
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 // Factory function — main entry point
 export { createShellBridge } from './shell-bridge.js';
 export type { ShellBridge } from './shell-bridge.js';
+
+// Hooks adapter — for advanced integrators who need to customize the adapter
+export { adaptHooks } from './hooks-adapter.js';
+export type { BrowserDeps } from './hooks-adapter.js';
 
 // Protocol types (re-exported from @napplet/core for backwards compatibility)
 export type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
@@ -46,7 +51,7 @@ export { manifestCache } from './manifest-cache.js';
 export type { ManifestCacheEntry } from './manifest-cache.js';
 export { cleanupNappState } from './state-proxy.js';
 
-// Enforcement gate
+// Enforcement gate (re-exported from shell's local enforce.ts for backwards compat)
 export { createEnforceGate, resolveCapabilities, formatDenialReason } from './enforce.js';
 export type { CapabilityResolution, EnforceResult, EnforceConfig, IdentityResolver, AclChecker } from './enforce.js';
 
