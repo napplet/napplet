@@ -41,10 +41,11 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Shell export cleanup — dead code removed, enforce deduplicated, singletons cleaned — v0.3.0
 - ✓ ServiceDescriptor in @napplet/core, ServiceHandler/ServiceRegistry in @napplet/runtime, topic-prefix dispatch — v0.4.0 Phase 18
 - ✓ Service discovery protocol — kind 29010 REQ/EVENT/EOSE flow, synthetic events from registry, live subscriptions — v0.4.0 Phase 19
+- ✓ Shim-side discovery API — window.napplet global with discoverServices/hasService/hasServiceVersion, session cache, ServiceInfo type — v0.4.0 Phase 21
 
 ### Active
 
-- [ ] Shim-side discovery API — napplet discovers available shell services post-AUTH
+- [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
 - [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
 - [ ] Manifest `requires` tags — napplet manifest declares service dependencies for shell to check
 - [ ] Audio service implementation — first concrete service, wraps audio-manager as ServiceHandler
@@ -68,7 +69,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: v0.4.0 in progress (Phase 19 complete). Service discovery protocol implemented in @napplet/runtime. Kind 29010 REQs intercepted, synthetic EVENTs generated from registry, live subscriptions push updates on registerService(). 13 new discovery unit tests + 122 total tests passing.
+- **Current state**: v0.4.0 in progress (Phase 21 complete). Shim-side discovery API added: window.napplet global installed at iframe load time with discoverServices(), hasService(), hasServiceVersion(). ServiceInfo type exported from @napplet/shim public API. Session-scoped cache prevents duplicate kind 29010 REQs. Runtime 39/39 tests pass.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core). Runtime is browser-agnostic via RuntimeHooks DI.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (193 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, and service discovery.
