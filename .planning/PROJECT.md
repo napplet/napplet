@@ -39,14 +39,14 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Service extension design — ServiceRegistry types, kind 29010, SPEC.md Section 11 — v0.3.0
 - ✓ 180 tests green across four-package structure (core, runtime, integration, e2e) — v0.3.0
 - ✓ Shell export cleanup — dead code removed, enforce deduplicated, singletons cleaned — v0.3.0
+- ✓ ServiceDescriptor in @napplet/core, ServiceHandler/ServiceRegistry in @napplet/runtime, topic-prefix dispatch — v0.4.0 Phase 18
+- ✓ Service discovery protocol — kind 29010 REQ/EVENT/EOSE flow, synthetic events from registry, live subscriptions — v0.4.0 Phase 19
 
 ### Active
 
-- [ ] Service discovery protocol — implement kind 29010 REQ/EVENT/EOSE flow (SPEC.md Section 11)
 - [ ] Shim-side discovery API — napplet discovers available shell services post-AUTH
 - [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
 - [ ] Manifest `requires` tags — napplet manifest declares service dependencies for shell to check
-- [ ] Runtime service dispatch — route kind 29010 REQs to ServiceRegistry, dispatch INTER_PANE to handlers by topic prefix
 - [ ] Audio service implementation — first concrete service, wraps audio-manager as ServiceHandler
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
@@ -68,10 +68,10 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: v0.3.0 with 7,109 LOC TypeScript across 5 packages (core, acl, runtime, shell, shim) + vite-plugin + demo app + test suite. 121 commits, 86 files changed in v0.3.0 alone.
+- **Current state**: v0.4.0 in progress (Phase 19 complete). Service discovery protocol implemented in @napplet/runtime. Kind 29010 REQs intercepted, synthetic EVENTs generated from registry, live subscriptions push updates on registerService(). 13 new discovery unit tests + 122 total tests passing.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core). Runtime is browser-agnostic via RuntimeHooks DI.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
-- **Test coverage**: 122 Playwright e2e tests + 58 vitest unit/integration tests (180 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, and four-package chain integration.
+- **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (193 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, and service discovery.
 - **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events.
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
 
@@ -132,4 +132,4 @@ This document evolves at phase transitions and milestone boundaries.
 - Audio service as first concrete ServiceHandler implementation
 
 ---
-*Last updated: 2026-03-31 after v0.4.0 milestone start*
+*Last updated: 2026-03-31 after Phase 19 (service discovery protocol) complete*
