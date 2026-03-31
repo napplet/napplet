@@ -5,6 +5,8 @@
  * ACL enforcement — all in Node.js without browser globals.
  */
 
+declare function setTimeout(cb: (...args: unknown[]) => void, ms?: number): unknown;
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime } from './runtime.js';
 import type { Runtime } from './runtime.js';
