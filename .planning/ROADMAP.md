@@ -15,7 +15,7 @@
 - [x] **Phase 12: Core Package** - Extract shared protocol types, constants, and message definitions into @napplet/core (completed 2026-03-31)
 - [x] **Phase 13: Runtime Package** - Extract protocol engine (dispatch, enforce, AUTH, subscriptions) into @napplet/runtime (completed 2026-03-31)
 - [ ] **Phase 14: Shell Adapter and Shim Rewire** - Slim shell to browser adapter over runtime; switch shim to core imports
-- [ ] **Phase 15: Service Extension Design** - Define RuntimeHooks.services interface and reserve service discovery event kind
+- [x] **Phase 15: Service Extension Design** - Define RuntimeHooks.services interface and reserve service discovery event kind (completed 2026-03-31)
 - [ ] **Phase 16: Verification** - Full test suite green with new structure; new unit and integration tests
 
 ## Phase Details
@@ -102,5 +102,5 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16
 | 12. Core Package | v0.3.0 | 3/3 | Complete   | 2026-03-31 |
 | 13. Runtime Package | v0.3.0 | 0/5 | Complete    | 2026-03-31 |
 | 14. Shell Adapter and Shim Rewire | v0.3.0 | 0/0 | Not started | - |
-| 15. Service Extension Design | v0.3.0 | 2/2 | Planned | - |
+| 15. Service Extension Design | v0.3.0 | 2/2 | Complete   | 2026-03-31 |
 | 16. Verification | v0.3.0 | 0/4 | Planned | - |
