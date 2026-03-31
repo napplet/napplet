@@ -51,9 +51,9 @@
 
 ### Service Extension Design (stub)
 
-- [ ] **SVC-01**: `RuntimeHooks.services` optional field defined in interface (Record<string, unknown> or typed registry)
-- [ ] **SVC-02**: Event kind 29010 reserved for service discovery in @napplet/core
-- [ ] **SVC-03**: Service discovery message format documented in SPEC.md (even if not yet implemented)
+- [x] **SVC-01**: `RuntimeHooks.services` optional field defined in interface (Record<string, unknown> or typed registry)
+- [x] **SVC-02**: Event kind 29010 reserved for service discovery in @napplet/core
+- [x] **SVC-03**: Service discovery message format documented in SPEC.md (even if not yet implemented)
 
 ### Test Suite
 
@@ -116,9 +116,9 @@
 | SHIM-01 | Phase 14 | Pending |
 | SHIM-02 | Phase 14 | Pending |
 | SHIM-03 | Phase 14 | Pending |
-| SVC-01 | Phase 15 | Pending |
-| SVC-02 | Phase 15 | Pending |
-| SVC-03 | Phase 15 | Pending |
+| SVC-01 | Phase 15 | Complete |
+| SVC-02 | Phase 15 | Complete |
+| SVC-03 | Phase 15 | Complete |
 | TST-01 | Phase 16 | Pending |
 | TST-02 | Phase 16 | Pending |
 | TST-03 | Phase 16 | Pending |
