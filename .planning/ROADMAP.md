@@ -64,7 +64,7 @@
   1. RuntimeHooks has an optional `services` field with a typed interface (not just Record<string, unknown>)
   2. Event kind 29010 is reserved as a constant in @napplet/core for service discovery
   3. SPEC.md contains a "Service Discovery" section describing the message format, even if implementation is deferred
-**Plans**: TBD
+**Plans**: 15-01 (service types + kind constant), 15-02 (SPEC.md documentation)
 
 ### Phase 16: Verification
 **Goal**: The full test suite passes with the new four-package structure and new packages have their own test coverage
@@ -99,5 +99,5 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16
 | 12. Core Package | v0.3.0 | 0/0 | Not started | - |
 | 13. Runtime Package | v0.3.0 | 0/0 | Not started | - |
 | 14. Shell Adapter and Shim Rewire | v0.3.0 | 0/0 | Not started | - |
-| 15. Service Extension Design | v0.3.0 | 0/0 | Not started | - |
+| 15. Service Extension Design | v0.3.0 | 2/2 | Planned | - |
 | 16. Verification | v0.3.0 | 0/0 | Not started | - |
