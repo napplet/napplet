@@ -20,6 +20,8 @@ import * as path from 'path';
 export interface Nip5aManifestOptions {
   /** Napp type/dtag (e.g., 'feed', 'chat') */
   nappType: string;
+  /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
+  requires?: string[];
 }
 
 /** Walk a directory recursively and return all file paths (relative to root). */
@@ -73,16 +75,30 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
 
     transformIndexHtml(): IndexHtmlTransformResult {
       // Inject meta tag (empty in dev, populated in closeBundle for build)
-      return [
+      const tags: IndexHtmlTransformResult = [
         {
           tag: 'meta',
           attrs: {
             name: 'napplet-aggregate-hash',
             content: '',
           },
-          injectTo: 'head',
+          injectTo: 'head' as const,
         },
       ];
+
+      // Inject requires meta tag if service dependencies are declared
+      if (options.requires && options.requires.length > 0) {
+        tags.push({
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-requires',
+            content: options.requires.join(','),
+          },
+          injectTo: 'head' as const,
+        });
+      }
+
+      return tags;
     },
 
     async closeBundle() {
@@ -112,6 +128,9 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       // Compute aggregate hash
       const aggregateHash = computeAggregateHash(xTags);
 
+      // Build requires tags from plugin options
+      const requiresTags = (options.requires ?? []).map((name) => ['requires', name]);
+
       // Build kind 35128 manifest event (unsigned template)
       const manifest = {
         kind: 35128,
@@ -119,6 +138,7 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         tags: [
           ['d', options.nappType],
           ...xTags.map(([hash, p]) => ['x', hash, p]),
+          ...requiresTags,
         ],
         content: '',
         aggregateHash,
@@ -166,6 +186,10 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         );
         fs.writeFileSync(indexPath, html);
         console.log(`[nip5a-manifest] ${options.nappType}: hash ${aggregateHash.slice(0, 12)}... injected into index.html`);
+      }
+
+      if (requiresTags.length > 0) {
+        console.log(`[nip5a-manifest] ${options.nappType}: requires [${(options.requires ?? []).join(', ')}]`);
       }
     },
   };
