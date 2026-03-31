@@ -59,6 +59,8 @@ export const BusKind = {
   METADATA: 29005,
   NIPDB_REQUEST: 29006,
   NIPDB_RESPONSE: 29007,
+  /** Service discovery responses — napplets query available shell services via kind 29010. */
+  SERVICE_DISCOVERY: 29010,
 } as const;
 
 /** Union type of all bus event kind values. */

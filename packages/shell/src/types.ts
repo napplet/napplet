@@ -200,6 +200,94 @@ export interface AclCheckEvent {
   decision: 'allow' | 'deny';
 }
 
+// ─── Service Extension Types ────────────────────────────────────────────────
+
+/**
+ * Metadata describing a registered shell service.
+ * Services are optional capabilities a shell provides beyond the core protocol.
+ *
+ * @example
+ * ```ts
+ * const descriptor: ServiceDescriptor = {
+ *   name: 'audio',
+ *   version: '1.0.0',
+ *   description: 'Audio playback management and mute control',
+ * };
+ * ```
+ */
+export interface ServiceDescriptor {
+  /** Unique service identifier (e.g., 'audio', 'notifications', 'clipboard'). */
+  name: string;
+  /** Semver version of the service implementation. */
+  version: string;
+  /** Human-readable description of the service. */
+  description?: string;
+}
+
+/**
+ * Handler for service-specific messages from napplets.
+ * The shell dispatches service messages to the appropriate handler based on the
+ * service name extracted from the topic prefix.
+ *
+ * @example
+ * ```ts
+ * const handler: ServiceHandler = {
+ *   descriptor: { name: 'audio', version: '1.0.0' },
+ *   handleRequest(windowId, topic, content, event) {
+ *     if (topic === 'audio:register') {
+ *       audioManager.register(windowId, content.nappClass, content.title);
+ *     }
+ *   },
+ * };
+ * ```
+ */
+export interface ServiceHandler {
+  /** Metadata describing this service. */
+  descriptor: ServiceDescriptor;
+  /**
+   * Handle a service request from a napplet.
+   *
+   * @param windowId - The requesting napplet's window identifier
+   * @param topic - The full topic string (e.g., 'audio:register')
+   * @param content - Parsed JSON content from the event
+   * @param event - The raw NostrEvent for advanced use cases
+   */
+  handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void;
+  /**
+   * Called when a napplet window is destroyed. Services should clean up
+   * any state associated with the window.
+   *
+   * @param windowId - The destroyed napplet's window identifier
+   */
+  onWindowDestroyed?(windowId: string): void;
+}
+
+/**
+ * Registry of shell services available to napplets.
+ * The service registry is the extension point for adding new capabilities
+ * to the shell without protocol changes.
+ *
+ * @example
+ * ```ts
+ * const services: ServiceRegistry = {
+ *   audio: {
+ *     descriptor: { name: 'audio', version: '1.0.0' },
+ *     handleRequest(windowId, topic, content) { ... },
+ *     onWindowDestroyed(windowId) { ... },
+ *   },
+ *   notifications: {
+ *     descriptor: { name: 'notifications', version: '1.0.0' },
+ *     handleRequest(windowId, topic, content) { ... },
+ *   },
+ * };
+ * ```
+ */
+export interface ServiceRegistry {
+  [serviceName: string]: ServiceHandler;
+}
+
+// ─── Shell Hooks ────────────────────────────────────────────────────────────
+
 /**
  * All hooks that the shell requires from the host application.
  * @example
@@ -228,4 +316,21 @@ export interface ShellHooks {
   dm?: DmHooks;
   /** Called on every ACL enforcement check. Both allows and denials are reported. */
   onAclCheck?: (event: AclCheckEvent) => void;
+  /**
+   * Optional service extensions. Each key is a service name (e.g., 'audio',
+   * 'notifications'). Napplets discover available services via kind 29010
+   * service discovery events.
+   *
+   * @example
+   * ```ts
+   * const hooks: ShellHooks = {
+   *   // ... required hooks ...
+   *   services: {
+   *     audio: myAudioServiceHandler,
+   *     notifications: myNotificationServiceHandler,
+   *   },
+   * };
+   * ```
+   */
+  services?: ServiceRegistry;
 }

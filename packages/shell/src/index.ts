@@ -30,6 +30,9 @@ export type {
   NappKeyEntry,
   AclEntry,
   AclCheckEvent,
+  ServiceDescriptor,
+  ServiceHandler,
+  ServiceRegistry,
 } from './types.js';
 
 // Standalone utilities (usable without full shell)
