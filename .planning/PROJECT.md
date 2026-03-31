@@ -108,5 +108,17 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
+## Current Milestone: v0.3.0 Runtime and Core
+
+**Goal:** Extract shared protocol types into @napplet/core and the protocol engine into @napplet/runtime, enabling third-party shell implementations. Design the service extension interface for v0.4.0.
+
+**Target features:**
+- @napplet/core — shared types, protocol constants, message definitions
+- @napplet/runtime — enforcement gate, message router, ACL state container, RuntimeHooks interface
+- @napplet/shell slimmed to browser adapter
+- @napplet/shim imports from @napplet/core
+- RuntimeHooks.services interface designed (stub)
+- Service discovery event kind reserved
+
 ---
-*Last updated: 2026-03-31 after v0.2.0 milestone completion*
+*Last updated: 2026-03-31 after v0.3.0 milestone kickoff*
