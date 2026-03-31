@@ -36,3 +36,7 @@ export type {
 // ─── Audio Service ─────────────────────────────────────────────────────────
 
 export { createAudioService } from './audio-service.js';
+
+// ─── Notification Service ──────────────────────────────────────────────────
+
+export { createNotificationService } from './notification-service.js';
