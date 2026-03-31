@@ -64,9 +64,9 @@
 
 ### Shell Export Cleanup (Gap Closure)
 
-- [ ] **CLEAN-01**: Shell index.ts does not re-export handleStateRequest or cleanupNappState from state-proxy.ts
-- [ ] **CLEAN-02**: Shell's createEnforceGate is re-exported from @napplet/runtime, not from local duplicate enforce.ts
-- [ ] **CLEAN-03**: Shell singletons (nappKeyRegistry, aclStore) removed from public exports or documented as internal-only
+- [x] **CLEAN-01**: Shell index.ts does not re-export handleStateRequest or cleanupNappState from state-proxy.ts
+- [x] **CLEAN-02**: Shell's createEnforceGate is re-exported from @napplet/runtime, not from local duplicate enforce.ts
+- [x] **CLEAN-03**: Shell singletons (nappKeyRegistry, aclStore) removed from public exports or documented as internal-only
 
 ## v0.4.0 (Deferred)
 
@@ -129,9 +129,9 @@
 | TST-02 | Phase 16 | Pending |
 | TST-03 | Phase 16 | Pending |
 | TST-04 | Phase 16 | Pending |
-| CLEAN-01 | Phase 17 | Pending |
-| CLEAN-02 | Phase 17 | Pending |
-| CLEAN-03 | Phase 17 | Pending |
+| CLEAN-01 | Phase 17 | Complete |
+| CLEAN-02 | Phase 17 | Complete |
+| CLEAN-03 | Phase 17 | Complete |
 
 **Coverage:**
 - v0.3.0 requirements: 42 total
