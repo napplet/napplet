@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Feature Negotiation & Service Discovery
 status: executing
-stopped_at: Phase 20 context gathered
-last_updated: "2026-03-31T16:23:16.834Z"
+stopped_at: Phase 21 context gathered
+last_updated: "2026-03-31T16:36:35.743Z"
 last_activity: 2026-03-31 — Phase 18 replanned (handleMessage interface)
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 0
-  total_plans: 3
+  total_plans: 9
   completed_plans: 0
   percent: 0
 ---
@@ -78,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T16:23:16.832Z
-Stopped at: Phase 20 context gathered
-Resume file: .planning/phases/20-concrete-services/20-CONTEXT.md
+Last session: 2026-03-31T16:36:35.741Z
+Stopped at: Phase 21 context gathered
+Resume file: .planning/phases/21-shim-discovery-api/21-CONTEXT.md
