@@ -4,13 +4,13 @@ milestone: v0.4.0
 milestone_name: Feature Negotiation & Service Discovery
 status: executing
 stopped_at: All phases discussed
-last_updated: "2026-03-31T17:27:35.433Z"
+last_updated: "2026-03-31T17:33:10.034Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
-  completed_plans: 6
+  completed_plans: 9
   percent: 17
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 19 — service-discovery-protocol
+**Current focus:** Phase 21 — shim-discovery-api
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
-Status: Executing Phase 19
+Phase: 21 (shim-discovery-api) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [██░░░░░░░░] 17%
