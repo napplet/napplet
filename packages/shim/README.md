@@ -28,7 +28,7 @@ npm install @napplet/shim nostr-tools
 ## Quick Start
 
 ```ts
-import { subscribe, publish, on, nappState } from '@napplet/shim';
+import { subscribe, publish, on, nappState, discoverServices, hasService } from '@napplet/shim';
 
 // Subscribe to kind 1 notes
 const sub = subscribe(
@@ -53,6 +53,12 @@ const ipc = on('profile:open', (payload) => {
 // Use scoped storage (proxied through the shell)
 await nappState.setItem('theme', 'dark');
 const theme = await nappState.getItem('theme'); // 'dark'
+
+// Discover available shell services
+const services = await discoverServices();
+if (await hasService('audio')) {
+  console.log('Audio service available');
+}
 
 // Clean up
 sub.close();
@@ -161,6 +167,72 @@ const sub = on('stream:channel-switch', (payload) => {
 sub.close();
 ```
 
+### window.napplet
+
+The shim installs a `window.napplet` global that provides service discovery. This global is also accessible via the named exports.
+
+```ts
+// Via window global (available in any script context)
+const services = await window.napplet.discoverServices();
+
+// Via named import (preferred in TypeScript)
+import { discoverServices } from '@napplet/shim';
+const services = await discoverServices();
+```
+
+Note: the `window.napplet` global is set up at module initialization. The three functions below (`discoverServices`, `hasService`, `hasServiceVersion`) are mounted on this global and also available as named exports.
+
+### discoverServices()
+
+Query available services in the shell. Results are cached session-scoped — subsequent calls return the cache without sending another request.
+
+**Returns:** `Promise<ServiceInfo[]>`
+
+```ts
+const services = await discoverServices();
+console.log(`Shell provides ${services.length} services`);
+for (const svc of services) {
+  console.log(`${svc.name} v${svc.version}`);
+}
+```
+
+### hasService(name)
+
+Check whether a named service is available in the shell.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | `string` | Service name to check (e.g., `'audio'`, `'notifications'`) |
+
+**Returns:** `Promise<boolean>`
+
+```ts
+if (await hasService('audio')) {
+  // Safe to use audio features
+}
+```
+
+### hasServiceVersion(name, version)
+
+Check whether a named service with a specific version is available.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | `string` | Service name to check |
+| `version` | `string` | Exact version string (e.g., `'1.0.0'`) |
+
+**Returns:** `Promise<boolean>`
+
+```ts
+if (await hasServiceVersion('audio', '1.0.0')) {
+  // Audio v1.0.0 features available
+}
+```
+
 ### nappState
 
 Async localStorage-like API for sandboxed napplets. All operations are proxied through the shell and scoped by napplet identity -- napplets cannot read each other's data. Each napplet has a 512 KB quota enforced by the shell.
@@ -208,7 +280,7 @@ const allKeys = await nappState.keys();
 ## Types
 
 ```ts
-import type { NostrEvent, NostrFilter, Subscription, EventTemplate } from '@napplet/shim';
+import type { NostrEvent, NostrFilter, Subscription, EventTemplate, ServiceInfo } from '@napplet/shim';
 ```
 
 | Type | Description |
@@ -217,6 +289,7 @@ import type { NostrEvent, NostrFilter, Subscription, EventTemplate } from '@napp
 | `NostrFilter` | NIP-01 subscription filter |
 | `Subscription` | Handle with `close()` method |
 | `EventTemplate` | Unsigned event for `publish()` (`kind`, `content`, `tags`, `created_at`) |
+| `ServiceInfo` | Service descriptor from `discoverServices()`: `{ name: string; version: string; description?: string }` |
 
 ## Protocol Reference
 

@@ -71,6 +71,17 @@ The napp type identifier (e.g., `'feed'`, `'chat'`, `'profile'`). This value is:
 - Injected as the `content` of the `<meta name="napplet-napp-type">` tag
 - Used as the `d` tag in the kind 35128 manifest event
 
+#### requires (optional)
+
+**Type:** `string[]`
+
+An array of service names this napplet requires from its host shell (e.g., `['audio', 'notifications']`). When set:
+
+- Injects a `<meta name="napplet-requires">` tag into HTML (comma-separated service names)
+- Adds `['requires', 'service-name']` tags to the kind 35128 manifest event
+
+If the shell does not have all required services, the napplet can detect this at runtime via `discoverServices()` or the shell can show a compatibility warning.
+
 ### Environment Variables
 
 #### VITE_DEV_PRIVKEY_HEX
@@ -84,6 +95,61 @@ If set, the plugin signs the manifest event at build time. If not set, manifest 
 ```bash
 # Generate a test key (using nostr-tools or similar)
 node -e "import('nostr-tools/pure').then(m => console.log(Buffer.from(m.generateSecretKey()).toString('hex')))"
+```
+
+## Service Dependencies
+
+Use the `requires` option when your napplet needs specific shell services (like audio playback or push notifications) to function correctly.
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { nip5aManifest } from '@napplet/vite-plugin';
+
+export default defineConfig({
+  plugins: [
+    nip5aManifest({
+      nappType: 'my-music-app',
+      requires: ['audio', 'notifications'],
+    }),
+  ],
+});
+```
+
+### What gets injected
+
+With `requires: ['audio', 'notifications']`, the plugin injects into your HTML `<head>`:
+
+```html
+<meta name="napplet-aggregate-hash" content="">
+<meta name="napplet-napp-type" content="my-music-app">
+<meta name="napplet-requires" content="audio,notifications">
+```
+
+At build time (with `VITE_DEV_PRIVKEY_HEX` set), the manifest event also includes `requires` tags:
+
+```json
+{
+  "kind": 35128,
+  "tags": [
+    ["d", "my-music-app"],
+    ["x", "<sha256>", "index.js"],
+    ["requires", "audio"],
+    ["requires", "notifications"]
+  ]
+}
+```
+
+### Runtime compatibility checking
+
+The host shell reads `<meta name="napplet-requires">` during napplet initialization and compares against registered services. Napplets can also check at runtime:
+
+```ts
+import { hasService } from '@napplet/shim';
+
+if (!(await hasService('audio'))) {
+  console.warn('Audio service not available — some features disabled');
+}
 ```
 
 ## How It Works
@@ -107,7 +173,7 @@ Only runs if `VITE_DEV_PRIVKEY_HEX` is set:
 2. Computes SHA-256 hash of each file's contents
 3. Creates sorted hash lines: `<sha256hex> <relativePath>\n`
 4. Computes aggregate hash (SHA-256 of sorted concatenation)
-5. Creates kind 35128 manifest event with `x` tags for each file
+5. Creates kind 35128 manifest event with `x` tags for each file and `requires` tags if configured
 6. Signs with the test private key
 7. Writes `.nip5a-manifest.json` to `dist/`
 8. Updates the `napplet-aggregate-hash` meta tag in `dist/index.html`
@@ -132,6 +198,8 @@ Create a Vite plugin instance.
 interface Nip5aManifestOptions {
   /** Napp type/dtag (e.g., 'feed', 'chat') */
   nappType: string;
+  /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
+  requires?: string[];
 }
 ```
 

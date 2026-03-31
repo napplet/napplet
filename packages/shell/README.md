@@ -19,6 +19,13 @@ The shell acts as a NIP-01 ShellBridge between napplet iframes and real Nostr re
 3. When an iframe loads, register its window reference and call `relay.sendChallenge(windowId)`
 4. The ShellBridge handles AUTH verification, subscription management, event routing, and all protocol details
 
+> **Architecture note:** `@napplet/shell` is a **browser adapter** over `@napplet/runtime`.
+> `createShellBridge(hooks)` adapts `ShellHooks` (browser-oriented: `Window` references, `localStorage`, `postMessage`)
+> into `RuntimeHooks` (environment-agnostic) via `adaptHooks()`, then creates a runtime engine.
+>
+> Advanced integrators can call `adaptHooks()` and `createRuntime()` directly to bypass the browser
+> adapter and use a custom transport layer. See the [RuntimeHooks section](#runtimehooks-advanced) below.
+
 ## Installation
 
 ```bash
@@ -73,21 +80,21 @@ const hooks: ShellHooks = {
   },
 };
 
-const relay = createShellBridge(hooks);
+const bridge = createShellBridge(hooks);
 
 // Listen for messages from napplet iframes
 window.addEventListener('message', (event) => {
-  relay.handleMessage(event);
+  bridge.handleMessage(event);
 });
 
 // When an iframe loads, register and challenge it
 function onIframeLoad(iframe: HTMLIFrameElement, windowId: string) {
   originRegistry.register(windowId, iframe.contentWindow!);
-  relay.sendChallenge(windowId);
+  bridge.sendChallenge(windowId);
 }
 
 // Handle consent prompts for destructive signing operations
-relay.onConsentNeeded((request) => {
+bridge.registerConsentHandler((request) => {
   const allowed = confirm(`Allow ${request.event.kind} signing?`);
   request.resolve(allowed);
 });
@@ -114,8 +121,8 @@ Create a ShellBridge instance with dependency injection.
 | `handleMessage(event: MessageEvent)` | Main message handler -- attach to `window.addEventListener('message', ...)` |
 | `sendChallenge(windowId: string)` | Send a NIP-42 AUTH challenge to a napplet window |
 | `injectEvent(topic: string, payload: unknown)` | Inject a shell-created event into subscription delivery |
-| `cleanup()` | Clean up all state and remove listeners |
-| `onConsentNeeded(handler)` | Register handler for destructive signing consent prompts |
+| `destroy()` | Clean up all state and remove listeners |
+| `registerConsentHandler(handler)` | Register handler for destructive signing consent prompts |
 
 ### ShellHooks Interface
 
@@ -132,6 +139,34 @@ The `ShellHooks` interface is the main integration point. Implementors provide r
 | `workerRelay` | `WorkerRelayHooks` | Local cache/OPFS relay integration |
 | `crypto` | `CryptoHooks` | Event signature verification |
 | `dm?` | `DmHooks` | Optional NIP-17 DM handling |
+
+### Registering Services
+
+Wire in service handlers via the optional `services` field on `ShellHooks`. Napplets discover available services using kind 29010 service discovery.
+
+```ts
+import { createShellBridge } from '@napplet/shell';
+import { createAudioService } from '@napplet/services';
+import type { ShellHooks, ServiceRegistry } from '@napplet/shell';
+
+const services: ServiceRegistry = {
+  audio: createAudioService(),
+};
+
+const hooks: ShellHooks = {
+  // ... required hooks ...
+  services,
+};
+
+const bridge = createShellBridge(hooks);
+```
+
+Each service handler in `ServiceRegistry` must implement:
+- `descriptor: ServiceDescriptor` — service name and version (`{ name: string; version: string; description?: string }`)
+- `handleMessage(windowId, message, send)` — handle incoming service requests
+- `onWindowDestroyed?(windowId)` — optional cleanup when a napplet window closes
+
+Napplets query registered services using `window.napplet.discoverServices()` (kind 29010) and communicate with them using the service topic protocol.
 
 ### Standalone Utilities
 
@@ -159,6 +194,60 @@ These exports can be used independently without creating a full ShellBridge.
 | `DESTRUCTIVE_KINDS` | `Set([0, 3, 5, 10002])` | Event kinds requiring user consent |
 | `TOPICS` | `{ ... }` | Shell command topic constants |
 
+## RuntimeHooks (Advanced)
+
+> For advanced integrators who want to bypass `@napplet/shell`'s browser adapter and use `@napplet/runtime` directly (e.g., custom transport layers, test environments, server-side hosting).
+
+### How the adapter works
+
+`createShellBridge(hooks)` internally calls `adaptHooks(shellHooks, deps)` to convert browser-oriented `ShellHooks` into environment-agnostic `RuntimeHooks`, then passes them to `createRuntime()`:
+
+```ts
+import { adaptHooks, type BrowserDeps } from '@napplet/shell';
+import { createRuntime } from '@napplet/runtime';
+import { originRegistry, manifestCache, aclStore, audioManager, nappKeyRegistry } from '@napplet/shell';
+
+const deps: BrowserDeps = {
+  originRegistry,
+  manifestCache,
+  aclStore,
+  audioManager,
+  nappKeyRegistry,
+};
+
+const runtimeHooks = adaptHooks(shellHooks, deps);
+const runtime = createRuntime(runtimeHooks);
+```
+
+### RuntimeHooks Interface
+
+`RuntimeHooks` is the environment-agnostic contract that `@napplet/runtime` requires. Unlike `ShellHooks`, it works without browser APIs.
+
+| Hook | Interface | Description |
+|------|-----------|-------------|
+| `sendToNapplet` | `(windowId, msg[]) => void` | Send a NIP-01 message array to a napplet |
+| `relayPool` | `RuntimeRelayPoolHooks` | Abstract relay subscribe/publish |
+| `cache` | `RuntimeCacheHooks` | Local event cache (optional — return `isAvailable: false`) |
+| `auth` | `RuntimeAuthHooks` | User pubkey and signer |
+| `config` | `RuntimeConfigHooks` | Napp update behavior policy |
+| `hotkeys` | `RuntimeHotkeyHooks` | Keyboard shortcut forwarding |
+| `crypto` | `RuntimeCryptoHooks` | Event verification + UUID generation |
+| `aclPersistence` | `RuntimeAclPersistence` | ACL persistence (get/set string) |
+| `manifestPersistence` | `RuntimeManifestPersistence` | Manifest cache persistence |
+| `statePersistence` | `RuntimeStatePersistence` | Napp state storage (scoped keys) |
+| `windowManager` | `RuntimeWindowManagerHooks` | Create new napplet windows |
+| `relayConfig` | `RuntimeRelayConfigHooks` | Relay URL configuration |
+| `dm?` | `RuntimeDmHooks` | Optional NIP-17 DM handling |
+| `onAclCheck?` | `(event: AclCheckEvent) => void` | ACL enforcement audit hook |
+| `services?` | `ServiceRegistry` | Service handlers by name |
+
+Import `RuntimeHooks` types from `@napplet/runtime`:
+
+```ts
+import type { RuntimeHooks, RuntimeRelayPoolHooks, RuntimeCacheHooks } from '@napplet/runtime';
+import { createRuntime } from '@napplet/runtime';
+```
+
 ## Types
 
 ```ts
@@ -174,7 +263,10 @@ import type {
   ShellBridge,
   NostrEvent, NostrFilter,
   NappKeyEntry, AclEntry,
+  AclCheckEvent,
   Capability,
+  ServiceDescriptor, ServiceHandler, ServiceRegistry,
+  BrowserDeps,
 } from '@napplet/shell';
 ```
 
