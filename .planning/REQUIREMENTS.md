@@ -84,50 +84,51 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | TBD | Pending |
-| CORE-02 | TBD | Pending |
-| CORE-03 | TBD | Pending |
-| CORE-04 | TBD | Pending |
-| CORE-05 | TBD | Pending |
-| CORE-06 | TBD | Pending |
-| CORE-07 | TBD | Pending |
-| CORE-08 | TBD | Pending |
-| CORE-09 | TBD | Pending |
-| RT-01 | TBD | Pending |
-| RT-02 | TBD | Pending |
-| RT-03 | TBD | Pending |
-| RT-04 | TBD | Pending |
-| RT-05 | TBD | Pending |
-| RT-06 | TBD | Pending |
-| RT-07 | TBD | Pending |
-| RT-08 | TBD | Pending |
-| RT-09 | TBD | Pending |
-| RT-10 | TBD | Pending |
-| RT-11 | TBD | Pending |
-| RT-12 | TBD | Pending |
-| RT-13 | TBD | Pending |
-| SHELL-01 | TBD | Pending |
-| SHELL-02 | TBD | Pending |
-| SHELL-03 | TBD | Pending |
-| SHELL-04 | TBD | Pending |
-| SHELL-05 | TBD | Pending |
-| SHELL-06 | TBD | Pending |
-| SHELL-07 | TBD | Pending |
-| SHIM-01 | TBD | Pending |
-| SHIM-02 | TBD | Pending |
-| SHIM-03 | TBD | Pending |
-| SVC-01 | TBD | Pending |
-| SVC-02 | TBD | Pending |
-| SVC-03 | TBD | Pending |
-| TST-01 | TBD | Pending |
-| TST-02 | TBD | Pending |
-| TST-03 | TBD | Pending |
-| TST-04 | TBD | Pending |
+| CORE-01 | Phase 12 | Pending |
+| CORE-02 | Phase 12 | Pending |
+| CORE-03 | Phase 12 | Pending |
+| CORE-04 | Phase 12 | Pending |
+| CORE-05 | Phase 12 | Pending |
+| CORE-06 | Phase 12 | Pending |
+| CORE-07 | Phase 12 | Pending |
+| CORE-08 | Phase 12 | Pending |
+| CORE-09 | Phase 12 | Pending |
+| RT-01 | Phase 13 | Pending |
+| RT-02 | Phase 13 | Pending |
+| RT-03 | Phase 13 | Pending |
+| RT-04 | Phase 13 | Pending |
+| RT-05 | Phase 13 | Pending |
+| RT-06 | Phase 13 | Pending |
+| RT-07 | Phase 13 | Pending |
+| RT-08 | Phase 13 | Pending |
+| RT-09 | Phase 13 | Pending |
+| RT-10 | Phase 13 | Pending |
+| RT-11 | Phase 13 | Pending |
+| RT-12 | Phase 13 | Pending |
+| RT-13 | Phase 13 | Pending |
+| SHELL-01 | Phase 14 | Pending |
+| SHELL-02 | Phase 14 | Pending |
+| SHELL-03 | Phase 14 | Pending |
+| SHELL-04 | Phase 14 | Pending |
+| SHELL-05 | Phase 14 | Pending |
+| SHELL-06 | Phase 14 | Pending |
+| SHELL-07 | Phase 14 | Pending |
+| SHIM-01 | Phase 14 | Pending |
+| SHIM-02 | Phase 14 | Pending |
+| SHIM-03 | Phase 14 | Pending |
+| SVC-01 | Phase 15 | Pending |
+| SVC-02 | Phase 15 | Pending |
+| SVC-03 | Phase 15 | Pending |
+| TST-01 | Phase 16 | Pending |
+| TST-02 | Phase 16 | Pending |
+| TST-03 | Phase 16 | Pending |
+| TST-04 | Phase 16 | Pending |
 
 **Coverage:**
-- v0.3.0 requirements: 38 total
-- Mapped to phases: 0
-- Unmapped: 38
+- v0.3.0 requirements: 39 total
+- Mapped to phases: 39
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-31*
+*Traceability updated: 2026-03-31*

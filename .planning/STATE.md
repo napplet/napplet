@@ -1,41 +1,40 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.2.0
-milestone_name: Shell Architecture Cleanup
-status: executing
-stopped_at: Phase 09 plans complete, ready for verification
-last_updated: "2026-03-31T10:00:55.587Z"
+milestone: v0.3.0
+milestone_name: Runtime and Core
+status: ready_to_plan
+stopped_at: Roadmap created, ready to plan Phase 12
+last_updated: "2026-03-31"
 last_activity: 2026-03-31
 progress:
   total_phases: 5
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
-  percent: 64
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-30)
+See: .planning/PROJECT.md (updated 2026-03-31)
 
-**Core value:** The shell's security boundary (ACL) must be deterministic, auditable, and enforce on every code path -- no bypasses, no gaps.
-**Current focus:** Phase 11 — shell-code-cleanup
+**Core value:** Protocol logic is portable -- any environment can host napplets by implementing RuntimeHooks.
+**Current focus:** Phase 12 -- Core Package
 
 ## Current Position
 
-Phase: 11
+Phase: 12 of 16 (Core Package)
 Plan: Not started
-Status: Executing Phase 11
-Last activity: 2026-03-31
+Status: Ready to plan
+Last activity: 2026-03-31 -- Roadmap created for v0.3.0
 
-Progress: [██████░░░░] 64%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: 0 hours
@@ -47,13 +46,10 @@ Progress: [██████░░░░] 64%
 | - | - | - | - |
 
 **Recent Trend:**
-
 - Last 5 plans: -
 - Trend: -
 
 *Updated after each plan completion*
-| Phase 07 P01 | 6min | 11 tasks | 17 files |
-| Phase 07 P02 | 2min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -62,9 +58,10 @@ Progress: [██████░░░░] 64%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Roadmap v0.2.0]: Renames (Phase 7) before ACL redesign so new code uses correct names from the start
-- [Roadmap v0.2.0]: ACL redesign is the critical path (Phases 8-9), tests validate after (Phase 10), cleanup last (Phase 11)
-- [Roadmap v0.2.0]: Tests written against new architecture, not retrofitted onto old code
+- [v0.2.0]: Target architecture: acl -> core -> runtime -> shell (multi-shell support)
+- [v0.3.0 Roadmap]: Core extracted first because runtime, shell, and shim all depend on it
+- [v0.3.0 Roadmap]: Phase 14 (shell+shim) and Phase 15 (service design) can run in parallel after Phase 13
+- [v0.3.0 Roadmap]: Service extension is design-only -- stub interfaces, no implementation until v0.4.0
 
 ### Pending Todos
 
@@ -72,10 +69,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- CARRIED: npm publish (v0.1.0 plan 06-04) still blocked on human npm auth. Deferred to v0.3.0 per REQUIREMENTS.md.
+- CARRIED: npm publish still blocked on human npm auth. Deferred to v0.4.0+ per REQUIREMENTS.md.
 
 ## Session Continuity
 
-Last session: 2026-03-30T23:20:00.000Z
-Stopped at: Phase 09 plans complete, ready for verification
+Last session: 2026-03-31
+Stopped at: v0.3.0 roadmap created, ready to plan Phase 12
 Resume file: None
