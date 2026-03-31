@@ -12,7 +12,7 @@
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 12: Core Package** - Extract shared protocol types, constants, and message definitions into @napplet/core
+- [x] **Phase 12: Core Package** - Extract shared protocol types, constants, and message definitions into @napplet/core (completed 2026-03-31)
 - [ ] **Phase 13: Runtime Package** - Extract protocol engine (dispatch, enforce, AUTH, subscriptions) into @napplet/runtime
 - [ ] **Phase 14: Shell Adapter and Shim Rewire** - Slim shell to browser adapter over runtime; switch shim to core imports
 - [ ] **Phase 15: Service Extension Design** - Define RuntimeHooks.services interface and reserve service discovery event kind
@@ -99,7 +99,7 @@ Phases execute in numeric order: 12 -> 13 -> 14 -> 15 -> 16
 | 9. ACL Enforcement Gate | v0.2.0 | 2/2 | Complete | 2026-03-30 |
 | 10. ACL Behavioral Tests | v0.2.0 | 2/2 | Complete | 2026-03-30 |
 | 11. Shell Code Cleanup | v0.2.0 | 2/2 | Complete | 2026-03-31 |
-| 12. Core Package | v0.3.0 | 0/3 | Planned | - |
+| 12. Core Package | v0.3.0 | 0/3 | Complete    | 2026-03-31 |
 | 13. Runtime Package | v0.3.0 | 0/5 | Planned | - |
 | 14. Shell Adapter and Shim Rewire | v0.3.0 | 0/0 | Not started | - |
 | 15. Service Extension Design | v0.3.0 | 2/2 | Planned | - |
