@@ -28,16 +28,17 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Interactive Chat + Bot demo with visual protocol debugger — v0.1.0
 - ✓ Refined NIP-5A specification with implementation learnings — v0.1.0
 - ✓ Packages validated (publint + arethetypeswrong) at v0.1.0-alpha.1 — v0.1.0
+- ✓ ShellBridge rename (pseudo-relay → ShellBridge), storage → state rename — v0.2.0
+- ✓ @napplet/acl pure module — bitfield caps, immutable state, zero deps, WASM-ready — v0.2.0
+- ✓ Single enforce() gate in ShellBridge — all messages through one ACL checkpoint — v0.2.0
+- ✓ 56 ACL behavioral tests (122 total) — full capability × action matrix — v0.2.0
+- ✓ Shell code cleanup — verb-noun naming, JSDoc, clean internals — v0.2.0
 
 ### Active
 
-- [x] Rename pseudo-relay → ShellBridge across all packages, tests, spec, demo — Phase 7
-- [x] Redesign ACL as pure WASM-ready module — deterministic (identity, capability, action) → allow | deny — Phase 8
-- [x] Single ACL enforcement point in ShellBridge — every message passes through one gate — Phase 9
-- [x] Exhaustive behavioral ACL test suite — capability × action matrix — Phase 10
-- [x] Shell code cleanup — consistent method names, clean interfaces — Phase 11
-- [x] Complete storage → state rename across all tests — Phase 7
-- [ ] Publish @napplet/shim, @napplet/shell, @napplet/vite-plugin to npm (needs npm auth)
+- [ ] Extract @napplet/core — protocol types, message definitions, capability resolver (shared by all)
+- [ ] Extract @napplet/runtime — enforcement gate, message router, state management
+- [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
 - [ ] Event-ID triggered aggregate hash revalidation
@@ -107,16 +108,5 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
-## Current Milestone: v0.2.0 Shell Architecture Cleanup
-
-**Goal:** Redesign the shell's core architecture — rename pseudo-relay to ShellBridge, extract ACL into a pure WASM-ready module with a single enforcement point, write exhaustive behavioral tests, and clean up code quality.
-
-**Target features:**
-- Rename pseudo-relay → ShellBridge
-- Pure ACL module (WASM-compilable, deterministic)
-- Single enforcement point — all messages through one gate
-- Capability × action behavioral test matrix
-- Consistent naming and clean interfaces throughout shell
-
 ---
-*Last updated: 2026-03-31 after Phase 11 (Shell Code Cleanup) completion — v0.2.0 milestone complete*
+*Last updated: 2026-03-31 after v0.2.0 milestone completion*
