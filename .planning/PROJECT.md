@@ -43,12 +43,12 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Service discovery protocol — kind 29010 REQ/EVENT/EOSE flow, synthetic events from registry, live subscriptions — v0.4.0 Phase 19
 - ✓ Shim-side discovery API — window.napplet global with discoverServices/hasService/hasServiceVersion, session cache, ServiceInfo type — v0.4.0 Phase 21
 - ✓ @napplet/services package — createAudioService and createNotificationService as ServiceHandlers, audio:* prefix only, browser-agnostic — v0.4.0 Phase 20
+- ✓ Manifest requires tags — vite plugin injects ["requires","service-name"] into NIP-5A manifest, <meta napplet-requires> into index.html — v0.4.0 Phase 22 (COMPAT-01)
+- ✓ Compatibility check at AUTH — runtime reads manifest requires, checks ServiceRegistry, builds CompatibilityReport, fires onCompatibilityIssue; strict mode blocks load — v0.4.0 Phase 22 (NEG-01..04, COMPAT-02, COMPAT-03)
+- ✓ Undeclared service consent — checkUndeclaredService fires at INTER_PANE dispatch time; ConsentRequest type discriminator 'undeclared-service'; per-session consent cache — v0.4.0 Phase 22 (NEG-05)
+- ✓ strictMode configurable via RuntimeHooks — permissive default, strict blocks napplet loading on missing services — v0.4.0 Phase 22 (NEG-06)
 
 ### Active
-
-- [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
-- [ ] Compatibility reporting — shim surfaces missing required services to napplet developer/user
-- [ ] Manifest `requires` tags — napplet manifest declares service dependencies for shell to check
 - [ ] Publish @napplet/shim, @napplet/shell, @napplet/acl, @napplet/vite-plugin to npm
 - [ ] Napplet boilerplate / starter template (@napplet/create CLI)
 - [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
@@ -69,7 +69,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: v0.4.0 in progress (Phase 21 complete). Shim-side discovery API added: window.napplet global installed at iframe load time with discoverServices(), hasService(), hasServiceVersion(). ServiceInfo type exported from @napplet/shim public API. Session-scoped cache prevents duplicate kind 29010 REQs. Runtime 39/39 tests pass.
+- **Current state**: v0.4.0 in progress (Phase 22 complete). Negotiation and compatibility implemented: vite plugin injects requires tags; runtime checks them post-AUTH; CompatibilityReport surfaced via onCompatibilityIssue; strict/permissive mode; undeclared service consent at dispatch time. All 9 Phase 22 requirements (NEG-01..06, COMPAT-01..03) satisfied.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core). Runtime is browser-agnostic via RuntimeHooks DI.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (193 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, and service discovery.
