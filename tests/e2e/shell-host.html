@@ -7,11 +7,12 @@
 <body>
   <div id="status">loading</div>
   <script type="module">
-    import { createPseudoRelay, originRegistry, nappKeyRegistry } from '@napplet/shell';
+    import { createShellBridge, originRegistry } from '@napplet/shell';
 
     const windowId = 'test-napp-1';
+    let relay;
     window.__TEST__ = {
-      get authCompleted() { return nappKeyRegistry.isRegistered(windowId); },
+      get authCompleted() { return relay.runtime.nappKeyRegistry.isRegistered(windowId); },
       errors: [],
     };
 
@@ -57,7 +58,7 @@
         },
       };
 
-      const relay = createPseudoRelay(hooks);
+      relay = createShellBridge(hooks);
 
       // Listen for messages from the iframe and route to pseudo-relay
       window.addEventListener('message', (event) => {

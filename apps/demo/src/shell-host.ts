@@ -8,8 +8,6 @@
 import {
   createShellBridge,
   originRegistry,
-  aclStore,
-  nappKeyRegistry,
   type ShellBridge,
   type ShellHooks,
   type Capability,
@@ -306,9 +304,9 @@ export function bootShell(): { tap: MessageTap; relay: ShellBridge } {
       // Find which napplet this OK belongs to by checking nappKeyRegistry
       for (const [wid, info] of napplets) {
         if (!info.authenticated) {
-          const pubkey = nappKeyRegistry.getPubkey(wid);
+          const pubkey = relay.runtime.nappKeyRegistry.getPubkey(wid);
           if (pubkey) {
-            const entry = nappKeyRegistry.getEntry(pubkey);
+            const entry = relay.runtime.nappKeyRegistry.getEntry(pubkey);
             if (entry) {
               info.authenticated = true;
               info.pubkey = entry.pubkey;
@@ -368,12 +366,12 @@ export function toggleCapability(windowId: string, capability: Capability, enabl
   const hash = info.aggregateHash || '';
   console.log(`[acl] ${enabled ? 'GRANT' : 'REVOKE'} ${capability} for ${info.name} (pubkey=${info.pubkey.substring(0, 8)}... dTag=${dTag} hash=${hash})`);
   if (enabled) {
-    aclStore.grant(info.pubkey, dTag, hash, capability);
+    relay.runtime.aclState.grant(info.pubkey, dTag, hash, capability);
   } else {
-    aclStore.revoke(info.pubkey, dTag, hash, capability);
+    relay.runtime.aclState.revoke(info.pubkey, dTag, hash, capability);
   }
   // Verify the change took effect
-  const check = aclStore.check(info.pubkey, dTag, hash, capability);
+  const check = relay.runtime.aclState.check(info.pubkey, dTag, hash, capability);
   console.log(`[acl] check ${capability} after ${enabled ? 'grant' : 'revoke'}: ${check}`);
 }
 
@@ -384,9 +382,9 @@ export function toggleBlock(windowId: string, blocked: boolean): void {
   const info = napplets.get(windowId);
   if (!info?.pubkey) return;
   if (blocked) {
-    aclStore.block(info.pubkey, info.dTag || '', info.aggregateHash || '');
+    relay.runtime.aclState.block(info.pubkey, info.dTag || '', info.aggregateHash || '');
   } else {
-    aclStore.unblock(info.pubkey, info.dTag || '', info.aggregateHash || '');
+    relay.runtime.aclState.unblock(info.pubkey, info.dTag || '', info.aggregateHash || '');
   }
 }
 
