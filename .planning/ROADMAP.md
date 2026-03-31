@@ -111,7 +111,7 @@
   3. In strict mode, a napplet requiring a missing service is blocked from loading — the shell host receives the report and the napplet never starts
   4. In permissive mode (default), a napplet requiring a missing service loads with a warning — the shell host receives the report and decides UX
   5. When a napplet uses a service it did not declare in its manifest, the runtime raises a consent-style warning (reusing the ConsentRequest pattern from destructive signing kinds)
-**Plans**: TBD
+**Plans**: 22-01 (vite plugin requires, wave 1), 22-02 (runtime types, wave 1), 22-03 (compatibility check, wave 2), 22-04 (undeclared consent, wave 2)
 
 ## Progress
 
@@ -142,7 +142,7 @@ Phases execute in numeric order: 18 -> 19 -> 20 -> 21 -> 22
 | 19. Service Discovery Protocol | v0.4.0 | 0/0 | Not started | - |
 | 20. Concrete Services | v0.4.0 | 0/0 | Not started | - |
 | 21. Shim Discovery API | v0.4.0 | 0/0 | Not started | - |
-| 22. Negotiation & Compatibility | v0.4.0 | 0/0 | Not started | - |
+| 22. Negotiation & Compatibility | v0.4.0 | 0/4 | Planned | - |
 
 ### Phase 22.1: Core Infrastructure Services (INSERTED)
 
