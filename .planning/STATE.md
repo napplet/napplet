@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Runtime and Core
-status: planned
-stopped_at: Phase 12 planned (3 plans in 2 waves), ready to execute
-last_updated: "2026-03-31"
-last_activity: 2026-03-31
+status: executing
+stopped_at: v0.3.0 roadmap created, ready to plan Phase 12
+last_updated: "2026-03-31T10:31:11.680Z"
+last_activity: 2026-03-31 -- Phase 12 execution started
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 3
+  total_plans: 17
   completed_plans: 0
   percent: 0
 ---
@@ -21,20 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Protocol logic is portable -- any environment can host napplets by implementing RuntimeHooks.
-**Current focus:** Phase 12 -- Core Package
+**Current focus:** Phase 12 — core-package
 
 ## Current Position
 
-Phase: 12 of 16 (Core Package)
-Plan: 3 plans in 2 waves — ready to execute
-Status: Planned
-Last activity: 2026-03-31 -- Phase 12 planned
+Phase: 12 (core-package) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 12
+Last activity: 2026-03-31 -- Phase 12 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: 0 hours
@@ -46,6 +47,7 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: -
 - Trend: -
 
