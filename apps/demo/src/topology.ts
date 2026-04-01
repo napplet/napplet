@@ -150,11 +150,6 @@ export function buildDemoTopology(input: DemoTopologyInput): DemoTopology {
   ];
 
   const edges: DemoTopologyEdge[] = [
-    {
-      id: NAPPLETS_SHELL_EDGE_ID,
-      from: 'topology-napplets',
-      to: SHELL_NODE_ID,
-    },
     ...napplets.map((napplet) => ({
       id: getNappletEdgeId(napplet.name),
       from: getNappletNodeId(napplet.name),
@@ -204,6 +199,7 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   const BASE_OPTIONS = {
     color: COLOR_RESTING,
     size: 2,
+    curve: 0,
     endPlug: 'arrow2',
     endPlugSize: 1.5,
   };
