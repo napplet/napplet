@@ -187,14 +187,23 @@ const COLOR_AMBER = '#ff9f0a';
 const COLOR_BLOCKED = '#ff3b3b';
 const COLOR_RESTING = 'rgba(58,58,74,0.7)';
 
+/** Create a zero-size invisible port div anchored at (xPct%, yPct%) inside parent. */
+function makePort(parent: HTMLElement, xPct: number, yPct: number): HTMLElement {
+  const port = document.createElement('div');
+  port.style.cssText = `position:absolute;width:0;height:0;pointer-events:none;left:${xPct}%;top:${yPct}%;`;
+  parent.appendChild(port);
+  return port;
+}
+
 export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lines = new Map<string, any>();
+  const ports: HTMLElement[] = [];
 
   const BASE_OPTIONS = {
     color: COLOR_RESTING,
     size: 2,
-    path: 'grid',
+    path: 'fluid',
     endPlug: 'arrow2',
     endPlugSize: 1.5,
   };
@@ -204,25 +213,31 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
     const toEl = document.getElementById(edge.to);
     if (!fromEl || !toEl) continue;
 
+    // Ensure positioned context so absolute port children work
+    if (getComputedStyle(fromEl).position === 'static') fromEl.style.position = 'relative';
+    if (getComputedStyle(toEl).position === 'static') toEl.style.position = 'relative';
+
+    // Port divs at exact boundary positions — LeaderLine socket on a 0×0 div
+    // exits/enters perfectly perpendicular (90°) to the node edge.
+    const fromOutPort = makePort(fromEl, 75, 100); // right side, bottom edge
+    const toOutPort   = makePort(toEl,   75, 0);   // right side, top edge
+    const toInPort    = makePort(toEl,   25, 0);   // left side, top edge
+    const fromInPort  = makePort(fromEl, 25, 100); // left side, bottom edge
+    ports.push(fromOutPort, toOutPort, toInPort, fromInPort);
+
     try {
-      // outLine connects at right side of bottom/top edges
-      const outLine = new LeaderLine(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (LeaderLine as any).pointAnchor(fromEl, { x: '75%', y: '100%' }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (LeaderLine as any).pointAnchor(toEl, { x: '75%', y: '0%' }),
-        { ...BASE_OPTIONS },
-      );
+      const outLine = new LeaderLine(fromOutPort, toOutPort, {
+        ...BASE_OPTIONS,
+        startSocket: 'bottom',
+        endSocket: 'top',
+      });
       lines.set(edge.id + '-out', outLine);
 
-      // inLine connects at left side of top/bottom edges
-      const inLine = new LeaderLine(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (LeaderLine as any).pointAnchor(toEl, { x: '25%', y: '0%' }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (LeaderLine as any).pointAnchor(fromEl, { x: '25%', y: '100%' }),
-        { ...BASE_OPTIONS },
-      );
+      const inLine = new LeaderLine(toInPort, fromInPort, {
+        ...BASE_OPTIONS,
+        startSocket: 'top',
+        endSocket: 'bottom',
+      });
       lines.set(edge.id + '-in', inLine);
     } catch { /* best-effort — may fail if elements not visible */ }
   }
