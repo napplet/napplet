@@ -2,32 +2,31 @@
 gsd_state_version: 1.0
 milestone: v0.5.0
 milestone_name: Documentation & Developer Skills
-status: executing
-stopped_at: Phase 23 complete
-last_updated: "2026-03-31T22:31:18.036Z"
-last_activity: 2026-03-31
+status: complete
+stopped_at: Milestone v0.5.0 shipped
+last_updated: "2026-04-01T23:00:00.000Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 12
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-31 after v0.4.0 archive)
+See: .planning/PROJECT.md (updated 2026-04-01 after v0.5.0 shipped)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 26 — skills-directory
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 26
-Plan: Not started
-Status: Executing Phase 26
-Last activity: 2026-03-31
+Milestone: v0.5.0 shipped 2026-04-01
+Status: Between milestones
+Last activity: 2026-04-01
 
 ## Accumulated Context
 
@@ -37,10 +36,11 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-- CARRIED: npm publish blocked on human npm auth. Target for v0.5.0.
+- CARRIED: npm publish blocked on human npm auth. Target for next milestone.
+- LOW: nappState/nappStorage alias inconsistency — both work at runtime but undocumented
 
 ## Session Continuity
 
-Last session: 2026-03-31
-Stopped at: Phase 23 complete
-Resume: `/gsd:plan-phase 24`
+Last session: 2026-04-01
+Stopped at: Milestone v0.5.0 complete
+Resume: `/gsd:new-milestone`

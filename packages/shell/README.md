@@ -89,7 +89,7 @@ window.addEventListener('message', (event) => {
 
 // When an iframe loads, register and challenge it
 function onIframeLoad(iframe: HTMLIFrameElement, windowId: string) {
-  originRegistry.register(windowId, iframe.contentWindow!);
+  originRegistry.register(iframe.contentWindow!, windowId);
   bridge.sendChallenge(windowId);
 }
 
@@ -123,6 +123,7 @@ Create a ShellBridge instance with dependency injection.
 | `injectEvent(topic: string, payload: unknown)` | Inject a shell-created event into subscription delivery |
 | `destroy()` | Clean up all state and remove listeners |
 | `registerConsentHandler(handler)` | Register handler for destructive signing consent prompts |
+| `readonly runtime` | `Runtime` instance — access `runtime.registerService()` for dynamic service registration |
 
 ### ShellHooks Interface
 

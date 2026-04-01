@@ -1,5 +1,18 @@
 # Milestones
 
+## v0.5.0 Documentation & Developer Skills (Shipped: 2026-04-01)
+
+**Phases completed:** 4 phases, 12 plans, 0 tasks
+
+**Key accomplishments:**
+
+- Created READMEs for 4 new packages (@napplet/acl, @napplet/core, @napplet/runtime, @napplet/services) — complete API documentation from source
+- Updated root README and 3 existing package READMEs (shim, shell, vite-plugin) to reflect 7-package v0.4.0 SDK
+- Rewrote SPEC.md Section 11 (service discovery), renamed all PseudoRelay → ShellBridge, documented requires/compat protocol (Sections 2.9, 2.10, 15.6)
+- Created 3 agentskills.io-format portable skill files: build-napplet, integrate-shell, add-service — agents can build with napplet without reading the full spec
+
+---
+
 ## v0.4.0 Feature Negotiation & Service Discovery (Shipped: 2026-03-31)
 
 **Phases completed:** 6 phases, 19 plans, 43 tasks

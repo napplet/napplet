@@ -439,6 +439,7 @@ Kinds 29000-29999 are reserved for shell-internal bus traffic. These kinds are e
 | 29005 | METADATA | Reserved (internal shell use) |
 | 29006 | NIPDB_REQUEST | Napplet-to-shell cache proxy request |
 | 29007 | NIPDB_RESPONSE | Shell-to-napplet cache proxy response |
+| 29010 | SERVICE_DISCOVERY | Shell-to-napplet service descriptor (see Section 11) |
 
 Note: These kind numbers are implementation-specific. Other shell implementations MAY use different ephemeral kind ranges, provided they remain within the 20000-29999 ephemeral range defined by NIP-01.
 

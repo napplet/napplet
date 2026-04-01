@@ -74,11 +74,12 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: v0.5.0 in progress (2026-04-01). All phases 23-26 complete. Skills directory created: 3 agentskills.io-format skill files (build-napplet, integrate-shell, add-service). Full documentation coverage across all 7 packages. SPEC.md updated for v0.4.0 protocol.
+- **Current state**: v0.5.0 shipped (2026-04-01). All 7 packages documented with READMEs. SPEC.md fully updated for v0.4.0 protocol. 3 agentskills.io skill files enable agents/developers to build with napplet. 44 files changed, 6,819 lines added across v0.5.0.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
-- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. npm publish blocked on human auth.
+- **Documentation**: All 7 packages have README.md. SPEC.md (41KB+) covers full protocol including Section 11 service discovery. 3 portable skill files in skills/ directory.
+- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. npm publish blocked on human auth. nappState/nappStorage alias undocumented.
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
 
 ## Constraints
@@ -130,15 +131,14 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
-## Current Milestone: v0.5.0 Documentation & Developer Skills
+## Next Milestone Goals
 
-**Goal:** Make the napplet SDK self-documenting — every package has a README, the spec reflects v0.4.0 reality, and agents/developers have portable skills they can pull to build with napplet reliably.
-
-**Target features:**
-- Root README.md — full rewrite for 7-package architecture, correct API names, service discovery
-- Package READMEs — create 4 missing (acl, core, runtime, services) + update 3 outdated (shim, shell, vite-plugin)
-- SPEC.md — update Section 11 (kind 29010) and any sections that diverged during v0.4.0
-- skills/ directory — agentskills.io format portable skills: build-napplet, integrate-shell, add-service
+Next milestone candidates (run `/gsd:new-milestone` to define):
+- Publish all @napplet/* packages to npm (blocked on human npm auth)
+- @napplet/create CLI / starter template
+- Deploy demo as production nsite
+- Protocol hardening (aggregate hash revalidation, keypair derivation)
+- Service ACL (per-service capability strings)
 
 ---
-*Last updated: 2026-03-31 after v0.5.0 milestone defined*
+*Last updated: 2026-04-01 after v0.5.0 milestone shipped*

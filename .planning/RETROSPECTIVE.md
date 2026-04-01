@@ -50,6 +50,51 @@
 
 ---
 
+## Milestone: v0.5.0 — Documentation & Developer Skills
+
+**Shipped:** 2026-04-01
+**Phases:** 4 (23-26) | **Plans:** 12
+
+### What Was Built
+
+- **Phase 23**: READMEs for 4 new packages (@napplet/acl, @napplet/core, @napplet/runtime, @napplet/services) — complete API documentation from source
+- **Phase 24**: Root README rewrite and 3 existing package README updates (shim, shell, vite-plugin) for 7-package v0.4.0 SDK
+- **Phase 25**: SPEC.md rewrite — Section 11 (kind 29010 service discovery), ShellBridge rename completion, Sections 2.9/2.10/15.6 (requires/compat/consent)
+- **Phase 26**: 3 agentskills.io-format skill files: build-napplet, integrate-shell, add-service
+
+### What Worked
+
+- **Source-first README writing** — all READMEs written by reading actual source, not paraphrasing the spec. Caught real API discrepancies early.
+- **Skill files as portable knowledge** — agentskills.io format proved well-suited for agent consumption. Skills reference exact imports and types.
+- **Background agent parallelism** — Phase 26 plan + execute ran as background agents while manager dashboard stayed interactive. Clean async coordination.
+
+### What Was Inefficient
+
+- **Phase 24 has no execution record** — no SUMMARY.md or VERIFICATION.md. Work was done but the GSD execution tracking was bypassed. Deliverables confirmed on disk but no formal verification.
+- **REQUIREMENTS.md traceability stale again** — all 14 requirements still showed "Pending" checkboxes despite being complete. Same pattern as v0.4.0.
+- **SKILL-01/02/03 never added to traceability table** — requirements were defined but the traceability section wasn't updated to include the Skills row.
+- **originRegistry.register() argument order bug in shell README** — caught by integration checker during milestone audit, not during phase execution.
+
+### Patterns Established
+
+- **Documentation milestones follow code milestones** — separating docs from code work produces focused, higher-quality output
+- **Integration checker as quality gate** — cross-phase wiring checks caught real bugs (argument order inversion) that per-phase verification missed
+- **Skills as a first-class deliverable** — portable, agent-consumable documentation alongside traditional READMEs
+
+### Key Lessons
+
+- **VERIFICATION.md for EVERY phase, including docs-only phases** — Phase 24's missing record was the biggest audit gap
+- **Update traceability table during execution** — same lesson from v0.4.0; still not automated
+- **Cross-reference documentation** — per-phase verification doesn't catch cross-document inconsistencies (nappState vs nappStorage). Integration checker fills this gap.
+
+### Cost Observations
+
+- Sessions: concentrated 2-day effort (2026-03-29 → 2026-04-01)
+- 44 files changed, 6,819 lines added — almost entirely documentation
+- Milestone audit found 3 fixable bugs (HIGH: register() order, MEDIUM: missing runtime property, MEDIUM: Section 3.8 table gap)
+
+---
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | Plans | Tests | LOC (TS) | Duration |
@@ -58,10 +103,12 @@
 | v0.2.0 Shell Cleanup | 5 | 11 | 122 | ~6,500 | 1 day |
 | v0.3.0 Runtime & Core | 6 | 18 | 193 | ~8,000 | 1 day |
 | v0.4.0 Service Discovery | 6 | 19 | 220+ | ~10,122 | 1 day |
+| v0.5.0 Docs & Skills | 4 | 12 | 220+ | ~16,941 | 2 days |
 
 ### Observations
 
-- **Consistent 1-day milestones** — each milestone ships in a single focused session
-- **Test count growing healthily** — 66 → 122 → 193 → 220+ reflects increasing surface area
-- **Plan counts stabilizing** — v0.3.0 and v0.4.0 both ~18-19 plans; finding a natural milestone scope
-- **Documentation debt pattern** — each milestone has had minor doc gaps (stale checkboxes, missing VERIFICATION.md). Worth building into execution templates.
+- **Consistent short milestones** — each milestone ships in 1-2 focused sessions
+- **Test count stable** — v0.5.0 was docs-only, no new tests added. 220+ tests remain the baseline.
+- **LOC growing via documentation** — 6,819 lines of docs/skills added. Documentation is now a significant portion of the repo.
+- **Documentation debt is a recurring pattern** — v0.4.0 and v0.5.0 both had stale traceability tables and missing VERIFICATION.md files. Integration checker helps but the root cause is per-phase tracking gaps.
+- **Cross-phase integration checking is essential** — caught the originRegistry.register() argument order bug that per-phase verification missed.
