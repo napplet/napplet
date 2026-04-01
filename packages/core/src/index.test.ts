@@ -97,7 +97,7 @@ describe('@napplet/core exports', () => {
       expect(TOPICS.STATE_REMOVE).toBe('shell:state-remove');
       expect(TOPICS.STATE_CLEAR).toBe('shell:state-clear');
       expect(TOPICS.STATE_KEYS).toBe('shell:state-keys');
-      expect(TOPICS.STATE_RESPONSE).toBe('napp:state-response');
+      expect(TOPICS.STATE_RESPONSE).toBe('napplet:state-response');
     });
 
     it('includes auth and relay topics', () => {

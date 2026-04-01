@@ -8,7 +8,7 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 
 | Package | npm | Description |
 |---------|-----|-------------|
-| [@napplet/shim](packages/shim) | `@napplet/shim` | Napplet SDK. Provides `subscribe`, `publish`, `query`, `emit`, `on`, `nappState`, and service discovery — everything a napplet needs to communicate with its host shell. |
+| [@napplet/shim](packages/shim) | `@napplet/shim` | Napplet SDK. Provides `subscribe`, `publish`, `query`, `emit`, `on`, `nappletState`, and service discovery — everything a napplet needs to communicate with its host shell. |
 | [@napplet/shell](packages/shell) | `@napplet/shell` | Shell runtime browser adapter. `createShellBridge(hooks)` factory — handles postMessage routing, NIP-42 AUTH, ACL enforcement, signer proxy, storage proxy, and service dispatch. |
 | [@napplet/acl](packages/acl) | `@napplet/acl` | Pure capability enforcement module. Bitfield-based ACL with `check()`, `grant()`, `revoke()`, `block()` — zero browser dependencies. |
 | [@napplet/core](packages/core) | `@napplet/core` | Shared protocol types and constants. `NostrEvent`, `NostrFilter`, `BusKind`, `ServiceDescriptor`, topic constants — imported by all other packages. |
@@ -39,7 +39,7 @@ Shell (host page)                          Napplet (sandboxed iframe)
 @napplet/shell                             @napplet/shim
   createShellBridge(hooks)                   subscribe / publish / query
   ├── @napplet/runtime (engine)              emit / on (inter-pane events)
-  │     ├── NIP-01 message routing           nappState (proxied storage)
+  │     ├── NIP-01 message routing           nappletState (proxied storage)
   │     ├── NIP-42 AUTH handshake            window.nostr (NIP-07 proxy)
   │     ├── ACL enforcement                  window.napplet.discoverServices()
   │     ├── Service dispatch (kind 29010)

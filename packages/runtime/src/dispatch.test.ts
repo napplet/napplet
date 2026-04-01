@@ -102,7 +102,7 @@ describe('runtime message dispatch', () => {
 
     it('accepts valid AUTH response and registers napplet identity', async () => {
       await authenticateWindow(runtime, mock);
-      // After auth, the nappKeyRegistry should have the entry
+      // After auth, the sessionRegistry should have the entry
       const pubkey = runtime.nappKeyRegistry.getPubkey(WINDOW_ID);
       expect(pubkey).toBe(TEST_PUBKEY);
     });
