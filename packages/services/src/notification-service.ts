@@ -98,14 +98,14 @@ export function createNotificationService(options?: NotificationServiceOptions):
   }
 
   /**
-   * Create a synthetic INTER_PANE event to send back to a napplet.
+   * Create a synthetic IPC-PEER event to send back to a napplet.
    */
   function createResponseEvent(topic: string, content: Record<string, unknown>): NostrEvent {
     return {
       id: `notif-resp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pubkey: '__shell__',
       created_at: Math.floor(Date.now() / 1000),
-      kind: BusKind.INTER_PANE,
+      kind: BusKind.IPC_PEER,
       tags: [['t', topic]],
       content: JSON.stringify(content),
       sig: '',
@@ -254,8 +254,8 @@ export function createNotificationService(options?: NotificationServiceOptions):
       if (message[0] !== 'EVENT' || !message[1]) return;
       const event = message[1] as NostrEvent;
 
-      // Only handle INTER_PANE events with notifications:* topics
-      if (event.kind !== BusKind.INTER_PANE) return;
+      // Only handle IPC-PEER events with notifications:* topics
+      if (event.kind !== BusKind.IPC_PEER) return;
       const topic = extractTopic(event);
       if (!topic?.startsWith('notifications:')) return;
 

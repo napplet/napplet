@@ -28,7 +28,7 @@ export { discoverServices, hasService, hasServiceVersion } from './discovery-shi
 export type { ServiceInfo } from './discovery-shim.js';
 
 /**
- * Broadcast an inter-pane event to other napplets via the shell.
+ * Broadcast an IPC-PEER event to other napplets via the shell.
  *
  * Creates a signed kind 29003 event with the given topic as a 't' tag
  * and posts it to the ShellBridge for delivery to matching subscribers.
@@ -47,13 +47,13 @@ export function emit(
   extraTags: string[][] = [],
   content: string = '',
 ): void {
-  sendEvent(BusKind.INTER_PANE, [['t', topic], ...extraTags], content);
+  sendEvent(BusKind.IPC_PEER, [['t', topic], ...extraTags], content);
 }
 
 /**
- * Subscribe to inter-pane events on a specific topic.
+ * Subscribe to IPC-PEER events on a specific topic.
  *
- * Thin wrapper around subscribe() that filters by inter-pane event kind
+ * Thin wrapper around subscribe() that filters by IPC-PEER event kind
  * and topic tag, then parses event content as JSON.
  *
  * @param topic    The 't' tag value to listen for
@@ -74,7 +74,7 @@ export function on(
   callback: (payload: unknown, event: NostrEvent) => void,
 ): { close(): void } {
   return subscribe(
-    { kinds: [BusKind.INTER_PANE], '#t': [topic] },
+    { kinds: [BusKind.IPC_PEER], '#t': [topic] },
     (event: NostrEvent) => {
       let payload: unknown;
       try {
@@ -84,7 +84,7 @@ export function on(
       }
       callback(payload, event);
     },
-    () => { /* EOSE — no action needed for inter-pane subscriptions */ },
+    () => { /* EOSE — no action needed for IPC-PEER subscriptions */ },
   );
 }
 

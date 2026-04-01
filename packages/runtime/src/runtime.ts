@@ -463,7 +463,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       case BusKind.HOTKEY_FORWARD:
         try { handleHotkeyForward(event); } catch { /* Best-effort hotkey forwarding */ }
         break;
-      case BusKind.INTER_PANE: {
+      case BusKind.IPC_PEER: {
         const topic = event.tags?.find((t) => t[0] === 't')?.[1];
         if (topic?.startsWith('shell:state-')) {
           handleStateRequest(windowId, event, hooks.sendToNapplet, nappKeyRegistry, aclState, hooks.statePersistence);
@@ -721,7 +721,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     function sendInterPaneReply(replyTopic: string, content: string): void {
       const responseEvent: Partial<NostrEvent> = {
-        kind: BusKind.INTER_PANE, pubkey: '',
+        kind: BusKind.IPC_PEER, pubkey: '',
         created_at: Math.floor(Date.now() / 1000),
         tags: [['t', replyTopic]], content, id: '', sig: '',
       };
@@ -829,7 +829,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
               ? { success: true, ...(result.eventId ? { eventId: result.eventId } : {}) }
               : { success: false, error: result.error ?? 'unknown error' };
             const response: Partial<NostrEvent> = {
-              kind: BusKind.INTER_PANE, pubkey: '',
+              kind: BusKind.IPC_PEER, pubkey: '',
               created_at: Math.floor(Date.now() / 1000),
               tags: [['t', 'shell:send-dm-result'], ['id', corrId]],
               content: JSON.stringify(payload), id: '', sig: '',
@@ -878,7 +878,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         id: uuid,
         pubkey: '0'.repeat(64),
         created_at: Math.floor(Date.now() / 1000),
-        kind: BusKind.INTER_PANE,
+        kind: BusKind.IPC_PEER,
         tags: [['t', topic]],
         content: JSON.stringify(payload),
         sig: '0'.repeat(128),

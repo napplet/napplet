@@ -227,11 +227,11 @@ describe('runtime message dispatch', () => {
       await authenticateWindow(runtime, mock);
       mock.sent.length = 0;
 
-      // Inject an inter-pane event into the buffer
+      // Inject an IPC-PEER event into the buffer
       runtime.injectEvent('test:topic', { data: 'hello' });
 
-      // Subscribe with filter matching inter-pane events
-      runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-buf', { kinds: [BusKind.INTER_PANE] }]);
+      // Subscribe with filter matching IPC-PEER events
+      runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-buf', { kinds: [BusKind.IPC_PEER] }]);
 
       // Should receive the buffered event
       const eventMsg = mock.sent.find(
@@ -316,12 +316,12 @@ describe('runtime message dispatch', () => {
       expect(ok).toBeDefined();
     });
 
-    it('sends OK true for inter-pane events', async () => {
+    it('sends OK true for IPC-PEER events', async () => {
       await authenticateWindow(runtime, mock);
       mock.sent.length = 0;
 
       const interPaneEvent = makeEvent({
-        kind: BusKind.INTER_PANE,
+        kind: BusKind.IPC_PEER,
         tags: [['t', 'custom:topic']],
       });
       runtime.handleMessage(WINDOW_ID, ['EVENT', interPaneEvent]);
@@ -352,7 +352,7 @@ describe('runtime message dispatch', () => {
 
       // Create a new subscription to check the event is in the buffer
       // but should NOT be delivered to the closed sub
-      runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-close-verify', { kinds: [BusKind.INTER_PANE] }]);
+      runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-close-verify', { kinds: [BusKind.IPC_PEER] }]);
 
       const deliveredToClosed = mock.sent.find(
         m => m.message[0] === 'EVENT' && m.message[1] === 'sub-close-test',
@@ -378,7 +378,7 @@ describe('runtime message dispatch', () => {
       runtime.injectEvent('count:test', { n: 2 });
       mock.sent.length = 0;
 
-      runtime.handleMessage(WINDOW_ID, ['COUNT', 'count-1', { kinds: [BusKind.INTER_PANE] }]);
+      runtime.handleMessage(WINDOW_ID, ['COUNT', 'count-1', { kinds: [BusKind.IPC_PEER] }]);
 
       const countMsg = mock.sent.find(
         m => m.message[0] === 'COUNT' && m.message[1] === 'count-1',
@@ -455,7 +455,7 @@ describe('runtime message dispatch', () => {
       mock.sent.length = 0;
 
       const stateGetEvent = makeEvent({
-        kind: BusKind.INTER_PANE,
+        kind: BusKind.IPC_PEER,
         tags: [['t', 'shell:state-get'], ['key', 'test-key'], ['id', 'corr-state-denied']],
       });
       runtime.handleMessage(WINDOW_ID, ['EVENT', stateGetEvent]);
@@ -520,7 +520,7 @@ describe('runtime message dispatch', () => {
 
     it('injectEvent delivers to matching subscriptions', async () => {
       await authenticateWindow(runtime, mock);
-      runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-inject', { kinds: [BusKind.INTER_PANE] }]);
+      runtime.handleMessage(WINDOW_ID, ['REQ', 'sub-inject', { kinds: [BusKind.IPC_PEER] }]);
       mock.sent.length = 0;
 
       runtime.injectEvent('test:inject', { data: 'injected' });
@@ -530,7 +530,7 @@ describe('runtime message dispatch', () => {
       );
       expect(delivered).toBeDefined();
       const deliveredEvent = delivered!.message[2] as NostrEvent;
-      expect(deliveredEvent.kind).toBe(BusKind.INTER_PANE);
+      expect(deliveredEvent.kind).toBe(BusKind.IPC_PEER);
     });
   });
 });

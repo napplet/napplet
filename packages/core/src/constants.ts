@@ -45,16 +45,28 @@ export const REPLAY_WINDOW_SECONDS = 30 as const;
  * All bus kinds are in the 29000-29999 ephemeral range.
  * Ephemeral events are auto-discarded by real relays per NIP-01 spec —
  * perfect for bus traffic that should never persist beyond the ShellBridge.
+ *
+ * ### IPC-* Namespace
+ * The `IPC-*` prefix is reserved for the inter-napplet communication bus.
+ *
+ * | Constant | Kind | Status | Description |
+ * |----------|------|--------|-------------|
+ * | `IPC_PEER` | 29003 | Current | Directed peer-to-peer IPC between napplets and the shell |
+ * | `IPC_BROADCAST` | TBD | Reserved | Future: broadcast to all napplets |
+ * | `IPC_CHANNEL` | TBD | Reserved | Future: named channel pubsub |
+ *
+ * See SPEC.md for full IPC-* namespace semantics.
+ *
  * @example
  * ```ts
- * if (event.kind === BusKind.INTER_PANE) { // handle inter-pane message }
+ * if (event.kind === BusKind.IPC_PEER) { // handle IPC-PEER message }
  * ```
  */
 export const BusKind = {
   REGISTRATION: 29000,
   SIGNER_REQUEST: 29001,
   SIGNER_RESPONSE: 29002,
-  INTER_PANE: 29003,
+  IPC_PEER: 29003,
   HOTKEY_FORWARD: 29004,
   METADATA: 29005,
   NIPDB_REQUEST: 29006,

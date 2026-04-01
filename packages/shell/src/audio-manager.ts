@@ -99,7 +99,7 @@ export const audioManager = {
     const iframeWindow = originRegistry.getIframeWindow(windowId);
     if (iframeWindow) {
       const muteEvent = {
-        kind: BusKind.INTER_PANE,
+        kind: BusKind.IPC_PEER,
         created_at: Math.floor(Date.now() / 1000),
         tags: [['t', 'napplet:audio-muted']],
         content: JSON.stringify({ muted }),

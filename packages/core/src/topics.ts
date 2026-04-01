@@ -1,13 +1,13 @@
 /**
- * @napplet/core — Topic constants for the napplet inter-pane event bus.
+ * @napplet/core — Topic constants for the napplet IPC-PEER event bus.
  *
- * These constants define the topic strings used in inter-pane
- * INTER_PANE events for shell commands, state operations, audio,
+ * These constants define the topic strings used in IPC-PEER
+ * events for shell commands, state operations, audio,
  * and UI coordination.
  */
 
 /**
- * Built-in topic constants for the napplet shell inter-pane protocol.
+ * Built-in topic constants for the napplet shell IPC-PEER protocol.
  *
  * @example
  * ```ts

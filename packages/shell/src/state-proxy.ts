@@ -35,7 +35,7 @@ function calculateNappStateBytes(
 
 function sendResponse(sourceWindow: Window, correlationId: string, tags: string[][]): void {
   const responseEvent: Partial<NostrEvent> = {
-    kind: BusKind.INTER_PANE,
+    kind: BusKind.IPC_PEER,
     pubkey: '',
     created_at: Math.floor(Date.now() / 1000),
     tags: [['t', TOPICS.STATE_RESPONSE], ['id', correlationId], ...tags],

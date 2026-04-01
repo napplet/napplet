@@ -20,7 +20,7 @@ describe('@napplet/core exports', () => {
       expect(typeof BusKind.REGISTRATION).toBe('number');
       expect(typeof BusKind.SIGNER_REQUEST).toBe('number');
       expect(typeof BusKind.SIGNER_RESPONSE).toBe('number');
-      expect(typeof BusKind.INTER_PANE).toBe('number');
+      expect(typeof BusKind.IPC_PEER).toBe('number');
       expect(typeof BusKind.HOTKEY_FORWARD).toBe('number');
       expect(typeof BusKind.METADATA).toBe('number');
       expect(typeof BusKind.SERVICE_DISCOVERY).toBe('number');
@@ -118,7 +118,7 @@ describe('@napplet/core exports', () => {
       const _event: NostrEvent = {} as NostrEvent;
       const _filter: NostrFilter = {} as NostrFilter;
       const _cap: Capability = 'relay:read';
-      const _busKindVal: BusKindValue = BusKind.INTER_PANE;
+      const _busKindVal: BusKindValue = BusKind.IPC_PEER;
       const _topicKey: TopicKey = 'STATE_GET';
       const _topicVal: TopicValue = TOPICS.STATE_GET;
       expect(true).toBe(true);

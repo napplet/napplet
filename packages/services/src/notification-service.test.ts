@@ -17,7 +17,7 @@ function makeInterPaneEvent(topic: string, content: Record<string, unknown>, ove
     id: 'evt-' + Math.random().toString(36).slice(2).padEnd(58, '0'),
     pubkey: 'a'.repeat(64),
     created_at: Math.floor(Date.now() / 1000),
-    kind: BusKind.INTER_PANE,
+    kind: BusKind.IPC_PEER,
     tags: [['t', topic]],
     content: JSON.stringify(content),
     sig: '0'.repeat(128),

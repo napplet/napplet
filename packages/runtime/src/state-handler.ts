@@ -35,7 +35,7 @@ function sendResponse(
   tags: string[][],
 ): void {
   const responseEvent: Partial<NostrEvent> = {
-    kind: BusKind.INTER_PANE,
+    kind: BusKind.IPC_PEER,
     pubkey: '',
     created_at: Math.floor(Date.now() / 1000),
     tags: [['t', 'napplet:state-response'], ['id', correlationId], ...tags],
