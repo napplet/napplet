@@ -12,7 +12,11 @@ import type { Capability } from '@napplet/shell';
 export const DEMO_CAPABILITY_LABELS: Record<Capability, string> = {
   'relay:read': 'Relay Subscribe',
   'relay:write': 'Relay Publish / Inter-Pane Send',
+  'cache:read': 'Cache Read',
+  'cache:write': 'Cache Write',
   'sign:event': 'Signer Requests',
+  'sign:nip04': 'NIP-04 Encrypt/Decrypt',
+  'sign:nip44': 'NIP-44 Encrypt/Decrypt',
   'state:read': 'State Read',
   'state:write': 'State Write',
   'hotkey:forward': 'Hotkey Forward',
@@ -21,7 +25,11 @@ export const DEMO_CAPABILITY_LABELS: Record<Capability, string> = {
 export const DEMO_CAPABILITY_HINTS: Record<Capability, string> = {
   'relay:read': 'relay subscribe / inter-pane receive',
   'relay:write': 'relay publish / inter-pane send',
+  'cache:read': 'cache read access',
+  'cache:write': 'cache write access',
   'sign:event': 'signer requests',
+  'sign:nip04': 'NIP-04 encryption/decryption',
+  'sign:nip44': 'NIP-44 encryption/decryption',
   'state:read': 'state read',
   'state:write': 'state write',
   'hotkey:forward': 'hotkey forward',

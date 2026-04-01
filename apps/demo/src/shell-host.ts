@@ -484,12 +484,12 @@ export function bootShell(notificationOnChange?: (notifications: readonly Notifi
   // Track AUTH completions
   tap.onMessage((msg) => {
     if (msg.verb === 'OK' && msg.parsed.success === true && msg.direction === 'shell->napplet') {
-      // Find which napplet this OK belongs to by checking nappKeyRegistry
+      // Find which napplet this OK belongs to by checking sessionRegistry
       for (const [wid, info] of napplets) {
         if (!info.authenticated) {
-          const pubkey = relay.runtime.nappKeyRegistry.getPubkey(wid);
+          const pubkey = relay.runtime.sessionRegistry.getPubkey(wid);
           if (pubkey) {
-            const entry = relay.runtime.nappKeyRegistry.getEntry(pubkey);
+            const entry = relay.runtime.sessionRegistry.getEntry(pubkey);
             if (entry) {
               info.authenticated = true;
               info.pubkey = entry.pubkey;
