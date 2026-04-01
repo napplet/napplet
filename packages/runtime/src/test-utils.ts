@@ -1,23 +1,23 @@
 /**
- * test-utils.ts — Mock RuntimeHooks for unit testing.
+ * test-utils.ts — Mock RuntimeAdapter for unit testing.
  *
  * Not exported from the package — only used by tests.
  * No browser globals (window, document, localStorage).
  */
 
 import type {
-  RuntimeHooks,
-  RuntimeRelayPoolHooks,
-  RuntimeCacheHooks,
-  RuntimeAuthHooks,
-  RuntimeConfigHooks,
-  RuntimeHotkeyHooks,
-  RuntimeCryptoHooks,
-  RuntimeAclPersistence,
-  RuntimeManifestPersistence,
-  RuntimeStatePersistence,
-  RuntimeWindowManagerHooks,
-  RuntimeRelayConfigHooks,
+  RuntimeAdapter,
+  RelayPoolAdapter,
+  CacheAdapter,
+  AuthAdapter,
+  ConfigAdapter,
+  HotkeyAdapter,
+  CryptoAdapter,
+  AclPersistence,
+  ManifestPersistence,
+  StatePersistence,
+  WindowManagerAdapter,
+  RelayConfigAdapter,
   AclCheckEvent,
 } from './types.js';
 import type { NostrEvent, NostrFilter } from '@napplet/core';
@@ -30,7 +30,7 @@ export interface SentMessage {
 }
 
 export interface MockRuntimeContext {
-  hooks: RuntimeHooks;
+  hooks: RuntimeAdapter;
   /** All messages sent to napplets via sendToNapplet. */
   sent: SentMessage[];
   /** All ACL check events logged. */
@@ -47,7 +47,7 @@ export interface MockRuntimeContext {
 
 // ─── Mock Relay Pool ──────────────────────────────────────────────────────────
 
-function createMockRelayPool(): RuntimeRelayPoolHooks {
+function createMockRelayPool(): RelayPoolAdapter {
   const tracked = new Map<string, () => void>();
 
   return {
@@ -67,7 +67,7 @@ function createMockRelayPool(): RuntimeRelayPoolHooks {
 
 // ─── Mock Cache ───────────────────────────────────────────────────────────────
 
-function createMockCache(): RuntimeCacheHooks {
+function createMockCache(): CacheAdapter {
   return {
     query(_filters: NostrFilter[]) { return Promise.resolve([]); },
     store(_event: NostrEvent) { /* no-op */ },
@@ -77,7 +77,7 @@ function createMockCache(): RuntimeCacheHooks {
 
 // ─── Mock Auth ────────────────────────────────────────────────────────────────
 
-function createMockAuth(): RuntimeAuthHooks {
+function createMockAuth(): AuthAdapter {
   return {
     getUserPubkey() { return 'user_' + '0'.repeat(60); },
     getSigner() { return null; },
@@ -86,7 +86,7 @@ function createMockAuth(): RuntimeAuthHooks {
 
 // ─── Mock Config ──────────────────────────────────────────────────────────────
 
-function createMockConfig(): RuntimeConfigHooks {
+function createMockConfig(): ConfigAdapter {
   return {
     getNappUpdateBehavior() { return 'auto-grant'; },
   };
@@ -94,7 +94,7 @@ function createMockConfig(): RuntimeConfigHooks {
 
 // ─── Mock Hotkeys ─────────────────────────────────────────────────────────────
 
-function createMockHotkeys(): RuntimeHotkeyHooks {
+function createMockHotkeys(): HotkeyAdapter {
   return {
     executeHotkeyFromForward() { /* no-op */ },
   };
@@ -104,7 +104,7 @@ function createMockHotkeys(): RuntimeHotkeyHooks {
 
 let uuidCounter = 0;
 
-function createMockCrypto(): RuntimeCryptoHooks {
+function createMockCrypto(): CryptoAdapter {
   return {
     async verifyEvent(_event: NostrEvent) { return true; },
     randomUUID() { return `mock-uuid-${++uuidCounter}-${'0'.repeat(40)}`; },
@@ -113,21 +113,21 @@ function createMockCrypto(): RuntimeCryptoHooks {
 
 // ─── Mock Persistence ─────────────────────────────────────────────────────────
 
-function createMockAclPersistence(store: { data: string | null }): RuntimeAclPersistence {
+function createMockAclPersistence(store: { data: string | null }): AclPersistence {
   return {
     persist(data: string) { store.data = data; },
     load() { return store.data; },
   };
 }
 
-function createMockManifestPersistence(store: { data: string | null }): RuntimeManifestPersistence {
+function createMockManifestPersistence(store: { data: string | null }): ManifestPersistence {
   return {
     persist(data: string) { store.data = data; },
     load() { return store.data; },
   };
 }
 
-function createMockStatePersistence(stateStore: Map<string, string>): RuntimeStatePersistence {
+function createMockStatePersistence(stateStore: Map<string, string>): StatePersistence {
   return {
     get(key: string) { return stateStore.get(key) ?? null; },
     set(key: string, value: string) { stateStore.set(key, value); return true; },
@@ -152,7 +152,7 @@ function createMockStatePersistence(stateStore: Map<string, string>): RuntimeSta
 
 // ─── Mock Window Manager ──────────────────────────────────────────────────────
 
-function createMockWindowManager(): RuntimeWindowManagerHooks {
+function createMockWindowManager(): WindowManagerAdapter {
   return {
     createWindow(_options: { title: string; class: string; iframeSrc?: string }) { return 'mock-window-1'; },
   };
@@ -160,7 +160,7 @@ function createMockWindowManager(): RuntimeWindowManagerHooks {
 
 // ─── Mock Relay Config ────────────────────────────────────────────────────────
 
-function createMockRelayConfig(): RuntimeRelayConfigHooks {
+function createMockRelayConfig(): RelayConfigAdapter {
   return {
     addRelay() { /* no-op */ },
     removeRelay() { /* no-op */ },
@@ -172,13 +172,13 @@ function createMockRelayConfig(): RuntimeRelayConfigHooks {
 // ─── Factory ──────────────────────────────────────────────────────────────────
 
 /**
- * Create a complete set of mock RuntimeHooks for testing.
- * All hooks are sensible no-ops that record calls for assertions.
+ * Create a complete set of mock RuntimeAdapter for testing.
+ * All adapters are sensible no-ops that record calls for assertions.
  *
- * @param overrides - Partial overrides for any hook property
+ * @param overrides - Partial overrides for any adapter property
  * @returns A MockRuntimeContext with hooks and recorded data
  */
-export function createMockRuntimeHooks(overrides?: Partial<RuntimeHooks>): MockRuntimeContext {
+export function createMockRuntimeAdapter(overrides?: Partial<RuntimeAdapter>): MockRuntimeContext {
   const sent: SentMessage[] = [];
   const aclChecks: AclCheckEvent[] = [];
   const stateStore = new Map<string, string>();
@@ -187,7 +187,7 @@ export function createMockRuntimeHooks(overrides?: Partial<RuntimeHooks>): MockR
 
   uuidCounter = 0;
 
-  const hooks: RuntimeHooks = {
+  const hooks: RuntimeAdapter = {
     sendToNapplet(windowId: string, msg: unknown[]) {
       sent.push({ windowId, message: msg });
     },
@@ -222,4 +222,9 @@ export function createMockRuntimeHooks(overrides?: Partial<RuntimeHooks>): MockR
       uuidCounter = 0;
     },
   };
+}
+
+/** @deprecated Use createMockRuntimeAdapter. Will be removed in v0.9.0. */
+export function createMockRuntimeHooks(overrides?: Partial<RuntimeAdapter>): MockRuntimeContext {
+  return createMockRuntimeAdapter(overrides);
 }

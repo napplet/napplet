@@ -19,7 +19,8 @@ export type { BusKindValue } from '@napplet/core';
 
 // Types for host app integration (shell-specific)
 export type {
-  ShellHooks,
+  ShellAdapter,
+  ShellHooks,  // @deprecated — use ShellAdapter
   RelayPoolHooks,
   RelayPoolLike,
   RelayConfigHooks,
@@ -31,14 +32,17 @@ export type {
   WorkerRelayLike,
   CryptoHooks,
   DmHooks,
-  ConsentRequest,
-  NappKeyEntry,
+  SessionEntry,
+  NappKeyEntry,  // @deprecated — use SessionEntry
   AclEntry,
   AclCheckEvent,
   ServiceDescriptor,
   ServiceHandler,
   ServiceRegistry,
 } from './types.js';
+
+// Session registry
+export { sessionRegistry, nappKeyRegistry } from './session-registry.js';
 
 // Standalone utilities (usable without full shell)
 export { originRegistry } from './origin-registry.js';
@@ -50,6 +54,8 @@ export type { ManifestCacheEntry } from './manifest-cache.js';
 // Enforcement gate (re-exported from @napplet/runtime for backwards compatibility)
 export { createEnforceGate, resolveCapabilities, formatDenialReason } from '@napplet/runtime';
 export type { CapabilityResolution, EnforceResult, EnforceConfig, IdentityResolver, AclChecker } from '@napplet/runtime';
+// ConsentRequest canonical definition re-exported from @napplet/runtime
+export type { ConsentRequest } from '@napplet/runtime';
 
 // Topic constants for shell command routing
 export { TOPICS } from './topics.js';

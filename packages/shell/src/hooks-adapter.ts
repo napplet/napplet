@@ -1,36 +1,36 @@
 /**
- * hooks-adapter.ts — Converts ShellHooks (browser-facing) to RuntimeHooks (environment-agnostic).
+ * hooks-adapter.ts — Converts ShellAdapter (browser-facing) to RuntimeAdapter (environment-agnostic).
  *
- * The adapter bridges the gap between the shell's browser-oriented hook interfaces
- * (Window references, localStorage, postMessage) and the runtime's abstract interfaces
+ * The adapter bridges the gap between the shell's browser-oriented ShellAdapter interfaces
+ * (Window references, localStorage, postMessage) and the runtime's abstract RuntimeAdapter
  * (windowId strings, persistence interfaces, sendToNapplet callbacks).
  */
 
 import type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
 import type {
-  RuntimeHooks,
-  RuntimeRelayPoolHooks,
-  RuntimeCacheHooks,
-  RuntimeAuthHooks,
-  RuntimeSigner,
-  RuntimeConfigHooks,
-  RuntimeHotkeyHooks,
-  RuntimeAclPersistence,
-  RuntimeManifestPersistence,
-  RuntimeStatePersistence,
-  RuntimeCryptoHooks,
-  RuntimeWindowManagerHooks,
-  RuntimeRelayConfigHooks,
-  RuntimeDmHooks,
+  RuntimeAdapter,
+  RelayPoolAdapter,
+  CacheAdapter,
+  AuthAdapter,
+  Signer,
+  ConfigAdapter,
+  HotkeyAdapter,
+  AclPersistence,
+  ManifestPersistence,
+  StatePersistence,
+  CryptoAdapter,
+  WindowManagerAdapter,
+  RelayConfigAdapter,
+  DmAdapter,
   SendToNapplet,
   RelaySubscriptionHandle,
 } from '@napplet/runtime';
-import type { ShellHooks } from './types.js';
+import type { ShellAdapter } from './types.js';
 import type { originRegistry as OriginRegistryType } from './origin-registry.js';
 import type { manifestCache as ManifestCacheType } from './manifest-cache.js';
 import type { aclStore as AclStoreType } from './acl-store.js';
 import type { audioManager as AudioManagerType } from './audio-manager.js';
-import type { nappKeyRegistry as NappKeyRegistryType } from './napp-key-registry.js';
+import type { sessionRegistry as SessionRegistryType } from './session-registry.js';
 
 // ─── Browser Dependencies ─────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ export interface BrowserDeps {
   manifestCache: typeof ManifestCacheType;
   aclStore: typeof AclStoreType;
   audioManager: typeof AudioManagerType;
-  nappKeyRegistry: typeof NappKeyRegistryType;
+  nappKeyRegistry: typeof SessionRegistryType;
 }
 
 // ─── Adapter Factory ──────────────────────────────────────────────────────
@@ -58,9 +58,9 @@ export interface BrowserDeps {
  * - Wraps localStorage-backed singletons into persistence interfaces
  * - Translates relay pool API shapes (Observable → callback)
  *
- * @param shellHooks - The browser-oriented hooks provided by the host app
+ * @param shellHooks - The browser-oriented ShellAdapter provided by the host app
  * @param deps - Browser-specific singletons (originRegistry, aclStore, etc.)
- * @returns RuntimeHooks suitable for createRuntime()
+ * @returns RuntimeAdapter suitable for createRuntime()
  *
  * @example
  * ```ts
@@ -70,7 +70,7 @@ export interface BrowserDeps {
  * const runtime = createRuntime(runtimeHooks);
  * ```
  */
-export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHooks {
+export function adaptHooks(shellHooks: ShellAdapter, deps: BrowserDeps): RuntimeAdapter {
   const { originRegistry } = deps;
 
   // ─── sendToNapplet: windowId → Window lookup → postMessage ────────────
@@ -82,7 +82,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Relay Pool Adapter ─────────────────────────────────────────────────
 
-  const relayPool: RuntimeRelayPoolHooks = {
+  const relayPool: RelayPoolAdapter = {
     subscribe(
       filters: NostrFilter[],
       callback: (item: NostrEvent | 'EOSE') => void,
@@ -147,7 +147,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Cache Adapter (Worker Relay) ───────────────────────────────────────
 
-  const cache: RuntimeCacheHooks = {
+  const cache: CacheAdapter = {
     async query(filters: NostrFilter[]): Promise<NostrEvent[]> {
       const workerRelay = shellHooks.workerRelay.getWorkerRelay();
       if (!workerRelay) return [];
@@ -170,18 +170,18 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Auth Adapter ───────────────────────────────────────────────────────
 
-  const auth: RuntimeAuthHooks = {
+  const auth: AuthAdapter = {
     getUserPubkey(): string | null {
       return shellHooks.auth.getUserPubkey();
     },
-    getSigner(): RuntimeSigner | null {
+    getSigner(): Signer | null {
       return shellHooks.auth.getSigner();
     },
   };
 
   // ─── Config Adapter ─────────────────────────────────────────────────────
 
-  const config: RuntimeConfigHooks = {
+  const config: ConfigAdapter = {
     getNappUpdateBehavior(): 'auto-grant' | 'banner' | 'silent-reprompt' {
       return shellHooks.config.getNappUpdateBehavior();
     },
@@ -189,7 +189,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Hotkey Adapter ─────────────────────────────────────────────────────
 
-  const hotkeys: RuntimeHotkeyHooks = {
+  const hotkeys: HotkeyAdapter = {
     executeHotkeyFromForward(event): void {
       shellHooks.hotkeys.executeHotkeyFromForward(event);
     },
@@ -197,7 +197,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Crypto Adapter ─────────────────────────────────────────────────────
 
-  const cryptoHooks: RuntimeCryptoHooks = {
+  const cryptoHooks: CryptoAdapter = {
     async verifyEvent(event: NostrEvent): Promise<boolean> {
       return shellHooks.crypto.verifyEvent(event);
     },
@@ -208,7 +208,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── ACL Persistence (localStorage-backed) ──────────────────────────────
 
-  const aclPersistence: RuntimeAclPersistence = {
+  const aclPersistence: AclPersistence = {
     persist(data: string): void {
       try { localStorage.setItem('napplet:acl', data); } catch { /* best-effort */ }
     },
@@ -219,7 +219,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Manifest Persistence (localStorage-backed) ─────────────────────────
 
-  const manifestPersistence: RuntimeManifestPersistence = {
+  const manifestPersistence: ManifestPersistence = {
     persist(data: string): void {
       try { localStorage.setItem('napplet:manifest-cache', data); } catch { /* best-effort */ }
     },
@@ -230,7 +230,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── State Persistence (localStorage-backed, scoped) ────────────────────
 
-  const statePersistence: RuntimeStatePersistence = {
+  const statePersistence: StatePersistence = {
     get(scopedKey: string): string | null {
       try { return localStorage.getItem(scopedKey); } catch { return null; }
     },
@@ -277,7 +277,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Window Manager Adapter ─────────────────────────────────────────────
 
-  const windowManager: RuntimeWindowManagerHooks = {
+  const windowManager: WindowManagerAdapter = {
     createWindow(options): string | null {
       return shellHooks.windowManager.createWindow(options);
     },
@@ -285,7 +285,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── Relay Config Adapter ───────────────────────────────────────────────
 
-  const relayConfig: RuntimeRelayConfigHooks = {
+  const relayConfig: RelayConfigAdapter = {
     addRelay(tier: string, url: string): void {
       shellHooks.relayConfig.addRelay(tier, url);
     },
@@ -302,7 +302,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
 
   // ─── DM Adapter (optional) ──────────────────────────────────────────────
 
-  const dm: RuntimeDmHooks | undefined = shellHooks.dm
+  const dm: DmAdapter | undefined = shellHooks.dm
     ? {
         sendDm(recipientPubkey: string, message: string) {
           return shellHooks.dm!.sendDm(recipientPubkey, message);
@@ -310,7 +310,7 @@ export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHo
       }
     : undefined;
 
-  // ─── Assemble RuntimeHooks ──────────────────────────────────────────────
+  // ─── Assemble RuntimeAdapter ────────────────────────────────────────────
 
   return {
     sendToNapplet,

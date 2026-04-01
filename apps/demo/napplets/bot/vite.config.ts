@@ -5,7 +5,7 @@ export default defineConfig({
   base: './',
   plugins: [
     nip5aManifest({
-      nappType: 'demo-bot',
+      nappletType: 'demo-bot',
     }),
   ],
   build: {

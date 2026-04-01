@@ -10,6 +10,7 @@
  */
 
 import type { TappedMessage } from './shell-host.js';
+import { BusKind, TOPICS } from '@napplet/shell';
 
 const VERB_COLORS: Record<string, string> = {
   AUTH: '#b388ff',
@@ -108,6 +109,10 @@ export function renderSequenceDiagram(messages: TappedMessage[]): string {
 }
 
 function formatLabel(msg: TappedMessage): string {
+  const event = msg.verb === 'EVENT'
+    ? ((msg.direction === 'shell->napplet' ? msg.raw[2] : msg.raw[1]) as { kind?: number; tags?: string[][] } | undefined)
+    : undefined;
+  const topic = event?.tags?.find((tag) => tag[0] === 't')?.[1] ?? msg.parsed.topic;
   switch (msg.verb) {
     case 'AUTH':
       if (typeof msg.raw[1] === 'string') return 'AUTH challenge';
@@ -115,7 +120,15 @@ function formatLabel(msg: TappedMessage): string {
     case 'OK':
       return msg.parsed.success ? 'OK (accepted)' : 'OK (denied)';
     case 'EVENT':
-      if (msg.parsed.topic) return `EVENT ${msg.parsed.topic}`;
+      if (event?.kind === BusKind.IPC_PEER) {
+        if (topic === TOPICS.STATE_GET || topic === TOPICS.STATE_KEYS) return `state read ${topic}`;
+        if (topic === TOPICS.STATE_SET || topic === TOPICS.STATE_REMOVE || topic === TOPICS.STATE_CLEAR) return `state write ${topic}`;
+        if (topic === 'chat:message' || topic === 'bot:response') return `inter-pane ${topic}`;
+        return `inter-pane ${topic ?? 'event'}`;
+      }
+      if (event?.kind === BusKind.SIGNER_REQUEST) return 'signer request';
+      if (event?.kind === BusKind.SIGNER_RESPONSE) return 'signer response';
+      if (msg.parsed.topic) return `relay ${msg.parsed.topic}`;
       return `EVENT k:${msg.parsed.eventKind || '?'}`;
     case 'REQ':
       return `REQ ${msg.parsed.subId || ''}`.trim();

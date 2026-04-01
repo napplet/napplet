@@ -1,7 +1,7 @@
 /**
- * types.ts — Runtime hook interfaces and supporting types.
+ * types.ts — Runtime adapter interfaces and supporting types.
  *
- * RuntimeHooks is the abstract contract any environment must implement
+ * RuntimeAdapter is the abstract contract any environment must implement
  * to host napplets. No DOM types, no browser APIs.
  */
 
@@ -51,13 +51,22 @@ export interface RelaySubscriptionHandle {
   unsubscribe(): void;
 }
 
-// ─── Relay Pool Hooks ──────────────────────────────────────────────────────
+// ─── Runtime Sub-interfaces ────────────────────────────────────────────────
+//
+// These describe what the protocol engine requires from the host environment
+// (environment abstraction contracts). Suffix: *Adapter.
+//
+// Shell sub-interfaces (in @napplet/shell) describe injection points the
+// host app provides. Those keep the *Hooks suffix. The distinction is
+// intentional: RelayPoolAdapter (runtime) ≠ RelayPoolHooks (shell).
+
+// ─── Relay Pool Adapter ────────────────────────────────────────────────────
 
 /**
  * Abstract relay pool — runtime uses this to subscribe to and publish
  * events on real Nostr relays. Implementor wraps their relay library.
  */
-export interface RuntimeRelayPoolHooks {
+export interface RelayPoolAdapter {
   /**
    * Subscribe to events from relays matching the given filters.
    * The callback receives either 'EOSE' (end of stored events) or a NostrEvent.
@@ -94,10 +103,10 @@ export interface RuntimeRelayPoolHooks {
   isAvailable(): boolean;
 }
 
-// ─── Worker Relay / Cache Hooks ────────────────────────────────────────────
+// ─── Cache Adapter ─────────────────────────────────────────────────────────
 
 /** Abstract local cache — query and store events. */
-export interface RuntimeCacheHooks {
+export interface CacheAdapter {
   /** Query cached events. Returns matching events. */
   query(filters: NostrFilter[]): Promise<NostrEvent[]>;
 
@@ -108,10 +117,10 @@ export interface RuntimeCacheHooks {
   isAvailable(): boolean;
 }
 
-// ─── Auth / Signer Hooks ───────────────────────────────────────────────────
+// ─── Signer / Auth Adapters ────────────────────────────────────────────────
 
 /** NIP-07 compatible signer interface — minimal methods the runtime needs. */
-export interface RuntimeSigner {
+export interface Signer {
   getPublicKey?(): string | Promise<string>;
   signEvent?(event: NostrEvent): Promise<NostrEvent>;
   getRelays?(): Record<string, { read: boolean; write: boolean }> | Promise<Record<string, { read: boolean; write: boolean }>>;
@@ -125,27 +134,27 @@ export interface RuntimeSigner {
   };
 }
 
-/** Auth hooks — user identity and signing. */
-export interface RuntimeAuthHooks {
+/** Auth adapter — user identity and signing. */
+export interface AuthAdapter {
   /** Get the current user's pubkey, or null if not logged in. */
   getUserPubkey(): string | null;
 
   /** Get the signer, or null if unavailable. */
-  getSigner(): RuntimeSigner | null;
+  getSigner(): Signer | null;
 }
 
-// ─── Config Hooks ──────────────────────────────────────────────────────────
+// ─── Config Adapter ────────────────────────────────────────────────────────
 
-/** Config hooks — runtime behavior settings. */
-export interface RuntimeConfigHooks {
+/** Config adapter — runtime behavior settings. */
+export interface ConfigAdapter {
   /** Get the napp update behavior policy. */
   getNappUpdateBehavior(): 'auto-grant' | 'banner' | 'silent-reprompt';
 }
 
-// ─── Hotkey Hooks ──────────────────────────────────────────────────────────
+// ─── Hotkey Adapter ────────────────────────────────────────────────────────
 
-/** Hotkey hooks — keyboard shortcut forwarding. */
-export interface RuntimeHotkeyHooks {
+/** Hotkey adapter — keyboard shortcut forwarding. */
+export interface HotkeyAdapter {
   /** Execute a forwarded hotkey from a napp. */
   executeHotkeyFromForward(event: {
     key: string;
@@ -157,13 +166,13 @@ export interface RuntimeHotkeyHooks {
   }): void;
 }
 
-// ─── Persistence Hooks ─────────────────────────────────────────────────────
+// ─── Persistence Adapters ──────────────────────────────────────────────────
 
 /**
  * ACL persistence — runtime calls these to save/load ACL state.
  * Implementor decides storage backend (localStorage, file, DB, etc.).
  */
-export interface RuntimeAclPersistence {
+export interface AclPersistence {
   persist(data: string): void;
   load(): string | null;
 }
@@ -172,7 +181,7 @@ export interface RuntimeAclPersistence {
  * Manifest persistence — runtime calls these to save/load manifest cache.
  * Implementor decides storage backend.
  */
-export interface RuntimeManifestPersistence {
+export interface ManifestPersistence {
   persist(data: string): void;
   load(): string | null;
 }
@@ -181,7 +190,7 @@ export interface RuntimeManifestPersistence {
  * State storage — runtime calls these for napplet-scoped key-value storage.
  * All keys are pre-scoped by the runtime (pubkey:dTag:hash:userKey).
  */
-export interface RuntimeStatePersistence {
+export interface StatePersistence {
   get(scopedKey: string): string | null;
   set(scopedKey: string, value: string): boolean;
   remove(scopedKey: string): void;
@@ -190,10 +199,10 @@ export interface RuntimeStatePersistence {
   calculateBytes(prefix: string, excludeKey?: string): number;
 }
 
-// ─── Crypto Hooks ──────────────────────────────────────────────────────────
+// ─── Crypto Adapter ────────────────────────────────────────────────────────
 
-/** Crypto hooks — event verification. */
-export interface RuntimeCryptoHooks {
+/** Crypto adapter — event verification. */
+export interface CryptoAdapter {
   /** Verify a nostr event's Schnorr signature. */
   verifyEvent(event: NostrEvent): Promise<boolean>;
 
@@ -201,27 +210,27 @@ export interface RuntimeCryptoHooks {
   randomUUID(): string;
 }
 
-// ─── Window Management Hooks ───────────────────────────────────────────────
+// ─── Window Manager Adapter ────────────────────────────────────────────────
 
 /** Window management — create new napplet windows. */
-export interface RuntimeWindowManagerHooks {
+export interface WindowManagerAdapter {
   createWindow(options: { title: string; class: string; iframeSrc?: string }): string | null;
 }
 
-// ─── Relay Config Hooks ────────────────────────────────────────────────────
+// ─── Relay Config Adapter ──────────────────────────────────────────────────
 
 /** Relay configuration — manage relay tiers. */
-export interface RuntimeRelayConfigHooks {
+export interface RelayConfigAdapter {
   addRelay(tier: string, url: string): void;
   removeRelay(tier: string, url: string): void;
   getRelayConfig(): { discovery: string[]; super: string[]; outbox: string[] };
   getNip66Suggestions(): unknown;
 }
 
-// ─── DM Hooks ──────────────────────────────────────────────────────────────
+// ─── DM Adapter ────────────────────────────────────────────────────────────
 
-/** DM hooks — send direct messages (NIP-17 gift-wrap). */
-export interface RuntimeDmHooks {
+/** DM adapter — send direct messages (NIP-17 gift-wrap). */
+export interface DmAdapter {
   sendDm(recipientPubkey: string, message: string): Promise<{
     success: boolean;
     eventId?: string;
@@ -304,7 +313,7 @@ export interface ServiceInfo {
  * Result of checking a napplet's declared service requirements against
  * the runtime's registered services.
  *
- * Surfaced via RuntimeHooks.onCompatibilityIssue when compatible is false.
+ * Surfaced via RuntimeAdapter.onCompatibilityIssue when compatible is false.
  * In strict mode, the runtime blocks loading. In permissive mode (default),
  * the runtime loads the napplet and the shell host decides UX.
  *
@@ -326,13 +335,13 @@ export interface CompatibilityReport {
   compatible: boolean;
 }
 
-// ─── NappKeyEntry ──────────────────────────────────────────────────────────
+// ─── SessionEntry ─────────────────────────────────────────────────────────
 
 /**
- * Registry entry mapping a napp's pubkey to its runtime metadata.
+ * Registry entry mapping a napplet's pubkey to its runtime metadata.
  * Created after a successful NIP-42 AUTH handshake.
  */
-export interface NappKeyEntry {
+export interface SessionEntry {
   pubkey: string;
   windowId: string;
   origin: string;
@@ -342,8 +351,11 @@ export interface NappKeyEntry {
   registeredAt: number;
 }
 
+/** @deprecated Use SessionEntry. Will be removed in v0.9.0. */
+export type NappKeyEntry = SessionEntry;
+
 /**
- * A pending napp update — raised when a napp reconnects with a different aggregateHash.
+ * A pending napplet update — raised when a napplet reconnects with a different aggregateHash.
  */
 export interface PendingUpdate {
   windowId: string;
@@ -360,7 +372,7 @@ export type PendingUpdateNotifier = (windowId: string) => void;
 // ─── Manifest Cache Entry ──────────────────────────────────────────────────
 
 /**
- * A cached manifest entry for a verified napp build.
+ * A cached manifest entry for a verified napplet build.
  * Optionally stores the napplet's declared service requirements from its manifest.
  */
 export interface ManifestCacheEntry {
@@ -439,10 +451,10 @@ export interface ServiceHandler {
  */
 export type ServiceRegistry = Record<string, ServiceHandler>;
 
-// ─── RuntimeHooks ──────────────────────────────────────────────────────────
+// ─── RuntimeAdapter ────────────────────────────────────────────────────────
 
 /**
- * All hooks that the runtime requires from the host environment.
+ * All adapters that the runtime requires from the host environment.
  *
  * This is the primary integration point. A browser shell implements these
  * by wrapping postMessage, localStorage, and relay pool libraries.
@@ -451,9 +463,9 @@ export type ServiceRegistry = Record<string, ServiceHandler>;
  *
  * @example
  * ```ts
- * import { createRuntime, type RuntimeHooks } from '@napplet/runtime';
+ * import { createRuntime, type RuntimeAdapter } from '@napplet/runtime';
  *
- * const hooks: RuntimeHooks = {
+ * const hooks: RuntimeAdapter = {
  *   sendToNapplet: (wid, msg) => iframeWindows.get(wid)?.postMessage(msg, '*'),
  *   relayPool: myRelayPoolAdapter,
  *   cache: myCacheAdapter,
@@ -471,54 +483,54 @@ export type ServiceRegistry = Record<string, ServiceHandler>;
  * const runtime = createRuntime(hooks);
  * ```
  */
-export interface RuntimeHooks {
+export interface RuntimeAdapter {
   /** Send a NIP-01 message to a napplet by windowId. */
   sendToNapplet: SendToNapplet;
 
   /**
    * Relay pool operations.
    * Optional when a 'relay' or 'relay-pool' service is registered via
-   * RuntimeHooks.services or runtime.registerService(). If neither hooks
+   * RuntimeAdapter.services or runtime.registerService(). If neither adapter
    * nor service are provided, relay functionality is unavailable.
    */
-  relayPool?: RuntimeRelayPoolHooks;
+  relayPool?: RelayPoolAdapter;
 
   /**
    * Local event cache (worker relay).
    * Optional when a 'cache' or 'relay' (coordinated) service is registered.
-   * If neither hooks nor service are provided, cache functionality is unavailable.
+   * If neither adapter nor service are provided, cache functionality is unavailable.
    */
-  cache?: RuntimeCacheHooks;
+  cache?: CacheAdapter;
 
   /** Auth state and signing. */
-  auth: RuntimeAuthHooks;
+  auth: AuthAdapter;
 
   /** Runtime configuration. */
-  config: RuntimeConfigHooks;
+  config: ConfigAdapter;
 
   /** Hotkey dispatch. */
-  hotkeys: RuntimeHotkeyHooks;
+  hotkeys: HotkeyAdapter;
 
   /** Crypto operations (signature verification, random UUID). */
-  crypto: RuntimeCryptoHooks;
+  crypto: CryptoAdapter;
 
   /** ACL persistence (save/load ACL state). */
-  aclPersistence: RuntimeAclPersistence;
+  aclPersistence: AclPersistence;
 
   /** Manifest cache persistence. */
-  manifestPersistence: RuntimeManifestPersistence;
+  manifestPersistence: ManifestPersistence;
 
   /** Napplet state storage. */
-  statePersistence: RuntimeStatePersistence;
+  statePersistence: StatePersistence;
 
   /** Window management. */
-  windowManager: RuntimeWindowManagerHooks;
+  windowManager: WindowManagerAdapter;
 
   /** Relay configuration. */
-  relayConfig: RuntimeRelayConfigHooks;
+  relayConfig: RelayConfigAdapter;
 
   /** DM sending (optional). */
-  dm?: RuntimeDmHooks;
+  dm?: DmAdapter;
 
   /** Called on every ACL enforcement check (audit). */
   onAclCheck?: (event: AclCheckEvent) => void;
@@ -547,8 +559,8 @@ export interface RuntimeHooks {
    *
    * @example
    * ```ts
-   * const hooks: RuntimeHooks = {
-   *   // ... required hooks ...
+   * const hooks: RuntimeAdapter = {
+   *   // ... required adapters ...
    *   services: {
    *     audio: myAudioServiceHandler,
    *   },
@@ -557,3 +569,6 @@ export interface RuntimeHooks {
    */
   services?: ServiceRegistry;
 }
+
+/** @deprecated Use RuntimeAdapter. Will be removed in v0.9.0. */
+export type RuntimeHooks = RuntimeAdapter;

@@ -7,6 +7,7 @@ export default defineConfig({
       '@napplet/core': resolve(__dirname, 'packages/core/src/index.ts'),
       '@napplet/acl': resolve(__dirname, 'packages/acl/src/index.ts'),
       '@napplet/runtime': resolve(__dirname, 'packages/runtime/src/index.ts'),
+      '@napplet/services': resolve(__dirname, 'packages/services/src/index.ts'),
       '@napplet/shell': resolve(__dirname, 'packages/shell/src/index.ts'),
       '@napplet/shim': resolve(__dirname, 'packages/shim/src/index.ts'),
     },

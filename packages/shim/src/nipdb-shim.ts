@@ -5,7 +5,7 @@
 import { finalizeEvent } from 'nostr-tools/pure';
 import { BusKind } from './types.js';
 import type { NostrEvent, NostrFilter } from './types.js';
-import type { NappKeypair } from './napp-keypair.js';
+import type { NappletKeypair } from './napplet-keypair.js';
 
 // ─── Module-level state ────────────────────────────────────────────────────────
 
@@ -29,7 +29,7 @@ export const nipdbSubscribeHandlers = new Map<string, (event: NostrEvent) => voi
 export const nipdbSubscribeCancellers = new Map<string, () => void>();
 
 /** Current keypair — set when installNostrDb is called. */
-let _keypair: NappKeypair | null = null;
+let _keypair: NappletKeypair | null = null;
 
 // ─── Outbound helper ──────────────────────────────────────────────────────────
 
@@ -146,7 +146,7 @@ function handleNipdbMessage(msgEvent: MessageEvent): void {
  * @param keypair - Optional keypair for signing NIPDB_REQUEST events.
  * @returns cleanup function that removes window.nostrdb.
  */
-export function installNostrDb(keypair?: NappKeypair): () => void {
+export function installNostrDb(keypair?: NappletKeypair): () => void {
   if (keypair) {
     _keypair = keypair;
   }

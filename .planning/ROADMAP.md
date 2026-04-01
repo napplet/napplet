@@ -7,6 +7,8 @@
 - ✅ **v0.3.0 Runtime and Core** — Phases 12-17 (shipped 2026-03-31) — [Archive](milestones/v0.3.0-ROADMAP.md)
 - ✅ **v0.4.0 Feature Negotiation & Service Discovery** — Phases 18-22.1 (shipped 2026-03-31) — [Archive](milestones/v0.4.0-ROADMAP.md)
 - ✅ **v0.5.0 Documentation & Developer Skills** — Phases 23-26 (shipped 2026-04-01) — [Archive](milestones/v0.5.0-ROADMAP.md)
+- ✅ **v0.6.0 Demo Upgrade** — Phases 27-33 (shipped 2026-04-01) — [Archive](milestones/v0.6.0-ROADMAP.md)
+- ✅ **v0.7.0 Ontology Audit and Adjustments** — Phases 34-40 (shipped 2026-04-02) — [Archive](milestones/v0.7.0-ROADMAP.md)
 
 ## Phases
 
@@ -66,8 +68,34 @@
 
 - [x] **Phase 23: New Package READMEs** - Create READMEs for the four new packages: @napplet/acl, @napplet/core, @napplet/runtime, @napplet/services
 - [x] **Phase 24: Root and Interface READMEs** - Update root README and existing package READMEs: shim, shell, vite-plugin to reflect v0.4.0 reality
-- [x] **Phase 25: SPEC.md Updates** - Update SPEC.md Section 11, rename legacy identifiers, and document the requires/compat protocol (completed 2026-03-31)
-- [x] **Phase 26: Skills Directory** - Create agentskills.io-format skill files: build-napplet, integrate-shell, add-service (completed 2026-03-31)
+- [x] **Phase 25: SPEC.md Updates** - Update SPEC.md Section 11, rename legacy identifiers, and document the requires/compat protocol
+- [x] **Phase 26: Skills Directory** - Create agentskills.io-format skill files: build-napplet, integrate-shell, add-service
+
+</details>
+
+<details>
+<summary>v0.6.0 Demo Upgrade (Phases 27-33) — SHIPPED 2026-04-01</summary>
+
+- [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues
+- [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture
+- [x] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
+- [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path
+- [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings
+- [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, ACL isAmber logic fix, signer error detection
+- [x] **Phase 33: Polish Demo UI Layout** - Fix layout and interaction issues: iframe container filling, 90-degree line routing, endpoint offsets, orphan container lines, and service button click handling
+
+</details>
+
+<details>
+<summary>✅ v0.7.0 Ontology Audit and Adjustments (Phases 34-40) — SHIPPED 2026-04-02</summary>
+
+- [x] **Phase 34: Terminology Rename** - Rename all napp* identifiers, types, topics, meta tags, localStorage prefix, and docs to napplet* across all 7 packages (completed 2026-04-01)
+- [x] **Phase 35: Wire Protocol Rename** - Rename BusKind.INTER_PANE to BusKind.IPC_PEER and update all 30+ call sites plus SPEC.md (completed 2026-04-01)
+- [x] **Phase 36: Type Correctness** - Consolidate ConsentRequest to runtime canonical definition and remove shell/state-proxy.ts dead code (completed 2026-04-01)
+- [x] **Phase 37: API Alignment** - Rename RuntimeHooks/ShellHooks to RuntimeAdapter/ShellAdapter with deprecated aliases for one release cycle (completed 2026-04-01)
+- [x] **Phase 38: Session Vocabulary** - Rename NappKeyEntry/NappKeyRegistry to SessionEntry/SessionRegistry (completed 2026-04-01)
+- [x] **Phase 39: Documentation Pass** - Document topic prefix direction semantics and mark nappStorage as deprecated (completed 2026-04-01)
+- [x] **Phase 40: Remaining Rename Gaps** - Close audit gaps: createEphemeralKeypair, vite-plugin nappletType, SPEC.md stale topic strings (completed 2026-04-02)
 
 </details>
 
@@ -102,3 +130,17 @@
 | 24. Root and Interface READMEs | v0.5.0 | 4/4 | Complete | 2026-03-31 |
 | 25. SPEC.md Updates | v0.5.0 | 1/1 | Complete | 2026-03-31 |
 | 26. Skills Directory | v0.5.0 | 3/3 | Complete | 2026-03-31 |
+| 27. Demo Audit & Correctness | v0.6.0 | 3/3 | Complete | 2026-04-01 |
+| 28. Architecture Topology View | v0.6.0 | 2/2 | Complete | 2026-04-01 |
+| 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete | 2026-04-01 |
+| 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
+| 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
+| 32. Fix Demo UI/UX Bugs | v0.6.0 | 5/5 | Complete | 2026-04-01 |
+| 33. Polish Demo UI Layout | v0.6.0 | 4/5 | Complete | 2026-04-01 |
+| 34. Terminology Rename | v0.7.0 | 5/5 | Complete | 2026-04-01 |
+| 35. Wire Protocol Rename | v0.7.0 | 3/3 | Complete | 2026-04-01 |
+| 36. Type Correctness | v0.7.0 | 2/2 | Complete | 2026-04-01 |
+| 37. API Alignment | v0.7.0 | 1/1 | Complete | 2026-04-01 |
+| 38. Session Vocabulary | v0.7.0 | 2/2 | Complete | 2026-04-01 |
+| 39. Documentation Pass | v0.7.0 | 1/1 | Complete | 2026-04-01 |
+| 40. Remaining Rename Gaps | v0.7.0 | 2/2 | Complete | 2026-04-02 |

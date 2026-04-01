@@ -14,7 +14,7 @@
  * ```ts
  * const source: AudioSource = {
  *   windowId: 'win-1',
- *   nappClass: 'music-player',
+ *   nappletClass: 'music-player',
  *   title: 'Now Playing',
  *   muted: false,
  * };
@@ -23,8 +23,8 @@
 export interface AudioSource {
   /** The napplet window that registered this audio source. */
   windowId: string;
-  /** The napp class/type (e.g., 'music-player'). */
-  nappClass: string;
+  /** The napplet class/type (e.g., 'music-player'). */
+  nappletClass: string;
   /** Human-readable title for the audio source. */
   title: string;
   /** Whether this source is currently muted. */

@@ -18,8 +18,8 @@ import * as path from 'path';
 
 /** Configuration options for the NIP-5A manifest plugin. */
 export interface Nip5aManifestOptions {
-  /** Napp type/dtag (e.g., 'feed', 'chat') */
-  nappType: string;
+  /** Napplet type/dtag identifier (e.g., 'feed', 'chat'). Used as the NIP-5A 'd' tag and injected as napplet-type meta attribute. */
+  nappletType: string;
   /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
   requires?: string[];
 }
@@ -60,7 +60,7 @@ function computeAggregateHash(xTags: Array<[string, string]>): string {
  * a kind 35128 manifest event at build time. The aggregate hash is injected
  * into index.html via a meta tag for the napplet shim to read at runtime.
  *
- * @param options - Plugin configuration (nappType is required)
+ * @param options - Plugin configuration (nappletType is required)
  * @returns Vite Plugin instance
  */
 export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
@@ -81,6 +81,23 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
           attrs: {
             name: 'napplet-aggregate-hash',
             content: '',
+          },
+          injectTo: 'head' as const,
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-type',
+            content: options.nappletType,
+          },
+          injectTo: 'head' as const,
+        },
+        // Backward compatibility: also inject old attribute name for one release cycle
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-napp-type',
+            content: options.nappletType,
           },
           injectTo: 'head' as const,
         },
@@ -136,7 +153,7 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         kind: 35128,
         created_at: Math.floor(Date.now() / 1000),
         tags: [
-          ['d', options.nappType],
+          ['d', options.nappletType],
           ...xTags.map(([hash, p]) => ['x', hash, p]),
           ...requiresTags,
         ],
@@ -166,14 +183,14 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
           JSON.stringify(manifestWithMeta, null, 2),
         );
 
-        console.log(`[nip5a-manifest] ${options.nappType}: manifest signed by ${pubkey.slice(0, 8)}...`);
+        console.log(`[nip5a-manifest] ${options.nappletType}: manifest signed by ${pubkey.slice(0, 8)}...`);
       } catch {
         // nostr-tools not available at build time — write unsigned manifest
         fs.writeFileSync(
           path.join(distPath, '.nip5a-manifest.json'),
           JSON.stringify(manifest, null, 2),
         );
-        console.log(`[nip5a-manifest] ${options.nappType}: unsigned manifest written (nostr-tools not available at build)`);
+        console.log(`[nip5a-manifest] ${options.nappletType}: unsigned manifest written (nostr-tools not available at build)`);
       }
 
       // Update index.html meta tag with aggregate hash
@@ -185,11 +202,11 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
           `<meta name="napplet-aggregate-hash" content="${aggregateHash}">`,
         );
         fs.writeFileSync(indexPath, html);
-        console.log(`[nip5a-manifest] ${options.nappType}: hash ${aggregateHash.slice(0, 12)}... injected into index.html`);
+        console.log(`[nip5a-manifest] ${options.nappletType}: hash ${aggregateHash.slice(0, 12)}... injected into index.html`);
       }
 
       if (requiresTags.length > 0) {
-        console.log(`[nip5a-manifest] ${options.nappType}: requires [${(options.requires ?? []).join(', ')}]`);
+        console.log(`[nip5a-manifest] ${options.nappletType}: requires [${(options.requires ?? []).join(', ')}]`);
       }
     },
   };

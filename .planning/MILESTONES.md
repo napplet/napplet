@@ -1,5 +1,45 @@
 # Milestones
 
+## v0.7.0 Ontology Audit and Adjustments (Shipped: 2026-04-02)
+
+**Phases completed:** 7 phases, 16 plans
+
+**Key accomplishments:**
+
+- Complete `napp→napplet` rename — 87+ identifiers across 19 files in all 7 packages; deprecated aliases ship for one release cycle (v0.9.0 removal)
+- `BusKind.INTER_PANE → IPC_PEER` across 30+ call sites and SPEC.md; `IPC-*` namespace established for future `IPC-BROADCAST`/`IPC-CHANNEL` additions
+- `ConsentRequest` consolidated to `@napplet/runtime` canonical with `type` discriminator; stale shell copy removed; shell re-exports from runtime
+- `RuntimeAdapter`/`ShellAdapter` replace `RuntimeHooks`/`ShellHooks` — 13 public interfaces renamed to `*Adapter` convention; deprecated aliases for one release cycle
+- `SessionEntry`/`SessionRegistry` replace `NappKeyEntry`/`NappKeyRegistry`; `createEphemeralKeypair()` (no params) replaces `loadOrCreateKeypair(_nappType)`
+- Topic prefix direction semantics documented in `core/topics.ts` JSDoc; `nappStorage` marked `@deprecated`; SPEC.md fully corrected for all stale `napp:` strings
+
+---
+
+## v0.6.0 Demo Upgrade (Shipped: 2026-04-01)
+
+**Phases completed:** 7 phases, 28 plans, 28 tasks
+
+**Key accomplishments:**
+
+- Layered topology model and generated demo architecture view that separates napplets, shell, ACL, runtime, and wired services
+- Topology-aware message highlighting and responsive architecture layout that keep shell, ACL, runtime, and signer-service paths readable
+- SignerConnectionState model with NIP-07 browser extension connect flow, signer node topology UX showing connected/disconnected state, and shell-host decoupled from mock signer as primary path
+- NIP-46 WebSocket requester client, connect modal with NIP-07/NIP-46 side-by-side panes, QR code generation for nostrconnect://, and real connectNip46() implementation.
+- Tap wiring for signer request recording, extended topology render tests, and end-to-end verification of all SIGN requirements.
+- File:
+- File:
+- One-liner:
+- Task 1: Add curve: 0 to Leader Line BASE_OPTIONS
+- One-liner:
+- Objective:
+- Summary:
+- Enabled 90-degree orthogonal topology edge routing by replacing invalid `curve: 0` with correct `path: 'grid'` in Leader Line BASE_OPTIONS
+- One-liner:
+- One-liner:
+- One-liner:
+
+---
+
 ## v0.5.0 Documentation & Developer Skills (Shipped: 2026-04-01)
 
 **Phases completed:** 4 phases, 12 plans, 0 tasks

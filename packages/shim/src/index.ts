@@ -4,8 +4,8 @@
 // Completes NIP-42 AUTH handshake and proxies window.nostr NIP-07 calls as signed events.
 
 import { finalizeEvent } from 'nostr-tools/pure';
-import { loadOrCreateKeypair } from './napp-keypair.js';
-import type { NappKeypair } from './napp-keypair.js';
+import { createEphemeralKeypair } from './napplet-keypair.js';
+import type { NappletKeypair } from './napplet-keypair.js';
 import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _setInterPaneEventSender } from './state-shim.js';
@@ -20,15 +20,15 @@ export { subscribe, publish, query } from './relay-shim.js';
 export type { Subscription, EventTemplate } from './relay-shim.js';
 export type { NostrEvent, NostrFilter } from './types.js';
 
-// State shim (napp-side localStorage proxy)
-export { nappState, nappStorage } from './state-shim.js';
+// State shim (napplet-side localStorage proxy)
+export { nappletState, nappState, nappStorage } from './state-shim.js';
 
 // Service discovery API (window.napplet)
 export { discoverServices, hasService, hasServiceVersion } from './discovery-shim.js';
 export type { ServiceInfo } from './discovery-shim.js';
 
 /**
- * Broadcast an inter-pane event to other napps via the shell.
+ * Broadcast an IPC-PEER event to other napplets via the shell.
  *
  * Creates a signed kind 29003 event with the given topic as a 't' tag
  * and posts it to the ShellBridge for delivery to matching subscribers.
@@ -47,13 +47,13 @@ export function emit(
   extraTags: string[][] = [],
   content: string = '',
 ): void {
-  sendEvent(BusKind.INTER_PANE, [['t', topic], ...extraTags], content);
+  sendEvent(BusKind.IPC_PEER, [['t', topic], ...extraTags], content);
 }
 
 /**
- * Subscribe to inter-pane events on a specific topic.
+ * Subscribe to IPC-PEER events on a specific topic.
  *
- * Thin wrapper around subscribe() that filters by inter-pane event kind
+ * Thin wrapper around subscribe() that filters by IPC-PEER event kind
  * and topic tag, then parses event content as JSON.
  *
  * @param topic    The 't' tag value to listen for
@@ -74,7 +74,7 @@ export function on(
   callback: (payload: unknown, event: NostrEvent) => void,
 ): { close(): void } {
   return subscribe(
-    { kinds: [BusKind.INTER_PANE], '#t': [topic] },
+    { kinds: [BusKind.IPC_PEER], '#t': [topic] },
     (event: NostrEvent) => {
       let payload: unknown;
       try {
@@ -84,17 +84,18 @@ export function on(
       }
       callback(payload, event);
     },
-    () => { /* EOSE — no action needed for inter-pane subscriptions */ },
+    () => { /* EOSE — no action needed for IPC-PEER subscriptions */ },
   );
 }
 
-let keypair: NappKeypair | null = null;
+let keypair: NappletKeypair | null = null;
 
 // Pending signer requests: correlation id -> resolve/reject pair
 const pendingRequests = new Map<string, {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
 }>();
+const pendingSignerRequestEvents = new Map<string, string>();
 
 // Promise that resolves when the keypair is ready
 let _resolveKeypairReady!: () => void;
@@ -106,14 +107,16 @@ const SIGNER_SUB_ID = '__signer__';
 // NIPDB response subscription ID
 const NIPDB_SUB_ID = '__nipdb__';
 
-// ─── Napp type resolution ──────────────────────────────────────────────────────
+// ─── Napplet type resolution ──────────────────────────────────────────────────────
 
 /**
- * Determine napp type from a meta tag in the document head.
+ * Determine napplet type from a meta tag in the document head.
  * Falls back to 'unknown' if the meta tag is absent.
  */
-function getNappType(): string {
-  const meta = document.querySelector('meta[name="napplet-napp-type"]');
+function getNappletType(): string {
+  // Try new canonical attribute first; fall back to old name for backward compat
+  const meta = document.querySelector('meta[name="napplet-type"]')
+    ?? document.querySelector('meta[name="napplet-napp-type"]');
   return meta?.getAttribute('content') ?? 'unknown';
 }
 
@@ -145,14 +148,18 @@ async function sendSignerRequest(method: string, params?: Record<string, unknown
   return new Promise((resolve, reject) => {
     pendingRequests.set(id, { resolve, reject });
 
-    sendEvent(BusKind.SIGNER_REQUEST, [
+    const requestEvent = sendEvent(BusKind.SIGNER_REQUEST, [
       ['method', method],
       ['id', id],
       ...(params ? Object.entries(params).map(([k, v]) => ['param', k, JSON.stringify(v)]) : []),
     ]);
+    if (requestEvent) pendingSignerRequestEvents.set(requestEvent.id, id);
 
     setTimeout(() => {
       if (pendingRequests.delete(id)) {
+        for (const [eventId, correlationId] of pendingSignerRequestEvents.entries()) {
+          if (correlationId === id) pendingSignerRequestEvents.delete(eventId);
+        }
         reject(new Error('Signer request timed out'));
       }
     }, 30_000);
@@ -175,6 +182,18 @@ function handleRelayMessage(event: MessageEvent): void {
       break;
     }
     case 'OK': {
+      const [, eventId, success, reason] = msg;
+      if (success === false && typeof eventId === 'string') {
+        const correlationId = pendingSignerRequestEvents.get(eventId);
+        if (correlationId) {
+          pendingSignerRequestEvents.delete(eventId);
+          const pending = pendingRequests.get(correlationId);
+          if (pending) {
+            pendingRequests.delete(correlationId);
+            pending.reject(new Error(typeof reason === 'string' ? reason : 'Signer request denied'));
+          }
+        }
+      }
       break;
     }
     case 'EVENT': {
@@ -205,8 +224,7 @@ function getAggregateHash(): string {
 
 function handleAuthChallenge(challenge: string): void {
   if (!keypair) {
-    const nappType = getNappType();
-    keypair = loadOrCreateKeypair(nappType);
+    keypair = createEphemeralKeypair();
     setKeyboardShimKeypair(keypair);
     _resolveKeypairReady();
   }
@@ -217,7 +235,7 @@ function handleAuthChallenge(challenge: string): void {
     tags: [
       ['relay', SHELL_BRIDGE_URI],
       ['challenge', challenge],
-      ['type', getNappType()],
+      ['type', getNappletType()],
       ['version', PROTOCOL_VERSION],
       ['aggregateHash', getAggregateHash()],
     ],
@@ -242,6 +260,9 @@ function handleSignerResponse(event: NostrEvent): void {
   if (!pending) return;
 
   pendingRequests.delete(correlationId);
+  for (const [eventId, id] of pendingSignerRequestEvents.entries()) {
+    if (id === correlationId) pendingSignerRequestEvents.delete(eventId);
+  }
 
   const errorTag = event.tags.find(t => t[0] === 'error');
   if (errorTag) {
@@ -312,14 +333,13 @@ installNostrDb();
 // Install keyboard forwarding (hotkeys work when iframe has focus)
 installKeyboardShim();
 
-// Install napp-side storage proxy (wire sender to break circular dep)
+// Install napplet-side storage proxy (wire sender to break circular dep)
 _setInterPaneEventSender(emit);
 installStateShim();
 
 // Initialize keypair eagerly so it is ready before AUTH challenge arrives
 {
-  const nappType = getNappType();
-  keypair = loadOrCreateKeypair(nappType);
+  keypair = createEphemeralKeypair();
   setKeyboardShimKeypair(keypair);
   _resolveKeypairReady();
 }

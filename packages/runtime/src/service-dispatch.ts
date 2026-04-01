@@ -1,7 +1,7 @@
 /**
  * service-dispatch.ts — Generic topic-prefix routing for registered services.
  *
- * Routes INTER_PANE events to the correct ServiceHandler based on the topic
+ * Routes IPC-PEER events to the correct ServiceHandler based on the topic
  * prefix (text before ':'). Services receive raw NIP-01 message arrays via
  * handleMessage() and respond via the send callback.
  */
@@ -10,14 +10,14 @@ import type { NostrEvent } from '@napplet/core';
 import type { ServiceRegistry, SendToNapplet } from './types.js';
 
 /**
- * Route an INTER_PANE event to the matching service handler by topic prefix.
+ * Route an IPC-PEER event to the matching service handler by topic prefix.
  * Extracts the prefix before ':' from the topic, looks up the handler in the
  * service registry, and calls handleMessage() with an ['EVENT', event] message.
  *
  * Returns true if a service handled the message, false otherwise.
  *
  * @param windowId - The napplet window that sent the event
- * @param event - The INTER_PANE event to route
+ * @param event - The IPC-PEER event to route
  * @param topic - The full topic string (e.g., 'audio:register')
  * @param services - The service registry to look up handlers
  * @param sendToNapplet - Callback to send messages back to the napplet

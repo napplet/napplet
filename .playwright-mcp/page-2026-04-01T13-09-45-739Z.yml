@@ -1,0 +1,5 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "napplet playground" [level=1] [ref=e3]
+  - generic "Node inspector" [ref=e7]
+  - generic "Notification toasts"

@@ -1,0 +1,31 @@
+[     189ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts:419
+[  638568ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775049800902:419
+[  640408ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775049802772:419
+[ 3112948ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775049802772:419
+[ 3119082ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052281443:419
+[ 3126772ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052289144:419
+[ 3128316ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052290669:428
+[ 3132615ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052294985:428
+[ 3144414ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052306767:428
+[ 3147266ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052309632:428
+[ 3158970ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052321326:428
+[ 3162027ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775052324404:428
+[ 4564348ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775053726601:428
+[ 5010479ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5174/@vite/client:963
+[ 5010484ms] [ERROR] WebSocket connection to 'ws://localhost:5174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:5174/@vite/client:1034
+[ 7806853ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775056507458:429
+[ 8505439ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775057667744:429
+[ 8512749ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775057675097:429
+[ 8517433ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775057675097:429
+[ 8520915ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775057675097:429
+[ 9497774ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775058660056:429
+[ 9505026ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775058667357:429
+[ 9537723ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775058700046:429
+[ 9638971ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775058801300:429
+[ 9717471ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775058879833:429
+[10558429ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775059720780:429
+[11306861ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775060469149:429
+[11345888ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775060508218:429
+[11378390ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775060540714:429
+[11451859ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775060614184:429
+[11474939ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775060637278:429

@@ -1,460 +1,490 @@
-# Domain Pitfalls: Service Discovery & Capability Negotiation
+# Naming and API Design Pitfalls
 
-**Domain:** Adding service discovery, capability negotiation, and compatibility checking to an existing sandboxed iframe protocol (napplet v0.4.0)
-**Researched:** 2026-03-31
-
----
-
-## Critical Pitfalls
-
-Mistakes that cause protocol breaks, backwards incompatibility, or require rewrites.
-
-### Pitfall 1: Discovery REQ Races Against AUTH Queue Drain
-
-**What goes wrong:** After AUTH succeeds, the runtime drains `pendingAuthQueue` synchronously at `runtime.ts:253`. The shim currently sends two REQs immediately after the AUTH event (`index.ts:224-225`): `SIGNER_SUB_ID` and `NIPDB_SUB_ID`. A natural v0.4.0 addition would be to send a third REQ for service discovery (`['REQ', 'svc-discovery', { kinds: [29010] }]`) immediately after AUTH. But the AUTH response (`['OK', eventId, true, '']`) is asynchronous -- the shim does not wait for the OK before sending these REQs. The REQs arrive at the runtime while AUTH is still processing (signature verification is async at `runtime.ts:188`), so they get queued in `pendingAuthQueue`. After AUTH succeeds and the queue drains, the REQs execute. This works. The race happens when:
-
-1. The shim sends AUTH, then immediately sends the discovery REQ.
-2. The discovery REQ enters `pendingAuthQueue`.
-3. AUTH succeeds, queue drains, discovery REQ runs.
-4. Runtime generates kind 29010 events and sends them back.
-5. But the shim's discovery handler is not yet installed (it was supposed to be set up AFTER AUTH OK arrives).
-
-The shim receives the discovery REQ response to a subscription it has not yet set up a handler for. The events are delivered but nobody is listening.
-
-**Why it happens:** The current shim architecture fires REQs optimistically during `handleAuthChallenge()` before AUTH confirmation. This works for signer/nipdb because those subscriptions are long-lived and the handlers are installed at module initialization. But a discovery flow is a one-shot query that the napplet code initiates AFTER the shim is ready.
-
-**Consequences:**
-- Discovery responses are silently dropped because no handler is listening.
-- Napplets that call `discoverServices()` immediately after import get stale or empty results.
-- The race is timing-dependent -- fast AUTH verification (local mock) exposes it; slow verification (real Schnorr) masks it.
-
-**Prevention:**
-1. Do NOT send the service discovery REQ from `handleAuthChallenge()`. Discovery is napplet-initiated, not shim-internal.
-2. Expose a `discoverServices()` function that returns a `Promise<ServiceDescriptor[]>`. This function internally sends the REQ, listens for kind 29010 events, waits for EOSE, then resolves.
-3. The `discoverServices()` function should await the `keypairReady` promise (already exists) AND await AUTH confirmation before sending the REQ. Currently there is no "AUTH confirmed" promise -- add one.
-4. Alternative: have the shell proactively push service descriptors as part of the post-AUTH flow (like `auth:identity-changed`). This avoids the napplet needing to query at all but changes the protocol design from pull to push.
-
-**Detection:** Write a test where AUTH takes >50ms (mock slow `verifyEvent`). Call `discoverServices()` immediately after shim import. If discovery returns empty results, the race is present.
-
-**Phase:** Must be resolved in the first phase (discovery protocol implementation). Getting the timing wrong here poisons everything built on top.
+**Domain:** Ontology audit for a 7-package protocol SDK (@napplet/*)
+**Researched:** 2026-04-01
+**Overall confidence:** HIGH (findings grounded in actual codebase analysis + established API design literature)
 
 ---
 
-### Pitfall 2: Service Topic Routing Collision With Existing `shell:audio-*` Topics
+## 1. Ecosystem Term Conflicts
 
-**What goes wrong:** The runtime currently has hardcoded topic prefix routing at `runtime.ts:289-298`:
+When an SDK uses a term that means something different in the wider ecosystem, every reader (human or LLM) who encounters that term brings the wrong mental model. The damage compounds: documentation becomes ambiguous, search results return wrong context, and agents generate code using the ecosystem meaning rather than the SDK meaning.
+
+### 1.1 The "napp" / "napplet" Collision (Known, Critical)
+
+**The problem:** "Napp" is an established concept in the broader Nostr ecosystem -- it refers to a Nostr Application identifier (similar to how NIP numbers identify protocol extensions). In this SDK, "napp" is used as a shorthand for "napplet" (a sandboxed iframe mini-app). These are fundamentally different concepts: one is a protocol-level identifier, the other is a sandboxed runtime entity.
+
+**Where it appears in this codebase (87+ occurrences across 19 files):**
+
+| Pattern | Files | Example |
+|---------|-------|---------|
+| `NappKeypair` | shim | Interface for ephemeral keypair |
+| `NappKeyEntry` | runtime, shell (DUPLICATED) | Registry entry for a napplet session |
+| `NappKeyRegistry` | runtime, shell (DUPLICATED) | Bidirectional windowId-to-pubkey map |
+| `nappType` | vite-plugin, runtime, shim | The napplet's type identifier |
+| `nappClass` | services | Audio source's napplet class |
+| `nappState` / `nappStorage` | shim | State API object |
+| `napp-state:` prefix | runtime, shell | localStorage key prefix |
+| `napp:state-response` | core/topics | Topic constant for state responses |
+| `napp:audio-muted` | core/topics, services, shell | Topic constant for mute responses |
+| `getNappType()` | shim | Function to read meta tag |
+| `getNappUpdateBehavior()` | runtime | Config hook |
+| `napplet-napp-type` | vite-plugin, shim, SPEC.md | HTML meta tag name |
+
+**Why this is damaging:**
+1. A developer searching for "napp" in Nostr contexts finds the wrong concept. An LLM asked to "explain what a napp is" in the Nostr ecosystem will give the wrong answer for this SDK.
+2. The meta tag `napplet-napp-type` is a stuttering compound: "napplet's napp type" -- the word "napp" here MEANS "napplet" but is shortened in a confusing way within a tag that already says "napplet."
+3. In comments like "napp-side localStorage-like API" or "forwarded hotkey from a napp" -- a new contributor or agent reads "napp" and must figure out from context that it means "napplet."
+
+**How to detect during audit:**
+- Grep for `napp[^l]` (matches "napp" but not "napplet") -- already yields 87+ hits.
+- Check every meta tag, localStorage key prefix, topic string, interface name, function name, and comment.
+- Check SPEC.md for "napp" used where "napplet" is meant.
+
+**How to fix:**
+- `NappKeypair` -> `NappletKeypair`
+- `NappKeyEntry` -> `NappletKeyEntry`
+- `NappKeyRegistry` -> `NappletKeyRegistry`
+- `nappType` -> `nappletType`
+- `nappClass` -> `nappletClass`
+- `nappState` -> `nappletState` (keep `nappStorage` as deprecated alias if needed)
+- `napp-state:` prefix -> `napplet-state:` (BREAKING for persisted data -- needs migration story)
+- `napp:state-response` -> a topic within the napplet namespace
+- `napplet-napp-type` meta -> `napplet-type` meta
+- `getNappType()` -> `getNappletType()`
+- `getNappUpdateBehavior()` -> `getNappletUpdateBehavior()`
+
+**Migration risk for `napp-state:` localStorage prefix:** This prefix is used in persisted data. Changing it means existing napplet state becomes invisible. The audit should flag this as needing a migration utility or dual-read strategy.
+
+### 1.2 "INTER_PANE" / "INTER-PANE" (Known, Being Fixed)
+
+**The problem:** "Pane" is a UI term that implies a visual panel or window section. The actual mechanism is inter-process communication between sandboxed iframes. "Pane" suggests these are visual regions of the same window, not isolated security contexts communicating over a protocol boundary.
+
+**Current state:** Already planned for rename to `IPC_PEER` / `"IPC-PEER"`. The `IPC-*` namespace follows Nostr hyphen conventions and correctly describes what the wire verb does.
+
+**Audit scope:** 30+ occurrences of `INTER_PANE` and `"INTER-PANE"` across core, runtime, services, shell packages. Every `BusKind.INTER_PANE` reference, every `kind: 29003` comment that says "inter-pane."
+
+### 1.3 Topic Prefix Direction Confusion
+
+**The problem:** Topics use mixed directional prefixes that are inconsistent about who initiates vs. who responds:
+
+| Topic | Prefix | Direction | Who initiates? |
+|-------|--------|-----------|----------------|
+| `shell:state-get` | `shell:` | napplet -> shell | Napplet |
+| `shell:state-set` | `shell:` | napplet -> shell | Napplet |
+| `napp:state-response` | `napp:` | shell -> napplet | Shell |
+| `shell:audio-register` | `shell:` | napplet -> shell | Napplet |
+| `napp:audio-muted` | `napp:` | shell -> napplet | Shell |
+| `auth:identity-changed` | `auth:` | shell -> napplet | Shell |
+| `notifications:create` | `notifications:` | napplet -> service | Napplet |
+| `notifications:created` | `notifications:` | service -> napplet | Service |
+
+The prefix convention is: `shell:` = "this message is addressed TO the shell" and `napp:` = "this message is addressed TO the napplet." But this is never documented, and the convention breaks for service topics (which use service-name prefix for both directions).
+
+**Why this is damaging:** A new contributor sees `shell:state-get` and reads it as "the shell is getting state" (shell-initiated). But it means "hey shell, get me this state" (napplet-initiated). The `napp:state-response` prefix confirms the confusion -- it is shell-originated but prefixed with `napp:`.
+
+**The actual convention being used:**
+- `shell:*` = "shell handles this" (napplet-initiated command)
+- `napp:*` = "napplet receives this" (shell-initiated response)
+- `service:*` = "service handles this" (bidirectional, prefix matches service name)
+
+**Audit action:** Document the convention explicitly in TOPICS comments. Consider whether `napp:` prefix should become `napplet:` as part of the rename. Evaluate whether the notification service pattern (same prefix for request and response, differentiated by verb tense: `create` vs `created`) is the better pattern to adopt consistently.
+
+### 1.4 "shell" vs. "ShellBridge" vs. "Runtime" Abstraction Leak
+
+**The problem:** Topic strings use `shell:` prefix, but the actual handler is the runtime (which is browser-agnostic). The shell is now a thin adapter. Topics like `shell:state-get` are handled by `state-handler.ts` in `@napplet/runtime`, not by `@napplet/shell`. The `shell:` prefix leaks an implementation detail that is no longer accurate.
+
+**Audit action:** Flag all `shell:` prefixed topics for evaluation. The runtime handles them, not the shell. Whether to rename depends on whether "shell" means "the host environment" (conceptual) or "the @napplet/shell package" (concrete). If conceptual, document it. If concrete, the prefix is wrong.
+
+---
+
+## 2. Anti-patterns That Confuse Contributors
+
+### 2.1 Function Names That Do Not Match Behavior
+
+**`loadOrCreateKeypair(_nappType: string)`** in `shim/src/napp-keypair.ts`:
+- The name says "load OR create" implying persistence (try to load from storage, create if not found).
+- The implementation ALWAYS creates a fresh keypair. It never loads. The `_nappType` parameter is unused (prefixed with `_`).
+- An agent reading this name will assume keypairs can be persistent. It will generate code that expects idempotent calls to return the same keypair.
+- **Fix:** `createEphemeralKeypair()` -- no parameters, name matches behavior exactly.
+
+**`installStorageShim()` / `installStateShim()` / `installKeyboardShim()` / `installNostrDb()`**:
+- "Install" implies adding something to the system that can later be uninstalled.
+- These functions just add event listeners. They never provide uninstall/cleanup.
+- **Fix:** Either add teardown returns (`const cleanup = installStateShim(); cleanup()`) or rename to `initStateShim()` / `setupStateShim()` to signal one-time initialization.
+
+**`emit(topic, extraTags, content)` in `shim/src/index.ts`**:
+- "Emit" in the EventEmitter pattern means "fire an event locally." Here it means "sign a Nostr event and send it via postMessage to the shell for broadcast to other napplets."
+- The name hides the async signing, network hop, and cross-process nature.
+- **Tolerable because:** The shim aims for a simple event-bus-like API. But document that this is not local emission.
+
+**`handleMessage()` in runtime**:
+- Acceptable name, but `handleMessage` is overloaded in the JS ecosystem (Web Workers, Service Workers, postMessage handlers all use this name). Since this specifically handles NIP-01 protocol messages, `handleProtocolMessage()` or `handleNip01Message()` would be more precise.
+- **Low priority:** Only rename if it aids agent disambiguation.
+
+### 2.2 Parameter Names That Are Too Generic
+
+**`data` in `RuntimeAclPersistence.persist(data: string)` and `RuntimeManifestPersistence.persist(data: string)`:**
+- What is `data`? Is it JSON? Is it binary? What format?
+- **Fix:** `serializedState: string` or `jsonPayload: string` -- signals both content and format.
+
+**`options` parameter objects used inconsistently:**
+- `subscribe()` has `options?: { relay?: string; group?: string }` -- acceptable, small surface.
+- `publish()` has `options?: { relay?: boolean }` -- the `relay` property is a boolean here but a string (URL) in subscribe. Same name, different types across two sibling functions.
+- **Fix:** In subscribe, rename to `scopedRelay?: { url: string; group?: string }`. In publish, rename to `{ viaScoped?: boolean }`.
+
+**`content` in service handlers:**
+- `handleMessage(windowId, message, send)` -- `message` is typed as `unknown[]`, which is correct but opaque. The parameter name is fine, but the type gives zero guidance.
+- In the audio/notification services, the parsed content is accessed as `content.title`, `content.body`, etc. with runtime `typeof` checks everywhere.
+- **Fix:** Add a parsed-content helper type or use branded types for common service message shapes.
+
+### 2.3 Inconsistent Plurality
+
+**`subscriptions` (Map) vs `Subscription` (interface):**
+- Module-level state uses plural (`subscriptions`, `pendingChallenges`, `pendingRequests`).
+- Return types use singular (`Subscription`).
+- This is actually consistent and correct. Plural for collections, singular for individual instances.
+- No fix needed -- this pattern is fine.
+
+**`tags` vs `tag`:**
+- NIP-01 uses `tags` (array of arrays). The SDK follows this consistently.
+- But tag-finding operations use `find(t => t[0] === 'id')` where `t` is a single tag.
+- The variable name `t` is too terse for readability. `tag` would be better in filter callbacks.
+- **Low priority** but affects agent readability in grep results.
+
+**`keys()` return:**
+- `nappState.keys()` returns `Promise<string[]>` -- returns key names.
+- `RuntimeStatePersistence.keys(prefix)` returns `string[]` -- returns full scoped keys including prefix.
+- Same method name, different semantics at different abstraction layers. The shim strips the prefix, the persistence layer does not.
+- **Fix:** Rename the persistence method to `scopedKeys(prefix)` or document the difference clearly.
+
+### 2.4 Mixed Abstraction Levels in the Same API
+
+**The `RuntimeHooks` interface mixes three levels:**
+
+1. **Transport:** `sendToNapplet` (raw message delivery)
+2. **Domain services:** `relayPool`, `cache`, `auth`, `dm` (feature-specific hooks)
+3. **Infrastructure:** `crypto`, `aclPersistence`, `manifestPersistence`, `statePersistence` (plumbing)
+4. **Configuration:** `config`, `strictMode` (behavior toggles)
+5. **Callbacks:** `onAclCheck`, `onPendingUpdate`, `onCompatibilityIssue` (event handlers)
+
+This is 14+ fields at the same level. A new implementor does not know which are essential vs. optional, or which categories they need to think about.
+
+**Fix:** Group into sub-objects or document required vs. optional clearly. The current split where `relayPool` and `cache` are optional but `auth` and `config` are required is not obvious from reading the interface.
+
+### 2.5 "Hooks" Suffix Overload
+
+Every integration interface is suffixed with `Hooks`:
+- `RuntimeRelayPoolHooks`, `RuntimeCacheHooks`, `RuntimeAuthHooks`, `RuntimeConfigHooks`, `RuntimeHotkeyHooks`, `RuntimeCryptoHooks`
+- `ShellHooks`, `RelayPoolHooks`, `AuthHooks`, `ConfigHooks`, `HotkeyHooks`, `WorkerRelayHooks`, `CryptoHooks`, `DmHooks`
+
+Two problems:
+1. Shell and runtime have parallel interfaces with different names for the same concept (`AuthHooks` vs `RuntimeAuthHooks`, `CryptoHooks` vs `RuntimeCryptoHooks`).
+2. "Hooks" means something specific in React. For contributors from the React ecosystem (the majority of JS developers), "hooks" implies `useState`/`useEffect` patterns, not dependency injection interfaces.
+
+**Fix:** The `Runtime*` prefix is good for disambiguation. But consider whether `Adapter` or `Provider` would be clearer than `Hooks` for the concept being expressed (these are dependency injection contracts, not lifecycle hooks).
+
+---
+
+## 3. Cross-package Inconsistency Patterns
+
+### 3.1 Duplicate Types Across Packages (Critical)
+
+The following types are defined in BOTH `@napplet/runtime/types.ts` AND `@napplet/shell/types.ts`:
+
+| Type | runtime definition | shell definition | Differences |
+|------|-------------------|-----------------|-------------|
+| `NappKeyEntry` | line 335 | line 30 | Identical fields |
+| `AclEntry` | (as `AclEntryExternal`, line 378) | line 50 | Different field names: runtime has `capabilities`, shell has `capabilities` too, but runtime adds `stateQuota` |
+| `ConsentRequest` | line 263 | line 68 | runtime has `type` discriminator and `serviceName`; shell does not |
+| `AclCheckEvent` | line 26 | line 198 | Identical fields |
+
+**Why this is dangerous:**
+- An agent importing `NappKeyEntry` from `@napplet/shell` gets a different TypeScript type than importing from `@napplet/runtime`, even though they describe the same thing.
+- The shell's `ConsentRequest` is MISSING the `type` discriminator field that the runtime version has. Code written against the shell type cannot discriminate consent types.
+- If either type is updated independently, they silently diverge.
+
+**Fix:** Canonical types should live in ONE place (`@napplet/core` or `@napplet/runtime`). Shell re-exports them. The shell should not define its own versions.
+
+### 3.2 Parallel Hook Interfaces
+
+Shell and runtime define parallel but incompatible hook interfaces:
+
+| Shell | Runtime | Key Difference |
+|-------|---------|----------------|
+| `RelayPoolHooks` | `RuntimeRelayPoolHooks` | Shell uses `getRelayPool(): RelayPoolLike`, runtime uses `subscribe()/publish()` directly |
+| `WorkerRelayHooks` | `RuntimeCacheHooks` | Completely different names for the same concept (local cache) |
+| `AuthHooks` | `RuntimeAuthHooks` | Shell's `getSigner()` returns `any`, runtime's returns `RuntimeSigner` |
+| `CryptoHooks` | `RuntimeCryptoHooks` | Runtime adds `randomUUID()` |
+| `ConfigHooks` | `RuntimeConfigHooks` | Identical interface, different names |
+
+This is intentional (shell is browser-facing, runtime is abstract), but the naming gives no signal about the relationship. A contributor does not know that `WorkerRelayHooks` IS `RuntimeCacheHooks` at a different abstraction level.
+
+**Fix:** Document the mapping explicitly. Consider naming the shell interfaces to signal they are the browser-specific counterparts: `BrowserRelayPoolHooks` or keep current names but add a mapping table in the shell README.
+
+### 3.3 Inconsistent State Terminology
+
+The same concept is named differently across packages:
+
+| Package | Term | Meaning |
+|---------|------|---------|
+| shim | `nappState` | Napplet-scoped key-value storage API |
+| shim | `nappStorage` | Backwards-compat alias for `nappState` |
+| core/topics | `STATE_GET`, `STATE_SET` | Topic constants for state operations |
+| runtime | `statePersistence` | RuntimeHooks field for storage backend |
+| runtime | `state-handler.ts` | Module handling state requests |
+| shell | `state-proxy.ts` | Module handling state requests (DUPLICATE of runtime) |
+| localStorage | `napp-state:` prefix | Storage key format |
+
+"State" vs "storage" is used interchangeably. The rename from "storage" to "state" happened in v0.2.0 but left the alias `nappStorage` and the localStorage prefix `napp-state:` (not `napplet-state:`).
+
+**Fix:** Pick one term and use it everywhere. "State" is the better choice (already more prevalent, and "storage" conflates with the persistence mechanism). Kill the `nappStorage` alias in a semver-major, or deprecate loudly.
+
+### 3.4 Shell Contains Code That Duplicates Runtime
+
+Both `packages/shell/src/state-proxy.ts` and `packages/runtime/src/state-handler.ts` implement the `napp-state:` key scoping logic:
 
 ```typescript
-if (topic?.startsWith('shell:state-')) {
-  handleStateRequest(...);
-  return;
-}
-if (topic?.startsWith('shell:audio-')) {
-  eventBuffer.bufferAndDeliver(event, windowId);
-  break;
-}
-if (topic?.startsWith('shell:') || ...) {
-  handleShellCommand(event, windowId, topic!);
-  return;
-}
+// shell/state-proxy.ts:15
+return `napp-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
+
+// runtime/state-handler.ts:15
+return `napp-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
 ```
 
-Audio events (`shell:audio-register`, `shell:audio-unregister`, `shell:audio-state-changed`) are currently forwarded as inter-pane events. The SPEC.md Section 11.3 defines the new service routing pattern as `{service-name}:{action}` -- so the audio service would use `audio:register`, `audio:unregister`, `audio:state-changed`. These are DIFFERENT topic strings from the existing `shell:audio-*` topics in `@napplet/core`'s TOPICS constant.
+The shell version exists from before the runtime extraction (v0.3.0). It should have been removed when the runtime took over state handling. If both are reachable, a key format change in one but not the other causes data isolation failures.
 
-If the audio service handler is registered and the runtime dispatches `audio:register` to it, existing napplets using the old `shell:audio-register` topic will break. If both topic patterns are supported simultaneously, there are now two paths to the same functionality with different semantics.
-
-**Why it happens:** The existing audio topics were designed before the service extension system was specified. They follow the `shell:*` prefix convention used for all shell commands. The service system uses a different convention (`{service-name}:*`) to allow arbitrary service names.
-
-**Consequences:**
-- Existing napplets break if old topics stop working.
-- Two parallel paths to audio functionality create confusion and maintenance burden.
-- The TOPICS constant in `@napplet/core` has the old names hardcoded (`AUDIO_REGISTER: 'shell:audio-register'`). Changing these is a semver-breaking change.
-
-**Prevention:**
-1. Keep the old `shell:audio-*` topics working during v0.4.0. Route them to the audio service handler as aliases. Add deprecation warnings.
-2. The audio service handler should accept BOTH `audio:register` (new service convention) AND `shell:audio-register` (legacy) during the transition.
-3. In the runtime's topic dispatch, add service routing BEFORE the `shell:audio-*` check. If a service is registered for the `audio` prefix, dispatch `audio:*` topics to it. The old `shell:audio-*` topics are aliased internally.
-4. Do NOT change the TOPICS constants in `@napplet/core` yet. Add new constants alongside: `AUDIO_SVC_REGISTER: 'audio:register'`. Deprecate the old ones in JSDoc.
-5. Plan a clean break in v0.5.0 or v1.0 where legacy topics are removed.
-
-**Detection:** Run existing audio e2e tests after adding service dispatch. If audio tests fail, the routing collision is present. Check whether `handleEvent` in runtime.ts dispatches `audio:register` to a service handler or falls through to the `shell:` prefix check.
-
-**Phase:** Must be addressed in the service dispatch routing phase. The ordering of `if` checks in `handleEvent()` determines whether old or new topics win.
+**Audit action:** Verify that `shell/state-proxy.ts` is dead code. If it is still imported, the shell is bypassing the runtime for state operations.
 
 ---
 
-### Pitfall 3: Over-Engineering the Negotiation Protocol
+## 4. Function Signature Anti-patterns
 
-**What goes wrong:** It is tempting to design a full capability negotiation protocol inspired by IRCv3 CAP, with multi-round request/acknowledge cycles, atomic enable/disable of service sets, version constraints, and dependency resolution. This adds complexity that:
-- Delays shipping by 2-3 phases.
-- Creates protocol surface area with no consumers (no shell implementors exist yet besides hyprgate).
-- Makes the spec harder for third-party implementors to adopt.
-- Introduces state machine complexity that the simple REQ/EVENT/EOSE flow does not have.
+### 4.1 Positional Callback Arguments
 
-**Why it happens:** Protocol designers naturally want to handle every edge case upfront. The IRCv3 CAP negotiation took years to stabilize and required three spec rewrites. The MCP protocol's version negotiation has open issues about backwards compatibility. These are cautionary tales, not templates.
+**`subscribe(filters, onEvent, onEose, options?)`** in `shim/src/relay-shim.ts`:
 
-**Consequences:**
-- Napplet developers get a complex API (`negotiateServices({ require: [...], prefer: [...], versions: {...} })`) when they just need `const services = await discoverServices()`.
-- Shell implementors must implement a state machine instead of "respond to REQ with descriptor events."
-- The spec becomes harder to review and submit as a NIP.
-- Bugs in the negotiation logic are hard to test because they involve multi-round async exchanges.
+Four positional arguments where the 2nd and 3rd are callbacks. Problems:
+1. Easy to swap `onEvent` and `onEose` -- both are `() => void` compatible.
+2. The `options` parameter is rarely used but forces all callers to provide the two callbacks first.
+3. Agents generating code must remember the exact order. An LLM that puts callbacks in the wrong position gets a silent bug.
 
-**Prevention:**
-1. v0.4.0 should implement only the SPEC.md Section 11 design: napplet sends REQ, shell responds with service descriptors, EOSE. No negotiation, no enable/disable, no version constraints.
-2. The shim API should be `discoverServices(): Promise<ServiceDescriptor[]>` and `hasService(name: string): boolean`. That is the entire napplet-facing API.
-3. Compatibility checking (manifest `requires` tags) is a BUILD-TIME check, not a runtime negotiation. The vite-plugin declares required services in the manifest. The shell checks at AUTH time whether it can satisfy the requirements. No round trips needed.
-4. Version negotiation can be deferred to a future version when there are actual version conflicts to resolve. Semver range matching on service versions is complexity with no current users.
-5. If a napplet requires a service the shell does not have, the shell DOES NOT reject AUTH. Instead, it responds to discovery with the services it has, and the napplet decides what to do (degrade, show warning, refuse to start).
-
-**Detection:** If the proposed API has more than 3 functions, or if the protocol requires more than one round trip for discovery, it is over-engineered for v0.4.0.
-
-**Phase:** Architecture decision that must be locked before any implementation phase begins.
-
----
-
-### Pitfall 4: Breaking RuntimeHooks Interface for Service Support
-
-**What goes wrong:** Adding service dispatch to the runtime requires the runtime to know about registered services. The natural approach is to add a `services?: ServiceRegistry` field to `RuntimeHooks`. But `RuntimeHooks` is the core integration interface -- every shell implementor must provide it. Adding required fields is a breaking change. Adding optional fields creates confusion about where services live (RuntimeHooks vs ShellHooks vs separate registration).
-
-Currently, `ServiceRegistry`, `ServiceHandler`, and `ServiceDescriptor` are defined in `@napplet/shell/types.ts`, not in `@napplet/runtime` or `@napplet/core`. The runtime package cannot import from shell (dependency goes the wrong direction: shell depends on runtime).
-
-**Why it happens:** The service types were designed during v0.3.0 as a shell-level concept. Moving them to runtime or core requires a package boundary change.
-
-**Consequences:**
-- If service types stay in shell but the runtime needs them for dispatch, you get a circular dependency (runtime imports shell types).
-- If you duplicate the types in runtime, you have two diverging `ServiceHandler` interfaces.
-- If you move types to core, you change the public API of both core and shell (types removed from shell's exports).
-
-**Prevention:**
-1. Move `ServiceDescriptor`, `ServiceHandler`, and `ServiceRegistry` to `@napplet/core`. These are protocol-level types, not shell-specific. Core already has `NostrEvent`, `NostrFilter`, `Capability`, `BusKind`, and `TOPICS` -- service types belong there.
-2. Shell re-exports them from core (preserving backwards compatibility for consumers who import from `@napplet/shell`).
-3. Runtime adds an optional `services?: ServiceRegistry` to `RuntimeHooks`. The hooks-adapter in shell passes `shellHooks.services` through.
-4. Make the field optional with a clear default: no services registered = discovery returns EOSE immediately.
-5. Do the type migration as the FIRST step before any implementation, so all downstream code imports from the canonical location.
-
-**Detection:** Try importing `ServiceHandler` from `@napplet/runtime` after adding service dispatch. If it requires importing from `@napplet/shell`, the dependency direction is wrong.
-
-**Phase:** Must be the first phase action -- move types to core before implementing anything.
-
----
-
-### Pitfall 5: Kind 29010 REQ Without Service Dispatch Returns Nothing (Silent Failure)
-
-**What goes wrong:** When a napplet sends `['REQ', 'svc-discovery', { kinds: [29010] }]`, the runtime's `handleReq()` at `runtime.ts:314` creates a subscription and then:
-1. Replays buffered events matching the filter.
-2. Queries local cache (if available and not a bus kind).
-3. Subscribes to relay pool (if available and not a bus kind).
-
-Kind 29010 is in the bus kind range (29000-29999). The `isBusKind` check at `runtime.ts:340` will be `true`, so cache and relay pool are skipped. The subscription only receives buffered events. But no service descriptor events are in the buffer -- they need to be generated on demand when the REQ arrives.
-
-The current architecture has no mechanism for the runtime to generate response events in response to a REQ. REQs only match against buffered events, cache, and relay subscriptions. There is no "synthetic response" path.
-
-**Why it happens:** The runtime was designed as a relay proxy. REQs query existing data stores. Service discovery is different -- it is a request-response pattern where the runtime GENERATES events, not queries for them.
-
-**Consequences:**
-- Discovery REQ silently returns EOSE with no events. The napplet thinks the shell has zero services.
-- Developers waste hours debugging why discovery "doesn't work" when the issue is architectural.
-
-**Prevention:**
-1. Add a new dispatch path in `handleReq()` specifically for kind 29010 filters. Before the general subscription/cache/relay flow, check if any filter has `kinds: [29010]`. If so, generate service descriptor events from the registered services and deliver them directly.
-2. Implementation pattern:
-   ```typescript
-   // In handleReq, before the general subscription flow:
-   if (filters.some(f => f.kinds?.includes(BusKind.SERVICE_DISCOVERY))) {
-     for (const [name, handler] of Object.entries(registeredServices)) {
-       const descriptorEvent = createServiceDescriptorEvent(handler.descriptor);
-       hooks.sendToNapplet(windowId, ['EVENT', subId, descriptorEvent]);
-     }
-     hooks.sendToNapplet(windowId, ['EOSE', subId]);
-     return; // Do not proceed to relay/cache
-   }
-   ```
-3. Do NOT try to pre-buffer service descriptor events at startup. Services can be registered/deregistered at any time. Discovery must be live.
-4. Ensure the subscription is still tracked so CLOSE can clean it up, even though the response is immediate.
-
-**Detection:** Send a discovery REQ after AUTH. If the response is just EOSE with no events (and services are registered), the synthetic response path is missing.
-
-**Phase:** Core to the service dispatch phase. Without this, discovery is dead on arrival.
-
----
-
-## Moderate Pitfalls
-
-### Pitfall 6: Audio Manager Migration Creates Two Audio State Owners
-
-**What goes wrong:** The current `audioManager` in `packages/shell/src/audio-manager.ts` is a module-level singleton with its own `Map<string, AudioSource>` state, version counter, and `CustomEvent` dispatch. When converting it to a `ServiceHandler`, the temptation is to create an `AudioServiceHandler` class that wraps `audioManager`. Now there are two objects managing audio state:
-- The `audioManager` singleton (still exported from `@napplet/shell`, used by shell UI components).
-- The `AudioServiceHandler` (registered in the service registry, handling service messages).
-
-If the handler updates its own internal state but forgets to call `audioManager.register()`, the shell UI is stale. If the handler delegates to `audioManager` for everything, it is just a pass-through wrapper with no value.
-
-**Why it happens:** The audioManager was designed as a standalone registry with direct browser API access (`window.dispatchEvent`, `originRegistry.getIframeWindow`). The `ServiceHandler` interface has a different shape (`handleRequest(windowId, topic, content, event)`) and runs in the runtime context (no browser APIs).
-
-**Consequences:**
-- State divergence between the service handler and the audioManager singleton.
-- Shell UI components that read `audioManager.getSources()` see stale data.
-- The `audioManager.mute()` method sends postMessage directly to the iframe (bypassing the runtime), creating a second message path.
-
-**Prevention:**
-1. The `AudioServiceHandler` should be a THIN adapter that delegates all state management to the existing `audioManager` singleton. The handler's `handleRequest()` parses the message and calls `audioManager.register()`, `audioManager.unregister()`, etc.
-2. The `audioManager` remains the source of truth for audio state. The service handler is only a message routing layer.
-3. The `audioManager.mute()` method's direct postMessage call (`audio-manager.ts:102-111`) should be migrated to go through the runtime's `sendToNapplet()` path instead. This is a separate cleanup task that should happen in the same phase.
-4. Keep `audioManager` exported from `@napplet/shell` for backwards compatibility. Shell UI code continues to read from it. The service handler writes to it.
-5. Do NOT move audio state management into the runtime. Audio is browser-specific (Web Audio API, CustomEvent). It belongs in the shell adapter layer.
-
-**Detection:** After migration, register an audio source via the service handler path. Check `audioManager.getSources()`. If the source is missing, the handler is not delegating correctly.
-
-**Phase:** Audio service implementation phase. Get the delegation pattern right before adding more services.
-
----
-
-### Pitfall 7: Manifest `requires` Tags Create Chicken-and-Egg With Discovery
-
-**What goes wrong:** The plan includes manifest `requires` tags where a napplet declares its service dependencies in the NIP-5A manifest:
-
-```json
-{
-  "tags": [
-    ["requires", "audio", ">=1.0.0"],
-    ["requires", "notifications", ">=1.0.0"]
-  ]
-}
-```
-
-The shell is supposed to check these at AUTH time and warn if it cannot satisfy them. But the shell receives the manifest's aggregate hash during AUTH (`aggregateHash` tag), not the full manifest. The manifest itself is fetched separately (or cached). The shell would need to:
-1. Receive AUTH with aggregateHash.
-2. Fetch/lookup the manifest by aggregateHash.
-3. Parse `requires` tags from the manifest.
-4. Check against registered services.
-5. Decide whether to proceed with AUTH or warn.
-
-Step 2 is the problem. The manifest cache (`manifest-cache.ts`) stores `{ pubkey, dTag, aggregateHash, verifiedAt }` -- it does NOT store the full manifest content or requires tags. Fetching the manifest during AUTH adds latency and a network dependency to the critical path.
-
-**Why it happens:** The manifest cache was designed for identity verification (hash matches known build), not for content inspection.
-
-**Consequences:**
-- Compatibility checking during AUTH adds network latency (fetching manifest from relay/blossom).
-- If the manifest is unavailable (relay down, first-time napplet), compatibility cannot be checked.
-- AUTH becomes conditional on an external fetch, which can timeout or fail.
-
-**Prevention:**
-1. Do NOT check `requires` tags during AUTH. AUTH should remain fast and self-contained.
-2. Compatibility checking happens AFTER AUTH, as part of the service discovery flow:
-   a. Napplet completes AUTH.
-   b. Napplet calls `discoverServices()`.
-   c. Shim-side code compares discovered services against the napplet's own `requires` tags (read from meta tags, like aggregateHash is today).
-   d. If required services are missing, the shim fires a callback or event that the napplet developer handles.
-3. The shell does NOT need to know about `requires` tags. The compatibility check is entirely napplet-side: "I need these services, do I have them?"
-4. Add `<meta name="napplet-requires" content="audio:>=1.0.0,notifications:>=1.0.0">` alongside the existing aggregate hash meta tag. The vite-plugin generates this from the manifest.
-
-**Detection:** If the proposed implementation modifies `handleAuth()` in the runtime to check manifest content, it is over-coupling AUTH with compatibility. AUTH should not change.
-
-**Phase:** Compatibility reporting phase (after discovery protocol is working). This is a shim-side feature, not a runtime feature.
-
----
-
-### Pitfall 8: Service Handler `handleRequest` Receives Untrusted Content
-
-**What goes wrong:** The `ServiceHandler.handleRequest()` signature is:
+**Industry standard:** The options-object pattern.
 
 ```typescript
-handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void;
+// Current (positional callbacks)
+subscribe({ kinds: [1] }, (ev) => {}, () => {}, { relay: 'wss://...' })
+
+// Better (options object)
+subscribe({ kinds: [1] }, {
+  onEvent: (ev) => {},
+  onEose: () => {},
+  relay: 'wss://...',
+})
+
+// Best (separate live vs one-shot)
+// subscribe() for live streams
+// query() for one-shot (already exists)
 ```
 
-The `content` parameter is `JSON.parse(event.content)`. If the event content is malformed JSON, the parse throws. If it is valid JSON but contains unexpected types (array instead of object, missing fields), the handler crashes or behaves incorrectly.
+**Severity:** MEDIUM. The current API works and is small. But for a public SDK, the positional callback pattern is a known source of bugs, especially when LLMs generate the call site.
 
-Service handler authors will assume `content` is a well-structured object matching their expected schema. There is no validation layer between the raw event and the handler.
+### 4.2 Overloaded Parameter Types
 
-**Why it happens:** The handler interface was designed for simplicity. Adding schema validation feels like over-engineering. But every handler will need to validate its input independently, leading to inconsistent validation and repeated boilerplate.
+**`subscribe(filters: NostrFilter | NostrFilter[], ...)`:**
+- Accepting both single filter and array forces internal normalization (`Array.isArray(filters) ? filters : [filters]`).
+- Agents are uncertain which to pass. Some will always wrap in array, some will pass single.
+- The NIP-01 wire format always uses arrays. The convenience of single-filter input adds implementation complexity for marginal developer ergonomics.
 
-**Consequences:**
-- A malicious napplet sends `{ "constructor": { "prototype": { "isAdmin": true } } }` as content, and a careless handler spreads it into an object (prototype pollution).
-- Missing fields cause `undefined` access errors that crash the handler.
-- Each service handler reimplements input validation differently.
+**Fix:** Accept only `NostrFilter[]`. Callers write `[filter]` -- trivial, explicit, no ambiguity.
 
-**Prevention:**
-1. The runtime should catch `JSON.parse` errors and send an OK with error before calling the handler. If `event.content` is not valid JSON, the handler never sees it.
-2. Pass `event.content` as a raw string to the handler, not as pre-parsed JSON. Let handlers parse and validate in their own context. This avoids surprising type assumptions.
-3. Actually, a better pattern: pass both. `handleRequest(windowId, topic, rawContent: string, event: NostrEvent)`. The handler can parse and validate as needed.
-4. Document that handler authors MUST validate all input. Provide a utility function or pattern example in the SDK.
-5. For built-in services (audio), validate explicitly: check that `nappClass` is a string, `title` is a string, etc.
+### 4.3 Implicit Initialization via Import
 
-**Detection:** Send a service message with `content: "not json"`. If the runtime throws an unhandled exception, parsing is happening at the wrong layer.
+**`packages/shim/src/index.ts`** runs initialization code at the module level:
 
-**Phase:** Service dispatch routing phase. The handler calling convention must be decided before implementing any handlers.
+```typescript
+// Install relay message listener
+window.addEventListener('message', handleRelayMessage);
+installNostrDb();
+installKeyboardShim();
+_setInterPaneEventSender(emit);
+installStateShim();
+// Initialize keypair eagerly
+keypair = loadOrCreateKeypair(nappType);
+```
 
----
+Importing `@napplet/shim` has side effects. This means:
+1. The module cannot be imported in a test harness without triggering browser API calls.
+2. The module cannot be tree-shaken -- importing any single export triggers all initialization.
+3. An agent that imports a type from this module triggers full initialization.
 
-### Pitfall 9: Discovery Response Contains Stale Service Descriptors After Hot Registration
+**Fix:** Move side effects to an explicit `init()` function. Export individual APIs without requiring initialization. The init can be called once in the napplet's entry point.
 
-**What goes wrong:** If services can be registered after runtime creation (e.g., a shell plugin system that loads services dynamically), and a napplet has already completed discovery, the napplet's cached service list is stale. The napplet believes it knows what services exist, but new services were added after discovery completed.
+**Counter-argument:** The shim is designed to be a single import that "just works" for napplet developers. Requiring manual init adds a step. This is a tradeoff between DX simplicity and testability.
 
-**Why it happens:** The SPEC.md Section 11 design is pull-based (napplet sends REQ, gets response). There is no mechanism for the shell to push service additions/removals to napplets that already completed discovery.
+### 4.4 `send` Callback in ServiceHandler.handleMessage
 
-**Consequences:**
-- A napplet loaded before a service plugin is activated never learns about the new service.
-- If a service is removed, napplets that cached its descriptor continue trying to use it, getting silent failures.
+```typescript
+handleMessage(windowId: string, message: unknown[], send: (msg: unknown[]) => void): void;
+```
 
-**Prevention:**
-1. For v0.4.0, document that services must be registered BEFORE the runtime is created. Dynamic service registration is out of scope.
-2. If dynamic registration is needed later, add a push mechanism: the shell injects a `service:added` or `service:removed` inter-pane event when the registry changes. Napplets that care can subscribe.
-3. The `discoverServices()` shim function should not aggressively cache. Each call should send a fresh REQ. The runtime generates fresh responses from the current registry state.
-4. If caching is added later for performance, add an invalidation mechanism.
+The `send` callback is provided per-call. The handler cannot store it (it might be different next call). But handlers that need to send delayed responses (e.g., after an async operation) must capture the callback in a closure. If the callback is invalid after the handler returns (e.g., the runtime re-creates it per call), delayed responses silently fail.
 
-**Detection:** Register a service after a napplet completes AUTH + discovery. Check whether the napplet can discover the new service by calling `discoverServices()` again.
-
-**Phase:** Define the scope clearly in the architecture phase. v0.4.0 = static registration. Dynamic registration = future.
-
----
-
-### Pitfall 10: ACL Does Not Gate Service Discovery or Service Messages
-
-**What goes wrong:** SPEC.md Section 11.6 explicitly states "Service-level ACL gating is NOT defined in this version." This means:
-1. Any authenticated napplet can discover all registered services.
-2. Any authenticated napplet can send messages to any service.
-3. A napplet that has been blocked or had capabilities revoked can still use services.
-
-The existing ACL checks in `enforce.ts` resolve capabilities based on verb and event kind. Service messages arrive as INTER_PANE events (kind 29003), which resolve to `relay:write` for the sender. If a napplet has `relay:write` revoked, it cannot send service messages. But if `relay:write` is granted (the default), all services are accessible.
-
-**Why it happens:** Per-service ACL was explicitly deferred. This is a known design decision, not an oversight. But it creates a gap between the existing fine-grained ACL (per-capability revocation) and the new service system (no granularity).
-
-**Consequences:**
-- A shell that revokes `sign:event` for a napplet still allows that napplet to use all services.
-- No way to allow audio but deny notifications for a specific napplet.
-- If a service performs sensitive operations (clipboard write, file system access), there is no ACL barrier.
-
-**Prevention:**
-1. For v0.4.0, this is acceptable. Audio is not a sensitive operation. Document the limitation.
-2. Plan the capability extension: add `service:audio`, `service:notifications`, etc. to the `Capability` union type and `ALL_CAPABILITIES` array. This is a semver-minor change in `@napplet/core`.
-3. When per-service capabilities are added, the enforce gate needs to resolve service messages to the appropriate capability. The topic prefix determines which `service:*` capability to check.
-4. Do NOT block on per-service ACL for v0.4.0. Ship discovery and audio first, add ACL in a follow-up.
-
-**Detection:** Revoke all capabilities for a napplet. Attempt to use a service. If it works, per-service ACL is not enforced.
-
-**Phase:** Acknowledge in the roadmap as a known limitation. Address in v0.5.0 or a security-focused follow-up.
+**Audit action:** Verify that the `send` callback is stable and can be used asynchronously. Document whether handlers can store and call it later.
 
 ---
 
-### Pitfall 11: EOSE Semantics Differ Between Relay REQ and Discovery REQ
+## 5. Agent-readability Criteria
 
-**What goes wrong:** For relay REQs, EOSE means "end of stored events, live events may follow." The subscription stays open and continues receiving new events. For discovery REQs, EOSE means "all services have been reported, done." The subscription should be closed because no live updates will arrive (services are static for v0.4.0).
+AI agents (LLMs assisting with development) process code fundamentally differently than humans. They lack persistent memory across sessions, rely on pattern matching rather than deep understanding, and are sensitive to naming consistency because they use token-level associations.
 
-If the napplet treats discovery like a normal subscription (keeping it open after EOSE), it wastes a subscription slot. If it treats a relay subscription like discovery (closing after EOSE), it misses live events.
+### 5.1 Properties That Help Agents
 
-**Why it happens:** Both use the same NIP-01 REQ/EOSE mechanism. The semantic difference is implicit based on the filter kind.
+**Unambiguous names:** An agent reading `createEphemeralKeypair()` immediately knows:
+- It creates (not loads, not gets).
+- It is ephemeral (not persistent).
+- It produces a keypair (known crypto concept).
 
-**Consequences:**
-- Memory leak if discovery subscriptions are never closed.
-- The shim's `query()` function (which wraps subscribe + close-on-EOSE) is the right pattern for discovery but creates a misleading usage: `query({ kinds: [29010] })` looks like it is querying a relay.
+Compare with `loadOrCreateKeypair()`: the agent must read the implementation to know it never loads.
 
-**Prevention:**
-1. The `discoverServices()` API in the shim should use the `query()` pattern internally: subscribe, collect, close on EOSE, resolve.
-2. Document that discovery is a one-shot operation. Napplets should call `discoverServices()` once, cache the result, and not re-query unless they have reason to believe services changed.
-3. On the runtime side, the discovery REQ handler should immediately send all descriptors + EOSE, then the subscription can be auto-closed (or the napplet closes it -- both work).
-4. Consider having the runtime auto-CLOSE the discovery subscription after EOSE to prevent leaks if the napplet forgets.
+**Consistent patterns across modules:**
+- If every factory function is `create<Thing>()`, an agent learns the pattern and can predict APIs.
+- If some factories are `create()`, some are `make()`, some are `build()`, the agent cannot rely on naming patterns.
 
-**Detection:** Open a discovery subscription and never close it. Check whether it accumulates in the runtime's `subscriptions` Map.
+**Self-documenting parameter names:**
+- `windowId: string` -- the agent knows this is an identifier for a window.
+- `id: string` -- the agent cannot distinguish this from event ID, subscription ID, correlation ID, etc.
+- Always prefer qualified names: `windowId`, `subscriptionId`, `correlationId`, `nappletPubkey`.
 
-**Phase:** Discovery protocol implementation phase.
+**Enum-like constants with clear namespacing:**
+- `BusKind.SIGNER_REQUEST` -- the agent can search for all `BusKind.*` uses.
+- `29001` magic number -- the agent must grep for the number and loses semantic context.
 
----
+**JSDoc with `@example` blocks:**
+- Agents heavily weight code examples in JSDoc. An `@example` showing exact usage patterns is worth more than paragraphs of description.
+- The current codebase does this well. Maintain this practice.
 
-## Minor Pitfalls
+### 5.2 Properties That Hurt Agents
 
-### Pitfall 12: `ServiceDescriptor.version` Without Semver Parsing
+**Abbreviated names that conflict with ecosystem terms:**
+- `napp` vs `napplet` (as documented in Section 1.1).
+- An agent asked "what is a napp?" will retrieve Nostr ecosystem knowledge, not SDK knowledge.
 
-**What goes wrong:** The `ServiceDescriptor` interface has `version: string`. Without semver parsing utilities in the SDK, napplet developers must either:
-- Do string comparison (wrong: `"1.10.0" < "1.9.0"` alphabetically).
-- Bring their own semver library (dependency burden).
-- Ignore versions entirely (defeats the purpose of version reporting).
+**Same-name different-semantics across packages:**
+- `NappKeyEntry` defined in both runtime and shell (Section 3.1).
+- An agent importing the wrong one will not get a type error, just wrong behavior.
 
-**Prevention:**
-1. For v0.4.0, version is informational only. Document that it follows semver format but do not provide parsing.
-2. If `requires` tags support version ranges (`>=1.0.0`), the shim will need a minimal semver comparison function. A ~30-line `satisfies(version, range)` function covers `>=`, `^`, and `~` operators.
-3. Do NOT add `semver` as a dependency. The shim must remain lightweight.
+**Convention violations within the codebase:**
+- If 90% of factories are `createFoo()` and one is `loadOrCreateFoo()`, the agent will generate `createKeypair()` calls that do not exist.
 
-**Phase:** Compatibility reporting phase (if version ranges are supported). Can be deferred if `requires` tags only check presence, not version.
+**Implicit side effects:**
+- An agent importing `@napplet/shim` for type information will trigger side effects (Section 4.3).
+- Agents cannot distinguish "safe to import for types" from "importing runs code."
 
----
+**`any` types and `unknown[]` arrays:**
+- `handleMessage(windowId: string, message: unknown[], send: (msg: unknown[]) => void)` -- the agent cannot generate correct message arrays without consulting examples.
+- Adding branded types or string literal unions for message verbs would help: `type NIP01Message = ['EVENT', NostrEvent] | ['REQ', string, ...NostrFilter[]] | ['CLOSE', string]`.
 
-### Pitfall 13: Service Name Collision Between Built-in and Custom Services
+### 5.3 Agent-readability Checklist
 
-**What goes wrong:** The `ServiceRegistry` is an open dictionary (`[serviceName: string]: ServiceHandler`). Nothing prevents a shell implementor from registering a custom service called `audio` that conflicts with the built-in audio service, or `state` that conflicts with the state proxy.
-
-**Prevention:**
-1. Reserve built-in service names in the spec: `audio`, `notifications`, `clipboard`, `state`, `signer`. Document that these MUST NOT be used for custom services.
-2. Validate at registration time: if a reserved name is used, warn or throw.
-3. Custom services should use a namespace prefix: `myapp:custom-service` or reverse-domain `com.example:service`.
-4. For v0.4.0, only `audio` is built-in. The reservation list is short and can be documented.
-
-**Phase:** Spec documentation and service registration validation. Low priority for v0.4.0.
-
----
-
-### Pitfall 14: Shim Bundle Size Increase From Discovery API
-
-**What goes wrong:** The shim is loaded in every napplet iframe. It must be small. Adding discovery API, compatibility checking, version parsing, and requires-tag resolution can bloat the shim significantly.
-
-**Prevention:**
-1. The discovery API is tiny: one `discoverServices()` function that wraps `query()` (already exists).
-2. Make compatibility checking tree-shakeable. If a napplet does not import `checkCompatibility()`, it should not be in the bundle.
-3. Do NOT add semver parsing to the main shim entry point. Put it in a subpath export: `@napplet/shim/compat`.
-4. Measure bundle size before and after. Target: <1KB added to the shim.
-
-**Phase:** All shim-side phases. Measure at the end.
+- [ ] Every exported function name is a verb-noun phrase that describes what it does (`createRuntime`, `handleMessage`, `discoverServices`)
+- [ ] No function name contradicts its behavior (no "load" when it only "creates")
+- [ ] Parameter names are qualified (no bare `id`, `data`, `type` without context)
+- [ ] Constants are namespaced objects, not magic numbers (`BusKind.SIGNER_REQUEST`, not `29001`)
+- [ ] Types used across packages are defined in exactly one place
+- [ ] The same concept has the same name everywhere (not "state" in one package, "storage" in another)
+- [ ] Side-effect-free imports for type-only usage
+- [ ] JSDoc `@example` on every exported function
+- [ ] No abbreviated names that collide with ecosystem terms
 
 ---
 
-### Pitfall 15: Missing `onWindowDestroyed` Cleanup Creates Memory Leaks
+## 6. Audit Checklist
 
-**What goes wrong:** The `ServiceHandler` interface has an optional `onWindowDestroyed?(windowId: string)` method. If the audio service handler registers sources per-window (which it does), failing to call `onWindowDestroyed` when a napplet unloads leaks audio sources.
+Use this checklist when reviewing each of the 7 packages during the ontology audit.
 
-The runtime does not have a "window destroyed" concept. The shell-bridge detects iframe removal (or should -- see existing Pitfall 13 about subscription cleanup leaks). The bridge must call each service handler's `onWindowDestroyed()` when an iframe is removed.
+### Per-Symbol Checks (every exported name)
 
-**Prevention:**
-1. Add a `destroyWindow(windowId: string)` method to the `Runtime` interface that cleans up subscriptions, pending state, AND calls `onWindowDestroyed` on all service handlers.
-2. The shell-bridge calls `runtime.destroyWindow(windowId)` when it detects iframe removal.
-3. The audio service handler's `onWindowDestroyed` calls `audioManager.unregister(windowId)`.
-4. Make `onWindowDestroyed` cleanup idempotent -- calling it twice for the same windowId should be harmless.
+- [ ] **Ecosystem collision:** Does this name mean something different in Nostr, Web APIs, or JS ecosystem?
+- [ ] **Accuracy:** Does the name describe what the thing IS or DOES? (Not what it was, or what it might do.)
+- [ ] **Consistency:** Is this concept named the same way in every package that uses it?
+- [ ] **Single source:** Is this type/interface defined in exactly one package? (Check for duplicates.)
+- [ ] **Abbreviation check:** Any abbreviations that could be expanded for clarity? (`napp` -> `napplet`)
+- [ ] **Parameter names:** Are all parameters self-documenting? (No bare `id`, `data`, `options`, `config` without qualification.)
 
-**Detection:** Load a napplet that registers an audio source. Remove the iframe. Check `audioManager.getSources()`. If the source persists, cleanup is missing.
+### Per-Function Checks
 
-**Phase:** Audio service implementation phase. The window lifecycle must be wired up when the first service with per-window state is added.
+- [ ] **Name matches behavior:** Does the function do exactly what its name says?
+- [ ] **Signature ergonomics:** Fewer than 4 positional args? Callbacks in options objects? Required params before optional?
+- [ ] **Return type clarity:** Does the return type match what the name implies? (`create*` returns the created thing, `is*` returns boolean, etc.)
+- [ ] **Overload clarity:** If accepting union types, is the normalization justified?
+
+### Per-Module Checks
+
+- [ ] **Side effects:** Does importing this module run code? If yes, is this intentional and documented?
+- [ ] **Naming pattern:** Do all exports follow the module's naming convention? (e.g., all factories are `create*`)
+- [ ] **Re-exports:** Are re-exported types from other packages consistent with the canonical definition?
+
+### Per-Package Checks
+
+- [ ] **Type origin:** Are all types defined here, or properly imported from upstream (core/runtime)?
+- [ ] **No duplicate types:** Check that types defined here are not also defined in another package.
+- [ ] **Naming namespace:** Does the package use a consistent prefix/convention for its types? (`Runtime*` for runtime, no prefix for core, `Shell*` for shell if needed.)
+- [ ] **Topics/constants:** Do wire-format strings follow the established convention? (hyphen-case for NIP-01 verbs, colon-separated for topics.)
+
+### Cross-cutting Checks
+
+- [ ] **`napp` -> `napplet`:** Zero remaining `napp[^l]` occurrences in production code (comments, strings, identifiers).
+- [ ] **`INTER_PANE` -> `IPC_PEER`:** Zero remaining `INTER.PANE` occurrences.
+- [ ] **Topic prefix consistency:** All topics follow `{namespace}:{action}` pattern with documented direction semantics.
+- [ ] **Wire format strings:** No `napp:` prefix remaining in topic strings (should be `napplet:` if prefix is needed).
+- [ ] **localStorage prefixes:** `napp-state:` updated to `napplet-state:` with migration story.
+- [ ] **Meta tag names:** `napplet-napp-type` simplified to `napplet-type`.
+- [ ] **Duplicate removal:** `shell/state-proxy.ts` dead code removed, `shell/types.ts` duplicate types removed.
+- [ ] **Hook interface naming:** Consistent suffix convention documented (`*Hooks` or `*Provider` or `*Adapter`).
+
+### Documentation Checks
+
+- [ ] **SPEC.md:** All "napp" references updated to "napplet" where appropriate.
+- [ ] **README.md (per package):** Terminology matches code.
+- [ ] **JSDoc:** All exported symbols have JSDoc with accurate descriptions.
+- [ ] **Skill files:** Updated to use correct terminology.
 
 ---
 
 ## Phase-Specific Warnings
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Type migration (service types to core) | Breaking import paths for shell consumers (#4) | Re-export from shell for backwards compat |
-| Discovery protocol (kind 29010 REQ/EVENT/EOSE) | Silent empty response (#5), timing race (#1) | Add synthetic response path in handleReq, expose auth-confirmed promise in shim |
-| Service dispatch routing | Topic collision with legacy audio topics (#2) | Support both topic conventions, deprecate old |
-| Audio service implementation | Two state owners (#6), cleanup leaks (#15) | Handler delegates to audioManager singleton, wire onWindowDestroyed |
-| Compatibility reporting | Chicken-and-egg with manifest (#7) | Do compatibility checks shim-side, not AUTH-time |
-| Shim discovery API | Over-engineering (#3), bundle bloat (#14) | One function (`discoverServices()`), tree-shake compat utils |
-| ACL integration | No per-service gating (#10) | Document as known limitation, plan for v0.5.0 |
-| EOSE handling | Subscription leak for one-shot discovery (#11) | Use query() pattern, auto-close |
-| Content validation | Untrusted input to handlers (#8) | Pass raw string, validate in handler |
+| Phase Topic | Likely Pitfall | Severity | Mitigation |
+|-------------|---------------|----------|------------|
+| `napp` -> `napplet` rename | `napp-state:` localStorage prefix breaks persisted data | HIGH | Dual-read migration: try new prefix, fall back to old |
+| `napp` -> `napplet` rename | Meta tag `napplet-napp-type` rename breaks existing napplets | MEDIUM | Vite plugin reads both old and new meta names for one version |
+| `INTER_PANE` -> `IPC_PEER` rename | Wire verb change breaks cross-version compatibility | HIGH | Runtime accepts both old and new wire verb during transition |
+| Topic prefix audit | Changing `shell:*` topics changes wire protocol | HIGH | Do NOT rename wire-format topic strings unless adding deprecation aliases |
+| Duplicate type removal | Removing `ConsentRequest` from shell breaks shell consumers | MEDIUM | Re-export from runtime, keep import path working |
+| Dead code removal | `shell/state-proxy.ts` might still be imported | LOW | Check import graph before deletion |
+| localStorage prefix migration | Napplets lose stored state on upgrade | HIGH | Ship migration utility in runtime that copies old-prefix keys to new-prefix |
+| Agent-readability pass | Renaming exported functions is semver-breaking | HIGH | Group renames into a single semver-major bump |
 
 ---
 
 ## Sources
 
-- [IRCv3 Capability Negotiation](https://ircv3.net/specs/extensions/capability-negotiation) -- protocol-level lessons on ordering, timing, backwards compat in capability negotiation
-- [MCP Protocol Version Negotiation Issue #546](https://github.com/ibm/mcp-context-forge/issues/546) -- real-world difficulties with protocol version negotiation and backward compatibility
-- [MSRC: PostMessaged and Compromised (2025)](https://msrc.microsoft.com/blog/2025/08/postmessaged-and-compromised/) -- postMessage security patterns relevant to service message routing
-- [MDN: Window.postMessage()](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) -- authoritative reference on postMessage origin and timing
-- [Microservices Service Discovery Patterns](https://microservices.io/patterns/server-side-discovery.html) -- architectural patterns for service discovery versioning
-- [WCF Discovery Versioning](https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/discovery-versioning) -- versioning strategy patterns for discovery protocols
-- SPEC.md Section 11 (local, `/home/sandwich/Develop/napplet/SPEC.md:804`) -- the protocol design being implemented
-- `packages/runtime/src/runtime.ts` (local) -- current verb dispatch, AUTH flow, topic routing
-- `packages/shell/src/audio-manager.ts` (local) -- existing audio singleton being migrated
-- `packages/shim/src/index.ts` (local) -- AUTH handshake timing, REQ firing
-- `packages/core/src/topics.ts` (local) -- existing topic constants including legacy audio topics
-- `packages/shell/src/types.ts` (local) -- current ServiceHandler/ServiceRegistry/ServiceDescriptor definitions
+- [The Art of Naming in API Design](https://moldstud.com/articles/p-the-art-of-naming-in-api-design-best-practices-explained-for-developers) -- naming best practices for APIs
+- [API Design Anti-patterns](https://specmatic.io/appearance/how-to-identify-avoid-api-design-anti-patterns/) -- common anti-patterns in API design
+- [SDK Design Best Practices](https://www.shakebugs.com/blog/sdk-design-best-practices/) -- SDK naming and structure guidelines
+- [Google AIP-190: Naming Conventions](https://cloud.google.com/apis/design/naming_convention) -- Google's authoritative naming convention guide
+- [How to Name Events in Event Driven Architecture](https://richygreat.medium.com/how-to-name-events-in-event-driven-architecture-cc962d93ed60) -- event naming conventions (past-tense for events, imperative for commands)
+- [Message Naming Conventions](https://www.jimmybogard.com/message-naming-conventions/) -- distinguishing events from commands in message naming
+- [Cosmos SDK ADR-023: Protocol Buffer Naming](https://docs.cosmos.network/main/build/architecture/adr-023-protobuf-naming) -- avoiding namespace collisions in protocol SDKs
+- [Positional vs Named Arguments in TypeScript](https://medium.com/@soroushysf/positional-vs-named-arguments-in-typescript-when-to-use-each-9e533aa274a2) -- when to use options objects vs positional args
+- [How to Write a Good Spec for AI Agents](https://www.oreilly.com/radar/how-to-write-a-good-spec-for-ai-agents/) -- designing APIs for LLM consumption
+- [Formatting Tool Specifications for LLM Comprehension](https://apxml.com/courses/prompt-engineering-agentic-workflows/chapter-3-prompt-engineering-tool-use/formatting-tool-specifications-llm) -- tool naming for agent comprehension
+- [Why You Need a Semantic Layer](https://www.cloudgeometry.com/blog/ai-coding-agents-semantic-layer) -- semantic naming for AI agent effectiveness
+- [TypeScript Harmony in Monorepos](https://www.javacodegeeks.com/2024/11/typescript-harmony-in-monorepos-dependencies-consistency.html) -- centralized type management in monorepos
+- [Topic Architecture Best Practices (Solace)](https://docs.solace.com/Messaging/Topic-Architecture-Best-Practices.htm) -- topic naming conventions for event-driven systems
+- Local codebase analysis: `packages/*/src/*.ts`, `SPEC.md`, `CLAUDE.md`
 
 ---
 
-*Pitfalls audit: 2026-03-31 (v0.4.0 milestone research)*
-*Confidence: HIGH for pitfalls 1-6, 10-11, 15 (verified against source code and runtime behavior). MEDIUM for pitfalls 7-9, 12-14 (inferred from architecture and protocol design, not yet tested).*
+*Pitfalls audit: 2026-04-01 (v0.7.0 Ontology Audit milestone research)*
+*Confidence: HIGH for sections 1-4 (grounded in direct codebase analysis with exact line references). MEDIUM for section 5 (agent-readability is an emerging field with limited formal research). HIGH for section 6 (checklist derived from concrete findings).*

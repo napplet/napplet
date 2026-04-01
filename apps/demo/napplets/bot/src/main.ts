@@ -11,6 +11,20 @@
  */
 import { emit, on, nappState } from '@napplet/shim';
 
+// ─── Notification Helpers ─────────────────────────────────────────────────────
+
+/**
+ * Emit a notifications:create event through the real napplet→service path.
+ * The shell routes this INTER_PANE event to the notification service handler.
+ */
+function notifyCreate(title: string, body: string): void {
+  try {
+    emit('notifications:create', [], JSON.stringify({ title, body }));
+  } catch {
+    /* best-effort — don't break the main flow if notifications are denied */
+  }
+}
+
 const statusEl = document.getElementById('status-text')!;
 const ruleCountEl = document.getElementById('rule-count')!;
 const logEl = document.getElementById('log')!;
@@ -18,6 +32,12 @@ const rulesEl = document.getElementById('rules')!;
 
 let authenticated = false;
 const RULES_KEY = 'bot-rules';
+
+function formatError(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string' && error.length > 0) return error;
+  return fallback;
+}
 
 // Rule storage: trigger -> response
 let rules: Record<string, string> = {};
@@ -61,8 +81,8 @@ async function loadRules(): Promise<void> {
       rules = JSON.parse(raw);
       log(`loaded ${Object.keys(rules).length} rules from storage`, 'info');
     }
-  } catch {
-    log('no saved rules found', 'info');
+  } catch (error) {
+    log(`state read failed -- ${formatError(error, 'denied: state:read')}`, 'error');
   }
   updateRulesDisplay();
 }
@@ -70,8 +90,8 @@ async function loadRules(): Promise<void> {
 async function saveRules(): Promise<void> {
   try {
     await nappState.setItem(RULES_KEY, JSON.stringify(rules));
-  } catch {
-    log('failed to save rules (check storage ACL)', 'error');
+  } catch (error) {
+    log(`state write failed -- ${formatError(error, 'denied: state:write')}`, 'error');
   }
 }
 
@@ -99,6 +119,9 @@ function handleTeachCommand(text: string): boolean {
   log(`learned: "${trigger}" -> "${response}"`, 'learned');
   saveRules();
   updateRulesDisplay();
+
+  // Emit a notification so the host can surface this rule learn event
+  notifyCreate('Bot activity', `learned: "${trigger}" → "${response}"`);
 
   // Acknowledge the teach command
   emit('bot:response', [], JSON.stringify({
@@ -134,7 +157,7 @@ function handleChatMessage(payload: unknown): void {
   const text = data.text || '';
   if (!text) return;
 
-  log(text, 'heard');
+  log(`inter-pane chat:message received -- ${text}`, 'heard');
 
   // Check for teach command first
   if (handleTeachCommand(text)) return;
@@ -149,8 +172,11 @@ function handleChatMessage(payload: unknown): void {
       text: response,
       timestamp: Date.now(),
     }));
-  } catch {
-    log('failed to respond (check sign:event ACL)', 'error');
+    log('inter-pane bot:response sent', 'info');
+    // Emit a notification so the host can surface this bot reply
+    notifyCreate('Bot activity', response.length > 60 ? response.slice(0, 60) + '…' : response);
+  } catch (error) {
+    log(`inter-pane response failed -- ${formatError(error, 'denied: relay:write')}`, 'error');
   }
 }
 
@@ -166,7 +192,7 @@ window.addEventListener('message', (event) => {
     authenticated = true;
     statusEl.textContent = 'listening';
     statusEl.style.color = '#39ff14';
-    log('AUTH complete -- listening for chat messages', 'info');
+    log('AUTH complete -- listening for inter-pane chat:message input', 'info');
 
     // Load rules from storage
     loadRules();
@@ -174,7 +200,7 @@ window.addEventListener('message', (event) => {
     // Listen for chat messages via inter-pane
     on('chat:message', handleChatMessage);
 
-    log('subscribed to chat:message topic', 'info');
+    log('subscribed to inter-pane chat:message topic', 'info');
   }
 
   if (verb === 'OK' && success === false) {

@@ -6,7 +6,7 @@
  * lifecycle, AUTH handshake, signer proxying, and shell command routing.
  *
  * No browser APIs. No DOM. No localStorage. No postMessage.
- * All I/O is delegated to RuntimeHooks.
+ * All I/O is delegated to RuntimeAdapter.
  */
 
 import type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
@@ -20,14 +20,14 @@ import {
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
 import type {
-  RuntimeHooks, NappKeyEntry, ConsentRequest, ConsentHandler,
+  RuntimeAdapter, SessionEntry, ConsentRequest, ConsentHandler,
   ServiceHandler, ServiceRegistry, CompatibilityReport, ServiceInfo,
 } from './types.js';
 import { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
 import { handleDiscoveryReq, isDiscoveryReq, createServiceDiscoveryEvent } from './service-discovery.js';
 import type { DiscoverySubscription } from './service-discovery.js';
-import { createNappKeyRegistry } from './napp-key-registry.js';
-import type { NappKeyRegistry } from './napp-key-registry.js';
+import { createSessionRegistry } from './session-registry.js';
+import type { SessionRegistry } from './session-registry.js';
 import { createAclState } from './acl-state.js';
 import type { AclStateContainer } from './acl-state.js';
 import { createManifestCache } from './manifest-cache.js';
@@ -107,8 +107,8 @@ export interface Runtime {
    */
   destroyWindow(windowId: string): void;
 
-  /** Access the identity registry (for shell adapter to read napp state). */
-  readonly nappKeyRegistry: NappKeyRegistry;
+  /** Access the identity registry (for shell adapter to read napplet session state). */
+  readonly sessionRegistry: SessionRegistry;
 
   /** Access the ACL state container. */
   readonly aclState: AclStateContainer;
@@ -123,7 +123,7 @@ export interface Runtime {
  * Create a runtime instance with dependency injection via hooks.
  *
  * @param hooks - Host application provides relay pool, auth, config, etc.
- * @returns A Runtime instance ready to handle napp messages
+ * @returns A Runtime instance ready to handle napplet messages
  *
  * @example
  * ```ts
@@ -132,7 +132,7 @@ export interface Runtime {
  * runtime.handleMessage(windowId, msg);
  * ```
  */
-export function createRuntime(hooks: RuntimeHooks): Runtime {
+export function createRuntime(hooks: RuntimeAdapter): Runtime {
   // ─── Module-level state ──────────────────────────────────────────────────
 
   const pendingChallenges = new Map<string, string>();
@@ -167,7 +167,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
   // ─── Sub-module instances ────────────────────────────────────────────────
 
-  const nappKeyRegistry = createNappKeyRegistry(hooks.onPendingUpdate);
+  const sessionRegistry = createSessionRegistry(hooks.onPendingUpdate);
   const aclState = createAclState(hooks.aclPersistence);
   const manifestCache = createManifestCache(hooks.manifestPersistence);
   const replayDetector = createReplayDetector();
@@ -176,7 +176,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     checkAcl: (pubkey, dTag, aggregateHash, capability) =>
       aclState.check(pubkey, dTag, aggregateHash, capability),
     resolveIdentity: (pubkey) => {
-      const entry = nappKeyRegistry.getEntry(pubkey);
+      const entry = sessionRegistry.getEntry(pubkey);
       return entry ? { dTag: entry.dTag, aggregateHash: entry.aggregateHash } : undefined;
     },
     onAclCheck: hooks.onAclCheck,
@@ -184,7 +184,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
   const eventBuffer = createEventBuffer(
     hooks.sendToNapplet,
-    nappKeyRegistry,
+    sessionRegistry,
     enforce,
     subscriptions,
   );
@@ -243,8 +243,8 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     const typeTag = authEvent.tags?.find((t) => t[0] === 'type');
     if (!typeTag) { rejectAuth('missing required type tag'); return; }
-    const nappType = typeTag[1];
-    const dTag = parseInt(authEvent.pubkey.slice(0, 8), 16).toString(36) + nappType;
+    const nappletType = typeTag[1];
+    const dTag = parseInt(authEvent.pubkey.slice(0, 8), 16).toString(36) + nappletType;
     const hashTag = authEvent.tags?.find((t) => t[0] === 'aggregateHash');
     if (!hashTag) { rejectAuth('missing required aggregateHash tag'); return; }
     const aggregateHash = hashTag[1];
@@ -258,9 +258,9 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       });
     }
 
-    const entry: NappKeyEntry = {
+    const entry: SessionEntry = {
       pubkey: authEvent.pubkey, windowId, origin: '*',
-      type: nappType, dTag, aggregateHash, registeredAt: Date.now(),
+      type: nappletType, dTag, aggregateHash, registeredAt: Date.now(),
     };
 
     // Check for napp updates
@@ -272,20 +272,20 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     if (isUpdate) {
       const updateBehavior = hooks.config.getNappUpdateBehavior();
       if (updateBehavior === 'banner') {
-        nappKeyRegistry.setPendingUpdate(windowId, {
+        sessionRegistry.setPendingUpdate(windowId, {
           windowId, pubkey: authEvent.pubkey, dTag,
           oldHash: previousCacheEntry!.aggregateHash, newHash: aggregateHash,
           resolve: (action) => {
             if (action === 'accept') {
               cacheManifest(authEvent.pubkey, dTag, aggregateHash);
-              nappKeyRegistry.register(windowId, entry);
-              nappKeyRegistry.clearPendingUpdate(windowId);
+              sessionRegistry.register(windowId, entry);
+              sessionRegistry.clearPendingUpdate(windowId);
               const queued = pendingAuthQueue.get(windowId);
               pendingAuthQueue.delete(windowId);
               if (queued) for (const { msg: qMsg } of queued) dispatchVerb(qMsg[0], qMsg, windowId);
             } else {
               pendingAuthQueue.delete(windowId);
-              nappKeyRegistry.clearPendingUpdate(windowId);
+              sessionRegistry.clearPendingUpdate(windowId);
               hooks.sendToNapplet(windowId, ['OK', eventId, false, 'blocked: update rejected']);
             }
           },
@@ -305,7 +305,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       cacheManifest(authEvent.pubkey, dTag, aggregateHash);
     }
 
-    nappKeyRegistry.register(windowId, entry);
+    sessionRegistry.register(windowId, entry);
     pendingChallenges.delete(windowId);
 
     // ─── Compatibility check (Phase 22) ─────────────────────────────────────
@@ -385,12 +385,12 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     if (!registeredServices.has(serviceName)) return true;
 
     // Look up the napplet's declared requires via two-step registry lookup
-    const nappPubkey = nappKeyRegistry.getPubkey(windowId);
-    if (!nappPubkey) return true; // No identity yet — skip check
-    const nappEntry = nappKeyRegistry.getEntry(nappPubkey);
-    if (!nappEntry) return true;
+    const nappletPubkey = sessionRegistry.getPubkey(windowId);
+    if (!nappletPubkey) return true; // No identity yet — skip check
+    const nappletEntry = sessionRegistry.getEntry(nappletPubkey);
+    if (!nappletEntry) return true;
 
-    const requires = manifestCache.getRequires(nappEntry.pubkey, nappEntry.dTag);
+    const requires = manifestCache.getRequires(nappletEntry.pubkey, nappletEntry.dTag);
 
     // If the service IS declared in requires, no consent needed
     if (requires.includes(serviceName)) return true;
@@ -431,7 +431,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       hooks.sendToNapplet(windowId, ['OK', eventId, success, reason]);
     }
 
-    const pubkey = nappKeyRegistry.getPubkey(windowId);
+    const pubkey = sessionRegistry.getPubkey(windowId);
     if (!pubkey) { sendOk(false, 'auth-required: complete AUTH first'); return; }
 
     const replayResult = replayDetector.check(event);
@@ -463,10 +463,10 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       case BusKind.HOTKEY_FORWARD:
         try { handleHotkeyForward(event); } catch { /* Best-effort hotkey forwarding */ }
         break;
-      case BusKind.INTER_PANE: {
+      case BusKind.IPC_PEER: {
         const topic = event.tags?.find((t) => t[0] === 't')?.[1];
         if (topic?.startsWith('shell:state-')) {
-          handleStateRequest(windowId, event, hooks.sendToNapplet, nappKeyRegistry, aclState, hooks.statePersistence);
+          handleStateRequest(windowId, event, hooks.sendToNapplet, sessionRegistry, aclState, hooks.statePersistence);
           return;
         }
         if (topic?.startsWith('shell:') || topic === 'shell:create-window' || topic === 'shell:send-dm') {
@@ -480,7 +480,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
           const serviceName = topic.split(':')[0];
           // Only check if this looks like a service topic (registered service prefix)
           if (registeredServices.has(serviceName)) {
-            const pubkeyForCheck = nappKeyRegistry.getPubkey(windowId) ?? '';
+            const pubkeyForCheck = sessionRegistry.getPubkey(windowId) ?? '';
             const allowed = checkUndeclaredService(
               windowId, pubkeyForCheck, serviceName, event,
               () => { eventBuffer.bufferAndDeliver(event, windowId); },
@@ -508,7 +508,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     const subId = msg[1] as string | undefined;
     if (typeof subId !== 'string') return;
     const filters = (msg.slice(2) as NostrFilter[]) ?? [];
-    const pubkey = nappKeyRegistry.getPubkey(windowId);
+    const pubkey = sessionRegistry.getPubkey(windowId);
     if (!pubkey) { hooks.sendToNapplet(windowId, ['CLOSED', subId, 'auth-required']); return; }
     {
       const result = enforce(pubkey, 'relay:read');
@@ -624,7 +624,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     const countId = msg[1] as string | undefined;
     if (typeof countId !== 'string') return;
     const filters = (msg.slice(2) as NostrFilter[]) ?? [];
-    const pubkey = nappKeyRegistry.getPubkey(windowId);
+    const pubkey = sessionRegistry.getPubkey(windowId);
     if (!pubkey) { hooks.sendToNapplet(windowId, ['CLOSED', countId, 'auth-required']); return; }
     {
       const result = enforce(pubkey, 'relay:read');
@@ -721,7 +721,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     function sendInterPaneReply(replyTopic: string, content: string): void {
       const responseEvent: Partial<NostrEvent> = {
-        kind: BusKind.INTER_PANE, pubkey: '',
+        kind: BusKind.IPC_PEER, pubkey: '',
         created_at: Math.floor(Date.now() / 1000),
         tags: [['t', replyTopic]], content, id: '', sig: '',
       };
@@ -732,18 +732,18 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     switch (topic) {
       case 'shell:acl-get': {
         const aclEntries = aclState.getAllEntries();
-        const nappEntries = nappKeyRegistry.getAllEntries();
-        const nappInfoMap: Record<string, { type: string; registeredAt: number }> = {};
-        for (const e of nappEntries) nappInfoMap[e.pubkey] = { type: e.type, registeredAt: e.registeredAt };
+        const nappletEntries = sessionRegistry.getAllEntries();
+        const nappletInfoMap: Record<string, { type: string; registeredAt: number }> = {};
+        for (const e of nappletEntries) nappletInfoMap[e.pubkey] = { type: e.type, registeredAt: e.registeredAt };
         const merged = [...aclEntries];
-        for (const e of nappEntries) {
+        for (const e of nappletEntries) {
           if (!merged.find((a) => a.pubkey === e.pubkey)) {
             merged.push({ pubkey: e.pubkey, capabilities: [...ALL_CAPABILITIES], blocked: false });
           }
         }
         const display = merged.map((e) => ({
-          ...e, type: nappInfoMap[e.pubkey]?.type ?? 'unknown',
-          registeredAt: nappInfoMap[e.pubkey]?.registeredAt ?? 0,
+          ...e, type: nappletInfoMap[e.pubkey]?.type ?? 'unknown',
+          registeredAt: nappletInfoMap[e.pubkey]?.registeredAt ?? 0,
         }));
         sendInterPaneReply('shell:acl-current', JSON.stringify({ entries: display }));
         break;
@@ -752,7 +752,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         const pk = event.tags?.find((t) => t[0] === 'pubkey')?.[1];
         const cap = event.tags?.find((t) => t[0] === 'cap')?.[1];
         if (!pk) { sendOk(false, 'error: missing pubkey tag'); break; }
-        const ne = nappKeyRegistry.getEntry(pk);
+        const ne = sessionRegistry.getEntry(pk);
         if (topic === 'shell:acl-revoke' && cap) aclState.revoke(pk, ne?.dTag ?? '', ne?.aggregateHash ?? '', cap as Capability);
         else if (topic === 'shell:acl-grant' && cap) aclState.grant(pk, ne?.dTag ?? '', ne?.aggregateHash ?? '', cap as Capability);
         else if (topic === 'shell:acl-block') aclState.block(pk, ne?.dTag ?? '', ne?.aggregateHash ?? '');
@@ -829,7 +829,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
               ? { success: true, ...(result.eventId ? { eventId: result.eventId } : {}) }
               : { success: false, error: result.error ?? 'unknown error' };
             const response: Partial<NostrEvent> = {
-              kind: BusKind.INTER_PANE, pubkey: '',
+              kind: BusKind.IPC_PEER, pubkey: '',
               created_at: Math.floor(Date.now() / 1000),
               tags: [['t', 'shell:send-dm-result'], ['id', corrId]],
               content: JSON.stringify(payload), id: '', sig: '',
@@ -852,7 +852,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     if (!Array.isArray(msg) || msg.length < 2) return;
     const [verb] = msg;
     if (verb === 'AUTH') { void handleAuth(msg, windowId); return; }
-    if (!nappKeyRegistry.getPubkey(windowId)) {
+    if (!sessionRegistry.getPubkey(windowId)) {
       let queue = pendingAuthQueue.get(windowId);
       if (!queue) { queue = []; pendingAuthQueue.set(windowId, queue); }
       queue.push({ msg, windowId });
@@ -878,7 +878,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
         id: uuid,
         pubkey: '0'.repeat(64),
         created_at: Math.floor(Date.now() / 1000),
-        kind: BusKind.INTER_PANE,
+        kind: BusKind.IPC_PEER,
         tags: [['t', topic]],
         content: JSON.stringify(payload),
         sig: '0'.repeat(128),
@@ -953,7 +953,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       notifyServiceWindowDestroyed(windowId, serviceRegistry);
     },
 
-    get nappKeyRegistry() { return nappKeyRegistry; },
+    get sessionRegistry() { return sessionRegistry; },
     get aclState() { return aclState; },
     get manifestCache() { return manifestCache; },
   };

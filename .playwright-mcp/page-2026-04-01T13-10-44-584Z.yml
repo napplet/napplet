@@ -1,0 +1,243 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "napplet playground" [level=1] [ref=e3]
+  - generic [ref=e5]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: napplets
+        - generic [ref=e27]:
+          - article [ref=e29] [cursor=pointer]:
+            - generic [ref=e30]:
+              - generic [ref=e31]: napplet
+              - generic [ref=e32]: authenticated
+            - generic [ref=e33]: bot
+            - generic [ref=e34]:
+              - generic [ref=e225]: "auth: authenticated"
+              - generic [ref=e226]: "pubkey: 661b4e833270…"
+              - generic [ref=e227]: "activity: 8 recent"
+            - generic [ref=e39]:
+              - button "Relay Subscribe" [ref=e40]
+              - button "Relay Publish / Inter-Pane Send" [ref=e41]
+              - button "Signer Requests" [ref=e42]
+              - button "State Read" [ref=e43]
+              - button "State Write" [ref=e44]
+              - button "Block" [ref=e45]
+            - iframe [ref=e47]:
+              - generic [ref=f6e2]:
+                - generic [ref=f6e3]:
+                  - generic [ref=f6e4]: listening
+                  - generic [ref=f6e5]: 0 rules
+                - generic [ref=f6e6]:
+                  - generic [ref=f6e7]: 15:10 [info] AUTH complete -- listening for inter-pane chat:message input
+                  - generic [ref=f6e8]: 15:10 [info] subscribed to inter-pane chat:message topic
+          - article [ref=e49] [cursor=pointer]:
+            - generic [ref=e50]:
+              - generic [ref=e51]: napplet
+              - generic [ref=e52]: authenticated
+            - generic [ref=e53]: chat
+            - generic [ref=e54]:
+              - generic [ref=e228]: "auth: authenticated"
+              - generic [ref=e229]: "pubkey: 16944a4b7802…"
+              - generic [ref=e230]: "activity: 10 recent"
+            - generic [ref=e59]:
+              - button "Relay Subscribe" [ref=e60]
+              - button "Relay Publish / Inter-Pane Send" [ref=e61]
+              - button "Signer Requests" [ref=e62]
+              - button "State Read" [ref=e63]
+              - button "State Write" [ref=e64]
+              - button "Block" [ref=e65]
+            - iframe [ref=e67]:
+              - generic [ref=f5e2]:
+                - generic [ref=f5e3]: authenticated
+                - generic [ref=f5e4]:
+                  - generic [ref=f5e5]: 15:10* AUTH complete -- ready to chat
+                  - generic [ref=f5e9]: 15:10* relay subscribe ready
+                - generic [ref=f5e6]:
+                  - textbox "type a message..." [ref=f5e7]
+                  - button "send" [ref=f5e8] [cursor=pointer]
+      - article [ref=e69] [cursor=pointer]:
+        - generic [ref=e70]: host adapter
+        - generic [ref=e71]: shell
+        - generic [ref=e72]: relay shell bridge and host identity
+        - generic [ref=e73]: "pubkey: 32388a49bcd4349fca8c..."
+        - generic [ref=e74]:
+          - generic [ref=e231]: "pubkey: 32388a49bcd4349f…"
+          - generic [ref=e232]: "napplets: 2"
+          - generic [ref=e233]: "messages: 18"
+      - article [ref=e79] [cursor=pointer]:
+        - generic [ref=e80]: checkpoint
+        - generic [ref=e81]: acl
+        - generic [ref=e82]: capability gate between napplets and runtime dispatch
+        - generic [ref=e83]:
+          - generic [ref=e234]: "denied: 0"
+          - generic [ref=e235]: "recent blocks: 0"
+          - generic [ref=e236]: "napplets: 2"
+      - article [ref=e88] [cursor=pointer]:
+        - generic [ref=e89]: dispatcher
+        - generic [ref=e90]: runtime
+        - generic [ref=e91]: routes bus traffic and fans out to registered services
+        - generic [ref=e92]:
+          - generic [ref=e237]: "services: 2"
+          - generic [ref=e238]: "authed napplets: 2"
+          - generic [ref=e239]: "messages routed: 18"
+        - generic [ref=e96]:
+          - generic [ref=e97]: message flow
+          - generic [ref=e98]:
+            - generic [ref=e240]: 18 total messages
+            - generic [ref=e241]: AUTH ↓2 ↑2
+            - generic [ref=e242]: EOSE ↓1
+            - generic [ref=e243]: EVENT ↓2 ↑2
+            - generic [ref=e244]: OK ↓2
+            - generic [ref=e245]: REQ ↑7
+      - generic [ref=e104]:
+        - generic [ref=e105]: runtime services
+        - generic [ref=e106]:
+          - article [ref=e108] [cursor=pointer]:
+            - generic [ref=e109]: service
+            - generic [ref=e110]: notifications
+            - generic [ref=e111]:
+              - generic [ref=e246]: "service: notifications"
+              - generic [ref=e247]: "last action: —"
+              - generic [ref=e248]: "activity: 0 recent"
+            - generic [ref=e115]:
+              - generic [ref=e116]:
+                - generic [ref=e117]: "total: 0"
+                - generic [ref=e118]: "unread: 0"
+              - button "+ create demo toast" [ref=e119]
+              - button "list state" [ref=e120]
+              - button "mark latest read" [ref=e121]
+              - button "dismiss latest" [ref=e122]
+          - article [ref=e124] [cursor=pointer]:
+            - generic [ref=e125]: service
+            - generic [ref=e126]: signer
+            - generic [ref=e127]: not connected
+            - button "Connect Signer" [ref=e128]
+            - generic [ref=e129]:
+              - generic [ref=e249]: "service: signer"
+              - generic [ref=e250]: "last action: —"
+              - generic [ref=e251]: "activity: 0 recent"
+    - generic "Node inspector" [ref=e7]
+  - generic "Notification toasts"
+  - generic [ref=e10]:
+    - generic [ref=e11]:
+      - generic [ref=e12] [cursor=pointer]: Live Log
+      - generic [ref=e13] [cursor=pointer]: Sequence
+      - generic [ref=e14]: 25 messages
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: "Verb:"
+        - combobox [ref=e18] [cursor=pointer]:
+          - option "all" [selected]
+          - option "AUTH"
+          - option "EVENT"
+          - option "REQ"
+          - option "OK"
+          - option "EOSE"
+          - option "CLOSE"
+          - option "CLOSED"
+          - option "NOTICE"
+        - generic [ref=e19]: "Dir:"
+        - combobox [ref=e20] [cursor=pointer]:
+          - option "all" [selected]
+          - option "napplet->shell"
+          - option "shell->napplet"
+        - button "Clear" [ref=e21] [cursor=pointer]
+        - button "Pause" [ref=e22] [cursor=pointer]
+      - generic [ref=e23]:
+        - generic [ref=e133]: "[system] shell booted -- host pubkey: 32388a49bcd4349f..."
+        - generic [ref=e134]: "[system] host ready -- signer mode: service; audited paths: auth:none, relay-publish:relay:write, relay-subscribe:relay:read, inter-pane-send:relay:write, inter-pane-receive:relay:read, state-read:state:read, state-write:state:write, signer-request:sign:event, signer-response:sign:event"
+        - generic [ref=e135]: "[system] notification service registered -- host callbacks active"
+        - generic [ref=e136]:
+          - generic [ref=e137]: 15:10:29.468
+          - generic [ref=e138]: <--
+          - generic [ref=e139]: AUTH
+          - generic [ref=e140]: "path:auth challenge: 1a4e3914-b5ad-45..."
+        - generic [ref=e141]:
+          - generic [ref=e142]: 15:10:29.490
+          - generic [ref=e143]: <--
+          - generic [ref=e144]: AUTH
+          - generic [ref=e145]: "path:auth challenge: e050e8ff-c2b0-4c..."
+        - generic [ref=e146]:
+          - generic [ref=e147]: 15:10:29.497
+          - generic [ref=e148]: "-->"
+          - generic [ref=e149]: AUTH
+          - generic [ref=e150]: path:auth kind:22242 pubkey:16944a4b...
+        - generic [ref=e151]:
+          - generic [ref=e152]: 15:10:29.499
+          - generic [ref=e153]: "-->"
+          - generic [ref=e154]: REQ
+          - generic [ref=e155]: "path:relay-subscribe sub:__signer__ filters:[{\"kinds\":[29002]}]"
+        - generic [ref=e156]:
+          - generic [ref=e157]: 15:10:29.500
+          - generic [ref=e158]: "-->"
+          - generic [ref=e159]: REQ
+          - generic [ref=e160]: "path:relay-subscribe sub:__nipdb__ filters:[{\"kinds\":[29007]}]"
+        - generic [ref=e161]:
+          - generic [ref=e162]: 15:10:29.503
+          - generic [ref=e163]: <--
+          - generic [ref=e164]: OK
+          - generic [ref=e165]: accepted id:6dd87575...
+        - generic [ref=e166]:
+          - generic [ref=e167]: 15:10:29.505
+          - generic [ref=e168]: "-->"
+          - generic [ref=e169]: AUTH
+          - generic [ref=e170]: path:auth kind:22242 pubkey:661b4e83...
+        - generic [ref=e171]:
+          - generic [ref=e172]: 15:10:29.506
+          - generic [ref=e173]: "-->"
+          - generic [ref=e174]: REQ
+          - generic [ref=e175]: "path:relay-subscribe sub:__signer__ filters:[{\"kinds\":[29002]}]"
+        - generic [ref=e176]:
+          - generic [ref=e177]: 15:10:29.507
+          - generic [ref=e178]: "-->"
+          - generic [ref=e179]: REQ
+          - generic [ref=e180]: "path:relay-subscribe sub:__nipdb__ filters:[{\"kinds\":[29007]}]"
+        - generic [ref=e181]:
+          - generic [ref=e182]: 15:10:29.510
+          - generic [ref=e183]: <--
+          - generic [ref=e184]: OK
+          - generic [ref=e185]: accepted id:07d59bfb...
+        - generic [ref=e186]:
+          - generic [ref=e187]: 15:10:29.519
+          - generic [ref=e188]: "-->"
+          - generic [ref=e189]: EVENT
+          - generic [ref=e190]: path:state-read kind:29003 topic:shell:state-get id:253d1317...
+        - generic [ref=e191]: "[system] inter-pane: shell:state-get (kind:29003)"
+        - generic [ref=e192]:
+          - generic [ref=e193]: 15:10:29.521
+          - generic [ref=e194]: <--
+          - generic [ref=e195]: EVENT
+          - generic [ref=e196]: path:inter-pane-receive sub:__shell__ kind:29003 topic:napp:state-response id:...
+        - generic [ref=e197]: "[system] inter-pane: napp:state-response (kind:29003)"
+        - generic [ref=e198]:
+          - generic [ref=e199]: 15:10:29.523
+          - generic [ref=e200]: "-->"
+          - generic [ref=e201]: REQ
+          - generic [ref=e202]: "path:relay-subscribe sub:fba65e59-8e77-4943-8fde-64c9a85186e4 filters:[{\"kinds\":[1],\"#t\":[\"demo-chat\"],\"limit\":10}]"
+        - generic [ref=e203]:
+          - generic [ref=e204]: 15:10:29.523
+          - generic [ref=e205]: "-->"
+          - generic [ref=e206]: REQ
+          - generic [ref=e207]: "path:relay-subscribe sub:b9eee6bf-1123-4119-a4cd-5689f5d3d695 filters:[{\"kinds\":[29003],\"#t\":[\"bot:response\"]}]"
+        - generic [ref=e208]:
+          - generic [ref=e209]: 15:10:29.525
+          - generic [ref=e210]: "-->"
+          - generic [ref=e211]: EVENT
+          - generic [ref=e212]: path:state-read kind:29003 topic:shell:state-get id:ac185290...
+        - generic [ref=e213]: "[system] inter-pane: shell:state-get (kind:29003)"
+        - generic [ref=e214]:
+          - generic [ref=e215]: 15:10:29.527
+          - generic [ref=e216]: <--
+          - generic [ref=e217]: EVENT
+          - generic [ref=e218]: path:inter-pane-receive sub:__shell__ kind:29003 topic:napp:state-response id:...
+        - generic [ref=e219]: "[system] inter-pane: napp:state-response (kind:29003)"
+        - generic [ref=e220]:
+          - generic [ref=e221]: 15:10:29.528
+          - generic [ref=e222]: "-->"
+          - generic [ref=e223]: REQ
+          - generic [ref=e224]: "path:relay-subscribe sub:22f1b348-ebff-4f65-b842-c4ab827aa953 filters:[{\"kinds\":[29003],\"#t\":[\"chat:message\"]}]"
+        - generic [ref=e252]:
+          - generic [ref=e253]: 15:10:44.524
+          - generic [ref=e254]: <--
+          - generic [ref=e255]: EOSE
+          - generic [ref=e256]: path:relay-subscribe sub:fba65e59-8e77-4943-8fde-64c9a85186e4

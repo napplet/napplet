@@ -1,17 +1,17 @@
 /**
- * State shim — napp-side localStorage-like API over postMessage.
+ * State shim — napplet-side localStorage-like API over postMessage.
  *
  * Without allow-same-origin, iframes have opaque origins and cannot access
  * localStorage directly. This shim provides an async API that routes state
  * requests through the shell's state proxy.
  *
  * Usage:
- *   import { nappState } from '@napplet/shim';
- *   const value = await nappState.getItem('my-key');
- *   await nappState.setItem('my-key', 'my-value');
- *   await nappState.removeItem('my-key');
- *   const allKeys = await nappState.keys();
- *   await nappState.clear();
+ *   import { nappletState } from '@napplet/shim';
+ *   const value = await nappletState.getItem('my-key');
+ *   await nappletState.setItem('my-key', 'my-value');
+ *   await nappletState.removeItem('my-key');
+ *   const allKeys = await nappletState.keys();
+ *   await nappletState.clear();
  */
 
 import { TOPICS } from '@napplet/core';
@@ -99,13 +99,13 @@ function sendStateRequest(
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /**
- * Async localStorage-like state API for sandboxed napps.
+ * Async localStorage-like state API for sandboxed napplets.
  *
  * Routes all state operations through the shell's state proxy via postMessage.
- * Each napp's state is namespaced by its identity — napps cannot read each other's data.
- * A per-napp 512 KB quota is enforced by the shell.
+ * Each napplet's state is namespaced by its identity — napplets cannot read each other's data.
+ * A per-napplet 512 KB quota is enforced by the shell.
  */
-export const nappState = {
+export const nappletState = {
   /**
    * Retrieve a stored value by key.
    * Returns null if the key does not exist (matching localStorage semantics).
@@ -128,7 +128,7 @@ export const nappState = {
    *
    * @param key    The state key
    * @param value  The string value to store
-   * @throws If the napp exceeds its 512 KB state quota
+   * @throws If the napplet exceeds its 512 KB state quota
    */
   async setItem(key: string, value: string): Promise<void> {
     await sendStateRequest(TOPICS.STATE_SET, [['key', key], ['value', value]]);
@@ -144,15 +144,15 @@ export const nappState = {
   },
 
   /**
-   * Remove all stored state for this napp.
-   * Does not affect other napps' state.
+   * Remove all stored state for this napplet.
+   * Does not affect other napplets' state.
    */
   async clear(): Promise<void> {
     await sendStateRequest(TOPICS.STATE_CLEAR, []);
   },
 
   /**
-   * List all keys stored by this napp.
+   * List all keys stored by this napplet.
    *
    * @returns Array of state key strings
    */
@@ -165,8 +165,17 @@ export const nappState = {
   },
 };
 
-// Backwards compatibility alias
-export const nappStorage = nappState;
+/**
+ * @deprecated Use nappletState. Will be removed in v0.9.0.
+ * @see nappletState
+ */
+export const nappState = nappletState;
+
+/**
+ * @deprecated Use nappletState. Will be removed in v0.9.0.
+ * @see nappletState
+ */
+export const nappStorage = nappletState;
 
 // ─── Install ────────────────────────────────────────────────────────────────
 

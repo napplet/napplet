@@ -1,13 +1,13 @@
 /**
- * @napplet/core — Topic constants for the napplet inter-pane event bus.
+ * @napplet/core — Topic constants for the napplet IPC-PEER event bus.
  *
- * These constants define the topic strings used in inter-pane
- * INTER_PANE events for shell commands, state operations, audio,
+ * These constants define the topic strings used in IPC-PEER
+ * events for shell commands, state operations, audio,
  * and UI coordination.
  */
 
 /**
- * Built-in topic constants for the napplet shell inter-pane protocol.
+ * Built-in topic constants for the napplet shell IPC-PEER protocol.
  *
  * @example
  * ```ts
@@ -19,6 +19,19 @@
  * // Use topic constant for state operations
  * shim.publish({ kind: 29003, tags: [['t', TOPICS.STATE_GET]], content: '{}' });
  * ```
+ *
+ * ## Topic Prefix Conventions
+ *
+ * Topic strings follow a prefix convention that signals message direction:
+ *
+ * | Prefix | Direction | Meaning |
+ * |--------|-----------|---------|
+ * | `shell:*` | napplet → shell | Commands sent by a napplet to the shell |
+ * | `napplet:*` | shell → napplet | Responses/notifications sent by shell to napplet |
+ * | `{service}:*` | bidirectional | Service-scoped messages; direction is per-topic |
+ *
+ * Examples of `{service}:*` prefixes: `auth:*`, `stream:*`, `profile:*`,
+ * `wm:*`, `keybinds:*`, `chat:*`, `audio:*`.
  */
 export const TOPICS = {
   // ─── Auth and Identity ──────────────────────────────────────────────────
@@ -30,7 +43,7 @@ export const TOPICS = {
   STATE_REMOVE: 'shell:state-remove',
   STATE_CLEAR: 'shell:state-clear',
   STATE_KEYS: 'shell:state-keys',
-  STATE_RESPONSE: 'napp:state-response',
+  STATE_RESPONSE: 'napplet:state-response',
 
   // ─── Stream and Content ─────────────────────────────────────────────────
   STREAM_CHANNEL_SWITCH: 'stream:channel-switch',
@@ -68,7 +81,7 @@ export const TOPICS = {
   AUDIO_REGISTER: 'shell:audio-register',
   AUDIO_UNREGISTER: 'shell:audio-unregister',
   AUDIO_STATE_CHANGED: 'shell:audio-state-changed',
-  AUDIO_MUTED: 'napp:audio-muted',
+  AUDIO_MUTED: 'napplet:audio-muted',
 } as const;
 
 /** Key type for the TOPICS constant object. */

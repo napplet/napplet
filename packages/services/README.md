@@ -87,7 +87,7 @@ Audio topics the service handles:
 | `audio:unregister` | napplet → shell | Unregister the napplet's audio source |
 | `audio:state-changed` | napplet → shell | Update audio source metadata (content: `{ title }`) |
 | `audio:mute` | napplet → shell | Mute/unmute a window (content: `{ windowId?, muted }`) |
-| `napp:audio-muted` | shell → napplet | Mute state notification sent back to napplet (content: `{ muted }`) |
+| `napplet:audio-muted` | shell → napplet | Mute state notification sent back to napplet (content: `{ muted }`) |
 
 ### createNotificationService(options?)
 

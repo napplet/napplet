@@ -1,20 +1,20 @@
 // @napplet/shim — Keyboard forwarding shim
-// Captures keydown events in the napp and forwards them to the parent shell
+// Captures keydown events in the napplet and forwards them to the parent shell
 // as signed kind 29004 events so WM hotkeys work even when an iframe has DOM focus.
 
 import { finalizeEvent } from 'nostr-tools/pure';
 import { BusKind } from './types.js';
-import type { NappKeypair } from './napp-keypair.js';
+import type { NappletKeypair } from './napplet-keypair.js';
 
-// keypair is set by index.ts after loadOrCreateKeypair via setKeyboardShimKeypair()
-let shimKeypair: NappKeypair | null = null;
+// keypair is set by index.ts after createEphemeralKeypair via setKeyboardShimKeypair()
+let shimKeypair: NappletKeypair | null = null;
 
 /**
- * Provide the napp keypair to the keyboard shim so it can sign forwarded hotkey events.
- * Called by index.ts immediately after loadOrCreateKeypair() resolves and also inside
+ * Provide the napplet keypair to the keyboard shim so it can sign forwarded hotkey events.
+ * Called by index.ts immediately after createEphemeralKeypair() resolves and also inside
  * handleAuthChallenge() as a safety net in case AUTH challenge arrives before eager init.
  */
-export function setKeyboardShimKeypair(kp: NappKeypair): void {
+export function setKeyboardShimKeypair(kp: NappletKeypair): void {
   shimKeypair = kp;
 }
 

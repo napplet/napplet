@@ -71,8 +71,8 @@ export function resolveCapabilities(msg: unknown[]): CapabilityResolution {
         return { senderCap: 'hotkey:forward', recipientCap: null };
       }
 
-      // Inter-pane events — check topic for state operations
-      if (event.kind === BusKind.INTER_PANE) {
+      // IPC-PEER events — check topic for state operations
+      if (event.kind === BusKind.IPC_PEER) {
         const topic = event.tags?.find((t: string[]) => t[0] === 't')?.[1];
 
         if (topic === TOPICS.STATE_GET || topic === TOPICS.STATE_KEYS) {
@@ -87,7 +87,7 @@ export function resolveCapabilities(msg: unknown[]): CapabilityResolution {
           return { senderCap: 'state:write', recipientCap: null };
         }
 
-        // Non-state inter-pane messages (including audio, shell commands)
+        // Non-state IPC-PEER messages (including audio, shell commands)
         // require relay:write to send, relay:read to receive
         return { senderCap: 'relay:write', recipientCap: 'relay:read' };
       }
@@ -117,7 +117,7 @@ export interface EnforceResult {
 
 /**
  * Identity lookup function type — resolves a pubkey to its full identity.
- * Provided by nappKeyRegistry at runtime.
+ * Provided by sessionRegistry at runtime.
  */
 export type IdentityResolver = (pubkey: string) => { dTag: string; aggregateHash: string } | undefined;
 

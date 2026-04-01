@@ -2,7 +2,7 @@
  * acl-state.ts — ACL state container with persistence hooks.
  *
  * Wraps @napplet/acl's pure functions with persistence via
- * RuntimeAclPersistence. No localStorage or DOM references.
+ * AclPersistence. No localStorage or DOM references.
  */
 
 import type { Capability } from '@napplet/core';
@@ -15,7 +15,7 @@ import {
   CAP_HOTKEY_FORWARD, CAP_SIGN_EVENT, CAP_SIGN_NIP04, CAP_SIGN_NIP44,
   CAP_STATE_READ, CAP_STATE_WRITE, CAP_ALL,
 } from '@napplet/acl';
-import type { RuntimeAclPersistence, AclEntryExternal } from './types.js';
+import type { AclPersistence, AclEntryExternal } from './types.js';
 
 // ─── Capability String-to-Bit Mapping ──────────────────────────────────────
 
@@ -95,7 +95,7 @@ export interface AclStateContainer {
  * ```
  */
 export function createAclState(
-  persistence: RuntimeAclPersistence,
+  persistence: AclPersistence,
   defaultPolicy: 'permissive' | 'restrictive' = 'permissive',
 ): AclStateContainer {
   let state: AclState = createState(defaultPolicy);

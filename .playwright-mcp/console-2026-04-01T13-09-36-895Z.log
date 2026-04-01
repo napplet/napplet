@@ -1,0 +1,2 @@
+[    6289ms] The requested module '/node_modules/.vite/deps/leader-line.js?v=0660524b' does not provide an export named 'default'
+[    6291ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5174/favicon.ico:0

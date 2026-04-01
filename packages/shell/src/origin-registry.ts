@@ -2,7 +2,7 @@
  * Origin Registry — Window reference to windowId mapping.
  *
  * Used by the ShellBridge to validate that postMessage senders are known
- * napp iframes. event.source (a Window reference) is the only unforgeable
+ * napplet iframes. event.source (a Window reference) is the only unforgeable
  * origin — never trust event.origin from the message payload.
  */
 
@@ -24,7 +24,7 @@ export const originRegistry = {
    * Register a window reference with a windowId.
    *
    * @param win - The iframe's contentWindow reference
-   * @param windowId - The unique identifier for this napp window
+   * @param windowId - The unique identifier for this napplet window
    */
   register(win: Window, windowId: string): void {
     registry.set(win, windowId);

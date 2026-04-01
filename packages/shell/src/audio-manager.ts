@@ -13,14 +13,14 @@ import { BusKind } from './types.js';
  * @example
  * ```ts
  * const source: AudioSource = {
- *   windowId: 'win-1', nappClass: 'music-player',
+ *   windowId: 'win-1', nappletClass: 'music-player',
  *   title: 'Now Playing', muted: false,
  * };
  * ```
  */
 export interface AudioSource {
   windowId: string;
-  nappClass: string;
+  nappletClass: string;
   title: string;
   muted: boolean;
 }
@@ -52,11 +52,11 @@ export const audioManager = {
    * Register a new audio source for a window.
    *
    * @param windowId - The window identifier
-   * @param nappClass - The napp class/type (e.g., 'music-player')
+   * @param nappletClass - The napplet class/type (e.g., 'music-player')
    * @param title - Human-readable title for the audio source
    */
-  register(windowId: string, nappClass: string, title: string): void {
-    sources.set(windowId, { windowId, nappClass, title, muted: false });
+  register(windowId: string, nappletClass: string, title: string): void {
+    sources.set(windowId, { windowId, nappletClass, title, muted: false });
     bump();
   },
 
@@ -99,9 +99,9 @@ export const audioManager = {
     const iframeWindow = originRegistry.getIframeWindow(windowId);
     if (iframeWindow) {
       const muteEvent = {
-        kind: BusKind.INTER_PANE,
+        kind: BusKind.IPC_PEER,
         created_at: Math.floor(Date.now() / 1000),
-        tags: [['t', 'napp:audio-muted']],
+        tags: [['t', 'napplet:audio-muted']],
         content: JSON.stringify({ muted }),
         pubkey: '__shell__',
         id: `audio-mute-${windowId}-${Date.now()}`,

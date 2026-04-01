@@ -8,6 +8,20 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Current Milestone: v0.7.0 Ontology Audit and Adjustments
+
+**Goal:** Systematically audit and correct naming, terminology, and API signatures across all 7 packages so the codebase is semantically accurate and safe for external maintainers and agents.
+
+**Target features:**
+- `napp` → `napplet` rename everywhere (code, types, docs, SPEC.md) — correctness fix, napp is a different concept
+- `INTER_PANE` / `"INTER-PANE"` → `IPC_PEER` / `"IPC-PEER"` — follows Nostr hyphen convention, establishes `IPC-*` namespace
+- Full ontology audit — all concept/component names across 7 packages reviewed for semantic accuracy
+- API signature audit — function names, param names, ordering, callback vs promise patterns
+
+## Shipped: v0.6.0 Demo Upgrade
+
+The demo is now an architecture-accurate teaching and testing surface. 7 phases, 28 plans shipped 2026-04-01. See [archive](milestones/v0.6.0-ROADMAP.md).
+
 ## Requirements
 
 ### Validated
@@ -51,14 +65,27 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Package READMEs for all 7 packages — shim, shell, vite-plugin, core, runtime, acl, services — v0.5.0 Phases 23-24
 - ✓ SPEC.md updated for v0.4.0 — Section 11 service discovery, ShellBridge rename, requires/compat protocol — v0.5.0 Phase 25
 - ✓ Skills directory — 3 agentskills.io-format skill files: build-napplet, integrate-shell, add-service — v0.5.0 Phase 26 (SKILL-01, SKILL-02, SKILL-03)
+- ✓ Demo audit and correctness pass — host path inventory, signer service wiring, path-aware debugger labels, and regression coverage for relay/state/signer denials — v0.6.0 Phase 27 (DEMO-01, DEMO-02, DEMO-03)
+- ✓ Demo flow view separates napplets, shell, ACL, runtime, and service nodes in distinct topology nodes with hierarchy edges and animation — v0.6.0 Phase 28 (ARCH-01, ARCH-02)
+- ✓ Node detail adapter and compact summary surfaces — role-specific summaryFields on every topology node, live from host/runtime state — v0.6.0 Phase 29 (NODE-01)
+- ✓ Right-side inspector pane with selected-node state, recent-activity projection, and debugger coexistence — v0.6.0 Phase 29 (NODE-02)
+- ✓ Notification service as first-class topology node with toast UX, protocol activity visibility, and service state panel — v0.6.0 Phase 30 (NOTF-01, NOTF-02, NOTF-03)
+- ✓ Signer connection UX with NIP-07/NIP-46 flows, QR code, configurable relay, and signer topology node — v0.6.0 Phase 31 (SIGN-01..05)
+- ✓ Demo UI/UX bug fixes — amber state, Leader Line SVG edges, ACL isAmber logic, signer error detection — v0.6.0 Phase 32
+- ✓ Polish pass — iframe fill, perpendicular topology edges, separated in/out ports, orphan edge removal, button isolation — v0.6.0 Phase 33
+- ✓ BusKind.INTER_PANE renamed to BusKind.IPC_PEER across all 7 packages and SPEC.md — v0.7.0 Phase 35 (WIRE-01)
+- ✓ ConsentRequest consolidated to @napplet/runtime canonical (type? + serviceName? fields); shell/types.ts stale copy removed; shell re-exports from runtime — v0.7.0 Phase 36 (TYPE-01)
+- ✓ shell/state-proxy.ts dead code deleted (superseded by runtime/state-handler.ts in Phase 13) — v0.7.0 Phase 36 (TYPE-02)
+- ✓ RuntimeAdapter/ShellAdapter canonical; RuntimeHooks/ShellHooks @deprecated aliases for one release cycle — v0.7.0 Phase 37 (API-01, API-02)
+- ✓ SessionEntry/SessionRegistry replace NappKeyEntry/NappKeyRegistry — v0.7.0 Phase 38 (SESS-01, SESS-02)
+- ✓ napplet: topic prefix direction semantics documented; nappStorage @deprecated — v0.7.0 Phase 39 (DOC-01)
+- ✓ createEphemeralKeypair() (no params) replaces loadOrCreateKeypair(_nappType) in @napplet/shim — v0.7.0 Phase 40 (SESS-03)
+- ✓ Nip5aManifestOptions.nappletType replaces nappType as public API field in @napplet/vite-plugin — v0.7.0 Phase 40 (TERM-01)
+- ✓ SPEC.md stale napp: topic strings replaced with napplet: (state-response, audio-muted, napplet-state:) — v0.7.0 Phase 40 (TERM-04, WIRE-02)
 
 ### Active
-- [ ] Publish all @napplet/* packages to npm (@napplet/shim, @napplet/shell, @napplet/acl, @napplet/core, @napplet/runtime, @napplet/services, @napplet/vite-plugin)
-- [ ] Napplet boilerplate / starter template (@napplet/create CLI)
-- [ ] Deploy demo as production nsite (blossom + relay + NIP-5A gateway)
-- [ ] Event-ID triggered aggregate hash revalidation
-- [ ] Salt-based deterministic keypair derivation
-- [ ] Service ACL — per-service capability strings (service:audio, service:notifications)
+
+*(Milestone v0.7.0 complete — awaiting next milestone planning)*
 
 ### Out of Scope
 
@@ -71,15 +98,18 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - Restrictive ACL default mode — permissive default for developer adoption (v0.2.0 adds proper enforcement, restrictive mode later)
 - Manifest signature verification in shell — deferred to post-v1 security hardening
 - NIP PR submission — spec needs iterations before community submission
+- Arbitrary custom napplet loading in the demo shell — defer until the built-in demo is architecture-accurate and trustworthy again
 
 ## Context
 
-- **Current state**: v0.5.0 shipped (2026-04-01). All 7 packages documented with READMEs. SPEC.md fully updated for v0.4.0 protocol. 3 agentskills.io skill files enable agents/developers to build with napplet. 44 files changed, 6,819 lines added across v0.5.0.
+- **Current state**: Milestone v0.7.0 Ontology Audit and Adjustments complete (2026-04-02). Phase 40 (Remaining Rename Gaps) closed SESS-03, TERM-01, TERM-04, WIRE-02. All ontology requirements satisfied. Next: /gsd:new-milestone for v0.8.0 planning.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
+- **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
+- **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
 - **Documentation**: All 7 packages have README.md. SPEC.md (41KB+) covers full protocol including Section 11 service discovery. 3 portable skill files in skills/ directory.
-- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. npm publish blocked on human auth. nappState/nappStorage alias undocumented.
+- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. Demo flow visualization currently conflates some protocol paths. npm publish blocked on human auth. nappState/nappStorage alias undocumented.
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
 
 ## Constraints
@@ -113,6 +143,8 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 | Dual-path dispatch for core infra (service → hook fallback) | Backwards-compatible migration; shell hosts using RuntimeHooks directly still work | ✓ Good — zero breaking changes, SVC-04 satisfied |
 | audio:* topic prefix only (shell:audio-* dropped) | Alpha — no external consumers; clean break prevents legacy accumulation | ✓ Good — no compatibility burden |
 | Undeclared service consent reuses ConsentRequest pattern | Same hook, same UX flow as destructive signing kinds — shell hosts get one integration point | ✓ Good — minimal API surface growth |
+| Demo must mirror actual runtime architecture | The demo is now a teaching tool and debugger; flattening shell/ACL/runtime hides the protocol model and misleads users | Phase 27 established the audited host/debugger truth; Phase 28 will finish the topology UI |
+| Custom napplet loading deferred until after demo refresh | First make the built-in demo accurate and debuggable before opening a generic test harness | Pending post-v0.6.0 review |
 
 ## Evolution
 
@@ -131,14 +163,15 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
-## Next Milestone Goals
+## Future Milestone Candidates
 
-Next milestone candidates (run `/gsd:new-milestone` to define):
+After v0.6.0, likely next candidates:
+- Load custom napplets into the demo shell for ad-hoc shell/ACL/runtime testing
 - Publish all @napplet/* packages to npm (blocked on human npm auth)
-- @napplet/create CLI / starter template
-- Deploy demo as production nsite
+- `@napplet/create` CLI / starter template
+- Deploy demo as a production nsite
 - Protocol hardening (aggregate hash revalidation, keypair derivation)
-- Service ACL (per-service capability strings)
+- Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-01 after v0.5.0 milestone shipped*
+*Last updated: 2026-04-02 — Milestone v0.7.0 complete*

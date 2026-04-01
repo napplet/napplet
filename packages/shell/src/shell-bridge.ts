@@ -10,14 +10,14 @@
  */
 
 import { createRuntime } from '@napplet/runtime';
-import type { Runtime, ConsentHandler } from '@napplet/runtime';
+import type { Runtime, ConsentHandler, ConsentRequest } from '@napplet/runtime';
 import { adaptHooks } from './hooks-adapter.js';
 import { originRegistry } from './origin-registry.js';
-import { nappKeyRegistry } from './napp-key-registry.js';
+import { sessionRegistry, nappKeyRegistry } from './session-registry.js';
 import { aclStore } from './acl-store.js';
 import { manifestCache } from './manifest-cache.js';
 import { audioManager } from './audio-manager.js';
-import type { ShellHooks, ConsentRequest } from './types.js';
+import type { ShellAdapter } from './types.js';
 
 // ─── Public interface ────────────────────────────────────────────────────────
 
@@ -103,7 +103,7 @@ export interface ShellBridge {
 
   /**
    * Access the underlying runtime instance for advanced use cases.
-   * Provides direct access to the runtime's nappKeyRegistry, aclState,
+   * Provides direct access to the runtime's sessionRegistry, aclState,
    * and manifestCache.
    */
   readonly runtime: Runtime;
@@ -113,15 +113,15 @@ export interface ShellBridge {
  * Create a ShellBridge instance with dependency injection via hooks.
  *
  * Internally creates a Runtime from @napplet/runtime and adapts the
- * browser-oriented ShellHooks into environment-agnostic RuntimeHooks.
+ * browser-oriented ShellAdapter into environment-agnostic RuntimeAdapter.
  *
  * @param hooks - Host application provides relay pool, auth, config, etc.
- * @returns A ShellBridge instance ready to handle napp messages
+ * @returns A ShellBridge instance ready to handle napplet messages
  * @example
  * ```ts
- * import { createShellBridge, type ShellHooks } from '@napplet/shell';
+ * import { createShellBridge, type ShellAdapter } from '@napplet/shell';
  *
- * const hooks: ShellHooks = {
+ * const hooks: ShellAdapter = {
  *   relayPool: myRelayPoolHooks,
  *   relayConfig: myRelayConfigHooks,
  *   windowManager: myWindowManagerHooks,
@@ -134,7 +134,7 @@ export interface ShellBridge {
  * const bridge = createShellBridge(hooks);
  * ```
  */
-export function createShellBridge(hooks: ShellHooks): ShellBridge {
+export function createShellBridge(hooks: ShellAdapter): ShellBridge {
   const runtimeHooks = adaptHooks(hooks, {
     originRegistry,
     manifestCache,
@@ -170,7 +170,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     },
 
     registerConsentHandler(handler: (request: ConsentRequest) => void): void {
-      runtime.registerConsentHandler(handler as ConsentHandler);
+      runtime.registerConsentHandler(handler);
     },
 
     get runtime() {

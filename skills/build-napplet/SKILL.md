@@ -24,7 +24,7 @@ pnpm add -D @napplet/vite-plugin
 
 ## Step 2 — Configure the Vite plugin
 
-The vite plugin injects a `<meta name="napplet-aggregate-hash">` tag at build time, which the shim uses for version-scoped storage and ACL. The `nappType` option is required.
+The vite plugin injects a `<meta name="napplet-aggregate-hash">` tag at build time, which the shim uses for version-scoped storage and ACL. The `nappletType` option is required.
 
 ```ts
 // vite.config.ts
@@ -34,7 +34,7 @@ import { nip5aManifest } from '@napplet/vite-plugin';
 export default defineConfig({
   plugins: [
     nip5aManifest({
-      nappType: 'my-napplet',
+      nappletType: 'my-napplet',
       // requires: ['audio', 'notifications'], // optional: declared service dependencies
     }),
   ],
@@ -95,30 +95,32 @@ const events = await query({ kinds: [1], limit: 50 });
 console.log(`Loaded ${events.length} notes from cache`);
 ```
 
-## Step 6 — Use nappStorage
+## Step 6 — Use nappletState
 
-Import `nappStorage` from `@napplet/shim`. Storage is scoped by `nappType:aggregateHash` — different napplet versions have isolated storage namespaces. Do not use `localStorage` directly (it throws `SecurityError` without `allow-same-origin`).
+Import `nappletState` from `@napplet/shim`. Storage is scoped by `nappletType:aggregateHash` — different napplet versions have isolated storage namespaces. Do not use `localStorage` directly (it throws `SecurityError` without `allow-same-origin`).
 
 ```ts
-import { nappStorage } from '@napplet/shim';
+import { nappletState } from '@napplet/shim';
 
 // Store a string value
-await nappStorage.setItem('last-seen', Date.now().toString());
+await nappletState.setItem('last-seen', Date.now().toString());
 
 // Retrieve a value (returns string | null)
-const raw = await nappStorage.getItem('last-seen');
+const raw = await nappletState.getItem('last-seen');
 const lastSeen = raw ? Number(raw) : 0;
 
 // Store objects using JSON.stringify / JSON.parse
-await nappStorage.setItem('settings', JSON.stringify({ theme: 'dark', fontSize: 14 }));
-const raw2 = await nappStorage.getItem('settings');
+await nappletState.setItem('settings', JSON.stringify({ theme: 'dark', fontSize: 14 }));
+const raw2 = await nappletState.getItem('settings');
 const settings = raw2 ? JSON.parse(raw2) : {};
 
 // Remove a key
-await nappStorage.removeItem('last-seen');
+await nappletState.removeItem('last-seen');
 ```
 
-Additional methods: `nappStorage.clear()` (removes all keys for this napplet), `nappStorage.keys()` (returns all stored keys as `string[]`).
+Additional methods: `nappletState.clear()` (removes all keys for this napplet), `nappletState.keys()` (returns all stored keys as `string[]`).
+
+> **Deprecated aliases:** `nappStorage` and `nappState` are deprecated aliases for `nappletState`. They will be removed in v0.9.0.
 
 ## Step 7 — Use window.nostr (NIP-07 proxy)
 
@@ -183,7 +185,7 @@ const services = await discoverServices();
 // Check if a specific service is available
 if (await hasService('audio')) {
   // Safe to use audio service APIs
-  emit('audio:register', [], JSON.stringify({ nappClass: 'media-player', title: 'My Player' }));
+  emit('audio:register', [], JSON.stringify({ nappletClass: 'media-player', title: 'My Player' }));
 }
 
 // Check for a specific version
@@ -197,8 +199,8 @@ if (await hasServiceVersion('audio', '1.0.0')) {
 ## Common pitfalls
 
 - Do not call `window.nostr` before `@napplet/shim` is imported — it is installed synchronously at module load, but all signer calls are async and require the AUTH handshake to complete first.
-- `nappStorage` is scoped by version hash — clearing storage in one build version does not affect another build's stored data.
-- Do not use `localStorage` directly — without `allow-same-origin` it will throw `SecurityError`. Use `nappStorage` instead.
+- `nappletState` is scoped by version hash — clearing storage in one build version does not affect another build's stored data.
+- Do not use `localStorage` directly — without `allow-same-origin` it will throw `SecurityError`. Use `nappletState` instead.
 - `publish()` returns `Promise<NostrEvent>` — always `await` it. Errors surface as promise rejections (e.g., signer timeout, ACL denial).
 - `query()` resolves after EOSE — it is a one-shot snapshot, not a live stream. Use `subscribe()` for live updates.
 - `discoverServices()` results are session-cached. To refresh, the page must reload.
