@@ -167,6 +167,10 @@
 **Depends on**: Phase 38, Phase 39
 **Requirements**: SESS-03, TERM-01, TERM-04, WIRE-02
 **Gap Closure**: Closes gaps from v0.7.0 milestone audit (2026-04-01)
+**Plans:** 2 plans
+Plans:
+- [ ] 40-01-PLAN.md — Rename loadOrCreateKeypair to createEphemeralKeypair and nappType to nappletType in TypeScript
+- [ ] 40-02-PLAN.md — Fix stale napp: topic strings in SPEC.md, READMEs, and skills files
 **Success Criteria** (what must be TRUE):
   1. `createEphemeralKeypair()` is the sole function name in `packages/shim/src/napplet-keypair.ts`; `loadOrCreateKeypair` returns zero hits across all packages
   2. `Nip5aManifestOptions.nappletType` is the public API field name in `packages/vite-plugin/src/index.ts`; `nappType` returns zero hits in that file
@@ -220,4 +224,4 @@ Phases execute in numeric order: 34 -> 35 -> 36 -> 37 -> 38 -> 39
 | 37. API Alignment | v0.7.0 | 1/1 | Complete    | 2026-04-01 |
 | 38. Session Vocabulary | v0.7.0 | 2/2 | Complete    | 2026-04-01 |
 | 39. Documentation Pass | v0.7.0 | 0/0 | Not started | - |
-| 40. Remaining Rename Gaps | v0.7.0 | 0/0 | Not started | - |
+| 40. Remaining Rename Gaps | v0.7.0 | 0/2 | Not started | - |
