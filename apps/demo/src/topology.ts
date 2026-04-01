@@ -230,6 +230,8 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
         ...BASE_OPTIONS,
         startSocket: 'bottom',
         endSocket: 'top',
+        startSocketGravity: 80,
+        endSocketGravity: 80,
       });
       lines.set(edge.id + '-out', outLine);
 
@@ -237,6 +239,8 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
         ...BASE_OPTIONS,
         startSocket: 'top',
         endSocket: 'bottom',
+        startSocketGravity: 80,
+        endSocketGravity: 80,
       });
       lines.set(edge.id + '-in', inLine);
     } catch { /* best-effort — may fail if elements not visible */ }
