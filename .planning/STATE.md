@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.6.0
 milestone_name: milestone
-status: ready
-stopped_at: Phase 28 complete; Phase 29 ready for planning
-last_updated: "2026-04-01T11:13:30.000Z"
-last_activity: 2026-04-01 -- Phase 28 completed
+status: executing
+stopped_at: Phase 28 complete; Phase 29 ready
+last_updated: "2026-04-01T11:34:47.745Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 3
+  total_plans: 14
+  completed_plans: 8
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01 after v0.6.0 milestone definition)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 29 — node-detail-drill-down
+**Current focus:** Phase 30 — notification-service-ux
 
 ## Current Position
 
-Phase: 29 — node-detail-drill-down
+Phase: 30
 Plan: Not started
-Status: Phase 28 complete; ready to plan Phase 29
-Last activity: 2026-04-01 -- Phase 28 completed
+Status: Executing Phase 30
+Last activity: 2026-04-01
 
 ## Accumulated Context
 
