@@ -169,3 +169,16 @@
 | 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete    | 2026-04-01 |
 | 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
+| 32. Fix demo UI/UX bugs | v0.6.0 | 0/3 | Planning | 2026-04-01 |
+
+### Phase 32: Fix demo UI/UX bugs
+
+**Goal:** Fix three targeted UI/UX bugs in the demo app: add amber (infrastructure failure) state to ACL indicator, replace CSS-bar edges with Leader Line dynamic connections, and fix stale CLAUDE.md NappKeypair documentation.
+**Requirements**: None (bug fixes only)
+**Depends on:** Phase 31
+**Plans:** 3 plans
+
+Plans:
+- [ ] 32-01: ACL indicator signal quality — add amber state for infrastructure failures vs red for explicit denials
+- [ ] 32-02: Leader Line edge routing — replace CSS-bar edges with dynamic directional connecting lines
+- [ ] 32-03: Fix stale CLAUDE.md NappKeypair documentation

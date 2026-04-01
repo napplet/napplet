@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v0.6.0
 milestone_name: milestone
-status: complete
-stopped_at: Phase 31 complete; v0.6.0 milestone complete
+status: active
+stopped_at: Phase 32 plans created — ready for execution
 last_updated: "2026-04-01T14:10:00.000Z"
 last_activity: 2026-04-01
 progress:
@@ -24,12 +24,16 @@ See: .planning/PROJECT.md (updated 2026-04-01 after v0.6.0 milestone definition)
 
 ## Current Position
 
-Phase: 31 (signer-connection-ux) — COMPLETE
-Plan: 3 of 3
-Status: All plans complete — all 5 phases of v0.6.0 done
+Phase: 32 (fix-demo-ui-ux-bugs) — PLANNED
+Plan: 0 of 3
+Status: 3 plans created — Wave 1 (all parallel, no dependencies)
 Last activity: 2026-04-01
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 32 added: Fix demo UI/UX bugs
 
 ### Decisions
 
@@ -45,5 +49,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-04-01
-Stopped at: Phase 31 complete — all 5 phases of v0.6.0 milestone done
-Resume: `/gsd:complete-milestone` or `/gsd:new-milestone`
+Stopped at: Phase 32 plans created — 3 plans, all Wave 1 (parallel)
+Resume: `/gsd:execute-phase 32`
