@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.7.0
 milestone_name: Ontology Audit and Adjustments
-status: planning
-stopped_at: Phase 35 context gathered
-last_updated: "2026-04-01T19:03:38.253Z"
-last_activity: 2026-04-01 — Roadmap created for v0.7.0 (6 phases, 17 requirements)
+status: executing
+stopped_at: Phase 35 plans created — ready to execute
+last_updated: "2026-04-01T19:15:00.000Z"
+last_activity: 2026-04-01 -- Phase 35 planning complete
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 5
+  total_plans: 8
   completed_plans: 0
   percent: 0
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.7.0 Ontology Audit — Phase 34 ready to plan
+**Current focus:** Phase 35 — wire-protocol-rename
 
 ## Current Position
 
-Phase: 34 of 39 (Terminology Rename)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-04-01 — Roadmap created for v0.7.0 (6 phases, 17 requirements)
+Phase: 35 (wire-protocol-rename) — PLANNED, ready to execute
+Plan: 0 of 3
+Status: Plans created — 35-01 (core+consumers), 35-02 (tests), 35-03 (SPEC.md)
+Last activity: 2026-04-01 -- Phase 35 planning complete
 
 Progress: [░░░░░░░░░░] 0%
 
