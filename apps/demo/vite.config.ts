@@ -55,7 +55,11 @@ function serveDemoNapplets(): Plugin {
 export default defineConfig({
   root: __dirname,
   optimizeDeps: {
-    include: ['leader-line'],
+    esbuildOptions: {
+      define: {
+        global: 'window',
+      },
+    },
   },
   resolve: {
     alias: {

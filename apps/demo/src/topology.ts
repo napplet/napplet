@@ -1,5 +1,7 @@
-// @ts-ignore — leader-line has no bundled type declarations
-import LeaderLine from 'leader-line';
+// Load leader-line - a UMD library that doesn't have proper ESM exports
+// We need to require it in a way that makes it available
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const LeaderLine: any;
 
 export type TopologyNodeRole = 'napplet' | 'shell' | 'acl' | 'runtime' | 'service';
 
