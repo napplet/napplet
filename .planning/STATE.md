@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.7.0
 milestone_name: Ontology Audit and Adjustments
-status: Plans created — 35-01 (core+consumers), 35-02 (tests), 35-03 (SPEC.md)
-stopped_at: Phase 36 context gathered
-last_updated: "2026-04-01T19:20:59.112Z"
-last_activity: 2026-04-01 -- Phase 35 planning complete
+status: Plans created — 36-01 (TYPE-01 ConsentRequest), 36-02 (TYPE-02 state-proxy deletion)
+stopped_at: Phase 36 planning complete
+last_updated: "2026-04-01T19:45:00.000Z"
+last_activity: 2026-04-01 -- Phase 36 planning complete
 progress:
   total_phases: 6
   completed_phases: 0
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
 
 ## Current Position
 
-Phase: 35 (wire-protocol-rename) — PLANNED, ready to execute
-Plan: 0 of 3
-Status: Plans created — 35-01 (core+consumers), 35-02 (tests), 35-03 (SPEC.md)
-Last activity: 2026-04-01 -- Phase 35 planning complete
+Phase: 36 (type-correctness) — PLANNED, ready to execute
+Plan: 0 of 2
+Status: Plans created — 36-01 (TYPE-01 ConsentRequest), 36-02 (TYPE-02 state-proxy deletion)
+Last activity: 2026-04-01 -- Phase 36 planning complete
 
 Progress: [░░░░░░░░░░] 0%
 
