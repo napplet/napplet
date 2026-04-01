@@ -36,11 +36,11 @@ import type { NodeDetail } from './node-details.js';
 import { initNodeInspector, setSelectedNodeId } from './node-inspector.js';
 import {
   onStateChange,
-  connectNip07,
   disconnectSigner,
   recordSignerRequest,
   getSignerConnectionState,
 } from './signer-connection.js';
+import { initSignerModal, openSignerModal } from './signer-modal.js';
 
 // ─── Notification Controller ─────────────────────────────────────────────────
 
@@ -59,11 +59,121 @@ if (notificationHandler) {
   notificationController.connectService(notificationHandler);
 }
 
+// ─── Notification Toast Rendering ────────────────────────────────────────────
+
+const TOAST_DISPLAY_MS = 5000;
+
+// Track shown toast IDs so we don't re-show the same notification
+const _shownToastIds = new Set<string>();
+
+function renderToast(notification: import('@napplet/services').Notification): void {
+  const layer = document.getElementById('notification-toast-layer');
+  if (!layer) return;
+  const toast = document.createElement('div');
+  toast.className = 'notif-toast';
+  toast.dataset.notifId = notification.id;
+  toast.innerHTML = `
+    <div class="notif-toast-title">${escapeHtml(notification.title)}</div>
+    ${notification.body ? `<div class="notif-toast-body">${escapeHtml(notification.body)}</div>` : ''}
+    <div class="notif-toast-cue">notifications:create via service</div>
+  `;
+  layer.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, TOAST_DISPLAY_MS);
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ─── Notification Node Summary Rendering ────────────────────────────────────
+
+function renderNotificationNodeSummary(snapshot: DemoNotificationSnapshot): void {
+  const totalEl = document.getElementById('notif-total');
+  const unreadEl = document.getElementById('notif-unread');
+  const sourceCueEl = document.getElementById('notif-source-cue');
+  const cueTextEl = sourceCueEl?.querySelector('.notif-cue-text');
+
+  if (totalEl) totalEl.textContent = String(snapshot.notifications.length);
+  if (unreadEl) unreadEl.textContent = String(snapshot.unreadCount);
+  if (sourceCueEl && cueTextEl && snapshot.sourceLabel) {
+    (cueTextEl as HTMLElement).textContent = snapshot.sourceLabel;
+    (sourceCueEl as HTMLElement).style.display = '';
+  }
+}
+
+// ─── Notification Inspector Rendering ────────────────────────────────────────
+
+function renderNotificationInspector(snapshot: DemoNotificationSnapshot): void {
+  const listEl = document.getElementById('notification-list');
+  if (!listEl) return;
+
+  if (snapshot.notifications.length === 0) {
+    listEl.innerHTML = '<div class="notif-list-empty">no notifications yet</div>';
+    return;
+  }
+
+  // Newest first
+  const sorted = [...snapshot.notifications].reverse();
+  listEl.innerHTML = sorted
+    .map(
+      (n) => `
+      <div class="notif-item${n.read ? ' read' : ''}" data-notif-id="${n.id}">
+        <div class="notif-item-title">${escapeHtml(n.title)}</div>
+        ${n.body ? `<div class="notif-item-body">${escapeHtml(n.body)}</div>` : ''}
+        <div class="notif-item-meta">
+          <span class="notif-item-tag">notifications:create</span>
+          <span>${n.read ? 'read' : 'unread'}</span>
+        </div>
+        <div class="notif-item-actions">
+          ${!n.read ? `<button class="notif-item-btn read-btn" data-action="notif-read" data-notif-id="${n.id}">mark read</button>` : ''}
+          <button class="notif-item-btn dismiss-btn" data-action="notif-dismiss" data-notif-id="${n.id}">dismiss</button>
+        </div>
+      </div>
+    `
+    )
+    .join('');
+}
+
+// ─── Notification Snapshot Subscriber ────────────────────────────────────────
+
 // Track the latest notification snapshot for rendering
 let _notificationSnapshot: DemoNotificationSnapshot = notificationController.getSnapshot();
 notificationController.subscribe((snapshot) => {
+  const prev = _notificationSnapshot;
   _notificationSnapshot = snapshot;
+
+  // Show toasts for new notifications
+  for (const n of snapshot.notifications) {
+    if (!_shownToastIds.has(n.id)) {
+      _shownToastIds.add(n.id);
+      renderToast(n);
+      debuggerEl?.addSystemMessage(`notifications:create via service — id:${n.id.slice(0, 16)}`);
+    }
+  }
+
+  // Update summary fields in the node
+  renderNotificationNodeSummary(snapshot);
+
+  // If inspector is open, update it
+  const inspector = document.getElementById('notification-inspector');
+  if (inspector?.classList.contains('open')) {
+    renderNotificationInspector(snapshot);
+  }
+
+  // Reflect dismissed notifications (remove from shown set)
+  const currentIds = new Set(snapshot.notifications.map((n) => n.id));
+  for (const id of [..._shownToastIds]) {
+    if (!currentIds.has(id)) {
+      _shownToastIds.delete(id);
+    }
+  }
+
+  // Suppress TS unused-variable warning from old code
+  void prev;
 });
+
 const topology = buildDemoTopology(getDemoTopologyInputs());
 
 // Render topology into the left topology pane
@@ -71,6 +181,17 @@ const topologyPane = document.getElementById('topology-pane');
 if (topologyPane) {
   topologyPane.innerHTML = renderDemoTopology(topology);
 }
+
+// ─── Inject Notification Controls into the Notifications Node ────────────────
+
+(function injectNotificationControls(): void {
+  const notifNodeId = getServiceNodeId('notifications');
+  const notifServiceNode = document.getElementById(notifNodeId);
+  const template = document.getElementById('notification-node-controls-template') as HTMLTemplateElement | null;
+  if (!notifServiceNode || !template) return;
+  const clone = document.importNode(template.content, true);
+  notifServiceNode.appendChild(clone);
+})();
 
 // Connect debugger to tap
 const debuggerEl = document.getElementById('debugger') as NappletDebugger;
@@ -188,16 +309,76 @@ onStateChange((state) => {
   }
 });
 
+// Initialize signer connect modal
+initSignerModal();
+
 // Handle signer connect/disconnect button clicks
 document.addEventListener('click', (e) => {
   const target = e.target as HTMLElement;
   if (target.closest('[data-action="open-signer-connect"]')) {
-    // Plan 31-01: direct NIP-07 connect (Plan 31-02 replaces with modal)
-    connectNip07();
+    openSignerModal();
   }
   if (target.closest('[data-action="disconnect-signer"]')) {
     disconnectSigner();
     debuggerEl?.addSystemMessage('signer disconnected');
+  }
+
+  // Notification node controls
+  if (target.id === 'notification-node-create' || target.closest('#notification-node-create')) {
+    notificationController.createDemoNotification({
+      title: 'Demo notification',
+      body: 'Triggered from the notification service node',
+      sourceLabel: 'notifications:create via service',
+    });
+    debuggerEl?.addSystemMessage('notifications:create dispatched from host node control');
+  }
+  if (target.id === 'notification-node-list' || target.closest('#notification-node-list')) {
+    notificationController.requestList();
+    debuggerEl?.addSystemMessage('notifications:list requested');
+    // Open inspector to show the list
+    const inspector = document.getElementById('notification-inspector');
+    inspector?.classList.add('open');
+    renderNotificationInspector(_notificationSnapshot);
+  }
+  if (target.id === 'notification-node-mark-read' || target.closest('#notification-node-mark-read')) {
+    const newest = [..._notificationSnapshot.notifications].filter((n) => !n.read).pop();
+    if (newest) {
+      notificationController.markRead(newest.id);
+      debuggerEl?.addSystemMessage(`notifications:read dispatched — id:${newest.id.slice(0, 16)}`);
+    } else {
+      debuggerEl?.addSystemMessage('notifications:read — no unread notifications');
+    }
+  }
+  if (target.id === 'notification-node-dismiss' || target.closest('#notification-node-dismiss')) {
+    const newest = [..._notificationSnapshot.notifications].pop();
+    if (newest) {
+      notificationController.dismiss(newest.id);
+      debuggerEl?.addSystemMessage(`notifications:dismiss dispatched — id:${newest.id.slice(0, 16)}`);
+    } else {
+      debuggerEl?.addSystemMessage('notifications:dismiss — no notifications to dismiss');
+    }
+  }
+
+  // Inspector per-item controls
+  if ((target as HTMLElement).dataset.action === 'notif-read') {
+    const id = (target as HTMLElement).dataset.notifId;
+    if (id) {
+      notificationController.markRead(id);
+      debuggerEl?.addSystemMessage(`notifications:read from inspector — id:${id.slice(0, 16)}`);
+    }
+  }
+  if ((target as HTMLElement).dataset.action === 'notif-dismiss') {
+    const id = (target as HTMLElement).dataset.notifId;
+    if (id) {
+      notificationController.dismiss(id);
+      debuggerEl?.addSystemMessage(`notifications:dismiss from inspector — id:${id.slice(0, 16)}`);
+    }
+  }
+
+  // Close notification inspector
+  if (target.id === 'notification-inspector-close' || target.closest('#notification-inspector-close')) {
+    const inspector = document.getElementById('notification-inspector');
+    inspector?.classList.remove('open');
   }
 });
 
@@ -224,6 +405,52 @@ tap.onMessage((msg) => {
     typeof msg.raw?.[2] === 'string' &&
     (String(msg.raw[2]).includes('denied') || String(msg.raw[2]).startsWith('blocked:'));
   if (isOkFalse || isClosedDenied) totalBlocked++;
+});
+
+// ─── Signer Request Tap Wiring ───────────────────────────────────────────────
+
+tap.onMessage((msg) => {
+  // Detect signer request (kind 29001 from napplet to shell, no topic = direct signer request)
+  if (
+    msg.verb === 'EVENT' &&
+    msg.parsed.eventKind === 29001 &&
+    msg.parsed.topic === undefined &&
+    msg.direction === 'napplet->shell'
+  ) {
+    const raw = msg.raw;
+    const event = (Array.isArray(raw) && raw.length > 1)
+      ? (raw[1] as Record<string, unknown>)
+      : null;
+    const tags = (event?.tags as string[][] | undefined) ?? [];
+    const method = tags.find((t) => t[0] === 'method')?.[1] ?? 'unknown';
+    const eventTag = tags.find((t) => t[0] === 'event')?.[1];
+    let kind: number | undefined;
+    if (method === 'signEvent' && eventTag) {
+      try {
+        kind = (JSON.parse(eventTag) as { kind?: number }).kind;
+      } catch { /* ignore malformed event tag */ }
+    }
+
+    recordSignerRequest({
+      timestamp: msg.timestamp,
+      method,
+      kind,
+      success: true, // preliminary; updated on OK false response heuristic below
+    });
+  }
+
+  // Detect signer response failure — heuristic: most recent request within 5s
+  if (
+    msg.verb === 'OK' &&
+    msg.parsed.success === false &&
+    msg.direction === 'shell->napplet'
+  ) {
+    const state = getSignerConnectionState();
+    const last = state.recentRequests[state.recentRequests.length - 1];
+    if (last && Date.now() - last.timestamp < 5000) {
+      recordSignerRequest({ ...last, success: false });
+    }
+  }
 });
 
 // Install per-node activity projection

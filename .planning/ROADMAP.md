@@ -21,7 +21,7 @@
 - [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues (completed 2026-04-01)
 - [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture (completed 2026-04-01)
 - [ ] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
-- [ ] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path
+- [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path (completed 2026-04-01)
 - [ ] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings
 
 </details>
@@ -167,5 +167,5 @@
 | 27. Demo Audit & Correctness | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 28. Architecture Topology View | v0.6.0 | 2/2 | Complete | 2026-04-01 |
 | 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete    | 2026-04-01 |
-| 30. Notification Service UX | v0.6.0 | 1/3 | In Progress|  |
+| 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 31. Signer Connection UX | v0.6.0 | 1/3 | In Progress|  |

@@ -11,6 +11,20 @@
  */
 import { emit, on, nappState } from '@napplet/shim';
 
+// ─── Notification Helpers ─────────────────────────────────────────────────────
+
+/**
+ * Emit a notifications:create event through the real napplet→service path.
+ * The shell routes this INTER_PANE event to the notification service handler.
+ */
+function notifyCreate(title: string, body: string): void {
+  try {
+    emit('notifications:create', [], JSON.stringify({ title, body }));
+  } catch {
+    /* best-effort — don't break the main flow if notifications are denied */
+  }
+}
+
 const statusEl = document.getElementById('status-text')!;
 const ruleCountEl = document.getElementById('rule-count')!;
 const logEl = document.getElementById('log')!;
@@ -106,6 +120,9 @@ function handleTeachCommand(text: string): boolean {
   saveRules();
   updateRulesDisplay();
 
+  // Emit a notification so the host can surface this rule learn event
+  notifyCreate('Bot activity', `learned: "${trigger}" → "${response}"`);
+
   // Acknowledge the teach command
   emit('bot:response', [], JSON.stringify({
     text: `learned! I'll respond "${response}" when I hear "${trigger}"`,
@@ -156,6 +173,8 @@ function handleChatMessage(payload: unknown): void {
       timestamp: Date.now(),
     }));
     log('inter-pane bot:response sent', 'info');
+    // Emit a notification so the host can surface this bot reply
+    notifyCreate('Bot activity', response.length > 60 ? response.slice(0, 60) + '…' : response);
   } catch (error) {
     log(`inter-pane response failed -- ${formatError(error, 'denied: relay:write')}`, 'error');
   }

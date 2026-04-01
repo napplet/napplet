@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.6.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 28 complete; Phase 29 ready
-last_updated: "2026-04-01T11:40:14.703Z"
+stopped_at: Phase 30 complete; Phase 31 in progress
+last_updated: "2026-04-01T14:00:00.000Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 10
+  completed_plans: 12
 ---
 
 # Project State
@@ -25,7 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-01 after v0.6.0 milestone definition)
 ## Current Position
 
 Phase: 31 (signer-connection-ux) — EXECUTING
-Plan: 2 of 3
+Phase 30 (notification-service-ux): COMPLETE — all 3 plans done
+Plan: 2 of 3 for Phase 31
 Status: Ready to execute
 Last activity: 2026-04-01
 
@@ -45,5 +46,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-04-01
-Stopped at: Phase 28 complete; Phase 29 ready
-Resume: `/gsd:plan-phase 29`
+Stopped at: Phase 30 complete; Phase 31 in progress
+Resume: `/gsd:execute-phase 31`

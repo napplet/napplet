@@ -12,6 +12,20 @@
 import { publish, subscribe, emit, on, nappState } from '@napplet/shim';
 import type { EventTemplate } from '@napplet/shim';
 
+// ─── Notification Helpers ─────────────────────────────────────────────────────
+
+/**
+ * Emit a notifications:create event through the real napplet→service path.
+ * The shell routes this INTER_PANE event to the notification service handler.
+ */
+function notifyCreate(title: string, body: string): void {
+  try {
+    emit('notifications:create', [], JSON.stringify({ title, body }));
+  } catch {
+    /* best-effort — don't break the main flow if notifications are denied */
+  }
+}
+
 const statusEl = document.getElementById('status')!;
 const messagesEl = document.getElementById('messages')!;
 const inputEl = document.getElementById('msg-input') as HTMLInputElement;
@@ -87,6 +101,8 @@ async function sendMessage(): Promise<void> {
     pendingAcks.push('inter-pane send');
     emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
     addMessage('inter-pane send attempted -- chat:message', 'system');
+    // Emit notification so the host can surface this message send as a toast
+    notifyCreate('Chat message sent', text.length > 60 ? text.slice(0, 60) + '…' : text);
   } catch (error) {
     addMessage(`inter-pane send failed -- ${formatError(error, 'denied: relay:write')}`, 'system');
   }

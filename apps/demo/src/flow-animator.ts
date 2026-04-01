@@ -22,6 +22,7 @@ const FLASH_DURATION = 500;
 const TOPOLOGY_NODE_ACL = 'topology-node-acl';
 const TOPOLOGY_NODE_RUNTIME = 'topology-node-runtime';
 const TOPOLOGY_NODE_SERVICE_SIGNER = 'topology-node-service-signer';
+const TOPOLOGY_NODE_SERVICE_NOTIFICATIONS = 'topology-node-service-notifications';
 
 function flashClass(el: Element, cls: string): void {
   el.classList.add(cls);
@@ -55,7 +56,18 @@ function detectServiceTarget(topology: DemoTopology, msg: TappedMessage): string
   ) {
     return 'signer';
   }
+  if (
+    typeof msg.parsed.topic === 'string' &&
+    msg.parsed.topic.startsWith('notifications:') &&
+    topology.services.includes('notifications')
+  ) {
+    return 'notifications';
+  }
   return null;
+}
+
+function isNotificationTopic(msg: TappedMessage): boolean {
+  return typeof msg.parsed.topic === 'string' && msg.parsed.topic.startsWith('notifications:');
 }
 
 function buildHighlightPath(topology: DemoTopology, msg: TappedMessage): { nodes: string[]; edges: string[] } | null {
@@ -76,14 +88,29 @@ function buildHighlightPath(topology: DemoTopology, msg: TappedMessage): { nodes
     getAclRuntimeEdgeId(),
   ];
 
+  function getServiceNodeIdForTarget(target: string): string {
+    if (target === 'signer') return TOPOLOGY_NODE_SERVICE_SIGNER;
+    if (target === 'notifications') return TOPOLOGY_NODE_SERVICE_NOTIFICATIONS;
+    return `topology-node-service-${target}`;
+  }
+
   if (msg.direction === 'napplet->shell' && serviceTarget) {
-    nodes.push(serviceTarget === 'signer' ? TOPOLOGY_NODE_SERVICE_SIGNER : `topology-node-service-${serviceTarget}`);
+    nodes.push(getServiceNodeIdForTarget(serviceTarget));
     edges.push(getRuntimeServiceEdgeId(serviceTarget));
   }
 
   if (msg.direction === 'shell->napplet' && serviceTarget) {
-    nodes.unshift(serviceTarget === 'signer' ? TOPOLOGY_NODE_SERVICE_SIGNER : `topology-node-service-${serviceTarget}`);
+    nodes.unshift(getServiceNodeIdForTarget(serviceTarget));
     edges.unshift(getRuntimeServiceEdgeId(serviceTarget));
+  }
+
+  // Also flash notification node for host-originated notification events (no napplet windowId)
+  if (isNotificationTopic(msg) && !nappletName) {
+    nodes.push(TOPOLOGY_NODE_SERVICE_NOTIFICATIONS);
+    edges.push(getRuntimeServiceEdgeId('notifications'));
+    nodes.push(TOPOLOGY_NODE_RUNTIME);
+    edges.push(getAclRuntimeEdgeId());
+    return { nodes, edges };
   }
 
   return { nodes, edges };
@@ -129,5 +156,18 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology): void 
     else if (msg.direction === 'napplet->shell') counters[msg.verb].out++;
     else counters[msg.verb].in++;
     renderCounters();
+
+    // Log notification service activity with the exact topic string
+    if (isNotificationTopic(msg) && flowLog) {
+      const topicLabel = msg.parsed.topic ?? 'notifications:?';
+      const existing = flowLog.querySelector(`[data-notif-topic="${topicLabel}"]`);
+      if (!existing) {
+        const entry = document.createElement('div');
+        entry.dataset.notifTopic = topicLabel;
+        entry.style.cssText = 'color:#39ff14;font-size:10px;margin-top:2px';
+        entry.textContent = topicLabel;
+        flowLog.appendChild(entry);
+      }
+    }
   });
 }

@@ -84,6 +84,94 @@
     .signer-req-method { color:#a5abc2; }
     .signer-req-kind { color:#62d0ff; }
     .signer-no-requests { font-size:10px; color:#3a3a4a; }
+    /* ─── Signer connect modal ──────────────────────────────── */
+    .signer-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; }
+    .signer-modal-overlay[aria-hidden="false"] { display:flex; }
+    .signer-modal-panel { background:#12121a; border:2px solid #3a3a4a; border-radius:16px; padding:28px; width:min(90vw,720px); max-height:90vh; overflow-y:auto; }
+    .signer-modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .signer-modal-title { font-size:16px; font-weight:600; color:#f0f6ff; letter-spacing:0.05em; }
+    .signer-modal-close { background:none; border:none; color:#7c86a7; cursor:pointer; font-size:18px; padding:4px 8px; }
+    .signer-modal-body { display:grid; grid-template-columns:1fr auto 1fr; gap:24px; align-items:start; }
+    .signer-modal-option { display:flex; flex-direction:column; gap:12px; }
+    .signer-option-kicker { font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#7c86a7; }
+    .signer-option-title { font-size:15px; color:#f0f6ff; }
+    .signer-option-copy { font-size:11px; color:#a5abc2; line-height:1.5; }
+    .signer-modal-divider { display:flex; align-items:center; font-size:11px; color:#3a3a4a; padding-top:60px; }
+    .signer-option-status { min-height:20px; font-size:11px; }
+    .signer-option-status.error { color:#ff3b3b; }
+    .signer-option-status.success { color:#39ff14; }
+    .signer-option-status.connecting { color:#62d0ff; }
+    .signer-field-label { font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:#7c86a7; }
+    .signer-field-input { width:100%; background:#0a0a0f; border:1px solid #3a3a4a; border-radius:8px; padding:8px 12px; color:#f0f6ff; font-family:inherit; font-size:12px; box-sizing:border-box; }
+    .signer-field-input:focus { outline:none; border-color:#62d0ff; }
+    .signer-connect-action-btn { padding:10px 18px; background:rgba(57,255,20,0.1); border:1px solid rgba(57,255,20,0.4); border-radius:8px; color:#39ff14; cursor:pointer; font-family:inherit; font-size:12px; font-weight:500; transition:all 0.15s; }
+    .signer-connect-action-btn:hover { background:rgba(57,255,20,0.2); border-color:#39ff14; }
+    .signer-connect-action-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .signer-qr-section { display:flex; flex-direction:column; gap:8px; }
+    .signer-qr-label { font-size:10px; color:#7c86a7; }
+    .signer-qr-container { background:#fff; border-radius:8px; padding:8px; width:fit-content; }
+    .signer-qr-relay-note { font-size:10px; color:#7c86a7; }
+    .signer-qr-fallback { font-size:9px; color:#7c86a7; word-break:break-all; max-width:160px; }
+    @media (max-width:640px) { .signer-modal-body { grid-template-columns:1fr; } .signer-modal-divider { padding-top:0; } }
+    /* ─── Notification toast layer ─────────────────────────────── */
+    #notification-toast-layer {
+      position: fixed; bottom: 52vh; right: 16px; z-index: 9999;
+      display: flex; flex-direction: column-reverse; gap: 8px;
+      pointer-events: none;
+    }
+    .notif-toast {
+      background: linear-gradient(135deg, rgba(18,18,30,0.97), rgba(10,10,20,0.99));
+      border: 1px solid rgba(57,255,20,0.35); border-radius: 10px;
+      padding: 10px 14px; max-width: 280px; pointer-events: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 12px rgba(57,255,20,0.12);
+      animation: toast-in 0.22s ease-out;
+    }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateX(24px) scale(0.96); }
+      to   { opacity: 1; transform: translateX(0)  scale(1); }
+    }
+    .notif-toast-title { font-size: 11px; font-weight: 600; color: #f0f6ff; margin-bottom: 3px; }
+    .notif-toast-body  { font-size: 10px; color: #a5abc2; }
+    .notif-toast-cue   { font-size: 9px; color: #39ff14; letter-spacing: 0.12em; margin-top: 5px; text-transform: uppercase; }
+    /* ─── Notification service node controls ────────────────────── */
+    .notif-node-controls { display: flex; flex-direction: column; gap: 4px; padding: 8px 14px 10px; border-top: 1px solid #1f2235; }
+    .notif-node-btn {
+      padding: 5px 10px; background: transparent; border: 1px solid #2a2a3a;
+      border-radius: 6px; color: #a5abc2; cursor: pointer;
+      font-family: inherit; font-size: 10px; text-align: left; transition: all 0.15s;
+    }
+    .notif-node-btn:hover { border-color: rgba(57,255,20,0.4); color: #39ff14; }
+    .notif-node-btn.primary { border-color: rgba(57,255,20,0.3); color: #39ff14; background: rgba(57,255,20,0.06); }
+    .notif-node-btn.primary:hover { background: rgba(57,255,20,0.14); }
+    /* ─── Notification inspector panel ─────────────────────────── */
+    #notification-inspector {
+      display: none; flex-direction: column; gap: 0;
+      padding: 12px 0 0; background: inherit; overflow: hidden;
+    }
+    #notification-inspector.open { display: flex; }
+    .notif-inspector-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 14px 10px; border-bottom: 1px solid #1f2235;
+    }
+    .notif-inspector-title { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #7981a0; }
+    .notif-inspector-close { background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 0 2px; }
+    .notif-inspector-close:hover { color: #a5abc2; }
+    #notification-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .notif-list-empty { padding: 12px 14px; font-size: 11px; color: #3a3a4a; }
+    .notif-item { padding: 8px 14px; border-bottom: 1px solid #1a1a28; }
+    .notif-item.read { opacity: 0.55; }
+    .notif-item-title { font-size: 11px; color: #f0f6ff; margin-bottom: 2px; }
+    .notif-item-body  { font-size: 10px; color: #a5abc2; margin-bottom: 4px; }
+    .notif-item-meta  { font-size: 9px; color: #666; display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 5px; }
+    .notif-item-tag   { color: #39ff14; }
+    .notif-item-actions { display: flex; gap: 4px; }
+    .notif-item-btn {
+      padding: 2px 8px; background: transparent; border: 1px solid #2a2a3a;
+      border-radius: 4px; color: #a5abc2; cursor: pointer;
+      font-family: inherit; font-size: 9px; transition: all 0.15s;
+    }
+    .notif-item-btn.read-btn:hover { border-color: rgba(57,255,20,0.4); color: #39ff14; }
+    .notif-item-btn.dismiss-btn:hover { border-color: rgba(255,59,59,0.4); color: #ff3b3b; }
     @media (max-width: 768px) {
       .topology-layout { gap: 10px; }
       .topology-core-card { width: 100%; }
@@ -113,6 +201,95 @@
   </section>
 
   <div id="resize-handle" style="height:6px;cursor:ns-resize;background:#2a2a3a;border-top:1px solid #3a3a4a;border-bottom:1px solid #3a3a4a;flex-shrink:0"></div>
+  <!-- Signer connect modal -->
+  <div id="signer-connect-modal" class="signer-modal-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="signer-modal-title">
+    <div class="signer-modal-panel">
+      <div class="signer-modal-header">
+        <span id="signer-modal-title" class="signer-modal-title">Connect Signer</span>
+        <button class="signer-modal-close" data-action="close-signer-modal" aria-label="Close">✕</button>
+      </div>
+
+      <div class="signer-modal-body">
+        <!-- NIP-07 Column -->
+        <div class="signer-modal-option" id="nip07-option">
+          <div class="signer-option-kicker">extension</div>
+          <div class="signer-option-title">Browser Signer</div>
+          <div class="signer-option-copy">Connect a NIP-07 browser extension (e.g., Alby, nos2x, Nostrmo)</div>
+          <div id="nip07-status" class="signer-option-status"></div>
+          <button id="nip07-connect-btn" class="signer-connect-action-btn" data-action="connect-nip07">
+            Connect Extension
+          </button>
+        </div>
+
+        <div class="signer-modal-divider" aria-hidden="true">or</div>
+
+        <!-- NIP-46 Column -->
+        <div class="signer-modal-option" id="nip46-option">
+          <div class="signer-option-kicker">bunker</div>
+          <div class="signer-option-title">Nostr Connect</div>
+          <div class="signer-option-copy">Connect a remote signing bunker via NIP-46 (nsec.app, Nostrudel)</div>
+
+          <label class="signer-field-label" for="nip46-relay-input">Relay</label>
+          <input
+            id="nip46-relay-input"
+            class="signer-field-input"
+            type="text"
+            placeholder="wss://relay.nsec.app"
+            value="wss://relay.nsec.app"
+          />
+
+          <label class="signer-field-label" for="nip46-bunker-uri-input">Bunker URI</label>
+          <input
+            id="nip46-bunker-uri-input"
+            class="signer-field-input"
+            type="text"
+            placeholder="bunker://..."
+          />
+
+          <div class="signer-qr-section">
+            <div class="signer-qr-label">Or scan with your bunker app:</div>
+            <div id="nip46-qr-container" class="signer-qr-container"></div>
+            <div id="nip46-qr-relay-note" class="signer-qr-relay-note"></div>
+          </div>
+
+          <div id="nip46-status" class="signer-option-status"></div>
+          <button id="nip46-connect-btn" class="signer-connect-action-btn" data-action="connect-nip46">
+            Connect Bunker
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification toast layer: renders toasts above the debugger section -->
+  <div id="notification-toast-layer" aria-live="polite" aria-label="Notification toasts"></div>
+
+  <!-- Notification node controls: injected into the topology notifications service node -->
+  <template id="notification-node-controls-template">
+    <div id="notification-node" class="notif-node-controls">
+      <div class="notif-node-summary" id="notification-node-summary">
+        <span class="node-summary-field"><span class="node-summary-label">total:</span> <span class="node-summary-value" id="notif-total">0</span></span>
+        <span class="node-summary-field"><span class="node-summary-label">unread:</span> <span class="node-summary-value" id="notif-unread">0</span></span>
+        <span class="node-summary-field notif-source-cue" id="notif-source-cue" style="display:none"><span class="node-summary-label">via:</span> <span class="node-summary-value notif-cue-text"></span></span>
+      </div>
+      <button id="notification-node-create" class="notif-node-btn primary">+ create demo toast</button>
+      <button id="notification-node-list"   class="notif-node-btn">list state</button>
+      <button id="notification-node-mark-read"  class="notif-node-btn">mark latest read</button>
+      <button id="notification-node-dismiss" class="notif-node-btn">dismiss latest</button>
+    </div>
+  </template>
+
+  <!-- Notification inspector panel: shown inside the right inspector pane -->
+  <div id="notification-inspector" aria-label="Notification inspector">
+    <div class="notif-inspector-header">
+      <span class="notif-inspector-title">notifications</span>
+      <button class="notif-inspector-close" id="notification-inspector-close" aria-label="Close notification inspector">×</button>
+    </div>
+    <div id="notification-list" aria-label="Notification list">
+      <div class="notif-list-empty">no notifications yet</div>
+    </div>
+  </div>
+
   <section id="debugger-section" style="height:45vh;min-height:120px" class="shrink-0 flex flex-col overflow-hidden">
     <napplet-debugger id="debugger"></napplet-debugger>
   </section>
