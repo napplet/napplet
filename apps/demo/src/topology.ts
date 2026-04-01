@@ -194,7 +194,7 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   const BASE_OPTIONS = {
     color: COLOR_RESTING,
     size: 2,
-    path: 'grid',
+    path: 'fluid',
     endPlug: 'arrow2',
     endPlugSize: 1.5,
   };
@@ -207,17 +207,10 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
     try {
       const outLine = new LeaderLine(fromEl, toEl, {
         ...BASE_OPTIONS,
-        startSocketGravity: [8, 20],
-        endSocketGravity: [8, -20],
+        startSocket: 'bottom',
+        endSocket: 'top',
       });
-      lines.set(edge.id + '-out', outLine);
-
-      const inLine = new LeaderLine(toEl, fromEl, {
-        ...BASE_OPTIONS,
-        startSocketGravity: [-8, -20],
-        endSocketGravity: [-8, 20],
-      });
-      lines.set(edge.id + '-in', inLine);
+      lines.set(edge.id, outLine);
     } catch { /* best-effort — may fail if elements not visible */ }
   }
 
@@ -233,17 +226,14 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   return {
     flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
       const color = cls === 'active' ? COLOR_ACTIVE : cls === 'amber' ? COLOR_AMBER : COLOR_BLOCKED;
-      const outLine = lines.get(edgeId + '-out');
-      const inLine = lines.get(edgeId + '-in');
-      [outLine, inLine].forEach((line) => {
-        if (!line) return;
-        try {
-          line.setOptions({ color, size: 3 });
-          setTimeout(() => {
-            try { line.setOptions({ color: COLOR_RESTING, size: 2 }); } catch { /* best-effort */ }
-          }, FLASH_DURATION_MS);
-        } catch { /* best-effort */ }
-      });
+      const line = lines.get(edgeId);
+      if (!line) return;
+      try {
+        line.setOptions({ color, size: 3 });
+        setTimeout(() => {
+          try { line.setOptions({ color: COLOR_RESTING, size: 2 }); } catch { /* best-effort */ }
+        }, FLASH_DURATION_MS);
+      } catch { /* best-effort */ }
     },
   };
 }
