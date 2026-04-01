@@ -94,7 +94,7 @@
 - [x] **Phase 37: API Alignment** - Rename RuntimeHooks/ShellHooks to RuntimeAdapter/ShellAdapter with deprecated aliases for one release cycle (completed 2026-04-01)
 - [x] **Phase 38: Session Vocabulary** - Rename NappKeyEntry/NappKeyRegistry to SessionEntry/SessionRegistry and fix loadOrCreateKeypair (completed 2026-04-01)
 - [x] **Phase 39: Documentation Pass** - Document topic prefix direction semantics and mark nappStorage as deprecated (completed 2026-04-01)
-- [ ] **Phase 40: Remaining Rename Gaps** - Close audit gaps: rename createEphemeralKeypair, vite-plugin nappletType, and SPEC.md stale topic strings (closes SESS-03, TERM-01, TERM-04, WIRE-02)
+- [x] **Phase 40: Remaining Rename Gaps** - Close audit gaps: rename createEphemeralKeypair, vite-plugin nappletType, and SPEC.md stale topic strings (closes SESS-03, TERM-01, TERM-04, WIRE-02) (completed 2026-04-01)
 
 ## Phase Details
 
@@ -167,10 +167,10 @@
 **Depends on**: Phase 38, Phase 39
 **Requirements**: SESS-03, TERM-01, TERM-04, WIRE-02
 **Gap Closure**: Closes gaps from v0.7.0 milestone audit (2026-04-01)
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 40-01-PLAN.md — Rename loadOrCreateKeypair to createEphemeralKeypair and nappType to nappletType in TypeScript
-- [ ] 40-02-PLAN.md — Fix stale napp: topic strings in SPEC.md, READMEs, and skills files
+- [x] 40-01-PLAN.md — Rename loadOrCreateKeypair to createEphemeralKeypair and nappType to nappletType in TypeScript
+- [x] 40-02-PLAN.md — Fix stale napp: topic strings in SPEC.md, READMEs, and skills files
 **Success Criteria** (what must be TRUE):
   1. `createEphemeralKeypair()` is the sole function name in `packages/shim/src/napplet-keypair.ts`; `loadOrCreateKeypair` returns zero hits across all packages
   2. `Nip5aManifestOptions.nappletType` is the public API field name in `packages/vite-plugin/src/index.ts`; `nappType` returns zero hits in that file
@@ -224,4 +224,4 @@ Phases execute in numeric order: 34 -> 35 -> 36 -> 37 -> 38 -> 39
 | 37. API Alignment | v0.7.0 | 1/1 | Complete    | 2026-04-01 |
 | 38. Session Vocabulary | v0.7.0 | 2/2 | Complete    | 2026-04-01 |
 | 39. Documentation Pass | v0.7.0 | 0/0 | Not started | - |
-| 40. Remaining Rename Gaps | v0.7.0 | 0/2 | Not started | - |
+| 40. Remaining Rename Gaps | v0.7.0 | 2/2 | Complete    | 2026-04-01 |

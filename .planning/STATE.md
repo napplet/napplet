@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.7.0
 milestone_name: Ontology Audit and Adjustments
 status: executing
-stopped_at: Phase 38 complete
-last_updated: "2026-04-01T22:47:00.000Z"
+stopped_at: Phase 37 context gathered
+last_updated: "2026-04-01T22:19:02.905Z"
 last_activity: 2026-04-01
 progress:
-  total_phases: 6
-  completed_phases: 3
-  total_plans: 11
-  completed_plans: 10
-  percent: 50
+  total_phases: 7
+  completed_phases: 6
+  total_plans: 16
+  completed_plans: 13
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 39 — complete
+**Current focus:** Phase 40 — remaining-rename-gaps
 
 ## Current Position
 
-Phase: 39
-Plan: 39-01 complete
-Status: Phase 39 complete
-Last activity: 2026-04-01 - Completed quick task 260401-w49: Fix KINDS.INTER_PANE regression and @napplet/runtime module resolution in demo
+Phase: 40
+Plan: Not started
+Status: Executing Phase 40
+Last activity: 2026-04-01
 
 Progress: [██████████] 100%
 
