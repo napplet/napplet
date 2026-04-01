@@ -1,88 +1,92 @@
 # Requirements: Napplet Protocol SDK
 
-**Defined:** 2026-04-01
-**Milestone:** v0.7.0 Ontology Audit and Adjustments
+**Defined:** 2026-04-02
+**Milestone:** v0.8.0 Shim/SDK Split
 **Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## v0.7.0 Requirements
+## v0.8.0 Requirements
 
-### TERM — Terminology (napp → napplet)
+### PKG — Package Structure
 
-- [ ] **TERM-01**: All `napp*` TypeScript identifiers (types, functions, variables, parameters) renamed to `napplet*` across all 7 packages; zero `napp[^l]` occurrences remain in production code
-- [ ] **TERM-02**: `napp-state:` localStorage prefix migrated to `napplet-state:` with a dual-read migration utility (try `napplet-state:`, fall back to `napp-state:` for one release cycle)
-- [ ] **TERM-03**: `napplet-napp-type` HTML meta attribute corrected to `napplet-type`; vite plugin reads both names for backward compatibility for one release cycle
-- [ ] **TERM-04**: SPEC.md corrected — all uses of "napp" where "napplet" is intended replaced throughout
-- [ ] **TERM-05**: All READMEs, skills files, and documentation updated for napp → napplet rename
+- [ ] **PKG-01**: `@napplet/shim` has zero named exports — it is a pure window-installer; importing it is a side-effect-only operation
+- [ ] **PKG-02**: New `@napplet/sdk` package exists in the monorepo with its own `package.json`, `tsup.config.ts`, and `tsconfig.json`
+- [ ] **PKG-03**: `@napplet/sdk` has no dependency on `@napplet/shim` — it wraps `window.napplet.*` at runtime; the two packages are independent siblings
 
-### WIRE — Wire Protocol (IPC-PEER)
+### WIN — Window API Shape
 
-- [ ] **WIRE-01**: `BusKind.INTER_PANE` constant renamed to `BusKind.IPC_PEER` in `@napplet/core`; all consumers updated (30+ call sites across core, runtime, services, shell)
-- [ ] **WIRE-02**: SPEC.md and documentation updated — `INTER-PANE` / `inter-pane` replaced with `IPC-PEER` / `ipc-peer` throughout; `IPC-*` namespace documented as the family for future `IPC-BROADCAST` and `IPC-CHANNEL` types
+- [ ] **WIN-01**: `window.napplet.relay` exposes `{ subscribe, publish, query }` with existing signatures (no behavior changes)
+- [ ] **WIN-02**: `window.napplet.ipc` exposes `{ emit, on }` — napplet↔napplet pubsub through the shell
+- [ ] **WIN-03**: `window.napplet.services` exposes `{ list, has }` — `list()` returns `Promise<ServiceInfo[]>`; `has(name, version?)` returns `Promise<boolean>`
+- [ ] **WIN-04**: `window.napplet.storage` exposes `{ getItem, setItem, removeItem, keys }` — proxied napplet-scoped persistence
 
-### SESS — Session Vocabulary
+### SDK — SDK Exports
 
-- [ ] **SESS-01**: `NappKeyEntry` renamed to `SessionEntry` — type named for purpose (session record), not owner
-- [ ] **SESS-02**: `NappKeyRegistry` renamed to `SessionRegistry` — type named for purpose (session registry), not owner
-- [ ] **SESS-03**: `loadOrCreateKeypair()` renamed to `createEphemeralKeypair()` — name matches actual behavior (always creates fresh keypair, never loads); unused `_nappType` parameter removed
+- [ ] **SDK-01**: `@napplet/sdk` exports `relay`, `ipc`, `services`, `storage` as namespaced objects — each mirrors its `window.napplet.*` counterpart exactly
+- [ ] **SDK-02**: `@napplet/sdk` exports all public types: `NostrEvent`, `NostrFilter`, `ServiceInfo`, `Subscription`, `EventTemplate`
+- [ ] **SDK-03**: `import * as napplet from '@napplet/sdk'` produces an object structurally identical to `window.napplet`
 
-### API — API Alignment
+### DEP — Deprecation Removal
 
-- [ ] **API-01**: `RuntimeHooks` renamed to `RuntimeAdapter`; deprecated type alias `export type RuntimeHooks = RuntimeAdapter` shipped with `@deprecated` JSDoc for one release cycle; removal scheduled for v0.9.0
-- [ ] **API-02**: `ShellHooks` renamed to `ShellAdapter`; deprecated type alias `export type ShellHooks = ShellAdapter` shipped with `@deprecated` JSDoc; removal scheduled for v0.9.0
-- [ ] **API-03**: Nested sub-interface names drop the redundant `Runtime` prefix (`RuntimeRelayPoolHooks` → `RelayPoolAdapter`, `RuntimeAuthHooks` → `AuthAdapter`, etc.)
+- [ ] **DEP-01**: `discoverServices`, `hasService`, `hasServiceVersion` removed from `@napplet/shim` exports (replaced by `window.napplet.services`)
+- [ ] **DEP-02**: `nappState`, `nappStorage`, `nappletState` removed from `@napplet/shim` exports (replaced by `window.napplet.storage`)
 
-### TYPE — Type Correctness
+### ECO — Ecosystem Updates
 
-- [ ] **TYPE-01**: `ConsentRequest` defined canonically in `@napplet/runtime` only; shell's locally-defined version removed; shell re-exports from runtime; canonical definition includes `type` discriminator field (currently missing in shell version)
-- [ ] **TYPE-02**: `shell/state-proxy.ts` verified as dead code since v0.3.0 runtime extraction and removed; if still imported, routed through runtime instead
-
-### DOC — Documentation
-
-- [ ] **DOC-01**: Topic prefix direction semantics documented in `@napplet/core/topics.ts` JSDoc — `shell:*` = napplet-to-shell commands; `napplet:*` = shell-to-napplet responses; `{service}:*` = bidirectional service messages
-- [ ] **DOC-02**: `nappStorage` alias marked `@deprecated` in shim with JSDoc pointing to `nappletState` as canonical name; deprecation schedule (remove in v0.9.0) documented
+- [ ] **ECO-01**: Demo napplets updated to use new `window.napplet.relay.*`, `window.napplet.ipc.*`, `window.napplet.storage.*` API
+- [ ] **ECO-02**: All tests (Playwright e2e + Vitest unit) updated for new `window.napplet` API shape
+- [ ] **ECO-03**: SPEC.md `window.napplet` section updated — namespaced shape documented; `relay`/`ipc`/`services`/`storage` sub-objects defined
+- [ ] **ECO-04**: `@napplet/shim` README updated — documents window-only install, new `window.napplet` shape
+- [ ] **ECO-05**: `@napplet/sdk` README written — documents namespaced exports, usage with and without bundler, relationship to shim
 
 ## Future Requirements
 
-### Session Vocabulary (deferred from v0.7.0)
+### Relay Targeting (deferred from v0.8.0)
 
-- **SESS-FUTURE-01**: `windowId` in runtime layer replaced with `PeerId` type alias — abstracts browser transport concern from browser-agnostic protocol engine
+- **REL-FUTURE-01**: `relay.subscribe` / `relay.query` / `relay.publish` accept optional `relays?: string[]` — explicit relay URLs to target
+- **REL-FUTURE-02**: `exclusive?: boolean` option controls whether specified relays supplement the pool (`false`, default) or replace it (`true`)
+
+### Deprecation Cleanup (scheduled v0.9.0)
+
+- **DEP-FUTURE-01**: `RuntimeHooks` deprecated alias removed — deprecated in v0.7.0, removal window expires
+- **DEP-FUTURE-02**: `ShellHooks` deprecated alias removed — deprecated in v0.7.0, removal window expires
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Removing deprecated aliases immediately | Aliases ship in v0.7.0 and are removed in v0.9.0 — give consuming code (hyprgate) a migration window |
-| `windowId` → `peerId` mass rename | High blast-radius, medium benefit — pragmatic type alias (`PeerId = string`) is sufficient for now |
-| New protocol features | This milestone is correctness only; no new message types or capabilities |
-| npm publish | Still blocked on human npm auth; separate milestone |
+| `relays` / `exclusive` option on relay API | Sweeping implications for ShellBridge routing and spec; deferred to dedicated milestone |
+| `RuntimeHooks` / `ShellHooks` alias removal | Scheduled for v0.9.0 — migration window must complete first |
+| New protocol features | This milestone is restructuring only; no new message types or capabilities |
+| npm publish | Blocked on human npm auth; separate milestone |
+| NIP-29 scoped relay API changes | Existing `options.relay` / `options.group` on subscribe kept as-is; NIP-29 overhaul is separate |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TERM-01 | Phase 40 | Pending |
-| TERM-02 | Phase 34 | Pending |
-| TERM-03 | Phase 34 | Pending |
-| TERM-04 | Phase 40 | Pending |
-| TERM-05 | Phase 34 | Pending |
-| WIRE-01 | Phase 35 | Pending |
-| WIRE-02 | Phase 40 | Pending |
-| TYPE-01 | Phase 36 | Pending |
-| TYPE-02 | Phase 36 | Pending |
-| API-01 | Phase 37 | Pending |
-| API-02 | Phase 37 | Pending |
-| API-03 | Phase 37 | Pending |
-| SESS-01 | Phase 38 | Pending |
-| SESS-02 | Phase 38 | Pending |
-| SESS-03 | Phase 40 | Pending |
-| DOC-01 | Phase 39 | Pending |
-| DOC-02 | Phase 39 | Pending |
+| PKG-01 | — | Pending |
+| PKG-02 | — | Pending |
+| PKG-03 | — | Pending |
+| WIN-01 | — | Pending |
+| WIN-02 | — | Pending |
+| WIN-03 | — | Pending |
+| WIN-04 | — | Pending |
+| SDK-01 | — | Pending |
+| SDK-02 | — | Pending |
+| SDK-03 | — | Pending |
+| DEP-01 | — | Pending |
+| DEP-02 | — | Pending |
+| ECO-01 | — | Pending |
+| ECO-02 | — | Pending |
+| ECO-03 | — | Pending |
+| ECO-04 | — | Pending |
+| ECO-05 | — | Pending |
 
 **Coverage:**
-- v0.7.0 requirements: 17 total
-- Mapped to phases: 17/17
-- Unmapped: 0
+- v0.8.0 requirements: 17 total
+- Mapped to phases: 0/17 (roadmap pending)
+- Unmapped: 17 ⚠️
 
 ---
-*Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 — SESS-03, TERM-01, TERM-04, WIRE-02 remapped to Phase 40 (gap closure)*
+*Requirements defined: 2026-04-02*
+*Last updated: 2026-04-02 — initial definition*
