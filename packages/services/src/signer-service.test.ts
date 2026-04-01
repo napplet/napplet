@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { createSignerService } from './signer-service.js';
 import { BusKind } from '@napplet/core';
 import type { NostrEvent } from '@napplet/core';
-import type { RuntimeSigner } from '@napplet/runtime';
+import type { Signer } from '@napplet/runtime';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ function makeSignerEvent(overrides: Partial<NostrEvent> = {}): NostrEvent {
   };
 }
 
-function createMockSigner(): RuntimeSigner & {
+function createMockSigner(): Signer & {
   calls: string[];
 } {
   const calls: string[] = [];

@@ -189,13 +189,13 @@ export interface AclCheckEvent {
   decision: 'allow' | 'deny';
 }
 
-// ─── Shell Hooks ────────────────────────────────────────────────────────────
+// ─── ShellAdapter ────────────────────────────────────────────────────────────
 
 /**
- * All hooks that the shell requires from the host application.
+ * All adapters that the shell requires from the host application.
  * @example
  * ```ts
- * const hooks: ShellHooks = {
+ * const hooks: ShellAdapter = {
  *   relayPool: myRelayPoolHooks,
  *   relayConfig: myRelayConfigHooks,
  *   windowManager: myWindowManagerHooks,
@@ -207,7 +207,7 @@ export interface AclCheckEvent {
  * };
  * ```
  */
-export interface ShellHooks {
+export interface ShellAdapter {
   relayPool: RelayPoolHooks;
   relayConfig: RelayConfigHooks;
   windowManager: WindowManagerHooks;
@@ -226,8 +226,8 @@ export interface ShellHooks {
    *
    * @example
    * ```ts
-   * const hooks: ShellHooks = {
-   *   // ... required hooks ...
+   * const hooks: ShellAdapter = {
+   *   // ... required adapters ...
    *   services: {
    *     audio: myAudioServiceHandler,
    *     notifications: myNotificationServiceHandler,
@@ -237,3 +237,6 @@ export interface ShellHooks {
    */
   services?: ServiceRegistry;
 }
+
+/** @deprecated Use ShellAdapter. Will be removed in v0.9.0. */
+export type ShellHooks = ShellAdapter;

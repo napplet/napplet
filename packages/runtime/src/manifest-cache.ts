@@ -2,10 +2,10 @@
  * manifest-cache.ts — Manifest cache with persistence hooks.
  *
  * Caches NIP-5A manifest data (aggregate hashes) per napplet identity.
- * Delegates storage to RuntimeManifestPersistence — no localStorage.
+ * Delegates storage to ManifestPersistence — no localStorage.
  */
 
-import type { RuntimeManifestPersistence, ManifestCacheEntry } from './types.js';
+import type { ManifestPersistence, ManifestCacheEntry } from './types.js';
 
 /**
  * Cache for verified napplet manifest entries.
@@ -43,7 +43,7 @@ export interface ManifestCache {
  * @param persistence - Storage backend for manifest data
  * @returns A ManifestCache instance
  */
-export function createManifestCache(persistence: RuntimeManifestPersistence): ManifestCache {
+export function createManifestCache(persistence: ManifestPersistence): ManifestCache {
   const cache = new Map<string, ManifestCacheEntry>();
 
   function cacheKey(pubkey: string, dTag: string): string {

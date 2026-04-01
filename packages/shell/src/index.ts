@@ -19,7 +19,8 @@ export type { BusKindValue } from '@napplet/core';
 
 // Types for host app integration (shell-specific)
 export type {
-  ShellHooks,
+  ShellAdapter,
+  ShellHooks,  // @deprecated — use ShellAdapter
   RelayPoolHooks,
   RelayPoolLike,
   RelayConfigHooks,

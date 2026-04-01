@@ -17,7 +17,7 @@ import { sessionRegistry, nappKeyRegistry } from './session-registry.js';
 import { aclStore } from './acl-store.js';
 import { manifestCache } from './manifest-cache.js';
 import { audioManager } from './audio-manager.js';
-import type { ShellHooks } from './types.js';
+import type { ShellAdapter } from './types.js';
 
 // ─── Public interface ────────────────────────────────────────────────────────
 
@@ -113,15 +113,15 @@ export interface ShellBridge {
  * Create a ShellBridge instance with dependency injection via hooks.
  *
  * Internally creates a Runtime from @napplet/runtime and adapts the
- * browser-oriented ShellHooks into environment-agnostic RuntimeHooks.
+ * browser-oriented ShellAdapter into environment-agnostic RuntimeAdapter.
  *
  * @param hooks - Host application provides relay pool, auth, config, etc.
  * @returns A ShellBridge instance ready to handle napplet messages
  * @example
  * ```ts
- * import { createShellBridge, type ShellHooks } from '@napplet/shell';
+ * import { createShellBridge, type ShellAdapter } from '@napplet/shell';
  *
- * const hooks: ShellHooks = {
+ * const hooks: ShellAdapter = {
  *   relayPool: myRelayPoolHooks,
  *   relayConfig: myRelayConfigHooks,
  *   windowManager: myWindowManagerHooks,
@@ -134,7 +134,7 @@ export interface ShellBridge {
  * const bridge = createShellBridge(hooks);
  * ```
  */
-export function createShellBridge(hooks: ShellHooks): ShellBridge {
+export function createShellBridge(hooks: ShellAdapter): ShellBridge {
   const runtimeHooks = adaptHooks(hooks, {
     originRegistry,
     manifestCache,

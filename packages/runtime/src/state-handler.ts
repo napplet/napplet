@@ -2,12 +2,12 @@
  * state-handler.ts — State request handler using persistence hooks.
  *
  * Handles napplet state operations (get, set, remove, clear, keys)
- * by delegating storage to RuntimeStatePersistence. No localStorage.
+ * by delegating storage to StatePersistence. No localStorage.
  */
 
 import type { NostrEvent } from '@napplet/core';
 import { BusKind } from '@napplet/core';
-import type { SendToNapplet, RuntimeStatePersistence } from './types.js';
+import type { SendToNapplet, StatePersistence } from './types.js';
 import type { SessionRegistry } from './session-registry.js';
 import type { AclStateContainer } from './acl-state.js';
 
@@ -72,7 +72,7 @@ export function handleStateRequest(
   sendToNapplet: SendToNapplet,
   sessionRegistry: SessionRegistry,
   aclState: AclStateContainer,
-  statePersistence: RuntimeStatePersistence,
+  statePersistence: StatePersistence,
 ): void {
   const topic = event.tags?.find((t) => t[0] === 't')?.[1];
   const key = event.tags?.find((t) => t[0] === 'key')?.[1];
@@ -155,7 +155,7 @@ export function cleanupNappState(
   pubkey: string,
   dTag: string,
   aggregateHash: string,
-  statePersistence: RuntimeStatePersistence,
+  statePersistence: StatePersistence,
 ): void {
   const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
   statePersistence.clear(prefix);

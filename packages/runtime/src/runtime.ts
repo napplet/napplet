@@ -6,7 +6,7 @@
  * lifecycle, AUTH handshake, signer proxying, and shell command routing.
  *
  * No browser APIs. No DOM. No localStorage. No postMessage.
- * All I/O is delegated to RuntimeHooks.
+ * All I/O is delegated to RuntimeAdapter.
  */
 
 import type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
@@ -20,7 +20,7 @@ import {
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
 import type {
-  RuntimeHooks, SessionEntry, ConsentRequest, ConsentHandler,
+  RuntimeAdapter, SessionEntry, ConsentRequest, ConsentHandler,
   ServiceHandler, ServiceRegistry, CompatibilityReport, ServiceInfo,
 } from './types.js';
 import { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
@@ -132,7 +132,7 @@ export interface Runtime {
  * runtime.handleMessage(windowId, msg);
  * ```
  */
-export function createRuntime(hooks: RuntimeHooks): Runtime {
+export function createRuntime(hooks: RuntimeAdapter): Runtime {
   // ─── Module-level state ──────────────────────────────────────────────────
 
   const pendingChallenges = new Map<string, string>();

@@ -9,7 +9,7 @@
 
 import type { NostrEvent } from '@napplet/core';
 import { BusKind } from '@napplet/core';
-import type { ServiceHandler, RuntimeSigner } from '@napplet/runtime';
+import type { ServiceHandler, Signer } from '@napplet/runtime';
 
 /** Default kinds that require user consent before signing. */
 const DEFAULT_CONSENT_KINDS = [0, 3, 5, 10002];
@@ -33,7 +33,7 @@ export interface SignerServiceOptions {
    * Get the current signer instance. Returns null if no signer is available.
    * Called on every signer request — availability can change dynamically.
    */
-  getSigner: () => RuntimeSigner | null;
+  getSigner: () => Signer | null;
 
   /**
    * Called when a napplet requests signing of a destructive kind.
