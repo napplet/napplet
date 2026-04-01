@@ -63,6 +63,27 @@
     .node-box.inspector-selected { border-color: #00f0ff; box-shadow: 0 0 12px #00f0ff30; }
     /* Node click affordance */
     [data-node-id] { cursor: pointer; }
+    /* Signer node connection states */
+    .signer-status-disconnected { display:block; padding:2px 14px 6px; font-size:11px; color:#7c86a7; }
+    .signer-status-connecting { display:block; padding:2px 14px 6px; font-size:11px; color:#62d0ff; }
+    .signer-status-connected { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:2px 14px 6px; font-size:11px; }
+    .signer-status-error { display:block; padding:2px 14px 4px; font-size:10px; color:#ff3b3b; }
+    .signer-method-badge { background:rgba(57,255,20,0.12); border:1px solid rgba(57,255,20,0.3); border-radius:4px; padding:1px 6px; font-size:10px; color:#39ff14; letter-spacing:0.08em; }
+    .signer-pubkey { font-size:10px; color:#62d0ff; font-family:inherit; }
+    .signer-relay { font-size:10px; color:#a5abc2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
+    .signer-connect-btn { margin:6px 14px 12px; padding:8px 14px; background:rgba(57,255,20,0.08); border:1px solid rgba(57,255,20,0.3); border-radius:8px; color:#39ff14; cursor:pointer; font-family:inherit; font-size:11px; font-weight:500; transition:all 0.15s; display:block; width:calc(100% - 28px); }
+    .signer-connect-btn:hover { background:rgba(57,255,20,0.18); border-color:#39ff14; }
+    .signer-disconnect-btn { margin:4px 14px 10px; padding:4px 10px; background:transparent; border:1px solid #3a3a4a; border-radius:6px; color:#7c86a7; cursor:pointer; font-family:inherit; font-size:10px; transition:all 0.15s; display:block; }
+    .signer-disconnect-btn:hover { border-color:rgba(255,59,59,0.4); color:#ff3b3b; }
+    /* Signer activity feed */
+    .signer-recent-requests { padding:6px 14px 8px; border-top:1px solid #1f2235; }
+    .signer-recent-label { font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:#7c86a7; margin-bottom:4px; }
+    .signer-request-row { display:flex; gap:6px; align-items:center; font-size:10px; padding:2px 0; }
+    .signer-request-row.ok .signer-req-status { color:#39ff14; }
+    .signer-request-row.err .signer-req-status { color:#ff3b3b; }
+    .signer-req-method { color:#a5abc2; }
+    .signer-req-kind { color:#62d0ff; }
+    .signer-no-requests { font-size:10px; color:#3a3a4a; }
     @media (max-width: 768px) {
       .topology-layout { gap: 10px; }
       .topology-core-card { width: 100%; }

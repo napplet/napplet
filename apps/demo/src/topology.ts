@@ -1,5 +1,24 @@
 export type TopologyNodeRole = 'napplet' | 'shell' | 'acl' | 'runtime' | 'service';
 
+// Inline the signer state types here to avoid a circular import with signer-connection.ts
+export type SignerConnectionMethod = 'nip07' | 'nip46' | 'none';
+
+export interface SignerRequestRecord {
+  timestamp: number;
+  method: string;
+  kind?: number;
+  success: boolean;
+}
+
+export interface SignerConnectionStateView {
+  method: SignerConnectionMethod;
+  pubkey: string | null;
+  relay: string | null;
+  recentRequests: SignerRequestRecord[];
+  isConnecting: boolean;
+  error: string | null;
+}
+
 export interface DemoTopologyNappletInput {
   name: string;
   label: string;
@@ -12,6 +31,7 @@ export interface DemoTopologyInput {
   hostPubkey: string;
   napplets: DemoTopologyNappletInput[];
   services: string[];
+  signerState?: SignerConnectionStateView;
 }
 
 export interface DemoTopologyNode {
@@ -34,6 +54,7 @@ export interface DemoTopology {
   hostPubkey: string;
   napplets: DemoTopologyNappletInput[];
   services: string[];
+  signerState?: SignerConnectionStateView;
 }
 
 const SHELL_NODE_ID = 'topology-node-shell';
@@ -157,6 +178,7 @@ export function buildDemoTopology(input: DemoTopologyInput): DemoTopology {
     hostPubkey: input.hostPubkey,
     napplets,
     services,
+    signerState: input.signerState,
   };
 }
 
@@ -166,6 +188,52 @@ function renderNodeEdge(edgeId: string): string {
 
 function truncatePubkey(pubkey: string): string {
   return pubkey.length > 20 ? `${pubkey.substring(0, 20)}...` : pubkey;
+}
+
+/**
+ * Render the signer node content based on current connection state.
+ */
+function renderSignerNodeContent(signerState?: SignerConnectionStateView): string {
+  if (!signerState || signerState.method === 'none') {
+    const errorHtml = signerState?.error
+      ? `<div class="topology-node-meta signer-status-error">${signerState.error}</div>`
+      : '';
+    return `
+      <div class="topology-node-kicker">service</div>
+      <div class="topology-node-title">signer</div>
+      ${errorHtml}
+      <div class="topology-node-meta signer-status-disconnected">not connected</div>
+      <button class="signer-connect-btn" data-action="open-signer-connect">Connect Signer</button>
+    `;
+  }
+
+  if (signerState.isConnecting) {
+    return `
+      <div class="topology-node-kicker">service</div>
+      <div class="topology-node-title">signer</div>
+      <div class="topology-node-meta signer-status-connecting">connecting...</div>
+    `;
+  }
+
+  // Connected state
+  const truncatedPubkey = signerState.pubkey
+    ? `${signerState.pubkey.substring(0, 8)}...${signerState.pubkey.substring(signerState.pubkey.length - 4)}`
+    : '';
+  const relayHtml = signerState.relay
+    ? `<span class="signer-relay">${signerState.relay}</span>`
+    : '';
+
+  return `
+    <div class="topology-node-kicker">service</div>
+    <div class="topology-node-title">signer</div>
+    <div class="topology-node-meta signer-status-connected">
+      <span class="signer-method-badge">${signerState.method === 'nip07' ? 'nip-07' : 'nip-46'}</span>
+      <span class="signer-pubkey">${truncatedPubkey}</span>
+      ${relayHtml}
+    </div>
+    <div class="signer-recent-requests" id="signer-recent-requests"><!-- populated by signer activity --></div>
+    <button class="signer-disconnect-btn" data-action="disconnect-signer">disconnect</button>
+  `;
 }
 
 export function renderDemoTopology(topology: DemoTopology): string {
@@ -197,22 +265,28 @@ export function renderDemoTopology(topology: DemoTopology): string {
 
   const serviceCards = topology.services
     .map(
-      (service) => `
+      (service) => {
+        const isSigner = service === 'signer';
+        const innerContent = isSigner
+          ? renderSignerNodeContent(topology.signerState)
+          : `<div class="topology-node-kicker">service</div>
+            <div class="topology-node-title">${service}</div>`;
+        return `
         <div class="topology-service-branch">
           ${renderNodeEdge(getRuntimeServiceEdgeId(service))}
           <article
             id="${getServiceNodeId(service)}"
-            class="node-box topology-node topology-service-card"
+            class="node-box topology-node topology-service-card${isSigner ? ' signer-node' : ''}"
             data-topology-node="service"
             data-node-id="${getServiceNodeId(service)}"
             data-service-name="${service}"
           >
-            <div class="topology-node-kicker">service</div>
-            <div class="topology-node-title">${service}</div>
+            ${innerContent}
             <div class="node-summary" id="node-summary-${getServiceNodeId(service)}"></div>
           </article>
         </div>
-      `
+      `;
+      }
     )
     .join('');
 

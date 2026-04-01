@@ -20,7 +20,8 @@ import type { NappletDebugger } from './debugger.js';
 import { classifyTappedMessagePath } from './debugger.js';
 import { renderAclPanels, setDebugger } from './acl-panel.js';
 import { initFlowAnimator } from './flow-animator.js';
-import { buildDemoTopology, renderDemoTopology } from './topology.js';
+import { buildDemoTopology, renderDemoTopology, getServiceNodeId } from './topology.js';
+import type { SignerConnectionStateView } from './topology.js';
 import {
   buildAllNodeDetails,
   buildNodeDetails,
@@ -28,6 +29,13 @@ import {
 } from './node-details.js';
 import type { NodeDetail } from './node-details.js';
 import { initNodeInspector, setSelectedNodeId } from './node-inspector.js';
+import {
+  onStateChange,
+  connectNip07,
+  disconnectSigner,
+  recordSignerRequest,
+  getSignerConnectionState,
+} from './signer-connection.js';
 
 // Boot the shell (now includes signer)
 const { tap } = bootShell();
@@ -47,6 +55,125 @@ if (debuggerEl) {
   debuggerEl.addSystemMessage(`shell booted -- host pubkey: ${getDemoHostPubkey().substring(0, 16)}...`);
   debuggerEl.addSystemMessage(getDemoHostAuditSummary());
 }
+
+// ─── Signer Node Display ─────────────────────────────────────────────────────
+
+const signerNodeId = getServiceNodeId('signer');
+
+/**
+ * Update the signer service node in the topology to reflect current connection state.
+ * Operates surgically on the node element without re-rendering the whole topology.
+ */
+function updateSignerNodeDisplay(state: SignerConnectionStateView): void {
+  const signerNode = document.getElementById(signerNodeId);
+  if (!signerNode) return;
+
+  // Remove existing dynamic content (everything before node-summary)
+  const nodeSummary = signerNode.querySelector('.node-summary');
+  // Clear children except the node-summary
+  const toRemove: Element[] = [];
+  for (const child of signerNode.children) {
+    if (!child.classList.contains('node-summary')) {
+      toRemove.push(child);
+    }
+  }
+  for (const el of toRemove) el.remove();
+
+  let innerHtml = '';
+
+  if (state.isConnecting) {
+    innerHtml = `
+      <div class="topology-node-kicker">service</div>
+      <div class="topology-node-title">signer</div>
+      <div class="topology-node-meta signer-status-connecting">connecting...</div>
+    `;
+  } else if (state.method === 'none') {
+    const errorHtml = state.error
+      ? `<div class="topology-node-meta signer-status-error">${state.error}</div>`
+      : '';
+    innerHtml = `
+      <div class="topology-node-kicker">service</div>
+      <div class="topology-node-title">signer</div>
+      ${errorHtml}
+      <div class="topology-node-meta signer-status-disconnected">not connected</div>
+      <button class="signer-connect-btn" data-action="open-signer-connect">Connect Signer</button>
+    `;
+  } else {
+    // Connected
+    const truncatedPubkey = state.pubkey
+      ? `${state.pubkey.substring(0, 8)}...${state.pubkey.substring(state.pubkey.length - 4)}`
+      : '';
+    const relayHtml = state.relay
+      ? `<span class="signer-relay">${state.relay}</span>`
+      : '';
+
+    // Recent requests (last 5, most recent first)
+    const recentSlice = [...state.recentRequests].reverse().slice(0, 5);
+    const requestRowsHtml = recentSlice.length > 0
+      ? recentSlice.map((r) => `
+          <div class="signer-request-row ${r.success ? 'ok' : 'err'}">
+            <span class="signer-req-method">${r.method}</span>
+            ${r.kind !== undefined ? `<span class="signer-req-kind">k${r.kind}</span>` : ''}
+            <span class="signer-req-status">${r.success ? '✓' : '✗'}</span>
+          </div>
+        `).join('')
+      : '<div class="signer-no-requests">no requests yet</div>';
+
+    innerHtml = `
+      <div class="topology-node-kicker">service</div>
+      <div class="topology-node-title">signer</div>
+      <div class="topology-node-meta signer-status-connected">
+        <span class="signer-method-badge">${state.method === 'nip07' ? 'nip-07' : 'nip-46'}</span>
+        <span class="signer-pubkey">${truncatedPubkey}</span>
+        ${relayHtml}
+      </div>
+      <div class="signer-recent-requests">
+        <div class="signer-recent-label">recent</div>
+        ${requestRowsHtml}
+      </div>
+      <button class="signer-disconnect-btn" data-action="disconnect-signer">disconnect</button>
+    `;
+  }
+
+  // Insert the dynamic content before node-summary
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = innerHtml;
+  if (nodeSummary) {
+    for (const child of [...tempDiv.children]) {
+      signerNode.insertBefore(child, nodeSummary);
+    }
+  } else {
+    signerNode.innerHTML = innerHtml;
+  }
+}
+
+// Subscribe to signer connection state changes
+onStateChange((state) => {
+  updateSignerNodeDisplay(state);
+
+  // Log to debugger
+  if (state.method !== 'none' && !state.isConnecting && !state.error) {
+    debuggerEl?.addSystemMessage(
+      `signer connected via ${state.method}: ${state.pubkey?.substring(0, 16)}...`
+    );
+  }
+  if (state.error) {
+    debuggerEl?.addSystemMessage(`signer connection error: ${state.error}`);
+  }
+});
+
+// Handle signer connect/disconnect button clicks
+document.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (target.closest('[data-action="open-signer-connect"]')) {
+    // Plan 31-01: direct NIP-07 connect (Plan 31-02 replaces with modal)
+    connectNip07();
+  }
+  if (target.closest('[data-action="disconnect-signer"]')) {
+    disconnectSigner();
+    debuggerEl?.addSystemMessage('signer disconnected');
+  }
+});
 
 // Show pubkey in shell node
 const shellPubkey = document.getElementById('shell-pubkey');

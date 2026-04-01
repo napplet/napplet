@@ -10,12 +10,19 @@ import {
   originRegistry,
   type ShellBridge,
   type ShellHooks,
+  type ServiceHandler,
   type Capability,
   type NostrEvent,
   type ConsentRequest,
 } from '@napplet/shell';
-import { createSignerService } from '@napplet/services';
-import { createSignerHooks, getDemoHostPubkey } from './signer-demo.js';
+import { createSignerService, createNotificationService } from '@napplet/services';
+import type { Notification } from '@napplet/services';
+import { getSigner, getSignerConnectionState } from './signer-connection.js';
+
+// Static ephemeral host identity for shell node display (separate from signer identity)
+import { generateSecretKey, getPublicKey } from 'nostr-tools/pure';
+const _hostSecretKey = generateSecretKey();
+const _hostPubkey = getPublicKey(_hostSecretKey);
 
 // Inline a simplified message tap since we can't import from tests/helpers in apps/
 // (they are not a published package)
@@ -274,13 +281,19 @@ function createMessageTap(): MessageTap {
 
 // --- Mock ShellHooks (simplified from tests/helpers/mock-hooks.ts) ---
 
-function createDemoHooks(): ShellHooks {
-  const signerHooks = createSignerHooks();
+function createDemoHooks(notificationOnChange?: (notifications: readonly Notification[]) => void): ShellHooks {
+  const notificationService = createNotificationService({
+    onChange: notificationOnChange,
+    maxPerWindow: 50,
+  });
   const services = {
     signer: createSignerService({
-      getSigner: signerHooks.getSigner,
+      getSigner,
     }),
+    notifications: notificationService,
   };
+  // Expose the notification service handler so the controller can dispatch to it directly
+  _notificationServiceHandler = notificationService;
   return {
     relayPool: {
       getRelayPool: () => ({
@@ -303,8 +316,8 @@ function createDemoHooks(): ShellHooks {
     },
     windowManager: { createWindow: () => null },
     auth: {
-      getUserPubkey: signerHooks.getUserPubkey,
-      getSigner: signerHooks.getSigner,
+      getUserPubkey: () => getSignerConnectionState().pubkey ?? '',
+      getSigner,
     },
     services,
     config: { getNappUpdateBehavior: () => 'auto-grant' },
@@ -355,8 +368,15 @@ export interface NappletInfo {
 }
 
 const napplets = new Map<string, NappletInfo>();
-const demoServiceNames = new Set<string>(['signer']);
+const demoServiceNames = new Set<string>(['signer', 'notifications']);
 let nappletCounter = 0;
+
+let _notificationServiceHandler: ServiceHandler | null = null;
+
+/** Get the registered notification service handler for direct host dispatch. */
+export function getNotificationServiceHandler(): ServiceHandler | null {
+  return _notificationServiceHandler;
+}
 
 // --- Public API ---
 
@@ -376,14 +396,33 @@ export function getDemoTopologyInputs() {
     hostPubkey: getDemoHostPubkey(),
     napplets: getDemoNappletDefinitions(),
     services: getDemoServiceNames(),
+    signerState: getSignerConnectionState(),
   };
 }
 
 /**
- * Boot the shell: create ShellBridge, install tap, wire up proxy.
+ * Get the demo host pubkey for display on the shell node.
+ * This is the shell's own ephemeral identity, separate from the connected signer.
  */
-export function bootShell(): { tap: MessageTap; relay: ShellBridge } {
-  const hooks = createDemoHooks();
+export function getDemoHostPubkey(): string {
+  return _hostPubkey;
+}
+
+/**
+ * Get the current signer connection state for topology rendering and UI.
+ */
+export function getDemoSignerState() {
+  return getSignerConnectionState();
+}
+
+/**
+ * Boot the shell: create ShellBridge, install tap, wire up proxy.
+ *
+ * @param notificationOnChange - Called when the notification service state changes.
+ *   Used by the demo notification controller to update host-side toast/summary UX.
+ */
+export function bootShell(notificationOnChange?: (notifications: readonly Notification[]) => void): { tap: MessageTap; relay: ShellBridge } {
+  const hooks = createDemoHooks(notificationOnChange);
   tap = createMessageTap();
   tap.install(window);
 
@@ -532,4 +571,3 @@ export function toggleBlock(windowId: string, blocked: boolean): void {
   }
 }
 
-export { getDemoHostPubkey } from './signer-demo.js';
