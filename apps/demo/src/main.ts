@@ -14,7 +14,12 @@ import {
   getDemoServiceNames,
   getNapplets,
   loadNapplet,
+  getNotificationServiceHandler,
 } from './shell-host.js';
+import {
+  createDemoNotificationController,
+} from './notification-demo.js';
+import type { DemoNotificationSnapshot } from './notification-demo.js';
 import './debugger.js';
 import type { NappletDebugger } from './debugger.js';
 import { classifyTappedMessagePath } from './debugger.js';
@@ -37,8 +42,28 @@ import {
   getSignerConnectionState,
 } from './signer-connection.js';
 
-// Boot the shell (now includes signer)
-const { tap } = bootShell();
+// ─── Notification Controller ─────────────────────────────────────────────────
+
+// Create the controller before boot so we can pass its onChange into the shell.
+// The controller accumulates service state and notifies subscribers on change.
+const notificationController = createDemoNotificationController();
+
+// Boot the shell (now includes signer and notifications)
+const { tap } = bootShell((notifications) => {
+  notificationController.handleServiceChange(notifications);
+});
+
+// Connect the service handler so the controller can dispatch actions
+const notificationHandler = getNotificationServiceHandler();
+if (notificationHandler) {
+  notificationController.connectService(notificationHandler);
+}
+
+// Track the latest notification snapshot for rendering
+let _notificationSnapshot: DemoNotificationSnapshot = notificationController.getSnapshot();
+notificationController.subscribe((snapshot) => {
+  _notificationSnapshot = snapshot;
+});
 const topology = buildDemoTopology(getDemoTopologyInputs());
 
 // Render topology into the left topology pane
@@ -54,6 +79,7 @@ if (debuggerEl) {
   setDebugger(debuggerEl);
   debuggerEl.addSystemMessage(`shell booted -- host pubkey: ${getDemoHostPubkey().substring(0, 16)}...`);
   debuggerEl.addSystemMessage(getDemoHostAuditSummary());
+  debuggerEl.addSystemMessage('notification service registered -- host callbacks active');
 }
 
 // ─── Signer Node Display ─────────────────────────────────────────────────────
