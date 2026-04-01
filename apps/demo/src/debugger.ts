@@ -81,7 +81,7 @@ export function classifyTappedMessagePath(msg: TappedMessage): DemoProtocolPath 
   if (kind === BusKind.SIGNER_REQUEST) return 'signer-request';
   if (kind === BusKind.SIGNER_RESPONSE) return 'signer-response';
 
-  if (kind === BusKind.INTER_PANE) {
+  if (kind === BusKind.IPC_PEER) {
     if (topic === TOPICS.STATE_GET || topic === TOPICS.STATE_KEYS) return 'state-read';
     if (topic === TOPICS.STATE_SET || topic === TOPICS.STATE_REMOVE || topic === TOPICS.STATE_CLEAR) return 'state-write';
     return msg.direction === 'napplet->shell' ? 'inter-pane-send' : 'inter-pane-receive';
