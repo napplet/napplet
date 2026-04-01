@@ -525,6 +525,9 @@ function wireNodeSelection(): void {
   const allNodes = document.querySelectorAll('[data-node-id]');
   for (const el of allNodes) {
     el.addEventListener('click', (event) => {
+      // Guard: Skip button clicks to allow button handlers to execute
+      if ((event.target as HTMLElement).closest('button')) return;
+
       event.stopPropagation();
       const nodeId = el.getAttribute('data-node-id');
       if (nodeId) {
