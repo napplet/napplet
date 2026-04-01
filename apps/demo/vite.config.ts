@@ -54,6 +54,11 @@ function serveDemoNapplets(): Plugin {
 
 export default defineConfig({
   root: __dirname,
+  resolve: {
+    alias: {
+      '@napplet/services': path.resolve(__dirname, '../../packages/services/src/index.ts'),
+    },
+  },
   plugins: [
     UnoCSS(),
     serveDemoNapplets(),

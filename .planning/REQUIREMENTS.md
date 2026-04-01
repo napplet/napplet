@@ -1,0 +1,80 @@
+# Requirements: Napplet Protocol SDK
+
+**Defined:** 2026-04-01
+**Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
+
+## v0.6.0 Requirements
+
+### Demo Reliability
+
+- [x] **DEMO-01**: Demo boots on current `@napplet/*` packages without stale integration paths or broken imports. (Validated in Phase 27)
+- [x] **DEMO-02**: User can revoke an ACL capability and the demo shows only the affected path as blocked instead of implying unrelated paths failed too. (Validated in Phase 27)
+- [x] **DEMO-03**: Demo exposes enough protocol/debug detail to determine whether a failure is a UI bug, shell/runtime bug, or ACL decision. (Validated in Phase 27)
+
+### Architecture Visualization
+
+- [ ] **ARCH-01**: Flow view separates napplets, shell, ACL, runtime, and each registered service into distinct nodes.
+- [ ] **ARCH-02**: Node ordering and hierarchy in the flow view match the real host architecture closely enough to teach the system accurately at a glance.
+
+### Node Detail
+
+- [ ] **NODE-01**: Each node presents live information relevant to its role, such as identity, capabilities, service status, or recent activity.
+- [ ] **NODE-02**: User can open an expanded drill-down view for supported nodes in a right-side panel that preserves the bottom debugger.
+
+### Notification Service
+
+- [ ] **NOTF-01**: Demo registers the notification service and shows it as its own node in the flow view.
+- [ ] **NOTF-02**: User can trigger toast notifications through the notification service path and observe the resulting protocol activity.
+- [ ] **NOTF-03**: Notification node exposes actions or state relevant to notification behavior.
+
+### Signer Experience
+
+- [ ] **SIGN-01**: Demo replaces the hidden mock signer experience with a visible signer node and connect/login flow.
+- [ ] **SIGN-02**: User can connect the signer flow through NIP-07 when a browser signer is available.
+- [ ] **SIGN-03**: User can connect the signer flow through NIP-46 using either a bunker URI or a Nostr Connect QR code.
+- [ ] **SIGN-04**: User can modify the relay used for the NIP-46 connection from the demo UI.
+- [ ] **SIGN-05**: Signer node or drill-down shows connection state, pubkey, and recent signer activity.
+
+## vNext Requirements
+
+### Custom Napplet Loading
+
+- **LOAD-01**: User can load a custom napplet into the demo shell to test shell, ACL, runtime, and service behavior.
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Arbitrary custom napplet loading | Deferred until the built-in demo is architecture-accurate and stable again |
+| Production nsite deployment | Deployment is separate from the demo upgrade milestone |
+| `@napplet/create` starter CLI | Valuable, but not part of restoring the demo as a trustworthy teaching/testing tool |
+| Package publishing workflow | Blocked on human npm auth and not required for demo upgrade |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DEMO-01 | Phase 27 | Complete |
+| DEMO-02 | Phase 27 | Complete |
+| DEMO-03 | Phase 27 | Complete |
+| ARCH-01 | Phase 28 | Pending |
+| ARCH-02 | Phase 28 | Pending |
+| NODE-01 | Phase 29 | Pending |
+| NODE-02 | Phase 29 | Pending |
+| NOTF-01 | Phase 30 | Pending |
+| NOTF-02 | Phase 30 | Pending |
+| NOTF-03 | Phase 30 | Pending |
+| SIGN-01 | Phase 31 | Pending |
+| SIGN-02 | Phase 31 | Pending |
+| SIGN-03 | Phase 31 | Pending |
+| SIGN-04 | Phase 31 | Pending |
+| SIGN-05 | Phase 31 | Pending |
+
+**Coverage:**
+- v0.6.0 requirements: 15 total
+- Mapped to phases: 15
+- Unmapped: 0
+
+---
+*Requirements defined: 2026-04-01*
+*Last updated: 2026-04-01 after Phase 27 completion*

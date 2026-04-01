@@ -95,6 +95,7 @@ const pendingRequests = new Map<string, {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
 }>();
+const pendingSignerRequestEvents = new Map<string, string>();
 
 // Promise that resolves when the keypair is ready
 let _resolveKeypairReady!: () => void;
@@ -145,14 +146,18 @@ async function sendSignerRequest(method: string, params?: Record<string, unknown
   return new Promise((resolve, reject) => {
     pendingRequests.set(id, { resolve, reject });
 
-    sendEvent(BusKind.SIGNER_REQUEST, [
+    const requestEvent = sendEvent(BusKind.SIGNER_REQUEST, [
       ['method', method],
       ['id', id],
       ...(params ? Object.entries(params).map(([k, v]) => ['param', k, JSON.stringify(v)]) : []),
     ]);
+    if (requestEvent) pendingSignerRequestEvents.set(requestEvent.id, id);
 
     setTimeout(() => {
       if (pendingRequests.delete(id)) {
+        for (const [eventId, correlationId] of pendingSignerRequestEvents.entries()) {
+          if (correlationId === id) pendingSignerRequestEvents.delete(eventId);
+        }
         reject(new Error('Signer request timed out'));
       }
     }, 30_000);
@@ -175,6 +180,18 @@ function handleRelayMessage(event: MessageEvent): void {
       break;
     }
     case 'OK': {
+      const [, eventId, success, reason] = msg;
+      if (success === false && typeof eventId === 'string') {
+        const correlationId = pendingSignerRequestEvents.get(eventId);
+        if (correlationId) {
+          pendingSignerRequestEvents.delete(eventId);
+          const pending = pendingRequests.get(correlationId);
+          if (pending) {
+            pendingRequests.delete(correlationId);
+            pending.reject(new Error(typeof reason === 'string' ? reason : 'Signer request denied'));
+          }
+        }
+      }
       break;
     }
     case 'EVENT': {
@@ -242,6 +259,9 @@ function handleSignerResponse(event: NostrEvent): void {
   if (!pending) return;
 
   pendingRequests.delete(correlationId);
+  for (const [eventId, id] of pendingSignerRequestEvents.entries()) {
+    if (id === correlationId) pendingSignerRequestEvents.delete(eventId);
+  }
 
   const errorTag = event.tags.find(t => t[0] === 'error');
   if (errorTag) {

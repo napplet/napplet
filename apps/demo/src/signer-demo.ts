@@ -2,8 +2,10 @@
  * signer-demo.ts -- Mock signer for demonstrating NIP-07 proxy delegation.
  *
  * Provides a mock signer that the shell's AuthHooks.getSigner() returns.
- * When a napplet calls window.nostr.signEvent(), the request flows through
- * the shell's signer proxy, which calls this mock signer.
+ * The demo host now registers a signer service, and that service delegates
+ * to this mock signer through runtime hooks. The hook remains available as a
+ * fallback path if the service is removed, but the demo should label that
+ * runtime fallback explicitly instead of implying it is the primary topology.
  *
  * The mock signer:
  * 1. Signs non-destructive kinds immediately (demonstrates sign:event flow)
@@ -17,8 +19,8 @@ const hostSecretKey = generateSecretKey();
 const hostPubkey = getPublicKey(hostSecretKey);
 
 /**
- * Create ShellHooks auth overrides that provide a real signer.
- * The signer uses a demo keypair -- not a real user identity.
+ * Create auth hook overrides that provide a demo signer implementation.
+ * The signer uses a demo keypair, not a real end-user identity.
  */
 export function createSignerHooks(): {
   getUserPubkey: () => string;

@@ -9,12 +9,30 @@ import { getNapplets, toggleCapability, toggleBlock } from './shell-host.js';
 import type { NappletDebugger } from './debugger.js';
 import type { Capability } from '@napplet/shell';
 
+export const DEMO_CAPABILITY_LABELS: Record<Capability, string> = {
+  'relay:read': 'Relay Subscribe',
+  'relay:write': 'Relay Publish / Inter-Pane Send',
+  'sign:event': 'Signer Requests',
+  'state:read': 'State Read',
+  'state:write': 'State Write',
+  'hotkey:forward': 'Hotkey Forward',
+};
+
+export const DEMO_CAPABILITY_HINTS: Record<Capability, string> = {
+  'relay:read': 'relay subscribe / inter-pane receive',
+  'relay:write': 'relay publish / inter-pane send',
+  'sign:event': 'signer requests',
+  'state:read': 'state read',
+  'state:write': 'state write',
+  'hotkey:forward': 'hotkey forward',
+};
+
 const DEMO_CAPABILITIES: { cap: Capability; label: string }[] = [
-  { cap: 'relay:read', label: 'Read Shell' },
-  { cap: 'relay:write', label: 'Write Shell' },
-  { cap: 'sign:event', label: 'Sign' },
-  { cap: 'state:read', label: 'Read State' },
-  { cap: 'state:write', label: 'Write State' },
+  { cap: 'relay:read', label: DEMO_CAPABILITY_LABELS['relay:read'] },
+  { cap: 'relay:write', label: DEMO_CAPABILITY_LABELS['relay:write'] },
+  { cap: 'sign:event', label: DEMO_CAPABILITY_LABELS['sign:event'] },
+  { cap: 'state:read', label: DEMO_CAPABILITY_LABELS['state:read'] },
+  { cap: 'state:write', label: DEMO_CAPABILITY_LABELS['state:write'] },
 ];
 
 let debugger_: NappletDebugger | null = null;
@@ -41,7 +59,7 @@ function renderNappletAcl(containerId: string, windowId: string, info: { name: s
     const toggle = document.createElement('button');
     applyBtnStyle(toggle, true);
     toggle.textContent = label;
-    toggle.title = `${cap} — click to revoke`;
+    toggle.title = `${cap} (${DEMO_CAPABILITY_HINTS[cap]}) — click to revoke`;
     toggle.dataset.enabled = 'true';
 
     toggle.addEventListener('click', () => {
@@ -49,10 +67,12 @@ function renderNappletAcl(containerId: string, windowId: string, info: { name: s
       const newState = !enabled;
       toggle.dataset.enabled = String(newState);
       applyBtnStyle(toggle, newState);
-      toggle.title = `${cap} — click to ${newState ? 'revoke' : 'grant'}`;
+      toggle.title = `${cap} (${DEMO_CAPABILITY_HINTS[cap]}) — click to ${newState ? 'revoke' : 'grant'}`;
 
       toggleCapability(windowId, cap, newState);
-      debugger_?.addSystemMessage(`${newState ? 'GRANT' : 'REVOKE'} ${cap} on ${info.name}`);
+      debugger_?.addSystemMessage(
+        `${newState ? 'GRANT' : 'REVOKE'} ${cap} (${DEMO_CAPABILITY_HINTS[cap]}) on ${info.name}`
+      );
     });
 
     row.appendChild(toggle);

@@ -20,6 +20,13 @@ const sendBtn = document.getElementById('send-btn')!;
 let authenticated = false;
 const HISTORY_KEY = 'chat-history';
 const MAX_HISTORY = 50;
+const pendingAcks: string[] = [];
+
+function formatError(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string' && error.length > 0) return error;
+  return fallback;
+}
 
 // --- Message Display ---
 
@@ -49,8 +56,8 @@ async function loadHistory(): Promise<void> {
       }
       addMessage(`loaded ${entries.length} history entries`, 'system');
     }
-  } catch {
-    addMessage('no history found', 'system');
+  } catch (error) {
+    addMessage(`state history load failed -- ${formatError(error, 'denied: state:read')}`, 'system');
   }
 }
 
@@ -61,8 +68,8 @@ async function saveToHistory(text: string): Promise<void> {
     entries.push(text);
     if (entries.length > MAX_HISTORY) entries.splice(0, entries.length - MAX_HISTORY);
     await nappState.setItem(HISTORY_KEY, JSON.stringify(entries));
-  } catch {
-    // Storage may be denied by ACL -- silently ignore
+  } catch (error) {
+    addMessage(`state history save failed -- ${formatError(error, 'denied: state:write')}`, 'system');
   }
 }
 
@@ -76,11 +83,17 @@ async function sendMessage(): Promise<void> {
   addMessage(text, 'self');
   await saveToHistory(text);
 
-  // Emit to bot via inter-pane
-  emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
+  try {
+    pendingAcks.push('inter-pane send');
+    emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
+    addMessage('inter-pane send attempted -- chat:message', 'system');
+  } catch (error) {
+    addMessage(`inter-pane send failed -- ${formatError(error, 'denied: relay:write')}`, 'system');
+  }
 
   // Publish to relay (exercises relay:write + sign:event)
   try {
+    pendingAcks.push('signer request');
     const template: EventTemplate = {
       kind: 1,
       content: text,
@@ -88,8 +101,9 @@ async function sendMessage(): Promise<void> {
       created_at: Math.floor(Date.now() / 1000),
     };
     await publish(template, []);
-  } catch {
-    addMessage('relay publish failed (check ACL)', 'system');
+    pendingAcks.push('relay publish');
+  } catch (error) {
+    addMessage(`relay publish failed -- ${formatError(error, 'denied: relay:write')}`, 'system');
   }
 }
 
@@ -126,23 +140,31 @@ window.addEventListener('message', (event) => {
           addMessage(event.content, 'other');
         },
         () => {
-          addMessage('relay subscription ready', 'system');
+          addMessage('relay subscribe ready', 'system');
         }
       );
-    } catch {
-      addMessage('relay subscribe failed (check ACL)', 'system');
+    } catch (error) {
+      addMessage(`relay subscribe failed -- ${formatError(error, 'denied: relay:read')}`, 'system');
     }
 
     // Listen for bot responses via inter-pane
     on('bot:response', (payload: unknown) => {
       const data = payload as { text?: string };
       if (data.text) {
+        addMessage('inter-pane receive -- bot:response', 'system');
         addMessage(`[bot] ${data.text}`, 'other');
       }
     });
   }
 
-  if (verb === 'OK' && success === false) {
+  if (verb === 'OK' && authenticated) {
+    const op = pendingAcks.shift();
+    if (success === false && op) {
+      addMessage(`${op} denied -- ${event.data[3] || 'unknown error'}`, 'system');
+    }
+  }
+
+  if (verb === 'OK' && success === false && !authenticated) {
     statusEl.textContent = 'auth failed';
     statusEl.style.color = '#ff3b3b';
   }

@@ -9,7 +9,8 @@
  * Sequence diagram is added in Plan 05.
  */
 
-import type { TappedMessage, MessageTap } from './shell-host.js';
+import { BusKind, TOPICS } from '@napplet/shell';
+import type { TappedMessage, MessageTap, DemoProtocolPath } from './shell-host.js';
 import { renderSequenceDiagram } from './sequence-diagram.js';
 
 /** Verb-to-color mapping for the dark terminal theme */
@@ -31,6 +32,63 @@ const DIRECTION_ARROWS: Record<string, string> = {
   'napplet->shell': '-->',
   'shell->napplet': '<--',
 };
+
+export const DEBUGGER_PATH_LABELS: DemoProtocolPath[] = [
+  'auth',
+  'relay-publish',
+  'relay-subscribe',
+  'inter-pane-send',
+  'inter-pane-receive',
+  'state-read',
+  'state-write',
+  'signer-request',
+  'signer-response',
+];
+
+function extractEvent(msg: TappedMessage): Record<string, unknown> | null {
+  if (msg.verb !== 'EVENT') return null;
+  const candidate = msg.direction === 'shell->napplet' ? msg.raw[2] : msg.raw[1];
+  if (candidate && typeof candidate === 'object') return candidate as Record<string, unknown>;
+  return null;
+}
+
+function pathFromReason(reason?: string): DemoProtocolPath | null {
+  if (!reason) return null;
+  if (reason.includes('state:read')) return 'state-read';
+  if (reason.includes('state:write')) return 'state-write';
+  if (reason.includes('sign:event')) return 'signer-request';
+  if (reason.includes('relay:read')) return 'relay-subscribe';
+  if (reason.includes('relay:write')) return 'relay-publish';
+  return null;
+}
+
+export function classifyTappedMessagePath(msg: TappedMessage): DemoProtocolPath | null {
+  if (msg.verb === 'AUTH') return 'auth';
+  if (msg.verb === 'REQ' || msg.verb === 'EOSE' || msg.verb === 'CLOSE' || msg.verb === 'CLOSED') {
+    return 'relay-subscribe';
+  }
+  if (msg.verb === 'OK') {
+    return pathFromReason(msg.parsed.reason);
+  }
+  if (msg.verb !== 'EVENT') return null;
+
+  const event = extractEvent(msg);
+  const kind = typeof event?.kind === 'number' ? (event.kind as number) : msg.parsed.eventKind;
+  const topic = typeof event?.tags === 'object'
+    ? ((event?.tags as string[][] | undefined)?.find((tag) => tag[0] === 't')?.[1] ?? msg.parsed.topic)
+    : msg.parsed.topic;
+
+  if (kind === BusKind.SIGNER_REQUEST) return 'signer-request';
+  if (kind === BusKind.SIGNER_RESPONSE) return 'signer-response';
+
+  if (kind === BusKind.INTER_PANE) {
+    if (topic === TOPICS.STATE_GET || topic === TOPICS.STATE_KEYS) return 'state-read';
+    if (topic === TOPICS.STATE_SET || topic === TOPICS.STATE_REMOVE || topic === TOPICS.STATE_CLEAR) return 'state-write';
+    return msg.direction === 'napplet->shell' ? 'inter-pane-send' : 'inter-pane-receive';
+  }
+
+  return msg.direction === 'napplet->shell' ? 'relay-publish' : 'relay-subscribe';
+}
 
 export class NappletDebugger extends HTMLElement {
   private shadow: ShadowRoot;
@@ -346,26 +404,28 @@ export class NappletDebugger extends HTMLElement {
 
   private formatDetail(msg: TappedMessage): string {
     const p = msg.parsed;
+    const path = classifyTappedMessagePath(msg);
+    const pathPrefix = path ? `path:${path} ` : '';
     switch (msg.verb) {
       case 'AUTH':
-        if (typeof msg.raw[1] === 'string') return `challenge: ${(msg.raw[1] as string).substring(0, 16)}...`;
-        return `kind:${p.eventKind} pubkey:${(p.pubkey || '').substring(0, 8)}...`;
+        if (typeof msg.raw[1] === 'string') return `${pathPrefix}challenge: ${(msg.raw[1] as string).substring(0, 16)}...`;
+        return `${pathPrefix}kind:${p.eventKind} pubkey:${(p.pubkey || '').substring(0, 8)}...`;
       case 'EVENT':
-        return `${p.subId ? `sub:${p.subId} ` : ''}kind:${p.eventKind}${p.topic ? ` topic:${p.topic}` : ''} id:${(p.eventId || '').substring(0, 8)}...`;
+        return `${pathPrefix}${p.subId ? `sub:${p.subId} ` : ''}kind:${p.eventKind}${p.topic ? ` topic:${p.topic}` : ''} id:${(p.eventId || '').substring(0, 8)}...`;
       case 'REQ':
-        return `sub:${p.subId} filters:${JSON.stringify(msg.raw.slice(2)).substring(0, 60)}`;
+        return `${pathPrefix}sub:${p.subId} filters:${JSON.stringify(msg.raw.slice(2)).substring(0, 60)}`;
       case 'OK':
-        return `${p.success ? 'accepted' : 'rejected'}${p.reason ? ` -- ${p.reason}` : ''} id:${(p.eventId || '').substring(0, 8)}...`;
+        return `${pathPrefix}${p.success ? 'accepted' : 'rejected'}${p.reason ? ` -- ${p.reason}` : ''} id:${(p.eventId || '').substring(0, 8)}...`;
       case 'EOSE':
-        return `sub:${p.subId}`;
+        return `${pathPrefix}sub:${p.subId}`;
       case 'CLOSE':
-        return `sub:${p.subId}`;
+        return `${pathPrefix}sub:${p.subId}`;
       case 'CLOSED':
-        return `sub:${p.subId} reason:${p.reason || ''}`;
+        return `${pathPrefix}sub:${p.subId} reason:${p.reason || ''}`;
       case 'NOTICE':
-        return p.reason || '';
+        return `${pathPrefix}${p.reason || ''}`;
       default:
-        return JSON.stringify(msg.raw).substring(0, 80);
+        return `${pathPrefix}${JSON.stringify(msg.raw).substring(0, 80)}`;
     }
   }
 

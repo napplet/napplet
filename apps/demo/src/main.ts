@@ -4,7 +4,13 @@
  * Boots shell, loads napplets, wires debugger, ACL panel, and flow animator.
  */
 import 'virtual:uno.css';
-import { bootShell, loadNapplet, getDemoHostPubkey, getNapplets } from './shell-host.js';
+import {
+  bootShell,
+  loadNapplet,
+  getDemoHostPubkey,
+  getNapplets,
+  getDemoHostAuditSummary,
+} from './shell-host.js';
 import './debugger.js';
 import type { NappletDebugger } from './debugger.js';
 import { renderAclPanels, setDebugger } from './acl-panel.js';
@@ -19,6 +25,7 @@ if (debuggerEl) {
   debuggerEl.connectTap(tap);
   setDebugger(debuggerEl);
   debuggerEl.addSystemMessage(`shell booted -- host pubkey: ${getDemoHostPubkey().substring(0, 16)}...`);
+  debuggerEl.addSystemMessage(getDemoHostAuditSummary());
 }
 
 // Show pubkey in shell center panel

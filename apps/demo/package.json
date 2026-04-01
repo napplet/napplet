@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@napplet/services": "workspace:*",
     "@napplet/shell": "workspace:*",
     "@napplet/shim": "workspace:*",
     "nostr-tools": "^2.23.3"

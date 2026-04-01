@@ -13,8 +13,8 @@ import {
   type Capability,
   type NostrEvent,
   type ConsentRequest,
-  ALL_CAPABILITIES,
 } from '@napplet/shell';
+import { createSignerService } from '@napplet/services';
 import { createSignerHooks, getDemoHostPubkey } from './signer-demo.js';
 
 // Inline a simplified message tap since we can't import from tests/helpers in apps/
@@ -45,6 +45,95 @@ export interface MessageTap {
   onMessage(callback: (msg: TappedMessage) => void): () => void;
   filter(criteria: { verb?: string; direction?: string }): TappedMessage[];
   clear(): void;
+}
+
+export type DemoProtocolPath =
+  | 'auth'
+  | 'relay-publish'
+  | 'relay-subscribe'
+  | 'inter-pane-send'
+  | 'inter-pane-receive'
+  | 'state-read'
+  | 'state-write'
+  | 'signer-request'
+  | 'signer-response';
+
+export interface DemoPathAuditEntry {
+  path: DemoProtocolPath;
+  capability: Capability | null;
+  direction: 'host->runtime' | 'runtime->napplet' | 'napplet->runtime';
+  explanation: string;
+}
+
+export type DemoSignerMode = 'service' | 'fallback';
+
+export const DEMO_SIGNER_MODE: DemoSignerMode = 'service';
+
+export const DEMO_PROTOCOL_PATHS: DemoPathAuditEntry[] = [
+  {
+    path: 'auth',
+    capability: null,
+    direction: 'napplet->runtime',
+    explanation: 'AUTH handshakes establish napplet identity before capability checks begin.',
+  },
+  {
+    path: 'relay-publish',
+    capability: 'relay:write',
+    direction: 'napplet->runtime',
+    explanation: 'Regular EVENT publishes go through relay write enforcement before they fan out.',
+  },
+  {
+    path: 'relay-subscribe',
+    capability: 'relay:read',
+    direction: 'napplet->runtime',
+    explanation: 'REQ and relay delivery both rely on relay read permission.',
+  },
+  {
+    path: 'inter-pane-send',
+    capability: 'relay:write',
+    direction: 'napplet->runtime',
+    explanation: 'Non-state inter-pane events reuse the relay write sender gate before delivery.',
+  },
+  {
+    path: 'inter-pane-receive',
+    capability: 'relay:read',
+    direction: 'runtime->napplet',
+    explanation: 'Recipients need relay read permission to receive non-state inter-pane events.',
+  },
+  {
+    path: 'state-read',
+    capability: 'state:read',
+    direction: 'napplet->runtime',
+    explanation: 'shell:state-get and shell:state-keys topics are routed as state reads.',
+  },
+  {
+    path: 'state-write',
+    capability: 'state:write',
+    direction: 'napplet->runtime',
+    explanation: 'shell:state-set, remove, and clear topics require state write permission.',
+  },
+  {
+    path: 'signer-request',
+    capability: 'sign:event',
+    direction: 'napplet->runtime',
+    explanation: 'Kind 29001 signer requests are checked as sign:event before service dispatch.',
+  },
+  {
+    path: 'signer-response',
+    capability: 'sign:event',
+    direction: 'runtime->napplet',
+    explanation: 'Signer responses come back from the configured signer service after an allowed request.',
+  },
+];
+
+export const DEMO_PROTOCOL_PATH_INDEX: Record<DemoProtocolPath, DemoPathAuditEntry> =
+  Object.fromEntries(DEMO_PROTOCOL_PATHS.map((entry) => [entry.path, entry])) as Record<DemoProtocolPath, DemoPathAuditEntry>;
+
+export function getDemoHostAuditSummary(): string {
+  const auditedPaths = DEMO_PROTOCOL_PATHS
+    .map((entry) => `${entry.path}:${entry.capability ?? 'none'}`)
+    .join(', ');
+  return `host ready -- signer mode: ${DEMO_SIGNER_MODE}; audited paths: ${auditedPaths}`;
 }
 
 // --- Message Tap (simplified from tests/helpers/message-tap.ts) ---
@@ -186,6 +275,11 @@ function createDemoHooks(): ShellHooks {
     auth: {
       getUserPubkey: signerHooks.getUserPubkey,
       getSigner: signerHooks.getSigner,
+    },
+    services: {
+      signer: createSignerService({
+        getSigner: signerHooks.getSigner,
+      }),
     },
     config: { getNappUpdateBehavior: () => 'auto-grant' },
     hotkeys: { executeHotkeyFromForward: () => {} },

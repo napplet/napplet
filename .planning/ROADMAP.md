@@ -2,6 +2,7 @@
 
 ## Milestones
 
+- **v0.6.0 Demo Upgrade** — Phases 27-31 (planned)
 - ✅ **v0.1.0 Alpha** — Phases 1-6 (shipped 2026-03-30) — [Archive](milestones/v0.1.0-ROADMAP.md)
 - ✅ **v0.2.0 Shell Architecture Cleanup** — Phases 7-11 (shipped 2026-03-31) — [Archive](milestones/v0.2.0-ROADMAP.md)
 - ✅ **v0.3.0 Runtime and Core** — Phases 12-17 (shipped 2026-03-31) — [Archive](milestones/v0.3.0-ROADMAP.md)
@@ -13,6 +14,67 @@
 **Phase Numbering:**
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+<details open>
+<summary>v0.6.0 Demo Upgrade (Phases 27-31) — PLANNED</summary>
+
+- [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues (completed 2026-04-01)
+- [ ] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture
+- [ ] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
+- [ ] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path
+- [ ] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings
+
+</details>
+
+## Phase Details
+
+### Phase 27: Demo Audit & Correctness
+**Goal**: Reconcile the demo with the current `@napplet/*` architecture, identify stale integrations and correctness bugs, and make protocol failures understandable enough to distinguish UI issues from real ACL, runtime, or service behavior
+**Depends on**: Nothing (first phase in the milestone)
+**Requirements**: DEMO-01, DEMO-02, DEMO-03
+**Success Criteria** (what must be TRUE):
+  1. The demo boots against the current package structure without stale integration paths or obviously broken wiring
+  2. Revoking a capability shows the affected protocol path clearly enough that relay, inter-pane, signer, and state failures are not conflated
+  3. The phase leaves regression coverage where practical and reproducible notes for any diagnosed behavior that is not yet automated
+**Plans**: 3 completed
+
+### Phase 28: Architecture Topology View
+**Goal**: Rebuild the main demo topology so the visual node hierarchy matches the actual host architecture instead of flattening shell behavior into a single box
+**Depends on**: Phase 27
+**Requirements**: ARCH-01, ARCH-02
+**Success Criteria** (what must be TRUE):
+  1. The flow view separates napplets, shell, ACL, runtime, and each registered service into distinct nodes
+  2. The ordering and hierarchy of nodes teach the real architecture accurately at a glance
+**Plans**: TBD
+
+### Phase 29: Node Detail & Drill-Down
+**Goal**: Add node-specific state surfaces and an expanded right-side drill-down panel so users can inspect the demo architecture without losing the bottom debugger
+**Depends on**: Phase 28
+**Requirements**: NODE-01, NODE-02
+**Success Criteria** (what must be TRUE):
+  1. Each node presents live information relevant to its role, such as identity, capabilities, recent activity, or service state
+  2. Supported nodes can open an expanded drill-down view in a right-side panel while preserving access to the bottom debugger
+**Plans**: TBD
+
+### Phase 30: Notification Service UX
+**Goal**: Surface the notification service as a first-class part of the demo and exercise it through visible toast behavior
+**Depends on**: Phase 28, Phase 29
+**Requirements**: NOTF-01, NOTF-02, NOTF-03
+**Success Criteria** (what must be TRUE):
+  1. The demo registers the notification service and shows it as its own node in the flow
+  2. Users can trigger toast notifications through the real notification service path and observe the resulting protocol activity
+  3. The notification node exposes useful notification state or actions for tinkering and inspection
+**Plans**: TBD
+
+### Phase 31: Signer Connection UX
+**Goal**: Replace the simplified signer demo with a visible signer connection experience that supports NIP-07 and NIP-46 flows
+**Depends on**: Phase 27, Phase 28, Phase 29
+**Requirements**: SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-05
+**Success Criteria** (what must be TRUE):
+  1. The demo includes a visible signer node and login/connect flow instead of a hidden mock signer-only experience
+  2. Users can connect through NIP-07 when available and through NIP-46 using either a bunker URI or a Nostr Connect QR code
+  3. The demo UI allows editing the NIP-46 relay and shows signer connection state, pubkey, and recent signer activity
+**Plans**: TBD
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
@@ -102,3 +164,8 @@
 | 24. Root and Interface READMEs | v0.5.0 | 4/4 | Complete | 2026-03-31 |
 | 25. SPEC.md Updates | v0.5.0 | 1/1 | Complete | 2026-03-31 |
 | 26. Skills Directory | v0.5.0 | 3/3 | Complete | 2026-03-31 |
+| 27. Demo Audit & Correctness | v0.6.0 | 3/3 | Complete | 2026-04-01 |
+| 28. Architecture Topology View | v0.6.0 | 0/0 | Planned | — |
+| 29. Node Detail & Drill-Down | v0.6.0 | 0/0 | Planned | — |
+| 30. Notification Service UX | v0.6.0 | 0/0 | Planned | — |
+| 31. Signer Connection UX | v0.6.0 | 0/0 | Planned | — |
