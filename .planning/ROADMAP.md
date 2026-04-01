@@ -24,7 +24,7 @@
 - [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path (completed 2026-04-01)
 - [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings (completed 2026-04-01)
 - [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix, isAmber logic fix, detectServiceTarget signer errors (completed 2026-04-01)
-- [ ] **Phase 33: Polish Demo UI Layout** - Fix layout and interaction issues: iframe container filling, 90-degree line routing, endpoint offsets, orphan container lines, and service button click handling (pending)
+- [ ] **Phase 33: Polish Demo UI Layout** - Fix layout and interaction issues: iframe container filling, 90-degree line routing, endpoint offsets, orphan container lines, and service button click handling (planned)
 
 </details>
 
@@ -100,7 +100,14 @@
   3. Input and output connection points are visually distinct and offset from each other on nodes
   4. No orphan edges connecting to undefined container nodes
   5. Service buttons respond to clicks without triggering the node panel open action
-**Plans**: TBD
+**Plans**: 5 planned
+
+Plans:
+- [ ] 33-01: Fix napplet iframe container rendering — add CSS rule to fill flex container
+- [ ] 33-02: Configure Leader Line orthogonal routing — add curve: 0 to BASE_OPTIONS
+- [ ] 33-03: Implement socket gravity port distinction — adjust startSocketGravity/endSocketGravity offsets
+- [ ] 33-04: Remove orphan topology edge — delete edge definition referencing topology-napplets
+- [ ] 33-05: Add button click isolation — add event.stopPropagation() to service button handlers
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
@@ -196,14 +203,14 @@
 | 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 32. Fix demo UI/UX bugs | v0.6.0 | 5/5 | Complete | 2026-04-01 |
-| 33. Polish Demo UI Layout | v0.6.0 | 0/0 | Pending | — |
+| 33. Polish Demo UI Layout | v0.6.0 | 5/5 | Planned | — |
 
 ### Phase 32: Fix demo UI/UX bugs
 
 **Goal:** Fix three targeted UI/UX bugs in the demo app: add amber (infrastructure failure) state to ACL indicator, replace CSS-bar edges with Leader Line dynamic connections, and fix stale CLAUDE.md NappKeypair documentation.
 **Requirements**: None (bug fixes only)
 **Depends on:** Phase 31
-**Plans:** 3 plans
+**Plans:** 5 plans (3 original + 2 gap closure)
 
 Plans:
 - [x] 32-01: ACL indicator signal quality — add amber state for infrastructure failures vs red for explicit denials
