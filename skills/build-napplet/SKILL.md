@@ -24,7 +24,7 @@ pnpm add -D @napplet/vite-plugin
 
 ## Step 2 — Configure the Vite plugin
 
-The vite plugin injects a `<meta name="napplet-aggregate-hash">` tag at build time, which the shim uses for version-scoped storage and ACL. The `nappType` option is required.
+The vite plugin injects a `<meta name="napplet-aggregate-hash">` tag at build time, which the shim uses for version-scoped storage and ACL. The `nappletType` option is required.
 
 ```ts
 // vite.config.ts
@@ -34,7 +34,7 @@ import { nip5aManifest } from '@napplet/vite-plugin';
 export default defineConfig({
   plugins: [
     nip5aManifest({
-      nappType: 'my-napplet',
+      nappletType: 'my-napplet',
       // requires: ['audio', 'notifications'], // optional: declared service dependencies
     }),
   ],
@@ -97,7 +97,7 @@ console.log(`Loaded ${events.length} notes from cache`);
 
 ## Step 6 — Use nappletState
 
-Import `nappletState` from `@napplet/shim`. Storage is scoped by `nappType:aggregateHash` — different napplet versions have isolated storage namespaces. Do not use `localStorage` directly (it throws `SecurityError` without `allow-same-origin`).
+Import `nappletState` from `@napplet/shim`. Storage is scoped by `nappletType:aggregateHash` — different napplet versions have isolated storage namespaces. Do not use `localStorage` directly (it throws `SecurityError` without `allow-same-origin`).
 
 ```ts
 import { nappletState } from '@napplet/shim';

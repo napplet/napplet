@@ -150,7 +150,7 @@ TOPICS.AUTH_IDENTITY_CHANGED    // 'auth:identity-changed'
 TOPICS.STATE_GET                // 'shell:state-get'
 TOPICS.STATE_SET                // 'shell:state-set'
 TOPICS.STATE_REMOVE             // 'shell:state-remove'
-TOPICS.STATE_RESPONSE           // 'napp:state-response'
+TOPICS.STATE_RESPONSE           // 'napplet:state-response'
 
 // Shell config
 TOPICS.SHELL_CONFIG_GET         // 'shell:config-get'
@@ -159,7 +159,7 @@ TOPICS.SHELL_CONFIG_UPDATE      // 'shell:config-update'
 // Audio
 TOPICS.AUDIO_REGISTER           // 'shell:audio-register'
 TOPICS.AUDIO_UNREGISTER         // 'shell:audio-unregister'
-TOPICS.AUDIO_MUTED              // 'napp:audio-muted'
+TOPICS.AUDIO_MUTED              // 'napplet:audio-muted'
 
 // Window manager
 TOPICS.WM_FOCUSED_WINDOW_CHANGED // 'wm:focused-window-changed'

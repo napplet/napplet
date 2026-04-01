@@ -53,7 +53,7 @@ import { nip5aManifest } from '@napplet/vite-plugin';
 
 export default defineConfig({
   plugins: [
-    nip5aManifest({ nappType: 'my-napp' }),
+    nip5aManifest({ nappletType: 'my-napp' }),
   ],
 });
 ```
@@ -62,7 +62,7 @@ export default defineConfig({
 
 ### Plugin Options
 
-#### nappType (required)
+#### nappletType (required)
 
 **Type:** `string`
 
@@ -109,7 +109,7 @@ import { nip5aManifest } from '@napplet/vite-plugin';
 export default defineConfig({
   plugins: [
     nip5aManifest({
-      nappType: 'my-music-app',
+      nappletType: 'my-music-app',
       requires: ['audio', 'notifications'],
     }),
   ],
@@ -160,7 +160,7 @@ Injects two meta tags into the HTML `<head>`:
 
 ```html
 <meta name="napplet-aggregate-hash" content="">
-<meta name="napplet-napp-type" content="<nappType>">
+<meta name="napplet-napp-type" content="<nappletType>">
 ```
 
 The empty aggregate hash tells the shell this is a development build. The napplet shim reads these tags during AUTH to include in the handshake.
@@ -196,8 +196,8 @@ Create a Vite plugin instance.
 
 ```ts
 interface Nip5aManifestOptions {
-  /** Napp type/dtag (e.g., 'feed', 'chat') */
-  nappType: string;
+  /** Napplet type/dtag (e.g., 'feed', 'chat') */
+  nappletType: string;
   /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
   requires?: string[];
 }

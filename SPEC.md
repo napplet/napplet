@@ -199,7 +199,7 @@ Request:
 
 Response:
 ```json
-["EVENT", "sub-id", {"kind": 29003, "tags": [["t", "napp:state-response"], ["id", "corr-uuid"], ["value", "dark"], ["found", "true"]], "content": ""}]
+["EVENT", "sub-id", {"kind": 29003, "tags": [["t", "napplet:state-response"], ["id", "corr-uuid"], ["value", "dark"], ["found", "true"]], "content": ""}]
 ```
 
 ---
@@ -286,7 +286,7 @@ The `aggregateHash` tag value SHOULD be read from a `<meta name="napplet-aggrega
 The shell derives the dTag from the AUTH event:
 
 ```
-dTag = parseInt(pubkey.slice(0, 8), 16).toString(36) + nappType
+dTag = parseInt(pubkey.slice(0, 8), 16).toString(36) + nappletType
 ```
 
 This value is used as part of the composite ACL key `(pubkey, dTag, aggregateHash)`.
@@ -569,7 +569,7 @@ All state operations use kind 29003 (IPC_PEER) events with topic-based routing.
 {
   "kind": 29003,
   "tags": [
-    ["t", "napp:state-response"],
+    ["t", "napplet:state-response"],
     ["id", "<correlation_id>"]
   ],
   "content": ""
@@ -596,7 +596,7 @@ Storage requests use NIP-01 tags in the request event for parameters (not JSON c
 {
   "kind": 29003,
   "tags": [
-    ["t", "napp:state-response"],
+    ["t", "napplet:state-response"],
     ["id", "<correlation_id>"],
     ["key", "theme"],
     ["key", "preferences"],
@@ -622,7 +622,7 @@ The per-napplet quota MAY be configured via the ACL entry's `stateQuota` field. 
 The shell MUST scope state keys internally using the format:
 
 ```
-napp-state:{pubkey}:{dTag}:{aggregateHash}:{userKey}
+napplet-state:{pubkey}:{dTag}:{aggregateHash}:{userKey}
 ```
 
 Napplets only see their own `userKey` namespace -- the scoping prefix is invisible to the napplet.
@@ -651,14 +651,14 @@ The shell maintains a registry of which napplets are actively producing audio. N
 
 | Topic | Content | Description |
 |---|---|---|
-| `napp:audio-muted` | `{"muted": true}` or `{"muted": false}` | Shell commands napplet to mute or unmute |
+| `napplet:audio-muted` | `{"muted": true}` or `{"muted": false}` | Shell commands napplet to mute or unmute |
 
 ### 6.4 Lifecycle
 
 1. When a napplet begins audio playback, it SHOULD emit `shell:audio-register` with a display title
 2. The shell registers the source and displays an audio indicator in the UI
-3. The user MAY click the indicator to toggle mute -- the shell sends `napp:audio-muted`
-4. The napplet MUST pause/resume its AudioContext in response to `napp:audio-muted`
+3. The user MAY click the indicator to toggle mute -- the shell sends `napplet:audio-muted`
+4. The napplet MUST pause/resume its AudioContext in response to `napplet:audio-muted`
 5. Minimizing a window MAY auto-mute the source (shell implementation choice)
 6. When audio stops or the window closes, the napplet SHOULD emit `shell:audio-unregister`
 7. The shell MUST unregister sources when their window is destroyed, even without explicit unregister
@@ -1001,7 +1001,7 @@ Layer 3: Capabilities & Extensions
 ACL entries are keyed by the triple `(pubkey, dTag, aggregateHash)`. This ties permissions to a specific napplet build. When a napplet updates (new aggregateHash), the shell creates a fresh ACL entry.
 
 - `pubkey`: The napplet's ephemeral pubkey from AUTH
-- `dTag`: Derived from `parseInt(pubkey.slice(0, 8), 16).toString(36) + nappType`
+- `dTag`: Derived from `parseInt(pubkey.slice(0, 8), 16).toString(36) + nappletType`
 - `aggregateHash`: NIP-5A content hash from the AUTH event (empty string for dev mode)
 
 ### 13.2 Capability Types
