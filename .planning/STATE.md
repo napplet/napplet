@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.7.0
 milestone_name: Ontology Audit and Adjustments
-status: executing
-stopped_at: Phase 35 plans created — ready to execute
-last_updated: "2026-04-01T19:15:00.000Z"
+status: Plans created — 35-01 (core+consumers), 35-02 (tests), 35-03 (SPEC.md)
+stopped_at: Phase 36 context gathered
+last_updated: "2026-04-01T19:20:59.112Z"
 last_activity: 2026-04-01 -- Phase 35 planning complete
 progress:
   total_phases: 6
@@ -63,6 +63,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-01T19:03:38.251Z
-Stopped at: Phase 35 context gathered
-Resume file: .planning/phases/35-wire-protocol-rename/35-CONTEXT.md
+Last session: 2026-04-01T19:20:59.109Z
+Stopped at: Phase 36 context gathered
+Resume file: .planning/phases/36-type-correctness/36-CONTEXT.md
