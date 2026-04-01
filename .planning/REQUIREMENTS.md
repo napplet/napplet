@@ -18,8 +18,8 @@
 
 ### Node Detail
 
-- [ ] **NODE-01**: Each node presents live information relevant to its role, such as identity, capabilities, service status, or recent activity.
-- [ ] **NODE-02**: User can open an expanded drill-down view for supported nodes in a right-side panel that preserves the bottom debugger.
+- [x] **NODE-01**: Each node presents live information relevant to its role, such as identity, capabilities, service status, or recent activity. (Validated in Phase 29)
+- [x] **NODE-02**: User can open an expanded drill-down view for supported nodes in a right-side panel that preserves the bottom debugger. (Validated in Phase 29)
 
 ### Notification Service
 
@@ -59,8 +59,8 @@
 | DEMO-03 | Phase 27 | Complete |
 | ARCH-01 | Phase 28 | Pending |
 | ARCH-02 | Phase 28 | Pending |
-| NODE-01 | Phase 29 | Pending |
-| NODE-02 | Phase 29 | Pending |
+| NODE-01 | Phase 29 | Complete |
+| NODE-02 | Phase 29 | Complete |
 | NOTF-01 | Phase 30 | Pending |
 | NOTF-02 | Phase 30 | Pending |
 | NOTF-03 | Phase 30 | Pending |
@@ -77,4 +77,4 @@
 
 ---
 *Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 after Phase 27 completion*
+*Last updated: 2026-04-01 after Phase 29 completion*

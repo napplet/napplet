@@ -63,10 +63,12 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ SPEC.md updated for v0.4.0 — Section 11 service discovery, ShellBridge rename, requires/compat protocol — v0.5.0 Phase 25
 - ✓ Skills directory — 3 agentskills.io-format skill files: build-napplet, integrate-shell, add-service — v0.5.0 Phase 26 (SKILL-01, SKILL-02, SKILL-03)
 - ✓ Demo audit and correctness pass — host path inventory, signer service wiring, path-aware debugger labels, and regression coverage for relay/state/signer denials — v0.6.0 Phase 27 (DEMO-01, DEMO-02, DEMO-03)
+- ✓ Demo flow view separates napplets, shell, ACL, runtime, and service nodes in distinct topology nodes with hierarchy edges and animation — v0.6.0 Phase 28 (ARCH-01, ARCH-02)
+- ✓ Node detail adapter and compact summary surfaces — role-specific summaryFields on every topology node, live from host/runtime state — v0.6.0 Phase 29 (NODE-01)
+- ✓ Right-side inspector pane with selected-node state, recent-activity projection, and debugger coexistence — v0.6.0 Phase 29 (NODE-02)
 
 ### Active
-- [ ] Demo flow view separates shell, ACL, runtime, and service nodes in an architecture-faithful hierarchy
-- [ ] Nodes expose role-specific state and support right-side drill-down inspection without obscuring the debugger
+- [ ] Notification service is visible and exercised through toast UI in the demo
 - [ ] Notification service is visible and exercised through toast UI in the demo
 - [ ] Signer service demo supports NIP-07 and NIP-46 connection flows with configurable NIP-46 relay
 
@@ -85,7 +87,7 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 
 ## Context
 
-- **Current state**: Phase 27 completed on 2026-04-01. The demo host now reflects the current runtime/service architecture more accurately, and v0.6.0 continues with topology and drill-down work in Phase 28.
+- **Current state**: Phase 29 completed on 2026-04-01. The demo now has a layered topology view (Phase 28) plus node-detail summaries and right-side inspector drill-down (Phase 29). Next is Phase 30 — notification service UX.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
