@@ -104,10 +104,10 @@
 
 Plans:
 - [x] 33-01: Fix napplet iframe container rendering — add CSS rule to fill flex container
-- [ ] 33-02: Configure Leader Line orthogonal routing — add curve: 0 to BASE_OPTIONS
+- [x] 33-02: Configure Leader Line orthogonal routing — add curve: 0 to BASE_OPTIONS
 - [x] 33-03: Implement socket gravity port distinction — adjust startSocketGravity/endSocketGravity offsets
 - [ ] 33-04: Remove orphan topology edge — delete edge definition referencing topology-napplets
-- [ ] 33-05: Add button click isolation — add event.stopPropagation() to service button handlers
+- [x] 33-05: Add button click isolation — add event.stopPropagation() to service button handlers
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
@@ -203,7 +203,7 @@ Plans:
 | 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 32. Fix demo UI/UX bugs | v0.6.0 | 5/5 | Complete | 2026-04-01 |
-| 33. Polish Demo UI Layout | v0.6.0 | 2/5 | In Progress|  |
+| 33. Polish Demo UI Layout | v0.6.0 | 4/5 | In Progress|  |
 
 ### Phase 32: Fix demo UI/UX bugs
 
