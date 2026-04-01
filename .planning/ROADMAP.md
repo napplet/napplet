@@ -92,7 +92,7 @@
 - [x] **Phase 35: Wire Protocol Rename** - Rename BusKind.INTER_PANE to BusKind.IPC_PEER and update all 30+ call sites plus SPEC.md
 - [x] **Phase 36: Type Correctness** - Consolidate ConsentRequest to runtime canonical definition and remove shell/state-proxy.ts dead code (completed 2026-04-01)
 - [x] **Phase 37: API Alignment** - Rename RuntimeHooks/ShellHooks to RuntimeAdapter/ShellAdapter with deprecated aliases for one release cycle (completed 2026-04-01)
-- [ ] **Phase 38: Session Vocabulary** - Rename NappKeyEntry/NappKeyRegistry to SessionEntry/SessionRegistry and fix loadOrCreateKeypair
+- [x] **Phase 38: Session Vocabulary** - Rename NappKeyEntry/NappKeyRegistry to SessionEntry/SessionRegistry and fix loadOrCreateKeypair (completed 2026-04-01)
 - [ ] **Phase 39: Documentation Pass** - Document topic prefix direction semantics and mark nappStorage as deprecated
 
 ## Phase Details
@@ -206,5 +206,5 @@ Phases execute in numeric order: 34 -> 35 -> 36 -> 37 -> 38 -> 39
 | 35. Wire Protocol Rename | v0.7.0 | 0/0 | Not started | - |
 | 36. Type Correctness | v0.7.0 | 0/0 | Complete    | 2026-04-01 |
 | 37. API Alignment | v0.7.0 | 1/1 | Complete    | 2026-04-01 |
-| 38. Session Vocabulary | v0.7.0 | 0/0 | Not started | - |
+| 38. Session Vocabulary | v0.7.0 | 2/2 | Complete    | 2026-04-01 |
 | 39. Documentation Pass | v0.7.0 | 0/0 | Not started | - |
