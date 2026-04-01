@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.7.0
 milestone_name: Ontology Audit and Adjustments
-status: executing
-stopped_at: Phase 37 context gathered
-last_updated: "2026-04-01T22:19:02.905Z"
-last_activity: 2026-04-01
+status: complete
+stopped_at: v0.7.0 milestone complete
+last_updated: "2026-04-02T00:00:00.000Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 16
   percent: 100
 ---
 
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 40 — remaining-rename-gaps
+**Current focus:** Planning next milestone (v0.8.0)
 
 ## Current Position
 

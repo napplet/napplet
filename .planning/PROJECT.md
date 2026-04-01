@@ -174,4 +174,4 @@ After v0.6.0, likely next candidates:
 - Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-01 — Milestone v0.7.0 started*
+*Last updated: 2026-04-02 — Milestone v0.7.0 complete*

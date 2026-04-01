@@ -1,5 +1,20 @@
 # Milestones
 
+## v0.7.0 Ontology Audit and Adjustments (Shipped: 2026-04-02)
+
+**Phases completed:** 7 phases, 16 plans
+
+**Key accomplishments:**
+
+- Complete `napp→napplet` rename — 87+ identifiers across 19 files in all 7 packages; deprecated aliases ship for one release cycle (v0.9.0 removal)
+- `BusKind.INTER_PANE → IPC_PEER` across 30+ call sites and SPEC.md; `IPC-*` namespace established for future `IPC-BROADCAST`/`IPC-CHANNEL` additions
+- `ConsentRequest` consolidated to `@napplet/runtime` canonical with `type` discriminator; stale shell copy removed; shell re-exports from runtime
+- `RuntimeAdapter`/`ShellAdapter` replace `RuntimeHooks`/`ShellHooks` — 13 public interfaces renamed to `*Adapter` convention; deprecated aliases for one release cycle
+- `SessionEntry`/`SessionRegistry` replace `NappKeyEntry`/`NappKeyRegistry`; `createEphemeralKeypair()` (no params) replaces `loadOrCreateKeypair(_nappType)`
+- Topic prefix direction semantics documented in `core/topics.ts` JSDoc; `nappStorage` marked `@deprecated`; SPEC.md fully corrected for all stale `napp:` strings
+
+---
+
 ## v0.6.0 Demo Upgrade (Shipped: 2026-04-01)
 
 **Phases completed:** 7 phases, 28 plans, 28 tasks
