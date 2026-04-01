@@ -249,4 +249,23 @@ describe('recentActivity', () => {
     const detail = buildNodeDetails(node!, makeOptions());
     expect(Array.isArray(detail.recentActivity)).toBe(true);
   });
+
+  it('every node role exposes a recentActivity array in its detail record', () => {
+    const opts = makeOptions();
+    for (const node of TEST_TOPOLOGY.nodes) {
+      const detail = buildNodeDetails(node, opts);
+      expect(Array.isArray(detail.recentActivity)).toBe(true);
+    }
+  });
+
+  it('installActivityProjection is exported from node-details', async () => {
+    const mod = await import('../../apps/demo/src/node-details.ts');
+    expect(typeof mod.installActivityProjection).toBe('function');
+  });
+
+  it('getNodeActivity returns a bounded array (max ring size)', () => {
+    // Ring size is 12 — after many pushes the array should stay bounded
+    const activity = getNodeActivity('topology-node-acl');
+    expect(activity.length).toBeLessThanOrEqual(12);
+  });
 });

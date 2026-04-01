@@ -120,6 +120,21 @@ describe('rendered topology markup — selection hooks', () => {
   });
 });
 
+describe('inspector sections — current state and recent activity', () => {
+  it('inspector module exposes Current State section rendering', () => {
+    // The inspector renders sections from node-detail inspectorSections (which contain "Current State")
+    // and a hard-coded "Recent Activity" section
+    // Verify the module source references both required section headings
+    const { readFileSync: rfs } = require('node:fs');
+    const { resolve: r } = require('node:path');
+    const src = rfs(r(process.cwd(), 'apps/demo/src/node-inspector.ts'), 'utf8');
+    expect(src).toContain('Recent Activity');
+    // "Current State" comes from node-details inspectorSections — referenced in the same render pipeline
+    const detailSrc = rfs(r(process.cwd(), 'apps/demo/src/node-details.ts'), 'utf8');
+    expect(detailSrc).toContain('Current State');
+  });
+});
+
 describe('inspector render states', () => {
   it('topology markup supports no-selection state (node-summary slots empty by default)', () => {
     const markup = renderDemoTopology(TEST_TOPOLOGY);

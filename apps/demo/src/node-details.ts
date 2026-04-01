@@ -349,7 +349,7 @@ export function buildAllNodeDetails(
  *
  * @param tap - Live message tap from shell-host
  * @param topology - Demo topology for node id lookup
- * @param classifyPath - Path classifier from debugger (passed in to avoid circular imports)
+ * @param classifyPath - Path classifier from debugger (classifyTappedMessagePath); passed in to avoid circular imports
  */
 export function installActivityProjection(
   tap: MessageTap,

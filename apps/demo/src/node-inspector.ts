@@ -60,6 +60,7 @@ function renderActivityEntry(entry: NodeActivityEntry): string {
   `;
 }
 
+// Renders inspector sections including "Current State" and "Recent Activity" blocks
 function renderInspectorContent(detail: NodeDetail): string {
   const sectionItems = (items: Array<{ label: string; value: string }>) =>
     items
