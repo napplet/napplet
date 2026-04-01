@@ -205,22 +205,24 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
     if (!fromEl || !toEl) continue;
 
     try {
-      const outLine = new LeaderLine(fromEl, toEl, {
-        ...BASE_OPTIONS,
-        startSocket: 'bottom',
-        endSocket: 'top',
-        startSocketGravity: [180, 0],
-        endSocketGravity: [180, 0],
-      });
+      // outLine connects at right side of bottom/top edges
+      const outLine = new LeaderLine(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (LeaderLine as any).pointAnchor(fromEl, { x: '75%', y: '100%' }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (LeaderLine as any).pointAnchor(toEl, { x: '75%', y: '0%' }),
+        { ...BASE_OPTIONS },
+      );
       lines.set(edge.id + '-out', outLine);
 
-      const inLine = new LeaderLine(toEl, fromEl, {
-        ...BASE_OPTIONS,
-        startSocket: 'top',
-        endSocket: 'bottom',
-        startSocketGravity: [-180, 0],
-        endSocketGravity: [-180, 0],
-      });
+      // inLine connects at left side of top/bottom edges
+      const inLine = new LeaderLine(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (LeaderLine as any).pointAnchor(toEl, { x: '25%', y: '0%' }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (LeaderLine as any).pointAnchor(fromEl, { x: '25%', y: '100%' }),
+        { ...BASE_OPTIONS },
+      );
       lines.set(edge.id + '-in', inLine);
     } catch { /* best-effort — may fail if elements not visible */ }
   }
