@@ -319,15 +319,18 @@ initSignerModal();
 document.addEventListener('click', (e) => {
   const target = e.target as HTMLElement;
   if (target.closest('[data-action="open-signer-connect"]')) {
+    e.stopPropagation();
     openSignerModal();
   }
   if (target.closest('[data-action="disconnect-signer"]')) {
+    e.stopPropagation();
     disconnectSigner();
     debuggerEl?.addSystemMessage('signer disconnected');
   }
 
   // Notification node controls
   if (target.id === 'notification-node-create' || target.closest('#notification-node-create')) {
+    e.stopPropagation();
     notificationController.createDemoNotification({
       title: 'Demo notification',
       body: 'Triggered from the notification service node',
@@ -336,6 +339,7 @@ document.addEventListener('click', (e) => {
     debuggerEl?.addSystemMessage('notifications:create dispatched from host node control');
   }
   if (target.id === 'notification-node-list' || target.closest('#notification-node-list')) {
+    e.stopPropagation();
     notificationController.requestList();
     debuggerEl?.addSystemMessage('notifications:list requested');
     // Open inspector to show the list
@@ -344,6 +348,7 @@ document.addEventListener('click', (e) => {
     renderNotificationInspector(_notificationSnapshot);
   }
   if (target.id === 'notification-node-mark-read' || target.closest('#notification-node-mark-read')) {
+    e.stopPropagation();
     const newest = [..._notificationSnapshot.notifications].filter((n) => !n.read).pop();
     if (newest) {
       notificationController.markRead(newest.id);
@@ -353,6 +358,7 @@ document.addEventListener('click', (e) => {
     }
   }
   if (target.id === 'notification-node-dismiss' || target.closest('#notification-node-dismiss')) {
+    e.stopPropagation();
     const newest = [..._notificationSnapshot.notifications].pop();
     if (newest) {
       notificationController.dismiss(newest.id);
@@ -364,6 +370,7 @@ document.addEventListener('click', (e) => {
 
   // Inspector per-item controls
   if ((target as HTMLElement).dataset.action === 'notif-read') {
+    e.stopPropagation();
     const id = (target as HTMLElement).dataset.notifId;
     if (id) {
       notificationController.markRead(id);
@@ -371,6 +378,7 @@ document.addEventListener('click', (e) => {
     }
   }
   if ((target as HTMLElement).dataset.action === 'notif-dismiss') {
+    e.stopPropagation();
     const id = (target as HTMLElement).dataset.notifId;
     if (id) {
       notificationController.dismiss(id);
@@ -380,6 +388,7 @@ document.addEventListener('click', (e) => {
 
   // Close notification inspector
   if (target.id === 'notification-inspector-close' || target.closest('#notification-inspector-close')) {
+    e.stopPropagation();
     const inspector = document.getElementById('notification-inspector');
     inspector?.classList.remove('open');
   }
