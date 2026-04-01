@@ -7,7 +7,7 @@
 
 import { BusKind } from '@napplet/shell';
 import type { MessageTap, TappedMessage } from './shell-host.js';
-import type { DemoTopology } from './topology.js';
+import type { DemoTopology, EdgeFlasher } from './topology.js';
 import {
   getAclRuntimeEdgeId,
   getNappletEdgeId,
@@ -29,12 +29,12 @@ function flashClass(el: Element, cls: string): void {
   setTimeout(() => el.classList.remove(cls), FLASH_DURATION);
 }
 
-function flashEdge(edgeId: string, cls: 'active' | 'blocked'): void {
+function flashEdge(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
   const edge = document.getElementById(edgeId);
   if (edge) flashClass(edge, cls);
 }
 
-function flashNode(nodeId: string, cls: 'active' | 'blocked'): void {
+function flashNode(nodeId: string, cls: 'active' | 'amber' | 'blocked'): void {
   const node = document.getElementById(nodeId);
   if (node) flashClass(node, cls);
 }
@@ -116,7 +116,7 @@ function buildHighlightPath(topology: DemoTopology, msg: TappedMessage): { nodes
   return { nodes, edges };
 }
 
-export function initFlowAnimator(tap: MessageTap, topology: DemoTopology): void {
+export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFlasher?: EdgeFlasher): void {
   const flowLog = document.getElementById('shell-flow-log');
 
   // Live counters grouped by verb
@@ -142,12 +142,27 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology): void 
     const isClosedDenied = msg.verb === 'CLOSED' && typeof msg.raw?.[2] === 'string' &&
       (msg.raw[2].includes('denied') || msg.raw[2].startsWith('blocked:'));
     const isBlocked = isOkFalse || isClosedDenied;
-    const cls = isBlocked ? 'blocked' : 'active';
+
+    // Amber: infrastructure failures — not explicit ACL denials, but expected
+    // demo-environment failures (no signer, relay stub, timeout, not wired).
+    const isAmber = isOkFalse && typeof msg.raw?.[3] === 'string' && (
+      msg.raw[3].includes('no signer') ||
+      msg.raw[3].includes('relay') ||
+      msg.raw[3].includes('timeout') ||
+      msg.raw[3].includes('not wired') ||
+      msg.raw[3].includes('mock')
+    );
+
+    const cls: 'active' | 'amber' | 'blocked' = isAmber ? 'amber' : isBlocked ? 'blocked' : 'active';
 
     const highlightPath = buildHighlightPath(topology, msg);
     if (highlightPath) {
       highlightPath.nodes.forEach((nodeId) => flashNode(nodeId, cls));
-      highlightPath.edges.forEach((edgeId) => flashEdge(edgeId, cls));
+      if (edgeFlasher) {
+        highlightPath.edges.forEach((edgeId) => edgeFlasher.flash(edgeId, cls));
+      } else {
+        highlightPath.edges.forEach((edgeId) => flashEdge(edgeId, cls));  // fallback
+      }
     }
 
     totalMessages++;

@@ -25,7 +25,7 @@ import type { NappletDebugger } from './debugger.js';
 import { classifyTappedMessagePath } from './debugger.js';
 import { renderAclPanels, setDebugger } from './acl-panel.js';
 import { initFlowAnimator } from './flow-animator.js';
-import { buildDemoTopology, renderDemoTopology, getServiceNodeId } from './topology.js';
+import { buildDemoTopology, renderDemoTopology, getServiceNodeId, initTopologyEdges } from './topology.js';
 import type { SignerConnectionStateView } from './topology.js';
 import {
   buildAllNodeDetails,
@@ -181,6 +181,9 @@ const topologyPane = document.getElementById('topology-pane');
 if (topologyPane) {
   topologyPane.innerHTML = renderDemoTopology(topology);
 }
+
+// Initialize Leader Line edges after topology HTML is in the DOM
+const edgeFlasher = initTopologyEdges(topology);
 
 // ─── Inject Notification Controls into the Notifications Node ────────────────
 
@@ -391,7 +394,7 @@ const nappletInfos = DEMO_NAPPLETS.map((napplet) => loadNapplet(napplet.name, na
 const chatInfo = nappletInfos.find((napplet) => napplet.name === 'chat');
 const botInfo = nappletInfos.find((napplet) => napplet.name === 'bot');
 
-initFlowAnimator(tap, topology);
+initFlowAnimator(tap, topology, edgeFlasher);
 
 // ─── Node Detail Counters ────────────────────────────────────────────────────
 let totalMessages = 0;

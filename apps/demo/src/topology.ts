@@ -1,3 +1,6 @@
+// @ts-ignore — leader-line has no bundled type declarations
+import LeaderLine from 'leader-line';
+
 export type TopologyNodeRole = 'napplet' | 'shell' | 'acl' | 'runtime' | 'service';
 
 // Inline the signer state types here to avoid a circular import with signer-connection.ts
@@ -182,6 +185,76 @@ export function buildDemoTopology(input: DemoTopologyInput): DemoTopology {
   };
 }
 
+export interface EdgeFlasher {
+  flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void;
+}
+
+const FLASH_DURATION_MS = 500;
+const COLOR_ACTIVE = '#39ff14';
+const COLOR_AMBER = '#ff9f0a';
+const COLOR_BLOCKED = '#ff3b3b';
+const COLOR_RESTING = 'rgba(58,58,74,0.7)';
+
+export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lines = new Map<string, any>();
+
+  const BASE_OPTIONS = {
+    color: COLOR_RESTING,
+    size: 2,
+    endPlug: 'arrow2',
+    endPlugSize: 1.5,
+  };
+
+  for (const edge of topology.edges) {
+    const fromEl = document.getElementById(edge.from);
+    const toEl = document.getElementById(edge.to);
+    if (!fromEl || !toEl) continue;
+
+    try {
+      const outLine = new LeaderLine(fromEl, toEl, {
+        ...BASE_OPTIONS,
+        startSocketGravity: [12, 0],
+        endSocketGravity: [12, 0],
+      });
+      lines.set(edge.id + '-out', outLine);
+
+      const inLine = new LeaderLine(toEl, fromEl, {
+        ...BASE_OPTIONS,
+        startSocketGravity: [-12, 0],
+        endSocketGravity: [-12, 0],
+      });
+      lines.set(edge.id + '-in', inLine);
+    } catch { /* best-effort — may fail if elements not visible */ }
+  }
+
+  // Reposition lines when topology layout or inspector pane changes size
+  const ro = new ResizeObserver(() => {
+    lines.forEach((line) => { try { line.position(); } catch { /* best-effort */ } });
+  });
+  const topologyRoot = document.getElementById('topology-root');
+  if (topologyRoot) ro.observe(topologyRoot);
+  const flowAreaInner = document.getElementById('flow-area-inner');
+  if (flowAreaInner) ro.observe(flowAreaInner);
+
+  return {
+    flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
+      const color = cls === 'active' ? COLOR_ACTIVE : cls === 'amber' ? COLOR_AMBER : COLOR_BLOCKED;
+      const outLine = lines.get(edgeId + '-out');
+      const inLine = lines.get(edgeId + '-in');
+      [outLine, inLine].forEach((line) => {
+        if (!line) return;
+        try {
+          line.setOptions({ color, size: 3 });
+          setTimeout(() => {
+            try { line.setOptions({ color: COLOR_RESTING, size: 2 }); } catch { /* best-effort */ }
+          }, FLASH_DURATION_MS);
+        } catch { /* best-effort */ }
+      });
+    },
+  };
+}
+
 function renderNodeEdge(edgeId: string): string {
   return `<div id="${edgeId}" class="topology-edge" data-topology-edge="${edgeId}" aria-hidden="true"></div>`;
 }
@@ -257,7 +330,6 @@ export function renderDemoTopology(topology: DemoTopology): string {
             <div id="${napplet.aclId}" class="topology-acl-slot"></div>
             <div id="${napplet.frameContainerId}" class="topology-frame-slot"></div>
           </article>
-          ${renderNodeEdge(getNappletEdgeId(napplet.name))}
         </div>
       `
     )
@@ -273,7 +345,6 @@ export function renderDemoTopology(topology: DemoTopology): string {
             <div class="topology-node-title">${service}</div>`;
         return `
         <div class="topology-service-branch">
-          ${renderNodeEdge(getRuntimeServiceEdgeId(service))}
           <article
             id="${getServiceNodeId(service)}"
             class="node-box topology-node topology-service-card${isSigner ? ' signer-node' : ''}"
@@ -297,8 +368,6 @@ export function renderDemoTopology(topology: DemoTopology): string {
         <div class="topology-napplet-grid">${nappletCards}</div>
       </section>
 
-      ${renderNodeEdge(NAPPLETS_SHELL_EDGE_ID)}
-
       <section class="topology-layer">
         <article id="${SHELL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="shell" data-node-id="${SHELL_NODE_ID}">
           <div class="topology-node-kicker">host adapter</div>
@@ -309,8 +378,6 @@ export function renderDemoTopology(topology: DemoTopology): string {
         </article>
       </section>
 
-      ${renderNodeEdge(getShellAclEdgeId())}
-
       <section class="topology-layer">
         <article id="${ACL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="acl" data-node-id="${ACL_NODE_ID}">
           <div class="topology-node-kicker">checkpoint</div>
@@ -319,8 +386,6 @@ export function renderDemoTopology(topology: DemoTopology): string {
           <div class="node-summary" id="node-summary-${ACL_NODE_ID}"></div>
         </article>
       </section>
-
-      ${renderNodeEdge(getAclRuntimeEdgeId())}
 
       <section class="topology-layer">
         <article id="${RUNTIME_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="runtime" data-node-id="${RUNTIME_NODE_ID}">

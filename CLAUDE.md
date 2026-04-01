@@ -232,7 +232,7 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 ## Key Abstractions
 - Purpose: Identifies a napplet instance for its session. Created on first AUTH challenge.
 - Examples: `packages/shim/src/napp-keypair.ts`
-- Pattern: Stored in sessionStorage; loaded/created deterministically per nappType; used to sign all outbound events
+- Pattern: Ephemeral in-memory keypair per page load (no persistence). Generated fresh on every page load via `generateSecretKey()`. Used to sign all outbound events from this napplet instance.
 - Purpose: Framework-agnostic integration point. Host app provides relay pool, auth state, window manager, etc.
 - Examples: `packages/shell/src/types.ts` (ShellHooks, RelayPoolHooks, AuthHooks, WindowManagerHooks, etc.)
 - Pattern: createPseudoRelay(hooks) accepts all hooks; implementations are async-aware to allow real relay subscriptions

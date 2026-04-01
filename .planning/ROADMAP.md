@@ -2,7 +2,7 @@
 
 ## Milestones
 
-- **v0.6.0 Demo Upgrade** — Phases 27-31 (planned)
+- **v0.6.0 Demo Upgrade** — Phases 27-32 (planned)
 - ✅ **v0.1.0 Alpha** — Phases 1-6 (shipped 2026-03-30) — [Archive](milestones/v0.1.0-ROADMAP.md)
 - ✅ **v0.2.0 Shell Architecture Cleanup** — Phases 7-11 (shipped 2026-03-31) — [Archive](milestones/v0.2.0-ROADMAP.md)
 - ✅ **v0.3.0 Runtime and Core** — Phases 12-17 (shipped 2026-03-31) — [Archive](milestones/v0.3.0-ROADMAP.md)
@@ -16,13 +16,14 @@
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 <details open>
-<summary>v0.6.0 Demo Upgrade (Phases 27-31) — PLANNED</summary>
+<summary>v0.6.0 Demo Upgrade (Phases 27-32) — PLANNED</summary>
 
 - [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues (completed 2026-04-01)
 - [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture (completed 2026-04-01)
 - [ ] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
 - [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path (completed 2026-04-01)
 - [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings (completed 2026-04-01)
+- [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix (completed 2026-04-01)
 
 </details>
 
@@ -74,6 +75,16 @@
   1. The demo includes a visible signer node and login/connect flow instead of a hidden mock signer-only experience
   2. Users can connect through NIP-07 when available and through NIP-46 using either a bunker URI or a Nostr Connect QR code
   3. The demo UI allows editing the NIP-46 relay and shows signer connection state, pubkey, and recent signer activity
+**Plans**: 3 completed
+
+### Phase 32: Fix Demo UI/UX Bugs
+**Goal**: Fix three targeted UI/UX bugs: amber infrastructure-failure state for ACL indicator, Leader Line SVG dynamic connections, and stale CLAUDE.md NappKeypair documentation
+**Depends on**: Phase 28, Phase 31
+**Requirements**: None (bug fixes only)
+**Success Criteria** (what must be TRUE):
+  1. Infrastructure failures (no signer, relay stub) flash amber, explicit ACL denials flash red
+  2. Topology edges are real SVG lines with arrowheads that reposition on layout changes
+  3. CLAUDE.md NappKeypair description accurately reflects ephemeral in-memory behavior
 **Plans**: 3 completed
 
 <details>
