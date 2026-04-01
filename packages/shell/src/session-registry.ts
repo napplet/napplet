@@ -1,14 +1,14 @@
 /**
- * NappKeyRegistry — windowId to verified napp pubkey bidirectional mapping.
+ * SessionRegistry — windowId to verified napplet pubkey bidirectional mapping.
  *
- * After a successful AUTH handshake, the ShellBridge registers the napp's
+ * After a successful AUTH handshake, the ShellBridge registers the napplet's
  * verified pubkey here. Both mappings are kept in sync.
  */
 
-import type { NappKeyEntry } from './types.js';
+import type { SessionEntry } from './types.js';
 
 /**
- * A pending napp update — raised when a napp reconnects with a different aggregateHash.
+ * A pending napplet update — raised when a napplet reconnects with a different aggregateHash.
  * @example
  * ```ts
  * const update: PendingUpdate = {
@@ -28,38 +28,38 @@ export interface PendingUpdate {
 }
 
 const byWindowId = new Map<string, string>();
-const byPubkey = new Map<string, NappKeyEntry>();
+const byPubkey = new Map<string, SessionEntry>();
 const pendingUpdates = new Map<string, PendingUpdate>();
 
 let _pendingVersion = 0;
 function getPendingUpdateVersion(): number { return _pendingVersion; }
 
 /**
- * Bidirectional registry mapping windowIds to verified napp pubkeys.
+ * Bidirectional registry mapping windowIds to verified napplet pubkeys.
  * Maintained by ShellBridge after successful AUTH handshakes.
  *
  * @example
  * ```ts
- * import { nappKeyRegistry } from '@napplet/shell';
+ * import { sessionRegistry } from '@napplet/shell';
  *
- * const pubkey = nappKeyRegistry.getPubkey('win-1');
- * const entry = pubkey ? nappKeyRegistry.getEntry(pubkey) : undefined;
+ * const pubkey = sessionRegistry.getPubkey('win-1');
+ * const entry = pubkey ? sessionRegistry.getEntry(pubkey) : undefined;
  * ```
  */
-export const nappKeyRegistry = {
+export const sessionRegistry = {
   /**
-   * Register a napp entry, mapping windowId to pubkey and vice versa.
+   * Register a napplet entry, mapping windowId to pubkey and vice versa.
    *
    * @param windowId - The window identifier
-   * @param entry - The verified napp key entry from AUTH handshake
+   * @param entry - The verified napplet session entry from AUTH handshake
    */
-  register(windowId: string, entry: NappKeyEntry): void {
+  register(windowId: string, entry: SessionEntry): void {
     byWindowId.set(windowId, entry.pubkey);
     byPubkey.set(entry.pubkey, entry);
   },
 
   /**
-   * Unregister a napp by windowId, removing both mappings.
+   * Unregister a napplet by windowId, removing both mappings.
    *
    * @param windowId - The window identifier to remove
    */
@@ -76,26 +76,26 @@ export const nappKeyRegistry = {
    * Get the pubkey associated with a windowId.
    *
    * @param windowId - The window identifier
-   * @returns The napp's pubkey, or undefined if not registered
+   * @returns The napplet's pubkey, or undefined if not registered
    */
   getPubkey(windowId: string): string | undefined {
     return byWindowId.get(windowId);
   },
 
   /**
-   * Get the full entry for a napp pubkey.
+   * Get the full entry for a napplet pubkey.
    *
-   * @param pubkey - The napp's pubkey
-   * @returns The full NappKeyEntry, or undefined if not found
+   * @param pubkey - The napplet's pubkey
+   * @returns The full SessionEntry, or undefined if not found
    */
-  getEntry(pubkey: string): NappKeyEntry | undefined {
+  getEntry(pubkey: string): SessionEntry | undefined {
     return byPubkey.get(pubkey);
   },
 
   /**
-   * Get the windowId for a napp pubkey.
+   * Get the windowId for a napplet pubkey.
    *
-   * @param pubkey - The napp's pubkey
+   * @param pubkey - The napplet's pubkey
    * @returns The windowId, or undefined if not found
    */
   getWindowId(pubkey: string): string | undefined {
@@ -103,26 +103,26 @@ export const nappKeyRegistry = {
   },
 
   /**
-   * Check if a windowId has a registered napp.
+   * Check if a windowId has a registered napplet.
    *
    * @param windowId - The window identifier
-   * @returns True if the windowId has a registered napp
+   * @returns True if the windowId has a registered napplet
    */
   isRegistered(windowId: string): boolean {
     return byWindowId.has(windowId);
   },
 
   /**
-   * Get all registered napp entries.
+   * Get all registered napplet entries.
    *
-   * @returns Array of all NappKeyEntry objects
+   * @returns Array of all SessionEntry objects
    */
-  getAllEntries(): NappKeyEntry[] {
+  getAllEntries(): SessionEntry[] {
     return Array.from(byPubkey.values());
   },
 
   /**
-   * Set a pending update for a window (napp reconnected with different hash).
+   * Set a pending update for a window (napplet reconnected with different hash).
    *
    * @param windowId - The window identifier
    * @param update - The pending update details with resolve callback
@@ -165,3 +165,6 @@ export const nappKeyRegistry = {
     pendingUpdates.clear();
   },
 };
+
+/** @deprecated Use sessionRegistry. Will be removed in v0.9.0. */
+export const nappKeyRegistry = sessionRegistry;

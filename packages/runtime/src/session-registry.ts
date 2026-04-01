@@ -1,42 +1,42 @@
 /**
- * NappKeyRegistry — windowId to verified napp pubkey bidirectional mapping.
+ * SessionRegistry — windowId to verified napplet pubkey bidirectional mapping.
  *
- * After a successful AUTH handshake, the runtime registers the napp's
+ * After a successful AUTH handshake, the runtime registers the napplet's
  * verified pubkey here. Both mappings are kept in sync.
  *
  * Unlike the shell singleton version, this is a factory that accepts
  * an optional notifier callback instead of using window.dispatchEvent.
  */
 
-import type { NappKeyEntry, PendingUpdate, PendingUpdateNotifier } from './types.js';
+import type { SessionEntry, PendingUpdate, PendingUpdateNotifier } from './types.js';
 
 /**
- * Bidirectional registry mapping windowIds to verified napp pubkeys.
+ * Bidirectional registry mapping windowIds to verified napplet pubkeys.
  * Maintained by the runtime after successful AUTH handshakes.
  *
  * @example
  * ```ts
- * const registry = createNappKeyRegistry();
+ * const registry = createSessionRegistry();
  * registry.register('win-1', entry);
  * const pubkey = registry.getPubkey('win-1');
  * ```
  */
-export interface NappKeyRegistry {
-  /** Register a napp entry, mapping windowId to pubkey and vice versa. */
-  register(windowId: string, entry: NappKeyEntry): void;
-  /** Unregister a napp by windowId, removing both mappings. */
+export interface SessionRegistry {
+  /** Register a napplet entry, mapping windowId to pubkey and vice versa. */
+  register(windowId: string, entry: SessionEntry): void;
+  /** Unregister a napplet by windowId, removing both mappings. */
   unregister(windowId: string): void;
   /** Get the pubkey associated with a windowId. */
   getPubkey(windowId: string): string | undefined;
-  /** Get the full entry for a napp pubkey. */
-  getEntry(pubkey: string): NappKeyEntry | undefined;
-  /** Get the windowId for a napp pubkey. */
+  /** Get the full entry for a napplet pubkey. */
+  getEntry(pubkey: string): SessionEntry | undefined;
+  /** Get the windowId for a napplet pubkey. */
   getWindowId(pubkey: string): string | undefined;
-  /** Check if a windowId has a registered napp. */
+  /** Check if a windowId has a registered napplet. */
   isRegistered(windowId: string): boolean;
-  /** Get all registered napp entries. */
-  getAllEntries(): NappKeyEntry[];
-  /** Set a pending update for a window (napp reconnected with different hash). */
+  /** Get all registered napplet entries. */
+  getAllEntries(): SessionEntry[];
+  /** Set a pending update for a window (napplet reconnected with different hash). */
   setPendingUpdate(windowId: string, update: PendingUpdate): void;
   /** Get a pending update for a window. */
   getPendingUpdate(windowId: string): PendingUpdate | undefined;
@@ -46,26 +46,29 @@ export interface NappKeyRegistry {
   clear(): void;
 }
 
+/** @deprecated Use SessionRegistry. Will be removed in v0.9.0. */
+export type NappKeyRegistry = SessionRegistry;
+
 /**
- * Create a new NappKeyRegistry instance.
+ * Create a new SessionRegistry instance.
  *
  * @param notifier - Optional callback invoked when pending updates change
- * @returns A NappKeyRegistry instance
+ * @returns A SessionRegistry instance
  *
  * @example
  * ```ts
- * const registry = createNappKeyRegistry((windowId) => {
+ * const registry = createSessionRegistry((windowId) => {
  *   console.log('Pending update changed for', windowId);
  * });
  * ```
  */
-export function createNappKeyRegistry(notifier?: PendingUpdateNotifier): NappKeyRegistry {
+export function createSessionRegistry(notifier?: PendingUpdateNotifier): SessionRegistry {
   const byWindowId = new Map<string, string>();
-  const byPubkey = new Map<string, NappKeyEntry>();
+  const byPubkey = new Map<string, SessionEntry>();
   const pendingUpdates = new Map<string, PendingUpdate>();
 
   return {
-    register(windowId: string, entry: NappKeyEntry): void {
+    register(windowId: string, entry: SessionEntry): void {
       byWindowId.set(windowId, entry.pubkey);
       byPubkey.set(entry.pubkey, entry);
     },
@@ -83,7 +86,7 @@ export function createNappKeyRegistry(notifier?: PendingUpdateNotifier): NappKey
       return byWindowId.get(windowId);
     },
 
-    getEntry(pubkey: string): NappKeyEntry | undefined {
+    getEntry(pubkey: string): SessionEntry | undefined {
       return byPubkey.get(pubkey);
     },
 
@@ -95,7 +98,7 @@ export function createNappKeyRegistry(notifier?: PendingUpdateNotifier): NappKey
       return byWindowId.has(windowId);
     },
 
-    getAllEntries(): NappKeyEntry[] {
+    getAllEntries(): SessionEntry[] {
       return Array.from(byPubkey.values());
     },
 
@@ -120,3 +123,6 @@ export function createNappKeyRegistry(notifier?: PendingUpdateNotifier): NappKey
     },
   };
 }
+
+/** @deprecated Use createSessionRegistry. Will be removed in v0.9.0. */
+export const createNappKeyRegistry = createSessionRegistry;
