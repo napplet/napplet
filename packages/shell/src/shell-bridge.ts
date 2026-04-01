@@ -13,7 +13,7 @@ import { createRuntime } from '@napplet/runtime';
 import type { Runtime, ConsentHandler } from '@napplet/runtime';
 import { adaptHooks } from './hooks-adapter.js';
 import { originRegistry } from './origin-registry.js';
-import { nappKeyRegistry } from './napp-key-registry.js';
+import { sessionRegistry, nappKeyRegistry } from './session-registry.js';
 import { aclStore } from './acl-store.js';
 import { manifestCache } from './manifest-cache.js';
 import { audioManager } from './audio-manager.js';
@@ -103,7 +103,7 @@ export interface ShellBridge {
 
   /**
    * Access the underlying runtime instance for advanced use cases.
-   * Provides direct access to the runtime's nappKeyRegistry, aclState,
+   * Provides direct access to the runtime's sessionRegistry, aclState,
    * and manifestCache.
    */
   readonly runtime: Runtime;
@@ -116,7 +116,7 @@ export interface ShellBridge {
  * browser-oriented ShellHooks into environment-agnostic RuntimeHooks.
  *
  * @param hooks - Host application provides relay pool, auth, config, etc.
- * @returns A ShellBridge instance ready to handle napp messages
+ * @returns A ShellBridge instance ready to handle napplet messages
  * @example
  * ```ts
  * import { createShellBridge, type ShellHooks } from '@napplet/shell';

@@ -1,26 +1,26 @@
 /**
- * State proxy — shell-side handler for napp state requests.
+ * State proxy — shell-side handler for napplet state requests.
  *
- * Napps without allow-same-origin cannot access localStorage directly.
- * This proxy stores napp state in the shell's localStorage, scoped by
- * napp identity (pubkey:dTag:aggregateHash).
+ * Napplets without allow-same-origin cannot access localStorage directly.
+ * This proxy stores napplet state in the shell's localStorage, scoped by
+ * napplet identity (pubkey:dTag:aggregateHash).
  */
 
 import type { NostrEvent } from '@napplet/core';
 import { BusKind, TOPICS } from '@napplet/core';
-import { nappKeyRegistry } from './napp-key-registry.js';
+import { sessionRegistry } from './session-registry.js';
 import { aclStore } from './acl-store.js';
 
 function scopedKey(pubkey: string, dTag: string, aggregateHash: string, userKey: string): string {
-  return `napp-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
+  return `napplet-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
 }
 
 function calculateNappStateBytes(
   pubkey: string, dTag: string, aggregateHash: string, excludeUserKey?: string,
 ): number {
-  const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
+  const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
   const excludeScopedKey = excludeUserKey
-    ? `napp-state:${pubkey}:${dTag}:${aggregateHash}:${excludeUserKey}`
+    ? `napplet-state:${pubkey}:${dTag}:${aggregateHash}:${excludeUserKey}`
     : null;
   let totalBytes = 0;
   for (let i = 0; i < localStorage.length; i++) {
@@ -54,7 +54,7 @@ function sendError(sourceWindow: Window, correlationId: string, reason: string):
  * Handle a state request from a napplet iframe.
  * Routes to the appropriate operation (get, set, remove, clear, keys) based on topic.
  *
- * @param windowId - The window identifier of the requesting napp
+ * @param windowId - The window identifier of the requesting napplet
  * @param sourceWindow - The Window reference to send responses to
  * @param event - The NostrEvent containing the state request
  */
@@ -65,9 +65,9 @@ export function handleStateRequest(
   const key = event.tags?.find((t) => t[0] === 'key')?.[1];
   const correlationId = event.tags?.find((t) => t[0] === 'id')?.[1] ?? '';
 
-  const pubkey = nappKeyRegistry.getPubkey(windowId);
+  const pubkey = sessionRegistry.getPubkey(windowId);
   if (!pubkey) { sendError(sourceWindow, correlationId, 'auth-required: not registered'); return; }
-  const entry = nappKeyRegistry.getEntry(pubkey);
+  const entry = sessionRegistry.getEntry(pubkey);
   if (!entry) { sendError(sourceWindow, correlationId, 'auth-required: no entry'); return; }
 
   const { dTag, aggregateHash } = entry;
@@ -89,7 +89,7 @@ export function handleStateRequest(
       const newWriteBytes = new TextEncoder().encode(scopedKey(pubkey, dTag, aggregateHash, key) + value).length;
       const existingBytes = calculateNappStateBytes(pubkey, dTag, aggregateHash, key);
       if (existingBytes + newWriteBytes > quota) {
-        sendError(sourceWindow, correlationId, `quota exceeded: napp state limit is ${quota} bytes`);
+        sendError(sourceWindow, correlationId, `quota exceeded: napplet state limit is ${quota} bytes`);
         return;
       }
       const sk = scopedKey(pubkey, dTag, aggregateHash, key);
@@ -115,7 +115,7 @@ export function handleStateRequest(
       break;
     }
     case TOPICS.STATE_KEYS: {
-      const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
+      const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
       const userKeys: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const lsKey = localStorage.key(i);
@@ -131,15 +131,15 @@ export function handleStateRequest(
 }
 
 /**
- * Remove all state entries for a napp identity from localStorage.
- * Used during napp cleanup when a window is closed.
+ * Remove all state entries for a napplet identity from localStorage.
+ * Used during napplet cleanup when a window is closed.
  *
- * @param pubkey - The napp's pubkey
- * @param dTag - The napp's dTag
- * @param aggregateHash - The napp's build hash
+ * @param pubkey - The napplet's pubkey
+ * @param dTag - The napplet's dTag
+ * @param aggregateHash - The napplet's build hash
  */
 export function cleanupNappState(pubkey: string, dTag: string, aggregateHash: string): void {
-  const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
+  const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);

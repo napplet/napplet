@@ -1,15 +1,15 @@
 /**
  * manifest-cache.ts — Manifest cache with persistence hooks.
  *
- * Caches NIP-5A manifest data (aggregate hashes) per napp identity.
+ * Caches NIP-5A manifest data (aggregate hashes) per napplet identity.
  * Delegates storage to RuntimeManifestPersistence — no localStorage.
  */
 
 import type { RuntimeManifestPersistence, ManifestCacheEntry } from './types.js';
 
 /**
- * Cache for verified napp manifest entries.
- * Used to detect napp updates (aggregateHash changes) across sessions.
+ * Cache for verified napplet manifest entries.
+ * Used to detect napplet updates (aggregateHash changes) across sessions.
  *
  * @example
  * ```ts

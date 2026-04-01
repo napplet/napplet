@@ -1,8 +1,8 @@
 /**
- * ACL Store — composite-keyed capability registry for napp identity.
+ * ACL Store — composite-keyed capability registry for napplet identity.
  *
  * ACL entries are keyed by pubkey:dTag:aggregateHash — a composite key
- * that ties permissions to a specific napp build.
+ * that ties permissions to a specific napplet build.
  *
  * Default policy is PERMISSIVE: unknown identities have all capabilities granted.
  */
@@ -13,7 +13,7 @@ import type { AclEntry } from './types.js';
 
 const STORAGE_KEY = 'napplet:acl';
 
-/** Default state quota in bytes (512 KB) per napp identity. */
+/** Default state quota in bytes (512 KB) per napplet identity. */
 export const DEFAULT_STATE_QUOTA = 512 * 1024;
 
 interface InternalAclEntry {

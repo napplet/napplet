@@ -117,7 +117,7 @@ export interface EnforceResult {
 
 /**
  * Identity lookup function type — resolves a pubkey to its full identity.
- * Provided by nappKeyRegistry at runtime.
+ * Provided by sessionRegistry at runtime.
  */
 export type IdentityResolver = (pubkey: string) => { dTag: string; aggregateHash: string } | undefined;
 

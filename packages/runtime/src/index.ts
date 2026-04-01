@@ -20,7 +20,8 @@ export type {
   RuntimeDmHooks,
   ConsentRequest,
   ConsentHandler,
-  NappKeyEntry,
+  SessionEntry,
+  NappKeyEntry,  // @deprecated — use SessionEntry
   PendingUpdate,
   PendingUpdateNotifier,
   ManifestCacheEntry,
@@ -36,9 +37,9 @@ export type {
 export { createEnforceGate, resolveCapabilities, formatDenialReason } from './enforce.js';
 export type { CapabilityResolution, EnforceResult, EnforceConfig, IdentityResolver, AclChecker } from './enforce.js';
 
-// ─── NappKeyRegistry ──────────────────────────────────────────────────────
-export { createNappKeyRegistry } from './napp-key-registry.js';
-export type { NappKeyRegistry } from './napp-key-registry.js';
+// ─── SessionRegistry ──────────────────────────────────────────────────────
+export { createSessionRegistry, createNappKeyRegistry } from './session-registry.js';
+export type { SessionRegistry, NappKeyRegistry } from './session-registry.js';
 
 // ─── ACL State Container ──────────────────────────────────────────────────
 export { createAclState } from './acl-state.js';

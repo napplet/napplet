@@ -1,9 +1,9 @@
 /**
- * Manifest cache — persists verified NIP-5A aggregate hashes per napp identity.
+ * Manifest cache — persists verified NIP-5A aggregate hashes per napplet identity.
  */
 
 /**
- * A cached manifest entry for a verified napp build.
+ * A cached manifest entry for a verified napplet build.
  * @example
  * ```ts
  * const entry: ManifestCacheEntry = {
@@ -27,8 +27,8 @@ function cacheKey(pubkey: string, dTag: string): string {
 }
 
 /**
- * Cache for verified napp manifest entries. Persists to localStorage.
- * Used to detect napp updates (aggregateHash changes) across sessions.
+ * Cache for verified napplet manifest entries. Persists to localStorage.
+ * Used to detect napplet updates (aggregateHash changes) across sessions.
  *
  * @example
  * ```ts

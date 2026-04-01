@@ -8,11 +8,11 @@
 import type { NostrEvent } from '@napplet/core';
 import { BusKind } from '@napplet/core';
 import type { SendToNapplet, RuntimeStatePersistence } from './types.js';
-import type { NappKeyRegistry } from './napp-key-registry.js';
+import type { SessionRegistry } from './session-registry.js';
 import type { AclStateContainer } from './acl-state.js';
 
 function scopedKey(pubkey: string, dTag: string, aggregateHash: string, userKey: string): string {
-  return `napp-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
+  return `napplet-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
 }
 
 /** Compute byte length of a UTF-8 string without TextEncoder (ES2022-safe). */
@@ -38,7 +38,7 @@ function sendResponse(
     kind: BusKind.INTER_PANE,
     pubkey: '',
     created_at: Math.floor(Date.now() / 1000),
-    tags: [['t', 'napp:state-response'], ['id', correlationId], ...tags],
+    tags: [['t', 'napplet:state-response'], ['id', correlationId], ...tags],
     content: '',
     id: '',
     sig: '',
@@ -59,10 +59,10 @@ function sendError(
  * Handle a state request from a napplet.
  * Routes to the appropriate operation (get, set, remove, clear, keys) based on topic.
  *
- * @param windowId - The window identifier of the requesting napp
+ * @param windowId - The window identifier of the requesting napplet
  * @param event - The NostrEvent containing the state request
  * @param sendToNapplet - Transport function to send responses
- * @param nappKeyRegistry - Identity registry for looking up napp identity
+ * @param sessionRegistry - Identity registry for looking up napplet session identity
  * @param aclState - ACL state for quota checks
  * @param statePersistence - State storage backend
  */
@@ -70,7 +70,7 @@ export function handleStateRequest(
   windowId: string,
   event: NostrEvent,
   sendToNapplet: SendToNapplet,
-  nappKeyRegistry: NappKeyRegistry,
+  sessionRegistry: SessionRegistry,
   aclState: AclStateContainer,
   statePersistence: RuntimeStatePersistence,
 ): void {
@@ -78,19 +78,21 @@ export function handleStateRequest(
   const key = event.tags?.find((t) => t[0] === 'key')?.[1];
   const correlationId = event.tags?.find((t) => t[0] === 'id')?.[1] ?? '';
 
-  const pubkey = nappKeyRegistry.getPubkey(windowId);
+  const pubkey = sessionRegistry.getPubkey(windowId);
   if (!pubkey) { sendError(sendToNapplet, windowId, correlationId, 'auth-required: not registered'); return; }
-  const entry = nappKeyRegistry.getEntry(pubkey);
+  const entry = sessionRegistry.getEntry(pubkey);
   if (!entry) { sendError(sendToNapplet, windowId, correlationId, 'auth-required: no entry'); return; }
 
   const { dTag, aggregateHash } = entry;
-  const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
+  const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
 
   switch (topic) {
     case 'shell:state-get': {
       if (!key) { sendError(sendToNapplet, windowId, correlationId, 'missing key tag'); return; }
-      const sk = scopedKey(pubkey, dTag, aggregateHash, key);
-      const result = statePersistence.get(sk);
+      const newStorageKey = scopedKey(pubkey, dTag, aggregateHash, key);
+      const oldStorageKey = `napp-state:${pubkey}:${dTag}:${aggregateHash}:${key}`;
+      // Dual-read: try new prefix first, fall back to old for migration
+      const result = statePersistence.get(newStorageKey) ?? statePersistence.get(oldStorageKey) ?? null;
       sendResponse(sendToNapplet, windowId, correlationId, [
         ['value', result ?? ''], ['found', result !== null ? 'true' : 'false'],
       ]);
@@ -104,7 +106,7 @@ export function handleStateRequest(
       const newWriteBytes = byteLength(sk + value);
       const existingBytes = statePersistence.calculateBytes(prefix, key);
       if (existingBytes + newWriteBytes > quota) {
-        sendError(sendToNapplet, windowId, correlationId, `quota exceeded: napp state limit is ${quota} bytes`);
+        sendError(sendToNapplet, windowId, correlationId, `quota exceeded: napplet state limit is ${quota} bytes`);
         return;
       }
       const success = statePersistence.set(sk, value);
@@ -129,7 +131,7 @@ export function handleStateRequest(
     }
     case 'shell:state-keys': {
       const scopedKeys = statePersistence.keys(prefix);
-      // Strip the prefix to return user-facing key names (e.g., 'k1' not 'napp-state:pk:dTag:hash:k1')
+      // Strip the prefix to return user-facing key names (e.g., 'k1' not 'napplet-state:pk:dTag:hash:k1')
       const userKeys = scopedKeys.map(k => k.startsWith(prefix) ? k.slice(prefix.length) : k);
       sendResponse(sendToNapplet, windowId, correlationId, userKeys.map(k => ['key', k]));
       break;
@@ -141,12 +143,12 @@ export function handleStateRequest(
 }
 
 /**
- * Remove all state entries for a napp identity.
- * Used during napp cleanup when a window is closed.
+ * Remove all state entries for a napplet identity.
+ * Used during napplet cleanup when a window is closed.
  *
- * @param pubkey - The napp's pubkey
- * @param dTag - The napp's dTag
- * @param aggregateHash - The napp's build hash
+ * @param pubkey - The napplet's pubkey
+ * @param dTag - The napplet's dTag
+ * @param aggregateHash - The napplet's build hash
  * @param statePersistence - State storage backend
  */
 export function cleanupNappState(
@@ -155,6 +157,6 @@ export function cleanupNappState(
   aggregateHash: string,
   statePersistence: RuntimeStatePersistence,
 ): void {
-  const prefix = `napp-state:${pubkey}:${dTag}:${aggregateHash}:`;
+  const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
   statePersistence.clear(prefix);
 }

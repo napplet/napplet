@@ -20,14 +20,14 @@ import {
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
 import type {
-  RuntimeHooks, NappKeyEntry, ConsentRequest, ConsentHandler,
+  RuntimeHooks, SessionEntry, ConsentRequest, ConsentHandler,
   ServiceHandler, ServiceRegistry, CompatibilityReport, ServiceInfo,
 } from './types.js';
 import { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
 import { handleDiscoveryReq, isDiscoveryReq, createServiceDiscoveryEvent } from './service-discovery.js';
 import type { DiscoverySubscription } from './service-discovery.js';
-import { createNappKeyRegistry } from './napp-key-registry.js';
-import type { NappKeyRegistry } from './napp-key-registry.js';
+import { createSessionRegistry } from './session-registry.js';
+import type { SessionRegistry } from './session-registry.js';
 import { createAclState } from './acl-state.js';
 import type { AclStateContainer } from './acl-state.js';
 import { createManifestCache } from './manifest-cache.js';
@@ -107,8 +107,8 @@ export interface Runtime {
    */
   destroyWindow(windowId: string): void;
 
-  /** Access the identity registry (for shell adapter to read napp state). */
-  readonly nappKeyRegistry: NappKeyRegistry;
+  /** Access the identity registry (for shell adapter to read napplet session state). */
+  readonly nappKeyRegistry: SessionRegistry;
 
   /** Access the ACL state container. */
   readonly aclState: AclStateContainer;
@@ -123,7 +123,7 @@ export interface Runtime {
  * Create a runtime instance with dependency injection via hooks.
  *
  * @param hooks - Host application provides relay pool, auth, config, etc.
- * @returns A Runtime instance ready to handle napp messages
+ * @returns A Runtime instance ready to handle napplet messages
  *
  * @example
  * ```ts
@@ -167,7 +167,7 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
   // ─── Sub-module instances ────────────────────────────────────────────────
 
-  const nappKeyRegistry = createNappKeyRegistry(hooks.onPendingUpdate);
+  const nappKeyRegistry = createSessionRegistry(hooks.onPendingUpdate);
   const aclState = createAclState(hooks.aclPersistence);
   const manifestCache = createManifestCache(hooks.manifestPersistence);
   const replayDetector = createReplayDetector();
@@ -243,8 +243,8 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
 
     const typeTag = authEvent.tags?.find((t) => t[0] === 'type');
     if (!typeTag) { rejectAuth('missing required type tag'); return; }
-    const nappType = typeTag[1];
-    const dTag = parseInt(authEvent.pubkey.slice(0, 8), 16).toString(36) + nappType;
+    const nappletType = typeTag[1];
+    const dTag = parseInt(authEvent.pubkey.slice(0, 8), 16).toString(36) + nappletType;
     const hashTag = authEvent.tags?.find((t) => t[0] === 'aggregateHash');
     if (!hashTag) { rejectAuth('missing required aggregateHash tag'); return; }
     const aggregateHash = hashTag[1];
@@ -258,9 +258,9 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
       });
     }
 
-    const entry: NappKeyEntry = {
+    const entry: SessionEntry = {
       pubkey: authEvent.pubkey, windowId, origin: '*',
-      type: nappType, dTag, aggregateHash, registeredAt: Date.now(),
+      type: nappletType, dTag, aggregateHash, registeredAt: Date.now(),
     };
 
     // Check for napp updates
@@ -385,12 +385,12 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     if (!registeredServices.has(serviceName)) return true;
 
     // Look up the napplet's declared requires via two-step registry lookup
-    const nappPubkey = nappKeyRegistry.getPubkey(windowId);
-    if (!nappPubkey) return true; // No identity yet — skip check
-    const nappEntry = nappKeyRegistry.getEntry(nappPubkey);
-    if (!nappEntry) return true;
+    const nappletPubkey = nappKeyRegistry.getPubkey(windowId);
+    if (!nappletPubkey) return true; // No identity yet — skip check
+    const nappletEntry = nappKeyRegistry.getEntry(nappletPubkey);
+    if (!nappletEntry) return true;
 
-    const requires = manifestCache.getRequires(nappEntry.pubkey, nappEntry.dTag);
+    const requires = manifestCache.getRequires(nappletEntry.pubkey, nappletEntry.dTag);
 
     // If the service IS declared in requires, no consent needed
     if (requires.includes(serviceName)) return true;
@@ -732,18 +732,18 @@ export function createRuntime(hooks: RuntimeHooks): Runtime {
     switch (topic) {
       case 'shell:acl-get': {
         const aclEntries = aclState.getAllEntries();
-        const nappEntries = nappKeyRegistry.getAllEntries();
-        const nappInfoMap: Record<string, { type: string; registeredAt: number }> = {};
-        for (const e of nappEntries) nappInfoMap[e.pubkey] = { type: e.type, registeredAt: e.registeredAt };
+        const nappletEntries = nappKeyRegistry.getAllEntries();
+        const nappletInfoMap: Record<string, { type: string; registeredAt: number }> = {};
+        for (const e of nappletEntries) nappletInfoMap[e.pubkey] = { type: e.type, registeredAt: e.registeredAt };
         const merged = [...aclEntries];
-        for (const e of nappEntries) {
+        for (const e of nappletEntries) {
           if (!merged.find((a) => a.pubkey === e.pubkey)) {
             merged.push({ pubkey: e.pubkey, capabilities: [...ALL_CAPABILITIES], blocked: false });
           }
         }
         const display = merged.map((e) => ({
-          ...e, type: nappInfoMap[e.pubkey]?.type ?? 'unknown',
-          registeredAt: nappInfoMap[e.pubkey]?.registeredAt ?? 0,
+          ...e, type: nappletInfoMap[e.pubkey]?.type ?? 'unknown',
+          registeredAt: nappletInfoMap[e.pubkey]?.registeredAt ?? 0,
         }));
         sendInterPaneReply('shell:acl-current', JSON.stringify({ entries: display }));
         break;

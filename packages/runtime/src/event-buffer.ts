@@ -7,7 +7,7 @@
 
 import type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
 import type { SendToNapplet } from './types.js';
-import type { NappKeyRegistry } from './napp-key-registry.js';
+import type { SessionRegistry } from './session-registry.js';
 import type { EnforceResult } from './enforce.js';
 
 /** Default ring buffer size. */
@@ -78,14 +78,14 @@ export interface EventBuffer {
  * Create an event buffer with subscription delivery.
  *
  * @param sendToNapplet - Transport function to send messages to napplets
- * @param nappKeyRegistry - Identity registry for looking up napp pubkeys
+ * @param sessionRegistry - Identity registry for looking up napplet pubkeys
  * @param enforce - Enforcement function for checking relay:read on recipients
  * @param subscriptions - Shared subscription map (owned by the runtime)
  * @returns An EventBuffer instance
  */
 export function createEventBuffer(
   sendToNapplet: SendToNapplet,
-  nappKeyRegistry: NappKeyRegistry,
+  sessionRegistry: SessionRegistry,
   enforce: (pubkey: string, capability: Capability) => EnforceResult,
   subscriptions: Map<string, SubscriptionEntry>,
 ): EventBuffer {
@@ -99,7 +99,7 @@ export function createEventBuffer(
       if (senderId !== null && sub.windowId === senderId) continue;
 
       // Check relay:read ACL on the recipient at delivery time
-      const recipientPubkey = nappKeyRegistry.getPubkey(sub.windowId);
+      const recipientPubkey = sessionRegistry.getPubkey(sub.windowId);
       if (recipientPubkey) {
         const recipientResult = enforce(recipientPubkey, 'relay:read');
         if (!recipientResult.allowed) continue;

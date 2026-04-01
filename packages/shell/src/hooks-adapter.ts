@@ -30,7 +30,7 @@ import type { originRegistry as OriginRegistryType } from './origin-registry.js'
 import type { manifestCache as ManifestCacheType } from './manifest-cache.js';
 import type { aclStore as AclStoreType } from './acl-store.js';
 import type { audioManager as AudioManagerType } from './audio-manager.js';
-import type { nappKeyRegistry as NappKeyRegistryType } from './napp-key-registry.js';
+import type { sessionRegistry as SessionRegistryType } from './session-registry.js';
 
 // ─── Browser Dependencies ─────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ export interface BrowserDeps {
   manifestCache: typeof ManifestCacheType;
   aclStore: typeof AclStoreType;
   audioManager: typeof AudioManagerType;
-  nappKeyRegistry: typeof NappKeyRegistryType;
+  nappKeyRegistry: typeof SessionRegistryType;
 }
 
 // ─── Adapter Factory ──────────────────────────────────────────────────────

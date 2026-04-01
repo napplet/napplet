@@ -32,13 +32,17 @@ export type {
   CryptoHooks,
   DmHooks,
   ConsentRequest,
-  NappKeyEntry,
+  SessionEntry,
+  NappKeyEntry,  // @deprecated — use SessionEntry
   AclEntry,
   AclCheckEvent,
   ServiceDescriptor,
   ServiceHandler,
   ServiceRegistry,
 } from './types.js';
+
+// Session registry
+export { sessionRegistry, nappKeyRegistry } from './session-registry.js';
 
 // Standalone utilities (usable without full shell)
 export { originRegistry } from './origin-registry.js';
