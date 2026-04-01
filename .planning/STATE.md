@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
 Phase: 39
 Plan: 39-01 complete
 Status: Phase 39 complete
-Last activity: 2026-04-01
+Last activity: 2026-04-01 - Completed quick task 260401-w49: Fix KINDS.INTER_PANE regression and @napplet/runtime module resolution in demo
 
 Progress: [██████████] 100%
 
@@ -54,6 +54,12 @@ Progress: [██████████] 100%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260401-w49 | Fix KINDS.INTER_PANE regression and @napplet/runtime module resolution in demo | 2026-04-01 | ff91cb9 | [260401-w49-fix-kinds-inter-pane-regression-and-napp](.planning/quick/260401-w49-fix-kinds-inter-pane-regression-and-napp/) |
 
 ### Blockers/Concerns
 
