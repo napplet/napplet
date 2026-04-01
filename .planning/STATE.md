@@ -4,8 +4,8 @@ milestone: v0.6.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 28 complete; Phase 29 ready
-last_updated: "2026-04-01T11:34:47.745Z"
-last_activity: 2026-04-01
+last_updated: "2026-04-01T11:34:55.458Z"
+last_activity: 2026-04-01 -- Phase 31 execution started
 progress:
   total_phases: 5
   completed_phases: 3
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01 after v0.6.0 milestone definition)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 30 — notification-service-ux
+**Current focus:** Phase 31 — signer-connection-ux
 
 ## Current Position
 
-Phase: 30
-Plan: Not started
-Status: Executing Phase 30
-Last activity: 2026-04-01
+Phase: 31 (signer-connection-ux) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 31
+Last activity: 2026-04-01 -- Phase 31 execution started
 
 ## Accumulated Context
 
