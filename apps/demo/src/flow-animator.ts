@@ -12,7 +12,6 @@ import {
   getAclRuntimeEdgeId,
   getNappletEdgeId,
   getNappletNodeId,
-  getNappletsShellEdgeId,
   getRuntimeServiceEdgeId,
   getShellAclEdgeId,
   getShellNodeId,
@@ -95,7 +94,6 @@ function buildHighlightPath(topology: DemoTopology, msg: TappedMessage): { nodes
   ];
   const edges: string[] = [
     getNappletEdgeId(nappletName),
-    getNappletsShellEdgeId(),
     getShellAclEdgeId(),
     getAclRuntimeEdgeId(),
   ];

@@ -65,7 +65,6 @@ export interface DemoTopology {
 const SHELL_NODE_ID = 'topology-node-shell';
 const ACL_NODE_ID = 'topology-node-acl';
 const RUNTIME_NODE_ID = 'topology-node-runtime';
-const NAPPLETS_SHELL_EDGE_ID = 'topology-edge-napplets-shell';
 
 function slugifyTopologyName(name: string): string {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -81,10 +80,6 @@ export function getAclNodeId(): string {
 
 export function getRuntimeNodeId(): string {
   return RUNTIME_NODE_ID;
-}
-
-export function getNappletsShellEdgeId(): string {
-  return NAPPLETS_SHELL_EDGE_ID;
 }
 
 export function getNappletNodeId(name: string): string {
