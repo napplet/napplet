@@ -60,13 +60,13 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TERM-01 | Phase 34 | Pending |
+| TERM-01 | Phase 40 | Pending |
 | TERM-02 | Phase 34 | Pending |
 | TERM-03 | Phase 34 | Pending |
-| TERM-04 | Phase 34 | Pending |
+| TERM-04 | Phase 40 | Pending |
 | TERM-05 | Phase 34 | Pending |
 | WIRE-01 | Phase 35 | Pending |
-| WIRE-02 | Phase 35 | Pending |
+| WIRE-02 | Phase 40 | Pending |
 | TYPE-01 | Phase 36 | Pending |
 | TYPE-02 | Phase 36 | Pending |
 | API-01 | Phase 37 | Pending |
@@ -74,7 +74,7 @@
 | API-03 | Phase 37 | Pending |
 | SESS-01 | Phase 38 | Pending |
 | SESS-02 | Phase 38 | Pending |
-| SESS-03 | Phase 38 | Pending |
+| SESS-03 | Phase 40 | Pending |
 | DOC-01 | Phase 39 | Pending |
 | DOC-02 | Phase 39 | Pending |
 
@@ -85,4 +85,4 @@
 
 ---
 *Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 — roadmap phase mappings added*
+*Last updated: 2026-04-01 — SESS-03, TERM-01, TERM-04, WIRE-02 remapped to Phase 40 (gap closure)*
