@@ -60,29 +60,29 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TERM-01 | — | Pending |
-| TERM-02 | — | Pending |
-| TERM-03 | — | Pending |
-| TERM-04 | — | Pending |
-| TERM-05 | — | Pending |
-| WIRE-01 | — | Pending |
-| WIRE-02 | — | Pending |
-| SESS-01 | — | Pending |
-| SESS-02 | — | Pending |
-| SESS-03 | — | Pending |
-| API-01 | — | Pending |
-| API-02 | — | Pending |
-| API-03 | — | Pending |
-| TYPE-01 | — | Pending |
-| TYPE-02 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
+| TERM-01 | Phase 34 | Pending |
+| TERM-02 | Phase 34 | Pending |
+| TERM-03 | Phase 34 | Pending |
+| TERM-04 | Phase 34 | Pending |
+| TERM-05 | Phase 34 | Pending |
+| WIRE-01 | Phase 35 | Pending |
+| WIRE-02 | Phase 35 | Pending |
+| TYPE-01 | Phase 36 | Pending |
+| TYPE-02 | Phase 36 | Pending |
+| API-01 | Phase 37 | Pending |
+| API-02 | Phase 37 | Pending |
+| API-03 | Phase 37 | Pending |
+| SESS-01 | Phase 38 | Pending |
+| SESS-02 | Phase 38 | Pending |
+| SESS-03 | Phase 38 | Pending |
+| DOC-01 | Phase 39 | Pending |
+| DOC-02 | Phase 39 | Pending |
 
 **Coverage:**
 - v0.7.0 requirements: 17 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17/17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 — initial definition*
+*Last updated: 2026-04-01 — roadmap phase mappings added*

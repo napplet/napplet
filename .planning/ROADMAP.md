@@ -2,112 +2,19 @@
 
 ## Milestones
 
-- ✅ **v0.6.0 Demo Upgrade** — Phases 27-33 (shipped 2026-04-01) — [Archive](milestones/v0.6.0-ROADMAP.md)
 - ✅ **v0.1.0 Alpha** — Phases 1-6 (shipped 2026-03-30) — [Archive](milestones/v0.1.0-ROADMAP.md)
 - ✅ **v0.2.0 Shell Architecture Cleanup** — Phases 7-11 (shipped 2026-03-31) — [Archive](milestones/v0.2.0-ROADMAP.md)
 - ✅ **v0.3.0 Runtime and Core** — Phases 12-17 (shipped 2026-03-31) — [Archive](milestones/v0.3.0-ROADMAP.md)
 - ✅ **v0.4.0 Feature Negotiation & Service Discovery** — Phases 18-22.1 (shipped 2026-03-31) — [Archive](milestones/v0.4.0-ROADMAP.md)
 - ✅ **v0.5.0 Documentation & Developer Skills** — Phases 23-26 (shipped 2026-04-01) — [Archive](milestones/v0.5.0-ROADMAP.md)
+- ✅ **v0.6.0 Demo Upgrade** — Phases 27-33 (shipped 2026-04-01) — [Archive](milestones/v0.6.0-ROADMAP.md)
+- **v0.7.0 Ontology Audit and Adjustments** — Phases 34-39 (in progress)
 
 ## Phases
 
 **Phase Numbering:**
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-<details>
-<summary>✅ v0.6.0 Demo Upgrade (Phases 27-33) — SHIPPED 2026-04-01</summary>
-
-- [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues (completed 2026-04-01)
-- [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture (completed 2026-04-01)
-- [x] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger (completed 2026-04-01)
-- [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path (completed 2026-04-01)
-- [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings (completed 2026-04-01)
-- [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix, isAmber logic fix, detectServiceTarget signer errors (completed 2026-04-01)
-- [x] **Phase 33: Polish Demo UI Layout** - Fix layout and interaction issues: iframe container filling, 90-degree line routing, endpoint offsets, orphan container lines, and service button click handling (completed 2026-04-01)
-
-</details>
-
-## Phase Details
-
-### Phase 27: Demo Audit & Correctness
-**Goal**: Reconcile the demo with the current `@napplet/*` architecture, identify stale integrations and correctness bugs, and make protocol failures understandable enough to distinguish UI issues from real ACL, runtime, or service behavior
-**Depends on**: Nothing (first phase in the milestone)
-**Requirements**: DEMO-01, DEMO-02, DEMO-03
-**Success Criteria** (what must be TRUE):
-  1. The demo boots against the current package structure without stale integration paths or obviously broken wiring
-  2. Revoking a capability shows the affected protocol path clearly enough that relay, inter-pane, signer, and state failures are not conflated
-  3. The phase leaves regression coverage where practical and reproducible notes for any diagnosed behavior that is not yet automated
-**Plans**: 3 completed
-
-### Phase 28: Architecture Topology View
-**Goal**: Rebuild the main demo topology so the visual node hierarchy matches the actual host architecture instead of flattening shell behavior into a single box
-**Depends on**: Phase 27
-**Requirements**: ARCH-01, ARCH-02
-**Success Criteria** (what must be TRUE):
-  1. The flow view separates napplets, shell, ACL, runtime, and each registered service into distinct nodes
-  2. The ordering and hierarchy of nodes teach the real architecture accurately at a glance
-**Plans**: 2 completed
-
-### Phase 29: Node Detail & Drill-Down
-**Goal**: Add node-specific state surfaces and an expanded right-side drill-down panel so users can inspect the demo architecture without losing the bottom debugger
-**Depends on**: Phase 28
-**Requirements**: NODE-01, NODE-02
-**Success Criteria** (what must be TRUE):
-  1. Each node presents live information relevant to its role, such as identity, capabilities, recent activity, or service state
-  2. Supported nodes can open an expanded drill-down view in a right-side panel while preserving access to the bottom debugger
-**Plans**: 3 planned
-
-### Phase 30: Notification Service UX
-**Goal**: Surface the notification service as a first-class part of the demo and exercise it through visible toast behavior
-**Depends on**: Phase 28, Phase 29
-**Requirements**: NOTF-01, NOTF-02, NOTF-03
-**Success Criteria** (what must be TRUE):
-  1. The demo registers the notification service and shows it as its own node in the flow
-  2. Users can trigger toast notifications through the real notification service path and observe the resulting protocol activity
-  3. The notification node exposes useful notification state or actions for tinkering and inspection
-**Plans**: TBD
-
-### Phase 31: Signer Connection UX
-**Goal**: Replace the simplified signer demo with a visible signer connection experience that supports NIP-07 and NIP-46 flows
-**Depends on**: Phase 27, Phase 28, Phase 29
-**Requirements**: SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-05
-**Success Criteria** (what must be TRUE):
-  1. The demo includes a visible signer node and login/connect flow instead of a hidden mock signer-only experience
-  2. Users can connect through NIP-07 when available and through NIP-46 using either a bunker URI or a Nostr Connect QR code
-  3. The demo UI allows editing the NIP-46 relay and shows signer connection state, pubkey, and recent signer activity
-**Plans**: 3 completed
-
-### Phase 32: Fix Demo UI/UX Bugs
-**Goal**: Fix targeted UI/UX bugs: amber infrastructure-failure state for ACL indicator, Leader Line SVG dynamic connections, stale CLAUDE.md NappKeypair documentation, isAmber logic distinction, and detectServiceTarget signer error detection
-**Depends on**: Phase 28, Phase 31
-**Requirements**: None (bug fixes only)
-**Success Criteria** (what must be TRUE):
-  1. Infrastructure failures (no signer, relay stub) flash amber, explicit ACL denials flash red
-  2. Topology edges are real SVG lines with arrowheads that reposition on layout changes
-  3. CLAUDE.md NappKeypair description accurately reflects ephemeral in-memory behavior
-  4. isAmber logic correctly distinguishes ACL denials (denied: prefix) from infrastructure errors
-  5. Signer node flashes amber on infrastructure failures (no signer configured)
-**Plans**: 5 completed (3 original + 2 gap closure)
-
-### Phase 33: Polish Demo UI Layout
-**Goal**: Fix layout and interaction issues to improve visual clarity and usability of the demo
-**Depends on**: Phase 32
-**Requirements**: None (bug fixes/polish only)
-**Success Criteria** (what must be TRUE):
-  1. Napplet iframe content fills its container without unused whitespace
-  2. All topology edges render with 90-degree rectilinear routing instead of curves
-  3. Input and output connection points are visually distinct and offset from each other on nodes
-  4. No orphan edges connecting to undefined container nodes
-  5. Service buttons respond to clicks without triggering the node panel open action
-**Plans**: 5 planned
-
-Plans:
-- [x] 33-01: Fix napplet iframe container rendering — add CSS rule to fill flex container
-- [x] 33-02: Configure Leader Line orthogonal routing — add curve: 0 to BASE_OPTIONS
-- [x] 33-03: Implement socket gravity port distinction — adjust startSocketGravity/endSocketGravity offsets
-- [ ] 33-04: Remove orphan topology edge — delete edge definition referencing topology-napplets
-- [x] 33-05: Add button click isolation — add event.stopPropagation() to service button handlers
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
@@ -161,12 +68,103 @@ Plans:
 
 - [x] **Phase 23: New Package READMEs** - Create READMEs for the four new packages: @napplet/acl, @napplet/core, @napplet/runtime, @napplet/services
 - [x] **Phase 24: Root and Interface READMEs** - Update root README and existing package READMEs: shim, shell, vite-plugin to reflect v0.4.0 reality
-- [x] **Phase 25: SPEC.md Updates** - Update SPEC.md Section 11, rename legacy identifiers, and document the requires/compat protocol (completed 2026-03-31)
-- [x] **Phase 26: Skills Directory** - Create agentskills.io-format skill files: build-napplet, integrate-shell, add-service (completed 2026-03-31)
+- [x] **Phase 25: SPEC.md Updates** - Update SPEC.md Section 11, rename legacy identifiers, and document the requires/compat protocol
+- [x] **Phase 26: Skills Directory** - Create agentskills.io-format skill files: build-napplet, integrate-shell, add-service
 
 </details>
 
+<details>
+<summary>v0.6.0 Demo Upgrade (Phases 27-33) — SHIPPED 2026-04-01</summary>
+
+- [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues
+- [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture
+- [x] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
+- [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path
+- [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings
+- [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, ACL isAmber logic fix, signer error detection
+- [x] **Phase 33: Polish Demo UI Layout** - Fix layout and interaction issues: iframe container filling, 90-degree line routing, endpoint offsets, orphan container lines, and service button click handling
+
+</details>
+
+### v0.7.0 Ontology Audit and Adjustments
+
+- [ ] **Phase 34: Terminology Rename** - Rename all napp* identifiers, types, topics, meta tags, localStorage prefix, and docs to napplet* across all 7 packages
+- [ ] **Phase 35: Wire Protocol Rename** - Rename BusKind.INTER_PANE to BusKind.IPC_PEER and update all 30+ call sites plus SPEC.md
+- [ ] **Phase 36: Type Correctness** - Consolidate ConsentRequest to runtime canonical definition and remove shell/state-proxy.ts dead code
+- [ ] **Phase 37: API Alignment** - Rename RuntimeHooks/ShellHooks to RuntimeAdapter/ShellAdapter with deprecated aliases for one release cycle
+- [ ] **Phase 38: Session Vocabulary** - Rename NappKeyEntry/NappKeyRegistry to SessionEntry/SessionRegistry and fix loadOrCreateKeypair
+- [ ] **Phase 39: Documentation Pass** - Document topic prefix direction semantics and mark nappStorage as deprecated
+
+## Phase Details
+
+### Phase 34: Terminology Rename
+**Goal**: Eliminate the napp/napplet semantic collision so the codebase uses "napplet" consistently and "napp" never appears where "napplet" is meant
+**Depends on**: Nothing (first phase in milestone)
+**Requirements**: TERM-01, TERM-02, TERM-03, TERM-04, TERM-05
+**Success Criteria** (what must be TRUE):
+  1. `grep -r 'napp[^l]' packages/` returns zero hits in production TypeScript (excluding node_modules and dist)
+  2. `pnpm type-check` passes across all 7 packages with zero errors
+  3. All existing tests pass (193+ Playwright e2e + vitest unit/integration)
+  4. The `napplet-state:` localStorage prefix is active with a dual-read fallback to `napp-state:` for migration
+  5. SPEC.md, READMEs, and skills files contain no stale "napp" references where "napplet" is intended
+**Plans**: TBD
+
+### Phase 35: Wire Protocol Rename
+**Goal**: Replace the UI-topology term INTER_PANE with the protocol-semantic IPC_PEER across all packages and documentation
+**Depends on**: Phase 34
+**Requirements**: WIRE-01, WIRE-02
+**Success Criteria** (what must be TRUE):
+  1. `grep -r 'INTER.PANE\|INTER_PANE\|inter.pane' packages/` returns zero hits (excluding node_modules and dist)
+  2. `pnpm type-check` passes across all 7 packages
+  3. All existing tests pass
+  4. SPEC.md documents the `IPC-*` namespace convention and lists `IPC-PEER` as the current member with `IPC-BROADCAST` and `IPC-CHANNEL` as reserved future members
+**Plans**: TBD
+
+### Phase 36: Type Correctness
+**Goal**: Eliminate duplicate type definitions between shell and runtime so each protocol type has exactly one canonical source
+**Depends on**: Phase 35
+**Requirements**: TYPE-01, TYPE-02
+**Success Criteria** (what must be TRUE):
+  1. `ConsentRequest` is defined only in `@napplet/runtime`, includes the `type` discriminator field, and `@napplet/shell` re-exports it
+  2. `shell/state-proxy.ts` is confirmed dead code and removed, or if still imported, routed through runtime
+  3. `pnpm type-check` passes and all tests pass after the changes
+**Plans**: TBD
+
+### Phase 37: API Alignment
+**Goal**: Rename the public *Hooks interfaces to *Adapter to match established SDK conventions, with deprecated aliases shipping for one release cycle
+**Depends on**: Phase 36
+**Requirements**: API-01, API-02, API-03
+**Success Criteria** (what must be TRUE):
+  1. `RuntimeAdapter` and `ShellAdapter` are the canonical interface names; `RuntimeHooks` and `ShellHooks` exist as `@deprecated` type aliases
+  2. Nested sub-interfaces use unprefixed names (`RelayPoolAdapter`, `AuthAdapter`, `CacheAdapter`, `CryptoAdapter` instead of `RuntimeRelayPoolHooks`, etc.)
+  3. `pnpm type-check` passes and all tests pass
+  4. Deprecation schedule is documented (removal in v0.9.0)
+**Plans**: TBD
+
+### Phase 38: Session Vocabulary
+**Goal**: Rename session management types to reflect their purpose (session lifecycle) rather than their owner (napp/napplet)
+**Depends on**: Phase 34, Phase 37
+**Requirements**: SESS-01, SESS-02, SESS-03
+**Success Criteria** (what must be TRUE):
+  1. `SessionEntry` and `SessionRegistry` are the canonical type names (no `NappKeyEntry` or `NappletKeyEntry` references remain in production code)
+  2. `createEphemeralKeypair()` is the function name with no parameters; `loadOrCreateKeypair` no longer exists
+  3. `pnpm type-check` passes and all tests pass
+**Plans**: TBD
+
+### Phase 39: Documentation Pass
+**Goal**: Document the implicit protocol conventions that new contributors and agents need to understand
+**Depends on**: Phase 34, Phase 38
+**Requirements**: DOC-01, DOC-02
+**Success Criteria** (what must be TRUE):
+  1. `core/topics.ts` has JSDoc explaining direction semantics: `shell:*` = napplet-to-shell, `napplet:*` = shell-to-napplet, `{service}:*` = bidirectional
+  2. `nappStorage` in shim has `@deprecated` JSDoc pointing to `nappletState` as canonical, with v0.9.0 removal target noted
+  3. `pnpm type-check` passes (JSDoc must not break builds)
+**Plans**: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 34 -> 35 -> 36 -> 37 -> 38 -> 39
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -199,22 +197,14 @@ Plans:
 | 26. Skills Directory | v0.5.0 | 3/3 | Complete | 2026-03-31 |
 | 27. Demo Audit & Correctness | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 28. Architecture Topology View | v0.6.0 | 2/2 | Complete | 2026-04-01 |
-| 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete    | 2026-04-01 |
+| 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete | 2026-04-01 |
 | 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
-| 32. Fix demo UI/UX bugs | v0.6.0 | 5/5 | Complete | 2026-04-01 |
-| 33. Polish Demo UI Layout | v0.6.0 | 4/5 | In Progress|  |
-
-### Phase 32: Fix demo UI/UX bugs
-
-**Goal:** Fix three targeted UI/UX bugs in the demo app: add amber (infrastructure failure) state to ACL indicator, replace CSS-bar edges with Leader Line dynamic connections, and fix stale CLAUDE.md NappKeypair documentation.
-**Requirements**: None (bug fixes only)
-**Depends on:** Phase 31
-**Plans:** 5 plans (3 original + 2 gap closure)
-
-Plans:
-- [x] 32-01: ACL indicator signal quality — add amber state for infrastructure failures vs red for explicit denials
-- [x] 32-02: Leader Line edge routing — replace CSS-bar edges with dynamic directional connecting lines
-- [x] 32-03: Fix stale CLAUDE.md NappKeypair documentation
-- [x] 32-04: Fix isAmber logic to distinguish ACL denials (denied: prefix) from infrastructure errors
-- [x] 32-05: Enhance detectServiceTarget to catch signer errors via OK response patterns
+| 32. Fix Demo UI/UX Bugs | v0.6.0 | 5/5 | Complete | 2026-04-01 |
+| 33. Polish Demo UI Layout | v0.6.0 | 4/5 | Complete | 2026-04-01 |
+| 34. Terminology Rename | v0.7.0 | 0/0 | Not started | - |
+| 35. Wire Protocol Rename | v0.7.0 | 0/0 | Not started | - |
+| 36. Type Correctness | v0.7.0 | 0/0 | Not started | - |
+| 37. API Alignment | v0.7.0 | 0/0 | Not started | - |
+| 38. Session Vocabulary | v0.7.0 | 0/0 | Not started | - |
+| 39. Documentation Pass | v0.7.0 | 0/0 | Not started | - |
