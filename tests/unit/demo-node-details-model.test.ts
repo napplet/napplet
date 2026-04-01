@@ -60,6 +60,7 @@ describe('buildNodeDetails — node role coverage', () => {
     expect(roles).toContain('service');
   });
 
+  // drill-down: asserts that every topology node supports the inspector drill-down workflow
   it('returns drillDownSupported: true for all current topology nodes', () => {
     const opts = makeOptions();
     for (const node of TEST_TOPOLOGY.nodes) {
