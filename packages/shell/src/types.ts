@@ -57,24 +57,6 @@ export interface AclEntry {
   stateQuota?: number;
 }
 
-/**
- * A pending consent request for a destructive signing kind.
- * Raised when a signer request arrives for kinds 0, 3, 5, 10002.
- * @example
- * ```ts
- * bridge.registerConsentHandler((request: ConsentRequest) => {
- *   const allowed = confirm(`Allow kind ${request.event.kind}?`);
- *   request.resolve(allowed);
- * });
- * ```
- */
-export interface ConsentRequest {
-  windowId: string;
-  pubkey: string;
-  event: NostrEvent;
-  resolve: (allowed: boolean) => void;
-}
-
 // ─── Hook Interfaces ────────────────────────────────────────────────────────
 
 /**

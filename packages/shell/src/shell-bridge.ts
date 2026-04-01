@@ -10,14 +10,14 @@
  */
 
 import { createRuntime } from '@napplet/runtime';
-import type { Runtime, ConsentHandler } from '@napplet/runtime';
+import type { Runtime, ConsentHandler, ConsentRequest } from '@napplet/runtime';
 import { adaptHooks } from './hooks-adapter.js';
 import { originRegistry } from './origin-registry.js';
 import { sessionRegistry, nappKeyRegistry } from './session-registry.js';
 import { aclStore } from './acl-store.js';
 import { manifestCache } from './manifest-cache.js';
 import { audioManager } from './audio-manager.js';
-import type { ShellHooks, ConsentRequest } from './types.js';
+import type { ShellHooks } from './types.js';
 
 // ─── Public interface ────────────────────────────────────────────────────────
 
@@ -170,7 +170,7 @@ export function createShellBridge(hooks: ShellHooks): ShellBridge {
     },
 
     registerConsentHandler(handler: (request: ConsentRequest) => void): void {
-      runtime.registerConsentHandler(handler as ConsentHandler);
+      runtime.registerConsentHandler(handler);
     },
 
     get runtime() {

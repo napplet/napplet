@@ -31,7 +31,6 @@ export type {
   WorkerRelayLike,
   CryptoHooks,
   DmHooks,
-  ConsentRequest,
   SessionEntry,
   NappKeyEntry,  // @deprecated — use SessionEntry
   AclEntry,
@@ -54,6 +53,8 @@ export type { ManifestCacheEntry } from './manifest-cache.js';
 // Enforcement gate (re-exported from @napplet/runtime for backwards compatibility)
 export { createEnforceGate, resolveCapabilities, formatDenialReason } from '@napplet/runtime';
 export type { CapabilityResolution, EnforceResult, EnforceConfig, IdentityResolver, AclChecker } from '@napplet/runtime';
+// ConsentRequest canonical definition re-exported from @napplet/runtime
+export type { ConsentRequest } from '@napplet/runtime';
 
 // Topic constants for shell command routing
 export { TOPICS } from './topics.js';
