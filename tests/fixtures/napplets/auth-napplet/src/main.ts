@@ -2,7 +2,7 @@
  * auth-napplet -- Minimal test napplet that only does AUTH handshake.
  *
  * Importing @napplet/shim automatically triggers:
- * 1. Read nappType from <meta name="napplet-napp-type">
+ * 1. Read nappletType from <meta name="napplet-napp-type">
  * 2. Load/create ephemeral session keypair
  * 3. Install window.nostr NIP-07 proxy
  * 4. Attach message listener for relay responses

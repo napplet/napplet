@@ -6,12 +6,12 @@ import { finalizeEvent } from 'nostr-tools/pure';
 import { BusKind } from './types.js';
 import type { NappletKeypair } from './napplet-keypair.js';
 
-// keypair is set by index.ts after loadOrCreateKeypair via setKeyboardShimKeypair()
+// keypair is set by index.ts after createEphemeralKeypair via setKeyboardShimKeypair()
 let shimKeypair: NappletKeypair | null = null;
 
 /**
  * Provide the napplet keypair to the keyboard shim so it can sign forwarded hotkey events.
- * Called by index.ts immediately after loadOrCreateKeypair() resolves and also inside
+ * Called by index.ts immediately after createEphemeralKeypair() resolves and also inside
  * handleAuthChallenge() as a safety net in case AUTH challenge arrives before eager init.
  */
 export function setKeyboardShimKeypair(kp: NappletKeypair): void {

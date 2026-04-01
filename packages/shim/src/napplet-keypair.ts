@@ -21,14 +21,13 @@ export type NappKeypair = NappletKeypair;
  * event), not by the keypair's pubkey. Each page load produces a new identity
  * that is validated against the napplet's published manifest.
  *
- * @param _nappType - The napplet type identifier (kept for API compatibility; ignored — always creates fresh keypair)
  * @returns A fresh ephemeral keypair
  */
 // TODO(SEED-001): This placeholder always generates a random keypair.
 // The correct design: shell derives a deterministic key from
 // SHA256(salt + aggregateHash + dTag + nappletAuthorPubkey) and sends it
 // to the napplet via an init message. See .planning/seeds/SEED-001-deterministic-napplet-keypair.md
-export function loadOrCreateKeypair(_nappType: string): NappletKeypair {
+export function createEphemeralKeypair(): NappletKeypair {
   const privkey = generateSecretKey();
   const pubkey = getPublicKey(privkey);
   return { privkey, pubkey };

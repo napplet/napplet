@@ -4,7 +4,7 @@
 // Completes NIP-42 AUTH handshake and proxies window.nostr NIP-07 calls as signed events.
 
 import { finalizeEvent } from 'nostr-tools/pure';
-import { loadOrCreateKeypair } from './napplet-keypair.js';
+import { createEphemeralKeypair } from './napplet-keypair.js';
 import type { NappletKeypair } from './napplet-keypair.js';
 import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
@@ -224,8 +224,7 @@ function getAggregateHash(): string {
 
 function handleAuthChallenge(challenge: string): void {
   if (!keypair) {
-    const nappletType = getNappletType();
-    keypair = loadOrCreateKeypair(nappletType);
+    keypair = createEphemeralKeypair();
     setKeyboardShimKeypair(keypair);
     _resolveKeypairReady();
   }
@@ -340,8 +339,7 @@ installStateShim();
 
 // Initialize keypair eagerly so it is ready before AUTH challenge arrives
 {
-  const nappletType = getNappletType();
-  keypair = loadOrCreateKeypair(nappletType);
+  keypair = createEphemeralKeypair();
   setKeyboardShimKeypair(keypair);
   _resolveKeypairReady();
 }
