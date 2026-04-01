@@ -19,7 +19,7 @@
 <summary>v0.6.0 Demo Upgrade (Phases 27-31) — PLANNED</summary>
 
 - [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues (completed 2026-04-01)
-- [ ] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture
+- [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture (completed 2026-04-01)
 - [ ] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
 - [ ] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path
 - [ ] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings
@@ -45,7 +45,7 @@
 **Success Criteria** (what must be TRUE):
   1. The flow view separates napplets, shell, ACL, runtime, and each registered service into distinct nodes
   2. The ordering and hierarchy of nodes teach the real architecture accurately at a glance
-**Plans**: TBD
+**Plans**: 2 completed
 
 ### Phase 29: Node Detail & Drill-Down
 **Goal**: Add node-specific state surfaces and an expanded right-side drill-down panel so users can inspect the demo architecture without losing the bottom debugger
@@ -165,7 +165,7 @@
 | 25. SPEC.md Updates | v0.5.0 | 1/1 | Complete | 2026-03-31 |
 | 26. Skills Directory | v0.5.0 | 3/3 | Complete | 2026-03-31 |
 | 27. Demo Audit & Correctness | v0.6.0 | 3/3 | Complete | 2026-04-01 |
-| 28. Architecture Topology View | v0.6.0 | 0/0 | Planned | — |
+| 28. Architecture Topology View | v0.6.0 | 2/2 | Complete | 2026-04-01 |
 | 29. Node Detail & Drill-Down | v0.6.0 | 0/3 | Planned | — |
 | 30. Notification Service UX | v0.6.0 | 0/0 | Planned | — |
 | 31. Signer Connection UX | v0.6.0 | 0/0 | Planned | — |

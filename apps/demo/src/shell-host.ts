@@ -47,6 +47,14 @@ export interface MessageTap {
   clear(): void;
 }
 
+export interface DemoNappletDefinition {
+  name: string;
+  label: string;
+  statusId: string;
+  aclId: string;
+  frameContainerId: string;
+}
+
 export type DemoProtocolPath =
   | 'auth'
   | 'relay-publish'
@@ -68,6 +76,23 @@ export interface DemoPathAuditEntry {
 export type DemoSignerMode = 'service' | 'fallback';
 
 export const DEMO_SIGNER_MODE: DemoSignerMode = 'service';
+
+export const DEMO_NAPPLETS: DemoNappletDefinition[] = [
+  {
+    name: 'chat',
+    label: 'chat',
+    statusId: 'chat-status',
+    aclId: 'chat-acl',
+    frameContainerId: 'chat-frame-container',
+  },
+  {
+    name: 'bot',
+    label: 'bot',
+    statusId: 'bot-status',
+    aclId: 'bot-acl',
+    frameContainerId: 'bot-frame-container',
+  },
+];
 
 export const DEMO_PROTOCOL_PATHS: DemoPathAuditEntry[] = [
   {
@@ -251,6 +276,11 @@ function createMessageTap(): MessageTap {
 
 function createDemoHooks(): ShellHooks {
   const signerHooks = createSignerHooks();
+  const services = {
+    signer: createSignerService({
+      getSigner: signerHooks.getSigner,
+    }),
+  };
   return {
     relayPool: {
       getRelayPool: () => ({
@@ -276,11 +306,7 @@ function createDemoHooks(): ShellHooks {
       getUserPubkey: signerHooks.getUserPubkey,
       getSigner: signerHooks.getSigner,
     },
-    services: {
-      signer: createSignerService({
-        getSigner: signerHooks.getSigner,
-      }),
-    },
+    services,
     config: { getNappUpdateBehavior: () => 'auto-grant' },
     hotkeys: { executeHotkeyFromForward: () => {} },
     workerRelay: { getWorkerRelay: () => null },
@@ -329,6 +355,7 @@ export interface NappletInfo {
 }
 
 const napplets = new Map<string, NappletInfo>();
+const demoServiceNames = new Set<string>(['signer']);
 let nappletCounter = 0;
 
 // --- Public API ---
@@ -338,6 +365,19 @@ export let relay: ShellBridge;
 
 export function getNapplets(): Map<string, NappletInfo> { return napplets; }
 export function getNapplet(windowId: string): NappletInfo | undefined { return napplets.get(windowId); }
+export function getDemoNappletDefinitions(): DemoNappletDefinition[] {
+  return DEMO_NAPPLETS.map((napplet) => ({ ...napplet }));
+}
+export function getDemoServiceNames(): string[] {
+  return [...demoServiceNames].sort((left, right) => left.localeCompare(right));
+}
+export function getDemoTopologyInputs() {
+  return {
+    hostPubkey: getDemoHostPubkey(),
+    napplets: getDemoNappletDefinitions(),
+    services: getDemoServiceNames(),
+  };
+}
 
 /**
  * Boot the shell: create ShellBridge, install tap, wire up proxy.
@@ -365,6 +405,16 @@ export function bootShell(): { tap: MessageTap; relay: ShellBridge } {
   };
 
   relay = createShellBridge(hooks);
+  const originalRegisterService = relay.runtime.registerService.bind(relay.runtime);
+  relay.runtime.registerService = (name, handler) => {
+    demoServiceNames.add(name);
+    originalRegisterService(name, handler);
+  };
+  const originalUnregisterService = relay.runtime.unregisterService.bind(relay.runtime);
+  relay.runtime.unregisterService = (name) => {
+    demoServiceNames.delete(name);
+    originalUnregisterService(name);
+  };
 
   // Set consent handler for destructive kinds
   // In the demo, auto-approve after 500ms to show the flow

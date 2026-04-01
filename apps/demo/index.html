@@ -8,115 +8,64 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    .flow-arrow { stroke: #2a2a3a; stroke-width: 3; fill: none; transition: stroke 0.3s, filter 0.3s; }
-    .flow-arrow.active { stroke: #39ff14; filter: drop-shadow(0 0 4px #39ff1460); }
-    .flow-arrow.blocked { stroke: #ff3b3b; filter: drop-shadow(0 0 4px #ff3b3b60); }
-    .flow-arrowhead { fill: #2a2a3a; transition: fill 0.3s; }
-    .flow-arrowhead.active { fill: #39ff14; }
-    .flow-arrowhead.blocked { fill: #ff3b3b; }
     .node-box { border: 3px solid #3a3a4a; transition: border-color 0.3s, box-shadow 0.3s; }
     .node-box.active { border-color: #39ff14; box-shadow: 0 0 12px #39ff1430; }
     .node-box.blocked { border-color: #ff3b3b; box-shadow: 0 0 12px #ff3b3b30; }
+    .topology-edge { width: 3px; min-height: 28px; margin: 0 auto; border-radius: 999px; background: linear-gradient(180deg, #2a2a3a, #202033); transition: background 0.3s, box-shadow 0.3s; }
+    .topology-edge.active { background: linear-gradient(180deg, #39ff14, #97ff70); box-shadow: 0 0 10px #39ff1460; }
+    .topology-edge.blocked { background: linear-gradient(180deg, #ff3b3b, #ff8787); box-shadow: 0 0 10px #ff3b3b60; }
     .acl-btn { transition: all 0.15s; }
     .acl-btn-on { background: rgba(57,255,20,0.2); border-color: rgba(57,255,20,0.5); color: #39ff14; }
     .acl-btn-off { background: rgba(255,59,59,0.2); border-color: rgba(255,59,59,0.5); color: #ff3b3b; }
     .acl-btn-block { background: transparent; border-color: #3a3a4a; color: #666; }
     .acl-btn-block:hover { border-color: rgba(255,59,59,0.4); color: #ff3b3b; }
     .acl-btn-blocked { background: rgba(255,59,59,0.2); border-color: rgba(255,59,59,0.5); color: #ff3b3b; }
+    .topology-layout { height: 100%; display: flex; flex-direction: column; gap: 12px; }
+    .topology-region { display: flex; flex-direction: column; gap: 10px; }
+    .topology-region-label { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #7c86a7; }
+    .topology-napplet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; min-height: 0; }
+    .topology-napplet-branch { display: flex; flex-direction: column; gap: 8px; }
+    .topology-service-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .topology-service-branch { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 180px; }
+    .topology-layer { display: flex; justify-content: center; }
+    .topology-node { background: linear-gradient(180deg, rgba(18,18,26,0.95), rgba(10,10,15,0.98)); border-radius: 16px; overflow: hidden; }
+    .topology-node-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 0; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7981a0; }
+    .topology-node-kicker { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7981a0; }
+    .topology-node-status { font-size: 10px; color: #666; }
+    .topology-node-title { padding: 2px 14px 0; font-size: 18px; line-height: 1.2; color: #f0f6ff; text-transform: lowercase; }
+    .topology-node-copy { padding: 6px 14px 12px; font-size: 11px; line-height: 1.5; color: #a5abc2; }
+    .topology-node-meta { padding: 0 14px 14px; font-size: 11px; color: #62d0ff; }
+    .topology-core-card { width: min(100%, 420px); }
+    .topology-napplet-card { min-height: 260px; display: flex; flex-direction: column; }
+    .topology-service-card { width: 100%; max-width: 220px; }
+    .topology-acl-slot { padding: 10px 14px; border-top: 1px solid #1f2235; border-bottom: 1px solid #1f2235; min-height: 58px; background: rgba(255,255,255,0.01); }
+    .topology-frame-slot { flex: 1; min-height: 220px; position: relative; }
+    .topology-services-region { padding-bottom: 4px; }
+    .topology-flow-log { margin: 0 14px 14px; padding-top: 10px; border-top: 1px solid #1f2235; }
+    .topology-flow-log-label { margin-bottom: 6px; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7c86a7; }
+    .topology-flow-log-body { font-size: 10px; color: #666; min-height: 20px; }
     @media (max-width: 768px) {
-      .flow-row { flex-direction: column !important; }
-      .flow-row .node-box { width: 100% !important; min-width: 0 !important; }
-      .arrow-col { transform: rotate(90deg); width: 60px !important; height: 40px !important; align-self: center; }
+      .topology-layout { gap: 10px; }
+      .topology-core-card { width: 100%; }
+      .topology-napplet-grid { grid-template-columns: 1fr; }
+      .topology-service-grid { flex-direction: column; align-items: stretch; }
+      .topology-service-branch { min-width: 0; }
+      .topology-service-card { max-width: none; }
     }
   </style>
 </head>
 <body class="bg-surface-dark text-gray-300 font-mono min-h-screen flex flex-col overflow-hidden">
-  <!-- Header -->
   <header class="px-4 py-2 bg-surface-mid border-b border-surface-border flex items-center shrink-0">
     <h1 class="text-neon-blue text-sm font-bold tracking-wider uppercase">napplet playground</h1>
   </header>
 
-  <!-- Flow area: Chat | → | Shell/ACL | → | Bot -->
-  <section id="flow-area" class="flex-1 min-h-0 p-4">
-    <div class="flow-row flex items-stretch gap-0 h-full">
+  <section
+    id="flow-area"
+    class="flex-1 min-h-0 p-4 overflow-auto"
+    data-topology-required-nodes="topology-node-acl topology-node-runtime"
+    data-topology-regions="topology-services"
+  ></section>
 
-      <!-- Chat napplet -->
-      <div id="chat-box" class="node-box flex flex-col flex-1 min-w-[200px] rounded-lg overflow-hidden">
-        <div class="px-3 py-2 bg-surface-mid border-b border-surface-border flex items-center justify-between shrink-0">
-          <span class="text-neon-blue text-xs font-bold uppercase">chat</span>
-          <span id="chat-status" class="text-[10px] text-gray-500">loading...</span>
-        </div>
-        <div id="chat-acl" class="px-2 py-2 bg-surface-dark border-b border-surface-border shrink-0"></div>
-        <div id="chat-frame-container" class="flex-1 relative min-h-0"></div>
-      </div>
-
-      <!-- Arrow: Chat ↔ Shell -->
-      <div class="arrow-col flex flex-col justify-center w-[60px] shrink-0">
-        <svg viewBox="0 0 60 80" class="w-full h-[80px]">
-          <defs>
-            <marker id="ah-right" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" class="flow-arrowhead" id="ahf-chat-out"/>
-            </marker>
-            <marker id="ah-left-chat" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
-              <polygon points="8 0, 0 3, 8 6" class="flow-arrowhead" id="ahf-chat-in"/>
-            </marker>
-          </defs>
-          <!-- Chat → Shell (right arrow) -->
-          <line x1="4" y1="25" x2="52" y2="25" class="flow-arrow" id="line-chat-out" marker-end="url(#ah-right)"/>
-          <!-- Shell → Chat (left arrow) -->
-          <line x1="56" y1="55" x2="8" y2="55" class="flow-arrow" id="line-chat-in" marker-end="url(#ah-left-chat)"/>
-        </svg>
-      </div>
-
-      <!-- Shell / ACL (center) -->
-      <div id="shell-box" class="node-box flex flex-col w-[220px] min-w-[180px] shrink-0 rounded-lg overflow-hidden">
-        <div class="px-3 py-2 bg-surface-mid border-b border-surface-border shrink-0">
-          <span class="text-neon-purple text-xs font-bold uppercase">shell / acl</span>
-        </div>
-        <div class="flex-1 flex flex-col p-3 gap-2 overflow-y-auto">
-          <div class="text-[10px] text-gray-500">
-            <div>relay: <span class="text-neon-blue">shell://</span></div>
-            <div id="shell-pubkey" class="truncate">pubkey: ...</div>
-          </div>
-          <div class="border-t border-surface-border pt-2">
-            <div class="text-[10px] text-gray-400 mb-1 font-semibold uppercase">Message Flow</div>
-            <div id="shell-flow-log" class="text-[9px] text-gray-600 space-y-0.5 overflow-y-auto flex-1"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Arrow: Shell ↔ Bot -->
-      <div class="arrow-col flex flex-col justify-center w-[60px] shrink-0">
-        <svg viewBox="0 0 60 80" class="w-full h-[80px]">
-          <defs>
-            <marker id="ah-right-bot" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" class="flow-arrowhead" id="ahf-bot-in"/>
-            </marker>
-            <marker id="ah-left-bot" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
-              <polygon points="8 0, 0 3, 8 6" class="flow-arrowhead" id="ahf-bot-out"/>
-            </marker>
-          </defs>
-          <!-- Shell → Bot (right arrow) -->
-          <line x1="4" y1="25" x2="52" y2="25" class="flow-arrow" id="line-bot-in" marker-end="url(#ah-right-bot)"/>
-          <!-- Bot → Shell (left arrow) -->
-          <line x1="56" y1="55" x2="8" y2="55" class="flow-arrow" id="line-bot-out" marker-end="url(#ah-left-bot)"/>
-        </svg>
-      </div>
-
-      <!-- Bot napplet -->
-      <div id="bot-box" class="node-box flex flex-col flex-1 min-w-[200px] rounded-lg overflow-hidden">
-        <div class="px-3 py-2 bg-surface-mid border-b border-surface-border flex items-center justify-between shrink-0">
-          <span class="text-neon-pink text-xs font-bold uppercase">bot</span>
-          <span id="bot-status" class="text-[10px] text-gray-500">loading...</span>
-        </div>
-        <div id="bot-acl" class="px-2 py-2 bg-surface-dark border-b border-surface-border shrink-0"></div>
-        <div id="bot-frame-container" class="flex-1 relative min-h-0"></div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Bottom: Protocol debugger (resizable) -->
   <div id="resize-handle" style="height:6px;cursor:ns-resize;background:#2a2a3a;border-top:1px solid #3a3a4a;border-bottom:1px solid #3a3a4a;flex-shrink:0"></div>
   <section id="debugger-section" style="height:45vh;min-height:120px" class="shrink-0 flex flex-col overflow-hidden">
     <napplet-debugger id="debugger"></napplet-debugger>

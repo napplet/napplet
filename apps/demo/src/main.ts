@@ -1,23 +1,32 @@
 /**
  * main.ts -- Demo playground entry point.
  *
- * Boots shell, loads napplets, wires debugger, ACL panel, and flow animator.
+ * Boots shell, renders the topology view, loads napplets, wires debugger,
+ * ACL panels, and flow animator.
  */
 import 'virtual:uno.css';
 import {
   bootShell,
-  loadNapplet,
-  getDemoHostPubkey,
-  getNapplets,
+  DEMO_NAPPLETS,
   getDemoHostAuditSummary,
+  getDemoHostPubkey,
+  getDemoTopologyInputs,
+  loadNapplet,
 } from './shell-host.js';
 import './debugger.js';
 import type { NappletDebugger } from './debugger.js';
 import { renderAclPanels, setDebugger } from './acl-panel.js';
 import { initFlowAnimator } from './flow-animator.js';
+import { buildDemoTopology, renderDemoTopology } from './topology.js';
 
 // Boot the shell (now includes signer)
 const { tap } = bootShell();
+const topology = buildDemoTopology(getDemoTopologyInputs());
+
+const flowArea = document.getElementById('flow-area');
+if (flowArea) {
+  flowArea.innerHTML = renderDemoTopology(topology);
+}
 
 // Connect debugger to tap
 const debuggerEl = document.getElementById('debugger') as NappletDebugger;
@@ -28,20 +37,16 @@ if (debuggerEl) {
   debuggerEl.addSystemMessage(getDemoHostAuditSummary());
 }
 
-// Show pubkey in shell center panel
+// Show pubkey in shell node
 const shellPubkey = document.getElementById('shell-pubkey');
 if (shellPubkey) shellPubkey.textContent = `pubkey: ${getDemoHostPubkey().substring(0, 20)}...`;
 
-// Load demo napplets
-const chatInfo = loadNapplet('chat', 'chat-frame-container');
-const botInfo = loadNapplet('bot', 'bot-frame-container');
+// Load demo napplets into the rendered topology
+const nappletInfos = DEMO_NAPPLETS.map((napplet) => loadNapplet(napplet.name, napplet.frameContainerId));
+const chatInfo = nappletInfos.find((napplet) => napplet.name === 'chat');
+const botInfo = nappletInfos.find((napplet) => napplet.name === 'bot');
 
-// Init flow animator — resolves napplet names from windowId
-initFlowAnimator(tap, (windowId: string) => {
-  const napplets = getNapplets();
-  const info = napplets.get(windowId);
-  return info?.name ?? null;
-});
+initFlowAnimator(tap, topology);
 
 // Track which napplets have had their ACL panel rendered (render only once)
 const aclRendered = new Set<string>();
@@ -53,12 +58,12 @@ tap.onMessage((msg) => {
       const chatStatus = document.getElementById('chat-status');
       const botStatus = document.getElementById('bot-status');
 
-      if (chatInfo.authenticated && chatStatus && !aclRendered.has('chat')) {
+      if (chatInfo?.authenticated && chatStatus && !aclRendered.has('chat')) {
         chatStatus.textContent = 'authenticated';
         chatStatus.style.color = '#39ff14';
         aclRendered.add('chat');
       }
-      if (botInfo.authenticated && botStatus && !aclRendered.has('bot')) {
+      if (botInfo?.authenticated && botStatus && !aclRendered.has('bot')) {
         botStatus.textContent = 'authenticated';
         botStatus.style.color = '#39ff14';
         aclRendered.add('bot');
