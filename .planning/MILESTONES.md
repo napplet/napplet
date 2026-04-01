@@ -1,5 +1,30 @@
 # Milestones
 
+## v0.6.0 Demo Upgrade (Shipped: 2026-04-01)
+
+**Phases completed:** 7 phases, 28 plans, 28 tasks
+
+**Key accomplishments:**
+
+- Layered topology model and generated demo architecture view that separates napplets, shell, ACL, runtime, and wired services
+- Topology-aware message highlighting and responsive architecture layout that keep shell, ACL, runtime, and signer-service paths readable
+- SignerConnectionState model with NIP-07 browser extension connect flow, signer node topology UX showing connected/disconnected state, and shell-host decoupled from mock signer as primary path
+- NIP-46 WebSocket requester client, connect modal with NIP-07/NIP-46 side-by-side panes, QR code generation for nostrconnect://, and real connectNip46() implementation.
+- Tap wiring for signer request recording, extended topology render tests, and end-to-end verification of all SIGN requirements.
+- File:
+- File:
+- One-liner:
+- Task 1: Add curve: 0 to Leader Line BASE_OPTIONS
+- One-liner:
+- Objective:
+- Summary:
+- Enabled 90-degree orthogonal topology edge routing by replacing invalid `curve: 0` with correct `path: 'grid'` in Leader Line BASE_OPTIONS
+- One-liner:
+- One-liner:
+- One-liner:
+
+---
+
 ## v0.5.0 Documentation & Developer Skills (Shipped: 2026-04-01)
 
 **Phases completed:** 4 phases, 12 plans, 0 tasks

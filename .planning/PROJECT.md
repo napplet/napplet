@@ -8,16 +8,9 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## Current Milestone: v0.6.0 Demo Upgrade
+## Shipped: v0.6.0 Demo Upgrade
 
-**Goal:** Turn the demo into an architecture-accurate teaching and testing surface for the current shell/runtime/service stack.
-
-**Target features:**
-- Demo regression audit and fixes against current `@napplet/*` packages, including clear distinction between ACL denials, UI bugs, and deeper runtime issues
-- Architecture-aligned node layout separating shell, ACL, runtime, and each registered service
-- Node-specific live information plus drill-down panels that expand from the right without covering the bottom debugger
-- Notification/toast flow wired through the notification service
-- Signer service UX with login/connect modal, NIP-07 + NIP-46 support, and editable relay configuration for NIP-46
+The demo is now an architecture-accurate teaching and testing surface. 7 phases, 28 plans shipped 2026-04-01. See [archive](milestones/v0.6.0-ROADMAP.md).
 
 ## Requirements
 
@@ -66,11 +59,14 @@ Prove that sandboxed Nostr apps can securely delegate to a host shell over a sim
 - ✓ Demo flow view separates napplets, shell, ACL, runtime, and service nodes in distinct topology nodes with hierarchy edges and animation — v0.6.0 Phase 28 (ARCH-01, ARCH-02)
 - ✓ Node detail adapter and compact summary surfaces — role-specific summaryFields on every topology node, live from host/runtime state — v0.6.0 Phase 29 (NODE-01)
 - ✓ Right-side inspector pane with selected-node state, recent-activity projection, and debugger coexistence — v0.6.0 Phase 29 (NODE-02)
+- ✓ Notification service as first-class topology node with toast UX, protocol activity visibility, and service state panel — v0.6.0 Phase 30 (NOTF-01, NOTF-02, NOTF-03)
+- ✓ Signer connection UX with NIP-07/NIP-46 flows, QR code, configurable relay, and signer topology node — v0.6.0 Phase 31 (SIGN-01..05)
+- ✓ Demo UI/UX bug fixes — amber state, Leader Line SVG edges, ACL isAmber logic, signer error detection — v0.6.0 Phase 32
+- ✓ Polish pass — iframe fill, perpendicular topology edges, separated in/out ports, orphan edge removal, button isolation — v0.6.0 Phase 33
 
 ### Active
-- [ ] Notification service is visible and exercised through toast UI in the demo
-- [ ] Notification service is visible and exercised through toast UI in the demo
-- [ ] Signer service demo supports NIP-07 and NIP-46 connection flows with configurable NIP-46 relay
+
+*(Define requirements for next milestone via `/gsd:new-milestone`)*
 
 ### Out of Scope
 
