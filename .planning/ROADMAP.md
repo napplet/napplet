@@ -23,7 +23,7 @@
 - [ ] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
 - [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path (completed 2026-04-01)
 - [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings (completed 2026-04-01)
-- [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix (completed 2026-04-01)
+- [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix, isAmber logic fix, detectServiceTarget signer errors (completed 2026-04-01)
 
 </details>
 
@@ -78,14 +78,16 @@
 **Plans**: 3 completed
 
 ### Phase 32: Fix Demo UI/UX Bugs
-**Goal**: Fix three targeted UI/UX bugs: amber infrastructure-failure state for ACL indicator, Leader Line SVG dynamic connections, and stale CLAUDE.md NappKeypair documentation
+**Goal**: Fix targeted UI/UX bugs: amber infrastructure-failure state for ACL indicator, Leader Line SVG dynamic connections, stale CLAUDE.md NappKeypair documentation, isAmber logic distinction, and detectServiceTarget signer error detection
 **Depends on**: Phase 28, Phase 31
 **Requirements**: None (bug fixes only)
 **Success Criteria** (what must be TRUE):
   1. Infrastructure failures (no signer, relay stub) flash amber, explicit ACL denials flash red
   2. Topology edges are real SVG lines with arrowheads that reposition on layout changes
   3. CLAUDE.md NappKeypair description accurately reflects ephemeral in-memory behavior
-**Plans**: 3 completed
+  4. isAmber logic correctly distinguishes ACL denials (denied: prefix) from infrastructure errors
+  5. Signer node flashes amber on infrastructure failures (no signer configured)
+**Plans**: 5 completed (3 original + 2 gap closure)
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
@@ -180,7 +182,7 @@
 | 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete    | 2026-04-01 |
 | 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
-| 32. Fix demo UI/UX bugs | v0.6.0 | 0/3 | Planning | 2026-04-01 |
+| 32. Fix demo UI/UX bugs | v0.6.0 | 5/5 | Complete | 2026-04-01 |
 
 ### Phase 32: Fix demo UI/UX bugs
 
@@ -190,6 +192,8 @@
 **Plans:** 3 plans
 
 Plans:
-- [ ] 32-01: ACL indicator signal quality — add amber state for infrastructure failures vs red for explicit denials
-- [ ] 32-02: Leader Line edge routing — replace CSS-bar edges with dynamic directional connecting lines
-- [ ] 32-03: Fix stale CLAUDE.md NappKeypair documentation
+- [x] 32-01: ACL indicator signal quality — add amber state for infrastructure failures vs red for explicit denials
+- [x] 32-02: Leader Line edge routing — replace CSS-bar edges with dynamic directional connecting lines
+- [x] 32-03: Fix stale CLAUDE.md NappKeypair documentation
+- [x] 32-04: Fix isAmber logic to distinguish ACL denials (denied: prefix) from infrastructure errors
+- [x] 32-05: Enhance detectServiceTarget to catch signer errors via OK response patterns

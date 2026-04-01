@@ -56,6 +56,18 @@ function detectServiceTarget(topology: DemoTopology, msg: TappedMessage): string
   ) {
     return 'signer';
   }
+
+  // NEW: Detect signer errors via OK response with signer-related reason
+  if (
+    msg.verb === 'OK' &&
+    typeof msg.parsed.reason === 'string' &&
+    (msg.parsed.reason.includes('no signer') || msg.parsed.reason.includes('signer')) &&
+    topology.services.includes('signer')
+  ) {
+    return 'signer';
+  }
+
+  // Notifications detection
   if (
     typeof msg.parsed.topic === 'string' &&
     msg.parsed.topic.startsWith('notifications:') &&
@@ -143,15 +155,19 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
       (msg.raw[2].includes('denied') || msg.raw[2].startsWith('blocked:'));
     const isBlocked = isOkFalse || isClosedDenied;
 
-    // Amber: infrastructure failures — not explicit ACL denials, but expected
-    // demo-environment failures (no signer, relay stub, timeout, not wired).
-    const isAmber = isOkFalse && typeof msg.raw?.[3] === 'string' && (
-      msg.raw[3].includes('no signer') ||
-      msg.raw[3].includes('relay') ||
-      msg.raw[3].includes('timeout') ||
-      msg.raw[3].includes('not wired') ||
-      msg.raw[3].includes('mock')
+    // Classify failure type: amber for infrastructure, red for ACL denials
+    // ACL denials start with 'denied:' prefix (runtime enforce.ts line 201)
+    // Infrastructure errors use 'error:' prefix or other keywords
+    const reasonString = typeof msg.raw?.[3] === 'string' ? msg.raw[3] : '';
+    const isDenial = reasonString.startsWith('denied:');
+    const isInfrastructureError = !isDenial && (
+      reasonString.includes('no signer') ||
+      reasonString.includes('relay') ||
+      reasonString.includes('timeout') ||
+      reasonString.includes('not wired') ||
+      reasonString.includes('mock')
     );
+    const isAmber = isOkFalse && isInfrastructureError;
 
     const cls: 'active' | 'amber' | 'blocked' = isAmber ? 'amber' : isBlocked ? 'blocked' : 'active';
 

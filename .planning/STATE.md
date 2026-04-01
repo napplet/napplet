@@ -9,8 +9,8 @@ last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 6
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 20
+  completed_plans: 20
 ---
 
 # Project State
@@ -24,16 +24,16 @@ See: .planning/PROJECT.md (updated 2026-04-01 after v0.6.0 milestone definition)
 
 ## Current Position
 
-Phase: 32 (fix-demo-ui-ux-bugs) — COMPLETE
-Plan: 3 of 3
-Status: All 3 Wave 1 plans executed — amber state, Leader Line edges, CLAUDE.md fix done
+Phase: 32 (fix-demo-ui-ux-bugs) — COMPLETE (5 of 5 plans)
+Plan: 5 of 5 (3 original + 2 gap closure)
+Status: All plans executed — amber state, Leader Line edges, CLAUDE.md fix, isAmber logic fix, detectServiceTarget enhancement
 Last activity: 2026-04-01
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
-- Phase 32 complete: Fixed demo UI/UX bugs — amber state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix
+- Phase 32 complete: Fixed demo UI/UX bugs — amber state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix, isAmber distinction (32-04), detectServiceTarget signer errors (32-05)
 
 ### Decisions
 
@@ -49,5 +49,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-04-01
-Stopped at: Phase 32 complete — amber state, Leader Line edges, CLAUDE.md doc fix
+Stopped at: Phase 32 complete — all gap closure plans (32-04, 32-05) executed
 Resume: Next phase or milestone completion
