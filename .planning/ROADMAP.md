@@ -54,7 +54,7 @@
 **Success Criteria** (what must be TRUE):
   1. Each node presents live information relevant to its role, such as identity, capabilities, recent activity, or service state
   2. Supported nodes can open an expanded drill-down view in a right-side panel while preserving access to the bottom debugger
-**Plans**: TBD
+**Plans**: 3 planned
 
 ### Phase 30: Notification Service UX
 **Goal**: Surface the notification service as a first-class part of the demo and exercise it through visible toast behavior
@@ -166,6 +166,6 @@
 | 26. Skills Directory | v0.5.0 | 3/3 | Complete | 2026-03-31 |
 | 27. Demo Audit & Correctness | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 28. Architecture Topology View | v0.6.0 | 0/0 | Planned | — |
-| 29. Node Detail & Drill-Down | v0.6.0 | 0/0 | Planned | — |
+| 29. Node Detail & Drill-Down | v0.6.0 | 0/3 | Planned | — |
 | 30. Notification Service UX | v0.6.0 | 0/0 | Planned | — |
 | 31. Signer Connection UX | v0.6.0 | 0/0 | Planned | — |
