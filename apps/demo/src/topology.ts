@@ -209,8 +209,19 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
         ...BASE_OPTIONS,
         startSocket: 'bottom',
         endSocket: 'top',
+        startSocketGravity: [20, 0],
+        endSocketGravity: [20, 0],
       });
-      lines.set(edge.id, outLine);
+      lines.set(edge.id + '-out', outLine);
+
+      const inLine = new LeaderLine(toEl, fromEl, {
+        ...BASE_OPTIONS,
+        startSocket: 'top',
+        endSocket: 'bottom',
+        startSocketGravity: [-20, 0],
+        endSocketGravity: [-20, 0],
+      });
+      lines.set(edge.id + '-in', inLine);
     } catch { /* best-effort — may fail if elements not visible */ }
   }
 
@@ -226,14 +237,16 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   return {
     flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
       const color = cls === 'active' ? COLOR_ACTIVE : cls === 'amber' ? COLOR_AMBER : COLOR_BLOCKED;
-      const line = lines.get(edgeId);
-      if (!line) return;
-      try {
-        line.setOptions({ color, size: 3 });
-        setTimeout(() => {
-          try { line.setOptions({ color: COLOR_RESTING, size: 2 }); } catch { /* best-effort */ }
-        }, FLASH_DURATION_MS);
-      } catch { /* best-effort */ }
+      for (const suffix of ['-out', '-in']) {
+        const line = lines.get(edgeId + suffix);
+        if (!line) continue;
+        try {
+          line.setOptions({ color, size: 3 });
+          setTimeout(() => {
+            try { line.setOptions({ color: COLOR_RESTING, size: 2 }); } catch { /* best-effort */ }
+          }, FLASH_DURATION_MS);
+        } catch { /* best-effort */ }
+      }
     },
   };
 }
