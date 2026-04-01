@@ -18,7 +18,7 @@ import * as path from 'path';
 
 /** Configuration options for the NIP-5A manifest plugin. */
 export interface Nip5aManifestOptions {
-  /** Napp type/dtag (e.g., 'feed', 'chat') */
+  /** Napplet type/dtag identifier (e.g., 'feed', 'chat'). Used as the NIP-5A 'd' tag and injected as napplet-type meta attribute. */
   nappType: string;
   /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
   requires?: string[];
@@ -81,6 +81,23 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
           attrs: {
             name: 'napplet-aggregate-hash',
             content: '',
+          },
+          injectTo: 'head' as const,
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-type',
+            content: options.nappType,
+          },
+          injectTo: 'head' as const,
+        },
+        // Backward compatibility: also inject old attribute name for one release cycle
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-napp-type',
+            content: options.nappType,
           },
           injectTo: 'head' as const,
         },

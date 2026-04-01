@@ -4,8 +4,8 @@
 // Completes NIP-42 AUTH handshake and proxies window.nostr NIP-07 calls as signed events.
 
 import { finalizeEvent } from 'nostr-tools/pure';
-import { loadOrCreateKeypair } from './napp-keypair.js';
-import type { NappKeypair } from './napp-keypair.js';
+import { loadOrCreateKeypair } from './napplet-keypair.js';
+import type { NappletKeypair } from './napplet-keypair.js';
 import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _setInterPaneEventSender } from './state-shim.js';
@@ -20,15 +20,15 @@ export { subscribe, publish, query } from './relay-shim.js';
 export type { Subscription, EventTemplate } from './relay-shim.js';
 export type { NostrEvent, NostrFilter } from './types.js';
 
-// State shim (napp-side localStorage proxy)
-export { nappState, nappStorage } from './state-shim.js';
+// State shim (napplet-side localStorage proxy)
+export { nappletState, nappState, nappStorage } from './state-shim.js';
 
 // Service discovery API (window.napplet)
 export { discoverServices, hasService, hasServiceVersion } from './discovery-shim.js';
 export type { ServiceInfo } from './discovery-shim.js';
 
 /**
- * Broadcast an inter-pane event to other napps via the shell.
+ * Broadcast an inter-pane event to other napplets via the shell.
  *
  * Creates a signed kind 29003 event with the given topic as a 't' tag
  * and posts it to the ShellBridge for delivery to matching subscribers.
@@ -88,7 +88,7 @@ export function on(
   );
 }
 
-let keypair: NappKeypair | null = null;
+let keypair: NappletKeypair | null = null;
 
 // Pending signer requests: correlation id -> resolve/reject pair
 const pendingRequests = new Map<string, {
@@ -107,14 +107,16 @@ const SIGNER_SUB_ID = '__signer__';
 // NIPDB response subscription ID
 const NIPDB_SUB_ID = '__nipdb__';
 
-// ─── Napp type resolution ──────────────────────────────────────────────────────
+// ─── Napplet type resolution ──────────────────────────────────────────────────────
 
 /**
- * Determine napp type from a meta tag in the document head.
+ * Determine napplet type from a meta tag in the document head.
  * Falls back to 'unknown' if the meta tag is absent.
  */
-function getNappType(): string {
-  const meta = document.querySelector('meta[name="napplet-napp-type"]');
+function getNappletType(): string {
+  // Try new canonical attribute first; fall back to old name for backward compat
+  const meta = document.querySelector('meta[name="napplet-type"]')
+    ?? document.querySelector('meta[name="napplet-napp-type"]');
   return meta?.getAttribute('content') ?? 'unknown';
 }
 
@@ -222,8 +224,8 @@ function getAggregateHash(): string {
 
 function handleAuthChallenge(challenge: string): void {
   if (!keypair) {
-    const nappType = getNappType();
-    keypair = loadOrCreateKeypair(nappType);
+    const nappletType = getNappletType();
+    keypair = loadOrCreateKeypair(nappletType);
     setKeyboardShimKeypair(keypair);
     _resolveKeypairReady();
   }
@@ -234,7 +236,7 @@ function handleAuthChallenge(challenge: string): void {
     tags: [
       ['relay', SHELL_BRIDGE_URI],
       ['challenge', challenge],
-      ['type', getNappType()],
+      ['type', getNappletType()],
       ['version', PROTOCOL_VERSION],
       ['aggregateHash', getAggregateHash()],
     ],
@@ -332,14 +334,14 @@ installNostrDb();
 // Install keyboard forwarding (hotkeys work when iframe has focus)
 installKeyboardShim();
 
-// Install napp-side storage proxy (wire sender to break circular dep)
+// Install napplet-side storage proxy (wire sender to break circular dep)
 _setInterPaneEventSender(emit);
 installStateShim();
 
 // Initialize keypair eagerly so it is ready before AUTH challenge arrives
 {
-  const nappType = getNappType();
-  keypair = loadOrCreateKeypair(nappType);
+  const nappletType = getNappletType();
+  keypair = loadOrCreateKeypair(nappletType);
   setKeyboardShimKeypair(keypair);
   _resolveKeypairReady();
 }

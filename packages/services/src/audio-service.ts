@@ -100,9 +100,9 @@ export function createAudioService(options?: AudioServiceOptions): ServiceHandle
       case 'register': {
         const content = parseContent(event);
         if (!content) return;
-        const nappClass = typeof content.nappClass === 'string' ? content.nappClass : '';
+        const nappletClass = typeof content.nappletClass === 'string' ? content.nappletClass : '';
         const title = typeof content.title === 'string' ? content.title : '';
-        sources.set(windowId, { windowId, nappClass, title, muted: false });
+        sources.set(windowId, { windowId, nappletClass, title, muted: false });
         notify();
         break;
       }
@@ -142,7 +142,7 @@ export function createAudioService(options?: AudioServiceOptions): ServiceHandle
         }
 
         // Send mute notification back to the target napplet
-        const muteResponse = createResponseEvent('napp:audio-muted', { muted });
+        const muteResponse = createResponseEvent('napplet:audio-muted', { muted });
         send(['EVENT', '__shell__', muteResponse]);
         break;
       }
