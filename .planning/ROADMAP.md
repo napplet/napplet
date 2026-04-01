@@ -2,7 +2,7 @@
 
 ## Milestones
 
-- **v0.6.0 Demo Upgrade** — Phases 27-32 (planned)
+- **v0.6.0 Demo Upgrade** — Phases 27-33 (active)
 - ✅ **v0.1.0 Alpha** — Phases 1-6 (shipped 2026-03-30) — [Archive](milestones/v0.1.0-ROADMAP.md)
 - ✅ **v0.2.0 Shell Architecture Cleanup** — Phases 7-11 (shipped 2026-03-31) — [Archive](milestones/v0.2.0-ROADMAP.md)
 - ✅ **v0.3.0 Runtime and Core** — Phases 12-17 (shipped 2026-03-31) — [Archive](milestones/v0.3.0-ROADMAP.md)
@@ -16,14 +16,15 @@
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 <details open>
-<summary>v0.6.0 Demo Upgrade (Phases 27-32) — PLANNED</summary>
+<summary>v0.6.0 Demo Upgrade (Phases 27-33) — ACTIVE</summary>
 
 - [x] **Phase 27: Demo Audit & Correctness** - Reconcile the demo with current packages, identify stale integrations, and verify whether observed failures are UI bugs or deeper protocol/runtime issues (completed 2026-04-01)
 - [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture (completed 2026-04-01)
-- [ ] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
+- [x] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger (completed 2026-04-01)
 - [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path (completed 2026-04-01)
 - [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings (completed 2026-04-01)
 - [x] **Phase 32: Fix Demo UI/UX Bugs** - Amber infrastructure-failure state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix, isAmber logic fix, detectServiceTarget signer errors (completed 2026-04-01)
+- [ ] **Phase 33: Polish Demo UI Layout** - Fix layout and interaction issues: iframe container filling, 90-degree line routing, endpoint offsets, orphan container lines, and service button click handling (pending)
 
 </details>
 
@@ -88,6 +89,18 @@
   4. isAmber logic correctly distinguishes ACL denials (denied: prefix) from infrastructure errors
   5. Signer node flashes amber on infrastructure failures (no signer configured)
 **Plans**: 5 completed (3 original + 2 gap closure)
+
+### Phase 33: Polish Demo UI Layout
+**Goal**: Fix layout and interaction issues to improve visual clarity and usability of the demo
+**Depends on**: Phase 32
+**Requirements**: None (bug fixes/polish only)
+**Success Criteria** (what must be TRUE):
+  1. Napplet iframe content fills its container without unused whitespace
+  2. All topology edges render with 90-degree rectilinear routing instead of curves
+  3. Input and output connection points are visually distinct and offset from each other on nodes
+  4. No orphan edges connecting to undefined container nodes
+  5. Service buttons respond to clicks without triggering the node panel open action
+**Plans**: TBD
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
@@ -183,6 +196,7 @@
 | 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 32. Fix demo UI/UX bugs | v0.6.0 | 5/5 | Complete | 2026-04-01 |
+| 33. Polish Demo UI Layout | v0.6.0 | 0/0 | Pending | — |
 
 ### Phase 32: Fix demo UI/UX bugs
 

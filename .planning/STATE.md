@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.6.0
 milestone_name: milestone
-status: active
-stopped_at: Phase 32 complete — all 3 plans executed
-last_updated: "2026-04-01T15:30:00.000Z"
+status: planning
+stopped_at: Phase 33 context gathered
+last_updated: "2026-04-01T13:48:53.083Z"
 last_activity: 2026-04-01
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
+  total_plans: 19
+  completed_plans: 19
 ---
 
 # Project State
@@ -24,15 +24,16 @@ See: .planning/PROJECT.md (updated 2026-04-01 after v0.6.0 milestone definition)
 
 ## Current Position
 
-Phase: 32 (fix-demo-ui-ux-bugs) — COMPLETE (5 of 5 plans)
-Plan: 5 of 5 (3 original + 2 gap closure)
-Status: All plans executed — amber state, Leader Line edges, CLAUDE.md fix, isAmber logic fix, detectServiceTarget enhancement
+Phase: 33 (polish-demo-ui-layout) — PENDING
+Plan: 0 of TBD
+Status: Phase structure created. Ready for planning.
 Last activity: 2026-04-01
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- Phase 33 added: Polish Demo UI Layout — iframe container filling, 90-degree line routing, endpoint offsets, orphan container lines, service button click handling
 - Phase 32 complete: Fixed demo UI/UX bugs — amber state, Leader Line SVG edges, CLAUDE.md NappKeypair doc fix, isAmber distinction (32-04), detectServiceTarget signer errors (32-05)
 
 ### Decisions
@@ -48,6 +49,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-01
-Stopped at: Phase 32 complete — all gap closure plans (32-04, 32-05) executed
-Resume: Next phase or milestone completion
+Last session: 2026-04-01T13:48:53.080Z
+Stopped at: Phase 33 context gathered
+Resume: `/gsd:plan-phase 33` to create implementation plan
