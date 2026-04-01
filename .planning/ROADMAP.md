@@ -22,7 +22,7 @@
 - [x] **Phase 28: Architecture Topology View** - Separate shell, ACL, runtime, and service nodes into a flow that mirrors the actual host architecture (completed 2026-04-01)
 - [ ] **Phase 29: Node Detail & Drill-Down** - Add node-specific status surfaces plus a right-side expanded panel that preserves the bottom debugger
 - [x] **Phase 30: Notification Service UX** - Register notification service in the demo, surface it as a node, and drive toast UX through the real service path (completed 2026-04-01)
-- [ ] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings
+- [x] **Phase 31: Signer Connection UX** - Replace the simplified signer demo with visible signer connection flows for NIP-07 and NIP-46, including configurable NIP-46 relay settings (completed 2026-04-01)
 
 </details>
 
@@ -74,7 +74,7 @@
   1. The demo includes a visible signer node and login/connect flow instead of a hidden mock signer-only experience
   2. Users can connect through NIP-07 when available and through NIP-46 using either a bunker URI or a Nostr Connect QR code
   3. The demo UI allows editing the NIP-46 relay and shows signer connection state, pubkey, and recent signer activity
-**Plans**: TBD
+**Plans**: 3 completed
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
@@ -168,4 +168,4 @@
 | 28. Architecture Topology View | v0.6.0 | 2/2 | Complete | 2026-04-01 |
 | 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete    | 2026-04-01 |
 | 30. Notification Service UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
-| 31. Signer Connection UX | v0.6.0 | 1/3 | In Progress|  |
+| 31. Signer Connection UX | v0.6.0 | 3/3 | Complete | 2026-04-01 |
