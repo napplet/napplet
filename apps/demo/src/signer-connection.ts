@@ -206,18 +206,44 @@ function _cleanupNip46(): void {
 }
 
 /**
- * Connect to a NIP-46 bunker. Full implementation provided in Plan 31-02
- * when nip46-client.ts is created. This implementation will be replaced/extended
- * by Plan 31-02's connectNip46 which imports nip46-client.ts.
+ * Connect to a NIP-46 bunker.
+ * Creates a NIP-46 client, performs the connect handshake, and wires
+ * the resulting signer into the active signer ref.
  */
 export async function connectNip46(options: Nip46ConnectOptions): Promise<void> {
-  _setState({
-    ..._state,
-    isConnecting: false,
-    error: 'NIP-46 support not yet available in this build (requires Plan 31-02)',
-  });
-  // Suppress unused variable warning
-  void options;
+  const { createNip46Client } = await import('./nip46-client.js');
+
+  _cleanupNip46();
+  _setState({ ..._state, isConnecting: true, error: null });
+
+  try {
+    const client = createNip46Client({
+      relayUrl: options.relayUrl,
+      bunkerPubkey: options.bunkerPubkey,
+      secret: options.secret,
+    });
+
+    const pubkey = await client.connect();
+
+    _nip46Client = client;
+    _activeSigner = client.getSigner();
+    _setState({
+      ..._state,
+      method: 'nip46',
+      pubkey,
+      relay: options.relayUrl,
+      isConnecting: false,
+      error: null,
+    });
+  } catch (err) {
+    _activeSigner = null;
+    _nip46Client = null;
+    _setState({
+      ..._state,
+      isConnecting: false,
+      error: `NIP-46 connection failed: ${(err as Error).message ?? 'unknown error'}`,
+    });
+  }
 }
 
 // ─── Inspector Detail (Phase 29 surface) ─────────────────────────────────────
