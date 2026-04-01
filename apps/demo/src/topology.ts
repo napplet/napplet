@@ -177,6 +177,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
             id="${getNappletNodeId(napplet.name)}"
             class="node-box topology-node topology-napplet-card"
             data-topology-node="napplet"
+            data-node-id="${getNappletNodeId(napplet.name)}"
             data-napplet-name="${napplet.name}"
           >
             <div class="topology-node-header">
@@ -184,6 +185,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
               <span class="topology-node-status" id="${napplet.statusId}">loading...</span>
             </div>
             <div class="topology-node-title">${napplet.label}</div>
+            <div class="node-summary" id="node-summary-${getNappletNodeId(napplet.name)}"></div>
             <div id="${napplet.aclId}" class="topology-acl-slot"></div>
             <div id="${napplet.frameContainerId}" class="topology-frame-slot"></div>
           </article>
@@ -202,10 +204,12 @@ export function renderDemoTopology(topology: DemoTopology): string {
             id="${getServiceNodeId(service)}"
             class="node-box topology-node topology-service-card"
             data-topology-node="service"
+            data-node-id="${getServiceNodeId(service)}"
             data-service-name="${service}"
           >
             <div class="topology-node-kicker">service</div>
             <div class="topology-node-title">${service}</div>
+            <div class="node-summary" id="node-summary-${getServiceNodeId(service)}"></div>
           </article>
         </div>
       `
@@ -222,31 +226,34 @@ export function renderDemoTopology(topology: DemoTopology): string {
       ${renderNodeEdge(NAPPLETS_SHELL_EDGE_ID)}
 
       <section class="topology-layer">
-        <article id="${SHELL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="shell">
+        <article id="${SHELL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="shell" data-node-id="${SHELL_NODE_ID}">
           <div class="topology-node-kicker">host adapter</div>
           <div class="topology-node-title">shell</div>
           <div class="topology-node-copy">relay shell bridge and host identity</div>
           <div id="shell-pubkey" class="topology-node-meta">pubkey: ${truncatePubkey(topology.hostPubkey)}</div>
+          <div class="node-summary" id="node-summary-${SHELL_NODE_ID}"></div>
         </article>
       </section>
 
       ${renderNodeEdge(getShellAclEdgeId())}
 
       <section class="topology-layer">
-        <article id="${ACL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="acl">
+        <article id="${ACL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="acl" data-node-id="${ACL_NODE_ID}">
           <div class="topology-node-kicker">checkpoint</div>
           <div class="topology-node-title">acl</div>
           <div class="topology-node-copy">capability gate between napplets and runtime dispatch</div>
+          <div class="node-summary" id="node-summary-${ACL_NODE_ID}"></div>
         </article>
       </section>
 
       ${renderNodeEdge(getAclRuntimeEdgeId())}
 
       <section class="topology-layer">
-        <article id="${RUNTIME_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="runtime">
+        <article id="${RUNTIME_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="runtime" data-node-id="${RUNTIME_NODE_ID}">
           <div class="topology-node-kicker">dispatcher</div>
           <div class="topology-node-title">runtime</div>
           <div class="topology-node-copy">routes bus traffic and fans out to registered services</div>
+          <div class="node-summary" id="node-summary-${RUNTIME_NODE_ID}"></div>
           <div class="topology-flow-log">
             <div class="topology-flow-log-label">message flow</div>
             <div id="shell-flow-log" class="topology-flow-log-body"></div>

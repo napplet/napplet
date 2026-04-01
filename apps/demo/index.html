@@ -44,6 +44,25 @@
     .topology-flow-log { margin: 0 14px 14px; padding-top: 10px; border-top: 1px solid #1f2235; }
     .topology-flow-log-label { margin-bottom: 6px; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7c86a7; }
     .topology-flow-log-body { font-size: 10px; color: #666; min-height: 20px; }
+    /* Node compact summary */
+    .node-summary { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 6px 14px 8px; border-top: 1px solid #1f2235; }
+    .node-summary-field { font-size: 10px; color: #a5abc2; }
+    .node-summary-label { color: #7981a0; letter-spacing: 0.1em; text-transform: uppercase; }
+    .node-summary-value { color: #d0d4e8; }
+    /* Two-pane workspace: topology left, inspector right */
+    #flow-area-inner { display: flex; height: 100%; gap: 0; min-height: 0; }
+    #topology-pane { flex: 1; min-width: 0; overflow: auto; padding: 4px; }
+    #inspector-pane {
+      width: 0; overflow: hidden; transition: width 0.22s ease;
+      background: linear-gradient(180deg, rgba(18,18,26,0.98), rgba(10,10,15,0.99));
+      border-left: 1px solid #1f2235; font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: #a5abc2; flex-shrink: 0;
+    }
+    #flow-area-inner.inspector-open #inspector-pane { width: 280px; overflow: hidden; }
+    /* Selected node highlight */
+    .node-box.inspector-selected { border-color: #00f0ff; box-shadow: 0 0 12px #00f0ff30; }
+    /* Node click affordance */
+    [data-node-id] { cursor: pointer; }
     @media (max-width: 768px) {
       .topology-layout { gap: 10px; }
       .topology-core-card { width: 100%; }
@@ -51,6 +70,7 @@
       .topology-service-grid { flex-direction: column; align-items: stretch; }
       .topology-service-branch { min-width: 0; }
       .topology-service-card { max-width: none; }
+      #flow-area-inner.inspector-open #inspector-pane { width: 220px; }
     }
   </style>
 </head>
@@ -61,10 +81,15 @@
 
   <section
     id="flow-area"
-    class="flex-1 min-h-0 p-4 overflow-auto"
+    class="flex-1 min-h-0 overflow-hidden"
     data-topology-required-nodes="topology-node-acl topology-node-runtime"
     data-topology-regions="topology-services"
-  ></section>
+  >
+    <div id="flow-area-inner">
+      <div id="topology-pane" class="p-4"></div>
+      <div id="inspector-pane" aria-label="Node inspector"></div>
+    </div>
+  </section>
 
   <div id="resize-handle" style="height:6px;cursor:ns-resize;background:#2a2a3a;border-top:1px solid #3a3a4a;border-bottom:1px solid #3a3a4a;flex-shrink:0"></div>
   <section id="debugger-section" style="height:45vh;min-height:120px" class="shrink-0 flex flex-col overflow-hidden">
