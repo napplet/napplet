@@ -194,7 +194,7 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   const BASE_OPTIONS = {
     color: COLOR_RESTING,
     size: 2,
-    curve: 0,
+    path: 'grid',
     endPlug: 'arrow2',
     endPlugSize: 1.5,
   };
@@ -208,14 +208,14 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
       const outLine = new LeaderLine(fromEl, toEl, {
         ...BASE_OPTIONS,
         startSocketGravity: [12, -8],
-        endSocketGravity: [12, -8],
+        endSocketGravity: [12, 8],
       });
       lines.set(edge.id + '-out', outLine);
 
       const inLine = new LeaderLine(toEl, fromEl, {
         ...BASE_OPTIONS,
         startSocketGravity: [-12, 8],
-        endSocketGravity: [-12, 8],
+        endSocketGravity: [-12, -8],
       });
       lines.set(edge.id + '-in', inLine);
     } catch { /* best-effort — may fail if elements not visible */ }
