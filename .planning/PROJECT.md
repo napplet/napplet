@@ -8,6 +8,16 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Current Milestone: v0.7.0 Ontology Audit and Adjustments
+
+**Goal:** Systematically audit and correct naming, terminology, and API signatures across all 7 packages so the codebase is semantically accurate and safe for external maintainers and agents.
+
+**Target features:**
+- `napp` → `napplet` rename everywhere (code, types, docs, SPEC.md) — correctness fix, napp is a different concept
+- `INTER_PANE` / `"INTER-PANE"` → `IPC_PEER` / `"IPC-PEER"` — follows Nostr hyphen convention, establishes `IPC-*` namespace
+- Full ontology audit — all concept/component names across 7 packages reviewed for semantic accuracy
+- API signature audit — function names, param names, ordering, callback vs promise patterns
+
 ## Shipped: v0.6.0 Demo Upgrade
 
 The demo is now an architecture-accurate teaching and testing surface. 7 phases, 28 plans shipped 2026-04-01. See [archive](milestones/v0.6.0-ROADMAP.md).
@@ -66,7 +76,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-*(Define requirements for next milestone via `/gsd:new-milestone`)*
+*(Requirements being defined — see Current Milestone: v0.7.0)*
 
 ### Out of Scope
 
@@ -155,4 +165,4 @@ After v0.6.0, likely next candidates:
 - Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-01 after Phase 27 completion*
+*Last updated: 2026-04-01 — Milestone v0.7.0 started*
