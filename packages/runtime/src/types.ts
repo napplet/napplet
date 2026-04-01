@@ -326,13 +326,13 @@ export interface CompatibilityReport {
   compatible: boolean;
 }
 
-// ─── NappKeyEntry ──────────────────────────────────────────────────────────
+// ─── SessionEntry ─────────────────────────────────────────────────────────
 
 /**
- * Registry entry mapping a napp's pubkey to its runtime metadata.
+ * Registry entry mapping a napplet's pubkey to its runtime metadata.
  * Created after a successful NIP-42 AUTH handshake.
  */
-export interface NappKeyEntry {
+export interface SessionEntry {
   pubkey: string;
   windowId: string;
   origin: string;
@@ -342,8 +342,11 @@ export interface NappKeyEntry {
   registeredAt: number;
 }
 
+/** @deprecated Use SessionEntry. Will be removed in v0.9.0. */
+export type NappKeyEntry = SessionEntry;
+
 /**
- * A pending napp update — raised when a napp reconnects with a different aggregateHash.
+ * A pending napplet update — raised when a napplet reconnects with a different aggregateHash.
  */
 export interface PendingUpdate {
   windowId: string;
@@ -360,7 +363,7 @@ export type PendingUpdateNotifier = (windowId: string) => void;
 // ─── Manifest Cache Entry ──────────────────────────────────────────────────
 
 /**
- * A cached manifest entry for a verified napp build.
+ * A cached manifest entry for a verified napplet build.
  * Optionally stores the napplet's declared service requirements from its manifest.
  */
 export interface ManifestCacheEntry {

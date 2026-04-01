@@ -30,7 +30,7 @@ export const TOPICS = {
   STATE_REMOVE: 'shell:state-remove',
   STATE_CLEAR: 'shell:state-clear',
   STATE_KEYS: 'shell:state-keys',
-  STATE_RESPONSE: 'napp:state-response',
+  STATE_RESPONSE: 'napplet:state-response',
 
   // ─── Stream and Content ─────────────────────────────────────────────────
   STREAM_CHANNEL_SWITCH: 'stream:channel-switch',
@@ -68,7 +68,7 @@ export const TOPICS = {
   AUDIO_REGISTER: 'shell:audio-register',
   AUDIO_UNREGISTER: 'shell:audio-unregister',
   AUDIO_STATE_CHANGED: 'shell:audio-state-changed',
-  AUDIO_MUTED: 'napp:audio-muted',
+  AUDIO_MUTED: 'napplet:audio-muted',
 } as const;
 
 /** Key type for the TOPICS constant object. */

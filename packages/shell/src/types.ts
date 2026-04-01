@@ -16,18 +16,18 @@ export type { ServiceDescriptor, ServiceHandler, ServiceRegistry };
 // ─── Registry Types ─────────────────────────────────────────────────────────
 
 /**
- * Registry entry mapping a napp's pubkey to its runtime metadata.
+ * Registry entry mapping a napplet's pubkey to its runtime metadata.
  * Created after a successful NIP-42 AUTH handshake.
  * @example
  * ```ts
- * const entry: NappKeyEntry = {
+ * const entry: SessionEntry = {
  *   pubkey: 'abc123...', windowId: 'win-1', origin: '*',
  *   type: 'chat', dTag: '3chat', aggregateHash: 'deadbeef',
  *   registeredAt: Date.now(),
  * };
  * ```
  */
-export interface NappKeyEntry {
+export interface SessionEntry {
   pubkey: string;
   windowId: string;
   origin: string;
@@ -37,8 +37,11 @@ export interface NappKeyEntry {
   registeredAt: number;
 }
 
+/** @deprecated Use SessionEntry. Will be removed in v0.9.0. */
+export type NappKeyEntry = SessionEntry;
+
 /**
- * ACL entry controlling what a napp pubkey is permitted to do.
+ * ACL entry controlling what a napplet pubkey is permitted to do.
  * @example
  * ```ts
  * const entry: AclEntry = {
