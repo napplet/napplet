@@ -34,6 +34,7 @@ Last activity: 2026-04-01
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260401-obm | fix double lines and increase node spacing in topology | 2026-04-01 | a1ec64a | [260401-obm-fix-double-lines-and-increase-node-spaci](./quick/260401-obm-fix-double-lines-and-increase-node-spaci/) |
+| 260401-p5s | make topology lines symmetrical + increase in/out separation | 2026-04-01 | — | [260401-p5s-make-topology-lines-symmetrical](./quick/260401-p5s-make-topology-lines-symmetrical/) |
 
 ## Accumulated Context
 
@@ -55,4 +56,4 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last activity: 2026-04-01 - Completed quick task 260401-obm: fix double lines and increase node spacing in topology
+Last activity: 2026-04-01 - Completed quick task 260401-p5s: make topology lines symmetrical + increase in/out separation
