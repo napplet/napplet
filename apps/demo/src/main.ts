@@ -23,6 +23,7 @@ import { initFlowAnimator } from './flow-animator.js';
 import { buildDemoTopology, renderDemoTopology } from './topology.js';
 import {
   buildAllNodeDetails,
+  buildNodeDetails,
   installActivityProjection,
 } from './node-details.js';
 import type { NodeDetail } from './node-details.js';
@@ -134,7 +135,20 @@ function wireNodeSelection(): void {
     el.addEventListener('click', (event) => {
       event.stopPropagation();
       const nodeId = el.getAttribute('data-node-id');
-      if (nodeId) setSelectedNodeId(nodeId);
+      if (nodeId) {
+        setSelectedNodeId(nodeId);
+        // Eagerly build a single-node detail for quick UI response
+        const node = topology.nodes.find((n) => n.id === nodeId);
+        if (node) {
+          buildNodeDetails(node, {
+            napplets: getNapplets(),
+            serviceNames: getDemoServiceNames(),
+            hostPubkey: getDemoHostPubkey(),
+            totalMessages,
+            totalBlocked,
+          });
+        }
+      }
     });
   }
 }
