@@ -93,7 +93,7 @@
 - [x] **Phase 36: Type Correctness** - Consolidate ConsentRequest to runtime canonical definition and remove shell/state-proxy.ts dead code (completed 2026-04-01)
 - [x] **Phase 37: API Alignment** - Rename RuntimeHooks/ShellHooks to RuntimeAdapter/ShellAdapter with deprecated aliases for one release cycle (completed 2026-04-01)
 - [x] **Phase 38: Session Vocabulary** - Rename NappKeyEntry/NappKeyRegistry to SessionEntry/SessionRegistry and fix loadOrCreateKeypair (completed 2026-04-01)
-- [ ] **Phase 39: Documentation Pass** - Document topic prefix direction semantics and mark nappStorage as deprecated
+- [x] **Phase 39: Documentation Pass** - Document topic prefix direction semantics and mark nappStorage as deprecated (completed 2026-04-01)
 
 ## Phase Details
 

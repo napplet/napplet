@@ -19,6 +19,19 @@
  * // Use topic constant for state operations
  * shim.publish({ kind: 29003, tags: [['t', TOPICS.STATE_GET]], content: '{}' });
  * ```
+ *
+ * ## Topic Prefix Conventions
+ *
+ * Topic strings follow a prefix convention that signals message direction:
+ *
+ * | Prefix | Direction | Meaning |
+ * |--------|-----------|---------|
+ * | `shell:*` | napplet → shell | Commands sent by a napplet to the shell |
+ * | `napplet:*` | shell → napplet | Responses/notifications sent by shell to napplet |
+ * | `{service}:*` | bidirectional | Service-scoped messages; direction is per-topic |
+ *
+ * Examples of `{service}:*` prefixes: `auth:*`, `stream:*`, `profile:*`,
+ * `wm:*`, `keybinds:*`, `chat:*`, `audio:*`.
  */
 export const TOPICS = {
   // ─── Auth and Identity ──────────────────────────────────────────────────
