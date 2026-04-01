@@ -167,5 +167,5 @@
 | 27. Demo Audit & Correctness | v0.6.0 | 3/3 | Complete | 2026-04-01 |
 | 28. Architecture Topology View | v0.6.0 | 2/2 | Complete | 2026-04-01 |
 | 29. Node Detail & Drill-Down | v0.6.0 | 2/3 | Complete    | 2026-04-01 |
-| 30. Notification Service UX | v0.6.0 | 0/0 | Planned | — |
-| 31. Signer Connection UX | v0.6.0 | 0/0 | Planned | — |
+| 30. Notification Service UX | v0.6.0 | 1/3 | In Progress|  |
+| 31. Signer Connection UX | v0.6.0 | 1/3 | In Progress|  |

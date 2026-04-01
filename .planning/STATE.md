@@ -4,13 +4,13 @@ milestone: v0.6.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 28 complete; Phase 29 ready
-last_updated: "2026-04-01T11:34:55.458Z"
-last_activity: 2026-04-01 -- Phase 31 execution started
+last_updated: "2026-04-01T11:40:14.703Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 8
+  completed_plans: 10
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-01 after v0.6.0 milestone definition)
 ## Current Position
 
 Phase: 31 (signer-connection-ux) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 31
-Last activity: 2026-04-01 -- Phase 31 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-01
 
 ## Accumulated Context
 
