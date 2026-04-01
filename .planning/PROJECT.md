@@ -8,15 +8,16 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## Current Milestone: v0.7.0 Ontology Audit and Adjustments
+## Current Milestone: v0.8.0 Shim/SDK Split
 
-**Goal:** Systematically audit and correct naming, terminology, and API signatures across all 7 packages so the codebase is semantically accurate and safe for external maintainers and agents.
+**Goal:** Split `@napplet/shim` into a pure window-installer shim and a new `@napplet/sdk` convenience package, and reorganize `window.napplet` into a fully namespaced API that reflects the logical structure of the protocol.
 
 **Target features:**
-- `napp` → `napplet` rename everywhere (code, types, docs, SPEC.md) — correctness fix, napp is a different concept
-- `INTER_PANE` / `"INTER-PANE"` → `IPC_PEER` / `"IPC-PEER"` — follows Nostr hyphen convention, establishes `IPC-*` namespace
-- Full ontology audit — all concept/component names across 7 packages reviewed for semantic accuracy
-- API signature audit — function names, param names, ordering, callback vs promise patterns
+- `@napplet/shim` becomes a pure window installer — zero named exports, installs fully namespaced `window.napplet` global
+- `window.napplet` fully namespaced: `relay.{subscribe,publish,query}`, `ipc.{emit,on}`, `services.{list,has}`, `storage.{getItem,setItem,removeItem,keys}`
+- New `@napplet/sdk` package — thin wrappers around `window.napplet.*`, named exports for bundler consumers, independent of shim
+- Remove deprecated `nappState`/`nappStorage`/`nappletState`/`discoverServices`/`hasService`/`hasServiceVersion` exports (deprecated in v0.7.0)
+- Update demo, tests, SPEC.md, and all READMEs for new structure
 
 ## Shipped: v0.6.0 Demo Upgrade
 
@@ -85,7 +86,10 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-*(Milestone v0.7.0 complete — awaiting next milestone planning)*
+- [ ] `@napplet/shim` is a pure window installer with zero named exports
+- [ ] `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`)
+- [ ] `@napplet/sdk` exists as a standalone bundler-friendly package (thin wrappers + helpers)
+- [ ] All v0.7.0 deprecated symbols removed from public API
 
 ### Out of Scope
 
@@ -174,4 +178,4 @@ After v0.6.0, likely next candidates:
 - Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-02 — Milestone v0.7.0 complete*
+*Last updated: 2026-04-02 — Milestone v0.8.0 started*

@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.7.0
-milestone_name: Ontology Audit and Adjustments
-status: complete
-stopped_at: v0.7.0 milestone complete
+milestone: v0.8.0
+milestone_name: Shim/SDK Split
+status: planning
+stopped_at: defining requirements
 last_updated: "2026-04-02T00:00:00.000Z"
 last_activity: 2026-04-02
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
 
 ## Current Position
 
-Phase: 40
-Plan: Not started
-Status: Executing Phase 40
-Last activity: 2026-04-01
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-02 — Milestone v0.8.0 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
