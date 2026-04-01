@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 33-polish-demo-ui-layout
 source: 33-01-SUMMARY.md, 33-02-SUMMARY.md, 33-03-SUMMARY.md, 33-04-SUMMARY.md, 33-05-SUMMARY.md
 started: 2026-04-01T16:07:00Z
-updated: 2026-04-01T16:12:00Z
+updated: 2026-04-01T16:40:00Z
 ---
 
 ## Current Test
@@ -22,17 +22,15 @@ result: pass
 expected: |
   All edges in the topology diagram render as orthogonal 90-degree lines (rectilinear paths).
   No smooth curves between nodes. Edges should follow cardinal directions.
-result: issue
-reported: "Edges still rendering as curves/diagonals instead of 90-degree orthogonal lines"
-severity: major
+result: partial
+reported: "Edges now rectilinear (90-degree) but socket gravity positioning is awkward — lines approach gravity points at wrong angles"
+severity: cosmetic
 
 ### 3. Input and output sockets are visually distinct
 expected: |
   Connection points (sockets) between nodes are clearly separated.
   Output sockets (right side with upward offset) and input sockets (left side with downward offset) are visually distinguishable.
-result: issue
-reported: "Socket gravity offsets not creating visual distinction between input/output sockets"
-severity: major
+result: pass
 
 ### 4. No orphan edges visible
 expected: |
@@ -46,16 +44,15 @@ expected: |
   Click service buttons (e.g., "Connect Signer", "Create Notification", "Mark Read", "Dismiss").
   Buttons execute their actions without triggering node selection or opening the node inspector pane.
   Clicking non-button areas of node cards still opens the inspector (normal behavior).
-result: issue
-reported: "All buttons open side panels instead of executing without opening inspector"
-severity: major
+result: pass
 
 ## Summary
 
 total: 5
-passed: 2
-issues: 3
+passed: 4
+issues: 0
 pending: 0
+partial: 1
 skipped: 0
 
 ## Gaps
