@@ -194,7 +194,7 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   const BASE_OPTIONS = {
     color: COLOR_RESTING,
     size: 2,
-    path: 'fluid',
+    path: 'grid',
     endPlug: 'arrow2',
     endPlugSize: 1.5,
   };
