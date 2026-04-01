@@ -207,15 +207,15 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
     try {
       const outLine = new LeaderLine(fromEl, toEl, {
         ...BASE_OPTIONS,
-        startSocketGravity: [12, -8],
-        endSocketGravity: [12, 8],
+        startSocketGravity: [8, 20],
+        endSocketGravity: [8, -20],
       });
       lines.set(edge.id + '-out', outLine);
 
       const inLine = new LeaderLine(toEl, fromEl, {
         ...BASE_OPTIONS,
-        startSocketGravity: [-12, 8],
-        endSocketGravity: [-12, -8],
+        startSocketGravity: [-8, -20],
+        endSocketGravity: [-8, 20],
       });
       lines.set(edge.id + '-in', inLine);
     } catch { /* best-effort — may fail if elements not visible */ }
