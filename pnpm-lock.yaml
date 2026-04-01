@@ -35,6 +35,9 @@ importers:
 
   apps/demo:
     dependencies:
+      '@napplet/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@napplet/services':
         specifier: workspace:*
         version: link:../../packages/services

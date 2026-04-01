@@ -84,7 +84,7 @@ export function createDemoNotificationController(): DemoNotificationController {
   }
 
   /**
-   * Build an INTER_PANE event for a notifications:* topic and dispatch it
+   * Build an IPC_PEER event for a notifications:* topic and dispatch it
    * directly to the service handler, bypassing the auth check that the
    * runtime applies to napplet-originated messages. The host shell is
    * trusted and doesn't go through AUTH.

@@ -7,7 +7,7 @@
  * signer service request — no restart required when the signer changes.
  */
 
-import type { RuntimeSigner } from '@napplet/runtime';
+import type { Signer } from '@napplet/runtime';
 
 // ─── Public Types ────────────────────────────────────────────────────────────
 
@@ -58,7 +58,7 @@ const _initialState: SignerConnectionState = {
 };
 
 let _state: SignerConnectionState = { ..._initialState };
-let _activeSigner: RuntimeSigner | null = null;
+let _activeSigner: Signer | null = null;
 const _listeners: Array<(state: SignerConnectionState) => void> = [];
 
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
@@ -71,13 +71,16 @@ function _setState(next: SignerConnectionState): void {
 }
 
 /**
- * Build a RuntimeSigner-compatible adapter over window.nostr (NIP-07).
+ * Build a Signer-compatible adapter over window.nostr (NIP-07).
  * Forwards all available methods and returns null/undefined for unavailable ones.
  */
-function buildNip07Adapter(nostr: Nip07Signer): RuntimeSigner {
-  const adapter: RuntimeSigner = {
+function buildNip07Adapter(nostr: Nip07Signer): Signer {
+  const adapter: Signer = {
     getPublicKey: () => nostr.getPublicKey(),
-    signEvent: (event) => nostr.signEvent(event as Record<string, unknown>) as ReturnType<NonNullable<RuntimeSigner['signEvent']>>,
+    signEvent: async (event) => {
+      const result = await nostr.signEvent(event as unknown as Record<string, unknown>);
+      return result as unknown as Awaited<ReturnType<NonNullable<Signer['signEvent']>>>;
+    },
   };
 
   if (typeof nostr.getRelays === 'function') {
@@ -114,7 +117,7 @@ export function getSignerConnectionState(): SignerConnectionState {
  * Get the active signer, or null if no signer is connected.
  * Suitable for passing directly to createSignerService({ getSigner }).
  */
-export function getSigner(): RuntimeSigner | null {
+export function getSigner(): Signer | null {
   return _activeSigner;
 }
 

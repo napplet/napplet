@@ -3,7 +3,7 @@
  *
  * Implements the client/requester side of the NIP-46 bunker protocol.
  * Opens a WebSocket to the user-specified relay, completes the connect
- * handshake with the bunker, and exposes a RuntimeSigner-compatible
+ * handshake with the bunker, and exposes a Signer-compatible
  * adapter for signing requests.
  *
  * Reference: https://github.com/nostr-protocol/nips/blob/master/46.md
@@ -15,7 +15,7 @@ import {
   finalizeEvent,
 } from 'nostr-tools/pure';
 import { nip04 } from 'nostr-tools';
-import type { RuntimeSigner } from '@napplet/runtime';
+import type { Signer } from '@napplet/runtime';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,8 +29,8 @@ export interface Nip46ClientOptions {
 export interface Nip46Client {
   /** Connect to the bunker and complete handshake. Returns the authorized pubkey. */
   connect(): Promise<string>;
-  /** Returns a RuntimeSigner-compatible adapter over the bunker connection. */
-  getSigner(): RuntimeSigner;
+  /** Returns a Signer-compatible adapter over the bunker connection. */
+  getSigner(): Signer;
   /** Close the WebSocket and clean up. */
   close(): void;
 }
@@ -344,7 +344,7 @@ export function createNip46Client(options: Nip46ClientOptions): Nip46Client {
       return authorizedPubkey!;
     },
 
-    getSigner(): RuntimeSigner {
+    getSigner(): Signer {
       return {
         getPublicKey: async (): Promise<string> => {
           if (authorizedPubkey) return authorizedPubkey;
@@ -353,13 +353,13 @@ export function createNip46Client(options: Nip46ClientOptions): Nip46Client {
           return result as string;
         },
 
-        signEvent: async (event: Record<string, unknown>): Promise<Record<string, unknown>> => {
+        signEvent: async (event) => {
           const corrId = crypto.randomUUID();
           const result = await sendRequestWithId(corrId, 'sign_event', [JSON.stringify(event)]);
           if (typeof result === 'string') {
-            return JSON.parse(result) as Record<string, unknown>;
+            return JSON.parse(result) as Awaited<ReturnType<NonNullable<Signer['signEvent']>>>;
           }
-          return result as Record<string, unknown>;
+          return result as Awaited<ReturnType<NonNullable<Signer['signEvent']>>>;
         },
 
         nip04: {
