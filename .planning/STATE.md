@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.7.0
 milestone_name: Ontology Audit and Adjustments
-status: Plans created — 36-01 (TYPE-01 ConsentRequest), 36-02 (TYPE-02 state-proxy deletion)
-stopped_at: Phase 37 context gathered
-last_updated: "2026-04-01T19:43:20.421Z"
-last_activity: 2026-04-01 -- Phase 36 planning complete
+status: Phase 35 complete — BusKind.IPC_PEER rename done, 15 files updated, type-check passing
+stopped_at: Phase 35 complete, Phase 36 ready to execute
+last_updated: "2026-04-01T20:00:00.000Z"
+last_activity: 2026-04-01 -- Phase 35 wire-protocol-rename complete
 progress:
   total_phases: 6
   completed_phases: 1
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 35 — wire-protocol-rename
+**Current focus:** Phase 36 — type-correctness
 
 ## Current Position
 
 Phase: 36 (type-correctness) — PLANNED, ready to execute
 Plan: 0 of 2
-Status: Plans created — 36-01 (TYPE-01 ConsentRequest), 36-02 (TYPE-02 state-proxy deletion)
-Last activity: 2026-04-01 -- Phase 36 planning complete
+Status: Phase 35 complete. Phase 36 plans created (36-01 TYPE-01, 36-02 TYPE-02), ready to execute.
+Last activity: 2026-04-01 -- Phase 35 wire-protocol-rename complete
 
 Progress: [░░░░░░░░░░] 0%
 
