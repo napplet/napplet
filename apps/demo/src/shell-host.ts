@@ -551,6 +551,12 @@ export function loadNapplet(name: string, containerId: string): NappletInfo {
   const container = document.getElementById(containerId);
   if (container) container.appendChild(iframe);
 
+  // Register origin immediately — contentWindow is available after appendChild.
+  // This must happen before the shim module runs (which sends REGISTER).
+  if (iframe.contentWindow) {
+    originRegistry.register(iframe.contentWindow, windowId);
+  }
+
   const info: NappletInfo = {
     windowId,
     name,
@@ -561,10 +567,15 @@ export function loadNapplet(name: string, containerId: string): NappletInfo {
 
   iframe.addEventListener('load', () => {
     if (iframe.contentWindow) {
+      // Re-register in case contentWindow reference changed during load
       originRegistry.register(iframe.contentWindow, windowId);
-      // Do NOT send AUTH challenge here — the runtime sends it
-      // after processing the napplet's REGISTER message (Phase 46).
-      // relay.sendChallenge(windowId) was the old ephemeral-key flow.
+      // Fallback: if the napplet doesn't send REGISTER (legacy shim),
+      // send AUTH challenge directly after a short delay.
+      setTimeout(() => {
+        if (!info.authenticated && !relay.runtime.sessionRegistry.getPubkey(windowId)) {
+          relay.sendChallenge(windowId);
+        }
+      }, 500);
     }
   });
 
