@@ -12,7 +12,7 @@
     const windowId = 'test-napp-1';
     let relay;
     window.__TEST__ = {
-      get authCompleted() { return relay.runtime.sessionRegistry.isRegistered(windowId); },
+      get authCompleted() { return relay.runtime.nappKeyRegistry.isRegistered(windowId); },
       errors: [],
     };
 

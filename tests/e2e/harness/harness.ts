@@ -301,8 +301,8 @@ window.__aclClear__ = () => runtimeAcl.clear();
 window.__aclCheck__ = (pubkey, dTag, hash, cap) => runtimeAcl.check(pubkey, dTag, hash, cap as Capability);
 window.__aclGetEntry__ = (pubkey, dTag, hash) => runtimeAcl.getEntry(pubkey, dTag, hash);
 
-// Napplet identity globals — use the runtime's sessionRegistry (not the shell singleton)
-const runtimeRegistry = relay.runtime.sessionRegistry;
+// Napplet identity globals — use the runtime's nappKeyRegistry (not the shell singleton)
+const runtimeRegistry = relay.runtime.nappKeyRegistry;
 window.__getNappPubkey__ = (windowId: string) => runtimeRegistry.getPubkey(windowId);
 window.__getNappEntry__ = (windowId: string) => {
   const pubkey = runtimeRegistry.getPubkey(windowId);

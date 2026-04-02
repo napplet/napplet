@@ -3,14 +3,14 @@
  *
  * Exercises: relay:write, relay:read, sign:event, state:read, state:write, inter-pane emit.
  *
- * - Sends messages via relay.publish() to relay (relay:write + sign:event)
- * - Subscribes to incoming messages via relay.subscribe() (relay:read)
- * - Stores chat history via storage (state:read + state:write)
- * - Emits messages to bot via ipc.emit('chat:message') (inter-pane)
- * - Listens for bot responses via ipc.on('bot:response') (inter-pane)
+ * - Sends messages via publish() to relay (relay:write + sign:event)
+ * - Subscribes to incoming messages via subscribe() (relay:read)
+ * - Stores chat history via nappState (state:read + state:write)
+ * - Emits messages to bot via emit('chat:message') (inter-pane)
+ * - Listens for bot responses via on('bot:response') (inter-pane)
  */
-import '@napplet/shim';
-import { relay, ipc, storage, type EventTemplate } from '@napplet/sdk';
+import { publish, subscribe, emit, on, nappState } from '@napplet/shim';
+import type { EventTemplate } from '@napplet/shim';
 
 // ─── Notification Helpers ─────────────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ import { relay, ipc, storage, type EventTemplate } from '@napplet/sdk';
  */
 function notifyCreate(title: string, body: string): void {
   try {
-    ipc.emit('notifications:create', [], JSON.stringify({ title, body }));
+    emit('notifications:create', [], JSON.stringify({ title, body }));
   } catch {
     /* best-effort — don't break the main flow if notifications are denied */
   }
@@ -62,7 +62,7 @@ function escapeHtml(s: string): string {
 
 async function loadHistory(): Promise<void> {
   try {
-    const raw = await storage.getItem(HISTORY_KEY);
+    const raw = await nappState.getItem(HISTORY_KEY);
     if (raw) {
       const entries: string[] = JSON.parse(raw);
       for (const entry of entries.slice(-10)) {
@@ -77,11 +77,11 @@ async function loadHistory(): Promise<void> {
 
 async function saveToHistory(text: string): Promise<void> {
   try {
-    const raw = await storage.getItem(HISTORY_KEY);
+    const raw = await nappState.getItem(HISTORY_KEY);
     const entries: string[] = raw ? JSON.parse(raw) : [];
     entries.push(text);
     if (entries.length > MAX_HISTORY) entries.splice(0, entries.length - MAX_HISTORY);
-    await storage.setItem(HISTORY_KEY, JSON.stringify(entries));
+    await nappState.setItem(HISTORY_KEY, JSON.stringify(entries));
   } catch (error) {
     addMessage(`state history save failed -- ${formatError(error, 'denied: state:write')}`, 'system');
   }
@@ -99,7 +99,7 @@ async function sendMessage(): Promise<void> {
 
   try {
     pendingAcks.push('inter-pane send');
-    ipc.emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
+    emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
     addMessage('inter-pane send attempted -- chat:message', 'system');
     // Emit notification so the host can surface this message send as a toast
     notifyCreate('Chat message sent', text.length > 60 ? text.slice(0, 60) + '…' : text);
@@ -116,7 +116,7 @@ async function sendMessage(): Promise<void> {
       tags: [['t', 'demo-chat']],
       created_at: Math.floor(Date.now() / 1000),
     };
-    await relay.publish(template, []);
+    await publish(template, []);
     pendingAcks.push('relay publish');
   } catch (error) {
     addMessage(`relay publish failed -- ${formatError(error, 'denied: relay:write')}`, 'system');
@@ -149,7 +149,7 @@ window.addEventListener('message', (event) => {
 
     // Subscribe to relay events (exercises relay:read)
     try {
-      relay.subscribe(
+      subscribe(
         [{ kinds: [1], '#t': ['demo-chat'], limit: 10 }],
         (event) => {
           // Don't show our own messages again
@@ -164,7 +164,7 @@ window.addEventListener('message', (event) => {
     }
 
     // Listen for bot responses via inter-pane
-    ipc.on('bot:response', (payload: unknown) => {
+    on('bot:response', (payload: unknown) => {
       const data = payload as { text?: string };
       if (data.text) {
         addMessage('inter-pane receive -- bot:response', 'system');
