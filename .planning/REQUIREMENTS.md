@@ -64,29 +64,29 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01 | — | Pending |
-| PKG-02 | — | Pending |
-| PKG-03 | — | Pending |
-| WIN-01 | — | Pending |
-| WIN-02 | — | Pending |
-| WIN-03 | — | Pending |
-| WIN-04 | — | Pending |
-| SDK-01 | — | Pending |
-| SDK-02 | — | Pending |
-| SDK-03 | — | Pending |
-| DEP-01 | — | Pending |
-| DEP-02 | — | Pending |
-| ECO-01 | — | Pending |
-| ECO-02 | — | Pending |
-| ECO-03 | — | Pending |
-| ECO-04 | — | Pending |
-| ECO-05 | — | Pending |
+| PKG-01 | Phase 41 | Pending |
+| PKG-02 | Phase 42 | Pending |
+| PKG-03 | Phase 42 | Pending |
+| WIN-01 | Phase 41 | Pending |
+| WIN-02 | Phase 41 | Pending |
+| WIN-03 | Phase 41 | Pending |
+| WIN-04 | Phase 41 | Pending |
+| SDK-01 | Phase 42 | Pending |
+| SDK-02 | Phase 42 | Pending |
+| SDK-03 | Phase 42 | Pending |
+| DEP-01 | Phase 41 | Pending |
+| DEP-02 | Phase 41 | Pending |
+| ECO-01 | Phase 43 | Pending |
+| ECO-02 | Phase 43 | Pending |
+| ECO-03 | Phase 44 | Pending |
+| ECO-04 | Phase 44 | Pending |
+| ECO-05 | Phase 44 | Pending |
 
 **Coverage:**
 - v0.8.0 requirements: 17 total
-- Mapped to phases: 0/17 (roadmap pending)
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17/17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-02*
-*Last updated: 2026-04-02 — initial definition*
+*Last updated: 2026-04-02 — roadmap phase mapping complete*

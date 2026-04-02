@@ -9,6 +9,7 @@
 - ✅ **v0.5.0 Documentation & Developer Skills** — Phases 23-26 (shipped 2026-04-01) — [Archive](milestones/v0.5.0-ROADMAP.md)
 - ✅ **v0.6.0 Demo Upgrade** — Phases 27-33 (shipped 2026-04-01) — [Archive](milestones/v0.6.0-ROADMAP.md)
 - ✅ **v0.7.0 Ontology Audit and Adjustments** — Phases 34-40 (shipped 2026-04-02) — [Archive](milestones/v0.7.0-ROADMAP.md)
+- **v0.8.0 Shim/SDK Split** — Phases 41-44 (in progress)
 
 ## Phases
 
@@ -87,7 +88,7 @@
 </details>
 
 <details>
-<summary>✅ v0.7.0 Ontology Audit and Adjustments (Phases 34-40) — SHIPPED 2026-04-02</summary>
+<summary>v0.7.0 Ontology Audit and Adjustments (Phases 34-40) — SHIPPED 2026-04-02</summary>
 
 - [x] **Phase 34: Terminology Rename** - Rename all napp* identifiers, types, topics, meta tags, localStorage prefix, and docs to napplet* across all 7 packages (completed 2026-04-01)
 - [x] **Phase 35: Wire Protocol Rename** - Rename BusKind.INTER_PANE to BusKind.IPC_PEER and update all 30+ call sites plus SPEC.md (completed 2026-04-01)
@@ -99,7 +100,66 @@
 
 </details>
 
+### v0.8.0 Shim/SDK Split (In Progress)
+
+**Milestone Goal:** Split `@napplet/shim` into a pure window-installer shim and a new `@napplet/sdk` convenience package, with a fully namespaced `window.napplet` API.
+
+- [ ] **Phase 41: Shim Restructure** - Reorganize @napplet/shim into a pure window installer with namespaced window.napplet API and zero named exports
+- [ ] **Phase 42: SDK Package** - Create @napplet/sdk as a standalone bundler-friendly package wrapping window.napplet
+- [ ] **Phase 43: Demo & Test Migration** - Update demo napplets and test suite for new window.napplet API shape
+- [ ] **Phase 44: Documentation** - Update SPEC.md and READMEs for shim/SDK split
+
+## Phase Details
+
+### Phase 41: Shim Restructure
+**Goal**: Developers importing @napplet/shim get a side-effect-only module that installs a fully namespaced window.napplet global with zero named exports
+**Depends on**: Phase 40
+**Requirements**: PKG-01, WIN-01, WIN-02, WIN-03, WIN-04, DEP-01, DEP-02
+**Success Criteria** (what must be TRUE):
+  1. `import '@napplet/shim'` installs `window.napplet` with `relay`, `ipc`, `services`, and `storage` sub-objects -- no named exports available
+  2. `window.napplet.relay.subscribe()`, `.publish()`, `.query()` work with existing call signatures
+  3. `window.napplet.ipc.emit()` and `.on()` deliver inter-pane messages through the shell
+  4. `window.napplet.services.list()` returns registered services and `.has()` checks by name/version
+  5. `window.napplet.storage.getItem()`, `.setItem()`, `.removeItem()`, `.keys()` proxy to shell-scoped storage
+**Plans**: TBD
+
+### Phase 42: SDK Package
+**Goal**: Bundler-consuming developers can `import { relay, ipc } from '@napplet/sdk'` and get typed wrappers around window.napplet without depending on the shim
+**Depends on**: Phase 41
+**Requirements**: PKG-02, PKG-03, SDK-01, SDK-02, SDK-03
+**Success Criteria** (what must be TRUE):
+  1. `@napplet/sdk` exists as a workspace package with its own package.json, tsup.config.ts, and tsconfig.json
+  2. `import { relay, ipc, services, storage } from '@napplet/sdk'` produces objects that delegate to `window.napplet.*` at call time
+  3. `import * as napplet from '@napplet/sdk'` produces an object structurally identical to `window.napplet`
+  4. `@napplet/sdk` has no dependency on `@napplet/shim` in its package.json -- the two packages are independent siblings
+  5. All public protocol types (`NostrEvent`, `NostrFilter`, `ServiceInfo`, `Subscription`, `EventTemplate`) are re-exported from `@napplet/sdk`
+**Plans**: TBD
+
+### Phase 43: Demo & Test Migration
+**Goal**: All demo napplets and tests exercise the new namespaced window.napplet API, confirming the restructure works end-to-end in a real browser
+**Depends on**: Phase 42
+**Requirements**: ECO-01, ECO-02
+**Success Criteria** (what must be TRUE):
+  1. Demo Chat and Bot napplets use `window.napplet.relay.*`, `window.napplet.ipc.*`, and `window.napplet.storage.*` with no references to old top-level shim exports
+  2. All Playwright e2e tests pass against the new window.napplet API shape
+  3. All Vitest unit/integration tests pass with the restructured shim
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 44: Documentation
+**Goal**: Developers reading the spec, shim README, and SDK README understand the new window.napplet shape, when to use shim vs SDK, and how to migrate
+**Depends on**: Phase 43
+**Requirements**: ECO-03, ECO-04, ECO-05
+**Success Criteria** (what must be TRUE):
+  1. SPEC.md documents the namespaced `window.napplet` shape with `relay`, `ipc`, `services`, `storage` sub-objects
+  2. `@napplet/shim` README explains it is a side-effect-only window installer, documents `window.napplet.*` shape, and notes zero named exports
+  3. `@napplet/sdk` README explains namespaced exports, usage with and without a bundler, and its relationship to the shim
+**Plans**: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 41 -> 42 -> 43 -> 44
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -144,3 +204,7 @@
 | 38. Session Vocabulary | v0.7.0 | 2/2 | Complete | 2026-04-01 |
 | 39. Documentation Pass | v0.7.0 | 1/1 | Complete | 2026-04-01 |
 | 40. Remaining Rename Gaps | v0.7.0 | 2/2 | Complete | 2026-04-02 |
+| 41. Shim Restructure | v0.8.0 | 0/0 | Not started | - |
+| 42. SDK Package | v0.8.0 | 0/0 | Not started | - |
+| 43. Demo & Test Migration | v0.8.0 | 0/0 | Not started | - |
+| 44. Documentation | v0.8.0 | 0/0 | Not started | - |

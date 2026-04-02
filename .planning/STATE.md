@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.8.0
 milestone_name: Shim/SDK Split
-status: planning
-stopped_at: defining requirements
+status: ready_to_plan
+stopped_at: roadmap created
 last_updated: "2026-04-02T00:00:00.000Z"
 last_activity: 2026-04-02
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-01 — Milestone v0.7.0 started)
+See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.8.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Planning next milestone (v0.8.0)
+**Current focus:** Phase 41 — Shim Restructure
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-02 — Milestone v0.8.0 started
+Phase: 41 of 44 (Shim Restructure)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-04-02 — Roadmap created for v0.8.0
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -36,9 +36,9 @@ Progress: [░░░░░░░░░░] 0%
 
 **Velocity:**
 
-- Total plans completed: 0 (v0.7.0)
-- Average duration: —
-- Total execution time: —
+- Total plans completed: 0 (v0.8.0)
+- Average duration: --
+- Total execution time: --
 
 *Updated after each plan completion*
 
@@ -46,10 +46,10 @@ Progress: [░░░░░░░░░░] 0%
 
 ### Roadmap Evolution
 
-- v0.7.0 roadmap created: 6 phases (34-39), 17 requirements mapped
-- Phase order: TERM (34) -> WIRE (35) -> TYPE (36) -> API (37) -> SESS (38) -> DOC (39)
-- TERM pass is largest blast radius (87+ occurrences across 19 files)
-- TYPE fixes happen before API rename to avoid compounding type errors
+- v0.8.0 roadmap created: 4 phases (41-44), 17 requirements mapped
+- Phase order: Shim Restructure (41) -> SDK Package (42) -> Demo & Test Migration (43) -> Documentation (44)
+- Phase 41 is the largest (7 requirements) — namespacing + deprecation removal are tightly coupled
+- Phase 42 depends on window.napplet shape being final from Phase 41
 
 ### Decisions
 
@@ -64,11 +64,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth. Target for future milestone.
-- NOTE: `napp-state:` localStorage migration requires dual-read fallback (TERM-02)
 - NOTE: RuntimeHooks/ShellHooks deprecated aliases must survive one release cycle before v0.9.0 removal (API-01, API-02)
 
 ## Session Continuity
 
-Last session: 2026-04-01T19:43:20.419Z
-Stopped at: Phase 37 context gathered
-Resume file: .planning/phases/37-api-alignment/37-CONTEXT.md
+Last session: 2026-04-02
+Stopped at: Roadmap created for v0.8.0 Shim/SDK Split
+Resume file: None
