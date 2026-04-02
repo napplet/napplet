@@ -104,7 +104,7 @@
 
 **Milestone Goal:** Split `@napplet/shim` into a pure window-installer shim and a new `@napplet/sdk` convenience package, with a fully namespaced `window.napplet` API.
 
-- [ ] **Phase 41: Shim Restructure** - Reorganize @napplet/shim into a pure window installer with namespaced window.napplet API and zero named exports
+- [x] **Phase 41: Shim Restructure** - Reorganize @napplet/shim into a pure window installer with namespaced window.napplet API and zero named exports (completed 2026-04-02)
 - [ ] **Phase 42: SDK Package** - Create @napplet/sdk as a standalone bundler-friendly package wrapping window.napplet
 - [ ] **Phase 43: Demo & Test Migration** - Update demo napplets and test suite for new window.napplet API shape
 - [ ] **Phase 44: Documentation** - Update SPEC.md and READMEs for shim/SDK split
@@ -204,7 +204,7 @@ Phases execute in numeric order: 41 -> 42 -> 43 -> 44
 | 38. Session Vocabulary | v0.7.0 | 2/2 | Complete | 2026-04-01 |
 | 39. Documentation Pass | v0.7.0 | 1/1 | Complete | 2026-04-01 |
 | 40. Remaining Rename Gaps | v0.7.0 | 2/2 | Complete | 2026-04-02 |
-| 41. Shim Restructure | v0.8.0 | 0/0 | Not started | - |
+| 41. Shim Restructure | v0.8.0 | 2/2 | Complete    | 2026-04-02 |
 | 42. SDK Package | v0.8.0 | 0/2 | Planned | - |
 | 43. Demo & Test Migration | v0.8.0 | 0/3 | Planned | - |
 | 44. Documentation | v0.8.0 | 0/3 | Planned | - |
