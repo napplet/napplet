@@ -1,7 +1,7 @@
 /**
  * Bot demo napplet -- teachable auto-responder.
  *
- * Exercises: sign:event (for response signing), state:read, state:write, inter-pane on/emit.
+ * Exercises: sign:event (for response signing), state:read, state:write, ipc on/emit.
  *
  * - Listens via on('chat:message') for messages from chat napplet
  * - Auto-responds based on learned rules or default personality
@@ -157,7 +157,7 @@ function handleChatMessage(payload: unknown): void {
   const text = data.text || '';
   if (!text) return;
 
-  log(`inter-pane chat:message received -- ${text}`, 'heard');
+  log(`ipc chat:message received -- ${text}`, 'heard');
 
   // Check for teach command first
   if (handleTeachCommand(text)) return;
@@ -166,17 +166,17 @@ function handleChatMessage(payload: unknown): void {
   const response = findResponse(text);
   log(response, 'replied');
 
-  // Emit response to chat via inter-pane (exercises sign:event for the emit)
+  // Emit response to chat via ipc (exercises sign:event for the emit)
   try {
     emit('bot:response', [], JSON.stringify({
       text: response,
       timestamp: Date.now(),
     }));
-    log('inter-pane bot:response sent', 'info');
+    log('ipc bot:response sent', 'info');
     // Emit a notification so the host can surface this bot reply
     notifyCreate('Bot activity', response.length > 60 ? response.slice(0, 60) + '…' : response);
   } catch (error) {
-    log(`inter-pane response failed -- ${formatError(error, 'denied: relay:write')}`, 'error');
+    log(`ipc response failed -- ${formatError(error, 'denied: relay:write')}`, 'error');
   }
 }
 
@@ -192,15 +192,15 @@ window.addEventListener('message', (event) => {
     authenticated = true;
     statusEl.textContent = 'listening';
     statusEl.style.color = '#39ff14';
-    log('AUTH complete -- listening for inter-pane chat:message input', 'info');
+    log('AUTH complete -- listening for ipc chat:message input', 'info');
 
     // Load rules from storage
     loadRules();
 
-    // Listen for chat messages via inter-pane
+    // Listen for chat messages via ipc
     on('chat:message', handleChatMessage);
 
-    log('subscribed to inter-pane chat:message topic', 'info');
+    log('subscribed to ipc chat:message topic', 'info');
   }
 
   if (verb === 'OK' && success === false) {

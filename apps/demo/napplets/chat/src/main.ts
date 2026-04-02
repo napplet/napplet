@@ -1,13 +1,13 @@
 /**
  * Chat demo napplet.
  *
- * Exercises: relay:write, relay:read, sign:event, state:read, state:write, inter-pane emit.
+ * Exercises: relay:write, relay:read, sign:event, state:read, state:write, ipc emit.
  *
  * - Sends messages via publish() to relay (relay:write + sign:event)
  * - Subscribes to incoming messages via subscribe() (relay:read)
  * - Stores chat history via nappState (state:read + state:write)
- * - Emits messages to bot via emit('chat:message') (inter-pane)
- * - Listens for bot responses via on('bot:response') (inter-pane)
+ * - Emits messages to bot via emit('chat:message') (ipc)
+ * - Listens for bot responses via on('bot:response') (ipc)
  */
 import { publish, subscribe, emit, on, nappState } from '@napplet/shim';
 import type { EventTemplate } from '@napplet/shim';
@@ -98,13 +98,13 @@ async function sendMessage(): Promise<void> {
   await saveToHistory(text);
 
   try {
-    pendingAcks.push('inter-pane send');
+    pendingAcks.push('ipc send');
     emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
-    addMessage('inter-pane send attempted -- chat:message', 'system');
+    addMessage('ipc send attempted -- chat:message', 'system');
     // Emit notification so the host can surface this message send as a toast
     notifyCreate('Chat message sent', text.length > 60 ? text.slice(0, 60) + '…' : text);
   } catch (error) {
-    addMessage(`inter-pane send failed -- ${formatError(error, 'denied: relay:write')}`, 'system');
+    addMessage(`ipc send failed -- ${formatError(error, 'denied: relay:write')}`, 'system');
   }
 
   // Publish to relay (exercises relay:write + sign:event)
@@ -163,11 +163,11 @@ window.addEventListener('message', (event) => {
       addMessage(`relay subscribe failed -- ${formatError(error, 'denied: relay:read')}`, 'system');
     }
 
-    // Listen for bot responses via inter-pane
+    // Listen for bot responses via ipc
     on('bot:response', (payload: unknown) => {
       const data = payload as { text?: string };
       if (data.text) {
-        addMessage('inter-pane receive -- bot:response', 'system');
+        addMessage('ipc receive -- bot:response', 'system');
         addMessage(`[bot] ${data.text}`, 'other');
       }
     });
