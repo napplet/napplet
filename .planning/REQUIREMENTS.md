@@ -41,9 +41,9 @@
 
 ### DOC — Documentation
 
-- [ ] **DOC-01**: SPEC.md Section 2 updated with REGISTER → IDENTITY → AUTH handshake sequence
-- [ ] **DOC-02**: SPEC.md Section 5 updated with new storage scoping model (dTag:aggregateHash, no pubkey)
-- [ ] **DOC-03**: SPEC.md Section 14 updated with delegated key security model and threat analysis
+- [x] **DOC-01**: SPEC.md Section 2 updated with REGISTER → IDENTITY → AUTH handshake sequence
+- [x] **DOC-02**: SPEC.md Section 5 updated with new storage scoping model (dTag:aggregateHash, no pubkey)
+- [x] **DOC-03**: SPEC.md Section 14 updated with delegated key security model and threat analysis
 
 ## Future Requirements
 
@@ -86,9 +86,9 @@
 | SEC-02 | Phase 46 | Pending |
 | DEP-03 | Phase 47 | Pending |
 | DEP-04 | Phase 47 | Pending |
-| DOC-01 | Phase 48 | Pending |
-| DOC-02 | Phase 48 | Pending |
-| DOC-03 | Phase 48 | Pending |
+| DOC-01 | Phase 48 | Complete |
+| DOC-02 | Phase 48 | Complete |
+| DOC-03 | Phase 48 | Complete |
 
 **Coverage:**
 - v0.9.0 requirements: 18 total
