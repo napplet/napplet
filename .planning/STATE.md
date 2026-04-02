@@ -4,8 +4,8 @@ milestone: v0.8.0
 milestone_name: Shim/SDK Split
 status: executing
 stopped_at: Phase 42 planned
-last_updated: "2026-04-02T11:43:30.974Z"
-last_activity: 2026-04-02
+last_updated: "2026-04-02T11:44:40.904Z"
+last_activity: 2026-04-02 -- Phase 44 execution started
 progress:
   total_phases: 4
   completed_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.8.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 43 — demo-test-migration
+**Current focus:** Phase 44 — documentation
 
 ## Current Position
 
-Phase: 44
-Plan: Not started
-Status: Executing Phase 43
-Last activity: 2026-04-02
+Phase: 44 (documentation) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 44
+Last activity: 2026-04-02 -- Phase 44 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
