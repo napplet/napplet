@@ -116,7 +116,7 @@ async function sendMessage(): Promise<void> {
       tags: [['t', 'demo-chat']],
       created_at: Math.floor(Date.now() / 1000),
     };
-    await relay.publish(template, []);
+    await relay.publish(template);
     pendingAcks.push('relay publish');
   } catch (error) {
     addMessage(`relay publish failed -- ${formatError(error, 'denied: relay:write')}`, 'system');

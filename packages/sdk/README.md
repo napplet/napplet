@@ -66,7 +66,7 @@ Relay operations through the shell's relay pool. Mirrors `window.napplet.relay`.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `subscribe(filters, onEvent, onEose?, options?)` | `Subscription` | Open a live NIP-01 subscription |
+| `subscribe(filters, onEvent, onEose, options?)` | `Subscription` | Open a live NIP-01 subscription |
 | `publish(template, options?)` | `Promise<NostrEvent>` | Sign and broadcast via the shell's signer proxy |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: subscribe, collect until EOSE, resolve |
 

@@ -70,7 +70,7 @@ After `import '@napplet/shim'`, the global `window.napplet` object has the follo
 ```ts
 window.napplet = {
   relay: {
-    subscribe(filters, onEvent, onEose?, options?): Subscription;
+    subscribe(filters, onEvent, onEose, options?): Subscription;
     publish(template, options?): Promise<NostrEvent>;
     query(filters): Promise<NostrEvent[]>;
   },
@@ -97,7 +97,7 @@ Relay operations through the shell's relay pool.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `subscribe(filters, onEvent, onEose?, options?)` | `Subscription` | Open a live NIP-01 subscription. `options.relay` and `options.group` for NIP-29 scoped relays. |
+| `subscribe(filters, onEvent, onEose, options?)` | `Subscription` | Open a live NIP-01 subscription. `options.relay` and `options.group` for NIP-29 scoped relays. |
 | `publish(template, options?)` | `Promise<NostrEvent>` | Sign and broadcast a Nostr event via the shell's signer proxy. |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: subscribe, collect events until EOSE, then resolve. |
 
