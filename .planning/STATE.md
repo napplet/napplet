@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.9.0
 milestone_name: Identity & Trust
-status: planning
-stopped_at: Defining requirements
-last_updated: "2026-04-02T14:00:00.000Z"
-last_activity: 2026-04-02 — Milestone v0.9.0 started
+status: ready_to_plan
+stopped_at: Roadmap created
+last_updated: "2026-04-02T17:00:00.000Z"
+last_activity: 2026-04-02 — Roadmap created for v0.9.0 (3 phases, 18 requirements)
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.9.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Defining requirements for v0.9.0 Identity & Trust
+**Current focus:** Phase 46 — Shell-Assigned Keypair Handshake (ready to plan)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-02
+Phase: 46 of 48 (Shell-Assigned Keypair Handshake)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-04-02 — Roadmap created for v0.9.0
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -36,7 +36,7 @@ Progress: [░░░░░░░░░░] 0%
 
 **Velocity:**
 
-- Total plans completed: 0 (v0.8.0)
+- Total plans completed: 0 (v0.9.0)
 - Average duration: --
 - Total execution time: --
 
@@ -44,18 +44,19 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
-### Roadmap Evolution
-
-- v0.8.0 roadmap created: 4 phases (41-44), 17 requirements mapped
-- Phase order: Shim Restructure (41) -> SDK Package (42) -> Demo & Test Migration (43) -> Documentation (44)
-- Phase 41 is the largest (7 requirements) — namespacing + deprecation removal are tightly coupled
-- Phase 42 depends on window.napplet shape being final from Phase 41
-- Phase 45 added: IPC terminology cleanup — replace ~30 "inter-pane" occurrences in demo UI labels/logs with "ipc"
-- Phase 46 added: Shell-assigned keypair handshake — napplet authenticates with shell-provided key instead of ephemeral keypair, fixing storage persistence across reloads. Root cause: agent shortcut made keypair ephemeral per page load, breaking storage scoping continuity.
-
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+Phase 46 has 8 locked decisions (D-01 through D-08) in its CONTEXT.md:
+- D-01: Storage scoping removes ephemeral pubkey (dTag:aggregateHash:userKey)
+- D-02: Shell delegates stable keypair via REGISTER/IDENTITY messages
+- D-03: Per-iframe persistent GUID for instance identity
+- D-04: Shell verifies aggregate hash from fetched napplet files
+- D-05: Verification cached by manifest event ID
+- D-06: Spec defines wire format; enforcement is implementation-level
+- D-07: Delegated keys are protocol-auth-only, never sign relay events
+- D-08: Deterministic key derivation via HMAC(shellSecret, dTag+aggregateHash)
 
 ### Quick Tasks Completed
 
@@ -67,10 +68,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth. Target for future milestone.
-- NOTE: RuntimeHooks/ShellHooks deprecated aliases must survive one release cycle before v0.9.0 removal (API-01, API-02)
 
 ## Session Continuity
 
-Last session: 2026-04-02T12:00:00.000Z
-Stopped at: Phase 42 planned
-Resume file: .planning/phases/42-sdk-package/42-01-PLAN.md
+Last session: 2026-04-02
+Stopped at: Roadmap created for v0.9.0 — 3 phases (46-48), 18 requirements mapped
+Resume file: None — run `/gsd:plan-phase 46` next

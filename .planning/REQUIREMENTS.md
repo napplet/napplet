@@ -71,30 +71,30 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| AUTH-04 | TBD | Pending |
-| VERIFY-01 | TBD | Pending |
-| VERIFY-02 | TBD | Pending |
-| VERIFY-03 | TBD | Pending |
-| STORE-01 | TBD | Pending |
-| STORE-02 | TBD | Pending |
-| STORE-03 | TBD | Pending |
-| INST-01 | TBD | Pending |
-| SEC-01 | TBD | Pending |
-| SEC-02 | TBD | Pending |
-| DEP-03 | TBD | Pending |
-| DEP-04 | TBD | Pending |
-| DOC-01 | TBD | Pending |
-| DOC-02 | TBD | Pending |
-| DOC-03 | TBD | Pending |
+| AUTH-01 | Phase 46 | Pending |
+| AUTH-02 | Phase 46 | Pending |
+| AUTH-03 | Phase 46 | Pending |
+| AUTH-04 | Phase 46 | Pending |
+| VERIFY-01 | Phase 46 | Pending |
+| VERIFY-02 | Phase 46 | Pending |
+| VERIFY-03 | Phase 46 | Pending |
+| STORE-01 | Phase 46 | Pending |
+| STORE-02 | Phase 46 | Pending |
+| STORE-03 | Phase 46 | Pending |
+| INST-01 | Phase 46 | Pending |
+| SEC-01 | Phase 46 | Pending |
+| SEC-02 | Phase 46 | Pending |
+| DEP-03 | Phase 47 | Pending |
+| DEP-04 | Phase 47 | Pending |
+| DOC-01 | Phase 48 | Pending |
+| DOC-02 | Phase 48 | Pending |
+| DOC-03 | Phase 48 | Pending |
 
 **Coverage:**
 - v0.9.0 requirements: 18 total
-- Mapped to phases: 0/18 (pending roadmap)
-- Unmapped: 18
+- Mapped to phases: 18/18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-02*
-*Last updated: 2026-04-02*
+*Last updated: 2026-04-02 — Traceability updated with phase mappings*
