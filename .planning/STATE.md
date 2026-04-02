@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.8.0
-milestone_name: Shim/SDK Split
-status: executing
-stopped_at: Phase 42 planned
-last_updated: "2026-04-02T13:35:31.040Z"
-last_activity: 2026-04-02
+milestone: v0.9.0
+milestone_name: Identity & Trust
+status: planning
+stopped_at: Defining requirements
+last_updated: "2026-04-02T14:00:00.000Z"
+last_activity: 2026-04-02 — Milestone v0.9.0 started
 progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -18,16 +18,16 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.8.0 started)
+See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.9.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 44 — documentation
+**Current focus:** Defining requirements for v0.9.0 Identity & Trust
 
 ## Current Position
 
-Phase: 44
-Plan: Not started
-Status: Executing Phase 44
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
 Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%

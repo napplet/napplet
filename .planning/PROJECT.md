@@ -8,6 +8,19 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Current Milestone: v0.9.0 Identity & Trust
+
+**Goal:** Establish shell-delegated keypair handshake with aggregate hash verification, fixing storage persistence and hardening the napplet trust model.
+
+**Target features:**
+- Shell delegates stable keypair to napplet (REGISTER → IDENTITY → NIP-42 AUTH handshake)
+- Storage scoped by `dTag:aggregateHash` (pubkey removed), persists across reloads
+- Shell-side aggregate hash verification from fetched napplet files
+- Verification caching by manifest event ID
+- Per-iframe persistent GUID for instance identity
+- Delegated keys restricted to protocol auth only (never relay publishing)
+- `RuntimeHooks`/`ShellHooks` deprecated alias removal (migration window expires)
+
 ## Shipped: v0.8.0 Shim/SDK Split
 
 `@napplet/shim` is now a pure side-effect window installer (zero named exports). `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`). New `@napplet/sdk` package provides typed named exports for bundler consumers. All deprecated v0.7.0 symbols removed. 4 phases, 10 plans shipped 2026-04-02. See [archive](milestones/v0.8.0-ROADMAP.md).
@@ -103,7 +116,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: Milestone v0.8.0 complete. All 4 phases (41-44) shipped. Shim is now a pure window installer, SDK provides named exports, demo and tests migrated, SPEC.md and all READMEs updated. 8 packages in the monorepo.
+- **Current state**: v0.8.0 complete (shim/SDK split). Starting v0.9.0 Identity & Trust — shell-delegated keypair handshake, storage persistence fix, aggregate hash verification. Phase 46 has full CONTEXT.md with 8 locked decisions. 8 packages in the monorepo.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
@@ -175,4 +188,4 @@ After v0.6.0, likely next candidates:
 - Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-02 — Phase 44 (Documentation) complete, v0.8.0 milestone complete*
+*Last updated: 2026-04-02 — Milestone v0.9.0 Identity & Trust started*
