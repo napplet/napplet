@@ -399,6 +399,8 @@ export interface SessionEntry {
   dTag: string;
   aggregateHash: string;
   registeredAt: number;
+  /** Persistent GUID for this iframe instance, assigned by the runtime. Survives page reloads. */
+  instanceId: string;
 }
 
 /** @deprecated Use SessionEntry. Will be removed in v0.9.0. */

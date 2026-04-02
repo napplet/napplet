@@ -204,6 +204,11 @@ export function adaptHooks(shellHooks: ShellAdapter, deps: BrowserDeps): Runtime
     randomUUID(): string {
       return crypto.randomUUID();
     },
+    randomBytes(length: number): Uint8Array {
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return bytes;
+    },
   };
 
   // ─── ACL Persistence (localStorage-backed) ──────────────────────────────

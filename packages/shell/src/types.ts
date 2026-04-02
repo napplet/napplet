@@ -23,7 +23,7 @@ export type { ServiceDescriptor, ServiceHandler, ServiceRegistry };
  * const entry: SessionEntry = {
  *   pubkey: 'abc123...', windowId: 'win-1', origin: '*',
  *   type: 'chat', dTag: '3chat', aggregateHash: 'deadbeef',
- *   registeredAt: Date.now(),
+ *   registeredAt: Date.now(), instanceId: 'guid-123',
  * };
  * ```
  */
@@ -35,6 +35,8 @@ export interface SessionEntry {
   dTag: string;
   aggregateHash: string;
   registeredAt: number;
+  /** Persistent GUID for this iframe instance, assigned by the runtime. Survives page reloads. */
+  instanceId: string;
 }
 
 /** @deprecated Use SessionEntry. Will be removed in v0.9.0. */

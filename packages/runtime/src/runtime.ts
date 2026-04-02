@@ -261,6 +261,7 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     const entry: SessionEntry = {
       pubkey: authEvent.pubkey, windowId, origin: '*',
       type: nappletType, dTag, aggregateHash, registeredAt: Date.now(),
+      instanceId: hooks.crypto.randomUUID(),
     };
 
     // Check for napp updates

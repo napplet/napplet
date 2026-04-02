@@ -36,6 +36,8 @@ export interface SessionRegistry {
   isRegistered(windowId: string): boolean;
   /** Get all registered napplet entries. */
   getAllEntries(): SessionEntry[];
+  /** Get the instance GUID for a window. */
+  getInstanceId(windowId: string): string | undefined;
   /** Set a pending update for a window (napplet reconnected with different hash). */
   setPendingUpdate(windowId: string, update: PendingUpdate): void;
   /** Get a pending update for a window. */
@@ -100,6 +102,12 @@ export function createSessionRegistry(notifier?: PendingUpdateNotifier): Session
 
     getAllEntries(): SessionEntry[] {
       return Array.from(byPubkey.values());
+    },
+
+    getInstanceId(windowId: string): string | undefined {
+      const pubkey = byWindowId.get(windowId);
+      if (!pubkey) return undefined;
+      return byPubkey.get(pubkey)?.instanceId;
     },
 
     setPendingUpdate(windowId: string, update: PendingUpdate): void {
