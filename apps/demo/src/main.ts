@@ -584,10 +584,10 @@ tap.onMessage((msg) => {
     }, 200);
   }
 
-  // Log inter-pane events prominently
+  // Log ipc events prominently
   if (msg.verb === 'EVENT' && msg.parsed.topic) {
     debuggerEl?.addSystemMessage(
-      `inter-pane: ${msg.parsed.topic} (kind:${msg.parsed.eventKind})`
+      `ipc: ${msg.parsed.topic} (kind:${msg.parsed.eventKind})`
     );
   }
 });

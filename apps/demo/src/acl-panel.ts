@@ -11,7 +11,7 @@ import type { Capability } from '@napplet/shell';
 
 export const DEMO_CAPABILITY_LABELS: Record<Capability, string> = {
   'relay:read': 'Relay Subscribe',
-  'relay:write': 'Relay Publish / Inter-Pane Send',
+  'relay:write': 'Relay Publish / IPC Send',
   'cache:read': 'Cache Read',
   'cache:write': 'Cache Write',
   'sign:event': 'Signer Requests',
@@ -23,8 +23,8 @@ export const DEMO_CAPABILITY_LABELS: Record<Capability, string> = {
 };
 
 export const DEMO_CAPABILITY_HINTS: Record<Capability, string> = {
-  'relay:read': 'relay subscribe / inter-pane receive',
-  'relay:write': 'relay publish / inter-pane send',
+  'relay:read': 'relay subscribe / ipc receive',
+  'relay:write': 'relay publish / ipc send',
   'cache:read': 'cache read access',
   'cache:write': 'cache write access',
   'sign:event': 'signer requests',
