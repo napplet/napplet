@@ -1,5 +1,15 @@
 # Milestones
 
+## v0.9.0 Identity & Trust (Shipped: 2026-04-02)
+
+**Phases completed:** 3 phases, 7 plans, 15 tasks
+
+**Key accomplishments:**
+
+- Deleted RuntimeHooks/ShellHooks deprecated type aliases and createMockRuntimeHooks test utility across 15 files; importing the old names now fails at compile time
+
+---
+
 ## v0.8.0 Shim/SDK Split (Shipped: 2026-04-02)
 
 **Phases completed:** 6 phases, 10 plans, 5 tasks

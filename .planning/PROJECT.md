@@ -8,18 +8,9 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## Current Milestone: v0.9.0 Identity & Trust
+## Shipped: v0.9.0 Identity & Trust
 
-**Goal:** Establish shell-delegated keypair handshake with aggregate hash verification, fixing storage persistence and hardening the napplet trust model.
-
-**Target features:**
-- Shell delegates stable keypair to napplet (REGISTER → IDENTITY → NIP-42 AUTH handshake)
-- Storage scoped by `dTag:aggregateHash` (pubkey removed), persists across reloads
-- Shell-side aggregate hash verification from fetched napplet files
-- Verification caching by manifest event ID
-- Per-iframe persistent GUID for instance identity
-- Delegated keys restricted to protocol auth only (never relay publishing)
-- `RuntimeHooks`/`ShellHooks` deprecated alias removal (migration window expires)
+Shell-delegated keypair handshake (REGISTER → IDENTITY → AUTH) with deterministic key derivation via HMAC-SHA256. Storage rekeyed to `dTag:aggregateHash` (pubkey removed) — persists across reloads. Shell-side aggregate hash verification with caching. Per-iframe persistent GUID. Delegated keys confined to protocol auth only. RuntimeHooks/ShellHooks deprecated aliases removed. SPEC.md §2, §5, §14 updated. 3 phases, 7 plans shipped 2026-04-02. See [archive](milestones/v0.9.0-ROADMAP.md).
 
 ## Shipped: v0.8.0 Shim/SDK Split
 
@@ -122,7 +113,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.9.0 complete (Identity & Trust). Shell-delegated keypair handshake, pubkey-free storage scoping, aggregate hash verification, delegated key confinement, deprecated alias removal, and SPEC.md documentation all shipped. 8 packages in the monorepo.
+- **Current state**: v0.9.0 shipped (Identity & Trust). The protocol now has a proper trust model: shell-delegated deterministic keypairs, aggregate hash verification, storage persistence across reloads, and delegated key confinement. 8 packages in the monorepo.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
@@ -194,4 +185,4 @@ After v0.6.0, likely next candidates:
 - Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-02 — Milestone v0.9.0 Identity & Trust started*
+*Last updated: 2026-04-02 — Milestone v0.9.0 Identity & Trust shipped*
