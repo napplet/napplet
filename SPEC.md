@@ -611,7 +611,9 @@ The signer proxy protocol is independent of the backing provider -- napplets int
 
 ### 5.1 Overview
 
-Sandboxed napplets (without `allow-same-origin`) cannot access localStorage directly. The shell provides a state proxy that scopes data by napplet composite identity `(pubkey, dTag, aggregateHash)`. When a napplet updates (new aggregateHash), it receives a fresh, empty state namespace.
+Sandboxed napplets (without `allow-same-origin`) cannot access localStorage directly. The shell provides a state proxy that scopes data by napplet composite identity `(dTag, aggregateHash)`. When a napplet updates (new aggregateHash), it receives a fresh, empty state namespace.
+
+The ephemeral pubkey was removed from the scoping key in v0.9.0 because ephemeral keys changed on every page reload, destroying storage persistence. With pubkey removed, the same napplet type + version reads the same storage namespace across reloads.
 
 ### 5.2 Request-Response Protocol
 
@@ -689,14 +691,18 @@ The per-napplet quota MAY be configured via the ACL entry's `stateQuota` field. 
 The shell MUST scope state keys internally using the format:
 
 ```
-napplet-state:{pubkey}:{dTag}:{aggregateHash}:{userKey}
+napplet-state:{dTag}:{aggregateHash}:{userKey}
 ```
 
 Napplets only see their own `userKey` namespace -- the scoping prefix is invisible to the napplet.
 
+**Legacy migration:** Prior to v0.9.0, the format included `{pubkey}` as the first scoping component: `napplet-state:{pubkey}:{dTag}:{aggregateHash}:{userKey}`. Implementations SHOULD attempt to read from the legacy format as a fallback when reading, to support migration from pre-v0.9.0 data. Writes MUST always use the new format.
+
 ### 5.6 Identity Isolation
 
 When a napplet's `aggregateHash` changes (new build), the composite key changes, creating a new empty namespace. The previous build's data is NOT automatically migrated. Shells MAY implement migration utilities but are not required to.
+
+Because the pubkey is no longer part of the scope key, storage persists across page reloads for the same napplet type and version. This is the intended behavior -- a chat napplet should not lose its message history when the user refreshes the page.
 
 ---
 
