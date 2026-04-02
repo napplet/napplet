@@ -83,13 +83,13 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ createEphemeralKeypair() (no params) replaces loadOrCreateKeypair(_nappType) in @napplet/shim — v0.7.0 Phase 40 (SESS-03)
 - ✓ Nip5aManifestOptions.nappletType replaces nappType as public API field in @napplet/vite-plugin — v0.7.0 Phase 40 (TERM-01)
 - ✓ SPEC.md stale napp: topic strings replaced with napplet: (state-response, audio-muted, napplet-state:) — v0.7.0 Phase 40 (TERM-04, WIRE-02)
+- ✓ `@napplet/shim` is a pure window installer with zero named exports — v0.8.0 Phase 41 (PKG-01, DEP-01, DEP-02)
+- ✓ `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`) — v0.8.0 Phase 41 (WIN-01, WIN-02, WIN-03, WIN-04)
 
 ### Active
 
-- [ ] `@napplet/shim` is a pure window installer with zero named exports
-- [ ] `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`)
 - [ ] `@napplet/sdk` exists as a standalone bundler-friendly package (thin wrappers + helpers)
-- [ ] All v0.7.0 deprecated symbols removed from public API
+- [ ] All v0.7.0 deprecated symbols removed from public API (demo/test migration pending)
 
 ### Out of Scope
 
@@ -106,7 +106,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: Milestone v0.7.0 Ontology Audit and Adjustments complete (2026-04-02). Phase 40 (Remaining Rename Gaps) closed SESS-03, TERM-01, TERM-04, WIRE-02. All ontology requirements satisfied. Next: /gsd:new-milestone for v0.8.0 planning.
+- **Current state**: Milestone v0.8.0 in progress. Phase 41 (Shim Restructure) complete — @napplet/shim is now a pure side-effect window installer with namespaced window.napplet global. Next: Phase 42 (SDK Package).
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
@@ -178,4 +178,4 @@ After v0.6.0, likely next candidates:
 - Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-02 — Milestone v0.8.0 started*
+*Last updated: 2026-04-02 — Phase 41 (Shim Restructure) complete*
