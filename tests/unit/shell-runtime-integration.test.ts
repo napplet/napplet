@@ -190,8 +190,8 @@ describe('shell -> runtime -> acl -> core integration', () => {
       expect(typeof runtime.registerConsentHandler).toBe('function');
     });
 
-    it('runtime exposes nappKeyRegistry, aclState, manifestCache', () => {
-      expect(runtime.nappKeyRegistry).toBeDefined();
+    it('runtime exposes sessionRegistry, aclState, manifestCache', () => {
+      expect(runtime.sessionRegistry).toBeDefined();
       expect(runtime.aclState).toBeDefined();
       expect(runtime.manifestCache).toBeDefined();
     });
@@ -289,7 +289,7 @@ describe('shell -> runtime -> acl -> core integration', () => {
       await new Promise(resolve => setTimeout(resolve, 10));
 
       // Verify auth succeeded
-      expect(runtime.nappKeyRegistry.getPubkey(windowId)).toBe(pubkey);
+      expect(runtime.sessionRegistry.getPubkey(windowId)).toBe(pubkey);
 
       // Revoke relay:write using runtime's aclState
       runtime.aclState.revoke(pubkey, dTag, hash, 'relay:write');

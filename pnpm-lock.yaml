@@ -72,6 +72,9 @@ importers:
 
   apps/demo/napplets/bot:
     dependencies:
+      '@napplet/sdk':
+        specifier: workspace:*
+        version: link:../../../../packages/sdk
       '@napplet/shim':
         specifier: workspace:*
         version: link:../../../../packages/shim
@@ -88,6 +91,9 @@ importers:
 
   apps/demo/napplets/chat:
     dependencies:
+      '@napplet/sdk':
+        specifier: workspace:*
+        version: link:../../../../packages/sdk
       '@napplet/shim':
         specifier: workspace:*
         version: link:../../../../packages/shim
