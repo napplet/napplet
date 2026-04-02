@@ -187,8 +187,35 @@ export interface ManifestPersistence {
 }
 
 /**
+ * Shell secret persistence — runtime calls these to save/load the per-shell secret
+ * used for deterministic keypair derivation. The secret is a 32-byte random value
+ * generated once on first use.
+ */
+export interface ShellSecretPersistence {
+  /** Get the stored shell secret, or null if not yet generated. */
+  get(): Uint8Array | null;
+  /** Store the shell secret. */
+  set(secret: Uint8Array): void;
+}
+
+/**
+ * GUID persistence — runtime calls these to save/load per-iframe instance GUIDs.
+ * GUIDs survive page reloads: same iframe slot gets the same GUID.
+ * Implementor decides storage backend and keying strategy
+ * (e.g., localStorage keyed by iframe src or slot index).
+ */
+export interface GuidPersistence {
+  /** Get a stored GUID for a window identifier, or null if none exists. */
+  get(windowId: string): string | null;
+  /** Store a GUID for a window identifier. */
+  set(windowId: string, guid: string): void;
+  /** Remove a stored GUID. */
+  remove(windowId: string): void;
+}
+
+/**
  * State storage — runtime calls these for napplet-scoped key-value storage.
- * All keys are pre-scoped by the runtime (pubkey:dTag:hash:userKey).
+ * All keys are pre-scoped by the runtime (dTag:hash:userKey).
  */
 export interface StatePersistence {
   get(scopedKey: string): string | null;
@@ -208,6 +235,29 @@ export interface CryptoAdapter {
 
   /** Generate a random UUID string (replaces crypto.randomUUID). */
   randomUUID(): string;
+
+  /** Generate cryptographically secure random bytes. */
+  randomBytes(length: number): Uint8Array;
+}
+
+/**
+ * Hash verification adapter — runtime calls this to verify a napplet's
+ * declared aggregate hash against its actual file contents.
+ * Optional: if not provided, hash verification is skipped (dev mode).
+ */
+export interface HashVerifierAdapter {
+  /**
+   * Compute aggregate hash from the napplet's served files.
+   * Returns the computed hash, or null if files cannot be fetched.
+   *
+   * @param nappletUrl - Base URL of the napplet (iframe src)
+   * @param manifestFiles - File paths and hashes from the manifest
+   * @returns Computed aggregate hash, or null on failure
+   */
+  computeHash(
+    nappletUrl: string,
+    manifestFiles: Array<{ path: string; hash: string }>,
+  ): Promise<string | null>;
 }
 
 // ─── Window Manager Adapter ────────────────────────────────────────────────
@@ -384,6 +434,19 @@ export interface ManifestCacheEntry {
   requires?: string[];
 }
 
+/**
+ * Cached verification result for an aggregate hash.
+ * Keyed by manifest event ID — immutable Nostr events mean same ID = same content.
+ */
+export interface VerificationCacheEntry {
+  /** The computed aggregate hash. */
+  aggregateHash: string;
+  /** Whether the computed hash matched the declared hash. */
+  valid: boolean;
+  /** Timestamp when verification was performed. */
+  verifiedAt: number;
+}
+
 // ─── ACL Entry (external representation) ───────────────────────────────────
 
 /** External ACL entry — used in shell commands (shell:acl-get etc.). */
@@ -531,6 +594,21 @@ export interface RuntimeAdapter {
 
   /** DM sending (optional). */
   dm?: DmAdapter;
+
+  /** Shell secret persistence (for deterministic keypair derivation). */
+  shellSecretPersistence?: ShellSecretPersistence;
+
+  /** Hash verification (optional — if absent, hash verification is skipped). */
+  hashVerifier?: HashVerifierAdapter;
+
+  /** GUID persistence for iframe instance tracking (optional — if absent, GUIDs are in-memory only). */
+  guidPersistence?: GuidPersistence;
+
+  /**
+   * Called when aggregate hash verification fails (computed != declared).
+   * Host app should display a user-visible warning.
+   */
+  onHashMismatch?: (dTag: string, claimed: string, computed: string) => void;
 
   /** Called on every ACL enforcement check (audit). */
   onAclCheck?: (event: AclCheckEvent) => void;

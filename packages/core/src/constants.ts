@@ -89,3 +89,17 @@ export type BusKindValue = (typeof BusKind)[keyof typeof BusKind];
  * ```
  */
 export const DESTRUCTIVE_KINDS = new Set([0, 3, 5, 10002]);
+
+// ─── Handshake Verbs ───────────────────────────────────────────────────────
+
+/**
+ * NIP-01 verb for napplet registration (napplet -> shell).
+ * Sent before AUTH to announce napplet identity and claim an aggregate hash.
+ */
+export const VERB_REGISTER = 'REGISTER' as const;
+
+/**
+ * NIP-01 verb for identity delegation (shell -> napplet).
+ * Shell sends a derived keypair to the napplet after verifying registration.
+ */
+export const VERB_IDENTITY = 'IDENTITY' as const;

@@ -30,6 +30,8 @@ export type {
   EventTemplate,
   ServiceInfo,
   NappletGlobal,
+  RegisterPayload,
+  IdentityPayload,
 } from './types.js';
 export { ALL_CAPABILITIES } from './types.js';
 
@@ -42,6 +44,8 @@ export {
   REPLAY_WINDOW_SECONDS,
   BusKind,
   DESTRUCTIVE_KINDS,
+  VERB_REGISTER,
+  VERB_IDENTITY,
 } from './constants.js';
 export type { BusKindValue } from './constants.js';
 

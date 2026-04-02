@@ -115,6 +115,51 @@ export interface ServiceDescriptor {
   description?: string;
 }
 
+// ─── Handshake Message Payloads ─────────────────────────────────────────────
+
+/**
+ * Payload for the REGISTER verb (napplet -> shell).
+ * Napplet announces its type and claimed aggregate hash before AUTH.
+ *
+ * @example
+ * ```ts
+ * // Napplet sends:
+ * window.parent.postMessage(['REGISTER', { dTag: 'chat', claimedHash: 'abc123...' }], '*');
+ * ```
+ */
+export interface RegisterPayload {
+  /** Napplet type identifier from <meta name="napplet-type"> */
+  readonly dTag: string;
+  /** Aggregate hash from <meta name="napplet-aggregate-hash">, empty string in dev mode */
+  readonly claimedHash: string;
+}
+
+/**
+ * Payload for the IDENTITY verb (shell -> napplet).
+ * Shell sends a deterministic keypair derived from the napplet's verified identity.
+ *
+ * @example
+ * ```ts
+ * // Shell sends to napplet iframe:
+ * iframe.contentWindow.postMessage(['IDENTITY', {
+ *   pubkey: 'deadbeef...',
+ *   privkey: 'cafebabe...',
+ *   dTag: 'chat',
+ *   aggregateHash: 'abc123...',
+ * }], '*');
+ * ```
+ */
+export interface IdentityPayload {
+  /** Hex-encoded public key of the delegated keypair */
+  readonly pubkey: string;
+  /** Hex-encoded private key of the delegated keypair (32 bytes = 64 hex chars) */
+  readonly privkey: string;
+  /** Napplet type identifier (echoed back from REGISTER) */
+  readonly dTag: string;
+  /** Verified aggregate hash (may differ from claimed if shell overrides) */
+  readonly aggregateHash: string;
+}
+
 // ─── Shim API Types ──────────────────────────────────────────────────────────
 
 /**
