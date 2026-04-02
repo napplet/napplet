@@ -4,13 +4,13 @@ milestone: v0.8.0
 milestone_name: Shim/SDK Split
 status: executing
 stopped_at: Phase 42 planned
-last_updated: "2026-04-02T11:22:30.066Z"
-last_activity: 2026-04-02 -- Phase 42 execution started
+last_updated: "2026-04-02T11:26:56.309Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 2
+  completed_plans: 4
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.8.0 started)
 
 ## Current Position
 
-Phase: 42 (sdk-package) — EXECUTING
-Plan: 1 of 2
+Phase: 43
+Plan: Not started
 Status: Executing Phase 42
-Last activity: 2026-04-02 -- Phase 42 execution started
+Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
 
