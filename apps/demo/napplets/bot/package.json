@@ -9,7 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@napplet/shim": "workspace:*"
+    "@napplet/shim": "workspace:*",
+    "@napplet/sdk": "workspace:*"
   },
   "devDependencies": {
     "@napplet/vite-plugin": "workspace:*",

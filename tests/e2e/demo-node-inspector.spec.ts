@@ -154,7 +154,9 @@ test('all topology node roles can be selected for drill-down', async ({ page }) 
   ];
 
   for (const nodeId of nodeIds) {
-    await page.locator(nodeId).click();
+    // Click the node title to avoid hitting embedded buttons (e.g. signer "Connect" btn)
+    // which are guarded by the button-click short-circuit in wireNodeSelection()
+    await page.locator(`${nodeId} .topology-node-title`).click();
     await expect(page.locator('#flow-area-inner')).toHaveClass(/inspector-open/, {
       timeout: 3000,
     });

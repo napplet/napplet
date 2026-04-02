@@ -218,7 +218,7 @@ describe('shell -> runtime -> acl -> core integration', () => {
       expect(hotkeyCaps.senderCap).toBe('hotkey:forward');
 
       const stateCaps = resolveCapabilities(['EVENT', {
-        kind: BusKind.INTER_PANE,
+        kind: BusKind.IPC_PEER,
         tags: [['t', TOPICS.STATE_GET]],
       }]);
       expect(stateCaps.senderCap).toBe('state:read');
