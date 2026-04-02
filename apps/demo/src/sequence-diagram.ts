@@ -123,8 +123,8 @@ function formatLabel(msg: TappedMessage): string {
       if (event?.kind === BusKind.IPC_PEER) {
         if (topic === TOPICS.STATE_GET || topic === TOPICS.STATE_KEYS) return `state read ${topic}`;
         if (topic === TOPICS.STATE_SET || topic === TOPICS.STATE_REMOVE || topic === TOPICS.STATE_CLEAR) return `state write ${topic}`;
-        if (topic === 'chat:message' || topic === 'bot:response') return `inter-pane ${topic}`;
-        return `inter-pane ${topic ?? 'event'}`;
+        if (topic === 'chat:message' || topic === 'bot:response') return `ipc ${topic}`;
+        return `ipc ${topic ?? 'event'}`;
       }
       if (event?.kind === BusKind.SIGNER_REQUEST) return 'signer request';
       if (event?.kind === BusKind.SIGNER_RESPONSE) return 'signer response';
