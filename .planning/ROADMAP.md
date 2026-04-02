@@ -133,7 +133,7 @@
   3. `import * as napplet from '@napplet/sdk'` produces an object structurally identical to `window.napplet`
   4. `@napplet/sdk` has no dependency on `@napplet/shim` in its package.json -- the two packages are independent siblings
   5. All public protocol types (`NostrEvent`, `NostrFilter`, `ServiceInfo`, `Subscription`, `EventTemplate`) are re-exported from `@napplet/sdk`
-**Plans**: TBD
+**Plans**: 2 (1 wave)
 
 ### Phase 43: Demo & Test Migration
 **Goal**: All demo napplets and tests exercise the new namespaced window.napplet API, confirming the restructure works end-to-end in a real browser
@@ -205,6 +205,6 @@ Phases execute in numeric order: 41 -> 42 -> 43 -> 44
 | 39. Documentation Pass | v0.7.0 | 1/1 | Complete | 2026-04-01 |
 | 40. Remaining Rename Gaps | v0.7.0 | 2/2 | Complete | 2026-04-02 |
 | 41. Shim Restructure | v0.8.0 | 0/0 | Not started | - |
-| 42. SDK Package | v0.8.0 | 0/0 | Not started | - |
+| 42. SDK Package | v0.8.0 | 0/2 | Planned | - |
 | 43. Demo & Test Migration | v0.8.0 | 0/3 | Planned | - |
 | 44. Documentation | v0.8.0 | 0/0 | Not started | - |

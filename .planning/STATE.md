@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.8.0
 milestone_name: Shim/SDK Split
 status: planning
-stopped_at: Phase 41 context gathered
-last_updated: "2026-04-02T10:31:29.422Z"
-last_activity: 2026-04-02 — Roadmap created for v0.8.0
+stopped_at: Phase 42 planned
+last_updated: "2026-04-02T12:00:00.000Z"
+last_activity: 2026-04-02 — Phase 42 planned (2 plans, 1 wave)
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 2
+  total_plans: 4
   completed_plans: 0
   percent: 0
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.8.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 41 — Shim Restructure
+**Current focus:** Phase 42 — SDK Package (planned, ready to execute after Phase 41)
 
 ## Current Position
 
-Phase: 41 of 44 (Shim Restructure)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-04-02 — Roadmap created for v0.8.0
+Phase: 42 of 44 (SDK Package)
+Plan: 0 of 2 in current phase
+Status: Planned (depends on Phase 41 completion)
+Last activity: 2026-04-02 — Phase 42 planned (2 plans, 1 wave)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -68,6 +68,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-02T10:12:24.494Z
-Stopped at: Phase 41 context gathered
-Resume file: .planning/phases/41-shim-restructure/41-CONTEXT.md
+Last session: 2026-04-02T12:00:00.000Z
+Stopped at: Phase 42 planned
+Resume file: .planning/phases/42-sdk-package/42-01-PLAN.md
