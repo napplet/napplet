@@ -7,6 +7,7 @@ export default defineConfig({
     alias: {
       '@napplet/shell': path.resolve(__dirname, '../../packages/shell/src/index.ts'),
       '@napplet/shim': path.resolve(__dirname, '../../packages/shim/src/index.ts'),
+      '@napplet/sdk': path.resolve(__dirname, '../../packages/sdk/src/index.ts'),
     },
   },
   server: {

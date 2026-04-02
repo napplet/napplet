@@ -7,7 +7,7 @@
  *
  * After AUTH completes, publishes one event and signals __TEST_DONE__.
  */
-import { publish } from '@napplet/shim';
+import '@napplet/shim';
 
 const params = new URLSearchParams(location.search);
 const kind = parseInt(params.get('kind') ?? '1', 10);
@@ -27,7 +27,7 @@ window.addEventListener('message', async (event) => {
 
     try {
       // Publish the test event
-      await publish({
+      await window.napplet.relay.publish({
         kind,
         content,
         tags: [],
