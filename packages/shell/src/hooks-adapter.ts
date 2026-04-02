@@ -24,7 +24,23 @@ import type {
   DmAdapter,
   SendToNapplet,
   RelaySubscriptionHandle,
+  ShellSecretPersistence,
+  GuidPersistence,
 } from '@napplet/runtime';
+
+// ─── Hex utilities (inline to avoid @noble/hashes dependency) ────────────
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
 import type { ShellAdapter } from './types.js';
 import type { originRegistry as OriginRegistryType } from './origin-registry.js';
 import type { manifestCache as ManifestCacheType } from './manifest-cache.js';
@@ -305,6 +321,43 @@ export function adaptHooks(shellHooks: ShellAdapter, deps: BrowserDeps): Runtime
     },
   };
 
+  // ─── Shell Secret Persistence (localStorage-backed) ─────────────────────
+
+  const shellSecretPersistence: ShellSecretPersistence = {
+    get(): Uint8Array | null {
+      try {
+        const hex = localStorage.getItem('napplet-shell-secret');
+        if (!hex) return null;
+        return hexToBytes(hex);
+      } catch { return null; }
+    },
+    set(secret: Uint8Array): void {
+      try {
+        localStorage.setItem('napplet-shell-secret', bytesToHex(secret));
+      } catch { /* localStorage unavailable */ }
+    },
+  };
+
+  // ─── GUID Persistence (localStorage-backed) ────────────────────────────
+
+  const guidPersistence: GuidPersistence = {
+    get(windowId: string): string | null {
+      try {
+        return localStorage.getItem(`napplet-guid:${windowId}`);
+      } catch { return null; }
+    },
+    set(windowId: string, guid: string): void {
+      try {
+        localStorage.setItem(`napplet-guid:${windowId}`, guid);
+      } catch { /* localStorage unavailable */ }
+    },
+    remove(windowId: string): void {
+      try {
+        localStorage.removeItem(`napplet-guid:${windowId}`);
+      } catch { /* localStorage unavailable */ }
+    },
+  };
+
   // ─── DM Adapter (optional) ──────────────────────────────────────────────
 
   const dm: DmAdapter | undefined = shellHooks.dm
@@ -331,7 +384,10 @@ export function adaptHooks(shellHooks: ShellAdapter, deps: BrowserDeps): Runtime
     windowManager,
     relayConfig,
     dm,
+    shellSecretPersistence,
+    guidPersistence,
     onAclCheck: shellHooks.onAclCheck,
+    onHashMismatch: shellHooks.onHashMismatch,
     services: shellHooks.services,
   };
 }

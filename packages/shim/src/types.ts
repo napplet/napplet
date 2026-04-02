@@ -6,5 +6,5 @@
  */
 
 export type { NostrEvent, NostrFilter } from '@napplet/core';
-export { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION } from '@napplet/core';
+export { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, VERB_REGISTER, VERB_IDENTITY } from '@napplet/core';
 export type { BusKindValue } from '@napplet/core';

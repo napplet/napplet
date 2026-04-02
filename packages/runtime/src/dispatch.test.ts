@@ -180,6 +180,7 @@ describe('runtime message dispatch', () => {
         crypto: {
           async verifyEvent() { return false; },
           randomUUID() { return 'mock-uuid-fail-' + '0'.repeat(40); },
+          randomBytes(length: number) { return new Uint8Array(length); },
         },
       });
       runtime = createRuntime(mock.hooks);
@@ -261,6 +262,7 @@ describe('runtime message dispatch', () => {
       const mock2Crypto = {
         async verifyEvent() { return true; },
         randomUUID() { return 'mock-uuid-2-' + '0'.repeat(40); },
+        randomBytes(length: number) { return new Uint8Array(length); },
       };
       // Use same runtime, just authenticate a second window
       runtime.sendChallenge('win-receiver');

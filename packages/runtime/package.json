@@ -19,7 +19,9 @@
   },
   "dependencies": {
     "@napplet/core": "workspace:*",
-    "@napplet/acl": "workspace:*"
+    "@napplet/acl": "workspace:*",
+    "@noble/hashes": "^2.0.0",
+    "@noble/curves": "^2.0.0"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

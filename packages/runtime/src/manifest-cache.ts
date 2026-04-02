@@ -5,7 +5,7 @@
  * Delegates storage to ManifestPersistence — no localStorage.
  */
 
-import type { ManifestPersistence, ManifestCacheEntry } from './types.js';
+import type { ManifestPersistence, ManifestCacheEntry, VerificationCacheEntry } from './types.js';
 
 /**
  * Cache for verified napplet manifest entries.
@@ -35,6 +35,18 @@ export interface ManifestCache {
   persist(): void;
   /** Clear all cached entries. */
   clear(): void;
+
+  /** Get a cached verification result by manifest event ID. */
+  getVerification(eventId: string): VerificationCacheEntry | undefined;
+
+  /** Cache a verification result keyed by manifest event ID. */
+  setVerification(eventId: string, result: VerificationCacheEntry): void;
+
+  /** Check if a manifest event ID has been verified. */
+  hasVerification(eventId: string): boolean;
+
+  /** Clear all verification cache entries. */
+  clearVerifications(): void;
 }
 
 /**
@@ -45,6 +57,7 @@ export interface ManifestCache {
  */
 export function createManifestCache(persistence: ManifestPersistence): ManifestCache {
   const cache = new Map<string, ManifestCacheEntry>();
+  const verificationCache = new Map<string, VerificationCacheEntry>();
 
   function cacheKey(pubkey: string, dTag: string): string {
     return `${pubkey}:${dTag}`;
@@ -93,7 +106,26 @@ export function createManifestCache(persistence: ManifestPersistence): ManifestC
 
     clear(): void {
       cache.clear();
+      verificationCache.clear();
       try { persistence.persist(''); } catch { /* best-effort */ }
+    },
+
+    getVerification(eventId: string): VerificationCacheEntry | undefined {
+      return verificationCache.get(eventId);
+    },
+
+    setVerification(eventId: string, result: VerificationCacheEntry): void {
+      verificationCache.set(eventId, result);
+      // Verification cache is in-memory only — no persistence needed
+      // since manifest event IDs are immutable and re-fetching is cheap
+    },
+
+    hasVerification(eventId: string): boolean {
+      return verificationCache.has(eventId);
+    },
+
+    clearVerifications(): void {
+      verificationCache.clear();
     },
   };
 

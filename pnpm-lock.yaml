@@ -134,6 +134,12 @@ importers:
       '@napplet/core':
         specifier: workspace:*
         version: link:../core
+      '@noble/curves':
+        specifier: ^2.0.0
+        version: 2.0.1
+      '@noble/hashes':
+        specifier: ^2.0.0
+        version: 2.0.1
     devDependencies:
       tsup:
         specifier: ^8.5.0

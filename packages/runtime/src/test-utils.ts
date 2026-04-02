@@ -108,6 +108,7 @@ function createMockCrypto(): CryptoAdapter {
   return {
     async verifyEvent(_event: NostrEvent) { return true; },
     randomUUID() { return `mock-uuid-${++uuidCounter}-${'0'.repeat(40)}`; },
+    randomBytes(length: number) { return new Uint8Array(length); },
   };
 }
 

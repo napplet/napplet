@@ -10,7 +10,8 @@ import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _setInterPaneEventSender, _nappletStorage } from './state-shim.js';
 import { subscribe, publish, query } from './relay-shim.js';
 import { discoverServices } from './discovery-shim.js';
-import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION } from './types.js';
+import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, VERB_REGISTER, VERB_IDENTITY } from './types.js';
+import { hexToBytes } from 'nostr-tools/utils';
 import type { NostrEvent, NappletGlobal } from '@napplet/core';
 
 // ─── Global type augmentation ────────────────────────────────────────────────
@@ -198,6 +199,20 @@ function handleRelayMessage(event: MessageEvent): void {
       }
       break;
     }
+    case VERB_IDENTITY: {
+      const payload = msg[1] as { pubkey: string; privkey: string; dTag: string; aggregateHash: string } | undefined;
+      if (!payload || typeof payload !== 'object' || !payload.privkey || !payload.pubkey) {
+        break;
+      }
+      // Accept the shell-delegated keypair
+      keypair = {
+        privkey: hexToBytes(payload.privkey),
+        pubkey: payload.pubkey,
+      };
+      setKeyboardShimKeypair(keypair);
+      _resolveKeypairReady();
+      break;
+    }
     case 'EOSE':
     case 'CLOSED':
     case 'NOTICE':
@@ -219,6 +234,8 @@ function getAggregateHash(): string {
 
 function handleAuthChallenge(challenge: string): void {
   if (!keypair) {
+    // Fallback: if IDENTITY was not received (legacy shell or dev mode),
+    // create an ephemeral keypair as before
     keypair = createEphemeralKeypair();
     setKeyboardShimKeypair(keypair);
     _resolveKeypairReady();
@@ -354,9 +371,10 @@ installKeyboardShim();
 _setInterPaneEventSender(emit);
 installStateShim();
 
-// Initialize keypair eagerly so it is ready before AUTH challenge arrives
+// Send REGISTER to shell — the shell will respond with IDENTITY (delegated keypair)
+// then send AUTH challenge. Keypair is NOT created locally.
 {
-  keypair = createEphemeralKeypair();
-  setKeyboardShimKeypair(keypair);
-  _resolveKeypairReady();
+  const dTag = getNappletType();
+  const claimedHash = getAggregateHash();
+  window.parent.postMessage([VERB_REGISTER, { dTag, claimedHash }], '*');
 }

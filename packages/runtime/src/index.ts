@@ -32,6 +32,10 @@ export type {
   ServiceRegistry,
   CompatibilityReport,
   ServiceInfo,
+  ShellSecretPersistence,
+  GuidPersistence,
+  HashVerifierAdapter,
+  VerificationCacheEntry,
 } from './types.js';
 
 // ─── Enforcement Gate ──────────────────────────────────────────────────────

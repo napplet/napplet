@@ -9,10 +9,11 @@
  * All I/O is delegated to RuntimeAdapter.
  */
 
-import type { NostrEvent, NostrFilter, Capability } from '@napplet/core';
+import type { NostrEvent, NostrFilter, Capability, RegisterPayload, IdentityPayload } from '@napplet/core';
 import {
   AUTH_KIND, SHELL_BRIDGE_URI,
   BusKind, ALL_CAPABILITIES,
+  VERB_REGISTER, VERB_IDENTITY,
 } from '@napplet/core';
 
 // Timer globals are available in all JS runtimes (Node.js, Deno, Bun, browsers)
@@ -22,7 +23,9 @@ declare function clearTimeout(id: unknown): void;
 import type {
   RuntimeAdapter, SessionEntry, ConsentRequest, ConsentHandler,
   ServiceHandler, ServiceRegistry, CompatibilityReport, ServiceInfo,
+  VerificationCacheEntry,
 } from './types.js';
+import { deriveKeypair, getOrCreateShellSecret } from './key-derivation.js';
 import { routeServiceMessage, notifyServiceWindowDestroyed } from './service-dispatch.js';
 import { handleDiscoveryReq, isDiscoveryReq, createServiceDiscoveryEvent } from './service-discovery.js';
 import type { DiscoverySubscription } from './service-discovery.js';
@@ -189,6 +192,22 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     subscriptions,
   );
 
+  // ─── Shell Secret (for deterministic keypair derivation) ────────────────
+  const shellSecret = hooks.shellSecretPersistence
+    ? getOrCreateShellSecret(hooks.shellSecretPersistence, (len) => hooks.crypto.randomBytes(len))
+    : null;
+
+  // ─── REGISTER/IDENTITY state ───────────────────────────────────────────
+  const pendingRegistrations = new Map<string, {
+    dTag: string;
+    aggregateHash: string;
+    pubkey: string;
+    instanceId: string;
+  }>();
+
+  /** Set of pubkeys that are delegated napplet keys — must NOT publish to external relays. */
+  const delegatedPubkeys = new Set<string>();
+
   // Load persisted state
   aclState.load();
   manifestCache.load();
@@ -201,7 +220,99 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
       case 'REQ': handleReq(msg, windowId); break;
       case 'CLOSE': handleClose(msg, windowId); break;
       case 'COUNT': handleCount(msg, windowId); break;
+      case VERB_REGISTER: void handleRegister(msg, windowId); break;
     }
+  }
+
+  // ─── REGISTER Handler (Phase 46) ─────────────────────────────────────────
+
+  async function handleRegister(msg: unknown[], windowId: string): Promise<void> {
+    const payload = msg[1] as RegisterPayload | undefined;
+    if (!payload || typeof payload !== 'object') {
+      hooks.sendToNapplet(windowId, ['NOTICE', 'invalid REGISTER payload']);
+      return;
+    }
+
+    const { dTag, claimedHash } = payload;
+    if (!dTag || typeof dTag !== 'string') {
+      hooks.sendToNapplet(windowId, ['NOTICE', 'REGISTER requires dTag']);
+      return;
+    }
+
+    const aggregateHash = (typeof claimedHash === 'string') ? claimedHash : '';
+
+    // Derive deterministic keypair
+    if (!shellSecret) {
+      hooks.sendToNapplet(windowId, ['NOTICE', 'shell secret not available — cannot derive keypair']);
+      return;
+    }
+
+    const derived = deriveKeypair(shellSecret, dTag, aggregateHash);
+    delegatedPubkeys.add(derived.pubkeyHex);
+
+    // Assign or retrieve persistent GUID for this iframe
+    let instanceId: string;
+    if (hooks.guidPersistence) {
+      const existing = hooks.guidPersistence.get(windowId);
+      if (existing) {
+        instanceId = existing;
+      } else {
+        instanceId = hooks.crypto.randomUUID();
+        hooks.guidPersistence.set(windowId, instanceId);
+      }
+    } else {
+      instanceId = hooks.crypto.randomUUID();
+    }
+
+    // Store registration state for the upcoming AUTH
+    pendingRegistrations.set(windowId, {
+      dTag, aggregateHash, pubkey: derived.pubkeyHex, instanceId,
+    });
+
+    // ─── Aggregate hash verification (VERIFY-01, VERIFY-02, VERIFY-03) ──────
+    if (aggregateHash && hooks.hashVerifier) {
+      const manifestEventId = `${dTag}:${aggregateHash}`;
+
+      if (manifestCache.hasVerification(manifestEventId)) {
+        const cached = manifestCache.getVerification(manifestEventId)!;
+        if (!cached.valid) {
+          hooks.onHashMismatch?.(dTag, aggregateHash, cached.aggregateHash);
+        }
+      } else {
+        try {
+          const computed = await hooks.hashVerifier.computeHash(windowId, []);
+
+          if (computed !== null) {
+            const valid = computed === aggregateHash;
+            const verificationEntry: VerificationCacheEntry = {
+              aggregateHash: computed,
+              valid,
+              verifiedAt: Date.now(),
+            };
+
+            manifestCache.setVerification(manifestEventId, verificationEntry);
+
+            if (!valid) {
+              hooks.onHashMismatch?.(dTag, aggregateHash, computed);
+            }
+          }
+        } catch {
+          // Verification error — proceed without blocking (best-effort)
+        }
+      }
+    }
+
+    // Send IDENTITY to napplet
+    const identityPayload: IdentityPayload = {
+      pubkey: derived.pubkeyHex,
+      privkey: derived.privkeyHex,
+      dTag,
+      aggregateHash,
+    };
+    hooks.sendToNapplet(windowId, [VERB_IDENTITY, identityPayload]);
+
+    // Send AUTH challenge (the napplet will sign with the delegated key)
+    runtimeInstance.sendChallenge(windowId);
   }
 
   async function handleAuth(msg: unknown[], windowId: string): Promise<void> {
@@ -244,10 +355,24 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     const typeTag = authEvent.tags?.find((t) => t[0] === 'type');
     if (!typeTag) { rejectAuth('missing required type tag'); return; }
     const nappletType = typeTag[1];
-    const dTag = parseInt(authEvent.pubkey.slice(0, 8), 16).toString(36) + nappletType;
     const hashTag = authEvent.tags?.find((t) => t[0] === 'aggregateHash');
     if (!hashTag) { rejectAuth('missing required aggregateHash tag'); return; }
-    const aggregateHash = hashTag[1];
+
+    // Use pre-registered identity if REGISTER was received (Phase 46)
+    const registration = pendingRegistrations.get(windowId);
+    if (registration) {
+      // Verify the AUTH pubkey matches what we delegated
+      if (authEvent.pubkey !== registration.pubkey) {
+        rejectAuth('pubkey mismatch — AUTH must use delegated key from IDENTITY');
+        pendingRegistrations.delete(windowId);
+        return;
+      }
+    }
+
+    // Prefer registration data when available, fall back to AUTH event tags
+    const dTag = registration?.dTag
+      ?? (parseInt(authEvent.pubkey.slice(0, 8), 16).toString(36) + nappletType);
+    const aggregateHash = registration?.aggregateHash ?? hashTag[1];
 
     // Helper: cache manifest entry while preserving any pre-populated requires.
     function cacheManifest(pubkey: string, dTag: string, hash: string): void {
@@ -261,8 +386,11 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     const entry: SessionEntry = {
       pubkey: authEvent.pubkey, windowId, origin: '*',
       type: nappletType, dTag, aggregateHash, registeredAt: Date.now(),
-      instanceId: hooks.crypto.randomUUID(),
+      instanceId: registration?.instanceId ?? hooks.crypto.randomUUID(),
     };
+
+    // Clean up pending registration
+    pendingRegistrations.delete(windowId);
 
     // Check for napp updates
     const previousCacheEntry = manifestCache.get(authEvent.pubkey, dTag);
@@ -443,6 +571,23 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     if (caps.senderCap) {
       const result = enforce(pubkey, caps.senderCap);
       if (!result.allowed) { sendOk(false, formatDenialReason(result.capability)); return; }
+    }
+
+    // SEC-01: Events signed by delegated napplet keys must not reach external relays.
+    // Internal bus kinds (signer requests, IPC, hotkeys) are allowed — only standard
+    // relay-bound events are blocked.
+    if (delegatedPubkeys.has(event.pubkey)
+        && event.kind !== BusKind.SIGNER_REQUEST
+        && event.kind !== BusKind.SIGNER_RESPONSE
+        && event.kind !== BusKind.HOTKEY_FORWARD
+        && event.kind !== BusKind.IPC_PEER
+        && event.kind !== BusKind.REGISTRATION
+        && event.kind !== BusKind.METADATA
+        && event.kind !== BusKind.NIPDB_REQUEST
+        && event.kind !== BusKind.NIPDB_RESPONSE
+        && event.kind !== BusKind.SERVICE_DISCOVERY) {
+      sendOk(false, 'blocked: delegated keys cannot publish to external relays — use signer proxy');
+      return;
     }
 
     switch (event.kind) {
@@ -853,6 +998,8 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     if (!Array.isArray(msg) || msg.length < 2) return;
     const [verb] = msg;
     if (verb === 'AUTH') { void handleAuth(msg, windowId); return; }
+    // REGISTER must be handled before AUTH (pre-authentication handshake)
+    if (verb === VERB_REGISTER) { void handleRegister(msg, windowId); return; }
     if (!sessionRegistry.getPubkey(windowId)) {
       let queue = pendingAuthQueue.get(windowId);
       if (!queue) { queue = []; pendingAuthQueue.set(windowId, queue); }
@@ -899,6 +1046,8 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
       eventBuffer.clear();
       registeredServices.clear();
       undeclaredServiceConsents.clear();
+      pendingRegistrations.clear();
+      delegatedPubkeys.clear();
     },
 
     registerConsentHandler(handler: ConsentHandler): void {

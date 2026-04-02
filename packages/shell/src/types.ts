@@ -221,6 +221,8 @@ export interface ShellAdapter {
   dm?: DmHooks;
   /** Called on every ACL enforcement check. Both allows and denials are reported. */
   onAclCheck?: (event: AclCheckEvent) => void;
+  /** Called when aggregate hash verification fails (computed != declared). */
+  onHashMismatch?: (dTag: string, claimed: string, computed: string) => void;
   /**
    * Optional service extensions. Each key is a service name (e.g., 'audio',
    * 'notifications'). Napplets discover available services via kind 29010
