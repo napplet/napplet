@@ -90,7 +90,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 - [x] `@napplet/sdk` exists as a standalone bundler-friendly package (thin wrappers + helpers) — Validated in Phase 42: SDK Package
 - [x] Demo napplets and test fixtures migrated to window.napplet namespaced API — Validated in Phase 43: Demo & Test Migration
-- [ ] All v0.7.0 deprecated symbols removed from public API (documentation pending)
+- [x] SPEC.md, shim README, and SDK README updated for shim/SDK split -- Validated in Phase 44: Documentation
 
 ### Out of Scope
 
@@ -107,13 +107,13 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: Milestone v0.8.0 in progress. Phase 43 (Demo & Test Migration) complete — demo napplets and test fixtures migrated to namespaced window.napplet API, 134/142 e2e tests passing. Next: Phase 44 (Documentation).
-- **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
+- **Current state**: Milestone v0.8.0 complete. All 4 phases (41-44) shipped. Shim is now a pure window installer, SDK provides named exports, demo and tests migrated, SPEC.md and all READMEs updated. 8 packages in the monorepo.
+- **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
-- **Documentation**: All 7 packages have README.md. SPEC.md (41KB+) covers full protocol including Section 11 service discovery. 3 portable skill files in skills/ directory.
+- **Documentation**: All 8 packages have README.md. SPEC.md (41KB+) covers full protocol including Section 11 service discovery, shim/SDK split, and full 8-package reference. 3 portable skill files in skills/ directory.
 - **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. Demo flow visualization currently conflates some protocol paths. npm publish blocked on human auth. nappState/nappStorage alias undocumented.
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
 
@@ -179,4 +179,4 @@ After v0.6.0, likely next candidates:
 - Service ACL — per-service capability strings (service:audio, service:notifications)
 
 ---
-*Last updated: 2026-04-02 — Phase 42 (SDK Package) complete*
+*Last updated: 2026-04-02 — Phase 44 (Documentation) complete, v0.8.0 milestone complete*
