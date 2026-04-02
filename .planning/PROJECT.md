@@ -89,7 +89,8 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 ### Active
 
 - [x] `@napplet/sdk` exists as a standalone bundler-friendly package (thin wrappers + helpers) — Validated in Phase 42: SDK Package
-- [ ] All v0.7.0 deprecated symbols removed from public API (demo/test migration pending)
+- [x] Demo napplets and test fixtures migrated to window.napplet namespaced API — Validated in Phase 43: Demo & Test Migration
+- [ ] All v0.7.0 deprecated symbols removed from public API (documentation pending)
 
 ### Out of Scope
 
@@ -106,7 +107,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: Milestone v0.8.0 in progress. Phase 42 (SDK Package) complete — @napplet/sdk provides typed named exports wrapping window.napplet for bundler consumers. Next: Phase 43 (Demo & Test Migration).
+- **Current state**: Milestone v0.8.0 in progress. Phase 43 (Demo & Test Migration) complete — demo napplets and test fixtures migrated to namespaced window.napplet API, 134/142 e2e tests passing. Next: Phase 44 (Documentation).
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | services(runtime). Runtime is browser-agnostic via RuntimeHooks DI. 7 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
