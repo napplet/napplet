@@ -11,7 +11,12 @@ import type { SendToNapplet, StatePersistence } from './types.js';
 import type { SessionRegistry } from './session-registry.js';
 import type { AclStateContainer } from './acl-state.js';
 
-function scopedKey(pubkey: string, dTag: string, aggregateHash: string, userKey: string): string {
+function scopedKey(dTag: string, aggregateHash: string, userKey: string): string {
+  return `napplet-state:${dTag}:${aggregateHash}:${userKey}`;
+}
+
+/** Build a legacy scoped key that includes pubkey (for migration reads). */
+function legacyScopedKey(pubkey: string, dTag: string, aggregateHash: string, userKey: string): string {
   return `napplet-state:${pubkey}:${dTag}:${aggregateHash}:${userKey}`;
 }
 
@@ -84,15 +89,17 @@ export function handleStateRequest(
   if (!entry) { sendError(sendToNapplet, windowId, correlationId, 'auth-required: no entry'); return; }
 
   const { dTag, aggregateHash } = entry;
-  const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
+  const prefix = `napplet-state:${dTag}:${aggregateHash}:`;
+  const legacyPrefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
 
   switch (topic) {
     case 'shell:state-get': {
       if (!key) { sendError(sendToNapplet, windowId, correlationId, 'missing key tag'); return; }
-      const newStorageKey = scopedKey(pubkey, dTag, aggregateHash, key);
-      const oldStorageKey = `napp-state:${pubkey}:${dTag}:${aggregateHash}:${key}`;
-      // Dual-read: try new prefix first, fall back to old for migration
-      const result = statePersistence.get(newStorageKey) ?? statePersistence.get(oldStorageKey) ?? null;
+      const newKey = scopedKey(dTag, aggregateHash, key);
+      const legacyKeyWithPubkey = legacyScopedKey(pubkey, dTag, aggregateHash, key);
+      const oldPrefixKey = `napp-state:${pubkey}:${dTag}:${aggregateHash}:${key}`;
+      // Triple-read: try new format first, then legacy with pubkey, then old prefix for migration
+      const result = statePersistence.get(newKey) ?? statePersistence.get(legacyKeyWithPubkey) ?? statePersistence.get(oldPrefixKey) ?? null;
       sendResponse(sendToNapplet, windowId, correlationId, [
         ['value', result ?? ''], ['found', result !== null ? 'true' : 'false'],
       ]);
@@ -102,7 +109,7 @@ export function handleStateRequest(
       if (!key) { sendError(sendToNapplet, windowId, correlationId, 'missing key tag'); return; }
       const value = event.tags?.find((t) => t[0] === 'value')?.[1] ?? '';
       const quota = aclState.getStateQuota(pubkey, dTag, aggregateHash);
-      const sk = scopedKey(pubkey, dTag, aggregateHash, key);
+      const sk = scopedKey(dTag, aggregateHash, key);
       const newWriteBytes = byteLength(sk + value);
       const existingBytes = statePersistence.calculateBytes(prefix, key);
       if (existingBytes + newWriteBytes > quota) {
@@ -119,20 +126,25 @@ export function handleStateRequest(
     }
     case 'shell:state-remove': {
       if (!key) { sendError(sendToNapplet, windowId, correlationId, 'missing key tag'); return; }
-      const sk = scopedKey(pubkey, dTag, aggregateHash, key);
+      const sk = scopedKey(dTag, aggregateHash, key);
       statePersistence.remove(sk);
       sendResponse(sendToNapplet, windowId, correlationId, [['ok', 'true']]);
       break;
     }
     case 'shell:state-clear': {
       statePersistence.clear(prefix);
+      statePersistence.clear(legacyPrefix);
       sendResponse(sendToNapplet, windowId, correlationId, [['ok', 'true']]);
       break;
     }
     case 'shell:state-keys': {
-      const scopedKeys = statePersistence.keys(prefix);
-      // Strip the prefix to return user-facing key names (e.g., 'k1' not 'napplet-state:pk:dTag:hash:k1')
-      const userKeys = scopedKeys.map(k => k.startsWith(prefix) ? k.slice(prefix.length) : k);
+      const newKeys = statePersistence.keys(prefix);
+      const legacyKeys = statePersistence.keys(legacyPrefix);
+      // Merge: strip prefixes to get user-facing names, deduplicate
+      const userKeySet = new Set<string>();
+      for (const k of newKeys) userKeySet.add(k.startsWith(prefix) ? k.slice(prefix.length) : k);
+      for (const k of legacyKeys) userKeySet.add(k.startsWith(legacyPrefix) ? k.slice(legacyPrefix.length) : k);
+      const userKeys = Array.from(userKeySet);
       sendResponse(sendToNapplet, windowId, correlationId, userKeys.map(k => ['key', k]));
       break;
     }
@@ -144,9 +156,10 @@ export function handleStateRequest(
 
 /**
  * Remove all state entries for a napplet identity.
+ * Clears both new-format and legacy-format keys for completeness.
  * Used during napplet cleanup when a window is closed.
  *
- * @param pubkey - The napplet's pubkey
+ * @param pubkey - The napplet's pubkey (needed for legacy key cleanup)
  * @param dTag - The napplet's dTag
  * @param aggregateHash - The napplet's build hash
  * @param statePersistence - State storage backend
@@ -157,6 +170,10 @@ export function cleanupNappState(
   aggregateHash: string,
   statePersistence: StatePersistence,
 ): void {
-  const prefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
+  // Clear new format
+  const prefix = `napplet-state:${dTag}:${aggregateHash}:`;
   statePersistence.clear(prefix);
+  // Clear legacy format (includes pubkey)
+  const legacyPrefix = `napplet-state:${pubkey}:${dTag}:${aggregateHash}:`;
+  statePersistence.clear(legacyPrefix);
 }
