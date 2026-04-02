@@ -5,13 +5,12 @@
  * localStorage directly. This shim provides an async API that routes state
  * requests through the shell's state proxy.
  *
- * Usage:
- *   import { nappletState } from '@napplet/shim';
- *   const value = await nappletState.getItem('my-key');
- *   await nappletState.setItem('my-key', 'my-value');
- *   await nappletState.removeItem('my-key');
- *   const allKeys = await nappletState.keys();
- *   await nappletState.clear();
+ * Usage (via window.napplet global):
+ *   import '@napplet/shim';
+ *   const value = await window.napplet.storage.getItem('my-key');
+ *   await window.napplet.storage.setItem('my-key', 'my-value');
+ *   await window.napplet.storage.removeItem('my-key');
+ *   const allKeys = await window.napplet.storage.keys();
  */
 
 import { TOPICS } from '@napplet/core';
@@ -105,7 +104,7 @@ function sendStateRequest(
  * Each napplet's state is namespaced by its identity — napplets cannot read each other's data.
  * A per-napplet 512 KB quota is enforced by the shell.
  */
-export const nappletState = {
+const nappletState = {
   /**
    * Retrieve a stored value by key.
    * Returns null if the key does not exist (matching localStorage semantics).
@@ -144,14 +143,6 @@ export const nappletState = {
   },
 
   /**
-   * Remove all stored state for this napplet.
-   * Does not affect other napplets' state.
-   */
-  async clear(): Promise<void> {
-    await sendStateRequest(TOPICS.STATE_CLEAR, []);
-  },
-
-  /**
    * List all keys stored by this napplet.
    *
    * @returns Array of state key strings
@@ -165,18 +156,6 @@ export const nappletState = {
   },
 };
 
-/**
- * @deprecated Use nappletState. Will be removed in v0.9.0.
- * @see nappletState
- */
-export const nappState = nappletState;
-
-/**
- * @deprecated Use nappletState. Will be removed in v0.9.0.
- * @see nappletState
- */
-export const nappStorage = nappletState;
-
 // ─── Install ────────────────────────────────────────────────────────────────
 
 /**
@@ -186,3 +165,6 @@ export const nappStorage = nappletState;
 export function installStateShim(): void {
   window.addEventListener('message', handleStateResponse);
 }
+
+/** @internal Used by index.ts to wire window.napplet.storage. */
+export { nappletState as _nappletStorage };

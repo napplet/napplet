@@ -1,28 +1,7 @@
 // @napplet/shim — Napp relay API
 // NIP-01 wire format over postMessage to the ShellBridge.
 
-import type { NostrEvent, NostrFilter } from './types.js';
-
-/** Handle returned by subscribe() and query() for teardown. */
-export interface Subscription {
-  /** Close the subscription and stop receiving events. */
-  close(): void;
-}
-
-/**
- * Unsigned event template passed to publish().
- * The shell signs it via the NIP-07 proxy before broadcasting.
- */
-export interface EventTemplate {
-  /** Nostr event kind number */
-  kind: number;
-  /** Event content (typically plaintext or JSON string) */
-  content: string;
-  /** Event tags (NIP-01 tag arrays) */
-  tags: string[][];
-  /** Unix timestamp (seconds since epoch) */
-  created_at: number;
-}
+import type { NostrEvent, NostrFilter, Subscription, EventTemplate } from '@napplet/core';
 
 /**
  * Open a live NIP-01 subscription through the shell's relay pool.

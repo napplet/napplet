@@ -3,30 +3,7 @@
 
 import { query } from './relay-shim.js';
 import { BusKind } from './types.js';
-import type { NostrEvent } from './types.js';
-
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-/**
- * Describes an available service in the shell.
- * Parsed from kind 29010 discovery response events.
- *
- * @example
- * ```ts
- * const services = await discoverServices();
- * for (const svc of services) {
- *   console.log(`${svc.name} v${svc.version}: ${svc.description ?? '(no description)'}`);
- * }
- * ```
- */
-export interface ServiceInfo {
-  /** Service name (e.g., 'audio', 'notifications', 'relay-pool'). */
-  name: string;
-  /** Semver version string of the service implementation. */
-  version: string;
-  /** Optional human-readable description of the service. */
-  description?: string;
-}
+import type { NostrEvent, ServiceInfo } from '@napplet/core';
 
 // ─── Session-scoped cache ───────────────────────────────────────────────────
 
@@ -73,7 +50,7 @@ function parseServiceEvent(event: NostrEvent): ServiceInfo | null {
  * console.log(`Shell provides ${services.length} services`);
  * ```
  */
-export async function discoverServices(): Promise<ServiceInfo[]> {
+async function discoverServices(): Promise<ServiceInfo[]> {
   if (cachedServices !== null) return cachedServices;
 
   const events = await query({ kinds: [BusKind.SERVICE_DISCOVERY] });
@@ -104,7 +81,7 @@ export async function discoverServices(): Promise<ServiceInfo[]> {
  * }
  * ```
  */
-export async function hasService(name: string): Promise<boolean> {
+async function hasService(name: string): Promise<boolean> {
   const services = await discoverServices();
   return services.some(s => s.name === name);
 }
@@ -127,7 +104,10 @@ export async function hasService(name: string): Promise<boolean> {
  * }
  * ```
  */
-export async function hasServiceVersion(name: string, version: string): Promise<boolean> {
+async function hasServiceVersion(name: string, version: string): Promise<boolean> {
   const services = await discoverServices();
   return services.some(s => s.name === name && s.version === version);
 }
+
+// ─── Internal exports for index.ts ──────────────────────────────────────────
+export { discoverServices };

@@ -1,31 +1,26 @@
-// @napplet/shim — Napplet SDK
-// NIP-01 relay client shim for napplet iframes.
-// Communicates with the ShellBridge using NIP-01 wire format over postMessage.
-// Completes NIP-42 AUTH handshake and proxies window.nostr NIP-07 calls as signed events.
+// @napplet/shim — Napplet window installer
+// Side-effect-only module: importing this file installs window.napplet and window.nostr globals.
+// No named exports. No allow-same-origin required.
 
 import { finalizeEvent } from 'nostr-tools/pure';
 import { createEphemeralKeypair } from './napplet-keypair.js';
 import type { NappletKeypair } from './napplet-keypair.js';
 import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
-import { installStateShim, _setInterPaneEventSender } from './state-shim.js';
-import { subscribe, publish } from './relay-shim.js';
-import { discoverServices, hasService, hasServiceVersion } from './discovery-shim.js';
+import { installStateShim, _setInterPaneEventSender, _nappletStorage } from './state-shim.js';
+import { subscribe, publish, query } from './relay-shim.js';
+import { discoverServices } from './discovery-shim.js';
 import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION } from './types.js';
-import type { NostrEvent } from './types.js';
+import type { NostrEvent, NappletGlobal } from '@napplet/core';
 
-// ─── Public API exports ─────────────────────────────────────────────────────
+// ─── Global type augmentation ────────────────────────────────────────────────
+// Activates window.napplet TypeScript types on `import '@napplet/shim'`.
 
-export { subscribe, publish, query } from './relay-shim.js';
-export type { Subscription, EventTemplate } from './relay-shim.js';
-export type { NostrEvent, NostrFilter } from './types.js';
-
-// State shim (napplet-side localStorage proxy)
-export { nappletState, nappState, nappStorage } from './state-shim.js';
-
-// Service discovery API (window.napplet)
-export { discoverServices, hasService, hasServiceVersion } from './discovery-shim.js';
-export type { ServiceInfo } from './discovery-shim.js';
+declare global {
+  interface Window {
+    napplet: NappletGlobal;
+  }
+}
 
 /**
  * Broadcast an IPC-PEER event to other napplets via the shell.
@@ -42,7 +37,7 @@ export type { ServiceInfo } from './discovery-shim.js';
  * emit('profile:open', [], JSON.stringify({ pubkey: '...' }));
  * ```
  */
-export function emit(
+function emit(
   topic: string,
   extraTags: string[][] = [],
   content: string = '',
@@ -69,7 +64,7 @@ export function emit(
  * // Later: sub.close();
  * ```
  */
-export function on(
+function on(
   topic: string,
   callback: (payload: unknown, event: NostrEvent) => void,
 ): { close(): void } {
@@ -314,12 +309,34 @@ function handleSignerResponse(event: NostrEvent): void {
   },
 };
 
-// ─── window.napplet discovery API installation ────────────────────────────────
+// ─── window.napplet global installation ──────────────────────────────────────
 
-(window as unknown as { napplet: unknown }).napplet = {
-  discoverServices,
-  hasService,
-  hasServiceVersion,
+(window as unknown as { napplet: NappletGlobal }).napplet = {
+  relay: {
+    subscribe,
+    publish,
+    query,
+  },
+  ipc: {
+    emit,
+    on,
+  },
+  services: {
+    list: discoverServices,
+    has: async (name: string, version?: string): Promise<boolean> => {
+      const services = await discoverServices();
+      if (version !== undefined) {
+        return services.some(s => s.name === name && s.version === version);
+      }
+      return services.some(s => s.name === name);
+    },
+  },
+  storage: {
+    getItem: _nappletStorage.getItem.bind(_nappletStorage),
+    setItem: _nappletStorage.setItem.bind(_nappletStorage),
+    removeItem: _nappletStorage.removeItem.bind(_nappletStorage),
+    keys: _nappletStorage.keys.bind(_nappletStorage),
+  },
 };
 
 // ─── Initialize ───────────────────────────────────────────────────────────────
