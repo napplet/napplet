@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.8.0
 milestone_name: Shim/SDK Split
-status: ready_to_plan
-stopped_at: roadmap created
-last_updated: "2026-04-02T00:00:00.000Z"
-last_activity: 2026-04-02
+status: planning
+stopped_at: Phase 41 context gathered
+last_updated: "2026-04-02T10:12:24.497Z"
+last_activity: 2026-04-02 — Roadmap created for v0.8.0
 progress:
   total_phases: 4
   completed_phases: 0
@@ -68,6 +68,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-02
-Stopped at: Roadmap created for v0.8.0 Shim/SDK Split
-Resume file: None
+Last session: 2026-04-02T10:12:24.494Z
+Stopped at: Phase 41 context gathered
+Resume file: .planning/phases/41-shim-restructure/41-CONTEXT.md
