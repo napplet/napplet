@@ -994,7 +994,7 @@ The shell routes IPC-PEER events to service handlers based on the topic prefix. 
 
 ### 11.4 Service Lifecycle
 
-1. **Registration:** The shell host registers services at startup via the `services` field in ShellHooks (or RuntimeHooks). Each service provides a `ServiceHandler` with a descriptor and request handler.
+1. **Registration:** The shell host registers services at startup via the `services` field in ShellAdapter (or RuntimeAdapter). Each service provides a `ServiceHandler` with a descriptor and request handler.
 
 2. **Discovery:** After AUTH completes, the napplet MAY send a REQ for kind 29010 to discover available services. The shell responds with descriptors for all registered services, followed by EOSE.
 
@@ -1071,10 +1071,9 @@ Layer 3: Capabilities & Extensions
 
 ### 13.1 Composite Key Model
 
-ACL entries are keyed by the triple `(pubkey, dTag, aggregateHash)`. This ties permissions to a specific napplet build. When a napplet updates (new aggregateHash), the shell creates a fresh ACL entry.
+ACL entries are keyed by the tuple `(dTag, aggregateHash)`. This ties permissions to a specific napplet type and build version. When a napplet updates (new aggregateHash), the shell creates a fresh ACL entry.
 
-- `pubkey`: The napplet's ephemeral pubkey from AUTH
-- `dTag`: Derived from `parseInt(pubkey.slice(0, 8), 16).toString(36) + nappletType`
+- `dTag`: The napplet type identifier, declared by the napplet in its `REGISTER` message (see Section 2.2)
 - `aggregateHash`: NIP-5A content hash from the AUTH event (empty string for dev mode)
 
 ### 13.2 Capability Types
@@ -1122,7 +1121,7 @@ Responses contain JSON-serialized ACL entries in the content field, delivered di
 
 When a napplet provides a non-empty `aggregateHash` in its AUTH event:
 
-1. The shell checks its local manifest cache for a match on `(pubkey, dTag, aggregateHash)`
+1. The shell checks its local manifest cache for a match on `(dTag, aggregateHash)`
 2. If not cached, the shell fetches the napplet's NIP-5A manifest from relays
 3. The shell validates that the aggregate hash from AUTH matches the manifest
 4. On mismatch: AUTH is rejected (`"aggregate hash mismatch"`)
@@ -1162,8 +1161,8 @@ The ACL store MUST persist to `localStorage` under the key `"napplet:acl"`. The 
 **This format is LOCKED as part of the protocol contract.** Implementations MUST be able to load ACL state persisted by other conforming implementations. Changes to the persistence format require a new protocol version.
 
 Field definitions:
-- `pubkey`: The napplet's ephemeral pubkey from AUTH
-- `dTag`: Derived tag (see Section 2.5)
+- `pubkey`: The napplet's AUTH pubkey (delegated key in v0.9.0+, ephemeral key in legacy mode)
+- `dTag`: Napplet type identifier (see Section 2.2)
 - `aggregateHash`: NIP-5A content hash (empty string for dev mode)
 - `capabilities`: Array of granted capability strings (see Section 13.2)
 - `blocked`: Boolean indicating whether all operations are denied
@@ -1339,25 +1338,39 @@ The shell reads `requires` tags from the resolved kind 35128 manifest during AUT
 A minimal napplet that authenticates, subscribes, and publishes:
 
 ```javascript
-// 1. Generate ephemeral keypair (secp256k1/Schnorr)
-const keypair = generateKeypair(); // implementation-specific
+// 1. Read napplet identity from meta tags
+const dTag = document.querySelector('meta[name="napplet-type"]')?.content || 'unknown';
+const claimedHash = document.querySelector('meta[name="napplet-aggregate-hash"]')?.content || '';
 
-// 2. Listen for messages from the shell
+// 2. Send REGISTER as the first message
+window.parent.postMessage(['REGISTER', { dTag, claimedHash }], '*');
+
+let keypair = null; // Will be set by IDENTITY or generated as fallback
+
+// 3. Listen for messages from the shell
 window.addEventListener('message', (event) => {
   const msg = event.data;
   if (!Array.isArray(msg)) return;
 
+  if (msg[0] === 'IDENTITY') {
+    // 4. Shell delegates a deterministic keypair
+    keypair = { publicKey: msg[1].pubkey, privateKey: msg[1].privkey };
+  }
+
   if (msg[0] === 'AUTH') {
-    // 3. Respond with signed kind 22242
+    // 5. Fallback: generate ephemeral keypair if no IDENTITY received
+    if (!keypair) keypair = generateKeypair(); // implementation-specific
+
+    // 6. Respond with signed kind 22242 using delegated (or fallback) key
     const authEvent = signEvent({
       kind: 22242,
       created_at: Math.floor(Date.now() / 1000),
       tags: [
         ['relay', 'napplet://shell'],
         ['challenge', msg[1]],
-        ['type', 'my-napp'],
+        ['type', dTag],
         ['version', '2.0.0'],
-        ['aggregateHash', ''],
+        ['aggregateHash', claimedHash],
       ],
       content: '',
     }, keypair.privateKey);
@@ -1365,7 +1378,7 @@ window.addEventListener('message', (event) => {
   }
 
   if (msg[0] === 'OK' && msg[2] === true) {
-    // 4. AUTH succeeded -- open a subscription
+    // 7. AUTH succeeded -- open a subscription
     window.parent.postMessage(
       ['REQ', 'sub1', { kinds: [1], limit: 10 }],
       '*',
@@ -1381,7 +1394,7 @@ window.addEventListener('message', (event) => {
   }
 });
 
-// 5. Publish an event (after AUTH succeeds)
+// 8. Publish an event (after AUTH succeeds)
 function publishNote(content) {
   const event = signEvent({
     kind: 1,
