@@ -12,7 +12,7 @@
 ### How It Works
 
 1. Create a service handler by calling a factory function (e.g., `createAudioService()`)
-2. Register the handler with the runtime via `RuntimeHooks.services` at creation time, or call `runtime.registerService()` dynamically
+2. Register the handler with the runtime via `RuntimeAdapter.services` at creation time, or call `runtime.registerService()` dynamically
 3. The runtime automatically routes matching NIP-01 messages to the handler's `handleMessage()` method
 4. Napplets discover available services by subscribing to kind 29010 — the runtime handles discovery automatically
 
@@ -35,7 +35,7 @@ runtime.registerService('audio', audio);
 runtime.registerService('notifications', notifications);
 ```
 
-Or use `RuntimeHooks.services` at creation time:
+Or use `RuntimeAdapter.services` at creation time:
 
 ```ts
 const runtime = createRuntime({
@@ -266,7 +266,7 @@ import type {
 
 ## Integration Note
 
-All service factories return `ServiceHandler` from `@napplet/runtime`. Services are registered with the runtime via `runtime.registerService(name, handler)` or `RuntimeHooks.services`. Napplets discover registered services via kind 29010 — see `@napplet/runtime` for the discovery protocol details.
+All service factories return `ServiceHandler` from `@napplet/runtime`. Services are registered with the runtime via `runtime.registerService(name, handler)` or `RuntimeAdapter.services`. Napplets discover registered services via kind 29010 — see `@napplet/runtime` for the discovery protocol details.
 
 ## Protocol Reference
 

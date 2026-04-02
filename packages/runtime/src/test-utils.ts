@@ -224,8 +224,3 @@ export function createMockRuntimeAdapter(overrides?: Partial<RuntimeAdapter>): M
     },
   };
 }
-
-/** @deprecated Use createMockRuntimeAdapter. Will be removed in v0.9.0. */
-export function createMockRuntimeHooks(overrides?: Partial<RuntimeAdapter>): MockRuntimeContext {
-  return createMockRuntimeAdapter(overrides);
-}

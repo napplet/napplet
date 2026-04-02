@@ -9,7 +9,7 @@ import {
   createShellBridge,
   originRegistry,
   type ShellBridge,
-  type ShellHooks,
+  type ShellAdapter,
   type ServiceHandler,
   type Capability,
   type NostrEvent,
@@ -279,9 +279,9 @@ function createMessageTap(): MessageTap {
   };
 }
 
-// --- Mock ShellHooks (simplified from tests/helpers/mock-hooks.ts) ---
+// --- Mock ShellAdapter (simplified from tests/helpers/mock-hooks.ts) ---
 
-function createDemoHooks(notificationOnChange?: (notifications: readonly Notification[]) => void): ShellHooks {
+function createDemoHooks(notificationOnChange?: (notifications: readonly Notification[]) => void): ShellAdapter {
   const notificationService = createNotificationService({
     onChange: notificationOnChange,
     maxPerWindow: 50,

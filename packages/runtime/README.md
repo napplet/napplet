@@ -16,7 +16,7 @@
 2. Wire up your message transport: call `runtime.handleMessage(windowId, msg)` for every postMessage from a napplet iframe
 3. When an iframe loads, call `runtime.sendChallenge(windowId)` to initiate the NIP-42 AUTH handshake
 4. The runtime handles all protocol details: AUTH verification, subscription lifecycle, ACL enforcement, state routing, and service dispatch
-5. Register optional services via `RuntimeHooks.services` at creation time, or call `runtime.registerService()` dynamically
+5. Register optional services via `RuntimeAdapter.services` at creation time, or call `runtime.registerService()` dynamically
 
 ### Installation
 
@@ -27,10 +27,10 @@ npm install @napplet/runtime
 ## Quick Start
 
 ```ts
-import { createRuntime, type RuntimeHooks } from '@napplet/runtime';
+import { createRuntime, type RuntimeAdapter } from '@napplet/runtime';
 import { verifyEvent } from 'nostr-tools';
 
-const hooks: RuntimeHooks = {
+const hooks: RuntimeAdapter = {
   // Required: send NIP-01 messages back to a napplet window
   sendToNapplet: (windowId, msg) => {
     iframeWindows.get(windowId)?.postMessage(msg, '*');
@@ -133,7 +133,7 @@ Create the napplet protocol engine.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `hooks` | `RuntimeHooks` | Host environment integration hooks (see RuntimeHooks below) |
+| `hooks` | `RuntimeAdapter` | Host environment integration hooks (see RuntimeAdapter below) |
 
 Returns: `Runtime` — the protocol engine instance.
 
@@ -152,9 +152,9 @@ The object returned by `createRuntime(hooks)`.
 | `destroyWindow(windowId)` | Clean up all state associated with a napplet window (subscriptions, pending state, service cleanup). |
 | `destroy()` | Tear down the runtime, persist state, clear all internal state. |
 
-### RuntimeHooks
+### RuntimeAdapter
 
-The `RuntimeHooks` interface is the complete integration contract. Implement every required hook to provide the runtime with its dependencies.
+The `RuntimeAdapter` interface is the complete integration contract. Implement every required hook to provide the runtime with its dependencies.
 
 **Required hooks:**
 
@@ -186,7 +186,7 @@ The `RuntimeHooks` interface is the complete integration contract. Implement eve
 
 ### ServiceHandler
 
-The `ServiceHandler` interface is implemented by every service. Register handlers with `RuntimeHooks.services` or `runtime.registerService()`.
+The `ServiceHandler` interface is implemented by every service. Register handlers with `RuntimeAdapter.services` or `runtime.registerService()`.
 
 ```ts
 interface ServiceHandler {
@@ -212,7 +212,7 @@ interface ServiceHandler {
 type ServiceRegistry = Record<string, ServiceHandler>;
 
 // Register at creation time:
-const hooks: RuntimeHooks = {
+const hooks: RuntimeAdapter = {
   // ...
   services: {
     audio: createAudioService({ onChange: updateAudioUI }),
@@ -267,7 +267,7 @@ if (isDiscoveryReq(filters)) {
 
 ```ts
 import type {
-  RuntimeHooks,
+  RuntimeAdapter,
   SendToNapplet,
   RuntimeRelayPoolHooks, RelaySubscriptionHandle,
   RuntimeCacheHooks,
@@ -293,7 +293,7 @@ import type { Runtime } from '@napplet/runtime';
 
 ## Integration Note
 
-For pre-built service implementations (audio, notifications, signer, relay pool, cache), see `@napplet/services`. Services implement the `ServiceHandler` interface and wire into the runtime via `RuntimeHooks.services` or `runtime.registerService()`.
+For pre-built service implementations (audio, notifications, signer, relay pool, cache), see `@napplet/services`. Services implement the `ServiceHandler` interface and wire into the runtime via `RuntimeAdapter.services` or `runtime.registerService()`.
 
 ## Protocol Reference
 

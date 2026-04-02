@@ -20,11 +20,11 @@ The shell acts as a NIP-01 ShellBridge between napplet iframes and real Nostr re
 4. The ShellBridge handles AUTH verification, subscription management, event routing, and all protocol details
 
 > **Architecture note:** `@napplet/shell` is a **browser adapter** over `@napplet/runtime`.
-> `createShellBridge(hooks)` adapts `ShellHooks` (browser-oriented: `Window` references, `localStorage`, `postMessage`)
-> into `RuntimeHooks` (environment-agnostic) via `adaptHooks()`, then creates a runtime engine.
+> `createShellBridge(hooks)` adapts `ShellAdapter` (browser-oriented: `Window` references, `localStorage`, `postMessage`)
+> into `RuntimeAdapter` (environment-agnostic) via `adaptHooks()`, then creates a runtime engine.
 >
 > Advanced integrators can call `adaptHooks()` and `createRuntime()` directly to bypass the browser
-> adapter and use a custom transport layer. See the [RuntimeHooks section](#runtimehooks-advanced) below.
+> adapter and use a custom transport layer. See the [RuntimeAdapter section](#runtimehooks-advanced) below.
 
 ## Installation
 
@@ -36,10 +36,10 @@ npm install @napplet/shell nostr-tools
 
 ```ts
 import { createShellBridge, originRegistry } from '@napplet/shell';
-import type { ShellHooks } from '@napplet/shell';
+import type { ShellAdapter } from '@napplet/shell';
 
 // Provide your application's hooks
-const hooks: ShellHooks = {
+const hooks: ShellAdapter = {
   relayPool: {
     getRelayPool: () => myPool,
     trackSubscription: (key, cleanup) => { /* track */ },
@@ -110,7 +110,7 @@ Create a ShellBridge instance with dependency injection.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `hooks` | `ShellHooks` | Host application integration hooks |
+| `hooks` | `ShellAdapter` | Host application integration hooks |
 
 **Returns:** `ShellBridge`
 
@@ -125,9 +125,9 @@ Create a ShellBridge instance with dependency injection.
 | `registerConsentHandler(handler)` | Register handler for destructive signing consent prompts |
 | `readonly runtime` | `Runtime` instance — access `runtime.registerService()` for dynamic service registration |
 
-### ShellHooks Interface
+### ShellAdapter Interface
 
-The `ShellHooks` interface is the main integration point. Implementors provide relay pool, window manager, signer, and other capabilities.
+The `ShellAdapter` interface is the main integration point. Implementors provide relay pool, window manager, signer, and other capabilities.
 
 | Hook | Interface | Description |
 |------|-----------|-------------|
@@ -143,18 +143,18 @@ The `ShellHooks` interface is the main integration point. Implementors provide r
 
 ### Registering Services
 
-Wire in service handlers via the optional `services` field on `ShellHooks`. Napplets discover available services using kind 29010 service discovery.
+Wire in service handlers via the optional `services` field on `ShellAdapter`. Napplets discover available services using kind 29010 service discovery.
 
 ```ts
 import { createShellBridge } from '@napplet/shell';
 import { createAudioService } from '@napplet/services';
-import type { ShellHooks, ServiceRegistry } from '@napplet/shell';
+import type { ShellAdapter, ServiceRegistry } from '@napplet/shell';
 
 const services: ServiceRegistry = {
   audio: createAudioService(),
 };
 
-const hooks: ShellHooks = {
+const hooks: ShellAdapter = {
   // ... required hooks ...
   services,
 };
@@ -195,13 +195,13 @@ These exports can be used independently without creating a full ShellBridge.
 | `DESTRUCTIVE_KINDS` | `Set([0, 3, 5, 10002])` | Event kinds requiring user consent |
 | `TOPICS` | `{ ... }` | Shell command topic constants |
 
-## RuntimeHooks (Advanced)
+## RuntimeAdapter (Advanced)
 
 > For advanced integrators who want to bypass `@napplet/shell`'s browser adapter and use `@napplet/runtime` directly (e.g., custom transport layers, test environments, server-side hosting).
 
 ### How the adapter works
 
-`createShellBridge(hooks)` internally calls `adaptHooks(shellHooks, deps)` to convert browser-oriented `ShellHooks` into environment-agnostic `RuntimeHooks`, then passes them to `createRuntime()`:
+`createShellBridge(hooks)` internally calls `adaptHooks(shellHooks, deps)` to convert browser-oriented `ShellAdapter` into environment-agnostic `RuntimeAdapter`, then passes them to `createRuntime()`:
 
 ```ts
 import { adaptHooks, type BrowserDeps } from '@napplet/shell';
@@ -220,32 +220,32 @@ const runtimeHooks = adaptHooks(shellHooks, deps);
 const runtime = createRuntime(runtimeHooks);
 ```
 
-### RuntimeHooks Interface
+### RuntimeAdapter Interface
 
-`RuntimeHooks` is the environment-agnostic contract that `@napplet/runtime` requires. Unlike `ShellHooks`, it works without browser APIs.
+`RuntimeAdapter` is the environment-agnostic contract that `@napplet/runtime` requires. Unlike `ShellAdapter`, it works without browser APIs.
 
 | Hook | Interface | Description |
 |------|-----------|-------------|
 | `sendToNapplet` | `(windowId, msg[]) => void` | Send a NIP-01 message array to a napplet |
-| `relayPool` | `RuntimeRelayPoolHooks` | Abstract relay subscribe/publish |
-| `cache` | `RuntimeCacheHooks` | Local event cache (optional — return `isAvailable: false`) |
-| `auth` | `RuntimeAuthHooks` | User pubkey and signer |
-| `config` | `RuntimeConfigHooks` | Napp update behavior policy |
-| `hotkeys` | `RuntimeHotkeyHooks` | Keyboard shortcut forwarding |
-| `crypto` | `RuntimeCryptoHooks` | Event verification + UUID generation |
-| `aclPersistence` | `RuntimeAclPersistence` | ACL persistence (get/set string) |
-| `manifestPersistence` | `RuntimeManifestPersistence` | Manifest cache persistence |
-| `statePersistence` | `RuntimeStatePersistence` | Napp state storage (scoped keys) |
-| `windowManager` | `RuntimeWindowManagerHooks` | Create new napplet windows |
-| `relayConfig` | `RuntimeRelayConfigHooks` | Relay URL configuration |
-| `dm?` | `RuntimeDmHooks` | Optional NIP-17 DM handling |
+| `relayPool` | `RelayPoolAdapter` | Abstract relay subscribe/publish |
+| `cache` | `CacheAdapter` | Local event cache (optional — return `isAvailable: false`) |
+| `auth` | `AuthAdapter` | User pubkey and signer |
+| `config` | `ConfigAdapter` | Napp update behavior policy |
+| `hotkeys` | `HotkeyAdapter` | Keyboard shortcut forwarding |
+| `crypto` | `CryptoAdapter` | Event verification + UUID generation |
+| `aclPersistence` | `AclPersistence` | ACL persistence (get/set string) |
+| `manifestPersistence` | `ManifestPersistence` | Manifest cache persistence |
+| `statePersistence` | `StatePersistence` | Napp state storage (scoped keys) |
+| `windowManager` | `WindowManagerAdapter` | Create new napplet windows |
+| `relayConfig` | `RelayConfigAdapter` | Relay URL configuration |
+| `dm?` | `DmAdapter` | Optional NIP-17 DM handling |
 | `onAclCheck?` | `(event: AclCheckEvent) => void` | ACL enforcement audit hook |
 | `services?` | `ServiceRegistry` | Service handlers by name |
 
-Import `RuntimeHooks` types from `@napplet/runtime`:
+Import `RuntimeAdapter` types from `@napplet/runtime`:
 
 ```ts
-import type { RuntimeHooks, RuntimeRelayPoolHooks, RuntimeCacheHooks } from '@napplet/runtime';
+import type { RuntimeAdapter, RelayPoolAdapter, CacheAdapter } from '@napplet/runtime';
 import { createRuntime } from '@napplet/runtime';
 ```
 
@@ -253,7 +253,7 @@ import { createRuntime } from '@napplet/runtime';
 
 ```ts
 import type {
-  ShellHooks,
+  ShellAdapter,
   RelayPoolHooks, RelayPoolLike,
   RelayConfigHooks,
   WindowManagerHooks,

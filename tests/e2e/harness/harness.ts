@@ -1,7 +1,7 @@
 /**
  * harness.ts -- Shell test harness boot script.
  *
- * Boots @napplet/shell with mock ShellHooks, installs a message tap,
+ * Boots @napplet/shell with mock ShellAdapter, installs a message tap,
  * and exposes control functions for Playwright tests.
  *
  * Playwright API:

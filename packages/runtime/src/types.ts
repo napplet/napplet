@@ -649,6 +649,3 @@ export interface RuntimeAdapter {
    */
   services?: ServiceRegistry;
 }
-
-/** @deprecated Use RuntimeAdapter. Will be removed in v0.9.0. */
-export type RuntimeHooks = RuntimeAdapter;

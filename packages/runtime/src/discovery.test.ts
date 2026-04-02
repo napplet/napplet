@@ -11,7 +11,7 @@ declare function setTimeout(cb: (...args: unknown[]) => void, ms?: number): unkn
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime } from './runtime.js';
 import type { Runtime } from './runtime.js';
-import { createMockRuntimeHooks } from './test-utils.js';
+import { createMockRuntimeAdapter } from './test-utils.js';
 import type { MockRuntimeContext } from './test-utils.js';
 import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI } from '@napplet/core';
 import type { NostrEvent } from '@napplet/core';
@@ -90,7 +90,7 @@ describe('Service Discovery Protocol (kind 29010)', () => {
     const notificationHandler = createMockServiceHandler('notifications', '2.1.0');
 
     beforeEach(async () => {
-      ctx = createMockRuntimeHooks({
+      ctx = createMockRuntimeAdapter({
         services: {
           audio: audioHandler,
           notifications: notificationHandler,
@@ -184,7 +184,7 @@ describe('Service Discovery Protocol (kind 29010)', () => {
       const cacheHandler = createMockServiceHandler('cache', '1.0.0', 'Local event cache');
       const audioHandler = createMockServiceHandler('audio', '1.0.0', 'Audio playback');
 
-      ctx = createMockRuntimeHooks({
+      ctx = createMockRuntimeAdapter({
         services: {
           'relay-pool': relayPoolHandler,
           cache: cacheHandler,
@@ -214,7 +214,7 @@ describe('Service Discovery Protocol (kind 29010)', () => {
 
   describe('DISC-04: empty registry', () => {
     beforeEach(async () => {
-      ctx = createMockRuntimeHooks(); // No services
+      ctx = createMockRuntimeAdapter(); // No services
       runtime = createRuntime(ctx.hooks);
       await authenticateWindow(runtime, ctx, WINDOW_ID);
       ctx.sent.length = 0;
@@ -235,7 +235,7 @@ describe('Service Discovery Protocol (kind 29010)', () => {
 
   describe('live subscription updates', () => {
     beforeEach(async () => {
-      ctx = createMockRuntimeHooks({
+      ctx = createMockRuntimeAdapter({
         services: {
           audio: createMockServiceHandler('audio', '1.0.0'),
         },
@@ -293,7 +293,7 @@ describe('Service Discovery Protocol (kind 29010)', () => {
 
   describe('auth and ACL gating', () => {
     it('unauthenticated window receives no discovery events (queued pre-auth)', () => {
-      ctx = createMockRuntimeHooks();
+      ctx = createMockRuntimeAdapter();
       runtime = createRuntime(ctx.hooks);
       // Do NOT authenticate — just send a discovery REQ
       // The runtime queues pre-auth messages, so nothing is delivered
@@ -309,7 +309,7 @@ describe('Service Discovery Protocol (kind 29010)', () => {
 
   describe('edge cases', () => {
     beforeEach(async () => {
-      ctx = createMockRuntimeHooks({
+      ctx = createMockRuntimeAdapter({
         services: {
           audio: createMockServiceHandler('audio', '1.0.0'),
         },

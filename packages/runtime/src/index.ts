@@ -3,7 +3,6 @@
 // ─── Types ─────────────────────────────────────────────────────────────────
 export type {
   RuntimeAdapter,
-  RuntimeHooks,  // @deprecated — use RuntimeAdapter
   SendToNapplet,
   RelayPoolAdapter,
   RelaySubscriptionHandle,

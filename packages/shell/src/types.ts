@@ -241,6 +241,3 @@ export interface ShellAdapter {
    */
   services?: ServiceRegistry;
 }
-
-/** @deprecated Use ShellAdapter. Will be removed in v0.9.0. */
-export type ShellHooks = ShellAdapter;

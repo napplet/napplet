@@ -48,7 +48,7 @@ import type { AclState, Identity } from '@napplet/acl';
 
 // ─── Runtime — protocol engine (browser-agnostic) ────────────────────────────
 import { createRuntime, createEnforceGate, resolveCapabilities, formatDenialReason } from '@napplet/runtime';
-import type { Runtime, RuntimeHooks } from '@napplet/runtime';
+import type { Runtime, RuntimeAdapter } from '@napplet/runtime';
 
 // ─── Shell — browser adapter (re-exports for backward compat) ────────────────
 // We import specific re-exports to verify they match core's exports.
@@ -69,7 +69,7 @@ import type {
 } from '@napplet/shell';
 
 // ─── Runtime mock helpers ────────────────────────────────────────────────────
-import { createMockRuntimeHooks } from '../../packages/runtime/src/test-utils.js';
+import { createMockRuntimeAdapter } from '../../packages/runtime/src/test-utils.js';
 
 describe('shell -> runtime -> acl -> core integration', () => {
 
@@ -173,11 +173,11 @@ describe('shell -> runtime -> acl -> core integration', () => {
   // ─── Runtime creates in Node.js ──────────────────────────────────────────
 
   describe('runtime creates successfully in Node.js', () => {
-    let mock: ReturnType<typeof createMockRuntimeHooks>;
+    let mock: ReturnType<typeof createMockRuntimeAdapter>;
     let runtime: Runtime;
 
     beforeEach(() => {
-      mock = createMockRuntimeHooks();
+      mock = createMockRuntimeAdapter();
       runtime = createRuntime(mock.hooks);
     });
 
@@ -256,7 +256,7 @@ describe('shell -> runtime -> acl -> core integration', () => {
 
   describe('full chain: runtime -> acl enforcement -> core types', () => {
     it('runtime enforces ACL revocation using core capability strings', async () => {
-      const mock = createMockRuntimeHooks();
+      const mock = createMockRuntimeAdapter();
       const runtime = createRuntime(mock.hooks);
 
       // Authenticate a napplet

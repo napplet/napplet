@@ -1,5 +1,5 @@
 import type {
-  ShellHooks,
+  ShellAdapter,
   RelayPoolHooks,
   RelayConfigHooks,
   WindowManagerHooks,
@@ -21,7 +21,7 @@ export interface MockCallLog {
 }
 
 export interface MockHooksResult {
-  hooks: ShellHooks;
+  hooks: ShellAdapter;
   relayPool: MockRelayPool;
   callLog: MockCallLog;
   /** Override the signer returned by auth.getSigner() */
@@ -31,14 +31,14 @@ export interface MockHooksResult {
 }
 
 /**
- * Create a complete mock ShellHooks object for testing.
+ * Create a complete mock ShellAdapter object for testing.
  *
  * All hooks have sensible defaults. Crypto uses real nostr-tools verifyEvent
  * for genuine signature verification (critical for AUTH handshake testing).
  *
- * @param overrides - Partial ShellHooks to override specific hooks
+ * @param overrides - Partial ShellAdapter to override specific hooks
  */
-export function createMockHooks(overrides?: Partial<ShellHooks>): MockHooksResult {
+export function createMockHooks(overrides?: Partial<ShellAdapter>): MockHooksResult {
   const mockRelayPool = createMockRelayPool();
   const subscriptionCleanups = new Map<string, () => void>();
   let userPubkey = '0'.repeat(64);
@@ -115,7 +115,7 @@ export function createMockHooks(overrides?: Partial<ShellHooks>): MockHooksResul
     ...overrides?.crypto,
   };
 
-  const hooks: ShellHooks = {
+  const hooks: ShellAdapter = {
     relayPool,
     relayConfig,
     windowManager,

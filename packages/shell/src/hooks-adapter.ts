@@ -66,7 +66,7 @@ export interface BrowserDeps {
 // ─── Adapter Factory ──────────────────────────────────────────────────────
 
 /**
- * Convert ShellHooks (browser-facing) into RuntimeHooks (environment-agnostic).
+ * Convert ShellAdapter (browser-facing) into RuntimeAdapter (environment-agnostic).
  *
  * The adapter is the single translation layer between browser APIs and the
  * runtime's abstract interfaces. It:

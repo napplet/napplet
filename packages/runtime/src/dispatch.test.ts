@@ -10,7 +10,7 @@ declare function setTimeout(cb: (...args: unknown[]) => void, ms?: number): unkn
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime } from './runtime.js';
 import type { Runtime } from './runtime.js';
-import { createMockRuntimeHooks } from './test-utils.js';
+import { createMockRuntimeAdapter } from './test-utils.js';
 import type { MockRuntimeContext } from './test-utils.js';
 import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI } from '@napplet/core';
 import type { NostrEvent } from '@napplet/core';
@@ -85,7 +85,7 @@ describe('runtime message dispatch', () => {
   let runtime: Runtime;
 
   beforeEach(() => {
-    mock = createMockRuntimeHooks();
+    mock = createMockRuntimeAdapter();
     runtime = createRuntime(mock.hooks);
   });
 
@@ -176,7 +176,7 @@ describe('runtime message dispatch', () => {
 
     it('rejects AUTH with invalid signature', async () => {
       // Override crypto to reject
-      mock = createMockRuntimeHooks({
+      mock = createMockRuntimeAdapter({
         crypto: {
           async verifyEvent() { return false; },
           randomUUID() { return 'mock-uuid-fail-' + '0'.repeat(40); },
@@ -542,7 +542,7 @@ describe('runtime message dispatch', () => {
 describe('service dispatch — signer', () => {
   it('routes kind 29001 to registered signer service', async () => {
     const signerCalls: Array<{ windowId: string; message: unknown[] }> = [];
-    const mock = createMockRuntimeHooks({
+    const mock = createMockRuntimeAdapter({
       services: {
         signer: {
           descriptor: { name: 'signer', version: '1.0.0' },
@@ -573,7 +573,7 @@ describe('service dispatch — signer', () => {
   });
 
   it('falls back to internal handler when no signer service registered', async () => {
-    const mock = createMockRuntimeHooks({
+    const mock = createMockRuntimeAdapter({
       auth: {
         getUserPubkey: () => 'user_' + '0'.repeat(60),
         getSigner: () => ({
@@ -600,7 +600,7 @@ describe('service dispatch — signer', () => {
   });
 
   it('send callback from signer service is forwarded to napplet', async () => {
-    const mock = createMockRuntimeHooks({
+    const mock = createMockRuntimeAdapter({
       services: {
         signer: {
           descriptor: { name: 'signer', version: '1.0.0' },
@@ -637,7 +637,7 @@ describe('service dispatch — signer', () => {
 describe('service dispatch — relay', () => {
   it('routes REQ to registered relay service', async () => {
     const relayCalls: Array<{ windowId: string; message: unknown[] }> = [];
-    const mock = createMockRuntimeHooks({
+    const mock = createMockRuntimeAdapter({
       services: {
         relay: {
           descriptor: { name: 'relay', version: '1.0.0' },
@@ -664,7 +664,7 @@ describe('service dispatch — relay', () => {
 
   it('routes CLOSE to registered relay service', async () => {
     const relayCalls: Array<unknown[]> = [];
-    const mock = createMockRuntimeHooks({
+    const mock = createMockRuntimeAdapter({
       services: {
         relay: {
           descriptor: { name: 'relay', version: '1.0.0' },
@@ -689,7 +689,7 @@ describe('service dispatch — relay', () => {
   });
 
   it('sends EOSE from relay service to napplet', async () => {
-    const mock = createMockRuntimeHooks({
+    const mock = createMockRuntimeAdapter({
       services: {
         relay: {
           descriptor: { name: 'relay', version: '1.0.0' },
@@ -713,7 +713,7 @@ describe('service dispatch — relay', () => {
 
 describe('service dispatch — optional relayPool/cache hooks', () => {
   it('works without relayPool and cache hooks when relay service is registered', async () => {
-    const mock = createMockRuntimeHooks({
+    const mock = createMockRuntimeAdapter({
       services: {
         relay: {
           descriptor: { name: 'relay', version: '1.0.0' },
