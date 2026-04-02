@@ -28,16 +28,16 @@ requirement_ids: [ECO-01, ECO-02]
 ### SC-2: All Playwright e2e tests pass
 **Status**: PASSED (with known flaky exclusions)
 
-- 134 of 142 tests pass
-- 3 flaky UI timing tests (demo-node-inspector, demo-notification-service) — not migration-related, intermittent in pre-migration baseline
-- 5 skipped tests (pre-existing skip annotations)
-- All protocol tests pass: auth (9/9), ACL matrix (43/43), inter-pane (6/6), signer delegation (7/7), state isolation (9/9), lifecycle (4/4), routing, replay, harness-smoke
+- 139 of 142 tests pass
+- 1 pre-existing flaky notification test (napplet-driven toast path — cross-iframe routing timing)
+- 2 serial-skip tests dependent on the flaky notification test
+- All protocol tests pass: auth (9/9), ACL matrix (43/43), inter-pane (6/6), signer delegation (7/7), state isolation (9/9), lifecycle (5/5), routing, replay, harness-smoke, node-inspector (9/9)
 
 ### SC-3: All Vitest unit/integration tests pass
 **Status**: PASSED
 
-- All unit tests pass across core, runtime, services, shell, shim, vite-plugin
-- 1 pre-existing assertion mismatch in `shell-runtime-integration.test.ts` (state:read vs relay:write) — unrelated to migration
+- All 196 unit tests pass across core, runtime, services, shell, shim, vite-plugin
+- Fixed BusKind.INTER_PANE stale alias in `shell-runtime-integration.test.ts` (renamed to IPC_PEER in Phase 35)
 
 ## Requirements Traceability
 
@@ -48,7 +48,10 @@ requirement_ids: [ECO-01, ECO-02]
 
 ## Additional Work
 
-Fixed pre-existing Phase 38 regression: test harness referenced `runtime.nappKeyRegistry` which was renamed to `runtime.sessionRegistry`. This blocked 89 of 142 e2e tests. Fixed in `harness.ts`, `shell-host.html`, and `shell-runtime-integration.test.ts`.
+1. Fixed pre-existing Phase 38 regression: test harness referenced `runtime.nappKeyRegistry` which was renamed to `runtime.sessionRegistry`. This blocked 89 of 142 e2e tests. Fixed in `harness.ts`, `shell-host.html`, and `shell-runtime-integration.test.ts`.
+2. Restored Phase 43 migration files that were accidentally reverted by Phase 44 commit (1c7e598).
+3. Fixed `BusKind.INTER_PANE` stale alias in `shell-runtime-integration.test.ts` (renamed to `IPC_PEER` in Phase 35).
+4. Fixed inspector drill-down e2e test to click node title instead of embedded button.
 
 ## must_haves
 
@@ -59,5 +62,6 @@ Fixed pre-existing Phase 38 regression: test harness referenced `runtime.nappKey
 - [x] `pnpm install` succeeds
 - [x] `pnpm type-check` passes
 - [x] `pnpm build` succeeds
-- [x] e2e test suite passes (134/142, 3 flaky, 5 skipped)
+- [x] e2e test suite passes (139/142, 1 pre-existing flaky, 2 serial skip)
+- [x] Unit tests pass (196/196)
 - [x] Zero old shim named export references in demos and fixtures
