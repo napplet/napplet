@@ -154,7 +154,7 @@
   1. SPEC.md documents the namespaced `window.napplet` shape with `relay`, `ipc`, `services`, `storage` sub-objects
   2. `@napplet/shim` README explains it is a side-effect-only window installer, documents `window.napplet.*` shape, and notes zero named exports
   3. `@napplet/sdk` README explains namespaced exports, usage with and without a bundler, and its relationship to the shim
-**Plans**: TBD
+**Plans**: 3 (1 wave)
 
 ## Progress
 
@@ -207,4 +207,4 @@ Phases execute in numeric order: 41 -> 42 -> 43 -> 44
 | 41. Shim Restructure | v0.8.0 | 0/0 | Not started | - |
 | 42. SDK Package | v0.8.0 | 0/2 | Planned | - |
 | 43. Demo & Test Migration | v0.8.0 | 0/3 | Planned | - |
-| 44. Documentation | v0.8.0 | 0/0 | Not started | - |
+| 44. Documentation | v0.8.0 | 0/3 | Planned | - |
