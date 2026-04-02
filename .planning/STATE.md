@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.9.0
 milestone_name: Identity & Trust
-status: ready_to_execute
-stopped_at: Phase 46 planned (5 plans in 2 waves)
-last_updated: "2026-04-02T17:30:00.000Z"
-last_activity: 2026-04-02 — Phase 46 planned with 5 plans covering 13 requirements
+status: executing
+stopped_at: Phase 46 planned — 5 plans in 2 waves, 13/13 requirements covered
+last_updated: "2026-04-02T15:35:18.603Z"
+last_activity: 2026-04-02 -- Phase 46 execution started
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 5
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 6
+  completed_plans: 5
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.9.0 started)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 46 — Shell-Assigned Keypair Handshake (planned, ready to execute)
+**Current focus:** Phase 46 — shell-assigned-keypair-handshake-napplet-authenticates-with-shell-provided-key-instead-of-ephemeral-keypair-fixing-storage-persistence-across-reloads
 
 ## Current Position
 
-Phase: 46 of 48 (Shell-Assigned Keypair Handshake)
-Plan: 5 plans in 2 waves (01-03 parallel, 04-05 depend on wave 1)
-Status: Ready to execute
-Last activity: 2026-04-02 — Phase 46 planned
+Phase: 46 (shell-assigned-keypair-handshake-napplet-authenticates-with-shell-provided-key-instead-of-ephemeral-keypair-fixing-storage-persistence-across-reloads) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 46
+Last activity: 2026-04-02 -- Phase 46 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 
 Phase 46 has 8 locked decisions (D-01 through D-08) in its CONTEXT.md:
+
 - D-01: Storage scoping removes ephemeral pubkey (dTag:aggregateHash:userKey)
 - D-02: Shell delegates stable keypair via REGISTER/IDENTITY messages
 - D-03: Per-iframe persistent GUID for instance identity
