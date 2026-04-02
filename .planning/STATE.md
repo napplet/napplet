@@ -4,10 +4,10 @@ milestone: v0.8.0
 milestone_name: Shim/SDK Split
 status: executing
 stopped_at: Phase 42 planned
-last_updated: "2026-04-02T11:49:22.037Z"
+last_updated: "2026-04-02T13:35:31.040Z"
 last_activity: 2026-04-02
 progress:
-  total_phases: 4
+  total_phases: 6
   completed_phases: 4
   total_plans: 10
   completed_plans: 10

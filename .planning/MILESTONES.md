@@ -1,5 +1,15 @@
 # Milestones
 
+## v0.8.0 Shim/SDK Split (Shipped: 2026-04-02)
+
+**Phases completed:** 6 phases, 10 plans, 5 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 ## v0.7.0 Ontology Audit and Adjustments (Shipped: 2026-04-02)
 
 **Phases completed:** 7 phases, 16 plans

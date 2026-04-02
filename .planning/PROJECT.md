@@ -8,16 +8,9 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## Current Milestone: v0.8.0 Shim/SDK Split
+## Shipped: v0.8.0 Shim/SDK Split
 
-**Goal:** Split `@napplet/shim` into a pure window-installer shim and a new `@napplet/sdk` convenience package, and reorganize `window.napplet` into a fully namespaced API that reflects the logical structure of the protocol.
-
-**Target features:**
-- `@napplet/shim` becomes a pure window installer — zero named exports, installs fully namespaced `window.napplet` global
-- `window.napplet` fully namespaced: `relay.{subscribe,publish,query}`, `ipc.{emit,on}`, `services.{list,has}`, `storage.{getItem,setItem,removeItem,keys}`
-- New `@napplet/sdk` package — thin wrappers around `window.napplet.*`, named exports for bundler consumers, independent of shim
-- Remove deprecated `nappState`/`nappStorage`/`nappletState`/`discoverServices`/`hasService`/`hasServiceVersion` exports (deprecated in v0.7.0)
-- Update demo, tests, SPEC.md, and all READMEs for new structure
+`@napplet/shim` is now a pure side-effect window installer (zero named exports). `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`). New `@napplet/sdk` package provides typed named exports for bundler consumers. All deprecated v0.7.0 symbols removed. 4 phases, 10 plans shipped 2026-04-02. See [archive](milestones/v0.8.0-ROADMAP.md).
 
 ## Shipped: v0.6.0 Demo Upgrade
 
@@ -86,11 +79,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ `@napplet/shim` is a pure window installer with zero named exports — v0.8.0 Phase 41 (PKG-01, DEP-01, DEP-02)
 - ✓ `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`) — v0.8.0 Phase 41 (WIN-01, WIN-02, WIN-03, WIN-04)
 
+- ✓ `@napplet/sdk` exists as a standalone bundler-friendly package (thin wrappers + helpers) — v0.8.0 Phase 42 (PKG-02, PKG-03, SDK-01, SDK-02, SDK-03)
+- ✓ Demo napplets and test fixtures migrated to window.napplet namespaced API — v0.8.0 Phase 43 (ECO-01, ECO-02)
+- ✓ SPEC.md, shim README, and SDK README updated for shim/SDK split — v0.8.0 Phase 44 (ECO-03, ECO-04, ECO-05)
+
 ### Active
 
-- [x] `@napplet/sdk` exists as a standalone bundler-friendly package (thin wrappers + helpers) — Validated in Phase 42: SDK Package
-- [x] Demo napplets and test fixtures migrated to window.napplet namespaced API — Validated in Phase 43: Demo & Test Migration
-- [x] SPEC.md, shim README, and SDK README updated for shim/SDK split -- Validated in Phase 44: Documentation
+- [ ] Shell-assigned keypair handshake — napplet authenticates with shell-provided key (Phase 46, deferred to v0.9.0)
+- [ ] All v0.7.0 deprecated aliases removed (RuntimeHooks, ShellHooks) — scheduled v0.9.0
 
 ### Out of Scope
 
