@@ -562,7 +562,9 @@ export function loadNapplet(name: string, containerId: string): NappletInfo {
   iframe.addEventListener('load', () => {
     if (iframe.contentWindow) {
       originRegistry.register(iframe.contentWindow, windowId);
-      relay.sendChallenge(windowId);
+      // Do NOT send AUTH challenge here — the runtime sends it
+      // after processing the napplet's REGISTER message (Phase 46).
+      // relay.sendChallenge(windowId) was the old ephemeral-key flow.
     }
   });
 
