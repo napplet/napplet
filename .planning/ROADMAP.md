@@ -118,7 +118,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Establish shell-delegated keypair handshake with aggregate hash verification, fixing storage persistence and hardening the napplet trust model.
 
 - [x] **Phase 46: Shell-Assigned Keypair Handshake** - REGISTER/IDENTITY/AUTH handshake, storage rekeying, aggregate hash verification, instance GUIDs, delegated key security (completed 2026-04-02)
-- [ ] **Phase 47: Deprecation Cleanup** - Remove RuntimeHooks and ShellHooks deprecated aliases (one release cycle expired)
+- [x] **Phase 47: Deprecation Cleanup** - Remove RuntimeHooks and ShellHooks deprecated aliases (one release cycle expired) (completed 2026-04-02)
 - [ ] **Phase 48: Specification & Documentation** - Update SPEC.md Sections 2, 5, and 14 for new handshake, storage, and security models
 
 ## Phase Details
@@ -212,5 +212,5 @@ Note: Phases 47 and 48 are independent of each other (both depend only on 46) bu
 | 43. Demo & Test Migration | v0.8.0 | 3/3 | Complete | 2026-04-02 |
 | 44. Documentation | v0.8.0 | 3/3 | Complete | 2026-04-02 |
 | 46. Shell-Assigned Keypair Handshake | v0.9.0 | 5/5 | Complete    | 2026-04-02 |
-| 47. Deprecation Cleanup | v0.9.0 | 0/? | Not started | - |
+| 47. Deprecation Cleanup | v0.9.0 | 1/1 | Complete    | 2026-04-02 |
 | 48. Specification & Documentation | v0.9.0 | 0/? | Not started | - |

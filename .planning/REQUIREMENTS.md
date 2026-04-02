@@ -36,8 +36,8 @@
 
 ### DEP — Deprecation Cleanup
 
-- [ ] **DEP-03**: `RuntimeHooks` deprecated alias removed from `@napplet/runtime` (deprecated in v0.7.0, one release cycle expired)
-- [ ] **DEP-04**: `ShellHooks` deprecated alias removed from `@napplet/shell` (deprecated in v0.7.0, one release cycle expired)
+- [x] **DEP-03**: `RuntimeHooks` deprecated alias removed from `@napplet/runtime` (deprecated in v0.7.0, one release cycle expired) *(Phase 47)*
+- [x] **DEP-04**: `ShellHooks` deprecated alias removed from `@napplet/shell` (deprecated in v0.7.0, one release cycle expired) *(Phase 47)*
 
 ### DOC — Documentation
 
