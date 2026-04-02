@@ -1185,12 +1185,13 @@ The protocol assumes:
 - The shell is trusted (it holds the user's signer and manages all relay connections)
 - The browser enforces iframe sandbox boundaries
 - `MessageEvent.source` provides unforgeable sender identification
+- Delegated napplet keys are confined to the shell-napplet postMessage channel and MUST NOT appear on external relays
 
 ### 14.2 Security Layers
 
 1. **Iframe sandbox:** `allow-scripts allow-forms allow-popups allow-modals allow-downloads` -- no `allow-same-origin`. Napplets have opaque origins, no direct state access, no direct network access beyond `fetch` to their serving origin.
 
-2. **NIP-42 AUTH:** One-time Schnorr signature verification establishes napplet identity. The shell verifies kind 22242 signatures using secp256k1. This is the only cryptographic verification in the protocol -- all subsequent identification uses Window references.
+2. **NIP-42 AUTH with delegated keys:** The napplet signs a kind 22242 AUTH event with a shell-delegated deterministic keypair (not an ephemeral one). The shell verifies the Schnorr signature and confirms the pubkey matches the one it derived and sent in the `IDENTITY` message. This is the only cryptographic verification in the protocol -- all subsequent identification uses Window references.
 
 3. **Window reference identity:** After AUTH, the shell identifies senders by `MessageEvent.source`. This is unforgeable within the browser security model. No per-message signature verification is required.
 
@@ -1202,7 +1203,9 @@ The protocol assumes:
 
 7. **Destructive kind safety floor:** Kinds 0, 3, 5, 10002 always require user consent regardless of ACL. This cannot be waived.
 
-8. **Storage scoping:** Storage is namespaced by composite key `(pubkey, dTag, aggregateHash)`. Napplets cannot access each other's data. Hash changes create new namespaces.
+8. **Storage scoping:** Storage is namespaced by composite key `(dTag, aggregateHash)`. Napplets cannot access each other's data. Hash changes create new namespaces.
+
+9. **Delegated key confinement:** Events signed by delegated napplet keys are blocked from relay publishing. The shell maintains a set of all delegated pubkeys and rejects `EVENT` messages signed with delegated keys for non-internal kinds (only ephemeral bus kinds 29000-29999 are allowed). The user's signer (NIP-07/NIP-46) is the only source of events published to external relays. The publishing flow is: napplet requests publish -> shell checks ACL -> shell asks user's signer to sign -> shell publishes to relays. The delegated key is nowhere in this chain.
 
 ### 14.3 What the Protocol Does NOT Protect Against
 
@@ -1210,6 +1213,18 @@ The protocol assumes:
 - A malicious shell implementation (napplets must trust the shell)
 - Side-channel attacks through timing or resource usage
 - Social engineering the user into granting capabilities
+
+### 14.4 Delegated Key Threat Analysis
+
+The v0.9.0 delegated key model introduces a keypair that the shell sends to the napplet in plaintext over postMessage. This section analyzes the security implications.
+
+1. **Key exfiltration via `fetch()`:** A malicious napplet could exfiltrate its delegated private key via `fetch()` to its serving origin (the only network access allowed by the iframe sandbox). This is harmless because: (a) no relay has ever seen that pubkey -- events signed with it would be meaningless to the Nostr network, (b) the shell blocks relay publishing with delegated keys (layer 9), and (c) the key is deterministic so the napplet always gets the same one -- there is nothing new to steal.
+
+2. **Shell secret compromise:** If the `shellSecret` is leaked, an attacker can derive all napplet keypairs for that shell instance. Impact is limited because delegated keys cannot publish to relays. The attacker could impersonate napplets to the shell via a crafted iframe, but this requires access to the user's browser -- at which point the attacker already has full access to the shell anyway.
+
+3. **Cross-shell key isolation:** Different shell instances (different `shellSecret` values) derive different keypairs for the same napplet. A napplet's delegated key from shell A is meaningless on shell B. There is no global napplet identity -- identity is always scoped to the shell instance.
+
+4. **Derivation collision resistance:** HMAC-SHA256 with a 32-byte random key provides 256-bit collision resistance. The probability of two different `(dTag, aggregateHash)` pairs producing the same keypair is approximately 3.7 * 10^-39, which is negligible -- less likely than a hardware error.
 
 ---
 
@@ -1272,7 +1287,7 @@ The aggregate hash is stored in the NIP-5A event's `x` tag (see [nostr-protocol/
 
 - The NIP-5A event on relays is the source of truth for production verification
 - The HTML meta tag is a local convenience for the shim during development
-- The shell uses the aggregate hash as part of the ACL composite key `(pubkey, dTag, aggregateHash)`
+- The shell uses the aggregate hash as part of the ACL composite key `(dTag, aggregateHash)`
 - Changes to any component of the composite key create a new identity
 
 **Note:** The `@napplet/vite-plugin` package is a **development convenience** for computing aggregate hashes locally during development. Production deployment of napplets to nsites uses community deploy tools (e.g., [nsyte](https://github.com/nicefarm/nsyte)) which handle NIP-5A event creation and relay publishing.
