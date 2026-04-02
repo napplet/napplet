@@ -133,7 +133,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. Two napplets with different aggregateHash values for the same dTag have completely isolated storage -- neither can read the other's keys
   4. Shell fetches napplet files, computes aggregate hash, and shows a user-visible warning when the computed hash does not match the napplet's declared hash
   5. A napplet's delegated key cannot produce events published to external relays -- only the user's signer (NIP-07/NIP-46) signs events that leave the shell
-**Plans**: TBD
+**Plans**: 5 plans in 2 waves
+  - Wave 1: 46-01 (core types), 46-02 (storage rekeying), 46-03 (instance GUID)
+  - Wave 2: 46-04 (handshake + key derivation + security), 46-05 (hash verification)
 
 ### Phase 47: Deprecation Cleanup
 **Goal**: Consumers who depended on RuntimeHooks or ShellHooks aliases get clear build failures pointing them to RuntimeAdapter and ShellAdapter
@@ -209,6 +211,6 @@ Note: Phases 47 and 48 are independent of each other (both depend only on 46) bu
 | 42. SDK Package | v0.8.0 | 2/2 | Complete | 2026-04-02 |
 | 43. Demo & Test Migration | v0.8.0 | 3/3 | Complete | 2026-04-02 |
 | 44. Documentation | v0.8.0 | 3/3 | Complete | 2026-04-02 |
-| 46. Shell-Assigned Keypair Handshake | v0.9.0 | 0/? | Not started | - |
+| 46. Shell-Assigned Keypair Handshake | v0.9.0 | 0/5 | Planned | - |
 | 47. Deprecation Cleanup | v0.9.0 | 0/? | Not started | - |
 | 48. Specification & Documentation | v0.9.0 | 0/? | Not started | - |
