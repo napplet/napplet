@@ -95,11 +95,17 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ `@napplet/sdk` exists as a standalone bundler-friendly package (thin wrappers + helpers) — v0.8.0 Phase 42 (PKG-02, PKG-03, SDK-01, SDK-02, SDK-03)
 - ✓ Demo napplets and test fixtures migrated to window.napplet namespaced API — v0.8.0 Phase 43 (ECO-01, ECO-02)
 - ✓ SPEC.md, shim README, and SDK README updated for shim/SDK split — v0.8.0 Phase 44 (ECO-03, ECO-04, ECO-05)
+- ✓ Shell-delegated keypair handshake (REGISTER/IDENTITY/AUTH) with deterministic key derivation — v0.9.0 Phase 46 (AUTH-01..04)
+- ✓ Shell-side aggregate hash verification with caching — v0.9.0 Phase 46 (VERIFY-01..03)
+- ✓ Storage rekeyed to `dTag:aggregateHash` (pubkey removed), persists across reloads — v0.9.0 Phase 46 (STORE-01..03)
+- ✓ Per-iframe persistent GUID for instance identity — v0.9.0 Phase 46 (INST-01)
+- ✓ Delegated keys confined to protocol auth, blocked from relay publishing — v0.9.0 Phase 46 (SEC-01, SEC-02)
+- ✓ RuntimeHooks/ShellHooks deprecated aliases removed — v0.9.0 Phase 47 (DEP-03, DEP-04)
+- ✓ SPEC.md Sections 2, 5, 14 updated for v0.9.0 handshake, storage, and security models — v0.9.0 Phase 48 (DOC-01..03)
 
 ### Active
 
-- [ ] Shell-assigned keypair handshake — napplet authenticates with shell-provided key (Phase 46, deferred to v0.9.0)
-- [ ] All v0.7.0 deprecated aliases removed (RuntimeHooks, ShellHooks) — scheduled v0.9.0
+(No active requirements — v0.9.0 milestone complete)
 
 ### Out of Scope
 
@@ -116,7 +122,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.8.0 complete (shim/SDK split). Starting v0.9.0 Identity & Trust — shell-delegated keypair handshake, storage persistence fix, aggregate hash verification. Phase 46 has full CONTEXT.md with 8 locked decisions. 8 packages in the monorepo.
+- **Current state**: v0.9.0 complete (Identity & Trust). Shell-delegated keypair handshake, pubkey-free storage scoping, aggregate hash verification, delegated key confinement, deprecated alias removal, and SPEC.md documentation all shipped. 8 packages in the monorepo.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
