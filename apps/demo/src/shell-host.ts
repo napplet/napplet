@@ -328,6 +328,36 @@ function createDemoHooks(notificationOnChange?: (notifications: readonly Notific
         const { verifyEvent } = await import('nostr-tools/pure');
         return verifyEvent(event as Parameters<typeof verifyEvent>[0]);
       },
+      randomBytes: (length: number): Uint8Array => crypto.getRandomValues(new Uint8Array(length)),
+      randomUUID: () => crypto.randomUUID(),
+    },
+    shellSecretPersistence: {
+      get(): Uint8Array | null {
+        try {
+          const hex = localStorage.getItem('napplet-shell-secret');
+          if (!hex) return null;
+          const bytes = new Uint8Array(hex.length / 2);
+          for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+          return bytes;
+        } catch { return null; }
+      },
+      set(secret: Uint8Array): void {
+        try {
+          const hex = Array.from(secret).map(b => b.toString(16).padStart(2, '0')).join('');
+          localStorage.setItem('napplet-shell-secret', hex);
+        } catch { /* localStorage unavailable */ }
+      },
+    },
+    guidPersistence: {
+      get(windowId: string): string | null {
+        try { return localStorage.getItem(`napplet-guid:${windowId}`); } catch { return null; }
+      },
+      set(windowId: string, guid: string): void {
+        try { localStorage.setItem(`napplet-guid:${windowId}`, guid); } catch { /* best-effort */ }
+      },
+      remove(windowId: string): void {
+        try { localStorage.removeItem(`napplet-guid:${windowId}`); } catch { /* best-effort */ }
+      },
     },
   };
 }
