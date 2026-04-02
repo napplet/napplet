@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0%
 - Phase order: Shim Restructure (41) -> SDK Package (42) -> Demo & Test Migration (43) -> Documentation (44)
 - Phase 41 is the largest (7 requirements) — namespacing + deprecation removal are tightly coupled
 - Phase 42 depends on window.napplet shape being final from Phase 41
+- Phase 45 added: IPC terminology cleanup — replace ~30 "inter-pane" occurrences in demo UI labels/logs with "ipc"
 
 ### Decisions
 
