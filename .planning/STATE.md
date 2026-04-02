@@ -4,8 +4,8 @@ milestone: v0.9.0
 milestone_name: Identity & Trust
 status: executing
 stopped_at: Phase 46 planned — 5 plans in 2 waves, 13/13 requirements covered
-last_updated: "2026-04-02T15:35:18.603Z"
-last_activity: 2026-04-02 -- Phase 46 execution started
+last_updated: "2026-04-02T15:36:35.228Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 3
   completed_phases: 1
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.9.0 started)
 
 ## Current Position
 
-Phase: 46 (shell-assigned-keypair-handshake-napplet-authenticates-with-shell-provided-key-instead-of-ephemeral-keypair-fixing-storage-persistence-across-reloads) — EXECUTING
-Plan: 1 of 5
+Phase: 47
+Plan: Not started
 Status: Executing Phase 46
-Last activity: 2026-04-02 -- Phase 46 execution started
+Last activity: 2026-04-02
 
 Progress: [░░░░░░░░░░] 0%
 
