@@ -463,7 +463,7 @@ See `@napplet/core` `constants.ts` for the authoritative `BusKind` constant defi
 
 The shell acts as a NIP-07 signer proxy for sandboxed napplets. Since napplets run in iframes without `allow-same-origin`, they cannot access the host page's `window.nostr` object directly. Instead, napplets send signer requests as ephemeral kind 29001 events, and the shell responds with kind 29002 events.
 
-The napplet-side SDK (`@napplet/shim`) provides a `window.nostr`-compatible interface that transparently bridges to the shell via postMessage.
+The napplet-side packages provide convenience layers over the raw wire protocol. `@napplet/shim` is a side-effect-only module that installs a `window.napplet` global with namespaced sub-objects (`relay`, `ipc`, `services`, `storage`) and a `window.nostr`-compatible NIP-07 interface. `@napplet/sdk` provides the same API surface as named TypeScript exports for bundler-consuming developers. Both delegate to the shell via postMessage.
 
 ### 4.2 Request-Response Protocol
 
@@ -1305,6 +1305,8 @@ function publishNote(content) {
 }
 ```
 
+> **Note:** The example above demonstrates the raw wire protocol. In practice, napplet developers use `@napplet/shim` (installs `window.napplet` global with `relay`, `ipc`, `services`, `storage` sub-objects) or `@napplet/sdk` (same API as named TypeScript imports). See the package READMEs for the convenience API.
+
 ### 16.2 Minimal Shell
 
 A minimal shell that hosts napplets in iframes:
@@ -1383,9 +1385,14 @@ window.addEventListener('message', (event) => {
 
 The portable SDK packages are in the [napplet](https://github.com/sandwichfarm/napplet) monorepo:
 
-- **@napplet/shim** (napplet-side SDK): `packages/shim/src/` (relay-shim.ts, index.ts, state-shim.ts, keyboard-shim.ts)
-- **@napplet/shell** (shell-side runtime): `packages/shell/src/` (shell-bridge.ts, state-proxy.ts, acl-store.ts, audio-manager.ts)
-- **@napplet/vite-plugin** (dev tooling): `packages/vite-plugin/src/` (NIP-5A manifest generation)
+- **@napplet/shim** (window installer): `packages/shim/src/` — side-effect-only module that installs `window.napplet` global and `window.nostr` NIP-07 bridge
+- **@napplet/sdk** (developer API): `packages/sdk/src/` — named TypeScript exports wrapping `window.napplet` for bundler consumers
+- **@napplet/core** (shared types): `packages/core/src/` — protocol types, constants, and bus kind definitions
+- **@napplet/runtime** (protocol engine): `packages/runtime/src/` — framework-agnostic NIP-01 message router, AUTH handler, ACL enforcement
+- **@napplet/acl** (access control): `packages/acl/src/` — pure, zero-dep ACL module with bitfield capabilities
+- **@napplet/services** (service handlers): `packages/services/src/` — audio and notification ServiceHandler implementations
+- **@napplet/shell** (browser adapter): `packages/shell/src/` — browser-specific shell adapter over runtime
+- **@napplet/vite-plugin** (dev tooling): `packages/vite-plugin/src/` — NIP-5A manifest generation at build time
 
 The Svelte reference implementation using these packages is [hyprgate](https://github.com/sandwichfarm/hyprgate).
 
