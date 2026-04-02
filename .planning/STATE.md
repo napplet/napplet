@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 - Phase 41 is the largest (7 requirements) — namespacing + deprecation removal are tightly coupled
 - Phase 42 depends on window.napplet shape being final from Phase 41
 - Phase 45 added: IPC terminology cleanup — replace ~30 "inter-pane" occurrences in demo UI labels/logs with "ipc"
+- Phase 46 added: Shell-assigned keypair handshake — napplet authenticates with shell-provided key instead of ephemeral keypair, fixing storage persistence across reloads. Root cause: agent shortcut made keypair ephemeral per page load, breaking storage scoping continuity.
 
 ### Decisions
 

@@ -218,3 +218,13 @@ Phases execute in numeric order: 41 -> 42 -> 43 -> 44
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 45 to break down)
+
+### Phase 46: Shell-assigned keypair handshake — napplet authenticates with shell-provided key instead of ephemeral keypair, fixing storage persistence across reloads
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 45
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 46 to break down)
