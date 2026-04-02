@@ -143,7 +143,7 @@
   1. Demo Chat and Bot napplets use `window.napplet.relay.*`, `window.napplet.ipc.*`, and `window.napplet.storage.*` with no references to old top-level shim exports
   2. All Playwright e2e tests pass against the new window.napplet API shape
   3. All Vitest unit/integration tests pass with the restructured shim
-**Plans**: TBD
+**Plans**: 3 (2 waves)
 **UI hint**: yes
 
 ### Phase 44: Documentation
@@ -206,5 +206,5 @@ Phases execute in numeric order: 41 -> 42 -> 43 -> 44
 | 40. Remaining Rename Gaps | v0.7.0 | 2/2 | Complete | 2026-04-02 |
 | 41. Shim Restructure | v0.8.0 | 0/0 | Not started | - |
 | 42. SDK Package | v0.8.0 | 0/0 | Not started | - |
-| 43. Demo & Test Migration | v0.8.0 | 0/0 | Not started | - |
+| 43. Demo & Test Migration | v0.8.0 | 0/3 | Planned | - |
 | 44. Documentation | v0.8.0 | 0/0 | Not started | - |
