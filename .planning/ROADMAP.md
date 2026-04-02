@@ -106,7 +106,7 @@
 
 - [x] **Phase 41: Shim Restructure** - Reorganize @napplet/shim into a pure window installer with namespaced window.napplet API and zero named exports (completed 2026-04-02)
 - [x] **Phase 42: SDK Package** - Create @napplet/sdk as a standalone bundler-friendly package wrapping window.napplet (completed 2026-04-02)
-- [ ] **Phase 43: Demo & Test Migration** - Update demo napplets and test suite for new window.napplet API shape
+- [x] **Phase 43: Demo & Test Migration** - Update demo napplets and test suite for new window.napplet API shape (completed 2026-04-02)
 - [ ] **Phase 44: Documentation** - Update SPEC.md and READMEs for shim/SDK split
 
 ## Phase Details
@@ -206,5 +206,5 @@ Phases execute in numeric order: 41 -> 42 -> 43 -> 44
 | 40. Remaining Rename Gaps | v0.7.0 | 2/2 | Complete | 2026-04-02 |
 | 41. Shim Restructure | v0.8.0 | 2/2 | Complete    | 2026-04-02 |
 | 42. SDK Package | v0.8.0 | 2/2 | Complete    | 2026-04-02 |
-| 43. Demo & Test Migration | v0.8.0 | 0/3 | Planned | - |
+| 43. Demo & Test Migration | v0.8.0 | 3/3 | Complete   | 2026-04-02 |
 | 44. Documentation | v0.8.0 | 0/3 | Planned | - |
