@@ -6,20 +6,21 @@
  * - Listens via on('chat:message') for messages from chat napplet
  * - Auto-responds based on learned rules or default personality
  * - Supports /teach command: "/teach hello Hi there!"
- * - Stores learned rules in nappState
- * - Emits responses via emit('bot:response')
+ * - Stores learned rules in storage
+ * - Emits responses via ipc.emit('bot:response')
  */
-import { emit, on, nappState } from '@napplet/shim';
+import '@napplet/shim';
+import { ipc, storage } from '@napplet/sdk';
 
 // ─── Notification Helpers ─────────────────────────────────────────────────────
 
 /**
  * Emit a notifications:create event through the real napplet→service path.
- * The shell routes this INTER_PANE event to the notification service handler.
+ * The shell routes this IPC_PEER event to the notification service handler.
  */
 function notifyCreate(title: string, body: string): void {
   try {
-    emit('notifications:create', [], JSON.stringify({ title, body }));
+    ipc.emit('notifications:create', [], JSON.stringify({ title, body }));
   } catch {
     /* best-effort — don't break the main flow if notifications are denied */
   }
@@ -76,7 +77,7 @@ function log(text: string, type: 'heard' | 'replied' | 'learned' | 'error' | 'in
 
 async function loadRules(): Promise<void> {
   try {
-    const raw = await nappState.getItem(RULES_KEY);
+    const raw = await storage.getItem(RULES_KEY);
     if (raw) {
       rules = JSON.parse(raw);
       log(`loaded ${Object.keys(rules).length} rules from storage`, 'info');
@@ -89,7 +90,7 @@ async function loadRules(): Promise<void> {
 
 async function saveRules(): Promise<void> {
   try {
-    await nappState.setItem(RULES_KEY, JSON.stringify(rules));
+    await storage.setItem(RULES_KEY, JSON.stringify(rules));
   } catch (error) {
     log(`state write failed -- ${formatError(error, 'denied: state:write')}`, 'error');
   }
@@ -124,7 +125,7 @@ function handleTeachCommand(text: string): boolean {
   notifyCreate('Bot activity', `learned: "${trigger}" → "${response}"`);
 
   // Acknowledge the teach command
-  emit('bot:response', [], JSON.stringify({
+  ipc.emit('bot:response', [], JSON.stringify({
     text: `learned! I'll respond "${response}" when I hear "${trigger}"`,
     timestamp: Date.now(),
   }));
@@ -168,7 +169,7 @@ function handleChatMessage(payload: unknown): void {
 
   // Emit response to chat via ipc (exercises sign:event for the emit)
   try {
-    emit('bot:response', [], JSON.stringify({
+    ipc.emit('bot:response', [], JSON.stringify({
       text: response,
       timestamp: Date.now(),
     }));
@@ -198,7 +199,7 @@ window.addEventListener('message', (event) => {
     loadRules();
 
     // Listen for chat messages via ipc
-    on('chat:message', handleChatMessage);
+    ipc.on('chat:message', handleChatMessage);
 
     log('subscribed to ipc chat:message topic', 'info');
   }

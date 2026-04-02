@@ -3,24 +3,24 @@
  *
  * Exercises: relay:write, relay:read, sign:event, state:read, state:write, ipc emit.
  *
- * - Sends messages via publish() to relay (relay:write + sign:event)
- * - Subscribes to incoming messages via subscribe() (relay:read)
- * - Stores chat history via nappState (state:read + state:write)
- * - Emits messages to bot via emit('chat:message') (ipc)
- * - Listens for bot responses via on('bot:response') (ipc)
+ * - Sends messages via relay.publish() (relay:write + sign:event)
+ * - Subscribes to incoming messages via relay.subscribe() (relay:read)
+ * - Stores chat history via storage (state:read + state:write)
+ * - Emits messages to bot via ipc.emit('chat:message')
+ * - Listens for bot responses via ipc.on('bot:response')
  */
-import { publish, subscribe, emit, on, nappState } from '@napplet/shim';
-import type { EventTemplate } from '@napplet/shim';
+import '@napplet/shim';
+import { relay, ipc, storage, type EventTemplate } from '@napplet/sdk';
 
 // ─── Notification Helpers ─────────────────────────────────────────────────────
 
 /**
  * Emit a notifications:create event through the real napplet→service path.
- * The shell routes this INTER_PANE event to the notification service handler.
+ * The shell routes this IPC_PEER event to the notification service handler.
  */
 function notifyCreate(title: string, body: string): void {
   try {
-    emit('notifications:create', [], JSON.stringify({ title, body }));
+    ipc.emit('notifications:create', [], JSON.stringify({ title, body }));
   } catch {
     /* best-effort — don't break the main flow if notifications are denied */
   }
@@ -62,7 +62,7 @@ function escapeHtml(s: string): string {
 
 async function loadHistory(): Promise<void> {
   try {
-    const raw = await nappState.getItem(HISTORY_KEY);
+    const raw = await storage.getItem(HISTORY_KEY);
     if (raw) {
       const entries: string[] = JSON.parse(raw);
       for (const entry of entries.slice(-10)) {
@@ -77,11 +77,11 @@ async function loadHistory(): Promise<void> {
 
 async function saveToHistory(text: string): Promise<void> {
   try {
-    const raw = await nappState.getItem(HISTORY_KEY);
+    const raw = await storage.getItem(HISTORY_KEY);
     const entries: string[] = raw ? JSON.parse(raw) : [];
     entries.push(text);
     if (entries.length > MAX_HISTORY) entries.splice(0, entries.length - MAX_HISTORY);
-    await nappState.setItem(HISTORY_KEY, JSON.stringify(entries));
+    await storage.setItem(HISTORY_KEY, JSON.stringify(entries));
   } catch (error) {
     addMessage(`state history save failed -- ${formatError(error, 'denied: state:write')}`, 'system');
   }
@@ -99,7 +99,7 @@ async function sendMessage(): Promise<void> {
 
   try {
     pendingAcks.push('ipc send');
-    emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
+    ipc.emit('chat:message', [], JSON.stringify({ text, timestamp: Date.now() }));
     addMessage('ipc send attempted -- chat:message', 'system');
     // Emit notification so the host can surface this message send as a toast
     notifyCreate('Chat message sent', text.length > 60 ? text.slice(0, 60) + '…' : text);
@@ -116,7 +116,7 @@ async function sendMessage(): Promise<void> {
       tags: [['t', 'demo-chat']],
       created_at: Math.floor(Date.now() / 1000),
     };
-    await publish(template, []);
+    await relay.publish(template, []);
     pendingAcks.push('relay publish');
   } catch (error) {
     addMessage(`relay publish failed -- ${formatError(error, 'denied: relay:write')}`, 'system');
@@ -149,7 +149,7 @@ window.addEventListener('message', (event) => {
 
     // Subscribe to relay events (exercises relay:read)
     try {
-      subscribe(
+      relay.subscribe(
         [{ kinds: [1], '#t': ['demo-chat'], limit: 10 }],
         (event) => {
           // Don't show our own messages again
@@ -164,7 +164,7 @@ window.addEventListener('message', (event) => {
     }
 
     // Listen for bot responses via ipc
-    on('bot:response', (payload: unknown) => {
+    ipc.on('bot:response', (payload: unknown) => {
       const data = payload as { text?: string };
       if (data.text) {
         addMessage('ipc receive -- bot:response', 'system');
