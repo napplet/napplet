@@ -216,7 +216,7 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
         // Trace mode: hop-by-hop sweep animation, no persistent state, no node flashing
         const direction = msg.direction === 'napplet->shell' ? 'out' as const : 'in' as const;
         const failureEdgeIndex = isFailure ? identifyFailureNode(nodes, msg) : edges.length;
-        animateTrace(edgeFlasher, edges, cls, failureEdgeIndex, direction);
+        animateTrace(edgeFlasher, edges, nodes, topology, cls, failureEdgeIndex, direction);
       } else if (!isFailure) {
         // Success: all edges get 'active' in the message direction
         const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';

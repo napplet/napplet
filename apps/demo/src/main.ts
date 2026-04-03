@@ -36,6 +36,7 @@ import {
   getNodeOutboundColor,
   setPersistenceMode,
   getPersistenceMode,
+  clearAllNodeOverlays,
 } from './color-state.js';
 import type { PersistenceMode } from './color-state.js';
 import { buildDemoTopology, renderDemoTopology, getServiceNodeId, initTopologyEdges, wireServiceToggles } from './topology.js';
@@ -478,16 +479,12 @@ document.addEventListener('click', (e) => {
 
       // When entering trace mode, clear persistent node color overlays
       if (mode === 'trace') {
-        for (const node of topology.nodes) {
-          const inEl = document.querySelector<HTMLElement>(
-            `[data-color-overlay="${node.id}"][data-color-direction="inbound"]`,
-          );
-          const outEl = document.querySelector<HTMLElement>(
-            `[data-color-overlay="${node.id}"][data-color-direction="outbound"]`,
-          );
-          if (inEl) inEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
-          if (outEl) outEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
-        }
+        clearAllNodeOverlays();
+      }
+
+      // When leaving trace mode, clear node overlays so they rebuild from edge state
+      if (wasTrace && mode !== 'trace') {
+        clearAllNodeOverlays();
       }
 
       debuggerEl?.addSystemMessage(`color mode changed: ${mode}`);

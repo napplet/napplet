@@ -1,8 +1,8 @@
 /**
  * color-state.ts — Persistent directional color state for topology edges and nodes.
  *
- * Tracks per-edge-direction pass/fail/warn results using one of three
- * persistence modes: rolling window (default), decay, or last-message wins.
+ * Tracks per-edge-direction pass/fail/warn results using one of four
+ * persistence modes: rolling window (default), decay, last-message wins, or trace.
  * Derives composite node colors from connected edge states.
  */
 
@@ -30,6 +30,8 @@ interface EdgeDirectionState {
 
 let _mode: PersistenceMode = 'rolling';
 let _topology: DemoTopology | null = null;
+let _recording = false;
+let _decayTimer: ReturnType<typeof setInterval> | null = null;
 
 /**
  * State map keyed by `${edgeId}:${direction}` where direction is 'out' or 'in'.
@@ -42,16 +44,30 @@ const _changeListeners: Array<() => void> = [];
 
 /**
  * Initialize color state for a topology. Call once after topology is built.
- * Clears any previous state.
+ * Clears any previous state. Recording starts after a short delay so initial
+ * AUTH handshake messages don't populate the state.
  */
 export function initColorState(topology: DemoTopology): void {
   _topology = topology;
+  _recording = false;
   _state.clear();
   for (const edge of topology.edges) {
     for (const dir of ['out', 'in'] as const) {
       _state.set(`${edge.id}:${dir}`, { window: [], lastEntry: null });
     }
   }
+  // Start recording after initial AUTH handshake settles
+  setTimeout(() => {
+    _recording = true;
+  }, 3000);
+  _startDecayTimerIfNeeded();
+}
+
+/**
+ * Enable recording immediately. Call if you need to bypass the startup delay.
+ */
+export function enableRecording(): void {
+  _recording = true;
 }
 
 // ─── Persistence Mode ───────────────────────────────────────────────────────
@@ -68,7 +84,24 @@ export function setPersistenceMode(mode: PersistenceMode): void {
     state.window = [];
     state.lastEntry = null;
   }
+  _startDecayTimerIfNeeded();
   _notifyChange();
+}
+
+// ─── Decay Timer ──────────────────────────────────────────────────────────
+
+function _startDecayTimerIfNeeded(): void {
+  // Clear existing timer
+  if (_decayTimer !== null) {
+    clearInterval(_decayTimer);
+    _decayTimer = null;
+  }
+  // Only run periodic checks in decay mode
+  if (_mode === 'decay') {
+    _decayTimer = setInterval(() => {
+      _notifyChange();
+    }, 200);
+  }
 }
 
 // ─── Recording ──────────────────────────────────────────────────────────────
@@ -80,6 +113,8 @@ export function setPersistenceMode(mode: PersistenceMode): void {
  * @param color - The classified color for this message
  */
 export function recordEdgeColor(edgeId: string, direction: 'out' | 'in', color: ColorClass): void {
+  // Don't record until startup delay passes
+  if (!_recording) return;
   // Trace mode: persistent state is not accumulated — animations are ephemeral
   if (_mode === 'trace') return;
   const key = `${edgeId}:${direction}`;
@@ -193,6 +228,37 @@ function _deriveNodeColor(nodeId: string, direction: 'out' | 'in'): ColorClass |
   if (hasBlocked && !hasActive && !hasAmber) return 'blocked';
   if (hasActive && !hasBlocked && !hasAmber) return 'active';
   return 'amber';
+}
+
+// ─── Trace Mode: Direct Node Overlay Updates ────────────────────────────────
+
+/**
+ * Directly set a node overlay color during trace mode.
+ * Bypasses the persistent state system — used by trace-animator
+ * to update node borders in sync with edge sweeps.
+ */
+export function setNodeOverlayColor(
+  nodeId: string,
+  direction: 'inbound' | 'outbound',
+  color: ColorClass | null,
+): void {
+  const el = document.querySelector<HTMLElement>(
+    `[data-color-overlay="${nodeId}"][data-color-direction="${direction}"]`,
+  );
+  if (!el) return;
+  el.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+  if (color) el.classList.add(`node-color-${color}`);
+}
+
+/**
+ * Clear all node overlay colors. Used when entering trace mode
+ * or when trace animations complete.
+ */
+export function clearAllNodeOverlays(): void {
+  const overlays = document.querySelectorAll<HTMLElement>('.node-color-overlay');
+  for (const el of overlays) {
+    el.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+  }
 }
 
 // ─── Change Notification ────────────────────────────────────────────────────
