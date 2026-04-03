@@ -107,7 +107,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 - [ ] Expose protocol magic numbers in demo UI with editing
 - [ ] ACL detail panel shows restrictions, rejection reasons (what + why)
-- [ ] Persistent edge/node coloring reflects actual pass/fail/warn routing state
+- [x] Persistent edge/node coloring reflects actual pass/fail/warn routing state — Validated in Phase 51: Accurate Color Routing
 - [ ] Per-message animation trace mode (toggle)
 - [ ] Disable/enable any service (audio, notifications, signer, relay pool, cache)
 - [ ] Toggle individual capabilities (e.g. sign:nip44 off, sign:event on)
@@ -204,4 +204,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-03 after v0.10.0 milestone start*
+*Last updated: 2026-04-03 after Phase 51 (Accurate Color Routing) completion*
