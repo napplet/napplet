@@ -493,7 +493,8 @@ export function renderDemoTopology(topology: DemoTopology): string {
       <div id="color-mode-bar" style="display:flex;align-items:center;justify-content:flex-end;padding:0 4px;min-height:24px">
         <span style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#555">color mode</span>
         <div class="color-mode-toggle">
-          <button class="color-mode-btn color-mode-active" data-color-mode="rolling">rolling</button>
+          <button class="color-mode-btn color-mode-active" data-color-mode="flash">flash</button>
+          <button class="color-mode-btn" data-color-mode="rolling">rolling</button>
           <button class="color-mode-btn" data-color-mode="decay">decay</button>
           <button class="color-mode-btn" data-color-mode="last-message">last</button>
           <button class="color-mode-btn" data-color-mode="trace">trace</button>

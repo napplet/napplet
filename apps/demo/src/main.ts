@@ -464,9 +464,10 @@ document.addEventListener('click', (e) => {
   if (colorModeBtn) {
     const mode = colorModeBtn.dataset.colorMode as PersistenceMode;
     if (mode) {
+      const prevMode = getPersistenceMode();
+
       // Cancel any pending trace animations before switching modes
-      const wasTrace = getPersistenceMode() === 'trace';
-      if (wasTrace) {
+      if (prevMode === 'trace') {
         cancelAllTraceAnimations(edgeFlasher, topology.edges.map((e) => e.id));
       }
 
@@ -477,14 +478,15 @@ document.addEventListener('click', (e) => {
         b.classList.toggle('color-mode-active', (b as HTMLElement).dataset.colorMode === mode);
       });
 
-      // When entering trace mode, clear persistent node color overlays
-      if (mode === 'trace') {
+      // Clear node overlays when entering ephemeral modes or leaving them
+      const ephemeral = ['flash', 'trace'];
+      if (ephemeral.includes(mode) || ephemeral.includes(prevMode)) {
         clearAllNodeOverlays();
-      }
-
-      // When leaving trace mode, clear node overlays so they rebuild from edge state
-      if (wasTrace && mode !== 'trace') {
-        clearAllNodeOverlays();
+        // Also reset LeaderLine edges to resting
+        for (const edge of topology.edges) {
+          edgeFlasher.setColor(edge.id, 'out', null);
+          edgeFlasher.setColor(edge.id, 'in', null);
+        }
       }
 
       debuggerEl?.addSystemMessage(`color mode changed: ${mode}`);

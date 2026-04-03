@@ -16,7 +16,7 @@ import {
   getShellAclEdgeId,
   getShellNodeId,
 } from './topology.js';
-import { recordEdgeColor, getEdgeColor, onColorStateChange, getPersistenceMode } from './color-state.js';
+import { recordEdgeColor, getEdgeColor, onColorStateChange, getPersistenceMode, setNodeOverlayColor } from './color-state.js';
 import { animateTrace } from './trace-animator.js';
 import { demoConfig } from './demo-config.js';
 const TOPOLOGY_NODE_ACL = 'topology-node-acl';
@@ -197,18 +197,34 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
     if (highlightPath && edgeFlasher) {
       const { nodes, edges } = highlightPath;
       const isFailure = cls === 'blocked';
-      const isTrace = getPersistenceMode() === 'trace';
+      const mode = getPersistenceMode();
+      const failureNodeIndex = isFailure ? identifyFailureNode(nodes, msg) : edges.length;
+      const direction = msg.direction === 'napplet->shell' ? 'out' as const : 'in' as const;
 
-      if (isTrace) {
-        // Trace mode: hop-by-hop sweep animation, no persistent state, no node flashing
-        const direction = msg.direction === 'napplet->shell' ? 'out' as const : 'in' as const;
-        const failureEdgeIndex = isFailure ? identifyFailureNode(nodes, msg) : edges.length;
-        animateTrace(edgeFlasher, edges, nodes, topology, cls, failureEdgeIndex, direction);
+      if (mode === 'trace') {
+        // Trace: hop-by-hop sweep animation with node overlays
+        animateTrace(edgeFlasher, edges, nodes, topology, cls, failureNodeIndex, direction);
+      } else if (mode === 'flash') {
+        // Flash: all edges flash simultaneously, revert after FLASH_DURATION. Like the original.
+        for (let i = 0; i < edges.length; i++) {
+          const edgeColor = i < failureNodeIndex ? 'active' as const : cls;
+          edgeFlasher.flashDirection(edges[i], direction, edgeColor);
+        }
+        // Flash node overlays too
+        for (let i = 0; i < nodes.length; i++) {
+          const nodeColor = i < failureNodeIndex ? 'active' as const : cls;
+          const overlayDir = direction === 'out' ? 'outbound' : 'inbound';
+          setNodeOverlayColor(nodes[i], overlayDir, nodeColor);
+        }
+        // Revert node overlays after flash duration
+        setTimeout(() => {
+          for (const nodeId of nodes) {
+            const overlayDir = direction === 'out' ? 'outbound' : 'inbound';
+            setNodeOverlayColor(nodeId, overlayDir, null);
+          }
+        }, demoConfig.get('demo.FLASH_DURATION'));
       } else {
-        // Persistent modes: record color state, let onColorStateChange render via setColor()
-        const failureNodeIndex = isFailure ? identifyFailureNode(nodes, msg) : edges.length;
-        const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';
-
+        // Persistent modes (rolling, decay, last-message): record state, rendered by onColorStateChange
         for (let i = 0; i < edges.length; i++) {
           if (i < failureNodeIndex) {
             recordEdgeColor(edges[i], direction, 'active');

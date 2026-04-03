@@ -12,7 +12,7 @@ import type { DemoTopology } from './topology.js';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type ColorClass = 'active' | 'blocked';
-export type PersistenceMode = 'rolling' | 'decay' | 'last-message' | 'trace';
+export type PersistenceMode = 'flash' | 'rolling' | 'decay' | 'last-message' | 'trace';
 
 interface EdgeDirectionEntry {
   color: ColorClass;
@@ -28,7 +28,7 @@ interface EdgeDirectionState {
 
 // ─── Module State ────────────────────────────────────────────────────────────
 
-let _mode: PersistenceMode = 'rolling';
+let _mode: PersistenceMode = 'flash';
 let _topology: DemoTopology | null = null;
 let _recording = false;
 let _decayTimer: ReturnType<typeof setInterval> | null = null;
@@ -115,8 +115,8 @@ function _startDecayTimerIfNeeded(): void {
 export function recordEdgeColor(edgeId: string, direction: 'out' | 'in', color: ColorClass): void {
   // Don't record until startup delay passes
   if (!_recording) return;
-  // Trace mode: persistent state is not accumulated — animations are ephemeral
-  if (_mode === 'trace') return;
+  // Flash and trace modes: no persistent state — animations are ephemeral
+  if (_mode === 'trace' || _mode === 'flash') return;
   const key = `${edgeId}:${direction}`;
   const state = _state.get(key);
   if (!state) return;
@@ -152,6 +152,8 @@ export function getEdgeColor(edgeId: string, direction: 'out' | 'in'): ColorClas
       return _resolveDecay(state);
     case 'last-message':
       return _resolveLastMessage(state);
+    case 'flash':
+      return null; // Flash mode has no persistent state — edges flash and revert
     case 'trace':
       return null; // Trace mode has no persistent state — edges driven by animations
   }
