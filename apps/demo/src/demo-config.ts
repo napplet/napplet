@@ -197,8 +197,8 @@ const CONSTANT_DEFS: ConstantDef[] = [
   {
     key: 'demo.ROLLING_WINDOW_SIZE',
     label: 'Color Rolling Window',
-    defaultValue: 10,
-    currentValue: 10,
+    defaultValue: 5,
+    currentValue: 5,
     unit: 'count',
     min: 1,
     max: 50,
@@ -211,8 +211,8 @@ const CONSTANT_DEFS: ConstantDef[] = [
   {
     key: 'demo.DECAY_DURATION_MS',
     label: 'Color Decay Duration',
-    defaultValue: 5000,
-    currentValue: 5000,
+    defaultValue: 2000,
+    currentValue: 2000,
     unit: 'ms',
     min: 500,
     max: 30000,

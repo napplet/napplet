@@ -159,11 +159,14 @@ export function getEdgeColor(edgeId: string, direction: 'out' | 'in'): ColorClas
 
 function _resolveRolling(state: EdgeDirectionState): ColorClass | null {
   if (state.window.length === 0) return null;
-  // Any failures in the window = blocked. Failures must be visible even if
-  // outnumbered by prior successes — otherwise blocking a napplet still looks green.
+  let blocked = 0;
+  let active = 0;
   for (const entry of state.window) {
-    if (entry.color === 'blocked') return 'blocked';
+    if (entry.color === 'blocked') blocked++;
+    else active++;
   }
+  // Majority wins — but with small window (default 5), recent state dominates quickly.
+  if (blocked >= active) return 'blocked';
   return 'active';
 }
 
