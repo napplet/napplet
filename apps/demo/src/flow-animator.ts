@@ -34,10 +34,7 @@ function flashEdge(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
   if (edge) flashClass(edge, cls);
 }
 
-function flashNode(nodeId: string, cls: 'active' | 'amber' | 'blocked'): void {
-  const node = document.getElementById(nodeId);
-  if (node) flashClass(node, cls);
-}
+
 
 function getNappletName(topology: DemoTopology, windowId?: string): string | null {
   if (!windowId) return null;
@@ -227,23 +224,10 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
           edgeFlasher.flashDirection(edgeId, direction, 'active');
           recordEdgeColor(edgeId, direction, 'active');
         }
-        for (const nodeId of nodes) {
-          flashNode(nodeId, 'active');
-        }
       } else {
         // Failure: identify failure point and split path
         const failureNodeIndex = identifyFailureNode(nodes, msg);
         const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';
-
-        for (let i = 0; i < nodes.length; i++) {
-          if (i < failureNodeIndex) {
-            // Before failure: green
-            flashNode(nodes[i], 'active');
-          } else {
-            // At or after failure: red or amber
-            flashNode(nodes[i], cls);
-          }
-        }
 
         for (let i = 0; i < edges.length; i++) {
           if (i < failureNodeIndex) {
@@ -259,7 +243,6 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
       }
     } else if (highlightPath) {
       // Fallback without edgeFlasher (unlikely but safe)
-      highlightPath.nodes.forEach((nodeId) => flashNode(nodeId, cls));
       highlightPath.edges.forEach((edgeId) => flashEdge(edgeId, cls));
     }
 

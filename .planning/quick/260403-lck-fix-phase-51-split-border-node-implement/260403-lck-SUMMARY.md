@@ -20,6 +20,12 @@ Replaced the Phase 51 split-border color overlays from subtle background tints (
 ### Deviation Fix (`apps/demo/src/main.ts`)
 - `updateSignerNodeDisplay()` and `injectNotificationControls()` updated to target `.topology-node-content` wrapper instead of the article element, preventing overlay div removal during dynamic updates
 
+### Wiring: Replace old border system (`apps/demo/src/flow-animator.ts`, `apps/demo/index.html`)
+- Removed old `.node-box.active/blocked/amber` CSS rules that applied single-color borders
+- Removed all `flashNode()` calls — node colors are now driven entirely by the overlay system via `onColorStateChange` + `getNodeInboundColor()`/`getNodeOutboundColor()`
+- Removed unused `flashNode()` function
+- Edge color recording (`recordEdgeColor()`) feeds the overlay system which derives node colors from connected edge states
+
 ## Result
 
-Topology nodes now display visible colored left/right border frames reflecting inbound/outbound routing state, instead of nearly-invisible background tints. The approach simulates split-color borders using CSS that browsers actually support.
+Topology nodes now display visible colored left/right border frames reflecting directional inbound/outbound routing state. The split-border overlays fully replace the old single-color border system — nodes show green outbound + red inbound simultaneously instead of a single amber compromise.
