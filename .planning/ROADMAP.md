@@ -129,7 +129,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 49: Constants Panel** - Expose and edit protocol magic numbers in a dedicated UI panel (completed 2026-04-03)
 - [x] **Phase 50: ACL Detail Panel** - Show per-napplet restrictions, capabilities, and rejection reasons with full event context (completed 2026-04-03)
-- [ ] **Phase 51: Accurate Color Routing** - Directional edge coloring and composite node colors reflecting actual pass/fail/warn state
+- [x] **Phase 51: Accurate Color Routing** - Directional edge coloring and composite node colors reflecting actual pass/fail/warn state (completed 2026-04-03)
 - [ ] **Phase 52: Service & Capability Toggles** - Enable/disable services and toggle individual ACL capabilities with live-reload
 - [ ] **Phase 53: Per-Message Trace Mode** - Animated hop-by-hop message trace through the topology graph
 
@@ -200,6 +200,6 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 |-------|----------------|--------|-----------|
 | 49. Constants Panel | 0/4 | Complete    | 2026-04-03 |
 | 50. ACL Detail Panel | 4/4 | Complete    | 2026-04-03 |
-| 51. Accurate Color Routing | 0/TBD | Not started | - |
+| 51. Accurate Color Routing | 4/4 | Complete   | 2026-04-03 |
 | 52. Service & Capability Toggles | 0/TBD | Not started | - |
 | 53. Per-Message Trace Mode | 0/TBD | Not started | - |
