@@ -128,7 +128,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Make the demo an honest, interactive sandbox -- expose protocol internals, fix color accuracy, and let users toggle services/capabilities to see real system behavior.
 
 - [x] **Phase 49: Constants Panel** - Expose and edit protocol magic numbers in a dedicated UI panel (completed 2026-04-03)
-- [ ] **Phase 50: ACL Detail Panel** - Show per-napplet restrictions, capabilities, and rejection reasons with full event context
+- [x] **Phase 50: ACL Detail Panel** - Show per-napplet restrictions, capabilities, and rejection reasons with full event context (completed 2026-04-03)
 - [ ] **Phase 51: Accurate Color Routing** - Directional edge coloring and composite node colors reflecting actual pass/fail/warn state
 - [ ] **Phase 52: Service & Capability Toggles** - Enable/disable services and toggle individual ACL capabilities with live-reload
 - [ ] **Phase 53: Per-Message Trace Mode** - Animated hop-by-hop message trace through the topology graph
@@ -154,7 +154,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. User can select a napplet and see all current capabilities (granted and denied) in the detail panel
   2. User can see a history of ACL rejections for the selected napplet, each showing the rejected event, the missing capability, and a human-readable reason
   3. Rejected event context includes the full NIP-01 message (kind, tags, content summary) so the user understands what was attempted
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 **UI hint**: yes
 
 ### Phase 51: Accurate Color Routing
@@ -199,7 +199,7 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 49. Constants Panel | 0/4 | Complete    | 2026-04-03 |
-| 50. ACL Detail Panel | 0/TBD | Not started | - |
+| 50. ACL Detail Panel | 4/4 | Complete    | 2026-04-03 |
 | 51. Accurate Color Routing | 0/TBD | Not started | - |
 | 52. Service & Capability Toggles | 0/TBD | Not started | - |
 | 53. Per-Message Trace Mode | 0/TBD | Not started | - |
