@@ -11,6 +11,7 @@
 - ✅ **v0.7.0 Ontology Audit and Adjustments** — Phases 34-40 (shipped 2026-04-02) — [Archive](milestones/v0.7.0-ROADMAP.md)
 - ✅ **v0.8.0 Shim/SDK Split** — Phases 41-44 (shipped 2026-04-02) — [Archive](milestones/v0.8.0-ROADMAP.md)
 - ✅ **v0.9.0 Identity & Trust** — Phases 46-48 (shipped 2026-04-03) — [Archive](milestones/v0.9.0-ROADMAP.md)
+- 🚧 **v0.10.0 Demo Consistency and Usability Pass** — Phases 49-53 (in progress)
 
 ## Phases
 
@@ -121,3 +122,84 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 48: Specification & Documentation** - Update SPEC.md Sections 2, 5, and 14 for new handshake, storage, and security models (completed 2026-04-02)
 
 </details>
+
+### v0.10.0 Demo Consistency and Usability Pass (In Progress)
+
+**Milestone Goal:** Make the demo an honest, interactive sandbox -- expose protocol internals, fix color accuracy, and let users toggle services/capabilities to see real system behavior.
+
+- [ ] **Phase 49: Constants Panel** - Expose and edit protocol magic numbers in a dedicated UI panel
+- [ ] **Phase 50: ACL Detail Panel** - Show per-napplet restrictions, capabilities, and rejection reasons with full event context
+- [ ] **Phase 51: Accurate Color Routing** - Directional edge coloring and composite node colors reflecting actual pass/fail/warn state
+- [ ] **Phase 52: Service & Capability Toggles** - Enable/disable services and toggle individual ACL capabilities with live-reload
+- [ ] **Phase 53: Per-Message Trace Mode** - Animated hop-by-hop message trace through the topology graph
+
+## Phase Details
+
+### Phase 49: Constants Panel
+**Goal**: Users can see and tweak every protocol magic number from the demo UI, making hidden behavior transparent
+**Depends on**: Nothing (first phase of v0.10.0)
+**Requirements**: TRANS-01, TRANS-02
+**Success Criteria** (what must be TRUE):
+  1. User can open a constants panel that lists all protocol magic numbers (buffer sizes, timeouts, quotas, replay window, flash durations) with their current values
+  2. User can edit any constant value in the panel and the change takes immediate effect on subsequent protocol operations
+  3. Edited values persist for the session (survive panel close/reopen) but reset on page reload
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 50: ACL Detail Panel
+**Goal**: Users can inspect exactly what ACL enforcement does for a selected napplet -- what is allowed, what is denied, and why a specific message was rejected
+**Depends on**: Nothing (can start independently; logically follows Phase 49 but no hard dependency)
+**Requirements**: TRANS-03, TRANS-04
+**Success Criteria** (what must be TRUE):
+  1. User can select a napplet and see all current capabilities (granted and denied) in the detail panel
+  2. User can see a history of ACL rejections for the selected napplet, each showing the rejected event, the missing capability, and a human-readable reason
+  3. Rejected event context includes the full NIP-01 message (kind, tags, content summary) so the user understands what was attempted
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 51: Accurate Color Routing
+**Goal**: Topology edges and nodes reflect actual protocol pass/fail/warn state with directional accuracy, replacing uniform coloring
+**Depends on**: Nothing (can start independently)
+**Requirements**: COLOR-01, COLOR-02
+**Success Criteria** (what must be TRUE):
+  1. Each topology edge half (source-side and target-side) is independently colored based on the directional pass/fail state of messages flowing through it
+  2. Node border/background color is derived as a composite of its connected edge states: green when all edges pass, red when all edges fail, amber when edges are mixed
+  3. Color changes are persistent (not just flash-on-event) and update as the cumulative routing state changes
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 52: Service & Capability Toggles
+**Goal**: Users can disable any service and toggle individual ACL capabilities per napplet, with changes taking effect on the next message
+**Depends on**: Phase 50 (ACL detail panel provides visibility into capability state and rejection effects)
+**Requirements**: TOGL-01, TOGL-02, TOGL-03
+**Success Criteria** (what must be TRUE):
+  1. User can disable/enable any registered service (signer, notifications, audio, relay pool, cache) via the demo UI, and the service immediately stops/starts handling messages
+  2. User can toggle individual ACL capabilities (sign:event, sign:nip44, state:read, state:write, etc.) per napplet via the demo UI
+  3. Service and ACL changes take effect on the very next message without requiring re-register or page reload
+  4. Disabled services and revoked capabilities produce visible rejection entries in the ACL detail panel (when viewed)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 53: Per-Message Trace Mode
+**Goal**: Users can enable a trace mode that animates individual messages hop-by-hop through the topology graph, making the routing path visible
+**Depends on**: Phase 51 (accurate color routing provides the directional edge infrastructure that trace animations build on)
+**Requirements**: COLOR-03
+**Success Criteria** (what must be TRUE):
+  1. User can toggle trace mode on/off via the demo UI
+  2. With trace mode on, each protocol message animates through the graph hop-by-hop with a visible moving indicator and directional fade
+  3. Trace animation speed is perceptible but does not block subsequent messages (messages queue or overlap gracefully)
+**Plans**: TBD
+**UI hint**: yes
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 49. Constants Panel | 0/TBD | Not started | - |
+| 50. ACL Detail Panel | 0/TBD | Not started | - |
+| 51. Accurate Color Routing | 0/TBD | Not started | - |
+| 52. Service & Capability Toggles | 0/TBD | Not started | - |
+| 53. Per-Message Trace Mode | 0/TBD | Not started | - |

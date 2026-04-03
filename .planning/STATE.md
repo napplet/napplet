@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v0.10.0
 milestone_name: Demo Consistency and Usability Pass
 status: active
-stopped_at: Defining requirements
+stopped_at: Roadmap created
 last_updated: "2026-04-03"
 last_activity: 2026-04-03
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,15 +20,26 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-04-03)
 
-**Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.10.0 Demo Consistency and Usability Pass
+**Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
+**Current focus:** v0.10.0 Phase 49 (Constants Panel)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-03 — Milestone v0.10.0 started
+Phase: 49 of 53 (Constants Panel) -- first of 5 phases in v0.10.0
+Plan: --
+Status: Ready to plan
+Last activity: 2026-04-03 -- Roadmap created for v0.10.0
+
+Progress: [..........] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0 (v0.10.0)
+- Average duration: --
+- Total execution time: --
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -50,5 +61,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Defining requirements for v0.10.0
-Resume: Define requirements, then `/gsd:plan-phase`
+Stopped at: Roadmap created for v0.10.0 (5 phases, 10 requirements)
+Resume: `/gsd:plan-phase 49`

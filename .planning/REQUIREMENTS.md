@@ -58,22 +58,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TRANS-01 | — | Pending |
-| TRANS-02 | — | Pending |
-| TRANS-03 | — | Pending |
-| TRANS-04 | — | Pending |
-| COLOR-01 | — | Pending |
-| COLOR-02 | — | Pending |
-| COLOR-03 | — | Pending |
-| TOGL-01 | — | Pending |
-| TOGL-02 | — | Pending |
-| TOGL-03 | — | Pending |
+| TRANS-01 | Phase 49 | Pending |
+| TRANS-02 | Phase 49 | Pending |
+| TRANS-03 | Phase 50 | Pending |
+| TRANS-04 | Phase 50 | Pending |
+| COLOR-01 | Phase 51 | Pending |
+| COLOR-02 | Phase 51 | Pending |
+| COLOR-03 | Phase 53 | Pending |
+| TOGL-01 | Phase 52 | Pending |
+| TOGL-02 | Phase 52 | Pending |
+| TOGL-03 | Phase 52 | Pending |
 
 **Coverage:**
 - v0.10.0 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after initial definition*
+*Last updated: 2026-04-03 after roadmap creation*
