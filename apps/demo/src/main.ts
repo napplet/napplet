@@ -27,6 +27,14 @@ import type { NappletDebugger } from './debugger.js';
 import { classifyTappedMessagePath } from './debugger.js';
 import { renderAclPanels, setDebugger } from './acl-panel.js';
 import { initFlowAnimator } from './flow-animator.js';
+import {
+  initColorState,
+  onColorStateChange,
+  getNodeInboundColor,
+  getNodeOutboundColor,
+  setPersistenceMode,
+} from './color-state.js';
+import type { PersistenceMode } from './color-state.js';
 import { buildDemoTopology, renderDemoTopology, getServiceNodeId, initTopologyEdges } from './topology.js';
 import type { SignerConnectionStateView } from './topology.js';
 import {
@@ -187,6 +195,35 @@ if (topologyPane) {
 
 // Initialize Leader Line edges after topology HTML is in the DOM
 const edgeFlasher = initTopologyEdges(topology);
+
+// Initialize persistent color state tracking for topology edges
+initColorState(topology);
+
+// ─── Persistent Node Color Rendering ────────────────────────────────────
+onColorStateChange(() => {
+  for (const node of topology.nodes) {
+    const inboundColor = getNodeInboundColor(node.id);
+    const outboundColor = getNodeOutboundColor(node.id);
+
+    // Update inbound overlay
+    const inEl = document.querySelector<HTMLElement>(
+      `[data-color-overlay="${node.id}"][data-color-direction="inbound"]`,
+    );
+    if (inEl) {
+      inEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+      if (inboundColor) inEl.classList.add(`node-color-${inboundColor}`);
+    }
+
+    // Update outbound overlay
+    const outEl = document.querySelector<HTMLElement>(
+      `[data-color-overlay="${node.id}"][data-color-direction="outbound"]`,
+    );
+    if (outEl) {
+      outEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+      if (outboundColor) outEl.classList.add(`node-color-${outboundColor}`);
+    }
+  }
+});
 
 // ─── Inject Notification Controls into the Notifications Node ────────────────
 
@@ -406,6 +443,20 @@ document.addEventListener('click', (e) => {
     e.stopPropagation();
     const inspector = document.getElementById('notification-inspector');
     inspector?.classList.remove('open');
+  }
+
+  // ─── Color Mode Toggle ──────────────────────────────────────────────────
+  const colorModeBtn = target.closest<HTMLElement>('[data-color-mode]');
+  if (colorModeBtn) {
+    const mode = colorModeBtn.dataset.colorMode as PersistenceMode;
+    if (mode) {
+      setPersistenceMode(mode);
+      // Update active class on toggle buttons
+      document.querySelectorAll('.color-mode-btn').forEach((b) => {
+        b.classList.toggle('color-mode-active', (b as HTMLElement).dataset.colorMode === mode);
+      });
+      debuggerEl?.addSystemMessage(`color mode changed: ${mode}`);
+    }
   }
 });
 

@@ -16,6 +16,7 @@ import {
   getShellAclEdgeId,
   getShellNodeId,
 } from './topology.js';
+import { recordEdgeColor, getEdgeColor, onColorStateChange } from './color-state.js';
 import { demoConfig } from './demo-config.js';
 const TOPOLOGY_NODE_ACL = 'topology-node-acl';
 const TOPOLOGY_NODE_RUNTIME = 'topology-node-runtime';
@@ -78,6 +79,43 @@ function detectServiceTarget(topology: DemoTopology, msg: TappedMessage): string
 
 function isNotificationTopic(msg: TappedMessage): boolean {
   return typeof msg.parsed.topic === 'string' && msg.parsed.topic.startsWith('notifications:');
+}
+
+/**
+ * Identify which node in the highlight path is the failure point.
+ * ACL denials → ACL node. Infrastructure errors → runtime or relevant service.
+ * Falls back to the last node in the path if source is unclear.
+ */
+function identifyFailureNode(nodes: string[], msg: TappedMessage): number {
+  const reasonString = typeof msg.raw?.[3] === 'string' ? msg.raw[3] : '';
+
+  // ACL denial: failure at the ACL node
+  if (reasonString.startsWith('denied:')) {
+    const aclIndex = nodes.indexOf(TOPOLOGY_NODE_ACL);
+    if (aclIndex !== -1) return aclIndex;
+  }
+
+  // Infrastructure error (no signer, timeout, etc.): failure at runtime or service
+  if (
+    reasonString.includes('no signer') ||
+    reasonString.includes('signer')
+  ) {
+    const signerIndex = nodes.indexOf(TOPOLOGY_NODE_SERVICE_SIGNER);
+    if (signerIndex !== -1) return signerIndex;
+  }
+
+  if (
+    reasonString.includes('relay') ||
+    reasonString.includes('timeout') ||
+    reasonString.includes('not wired') ||
+    reasonString.includes('mock')
+  ) {
+    const runtimeIndex = nodes.indexOf(TOPOLOGY_NODE_RUNTIME);
+    if (runtimeIndex !== -1) return runtimeIndex;
+  }
+
+  // Fallback: last node in path
+  return nodes.length - 1;
 }
 
 function buildHighlightPath(topology: DemoTopology, msg: TappedMessage): { nodes: string[]; edges: string[] } | null {
@@ -169,13 +207,53 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
     const cls: 'active' | 'amber' | 'blocked' = isAmber ? 'amber' : isBlocked ? 'blocked' : 'active';
 
     const highlightPath = buildHighlightPath(topology, msg);
-    if (highlightPath) {
-      highlightPath.nodes.forEach((nodeId) => flashNode(nodeId, cls));
-      if (edgeFlasher) {
-        highlightPath.edges.forEach((edgeId) => edgeFlasher.flash(edgeId, cls));
+
+    // ─── Directional Color Dispatch ──────────────────────────────────────────
+    if (highlightPath && edgeFlasher) {
+      const { nodes, edges } = highlightPath;
+      const isFailure = cls === 'blocked' || cls === 'amber';
+
+      if (!isFailure) {
+        // Success: all edges get 'active' in the message direction
+        const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';
+        for (const edgeId of edges) {
+          edgeFlasher.flashDirection(edgeId, direction, 'active');
+          recordEdgeColor(edgeId, direction, 'active');
+        }
+        for (const nodeId of nodes) {
+          flashNode(nodeId, 'active');
+        }
       } else {
-        highlightPath.edges.forEach((edgeId) => flashEdge(edgeId, cls));  // fallback
+        // Failure: identify failure point and split path
+        const failureNodeIndex = identifyFailureNode(nodes, msg);
+        const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';
+
+        for (let i = 0; i < nodes.length; i++) {
+          if (i < failureNodeIndex) {
+            // Before failure: green
+            flashNode(nodes[i], 'active');
+          } else {
+            // At or after failure: red or amber
+            flashNode(nodes[i], cls);
+          }
+        }
+
+        for (let i = 0; i < edges.length; i++) {
+          if (i < failureNodeIndex) {
+            // Edge before failure: green in message direction
+            edgeFlasher.flashDirection(edges[i], direction, 'active');
+            recordEdgeColor(edges[i], direction, 'active');
+          } else {
+            // Edge at or after failure: failure color
+            edgeFlasher.flashDirection(edges[i], direction, cls);
+            recordEdgeColor(edges[i], direction, cls);
+          }
+        }
       }
+    } else if (highlightPath) {
+      // Fallback without edgeFlasher (unlikely but safe)
+      highlightPath.nodes.forEach((nodeId) => flashNode(nodeId, cls));
+      highlightPath.edges.forEach((edgeId) => flashEdge(edgeId, cls));
     }
 
     totalMessages++;
@@ -198,4 +276,16 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
       }
     }
   });
+
+  // ─── Persistent Edge Color Rendering ────────────────────────────────────
+  if (edgeFlasher) {
+    onColorStateChange(() => {
+      for (const edge of topology.edges) {
+        for (const dir of ['out', 'in'] as const) {
+          const color = getEdgeColor(edge.id, dir);
+          edgeFlasher.setColor(edge.id, dir, color);
+        }
+      }
+    });
+  }
 }
