@@ -104,7 +104,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - Framework-specific bindings (Svelte/React components) — SDK is framework-agnostic by design
 - Multi-shell federation — single shell per page for v1
 - IndexedDB storage backend — localStorage sufficient for v1
-- Key rotation for ephemeral keypairs — complexity not justified yet
+- Key rotation for delegated keypairs — complexity not justified yet
 - Rate limiting on signer requests — document expected behavior, don't enforce yet
 - Restrictive ACL default mode — permissive default for developer adoption (v0.2.0 adds proper enforcement, restrictive mode later)
 - Manifest signature verification in shell — deferred to post-v1 security hardening
@@ -120,7 +120,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
 - **Documentation**: All 8 packages have README.md. SPEC.md (41KB+) covers full protocol including Section 11 service discovery, shim/SDK split, and full 8-package reference. 3 portable skill files in skills/ directory.
-- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. Demo flow visualization currently conflates some protocol paths. npm publish blocked on human auth. nappState/nappStorage alias undocumented.
+- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. npm publish blocked on human auth. SPEC.md SEC-01 says "29000-29999 range" but code uses explicit allowlist. No automated e2e tests for REGISTER/IDENTITY step (covered by UAT only).
 - **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
 
 ## Constraints
@@ -156,6 +156,10 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 | Undeclared service consent reuses ConsentRequest pattern | Same hook, same UX flow as destructive signing kinds — shell hosts get one integration point | ✓ Good — minimal API surface growth |
 | Demo must mirror actual runtime architecture | The demo is now a teaching tool and debugger; flattening shell/ACL/runtime hides the protocol model and misleads users | Phase 27 established the audited host/debugger truth; Phase 28 will finish the topology UI |
 | Custom napplet loading deferred until after demo refresh | First make the built-in demo accurate and debuggable before opening a generic test harness | Pending post-v0.6.0 review |
+| HMAC-SHA256(shellSecret, dTag+aggregateHash) for key derivation | Deterministic, standard primitive, shell secret never exposed to napplet | ✓ Good — same napplet always gets same keypair |
+| Hash mismatch warns but doesn't block registration | Adoption-friendly — developers aren't locked out during development | ✓ Good — onHashMismatch callback gives host apps flexibility |
+| Triple-read storage migration across 3 historical formats | Zero data loss on upgrade — reads new format, then legacy with pubkey, then old napp-state: prefix | ✓ Good — backward compat with no user action |
+| SEC-01 explicit BusKind allowlist (not 29000-29999 range) | Principle of least privilege — future bus kinds must opt in | ✓ Good — though SPEC.md says range (known debt) |
 
 ## Evolution
 
@@ -181,8 +185,8 @@ After v0.6.0, likely next candidates:
 - Publish all @napplet/* packages to npm (blocked on human npm auth)
 - `@napplet/create` CLI / starter template
 - Deploy demo as a production nsite
-- Protocol hardening (aggregate hash revalidation, keypair derivation)
 - Service ACL — per-service capability strings (service:audio, service:notifications)
+- Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-02 — Milestone v0.9.0 Identity & Trust shipped*
+*Last updated: 2026-04-03 after v0.9.0 milestone*

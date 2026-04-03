@@ -95,6 +95,53 @@
 
 ---
 
+## Milestone: v0.9.0 — Identity & Trust
+
+**Shipped:** 2026-04-03
+**Phases:** 3 (46-48) | **Plans:** 7 | **Tasks:** 15
+
+### What Was Built
+
+- **Phase 46**: REGISTER/IDENTITY/AUTH handshake with deterministic key derivation via HMAC-SHA256. Storage rekeyed to `dTag:aggregateHash` (pubkey removed). Shell-side aggregate hash verification with in-memory caching. Per-iframe persistent GUID. SEC-01 guard blocks delegated keys from relay publishing.
+- **Phase 47**: Permanent removal of RuntimeHooks/ShellHooks deprecated type aliases — importing old names now fails at compile time.
+- **Phase 48**: SPEC.md Sections 2, 5, and 14 updated for new handshake, storage scoping, and delegated key security models. Stale references cleaned in Sections 13, 15, 16.
+
+### What Worked
+
+- **Phase 46 wave structure** — splitting 5 plans into 2 waves (types+storage+GUID → handshake+verification) allowed clean dependency ordering. Wave 1 established types consumed by wave 2.
+- **Programmatic UAT** — Phases 47 and 48 used automated verification (grep scans, type-check, build) rather than interactive testing, completing 9 checks efficiently.
+- **Integration checker depth** — found 8 non-critical findings including dead code, hidden demo TS errors, and SPEC/code divergences that per-phase verification missed.
+- **HMAC-SHA256 derivation** — deterministic keypairs solved the core storage persistence problem elegantly. Same napplet always gets same keypair across sessions.
+
+### What Was Inefficient
+
+- **SUMMARY frontmatter gaps** — only Phase 47's SUMMARY included `requirements_completed` in frontmatter. Phase 46's 5 summaries and Phase 48's summary omitted it, weakening the 3-source cross-reference.
+- **Nyquist validation incomplete** — Phase 46's VALIDATION.md stayed at `nyquist_compliant: false` (tasks never updated to green). Phase 48 has no VALIDATION.md at all. Pattern of skipping validation sign-off continues.
+- **Demo type-check gap** — demo app has no `type-check` script, so excess properties on ShellAdapter (shellSecretPersistence, guidPersistence) were silently ignored. Found by integration checker, not by CI.
+- **message-tap.ts not updated** — REGISTER/IDENTITY verbs not added to KNOWN_VERBS, so e2e tests can't assert on the new handshake step.
+
+### Patterns Established
+
+- **Shell-delegated identity** — napplets no longer create their own keypairs. The shell derives deterministic keys from a persistent secret, establishing a clear trust hierarchy.
+- **Triple-read storage migration** — reading 3 historical key formats (new → legacy with pubkey → old napp-state: prefix) provides seamless backward compat without user intervention.
+- **Explicit allowlist over range check** — SEC-01 uses a named BusKind allowlist rather than "any 29xxx kind." Safer but requires manual updates for future kinds.
+
+### Key Lessons
+
+- **Update SUMMARY frontmatter `requirements_completed`** — the 3-source cross-reference is only as strong as its weakest source. Phase 46's 13 requirements were verified but not listed in frontmatter.
+- **Add demo to CI type-check** — hidden TypeScript errors accumulate when the demo is exempt from `pnpm type-check`.
+- **Update test helpers alongside protocol changes** — message-tap.ts and mock-hooks.ts should be updated in the same plan that adds new protocol verbs.
+- **Nyquist validation needs enforcement** — 3 milestones have now had incomplete or missing VALIDATION.md files. Consider making it a gating check.
+
+### Cost Observations
+
+- Sessions: concentrated 2-day effort (2026-04-02 → 2026-04-03)
+- 80 files changed, +6,226/-362 lines
+- Phase 46 was the heavy lift (5 plans, ~90% of the code changes)
+- Phases 47 and 48 were cleanup/docs — shipped in single plans each
+
+---
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | Plans | Tests | LOC (TS) | Duration |
@@ -104,11 +151,16 @@
 | v0.3.0 Runtime & Core | 6 | 18 | 193 | ~8,000 | 1 day |
 | v0.4.0 Service Discovery | 6 | 19 | 220+ | ~10,122 | 1 day |
 | v0.5.0 Docs & Skills | 4 | 12 | 220+ | ~16,941 | 2 days |
+| v0.6.0 Demo Upgrade | 7 | 28 | 220+ | — | 1 day |
+| v0.7.0 Ontology Audit | 7 | 16 | 220+ | — | 2 days |
+| v0.8.0 Shim/SDK Split | 4 | 10 | 220+ | — | 1 day |
+| v0.9.0 Identity & Trust | 3 | 7 | 220+ | +6,226 | 2 days |
 
 ### Observations
 
-- **Consistent short milestones** — each milestone ships in 1-2 focused sessions
-- **Test count stable** — v0.5.0 was docs-only, no new tests added. 220+ tests remain the baseline.
-- **LOC growing via documentation** — 6,819 lines of docs/skills added. Documentation is now a significant portion of the repo.
-- **Documentation debt is a recurring pattern** — v0.4.0 and v0.5.0 both had stale traceability tables and missing VERIFICATION.md files. Integration checker helps but the root cause is per-phase tracking gaps.
-- **Cross-phase integration checking is essential** — caught the originRegistry.register() argument order bug that per-phase verification missed.
+- **Consistent short milestones** — each milestone ships in 1-2 focused sessions. v0.9.0 continued this pattern.
+- **Test count stable** — no new automated tests since v0.4.0. 220+ tests remain the baseline. New protocol verbs (REGISTER/IDENTITY) lack dedicated e2e assertions.
+- **Integration checker is essential** — found real issues in every milestone it has run: argument order bugs (v0.5.0), SPEC divergences (v0.9.0), hidden demo TS errors (v0.9.0).
+- **Nyquist validation consistently incomplete** — v0.4.0, v0.5.0, and v0.9.0 all had missing or incomplete VALIDATION.md files. This is the most persistent process gap.
+- **SUMMARY frontmatter quality varies** — `requirements_completed` field is populated inconsistently. The 3-source cross-reference degrades when summaries omit it.
+- **Documentation debt is a recurring pattern** — traceability tables, VERIFICATION.md files, and SUMMARY frontmatter all accumulate gaps that the integration checker catches retroactively.

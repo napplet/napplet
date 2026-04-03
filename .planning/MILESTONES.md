@@ -1,12 +1,17 @@
 # Milestones
 
-## v0.9.0 Identity & Trust (Shipped: 2026-04-02)
+## v0.9.0 Identity & Trust (Shipped: 2026-04-03)
 
 **Phases completed:** 3 phases, 7 plans, 15 tasks
 
 **Key accomplishments:**
 
-- Deleted RuntimeHooks/ShellHooks deprecated type aliases and createMockRuntimeHooks test utility across 15 files; importing the old names now fails at compile time
+- Shell-delegated deterministic keypair handshake (REGISTER -> IDENTITY -> AUTH) replacing ephemeral keys — storage now survives page reloads
+- Pubkey-free storage scoping (`dTag:aggregateHash:userKey`) with triple-read backward-compatible migration across 3 historical formats
+- SEC-01 guard blocking delegated keys from external relay publishing — only the user's signer (NIP-07/NIP-46) signs events that leave the shell
+- Aggregate hash verification with in-memory caching — warns on mismatch but does not block registration
+- Permanent removal of deprecated RuntimeHooks/ShellHooks type aliases — importing old names now fails at compile time
+- SPEC.md updated for new handshake (Section 2), storage model (Section 5), and delegated key security (Section 14)
 
 ---
 

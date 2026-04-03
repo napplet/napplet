@@ -2,45 +2,43 @@
 gsd_state_version: 1.0
 milestone: v0.9.0
 milestone_name: Identity & Trust
-status: executing
-stopped_at: Phase 46 planned — 5 plans in 2 waves, 13/13 requirements covered
-last_updated: "2026-04-02T18:37:56.348Z"
-last_activity: 2026-04-02
+status: complete
+stopped_at: Milestone v0.9.0 complete — archived
+last_updated: "2026-04-03"
+last_activity: 2026-04-03
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 7
   completed_plans: 7
-  percent: 0
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-02 — Milestone v0.9.0 started)
+See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 48 — specification-documentation
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 48
-Plan: Not started
-Status: Executing Phase 48
-Last activity: 2026-04-02
+Phase: —
+Plan: —
+Status: v0.9.0 milestone complete, archived
+Last activity: 2026-04-03
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v0.9.0)
-- Average duration: --
-- Total execution time: --
-
-*Updated after each plan completion*
+- Total plans completed: 7 (v0.9.0)
+- Phases: 3 (46, 47, 48)
+- Timeline: 2 days (2026-04-02 → 2026-04-03)
 
 ## Accumulated Context
 
@@ -48,7 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-Phase 46 has 8 locked decisions (D-01 through D-08) in its CONTEXT.md:
+Phase 46 decisions (D-01 through D-08):
 
 - D-01: Storage scoping removes ephemeral pubkey (dTag:aggregateHash:userKey)
 - D-02: Shell delegates stable keypair via REGISTER/IDENTITY messages
@@ -72,6 +70,6 @@ Phase 46 has 8 locked decisions (D-01 through D-08) in its CONTEXT.md:
 
 ## Session Continuity
 
-Last session: 2026-04-02
-Stopped at: Phase 46 planned — 5 plans in 2 waves, 13/13 requirements covered
-Resume file: None — run `/gsd:execute-phase 46` next
+Last session: 2026-04-03
+Stopped at: Milestone v0.9.0 complete — archived
+Resume: `/gsd:new-milestone` to start next milestone
