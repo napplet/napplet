@@ -6,6 +6,7 @@
  */
 
 import { getNapplets, toggleCapability, toggleBlock } from './shell-host.js';
+import { refreshPolicyModal } from './acl-modal.js';
 import type { NappletDebugger } from './debugger.js';
 import type { Capability } from '@napplet/shell';
 
@@ -81,6 +82,8 @@ function renderNappletAcl(containerId: string, windowId: string, info: { name: s
       debugger_?.addSystemMessage(
         `${newState ? 'GRANT' : 'REVOKE'} ${cap} (${DEMO_CAPABILITY_HINTS[cap]}) on ${info.name}`
       );
+      // Sync policy modal if open
+      refreshPolicyModal();
     });
 
     row.appendChild(toggle);

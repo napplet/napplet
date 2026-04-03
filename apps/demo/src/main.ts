@@ -16,6 +16,7 @@ import {
   loadNapplet,
   getNotificationServiceHandler,
   relay,
+  toggleService,
 } from './shell-host.js';
 import type { Capability } from '@napplet/shell';
 import {
@@ -35,7 +36,7 @@ import {
   setPersistenceMode,
 } from './color-state.js';
 import type { PersistenceMode } from './color-state.js';
-import { buildDemoTopology, renderDemoTopology, getServiceNodeId, initTopologyEdges } from './topology.js';
+import { buildDemoTopology, renderDemoTopology, getServiceNodeId, initTopologyEdges, wireServiceToggles } from './topology.js';
 import type { SignerConnectionStateView } from './topology.js';
 import {
   buildAllNodeDetails,
@@ -195,6 +196,11 @@ if (topologyPane) {
 
 // Initialize Leader Line edges after topology HTML is in the DOM
 const edgeFlasher = initTopologyEdges(topology);
+
+// Wire service toggle icons on topology nodes
+wireServiceToggles((name, enabled) => {
+  toggleService(name, enabled);
+});
 
 // Initialize persistent color state tracking for topology edges
 initColorState(topology);

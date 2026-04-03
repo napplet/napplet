@@ -8,6 +8,7 @@
 
 import { DEMO_CAPABILITY_LABELS } from './acl-panel.js';
 import { getNapplets, relay, toggleCapability, getDemoServiceNames, toggleService, isServiceEnabled } from './shell-host.js';
+import { updateServiceNodeVisual } from './topology.js';
 import type { Capability } from '@napplet/shell';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -139,6 +140,8 @@ export function openPolicyModal(): void {
       const currentlyEnabled = isServiceEnabled(name);
       const newState = !currentlyEnabled;
       toggleService(name, newState);
+      // Sync topology node visual
+      updateServiceNodeVisual(name, newState);
       // Update toggle visual
       toggle.style.background = newState ? '#39ff14' : '#3a3a4a';
       knob.style.left = newState ? '18px' : '2px';
