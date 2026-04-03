@@ -94,9 +94,24 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ RuntimeHooks/ShellHooks deprecated aliases removed — v0.9.0 Phase 47 (DEP-03, DEP-04)
 - ✓ SPEC.md Sections 2, 5, 14 updated for v0.9.0 handshake, storage, and security models — v0.9.0 Phase 48 (DOC-01..03)
 
+## Current Milestone: v0.10.0 Demo Consistency and Usability Pass
+
+**Goal:** Make the demo an honest, interactive sandbox — expose protocol internals, fix color accuracy, and let users toggle services/capabilities to see real system behavior.
+
+**Target features:**
+- Protocol transparency: Expose magic numbers (rate limits, timeouts, queue caps) in UI with editing. ACL detail panel shows all restrictions and rejection reasons.
+- Accurate color routing: Persistent edge/node coloring reflects actual pass/fail/warn state. Per-message animation trace mode via toggle.
+- Service & capability toggles: Disable any service (including core infra) and toggle individual capabilities. Live-reload on next message.
+
 ### Active
 
-(No active requirements — v0.9.0 milestone complete)
+- [ ] Expose protocol magic numbers in demo UI with editing
+- [ ] ACL detail panel shows restrictions, rejection reasons (what + why)
+- [ ] Persistent edge/node coloring reflects actual pass/fail/warn routing state
+- [ ] Per-message animation trace mode (toggle)
+- [ ] Disable/enable any service (audio, notifications, signer, relay pool, cache)
+- [ ] Toggle individual capabilities (e.g. sign:nip44 off, sign:event on)
+- [ ] ACL edits take effect live on next message (no re-register)
 
 ### Out of Scope
 
@@ -113,7 +128,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.9.0 shipped (Identity & Trust). The protocol now has a proper trust model: shell-delegated deterministic keypairs, aggregate hash verification, storage persistence across reloads, and delegated key confinement. 8 packages in the monorepo.
+- **Current state**: v0.10.0 in progress (Demo Consistency and Usability Pass). Focus on making the demo an honest sandbox: transparent internals, accurate color routing, service/capability toggles. 8 packages in the monorepo.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
@@ -189,4 +204,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-03 after v0.9.0 milestone*
+*Last updated: 2026-04-03 after v0.10.0 milestone start*

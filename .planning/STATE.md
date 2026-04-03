@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.9.0
-milestone_name: Identity & Trust
-status: complete
-stopped_at: Milestone v0.9.0 complete — archived
+milestone: v0.10.0
+milestone_name: Demo Consistency and Usability Pass
+status: active
+stopped_at: Defining requirements
 last_updated: "2026-04-03"
 last_activity: 2026-04-03
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,41 +21,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Planning next milestone
+**Current focus:** v0.10.0 Demo Consistency and Usability Pass
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: v0.9.0 milestone complete, archived
-Last activity: 2026-04-03
-
-Progress: [██████████] 100%
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 7 (v0.9.0)
-- Phases: 3 (46, 47, 48)
-- Timeline: 2 days (2026-04-02 → 2026-04-03)
+Status: Defining requirements
+Last activity: 2026-04-03 — Milestone v0.10.0 started
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-
-Phase 46 decisions (D-01 through D-08):
-
-- D-01: Storage scoping removes ephemeral pubkey (dTag:aggregateHash:userKey)
-- D-02: Shell delegates stable keypair via REGISTER/IDENTITY messages
-- D-03: Per-iframe persistent GUID for instance identity
-- D-04: Shell verifies aggregate hash from fetched napplet files
-- D-05: Verification cached by manifest event ID
-- D-06: Spec defines wire format; enforcement is implementation-level
-- D-07: Delegated keys are protocol-auth-only, never sign relay events
-- D-08: Deterministic key derivation via HMAC(shellSecret, dTag+aggregateHash)
 
 ### Quick Tasks Completed
 
@@ -71,5 +50,5 @@ Phase 46 decisions (D-01 through D-08):
 ## Session Continuity
 
 Last session: 2026-04-03
-Stopped at: Milestone v0.9.0 complete — archived
-Resume: `/gsd:new-milestone` to start next milestone
+Stopped at: Defining requirements for v0.10.0
+Resume: Define requirements, then `/gsd:plan-phase`
