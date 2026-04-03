@@ -438,14 +438,16 @@ export function renderDemoTopology(topology: DemoTopology): string {
             data-napplet-name="${napplet.name}"
           >
             ${renderColorOverlays(getNappletNodeId(napplet.name))}
-            <div class="topology-node-header">
-              <span class="topology-node-kicker">napplet</span>
-              <span class="topology-node-status" id="${napplet.statusId}">loading...</span>
+            <div class="topology-node-content">
+              <div class="topology-node-header">
+                <span class="topology-node-kicker">napplet</span>
+                <span class="topology-node-status" id="${napplet.statusId}">loading...</span>
+              </div>
+              <div class="topology-node-title">${napplet.label}</div>
+              <div class="node-summary" id="node-summary-${getNappletNodeId(napplet.name)}"></div>
+              <div id="${napplet.aclId}" class="topology-acl-slot"></div>
+              <div id="${napplet.frameContainerId}" class="topology-frame-slot"></div>
             </div>
-            <div class="topology-node-title">${napplet.label}</div>
-            <div class="node-summary" id="node-summary-${getNappletNodeId(napplet.name)}"></div>
-            <div id="${napplet.aclId}" class="topology-acl-slot"></div>
-            <div id="${napplet.frameContainerId}" class="topology-frame-slot"></div>
           </article>
         </div>
       `
@@ -477,8 +479,10 @@ export function renderDemoTopology(topology: DemoTopology): string {
               style="position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;border:1px solid #3a3a4a;background:#1a1b2e;color:#39ff14;font-size:10px;line-height:18px;text-align:center;cursor:pointer;z-index:10;padding:0"
             >&#9679;</button>
             ${renderColorOverlays(getServiceNodeId(service))}
-            ${innerContent}
-            <div class="node-summary" id="node-summary-${getServiceNodeId(service)}"></div>
+            <div class="topology-node-content">
+              ${innerContent}
+              <div class="node-summary" id="node-summary-${getServiceNodeId(service)}"></div>
+            </div>
           </article>
         </div>
       `;
@@ -505,34 +509,40 @@ export function renderDemoTopology(topology: DemoTopology): string {
       <section class="topology-layer">
         <article id="${SHELL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="shell" data-node-id="${SHELL_NODE_ID}">
           ${renderColorOverlays(SHELL_NODE_ID)}
-          <div class="topology-node-kicker">host adapter</div>
-          <div class="topology-node-title">shell</div>
-          <div class="topology-node-copy">relay shell bridge and host identity</div>
-          <div id="shell-pubkey" class="topology-node-meta">pubkey: ${truncatePubkey(topology.hostPubkey)}</div>
-          <div class="node-summary" id="node-summary-${SHELL_NODE_ID}"></div>
+          <div class="topology-node-content">
+            <div class="topology-node-kicker">host adapter</div>
+            <div class="topology-node-title">shell</div>
+            <div class="topology-node-copy">relay shell bridge and host identity</div>
+            <div id="shell-pubkey" class="topology-node-meta">pubkey: ${truncatePubkey(topology.hostPubkey)}</div>
+            <div class="node-summary" id="node-summary-${SHELL_NODE_ID}"></div>
+          </div>
         </article>
       </section>
 
       <section class="topology-layer">
         <article id="${ACL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="acl" data-node-id="${ACL_NODE_ID}">
           ${renderColorOverlays(ACL_NODE_ID)}
-          <div class="topology-node-kicker">checkpoint</div>
-          <div class="topology-node-title">acl</div>
-          <div class="topology-node-copy">capability gate between napplets and runtime dispatch</div>
-          <div class="node-summary" id="node-summary-${ACL_NODE_ID}"></div>
+          <div class="topology-node-content">
+            <div class="topology-node-kicker">checkpoint</div>
+            <div class="topology-node-title">acl</div>
+            <div class="topology-node-copy">capability gate between napplets and runtime dispatch</div>
+            <div class="node-summary" id="node-summary-${ACL_NODE_ID}"></div>
+          </div>
         </article>
       </section>
 
       <section class="topology-layer">
         <article id="${RUNTIME_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="runtime" data-node-id="${RUNTIME_NODE_ID}">
           ${renderColorOverlays(RUNTIME_NODE_ID)}
-          <div class="topology-node-kicker">dispatcher</div>
-          <div class="topology-node-title">runtime</div>
-          <div class="topology-node-copy">routes bus traffic and fans out to registered services</div>
-          <div class="node-summary" id="node-summary-${RUNTIME_NODE_ID}"></div>
-          <div class="topology-flow-log">
-            <div class="topology-flow-log-label">message flow</div>
-            <div id="shell-flow-log" class="topology-flow-log-body"></div>
+          <div class="topology-node-content">
+            <div class="topology-node-kicker">dispatcher</div>
+            <div class="topology-node-title">runtime</div>
+            <div class="topology-node-copy">routes bus traffic and fans out to registered services</div>
+            <div class="node-summary" id="node-summary-${RUNTIME_NODE_ID}"></div>
+            <div class="topology-flow-log">
+              <div class="topology-flow-log-label">message flow</div>
+              <div id="shell-flow-log" class="topology-flow-log-body"></div>
+            </div>
           </div>
         </article>
       </section>
