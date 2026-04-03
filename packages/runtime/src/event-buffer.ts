@@ -81,6 +81,9 @@ export interface EventBuffer {
  * @param sessionRegistry - Identity registry for looking up napplet pubkeys
  * @param enforce - Enforcement function for checking relay:read on recipients
  * @param subscriptions - Shared subscription map (owned by the runtime)
+ * @param getBufferSize - Optional getter for a dynamic buffer size override.
+ *   When provided, its return value is used instead of RING_BUFFER_SIZE.
+ *   Called on every bufferAndDeliver, so changes take effect immediately.
  * @returns An EventBuffer instance
  */
 export function createEventBuffer(
@@ -88,6 +91,7 @@ export function createEventBuffer(
   sessionRegistry: SessionRegistry,
   enforce: (pubkey: string, capability: Capability) => EnforceResult,
   subscriptions: Map<string, SubscriptionEntry>,
+  getBufferSize?: () => number,
 ): EventBuffer {
   const buffer: NostrEvent[] = [];
 
@@ -122,7 +126,8 @@ export function createEventBuffer(
 
   return {
     bufferAndDeliver(event: NostrEvent, senderId: string | null): void {
-      if (buffer.length >= RING_BUFFER_SIZE) buffer.shift();
+      const maxSize = getBufferSize?.() ?? RING_BUFFER_SIZE;
+      if (buffer.length >= maxSize) buffer.shift();
       buffer.push(event);
       deliverToSubscriptions(event, senderId);
     },

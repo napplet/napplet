@@ -516,6 +516,31 @@ export interface ServiceHandler {
  */
 export type ServiceRegistry = Record<string, ServiceHandler>;
 
+// ─── Runtime Config Overrides ──────────────────────────────────────────────
+
+/**
+ * Optional runtime configuration overrides. When provided via
+ * RuntimeAdapter.getConfigOverrides(), the runtime reads these
+ * instead of the module-level defaults. All fields are optional —
+ * unset fields use the built-in defaults.
+ *
+ * Intended for demo/debug use only.
+ *
+ * @example
+ * ```ts
+ * const overrides: RuntimeConfigOverrides = {
+ *   replayWindowSeconds: 60,
+ *   ringBufferSize: 500,
+ * };
+ * ```
+ */
+export interface RuntimeConfigOverrides {
+  /** Override REPLAY_WINDOW_SECONDS (default: 30). */
+  replayWindowSeconds?: number;
+  /** Override RING_BUFFER_SIZE (default: 100). */
+  ringBufferSize?: number;
+}
+
 // ─── RuntimeAdapter ────────────────────────────────────────────────────────
 
 /**
@@ -648,4 +673,11 @@ export interface RuntimeAdapter {
    * ```
    */
   services?: ServiceRegistry;
+
+  /**
+   * Optional runtime behavior overrides — demo/debug use only.
+   * Called lazily on each relevant operation (replay check, buffer push),
+   * so changes take effect immediately without runtime recreation.
+   */
+  getConfigOverrides?(): RuntimeConfigOverrides;
 }

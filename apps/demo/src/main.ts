@@ -41,6 +41,8 @@ import {
   getSignerConnectionState,
 } from './signer-connection.js';
 import { initSignerModal, openSignerModal } from './signer-modal.js';
+import { demoConfig } from './demo-config.js';
+import { openConstantsTab } from './node-inspector.js';
 
 // ─── Notification Controller ─────────────────────────────────────────────────
 
@@ -61,8 +63,6 @@ if (notificationHandler) {
 
 // ─── Notification Toast Rendering ────────────────────────────────────────────
 
-const TOAST_DISPLAY_MS = 5000;
-
 // Track shown toast IDs so we don't re-show the same notification
 const _shownToastIds = new Set<string>();
 
@@ -80,7 +80,7 @@ function renderToast(notification: import('@napplet/services').Notification): vo
   layer.appendChild(toast);
   setTimeout(() => {
     toast.remove();
-  }, TOAST_DISPLAY_MS);
+  }, demoConfig.get('demo.TOAST_DISPLAY_MS'));
 }
 
 function escapeHtml(s: string): string {
@@ -205,6 +205,15 @@ if (debuggerEl) {
   debuggerEl.addSystemMessage(getDemoHostAuditSummary());
   debuggerEl.addSystemMessage('notification service registered -- host callbacks active');
 }
+
+// ─── Config Change Logging ──────────────────────────────────────────────────
+
+demoConfig.subscribe((key, value) => {
+  debuggerEl?.addSystemMessage(`config changed: ${key} = ${value}`);
+});
+
+// Suppress unused import warning — openConstantsTab is available for keyboard shortcuts
+void openConstantsTab;
 
 // ─── Signer Node Display ─────────────────────────────────────────────────────
 

@@ -35,6 +35,7 @@ export type {
   GuidPersistence,
   HashVerifierAdapter,
   VerificationCacheEntry,
+  RuntimeConfigOverrides,
 } from './types.js';
 
 // ─── Enforcement Gate ──────────────────────────────────────────────────────

@@ -389,5 +389,6 @@ export function adaptHooks(shellHooks: ShellAdapter, deps: BrowserDeps): Runtime
     onAclCheck: shellHooks.onAclCheck,
     onHashMismatch: shellHooks.onHashMismatch,
     services: shellHooks.services,
+    getConfigOverrides: shellHooks.getConfigOverrides,
   };
 }

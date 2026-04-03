@@ -8,6 +8,7 @@ export type { BusKindValue } from '@napplet/core';
 
 // Import Capability type locally for use in this file's shell-specific types
 import type { Capability, NostrEvent, NostrFilter, ServiceDescriptor } from '@napplet/core';
+import type { RuntimeConfigOverrides } from '@napplet/runtime';
 import type { ServiceHandler, ServiceRegistry } from '@napplet/runtime';
 
 // Re-export service types so shell consumers can still import from @napplet/shell
@@ -240,4 +241,10 @@ export interface ShellAdapter {
    * ```
    */
   services?: ServiceRegistry;
+  /**
+   * Optional runtime behavior overrides — demo/debug use only.
+   * Called lazily on each relevant operation (replay check, buffer push),
+   * so changes take effect immediately without runtime recreation.
+   */
+  getConfigOverrides?(): RuntimeConfigOverrides;
 }

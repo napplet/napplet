@@ -36,7 +36,7 @@ import type { AclStateContainer } from './acl-state.js';
 import { createManifestCache } from './manifest-cache.js';
 import type { ManifestCache } from './manifest-cache.js';
 import { createReplayDetector } from './replay.js';
-import { createEventBuffer, matchesAnyFilter } from './event-buffer.js';
+import { createEventBuffer, matchesAnyFilter, RING_BUFFER_SIZE } from './event-buffer.js';
 import type { SubscriptionEntry } from './event-buffer.js';
 import { createEnforceGate, resolveCapabilities, formatDenialReason } from './enforce.js';
 import { handleStateRequest } from './state-handler.js';
@@ -173,7 +173,11 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
   const sessionRegistry = createSessionRegistry(hooks.onPendingUpdate);
   const aclState = createAclState(hooks.aclPersistence);
   const manifestCache = createManifestCache(hooks.manifestPersistence);
-  const replayDetector = createReplayDetector();
+  const replayDetector = createReplayDetector(
+    hooks.getConfigOverrides
+      ? () => hooks.getConfigOverrides!().replayWindowSeconds
+      : undefined,
+  );
 
   const enforce = createEnforceGate({
     checkAcl: (pubkey, dTag, aggregateHash, capability) =>
@@ -190,6 +194,9 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     sessionRegistry,
     enforce,
     subscriptions,
+    hooks.getConfigOverrides
+      ? () => hooks.getConfigOverrides!().ringBufferSize ?? RING_BUFFER_SIZE
+      : undefined,
   );
 
   // ─── Shell Secret (for deterministic keypair derivation) ────────────────

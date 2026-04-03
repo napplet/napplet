@@ -18,6 +18,7 @@ import {
 import { createSignerService, createNotificationService } from '@napplet/services';
 import type { Notification } from '@napplet/services';
 import { getSigner, getSignerConnectionState } from './signer-connection.js';
+import { demoConfig } from './demo-config.js';
 
 // Static ephemeral host identity for shell node display (separate from signer identity)
 import { generateSecretKey, getPublicKey } from 'nostr-tools/pure';
@@ -358,6 +359,12 @@ function createDemoHooks(notificationOnChange?: (notifications: readonly Notific
       remove(windowId: string): void {
         try { localStorage.removeItem(`napplet-guid:${windowId}`); } catch { /* best-effort */ }
       },
+    },
+    getConfigOverrides() {
+      return {
+        replayWindowSeconds: demoConfig.get('core.REPLAY_WINDOW_SECONDS'),
+        ringBufferSize: demoConfig.get('runtime.RING_BUFFER_SIZE'),
+      };
     },
   };
 }

@@ -181,7 +181,8 @@ export interface EdgeFlasher {
   flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void;
 }
 
-const FLASH_DURATION_MS = 500;
+import { demoConfig } from './demo-config.js';
+
 const COLOR_ACTIVE = '#39ff14';
 const COLOR_AMBER = '#ff9f0a';
 const COLOR_BLOCKED = '#ff3b3b';
@@ -265,7 +266,7 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
           line.setOptions({ color, size: 3 });
           setTimeout(() => {
             try { line.setOptions({ color: COLOR_RESTING, size: 2 }); } catch { /* best-effort */ }
-          }, FLASH_DURATION_MS);
+          }, demoConfig.get('demo.FLASH_DURATION_MS'));
         } catch { /* best-effort */ }
       }
     },

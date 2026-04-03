@@ -11,6 +11,7 @@
 
 import type { TappedMessage } from './shell-host.js';
 import { BusKind, TOPICS } from '@napplet/shell';
+import { demoConfig } from './demo-config.js';
 
 const VERB_COLORS: Record<string, string> = {
   AUTH: '#b388ff',
@@ -28,8 +29,6 @@ const VERB_COLORS: Record<string, string> = {
 const LANE_NAMES = ['Chat', 'Shell', 'Bot'];
 const LANE_PCTS = [0.15, 0.50, 0.85]; // percentage of width
 
-const HEADER_HEIGHT = 40;
-const ROW_HEIGHT = 28;
 const ARROW_HEAD_SIZE = 7;
 
 function getLanePct(msg: TappedMessage): { from: number; to: number } {
@@ -63,6 +62,8 @@ function createArrow(fromPct: number, toPct: number, y: number, color: string): 
 
 export function renderSequenceDiagram(messages: TappedMessage[]): string {
   const protocolMessages = messages.filter(m => m.verb !== 'SYSTEM');
+  const HEADER_HEIGHT = demoConfig.get('demo.HEADER_HEIGHT');
+  const ROW_HEIGHT = demoConfig.get('demo.ROW_HEIGHT');
   const height = HEADER_HEIGHT + (protocolMessages.length * ROW_HEIGHT) + 20;
   const vbWidth = 1000; // virtual viewBox width — maps to 100% actual width
 

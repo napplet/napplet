@@ -44,9 +44,9 @@ export interface Nip07Signer {
   };
 }
 
-// ─── Module State ─────────────────────────────────────────────────────────────
+import { demoConfig } from './demo-config.js';
 
-const MAX_RECENT_REQUESTS = 20;
+// ─── Module State ─────────────────────────────────────────────────────────────
 
 const _initialState: SignerConnectionState = {
   method: 'none',
@@ -126,9 +126,10 @@ export function getSigner(): Signer | null {
  * Maintains a rolling window of MAX_RECENT_REQUESTS records.
  */
 export function recordSignerRequest(record: SignerRequestRecord): void {
+  const maxRecent = demoConfig.get('demo.MAX_RECENT_REQUESTS');
   const requests = [..._state.recentRequests, record];
-  if (requests.length > MAX_RECENT_REQUESTS) {
-    requests.splice(0, requests.length - MAX_RECENT_REQUESTS);
+  if (requests.length > maxRecent) {
+    requests.splice(0, requests.length - maxRecent);
   }
   _setState({ ..._state, recentRequests: requests });
 }

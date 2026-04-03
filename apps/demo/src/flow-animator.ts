@@ -16,8 +16,7 @@ import {
   getShellAclEdgeId,
   getShellNodeId,
 } from './topology.js';
-
-const FLASH_DURATION = 500;
+import { demoConfig } from './demo-config.js';
 const TOPOLOGY_NODE_ACL = 'topology-node-acl';
 const TOPOLOGY_NODE_RUNTIME = 'topology-node-runtime';
 const TOPOLOGY_NODE_SERVICE_SIGNER = 'topology-node-service-signer';
@@ -25,7 +24,7 @@ const TOPOLOGY_NODE_SERVICE_NOTIFICATIONS = 'topology-node-service-notifications
 
 function flashClass(el: Element, cls: string): void {
   el.classList.add(cls);
-  setTimeout(() => el.classList.remove(cls), FLASH_DURATION);
+  setTimeout(() => el.classList.remove(cls), demoConfig.get('demo.FLASH_DURATION'));
 }
 
 function flashEdge(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
