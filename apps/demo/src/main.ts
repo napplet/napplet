@@ -28,12 +28,14 @@ import type { NappletDebugger } from './debugger.js';
 import { classifyTappedMessagePath } from './debugger.js';
 import { renderAclPanels, setDebugger } from './acl-panel.js';
 import { initFlowAnimator } from './flow-animator.js';
+import { cancelAllTraceAnimations } from './trace-animator.js';
 import {
   initColorState,
   onColorStateChange,
   getNodeInboundColor,
   getNodeOutboundColor,
   setPersistenceMode,
+  getPersistenceMode,
 } from './color-state.js';
 import type { PersistenceMode } from './color-state.js';
 import { buildDemoTopology, renderDemoTopology, getServiceNodeId, initTopologyEdges, wireServiceToggles } from './topology.js';
@@ -456,11 +458,33 @@ document.addEventListener('click', (e) => {
   if (colorModeBtn) {
     const mode = colorModeBtn.dataset.colorMode as PersistenceMode;
     if (mode) {
+      // Cancel any pending trace animations before switching modes
+      const wasTrace = getPersistenceMode() === 'trace';
+      if (wasTrace) {
+        cancelAllTraceAnimations(edgeFlasher, topology.edges.map((e) => e.id));
+      }
+
       setPersistenceMode(mode);
+
       // Update active class on toggle buttons
       document.querySelectorAll('.color-mode-btn').forEach((b) => {
         b.classList.toggle('color-mode-active', (b as HTMLElement).dataset.colorMode === mode);
       });
+
+      // When entering trace mode, clear persistent node color overlays
+      if (mode === 'trace') {
+        for (const node of topology.nodes) {
+          const inEl = document.querySelector<HTMLElement>(
+            `[data-color-overlay="${node.id}"][data-color-direction="inbound"]`,
+          );
+          const outEl = document.querySelector<HTMLElement>(
+            `[data-color-overlay="${node.id}"][data-color-direction="outbound"]`,
+          );
+          if (inEl) inEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+          if (outEl) outEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+        }
+      }
+
       debuggerEl?.addSystemMessage(`color mode changed: ${mode}`);
     }
   }

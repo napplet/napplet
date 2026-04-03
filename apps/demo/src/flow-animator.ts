@@ -16,7 +16,8 @@ import {
   getShellAclEdgeId,
   getShellNodeId,
 } from './topology.js';
-import { recordEdgeColor, getEdgeColor, onColorStateChange } from './color-state.js';
+import { recordEdgeColor, getEdgeColor, onColorStateChange, getPersistenceMode } from './color-state.js';
+import { animateTrace } from './trace-animator.js';
 import { demoConfig } from './demo-config.js';
 const TOPOLOGY_NODE_ACL = 'topology-node-acl';
 const TOPOLOGY_NODE_RUNTIME = 'topology-node-runtime';
@@ -212,8 +213,14 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
     if (highlightPath && edgeFlasher) {
       const { nodes, edges } = highlightPath;
       const isFailure = cls === 'blocked' || cls === 'amber';
+      const isTrace = getPersistenceMode() === 'trace';
 
-      if (!isFailure) {
+      if (isTrace) {
+        // Trace mode: hop-by-hop sweep animation, no persistent state, no node flashing
+        const direction = msg.direction === 'napplet->shell' ? 'out' as const : 'in' as const;
+        const failureEdgeIndex = isFailure ? identifyFailureNode(nodes, msg) : edges.length;
+        animateTrace(edgeFlasher, edges, cls, failureEdgeIndex, direction);
+      } else if (!isFailure) {
         // Success: all edges get 'active' in the message direction
         const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';
         for (const edgeId of edges) {

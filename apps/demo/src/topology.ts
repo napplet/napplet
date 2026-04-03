@@ -494,6 +494,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
           <button class="color-mode-btn color-mode-active" data-color-mode="rolling">rolling</button>
           <button class="color-mode-btn" data-color-mode="decay">decay</button>
           <button class="color-mode-btn" data-color-mode="last-message">last</button>
+          <button class="color-mode-btn" data-color-mode="trace">trace</button>
         </div>
       </div>
       <section id="topology-napplets" class="topology-region" data-topology-region="napplets">
