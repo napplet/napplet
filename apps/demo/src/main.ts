@@ -241,7 +241,9 @@ onColorStateChange(() => {
   const template = document.getElementById('notification-node-controls-template') as HTMLTemplateElement | null;
   if (!notifServiceNode || !template) return;
   const clone = document.importNode(template.content, true);
-  notifServiceNode.appendChild(clone);
+  // Append inside the content wrapper so controls render within the opaque area
+  const contentWrapper = notifServiceNode.querySelector('.topology-node-content') ?? notifServiceNode;
+  contentWrapper.appendChild(clone);
 })();
 
 // Connect debugger to tap
@@ -278,11 +280,14 @@ function updateSignerNodeDisplay(state: SignerConnectionStateView): void {
   const signerNode = document.getElementById(signerNodeId);
   if (!signerNode) return;
 
+  // Target the content wrapper (overlays and toggle live outside it)
+  const contentWrapper = signerNode.querySelector('.topology-node-content') ?? signerNode;
+
   // Remove existing dynamic content (everything before node-summary)
-  const nodeSummary = signerNode.querySelector('.node-summary');
+  const nodeSummary = contentWrapper.querySelector('.node-summary');
   // Clear children except the node-summary
   const toRemove: Element[] = [];
-  for (const child of signerNode.children) {
+  for (const child of contentWrapper.children) {
     if (!child.classList.contains('node-summary')) {
       toRemove.push(child);
     }
@@ -350,10 +355,10 @@ function updateSignerNodeDisplay(state: SignerConnectionStateView): void {
   tempDiv.innerHTML = innerHtml;
   if (nodeSummary) {
     for (const child of [...tempDiv.children]) {
-      signerNode.insertBefore(child, nodeSummary);
+      contentWrapper.insertBefore(child, nodeSummary);
     }
   } else {
-    signerNode.innerHTML = innerHtml;
+    contentWrapper.innerHTML = innerHtml;
   }
 }
 
