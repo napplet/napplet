@@ -49,6 +49,62 @@
     .node-summary-field { font-size: 10px; color: #a5abc2; }
     .node-summary-label { color: #7981a0; letter-spacing: 0.1em; text-transform: uppercase; }
     .node-summary-value { color: #d0d4e8; }
+    /* ─── Split-border directional color overlays ────────────────────────── */
+    .node-color-overlay {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      pointer-events: none;
+      border-radius: 16px;
+      transition: background-color 0.4s ease;
+      z-index: 0;
+    }
+    .node-color-inbound {
+      left: 0;
+      width: 50%;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .node-color-outbound {
+      right: 0;
+      width: 50%;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    /* Color states for overlays — subtle background tint, not opaque */
+    .node-color-active { background-color: rgba(57,255,20,0.06); }
+    .node-color-blocked { background-color: rgba(255,59,59,0.06); }
+    .node-color-amber { background-color: rgba(255,159,10,0.06); }
+    /* Node must be positioned for overlay */
+    .topology-node { position: relative; }
+    /* ─── Persistence mode toggle ────────────────────────────────────────── */
+    .color-mode-toggle {
+      display: inline-flex;
+      gap: 0;
+      border: 1px solid #3a3a4a;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-left: 12px;
+      vertical-align: middle;
+    }
+    .color-mode-btn {
+      padding: 3px 10px;
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #7981a0;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: color 0.15s, background-color 0.15s;
+    }
+    .color-mode-btn:not(:last-child) { border-right: 1px solid #3a3a4a; }
+    .color-mode-btn:hover:not(.color-mode-active) { color: #a5abc2; }
+    .color-mode-active {
+      color: #00f0ff;
+      background: rgba(0,240,255,0.08);
+    }
     /* Two-pane workspace: topology left, inspector right */
     #flow-area-inner { display: flex; height: 100%; gap: 0; min-height: 0; }
     #topology-pane { flex: 1; min-width: 0; overflow: auto; padding: 4px; }

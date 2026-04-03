@@ -357,6 +357,14 @@ function renderSignerNodeContent(signerState?: SignerConnectionStateView): strin
   `;
 }
 
+/** Render the split-border directional color overlay divs for a topology node. */
+function renderColorOverlays(nodeId: string): string {
+  return `
+    <div class="node-color-overlay node-color-inbound" data-color-overlay="${nodeId}" data-color-direction="inbound"></div>
+    <div class="node-color-overlay node-color-outbound" data-color-overlay="${nodeId}" data-color-direction="outbound"></div>
+  `;
+}
+
 export function renderDemoTopology(topology: DemoTopology): string {
   const nappletCards = topology.napplets
     .map(
@@ -369,6 +377,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
             data-node-id="${getNappletNodeId(napplet.name)}"
             data-napplet-name="${napplet.name}"
           >
+            ${renderColorOverlays(getNappletNodeId(napplet.name))}
             <div class="topology-node-header">
               <span class="topology-node-kicker">napplet</span>
               <span class="topology-node-status" id="${napplet.statusId}">loading...</span>
@@ -400,6 +409,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
             data-node-id="${getServiceNodeId(service)}"
             data-service-name="${service}"
           >
+            ${renderColorOverlays(getServiceNodeId(service))}
             ${innerContent}
             <div class="node-summary" id="node-summary-${getServiceNodeId(service)}"></div>
           </article>
@@ -411,6 +421,14 @@ export function renderDemoTopology(topology: DemoTopology): string {
 
   return `
     <div id="topology-root" class="topology-layout">
+      <div id="color-mode-bar" style="display:flex;align-items:center;justify-content:flex-end;padding:0 4px;min-height:24px">
+        <span style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#555">color mode</span>
+        <div class="color-mode-toggle">
+          <button class="color-mode-btn color-mode-active" data-color-mode="rolling">rolling</button>
+          <button class="color-mode-btn" data-color-mode="decay">decay</button>
+          <button class="color-mode-btn" data-color-mode="last-message">last</button>
+        </div>
+      </div>
       <section id="topology-napplets" class="topology-region" data-topology-region="napplets">
         <div class="topology-region-label">napplets</div>
         <div class="topology-napplet-grid">${nappletCards}</div>
@@ -418,6 +436,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
 
       <section class="topology-layer">
         <article id="${SHELL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="shell" data-node-id="${SHELL_NODE_ID}">
+          ${renderColorOverlays(SHELL_NODE_ID)}
           <div class="topology-node-kicker">host adapter</div>
           <div class="topology-node-title">shell</div>
           <div class="topology-node-copy">relay shell bridge and host identity</div>
@@ -428,6 +447,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
 
       <section class="topology-layer">
         <article id="${ACL_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="acl" data-node-id="${ACL_NODE_ID}">
+          ${renderColorOverlays(ACL_NODE_ID)}
           <div class="topology-node-kicker">checkpoint</div>
           <div class="topology-node-title">acl</div>
           <div class="topology-node-copy">capability gate between napplets and runtime dispatch</div>
@@ -437,6 +457,7 @@ export function renderDemoTopology(topology: DemoTopology): string {
 
       <section class="topology-layer">
         <article id="${RUNTIME_NODE_ID}" class="node-box topology-node topology-core-card" data-topology-node="runtime" data-node-id="${RUNTIME_NODE_ID}">
+          ${renderColorOverlays(RUNTIME_NODE_ID)}
           <div class="topology-node-kicker">dispatcher</div>
           <div class="topology-node-title">runtime</div>
           <div class="topology-node-copy">routes bus traffic and fans out to registered services</div>
