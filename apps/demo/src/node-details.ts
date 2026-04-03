@@ -11,6 +11,10 @@
 import type { DemoTopology, DemoTopologyNode, TopologyNodeRole } from './topology.js';
 import type { NappletInfo, MessageTap, TappedMessage } from './shell-host.js';
 import type { DemoProtocolPath } from './shell-host.js';
+import { getAclDenials, getGlobalAclDenials } from './acl-history.js';
+import type { AclHistoryEntry } from './acl-history.js';
+import { DEMO_CAPABILITY_LABELS } from './acl-panel.js';
+import type { Capability } from '@napplet/shell';
 
 // ─── Activity History ────────────────────────────────────────────────────────
 
@@ -62,6 +66,8 @@ export interface NodeDetail {
   inspectorSections: InspectorSection[];
   /** Recent per-node activity derived from live tap signals */
   recentActivity: NodeActivityEntry[];
+  /** ACL denial history entries for this node (napplet role only). */
+  aclDenials: AclHistoryEntry[];
   /** Whether drill-down / inspector is supported for this node */
   drillDownSupported: boolean;
 }
@@ -97,17 +103,19 @@ function truncate(s: string, max = 20): string {
 function buildNappletDetail(
   node: DemoTopologyNode,
   sources: NodeDetailSources,
+  options?: NodeDetailOptions,
 ): NodeDetail {
   const name = node.name ?? node.label;
   // Find the matching NappletInfo for this topology node
   let info: NappletInfo | undefined;
-  for (const [, ni] of sources.napplets) {
-    if (ni.name === name) { info = ni; break; }
+  let nappletWindowId = '';
+  for (const [wid, ni] of sources.napplets) {
+    if (ni.name === name) { info = ni; nappletWindowId = wid; break; }
   }
 
   const authStatus = info?.authenticated ? 'authenticated' : 'pending';
   const pubkeyDisplay = info?.pubkey ? truncate(info.pubkey, 12) : '—';
-  const capabilityCount = 0; // capabilities tracked externally; placeholder shows structural intent
+  const denials = nappletWindowId ? getAclDenials(nappletWindowId) : [];
   const activity = getNodeActivity(node.id);
 
   const summaryFields: SummaryField[] = [
@@ -124,8 +132,30 @@ function buildNappletDetail(
         { label: 'pubkey', value: info?.pubkey ? truncate(info.pubkey, 24) : '—' },
         { label: 'dTag', value: info?.dTag ?? '—' },
         { label: 'aggregateHash', value: info?.aggregateHash ? truncate(info.aggregateHash, 16) : '—' },
-        { label: 'capabilities', value: capabilityCount === 0 ? 'defaults' : `${capabilityCount} granted` },
       ],
+    },
+    {
+      heading: 'ACL Capabilities',
+      items: (() => {
+        if (!info?.pubkey || !options?.checkCapability) {
+          return [{ label: 'status', value: info?.pubkey ? 'checking...' : 'not authenticated' }];
+        }
+        const dTag = info.dTag ?? '';
+        const hash = info.aggregateHash ?? '';
+        const allCaps: Capability[] = [
+          'relay:read', 'relay:write', 'cache:read', 'cache:write',
+          'sign:event', 'sign:nip04', 'sign:nip44',
+          'state:read', 'state:write', 'hotkey:forward',
+        ];
+        const items: SummaryField[] = [];
+        for (const cap of allCaps) {
+          const allowed = options.checkCapability(info.pubkey, dTag, hash, cap);
+          const label = DEMO_CAPABILITY_LABELS[cap as Capability] ?? cap;
+          items.push({ label, value: allowed ? 'granted' : 'revoked' });
+        }
+        items.push({ label: 'recorded denials', value: `${denials.length}` });
+        return items;
+      })(),
     },
   ];
 
@@ -136,6 +166,7 @@ function buildNappletDetail(
     summaryFields,
     inspectorSections,
     recentActivity: activity,
+    aclDenials: denials,
     drillDownSupported: true,
   };
 }
@@ -173,6 +204,7 @@ function buildShellDetail(
     summaryFields,
     inspectorSections,
     recentActivity: activity,
+    aclDenials: [],
     drillDownSupported: true,
   };
 }
@@ -184,6 +216,7 @@ function buildAclDetail(
   const activity = getNodeActivity(node.id);
   const blockedMessages = sources.totalBlocked;
   const blockedActivity = activity.filter((entry) => entry.blocked).length;
+  const globalDenials = getGlobalAclDenials();
 
   const summaryFields: SummaryField[] = [
     { label: 'denied', value: `${blockedMessages}` },
@@ -196,7 +229,7 @@ function buildAclDetail(
       heading: 'Current State',
       items: [
         { label: 'total denied', value: `${blockedMessages}` },
-        { label: 'recent blocks', value: `${blockedActivity}` },
+        { label: 'recent denials (buffer)', value: `${globalDenials.length}` },
         { label: 'napplets under gate', value: `${sources.napplets.size}` },
       ],
     },
@@ -209,6 +242,7 @@ function buildAclDetail(
     summaryFields,
     inspectorSections,
     recentActivity: activity,
+    aclDenials: globalDenials,
     drillDownSupported: true,
   };
 }
@@ -244,6 +278,7 @@ function buildRuntimeDetail(
     summaryFields,
     inspectorSections,
     recentActivity: activity,
+    aclDenials: [],
     drillDownSupported: true,
   };
 }
@@ -282,6 +317,7 @@ function buildServiceDetail(
     summaryFields,
     inspectorSections,
     recentActivity: activity,
+    aclDenials: [],
     drillDownSupported: true,
   };
 }
@@ -294,6 +330,8 @@ export interface NodeDetailOptions {
   hostPubkey: string;
   totalMessages: number;
   totalBlocked: number;
+  /** Check a capability for a napplet. Returns true if allowed. */
+  checkCapability?: (pubkey: string, dTag: string, hash: string, cap: string) => boolean;
 }
 
 /**
@@ -317,7 +355,7 @@ export function buildNodeDetails(
   };
 
   switch (node.role) {
-    case 'napplet': return buildNappletDetail(node, sources);
+    case 'napplet': return buildNappletDetail(node, sources, options);
     case 'shell': return buildShellDetail(node, sources);
     case 'acl': return buildAclDetail(node, sources);
     case 'runtime': return buildRuntimeDetail(node, sources);

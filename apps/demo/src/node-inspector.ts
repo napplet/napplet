@@ -16,6 +16,9 @@ import {
   getNodeActivity,
 } from './node-details.js';
 import type { NodeDetail, NodeDetailOptions, NodeActivityEntry } from './node-details.js';
+import type { AclHistoryEntry } from './acl-history.js';
+import { DEMO_CAPABILITY_LABELS } from './acl-panel.js';
+import { openPolicyModal } from './acl-modal.js';
 import { renderConstantsPanel, wireConstantsPanelEvents } from './constants-panel.js';
 
 // ─── Module State ─────────────────────────────────────────────────────────────
@@ -63,6 +66,62 @@ function renderActivityEntry(entry: NodeActivityEntry): string {
   `;
 }
 
+// ─── Rejection History Rendering ──────────────────────────────────────────────
+
+function renderRejectionEntry(entry: AclHistoryEntry, idx: number): string {
+  const capLabel = DEMO_CAPABILITY_LABELS[entry.capability as keyof typeof DEMO_CAPABILITY_LABELS] ?? entry.capability;
+  const timeStr = formatTimestamp(entry.timestamp);
+
+  // Summarize the NIP-01 message
+  let messageSummary = '';
+  if (entry.message && Array.isArray(entry.message)) {
+    const verb = entry.message[0];
+    const event = entry.message[1];
+    if (typeof event === 'object' && event !== null) {
+      const e = event as Record<string, unknown>;
+      const kind = e.kind ?? '?';
+      const topic = Array.isArray(e.tags)
+        ? (e.tags as string[][]).find(t => t[0] === 't')?.[1]
+        : undefined;
+      messageSummary = `${verb} kind:${kind}${topic ? ` topic:${topic}` : ''}`;
+    } else {
+      messageSummary = String(verb);
+    }
+  }
+
+  const rawId = `acl-raw-${idx}`;
+  const rawJson = entry.message ? JSON.stringify(entry.message, null, 2) : 'no message context';
+
+  return `
+    <div style="padding:6px 0;border-bottom:1px solid #1a1b2e">
+      <div style="display:flex;gap:6px;align-items:baseline;font-size:10px">
+        <span style="color:#ff3b3b">&#10007;</span>
+        <span style="color:#d0d4e8;flex:1">${capLabel}</span>
+        <span style="color:#666">${timeStr}</span>
+      </div>
+      ${messageSummary ? `<div style="font-size:9px;color:#7981a0;margin-top:2px;padding-left:16px">${messageSummary}</div>` : ''}
+      <div style="margin-top:3px;padding-left:16px">
+        <button
+          onclick="(function(){var el=document.getElementById('${rawId}');el.style.display=el.style.display==='none'?'block':'none'})()"
+          style="background:transparent;border:none;color:#5a6080;font-size:9px;cursor:pointer;padding:0;text-decoration:underline"
+        >raw</button>
+        <pre id="${rawId}" style="display:none;margin:4px 0 0;padding:6px 8px;background:#0a0b14;border-radius:4px;font-size:9px;color:#7981a0;max-height:120px;overflow:auto;white-space:pre-wrap;word-break:break-all">${rawJson}</pre>
+      </div>
+    </div>
+  `;
+}
+
+function renderRejectionHistory(denials: AclHistoryEntry[]): string {
+  if (denials.length === 0) {
+    return `<div style="color:#444;font-size:10px;padding:4px 0">no rejections recorded</div>`;
+  }
+  return denials
+    .slice()
+    .reverse()
+    .map((entry, idx) => renderRejectionEntry(entry, idx))
+    .join('');
+}
+
 // Renders inspector sections including "Current State" and "Recent Activity" blocks
 function renderInspectorContent(detail: NodeDetail): string {
   const sectionItems = (items: Array<{ label: string; value: string }>) =>
@@ -97,9 +156,35 @@ function renderInspectorContent(detail: NodeDetail): string {
         .map(renderActivityEntry)
         .join('');
 
+  // Policy button for ACL node
+  const policyBtn = detail.role === 'acl'
+    ? `
+      <div style="padding:0 0 16px">
+        <button
+          id="inspector-open-policy"
+          style="width:100%;padding:8px 12px;background:#1a1b2e;border:1px solid #2a2d42;border-radius:6px;color:#b388ff;font-size:11px;cursor:pointer;font-family:inherit;letter-spacing:0.05em"
+        >Open Policy Matrix</button>
+      </div>
+    `
+    : '';
+
+  // ACL rejections section for napplet and acl nodes
+  const denialsHtml = detail.aclDenials.length > 0 || detail.role === 'napplet' || detail.role === 'acl'
+    ? `
+      <div class="inspector-section" style="margin-bottom:16px">
+        <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7c86a7;margin-bottom:8px">ACL Rejections</div>
+        <div id="inspector-denials-list">
+          ${renderRejectionHistory(detail.aclDenials)}
+        </div>
+      </div>
+    `
+    : '';
+
   return `
     <div style="padding:0 16px 16px">
+      ${policyBtn}
       ${sections}
+      ${denialsHtml}
       <div class="inspector-section" style="margin-bottom:16px">
         <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7c86a7;margin-bottom:8px">Recent Activity</div>
         <div id="inspector-activity-list">
@@ -232,6 +317,12 @@ function updateInspectorPane(): void {
   const closeBtn = document.getElementById('inspector-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => setSelectedNodeId(null));
+  }
+
+  // Wire policy modal button (ACL node only)
+  const policyBtn = document.getElementById('inspector-open-policy');
+  if (policyBtn) {
+    policyBtn.addEventListener('click', () => openPolicyModal());
   }
 
   wireTabHandlers();

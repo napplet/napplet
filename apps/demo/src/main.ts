@@ -15,7 +15,9 @@ import {
   getNapplets,
   loadNapplet,
   getNotificationServiceHandler,
+  relay,
 } from './shell-host.js';
+import type { Capability } from '@napplet/shell';
 import {
   createDemoNotificationController,
 } from './notification-demo.js';
@@ -526,6 +528,8 @@ initNodeInspector(() => {
     hostPubkey: getDemoHostPubkey(),
     totalMessages,
     totalBlocked,
+    checkCapability: (pubkey: string, dTag: string, hash: string, cap: string) =>
+      relay.runtime.aclState.check(pubkey, dTag, hash, cap as Capability),
   };
 }, topology);
 
