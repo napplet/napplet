@@ -4,8 +4,8 @@ milestone: v0.10.0
 milestone_name: Demo Consistency and Usability Pass
 status: executing
 stopped_at: Phase 53 context gathered
-last_updated: "2026-04-03T13:10:13.157Z"
-last_activity: 2026-04-03
+last_updated: "2026-04-03T13:11:08.552Z"
+last_activity: 2026-04-03 -- Phase 52 execution started
 progress:
   total_phases: 5
   completed_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 51 — accurate-color-routing
+**Current focus:** Phase 52 — service-capability-toggles
 
 ## Current Position
 
-Phase: 52
-Plan: Not started
-Status: Executing Phase 51
-Last activity: 2026-04-03
+Phase: 52 (service-capability-toggles) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 52
+Last activity: 2026-04-03 -- Phase 52 execution started
 
 Progress: [####......] 40%
 
