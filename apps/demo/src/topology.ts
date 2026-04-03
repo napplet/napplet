@@ -178,7 +178,12 @@ export function buildDemoTopology(input: DemoTopologyInput): DemoTopology {
 }
 
 export interface EdgeFlasher {
+  /** Flash both -out and -in lines with the same color (backward compat). */
   flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void;
+  /** Flash only one direction's line. */
+  flashDirection(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked'): void;
+  /** Set a persistent color on one direction's line (no auto-revert). Pass null to reset to resting. */
+  setColor(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked' | null): void;
 }
 
 import { demoConfig } from './demo-config.js';
@@ -269,6 +274,31 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
           }, demoConfig.get('demo.FLASH_DURATION_MS'));
         } catch { /* best-effort */ }
       }
+    },
+
+    flashDirection(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked'): void {
+      const color = cls === 'active' ? COLOR_ACTIVE : cls === 'amber' ? COLOR_AMBER : COLOR_BLOCKED;
+      const line = lines.get(`${edgeId}-${direction}`);
+      if (!line) return;
+      try {
+        line.setOptions({ color, size: 3 });
+        setTimeout(() => {
+          try { line.setOptions({ color: COLOR_RESTING, size: 2 }); } catch { /* best-effort */ }
+        }, demoConfig.get('demo.FLASH_DURATION_MS'));
+      } catch { /* best-effort */ }
+    },
+
+    setColor(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked' | null): void {
+      const color = cls === null ? COLOR_RESTING
+        : cls === 'active' ? COLOR_ACTIVE
+        : cls === 'amber' ? COLOR_AMBER
+        : COLOR_BLOCKED;
+      const size = cls === null ? 2 : 3;
+      const line = lines.get(`${edgeId}-${direction}`);
+      if (!line) return;
+      try {
+        line.setOptions({ color, size });
+      } catch { /* best-effort */ }
     },
   };
 }
