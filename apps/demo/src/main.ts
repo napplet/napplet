@@ -45,6 +45,7 @@ import {
 import { initSignerModal, openSignerModal } from './signer-modal.js';
 import { demoConfig } from './demo-config.js';
 import { openConstantsTab } from './node-inspector.js';
+import { setAclRingSize } from './acl-history.js';
 
 // ─── Notification Controller ─────────────────────────────────────────────────
 
@@ -212,6 +213,9 @@ if (debuggerEl) {
 
 demoConfig.subscribe((key, value) => {
   debuggerEl?.addSystemMessage(`config changed: ${key} = ${value}`);
+  if (key === 'demo.ACL_RING_BUFFER_SIZE') {
+    setAclRingSize(value);
+  }
 });
 
 // Suppress unused import warning — openConstantsTab is available for keyboard shortcuts
