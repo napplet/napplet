@@ -188,7 +188,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. User can toggle trace mode on/off via the demo UI
   2. With trace mode on, each protocol message animates through the graph hop-by-hop with a visible moving indicator and directional fade
   3. Trace animation speed is perceptible but does not block subsequent messages (messages queue or overlap gracefully)
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 **UI hint**: yes
 
 ## Progress
@@ -202,4 +202,4 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 | 50. ACL Detail Panel | 4/4 | Complete    | 2026-04-03 |
 | 51. Accurate Color Routing | 4/4 | Complete    | 2026-04-03 |
 | 52. Service & Capability Toggles | 4/4 | Complete   | 2026-04-03 |
-| 53. Per-Message Trace Mode | 0/TBD | Not started | - |
+| 53. Per-Message Trace Mode | 0/4 | Planned | - |
