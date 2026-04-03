@@ -12,7 +12,7 @@ import type { DemoTopology } from './topology.js';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type ColorClass = 'active' | 'amber' | 'blocked';
-export type PersistenceMode = 'rolling' | 'decay' | 'last-message';
+export type PersistenceMode = 'rolling' | 'decay' | 'last-message' | 'trace';
 
 interface EdgeDirectionEntry {
   color: ColorClass;
@@ -80,6 +80,8 @@ export function setPersistenceMode(mode: PersistenceMode): void {
  * @param color - The classified color for this message
  */
 export function recordEdgeColor(edgeId: string, direction: 'out' | 'in', color: ColorClass): void {
+  // Trace mode: persistent state is not accumulated — animations are ephemeral
+  if (_mode === 'trace') return;
   const key = `${edgeId}:${direction}`;
   const state = _state.get(key);
   if (!state) return;
@@ -115,6 +117,8 @@ export function getEdgeColor(edgeId: string, direction: 'out' | 'in'): ColorClas
       return _resolveDecay(state);
     case 'last-message':
       return _resolveLastMessage(state);
+    case 'trace':
+      return null; // Trace mode has no persistent state — edges driven by animations
   }
 }
 
