@@ -19,6 +19,7 @@ import { createSignerService, createNotificationService } from '@napplet/service
 import type { Notification } from '@napplet/services';
 import { getSigner, getSignerConnectionState } from './signer-connection.js';
 import { demoConfig } from './demo-config.js';
+import { pushAclEvent } from './acl-history.js';
 
 // Static ephemeral host identity for shell node display (separate from signer identity)
 import { generateSecretKey, getPublicKey } from 'nostr-tools/pure';
@@ -365,6 +366,21 @@ function createDemoHooks(notificationOnChange?: (notifications: readonly Notific
         replayWindowSeconds: demoConfig.get('core.REPLAY_WINDOW_SECONDS'),
         ringBufferSize: demoConfig.get('runtime.RING_BUFFER_SIZE'),
       };
+    },
+    onAclCheck: (event) => {
+      // Resolve windowId and name from pubkey
+      let windowId = '';
+      let nappletName = 'unknown';
+      for (const [wid, info] of napplets) {
+        if (info.pubkey === event.identity.pubkey) {
+          windowId = wid;
+          nappletName = info.name;
+          break;
+        }
+      }
+      if (windowId) {
+        pushAclEvent(event, windowId, nappletName);
+      }
     },
   };
 }

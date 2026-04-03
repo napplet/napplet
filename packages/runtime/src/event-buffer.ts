@@ -89,7 +89,7 @@ export interface EventBuffer {
 export function createEventBuffer(
   sendToNapplet: SendToNapplet,
   sessionRegistry: SessionRegistry,
-  enforce: (pubkey: string, capability: Capability) => EnforceResult,
+  enforce: (pubkey: string, capability: Capability, message?: unknown[]) => EnforceResult,
   subscriptions: Map<string, SubscriptionEntry>,
   getBufferSize?: () => number,
 ): EventBuffer {
@@ -105,7 +105,7 @@ export function createEventBuffer(
       // Check relay:read ACL on the recipient at delivery time
       const recipientPubkey = sessionRegistry.getPubkey(sub.windowId);
       if (recipientPubkey) {
-        const recipientResult = enforce(recipientPubkey, 'relay:read');
+        const recipientResult = enforce(recipientPubkey, 'relay:read', ['EVENT', event]);
         if (!recipientResult.allowed) continue;
       }
 

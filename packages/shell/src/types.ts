@@ -190,6 +190,8 @@ export interface AclCheckEvent {
   capability: string;
   /** The enforcement decision. */
   decision: 'allow' | 'deny';
+  /** The triggering NIP-01 message, if available. */
+  message?: unknown[];
 }
 
 // ─── ShellAdapter ────────────────────────────────────────────────────────────

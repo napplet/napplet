@@ -161,10 +161,10 @@ export interface EnforceConfig {
  * // result.allowed === true | false
  * ```
  */
-export function createEnforceGate(config: EnforceConfig): (pubkey: string, capability: Capability) => EnforceResult {
+export function createEnforceGate(config: EnforceConfig): (pubkey: string, capability: Capability, message?: unknown[]) => EnforceResult {
   const { checkAcl, resolveIdentity, onAclCheck } = config;
 
-  return function enforce(pubkey: string, capability: Capability): EnforceResult {
+  return function enforce(pubkey: string, capability: Capability, message?: unknown[]): EnforceResult {
     const entry = resolveIdentity(pubkey);
     const dTag = entry?.dTag ?? '';
     const aggregateHash = entry?.aggregateHash ?? '';
@@ -176,7 +176,7 @@ export function createEnforceGate(config: EnforceConfig): (pubkey: string, capab
     const decision = allowed ? 'allow' as const : 'deny' as const;
 
     if (onAclCheck) {
-      onAclCheck({ identity, capability, decision });
+      onAclCheck({ identity, capability, decision, message });
     }
 
     return { allowed, capability };

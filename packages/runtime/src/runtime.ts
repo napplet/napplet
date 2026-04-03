@@ -576,7 +576,7 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     // Resolve and enforce the required capability for this message
     const caps = resolveCapabilities(msg);
     if (caps.senderCap) {
-      const result = enforce(pubkey, caps.senderCap);
+      const result = enforce(pubkey, caps.senderCap, msg);
       if (!result.allowed) { sendOk(false, formatDenialReason(result.capability)); return; }
     }
 
@@ -664,7 +664,7 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     const pubkey = sessionRegistry.getPubkey(windowId);
     if (!pubkey) { hooks.sendToNapplet(windowId, ['CLOSED', subId, 'auth-required']); return; }
     {
-      const result = enforce(pubkey, 'relay:read');
+      const result = enforce(pubkey, 'relay:read', msg);
       if (!result.allowed) { hooks.sendToNapplet(windowId, ['CLOSED', subId, formatDenialReason(result.capability)]); return; }
     }
 
@@ -780,7 +780,7 @@ export function createRuntime(hooks: RuntimeAdapter): Runtime {
     const pubkey = sessionRegistry.getPubkey(windowId);
     if (!pubkey) { hooks.sendToNapplet(windowId, ['CLOSED', countId, 'auth-required']); return; }
     {
-      const result = enforce(pubkey, 'relay:read');
+      const result = enforce(pubkey, 'relay:read', msg);
       if (!result.allowed) { hooks.sendToNapplet(windowId, ['CLOSED', countId, formatDenialReason(result.capability)]); return; }
     }
     let count = 0;
