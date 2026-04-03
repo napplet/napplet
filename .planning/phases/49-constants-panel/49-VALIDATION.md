@@ -1,10 +1,11 @@
 ---
 phase: 49
 slug: constants-panel
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-03
+validated: 2026-04-03
 ---
 
 # Phase 49 — Validation Strategy
@@ -17,11 +18,11 @@ created: 2026-04-03
 
 | Property | Value |
 |----------|-------|
-| **Framework** | Manual browser verification (demo UI phase) |
-| **Config file** | none — demo UI testing is manual |
-| **Quick run command** | `pnpm build && pnpm type-check` |
-| **Full suite command** | `pnpm build && pnpm type-check` |
-| **Estimated runtime** | ~15 seconds |
+| **Framework** | Vitest (unit) + manual browser verification |
+| **Config file** | `vitest.config.ts` |
+| **Quick run command** | `pnpm vitest run tests/unit/demo-config-model.test.ts tests/unit/demo-config-overrides.test.ts` |
+| **Full suite command** | `pnpm vitest run` |
+| **Estimated runtime** | ~5 seconds |
 
 ---
 
@@ -38,11 +39,11 @@ created: 2026-04-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 49-01-01 | 01 | 1 | TRANS-01 | build | `pnpm build && pnpm type-check` | N/A | ⬜ pending |
-| 49-01-02 | 01 | 1 | TRANS-01 | build | `pnpm build && pnpm type-check` | N/A | ⬜ pending |
-| 49-02-01 | 02 | 1 | TRANS-01, TRANS-02 | build | `pnpm build && pnpm type-check` | N/A | ⬜ pending |
-| 49-03-01 | 03 | 2 | TRANS-02 | build | `pnpm build && pnpm type-check` | N/A | ⬜ pending |
-| 49-04-01 | 04 | 2 | TRANS-01, TRANS-02 | build+manual | `pnpm build && pnpm type-check` | N/A | ⬜ pending |
+| 49-01-01 | 01 | 1 | TRANS-01 | unit | `pnpm vitest run tests/unit/demo-config-model.test.ts` | tests/unit/demo-config-model.test.ts | ✅ green |
+| 49-01-02 | 01 | 1 | TRANS-01 | unit | `pnpm vitest run tests/unit/demo-config-model.test.ts` | tests/unit/demo-config-model.test.ts | ✅ green |
+| 49-02-01 | 02 | 1 | TRANS-01, TRANS-02 | unit | `pnpm vitest run tests/unit/demo-config-model.test.ts` | tests/unit/demo-config-model.test.ts | ✅ green |
+| 49-03-01 | 03 | 2 | TRANS-02 | unit | `pnpm vitest run tests/unit/demo-config-overrides.test.ts` | tests/unit/demo-config-overrides.test.ts | ✅ green |
+| 49-04-01 | 04 | 2 | TRANS-01, TRANS-02 | unit | `pnpm vitest run tests/unit/demo-config-overrides.test.ts` | tests/unit/demo-config-overrides.test.ts | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -67,13 +68,32 @@ created: 2026-04-03
 
 ---
 
+## Validation Audit 2026-04-03
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 4 |
+| Resolved | 4 |
+| Escalated | 0 |
+
+### Tests Generated
+
+| File | Tests | Status |
+|------|-------|--------|
+| `tests/unit/demo-config-model.test.ts` | DemoConfig data model, getAllDefs, getByPackage, getByDomain, renderConstantsPanel HTML | ✅ green |
+| `tests/unit/demo-config-overrides.test.ts` | DemoConfig set/reset/subscribe, clamping, RuntimeConfigOverrides, lazy getters | ✅ green |
+
+**Total: 69 tests, 0 failures**
+
+---
+
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** complete (2026-04-03)
