@@ -303,6 +303,66 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   };
 }
 
+/**
+ * Wire click handlers for service toggle icons on topology service nodes.
+ * Must be called after renderDemoTopology() has been inserted into the DOM.
+ *
+ * @param onToggle - Callback invoked after toggle state changes (for external sync)
+ */
+export function wireServiceToggles(onToggle?: (name: string, enabled: boolean) => void): void {
+  const toggleIcons = document.querySelectorAll<HTMLButtonElement>('.service-toggle-icon[data-service-toggle]');
+
+  for (const icon of toggleIcons) {
+    const serviceName = icon.dataset.serviceToggle;
+    if (!serviceName) continue;
+
+    icon.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent inspector opening
+
+      const nodeEl = icon.closest<HTMLElement>('[data-service-name]');
+      const isCurrentlyEnabled = !nodeEl?.classList.contains('service-disabled');
+      const newEnabled = !isCurrentlyEnabled;
+
+      if (onToggle) {
+        onToggle(serviceName, newEnabled);
+      }
+
+      // Update visual state
+      updateServiceNodeVisual(serviceName, newEnabled);
+    });
+  }
+}
+
+/**
+ * Update a service node's visual state to reflect enabled/disabled.
+ * Adds/removes 'service-disabled' class and updates toggle icon appearance.
+ *
+ * @param name - Service name (must match data-service-name attribute)
+ * @param enabled - Whether the service is currently enabled
+ */
+export function updateServiceNodeVisual(name: string, enabled: boolean): void {
+  const nodeId = getServiceNodeId(name);
+  const nodeEl = document.getElementById(nodeId);
+  if (!nodeEl) return;
+
+  if (enabled) {
+    nodeEl.classList.remove('service-disabled');
+    nodeEl.style.opacity = '1';
+    nodeEl.style.filter = '';
+  } else {
+    nodeEl.classList.add('service-disabled');
+    nodeEl.style.opacity = '0.4';
+    nodeEl.style.filter = 'grayscale(0.8)';
+  }
+
+  // Update toggle icon color
+  const toggleIcon = nodeEl.querySelector<HTMLButtonElement>('.service-toggle-icon');
+  if (toggleIcon) {
+    toggleIcon.style.color = enabled ? '#39ff14' : '#ff3b3b';
+    toggleIcon.title = `${enabled ? 'Disable' : 'Enable'} ${name} service`;
+  }
+}
+
 function renderNodeEdge(edgeId: string): string {
   return `<div id="${edgeId}" class="topology-edge" data-topology-edge="${edgeId}" aria-hidden="true"></div>`;
 }
@@ -408,7 +468,14 @@ export function renderDemoTopology(topology: DemoTopology): string {
             data-topology-node="service"
             data-node-id="${getServiceNodeId(service)}"
             data-service-name="${service}"
+            style="position:relative"
           >
+            <button
+              class="service-toggle-icon"
+              data-service-toggle="${service}"
+              title="Toggle ${service} service"
+              style="position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;border:1px solid #3a3a4a;background:#1a1b2e;color:#39ff14;font-size:10px;line-height:18px;text-align:center;cursor:pointer;z-index:10;padding:0"
+            >&#9679;</button>
             ${renderColorOverlays(getServiceNodeId(service))}
             ${innerContent}
             <div class="node-summary" id="node-summary-${getServiceNodeId(service)}"></div>
