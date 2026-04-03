@@ -7,7 +7,7 @@
  */
 
 import { DEMO_CAPABILITY_LABELS } from './acl-panel.js';
-import { getNapplets, relay } from './shell-host.js';
+import { getNapplets, relay, toggleCapability, getDemoServiceNames, toggleService, isServiceEnabled } from './shell-host.js';
 import type { Capability } from '@napplet/shell';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -104,6 +104,61 @@ export function openPolicyModal(): void {
   header.appendChild(closeBtn);
   container.appendChild(header);
 
+  // Services section
+  const servicesSection = document.createElement('div');
+  servicesSection.style.cssText = 'margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #1f2235';
+
+  const servicesLabel = document.createElement('div');
+  servicesLabel.style.cssText = 'font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7981a0;margin-bottom:8px';
+  servicesLabel.textContent = 'services';
+  servicesSection.appendChild(servicesLabel);
+
+  const servicesGrid = document.createElement('div');
+  servicesGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px';
+
+  const serviceNames = getDemoServiceNames();
+  for (const name of serviceNames) {
+    const serviceItem = document.createElement('div');
+    serviceItem.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;border:1px solid #2a2d42;background:#181926';
+
+    const serviceNameSpan = document.createElement('span');
+    serviceNameSpan.textContent = name;
+    serviceNameSpan.style.cssText = 'font-size:11px;color:#d0d4e8;font-weight:500';
+    serviceItem.appendChild(serviceNameSpan);
+
+    // Toggle switch
+    const toggle = document.createElement('button');
+    const enabled = isServiceEnabled(name);
+    toggle.style.cssText = `width:32px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;transition:background 0.2s;background:${enabled ? '#39ff14' : '#3a3a4a'}`;
+
+    const knob = document.createElement('span');
+    knob.style.cssText = `display:block;width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;top:2px;transition:left 0.2s;left:${enabled ? '18px' : '2px'}`;
+    toggle.appendChild(knob);
+
+    toggle.addEventListener('click', () => {
+      const currentlyEnabled = isServiceEnabled(name);
+      const newState = !currentlyEnabled;
+      toggleService(name, newState);
+      // Update toggle visual
+      toggle.style.background = newState ? '#39ff14' : '#3a3a4a';
+      knob.style.left = newState ? '18px' : '2px';
+      // Update service name opacity
+      serviceNameSpan.style.color = newState ? '#d0d4e8' : '#555';
+    });
+
+    serviceItem.appendChild(toggle);
+
+    // Dim the label if disabled
+    if (!enabled) {
+      serviceNameSpan.style.color = '#555';
+    }
+
+    servicesGrid.appendChild(serviceItem);
+  }
+
+  servicesSection.appendChild(servicesGrid);
+  container.appendChild(servicesSection);
+
   // Table
   const table = document.createElement('table');
   table.style.cssText = 'width:100%;border-collapse:collapse;font-size:11px';
@@ -154,16 +209,34 @@ export function openPolicyModal(): void {
 
     for (const cap of ALL_CAPABILITIES) {
       const td = document.createElement('td');
-      td.style.cssText = 'text-align:center;padding:8px 4px;font-size:14px';
+      td.style.cssText = 'text-align:center;padding:8px 4px;font-size:14px;cursor:pointer;user-select:none';
       const state = row.caps.get(cap) ?? 'default';
 
-      if (state === 'granted') {
-        td.innerHTML = '<span style="color:#39ff14" title="granted">&#10003;</span>';
-      } else if (state === 'revoked') {
-        td.innerHTML = '<span style="color:#ff3b3b" title="revoked">&#10007;</span>';
-      } else {
-        td.innerHTML = '<span style="color:#555" title="default (permissive)">&#8212;</span>';
+      function renderCellState(cell: HTMLElement, cellState: 'granted' | 'revoked' | 'default'): void {
+        if (cellState === 'granted') {
+          cell.innerHTML = '<span style="color:#39ff14" title="granted — click to revoke">&#10003;</span>';
+        } else if (cellState === 'revoked') {
+          cell.innerHTML = '<span style="color:#ff3b3b" title="revoked — click to grant">&#10007;</span>';
+        } else {
+          cell.innerHTML = '<span style="color:#555" title="default (permissive) — click to revoke">&#8212;</span>';
+        }
       }
+
+      renderCellState(td, state);
+
+      // Click to toggle: allowed (granted/default) -> revoked -> allowed
+      td.addEventListener('click', () => {
+        const info = napplets.get(row.windowId);
+        if (!info?.pubkey) return;
+        const isCurrentlyAllowed = aclState.check(info.pubkey, info.dTag || '', info.aggregateHash || '', cap);
+        const newEnabled = !isCurrentlyAllowed;
+        toggleCapability(row.windowId, cap, newEnabled);
+        // Update cell visual immediately
+        renderCellState(td, newEnabled ? 'granted' : 'revoked');
+        // Update the row's caps map for consistency
+        row.caps.set(cap, newEnabled ? 'granted' : 'revoked');
+      });
+
       tr.appendChild(td);
     }
 
@@ -220,4 +293,15 @@ export function closePolicyModal(): void {
 /** Check if the policy modal is currently open. */
 export function isPolicyModalOpen(): boolean {
   return document.getElementById(MODAL_ID) !== null;
+}
+
+/**
+ * Refresh the policy modal if it is currently open.
+ * Called after external state changes (e.g., inline ACL panel toggle)
+ * to keep the modal in sync.
+ */
+export function refreshPolicyModal(): void {
+  if (isPolicyModalOpen()) {
+    openPolicyModal(); // close-and-reopen rebuilds from live state
+  }
 }
