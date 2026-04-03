@@ -143,7 +143,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. User can open a constants panel that lists all protocol magic numbers (buffer sizes, timeouts, quotas, replay window, flash durations) with their current values
   2. User can edit any constant value in the panel and the change takes immediate effect on subsequent protocol operations
   3. Edited values persist for the session (survive panel close/reopen) but reset on page reload
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 **UI hint**: yes
 
 ### Phase 50: ACL Detail Panel
@@ -198,7 +198,7 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 49. Constants Panel | 0/TBD | Not started | - |
+| 49. Constants Panel | 0/4 | Planned | - |
 | 50. ACL Detail Panel | 0/TBD | Not started | - |
 | 51. Accurate Color Routing | 0/TBD | Not started | - |
 | 52. Service & Capability Toggles | 0/TBD | Not started | - |
