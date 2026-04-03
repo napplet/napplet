@@ -198,7 +198,7 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 49. Constants Panel | 0/4 | Planned | - |
+| 49. Constants Panel | 0/4 | Planned    |  |
 | 50. ACL Detail Panel | 0/TBD | Not started | - |
 | 51. Accurate Color Routing | 0/TBD | Not started | - |
 | 52. Service & Capability Toggles | 0/TBD | Not started | - |

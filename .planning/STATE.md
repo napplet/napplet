@@ -4,8 +4,8 @@ milestone: v0.10.0
 milestone_name: Demo Consistency and Usability Pass
 status: executing
 stopped_at: Phase 50 context gathered
-last_updated: "2026-04-03T12:03:52.166Z"
-last_activity: 2026-04-03 -- Phase 49 planned (4 plans, 2 waves)
+last_updated: "2026-04-03T12:04:39.901Z"
+last_activity: 2026-04-03 -- Phase 49 execution started
 progress:
   total_phases: 5
   completed_phases: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.10.0 Phase 49 (Constants Panel)
+**Current focus:** Phase 49 — constants-panel
 
 ## Current Position
 
-Phase: 49 of 53 (Constants Panel) -- first of 5 phases in v0.10.0
-Plan: 4 plans in 2 waves
-Status: Ready to execute
-Last activity: 2026-04-03 -- Phase 49 planned (4 plans, 2 waves)
+Phase: 49 (constants-panel) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 49
+Last activity: 2026-04-03 -- Phase 49 execution started
 
 Progress: [..........] 0%
 
