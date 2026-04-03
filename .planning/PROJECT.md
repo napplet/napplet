@@ -105,10 +105,10 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-- [ ] Expose protocol magic numbers in demo UI with editing
-- [ ] ACL detail panel shows restrictions, rejection reasons (what + why)
+- [x] Expose protocol magic numbers in demo UI with editing — Validated in Phase 49: Constants Panel
+- [x] ACL detail panel shows restrictions, rejection reasons (what + why) — Validated in Phase 50: ACL Detail Panel
 - [x] Persistent edge/node coloring reflects actual pass/fail/warn routing state — Validated in Phase 51: Accurate Color Routing
-- [ ] Per-message animation trace mode (toggle)
+- [x] Per-message animation trace mode (toggle) — Validated in Phase 53: Per-Message Trace Mode
 - [x] Disable/enable any service (audio, notifications, signer, relay pool, cache) — Validated in Phase 52: Service & Capability Toggles
 - [x] Toggle individual capabilities (e.g. sign:nip44 off, sign:event on) — Validated in Phase 52: Service & Capability Toggles
 - [x] ACL edits take effect live on next message (no re-register) — Validated in Phase 52: Service & Capability Toggles
