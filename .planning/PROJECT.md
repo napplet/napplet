@@ -109,9 +109,9 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - [ ] ACL detail panel shows restrictions, rejection reasons (what + why)
 - [x] Persistent edge/node coloring reflects actual pass/fail/warn routing state — Validated in Phase 51: Accurate Color Routing
 - [ ] Per-message animation trace mode (toggle)
-- [ ] Disable/enable any service (audio, notifications, signer, relay pool, cache)
-- [ ] Toggle individual capabilities (e.g. sign:nip44 off, sign:event on)
-- [ ] ACL edits take effect live on next message (no re-register)
+- [x] Disable/enable any service (audio, notifications, signer, relay pool, cache) — Validated in Phase 52: Service & Capability Toggles
+- [x] Toggle individual capabilities (e.g. sign:nip44 off, sign:event on) — Validated in Phase 52: Service & Capability Toggles
+- [x] ACL edits take effect live on next message (no re-register) — Validated in Phase 52: Service & Capability Toggles
 
 ### Out of Scope
 
@@ -204,4 +204,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-03 after Phase 51 (Accurate Color Routing) completion*
+*Last updated: 2026-04-03 after Phase 52 (Service & Capability Toggles) completion*
