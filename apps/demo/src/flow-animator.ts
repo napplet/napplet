@@ -204,26 +204,15 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
         const direction = msg.direction === 'napplet->shell' ? 'out' as const : 'in' as const;
         const failureEdgeIndex = isFailure ? identifyFailureNode(nodes, msg) : edges.length;
         animateTrace(edgeFlasher, edges, nodes, topology, cls, failureEdgeIndex, direction);
-      } else if (!isFailure) {
-        // Success: all edges get 'active' in the message direction
-        const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';
-        for (const edgeId of edges) {
-          edgeFlasher.flashDirection(edgeId, direction, 'active');
-          recordEdgeColor(edgeId, direction, 'active');
-        }
       } else {
-        // Failure: identify failure point and split path
-        const failureNodeIndex = identifyFailureNode(nodes, msg);
+        // Persistent modes: record color state, let onColorStateChange render via setColor()
+        const failureNodeIndex = isFailure ? identifyFailureNode(nodes, msg) : edges.length;
         const direction = msg.direction === 'napplet->shell' ? 'out' : 'in';
 
         for (let i = 0; i < edges.length; i++) {
           if (i < failureNodeIndex) {
-            // Edge before failure: green in message direction
-            edgeFlasher.flashDirection(edges[i], direction, 'active');
             recordEdgeColor(edges[i], direction, 'active');
           } else {
-            // Edge at or after failure: failure color
-            edgeFlasher.flashDirection(edges[i], direction, cls);
             recordEdgeColor(edges[i], direction, cls);
           }
         }
