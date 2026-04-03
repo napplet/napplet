@@ -424,6 +424,12 @@ const napplets = new Map<string, NappletInfo>();
 const demoServiceNames = new Set<string>(['signer', 'notifications']);
 let nappletCounter = 0;
 
+/** Permanent store of all service handler references — never deleted, used for re-registration on toggle-on. */
+const serviceHandlerStore = new Map<string, ServiceHandler>();
+
+/** Set of service names that are currently disabled (unregistered from runtime). */
+const disabledServices = new Set<string>();
+
 let _notificationServiceHandler: ServiceHandler | null = null;
 
 /** Get the registered notification service handler for direct host dispatch. */
@@ -500,6 +506,7 @@ export function bootShell(notificationOnChange?: (notifications: readonly Notifi
   const originalRegisterService = relay.runtime.registerService.bind(relay.runtime);
   relay.runtime.registerService = (name, handler) => {
     demoServiceNames.add(name);
+    serviceHandlerStore.set(name, handler);
     originalRegisterService(name, handler);
   };
   const originalUnregisterService = relay.runtime.unregisterService.bind(relay.runtime);
@@ -622,6 +629,37 @@ export function toggleCapability(windowId: string, capability: Capability, enabl
   // Verify the change took effect
   const check = relay.runtime.aclState.check(info.pubkey, dTag, hash, capability);
   console.log(`[acl] check ${capability} after ${enabled ? 'grant' : 'revoke'}: ${check}`);
+}
+
+/**
+ * Enable or disable a service. When disabled, the service handler is unregistered
+ * from the runtime (messages to it will fail). When re-enabled, the stored handler
+ * reference is re-registered. Changes take effect on the very next message.
+ */
+export function toggleService(name: string, enabled: boolean): void {
+  if (enabled) {
+    const handler = serviceHandlerStore.get(name);
+    if (!handler) {
+      console.warn('[service] toggleService: no stored handler for', name);
+      return;
+    }
+    disabledServices.delete(name);
+    relay.runtime.registerService(name, handler);
+    console.log(`[service] ENABLED ${name}`);
+  } else {
+    disabledServices.add(name);
+    relay.runtime.unregisterService(name);
+    // Re-add to demoServiceNames so it still appears in topology (just disabled)
+    demoServiceNames.add(name);
+    console.log(`[service] DISABLED ${name}`);
+  }
+}
+
+/**
+ * Check if a service is currently enabled (registered with the runtime).
+ */
+export function isServiceEnabled(name: string): boolean {
+  return !disabledServices.has(name);
 }
 
 /**
