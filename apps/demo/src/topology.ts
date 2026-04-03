@@ -179,17 +179,16 @@ export function buildDemoTopology(input: DemoTopologyInput): DemoTopology {
 
 export interface EdgeFlasher {
   /** Flash both -out and -in lines with the same color (backward compat). */
-  flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void;
+  flash(edgeId: string, cls: 'active' | 'blocked'): void;
   /** Flash only one direction's line. */
-  flashDirection(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked'): void;
+  flashDirection(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'blocked'): void;
   /** Set a persistent color on one direction's line (no auto-revert). Pass null to reset to resting. */
-  setColor(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked' | null): void;
+  setColor(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'blocked' | null): void;
 }
 
 import { demoConfig } from './demo-config.js';
 
 const COLOR_ACTIVE = '#39ff14';
-const COLOR_AMBER = '#ff9f0a';
 const COLOR_BLOCKED = '#ff3b3b';
 const COLOR_RESTING = 'rgba(58,58,74,0.7)';
 
@@ -262,8 +261,8 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
   if (flowAreaInner) ro.observe(flowAreaInner);
 
   return {
-    flash(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
-      const color = cls === 'active' ? COLOR_ACTIVE : cls === 'amber' ? COLOR_AMBER : COLOR_BLOCKED;
+    flash(edgeId: string, cls: 'active' | 'blocked'): void {
+      const color = cls === 'active' ? COLOR_ACTIVE : COLOR_BLOCKED;
       for (const suffix of ['-out', '-in']) {
         const line = lines.get(edgeId + suffix);
         if (!line) continue;
@@ -276,8 +275,8 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
       }
     },
 
-    flashDirection(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked'): void {
-      const color = cls === 'active' ? COLOR_ACTIVE : cls === 'amber' ? COLOR_AMBER : COLOR_BLOCKED;
+    flashDirection(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'blocked'): void {
+      const color = cls === 'active' ? COLOR_ACTIVE : COLOR_BLOCKED;
       const line = lines.get(`${edgeId}-${direction}`);
       if (!line) return;
       try {
@@ -288,10 +287,9 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
       } catch { /* best-effort */ }
     },
 
-    setColor(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'amber' | 'blocked' | null): void {
+    setColor(edgeId: string, direction: 'out' | 'in', cls: 'active' | 'blocked' | null): void {
       const color = cls === null ? COLOR_RESTING
         : cls === 'active' ? COLOR_ACTIVE
-        : cls === 'amber' ? COLOR_AMBER
         : COLOR_BLOCKED;
       const size = cls === null ? 2 : 3;
       const line = lines.get(`${edgeId}-${direction}`);

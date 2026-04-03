@@ -11,7 +11,7 @@ import type { DemoTopology } from './topology.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type ColorClass = 'active' | 'amber' | 'blocked';
+export type ColorClass = 'active' | 'blocked';
 export type PersistenceMode = 'rolling' | 'decay' | 'last-message' | 'trace';
 
 interface EdgeDirectionEntry {
@@ -159,15 +159,11 @@ export function getEdgeColor(edgeId: string, direction: 'out' | 'in'): ColorClas
 
 function _resolveRolling(state: EdgeDirectionState): ColorClass | null {
   if (state.window.length === 0) return null;
-  const counts: Record<ColorClass, number> = { active: 0, amber: 0, blocked: 0 };
+  // Any failures in the window = blocked. Failures must be visible even if
+  // outnumbered by prior successes — otherwise blocking a napplet still looks green.
   for (const entry of state.window) {
-    counts[entry.color]++;
+    if (entry.color === 'blocked') return 'blocked';
   }
-  // Majority wins. Ties: blocked > amber > active (worst-case bias for safety).
-  const max = Math.max(counts.active, counts.amber, counts.blocked);
-  if (max === 0) return null;
-  if (counts.blocked === max) return 'blocked';
-  if (counts.amber === max) return 'amber';
   return 'active';
 }
 
@@ -188,7 +184,7 @@ function _resolveLastMessage(state: EdgeDirectionState): ColorClass | null {
 /**
  * Derive composite color for a node's inbound direction.
  * Aggregates all connected edge 'in' states.
- * green = all active, red = all blocked, amber = mixed or any amber.
+ * green = all active, red = any blocked.
  */
 export function getNodeInboundColor(nodeId: string): ColorClass | null {
   return _deriveNodeColor(nodeId, 'in');
@@ -220,14 +216,9 @@ function _deriveNodeColor(nodeId: string, direction: 'out' | 'in'): ColorClass |
 
   if (colors.length === 0) return null;
 
-  const hasBlocked = colors.includes('blocked');
-  const hasAmber = colors.includes('amber');
-  const hasActive = colors.includes('active');
-
-  // All same → that color. Mixed → amber.
-  if (hasBlocked && !hasActive && !hasAmber) return 'blocked';
-  if (hasActive && !hasBlocked && !hasAmber) return 'active';
-  return 'amber';
+  // Any blocked edge = blocked node. Otherwise active.
+  if (colors.includes('blocked')) return 'blocked';
+  return 'active';
 }
 
 // ─── Trace Mode: Direct Node Overlay Updates ────────────────────────────────
@@ -246,7 +237,7 @@ export function setNodeOverlayColor(
     `[data-color-overlay="${nodeId}"][data-color-direction="${direction}"]`,
   );
   if (!el) return;
-  el.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+  el.classList.remove('node-color-active', 'node-color-blocked');
   if (color) el.classList.add(`node-color-${color}`);
 }
 
@@ -257,7 +248,7 @@ export function setNodeOverlayColor(
 export function clearAllNodeOverlays(): void {
   const overlays = document.querySelectorAll<HTMLElement>('.node-color-overlay');
   for (const el of overlays) {
-    el.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+    el.classList.remove('node-color-active', 'node-color-blocked');
   }
 }
 

@@ -219,7 +219,7 @@ onColorStateChange(() => {
       `[data-color-overlay="${node.id}"][data-color-direction="inbound"]`,
     );
     if (inEl) {
-      inEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+      inEl.classList.remove('node-color-active', 'node-color-blocked');
       if (inboundColor) inEl.classList.add(`node-color-${inboundColor}`);
     }
 
@@ -228,7 +228,7 @@ onColorStateChange(() => {
       `[data-color-overlay="${node.id}"][data-color-direction="outbound"]`,
     );
     if (outEl) {
-      outEl.classList.remove('node-color-active', 'node-color-blocked', 'node-color-amber');
+      outEl.classList.remove('node-color-active', 'node-color-blocked');
       if (outboundColor) outEl.classList.add(`node-color-${outboundColor}`);
     }
   }

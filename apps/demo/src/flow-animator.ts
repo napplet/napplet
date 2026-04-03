@@ -29,7 +29,7 @@ function flashClass(el: Element, cls: string): void {
   setTimeout(() => el.classList.remove(cls), demoConfig.get('demo.FLASH_DURATION'));
 }
 
-function flashEdge(edgeId: string, cls: 'active' | 'amber' | 'blocked'): void {
+function flashEdge(edgeId: string, cls: 'active' | 'blocked'): void {
   const edge = document.getElementById(edgeId);
   if (edge) flashClass(edge, cls);
 }
@@ -188,28 +188,15 @@ export function initFlowAnimator(tap: MessageTap, topology: DemoTopology, edgeFl
       (msg.raw[2].includes('denied') || msg.raw[2].startsWith('blocked:'));
     const isBlocked = isOkFalse || isClosedDenied;
 
-    // Classify failure type: amber for infrastructure, red for ACL denials
-    // ACL denials start with 'denied:' prefix (runtime enforce.ts line 201)
-    // Infrastructure errors use 'error:' prefix or other keywords
-    const reasonString = typeof msg.raw?.[3] === 'string' ? msg.raw[3] : '';
-    const isDenial = reasonString.startsWith('denied:');
-    const isInfrastructureError = !isDenial && (
-      reasonString.includes('no signer') ||
-      reasonString.includes('relay') ||
-      reasonString.includes('timeout') ||
-      reasonString.includes('not wired') ||
-      reasonString.includes('mock')
-    );
-    const isAmber = isOkFalse && isInfrastructureError;
-
-    const cls: 'active' | 'amber' | 'blocked' = isAmber ? 'amber' : isBlocked ? 'blocked' : 'active';
+    // Simple: red for any failure, green for success. No amber.
+    const cls: 'active' | 'blocked' = isBlocked ? 'blocked' : 'active';
 
     const highlightPath = buildHighlightPath(topology, msg);
 
     // ─── Directional Color Dispatch ──────────────────────────────────────────
     if (highlightPath && edgeFlasher) {
       const { nodes, edges } = highlightPath;
-      const isFailure = cls === 'blocked' || cls === 'amber';
+      const isFailure = cls === 'blocked';
       const isTrace = getPersistenceMode() === 'trace';
 
       if (isTrace) {
