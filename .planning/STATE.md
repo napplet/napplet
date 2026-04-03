@@ -55,6 +55,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | 260401-w49 | Fix KINDS.INTER_PANE regression and @napplet/runtime module resolution in demo | 2026-04-01 | ff91cb9 | [260401-w49-fix-kinds-inter-pane-regression-and-napp](.planning/quick/260401-w49-fix-kinds-inter-pane-regression-and-napp/) |
 | 260402-krp | Replace inter-pane with ipc in demo UI labels, logs, comments, and path names | 2026-04-02 | 320ef58 | [260402-krp-replace-inter-pane-with-ipc-in-demo-ui-l](.planning/quick/260402-krp-replace-inter-pane-with-ipc-in-demo-ui-l/) |
 | 260403-lck | Fix Phase 51 split-border node implementation — padding-frame approach | 2026-04-03 | 8347912 | [260403-lck-fix-phase-51-split-border-node-implement](.planning/quick/260403-lck-fix-phase-51-split-border-node-implement/) |
+| 260403-mc5 | Post-phase color refinements: remove old borders, wire overlays to color state, simplify to red/green, add flash mode, fix decay/trace/persistence | 2026-04-03 | df21008 | [260403-mc5-update-planning-artifacts-for-out-of-wor](.planning/quick/260403-mc5-update-planning-artifacts-for-out-of-wor/) |
 
 ### Blockers/Concerns
 
@@ -62,6 +63,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-03T13:10:13.154Z
-Stopped at: Phase 53 context gathered
-Resume: `/gsd:execute-phase 51`
+Last session: 2026-04-03
+Stopped at: All 5 phases complete. Post-phase color refinements applied. Ready for milestone audit/completion.
+Resume: `/gsd:audit-milestone` or `/gsd:complete-milestone`

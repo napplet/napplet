@@ -9,22 +9,22 @@ Requirements for the Demo Consistency and Usability Pass. Each maps to roadmap p
 
 ### Transparency
 
-- [ ] **TRANS-01**: User can view all protocol magic numbers (buffer sizes, timeouts, quotas, replay window, flash durations) in a dedicated constants panel
-- [ ] **TRANS-02**: User can edit protocol constants at runtime with changes taking immediate effect
-- [ ] **TRANS-03**: User can see what was rejected by ACL, why (which capability), and the full event context in the ACL detail panel
-- [ ] **TRANS-04**: User can view all current restrictions and capabilities for a selected napplet in the detail panel
+- [x] **TRANS-01**: User can view all protocol magic numbers (buffer sizes, timeouts, quotas, replay window, flash durations) in a dedicated constants panel
+- [x] **TRANS-02**: User can edit protocol constants at runtime with changes taking immediate effect
+- [x] **TRANS-03**: User can see what was rejected by ACL, why (which capability), and the full event context in the ACL detail panel
+- [x] **TRANS-04**: User can view all current restrictions and capabilities for a selected napplet in the detail panel
 
 ### Color Routing
 
-- [ ] **COLOR-01**: Each topology edge half (in/out port) is colored by its own directional pass/fail state, not uniformly
-- [ ] **COLOR-02**: Node color is derived as composite of its edge states (green = all pass, red = all fail, amber = mixed)
-- [ ] **COLOR-03**: User can toggle per-message trace mode that animates individual messages through the graph hop-by-hop with fade
+- [x] **COLOR-01**: Each topology edge half (in/out port) is colored by its own directional pass/fail state, not uniformly
+- [x] **COLOR-02**: Node color is derived as composite of its edge states (green = all pass, red = any fail). Split-border padding-frame approach simulates directional colored borders.
+- [x] **COLOR-03**: User can toggle per-message trace mode that animates individual messages through the graph hop-by-hop with fade
 
 ### Service & Capability Toggles
 
-- [ ] **TOGL-01**: User can enable/disable any service (signer, notifications, audio, relay pool, cache) via the demo UI
-- [ ] **TOGL-02**: User can toggle individual ACL capabilities (sign:event, sign:nip44, state:read, state:write, etc.) per napplet
-- [ ] **TOGL-03**: ACL and service changes take effect live on the next message without requiring re-register
+- [x] **TOGL-01**: User can enable/disable any service (signer, notifications, audio, relay pool, cache) via the demo UI
+- [x] **TOGL-02**: User can toggle individual ACL capabilities (sign:event, sign:nip44, state:read, state:write, etc.) per napplet
+- [x] **TOGL-03**: ACL and service changes take effect live on the next message without requiring re-register
 
 ## Future Requirements
 
@@ -58,22 +58,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TRANS-01 | Phase 49 | Pending |
-| TRANS-02 | Phase 49 | Pending |
-| TRANS-03 | Phase 50 | Pending |
-| TRANS-04 | Phase 50 | Pending |
-| COLOR-01 | Phase 51 | Pending |
-| COLOR-02 | Phase 51 | Pending |
-| COLOR-03 | Phase 53 | Pending |
-| TOGL-01 | Phase 52 | Pending |
-| TOGL-02 | Phase 52 | Pending |
-| TOGL-03 | Phase 52 | Pending |
+| TRANS-01 | Phase 49 | Complete |
+| TRANS-02 | Phase 49 | Complete |
+| TRANS-03 | Phase 50 | Complete |
+| TRANS-04 | Phase 50 | Complete |
+| COLOR-01 | Phase 51 + post-phase refinement | Complete |
+| COLOR-02 | Phase 51 + post-phase refinement | Complete |
+| COLOR-03 | Phase 53 | Complete |
+| TOGL-01 | Phase 52 | Complete |
+| TOGL-02 | Phase 52 | Complete |
+| TOGL-03 | Phase 52 | Complete |
 
 **Coverage:**
 - v0.10.0 requirements: 10 total
 - Mapped to phases: 10
-- Unmapped: 0
+- Complete: 10
+
+## Post-Phase Refinements
+
+The following changes were made after Phase 51/53 execution to refine the color routing system based on user testing:
+
+- **Split-border padding-frame**: Node overlays use 4px padding + inner content wrapper to simulate directional colored borders (not CSS background tints)
+- **Amber removed**: Color model simplified to red (fail) / green (pass) — amber was too visually similar to green
+- **Flash mode added**: 5th color mode (default) that flashes edges/node borders on each message and reverts, matching original demo behavior
+- **LeaderLine persistence**: Persistent modes (rolling, decay, last-message) now persist LeaderLine edge colors via `setColor()` instead of flash-and-revert
+- **Decay timer**: 200ms periodic timer re-checks expired decay entries to properly fade colors
+- **Startup recording delay**: 3-second delay before color state recording starts, preventing AUTH handshake messages from lighting up all nodes on page load
+- **Rolling window tuning**: Window size reduced to 5 (from 10), majority-based resolution biased toward failures
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after roadmap creation*
+*Last updated: 2026-04-03 after post-phase color refinements*

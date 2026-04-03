@@ -163,9 +163,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Requirements**: COLOR-01, COLOR-02
 **Success Criteria** (what must be TRUE):
   1. Each topology edge half (source-side and target-side) is independently colored based on the directional pass/fail state of messages flowing through it
-  2. Node border/background color is derived as a composite of its connected edge states: green when all edges pass, red when all edges fail, amber when edges are mixed
+  2. Node border/background color is derived as a composite of its connected edge states: green when all edges pass, red when any edge fails
   3. Color changes are persistent (not just flash-on-event) and update as the cumulative routing state changes
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
+**Post-phase refinements**: Split-border padding-frame approach, amber removed (red/green only), flash mode added as default, LeaderLine persistence fix, decay timer, startup delay, rolling window tuning
 **UI hint**: yes
 
 ### Phase 52: Service & Capability Toggles
@@ -198,7 +199,7 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 49. Constants Panel | 0/4 | Complete    | 2026-04-03 |
+| 49. Constants Panel | 4/4 | Complete    | 2026-04-03 |
 | 50. ACL Detail Panel | 4/4 | Complete    | 2026-04-03 |
 | 51. Accurate Color Routing | 4/4 | Complete    | 2026-04-03 |
 | 52. Service & Capability Toggles | 4/4 | Complete    | 2026-04-03 |
