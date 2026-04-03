@@ -200,6 +200,6 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 |-------|----------------|--------|-----------|
 | 49. Constants Panel | 0/4 | Complete    | 2026-04-03 |
 | 50. ACL Detail Panel | 4/4 | Complete    | 2026-04-03 |
-| 51. Accurate Color Routing | 4/4 | Complete   | 2026-04-03 |
+| 51. Accurate Color Routing | 4/4 | Complete    | 2026-04-03 |
 | 52. Service & Capability Toggles | 0/4 | Planned | - |
 | 53. Per-Message Trace Mode | 0/TBD | Not started | - |
