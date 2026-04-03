@@ -177,7 +177,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. User can toggle individual ACL capabilities (sign:event, sign:nip44, state:read, state:write, etc.) per napplet via the demo UI
   3. Service and ACL changes take effect on the very next message without requiring re-register or page reload
   4. Disabled services and revoked capabilities produce visible rejection entries in the ACL detail panel (when viewed)
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 **UI hint**: yes
 
 ### Phase 53: Per-Message Trace Mode
@@ -201,5 +201,5 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 | 49. Constants Panel | 0/4 | Complete    | 2026-04-03 |
 | 50. ACL Detail Panel | 4/4 | Complete    | 2026-04-03 |
 | 51. Accurate Color Routing | 4/4 | Complete   | 2026-04-03 |
-| 52. Service & Capability Toggles | 0/TBD | Not started | - |
+| 52. Service & Capability Toggles | 0/4 | Planned | - |
 | 53. Per-Message Trace Mode | 0/TBD | Not started | - |
