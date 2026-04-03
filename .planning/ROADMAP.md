@@ -127,7 +127,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Make the demo an honest, interactive sandbox -- expose protocol internals, fix color accuracy, and let users toggle services/capabilities to see real system behavior.
 
-- [ ] **Phase 49: Constants Panel** - Expose and edit protocol magic numbers in a dedicated UI panel
+- [x] **Phase 49: Constants Panel** - Expose and edit protocol magic numbers in a dedicated UI panel (completed 2026-04-03)
 - [ ] **Phase 50: ACL Detail Panel** - Show per-napplet restrictions, capabilities, and rejection reasons with full event context
 - [ ] **Phase 51: Accurate Color Routing** - Directional edge coloring and composite node colors reflecting actual pass/fail/warn state
 - [ ] **Phase 52: Service & Capability Toggles** - Enable/disable services and toggle individual ACL capabilities with live-reload
@@ -198,7 +198,7 @@ Phases execute in numeric order: 49 -> 50 -> 51 -> 52 -> 53
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 49. Constants Panel | 0/4 | Planned    |  |
+| 49. Constants Panel | 0/4 | Complete    | 2026-04-03 |
 | 50. ACL Detail Panel | 0/TBD | Not started | - |
 | 51. Accurate Color Routing | 0/TBD | Not started | - |
 | 52. Service & Capability Toggles | 0/TBD | Not started | - |
