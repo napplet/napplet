@@ -181,6 +181,54 @@
       .topology-service-card { max-width: none; }
       #flow-area-inner.inspector-open #inspector-pane { width: 220px; }
     }
+    /* ─── Constants panel ──────────────────────────────── */
+    .const-group-header {
+      font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+      color: #7c86a7; margin: 12px 0 6px; padding-bottom: 4px;
+      border-bottom: 1px solid #1a1a28;
+    }
+    .const-group-header:first-child { margin-top: 4px; }
+    .const-row { transition: background 0.3s ease; }
+    .const-search-input {
+      width: 100%; background: #0a0a0f; border: 1px solid #3a3a4a;
+      border-radius: 6px; padding: 6px 10px; color: #f0f6ff;
+      font-family: inherit; font-size: 11px; box-sizing: border-box;
+    }
+    .const-search-input:focus { outline: none; border-color: #00f0ff; }
+    .const-search-input::placeholder { color: #3a3a4a; }
+    .const-grouping-btn {
+      padding: 3px 8px; background: transparent; border: 1px solid #3a3a4a;
+      border-radius: 4px; color: #7981a0; cursor: pointer;
+      font-family: inherit; font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; transition: all 0.15s;
+    }
+    .const-grouping-btn.active {
+      background: rgba(0,240,255,0.1); border-color: #00f0ff; color: #00f0ff;
+    }
+    .const-grouping-btn:hover:not(.active) { border-color: #62d0ff; color: #a5abc2; }
+    .const-reset-all-btn {
+      padding: 3px 8px; background: transparent; border: 1px solid rgba(255,59,59,0.4);
+      border-radius: 4px; color: #ff3b3b; cursor: pointer;
+      font-family: inherit; font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; transition: all 0.15s;
+    }
+    .const-reset-all-btn:hover { background: rgba(255,59,59,0.1); }
+    .const-number-input {
+      width: 72px; background: #0a0a0f; border: 1px solid #3a3a4a;
+      border-radius: 4px; padding: 3px 6px; color: #f0f6ff;
+      font-family: inherit; font-size: 11px; text-align: right;
+    }
+    .const-number-input:focus { outline: none; border-color: #00f0ff; }
+    .const-slider { flex: 1; accent-color: #00f0ff; height: 4px; }
+    .const-reset-btn {
+      background: transparent; border: none; color: #7981a0; cursor: pointer;
+      font-size: 12px; padding: 2px; transition: color 0.15s;
+    }
+    .const-reset-btn:hover { color: #00f0ff; }
+    .const-modified-dot {
+      position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+      width: 4px; height: 4px; border-radius: 50%; background: #00f0ff;
+    }
   </style>
 </head>
 <body class="bg-surface-dark text-gray-300 font-mono min-h-screen flex flex-col overflow-hidden">

@@ -16,9 +16,12 @@ import {
   getNodeActivity,
 } from './node-details.js';
 import type { NodeDetail, NodeDetailOptions, NodeActivityEntry } from './node-details.js';
+import { renderConstantsPanel, wireConstantsPanelEvents } from './constants-panel.js';
 
 // ─── Module State ─────────────────────────────────────────────────────────────
 
+type InspectorTab = 'node' | 'constants';
+let _activeTab: InspectorTab = 'node';
 let _selectedNodeId: string | null = null;
 let _getOptions: (() => NodeDetailOptions) | null = null;
 let _topology: DemoTopology | null = null;
@@ -123,21 +126,80 @@ function renderInspectorHeader(detail: NodeDetail): string {
   `;
 }
 
-function renderEmptyInspector(): string {
+function renderTabBar(): string {
+  const nodeActive = _activeTab === 'node';
+  const constActive = _activeTab === 'constants';
   return `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#3a3a4a;font-size:11px;text-align:center;padding:24px">
-      <div style="margin-bottom:8px;font-size:24px;opacity:0.3">⬡</div>
-      <div>select a node to inspect</div>
+    <div id="inspector-tab-bar" style="display:flex;border-bottom:1px solid #1f2235;padding:0 12px;gap:0;flex-shrink:0">
+      <button data-inspector-tab="node"
+        style="padding:8px 14px;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;font-family:inherit;
+               background:transparent;border:none;cursor:pointer;
+               color:${nodeActive ? '#f0f6ff' : '#7981a0'};
+               border-bottom:${nodeActive ? '2px solid #00f0ff' : '2px solid transparent'}">
+        Node
+      </button>
+      <button data-inspector-tab="constants"
+        style="padding:8px 14px;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;font-family:inherit;
+               background:transparent;border:none;cursor:pointer;
+               color:${constActive ? '#f0f6ff' : '#7981a0'};
+               border-bottom:${constActive ? '2px solid #00f0ff' : '2px solid transparent'}">
+        Constants
+      </button>
     </div>
   `;
+}
+
+function renderEmptyInspector(): string {
+  return `
+    <div style="height:100%;display:flex;flex-direction:column;overflow:hidden">
+      ${renderTabBar()}
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:#3a3a4a;font-size:11px;text-align:center;padding:24px">
+        <div style="margin-bottom:8px;font-size:24px;opacity:0.3">&#x2B21;</div>
+        <div>select a node to inspect</div>
+      </div>
+    </div>
+  `;
+}
+
+function wireTabHandlers(): void {
+  const tabs = document.querySelectorAll<HTMLButtonElement>('[data-inspector-tab]');
+  for (const tab of tabs) {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.inspectorTab as InspectorTab;
+      if (target === _activeTab) return;
+      _activeTab = target;
+      updateInspectorPane();
+    });
+  }
 }
 
 function updateInspectorPane(): void {
   const pane = getInspectorPane();
   if (!pane) return;
 
+  // Constants tab is always accessible, even without a selected node
+  if (_activeTab === 'constants') {
+    // Ensure inspector is visible
+    const inner = getFlowAreaInner();
+    if (inner) inner.classList.add('inspector-open');
+
+    pane.innerHTML = `
+      <div style="height:100%;display:flex;flex-direction:column;overflow:hidden">
+        ${renderTabBar()}
+        <div style="flex:1;overflow-y:auto;padding-top:4px">
+          ${renderConstantsPanel()}
+        </div>
+      </div>
+    `;
+    wireTabHandlers();
+    wireConstantsPanelEvents(() => updateInspectorPane());
+    return;
+  }
+
+  // Node tab: need a selected node
   if (!_selectedNodeId || !_topology || !_getOptions) {
     pane.innerHTML = renderEmptyInspector();
+    wireTabHandlers();
     return;
   }
 
@@ -146,6 +208,7 @@ function updateInspectorPane(): void {
   );
   if (!node) {
     pane.innerHTML = renderEmptyInspector();
+    wireTabHandlers();
     return;
   }
 
@@ -157,6 +220,7 @@ function updateInspectorPane(): void {
 
   pane.innerHTML = `
     <div style="height:100%;display:flex;flex-direction:column;overflow:hidden">
+      ${renderTabBar()}
       ${renderInspectorHeader(detail)}
       <div style="flex:1;overflow-y:auto;padding-top:4px">
         ${renderInspectorContent(detail)}
@@ -169,11 +233,14 @@ function updateInspectorPane(): void {
   if (closeBtn) {
     closeBtn.addEventListener('click', () => setSelectedNodeId(null));
   }
+
+  wireTabHandlers();
 }
 
 function showInspector(nodeId: string): void {
   const inner = getFlowAreaInner();
   if (inner) inner.classList.add('inspector-open');
+  _activeTab = 'node';
   _selectedNodeId = nodeId;
   updateInspectorPane();
 
@@ -209,6 +276,29 @@ export function setSelectedNodeId(id: string | null): void {
   } else {
     showInspector(id);
   }
+}
+
+/**
+ * Open the inspector with the constants tab active.
+ * Does not require a node selection.
+ */
+export function openConstantsTab(): void {
+  const inner = getFlowAreaInner();
+  if (inner) inner.classList.add('inspector-open');
+  _activeTab = 'constants';
+  updateInspectorPane();
+}
+
+/** Get the currently active inspector tab. */
+export function getActiveTab(): InspectorTab {
+  return _activeTab;
+}
+
+/** Set the active inspector tab. */
+export function setActiveTab(tab: InspectorTab): void {
+  if (tab === _activeTab) return;
+  _activeTab = tab;
+  updateInspectorPane();
 }
 
 /**
