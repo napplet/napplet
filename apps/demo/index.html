@@ -27,7 +27,14 @@
     .topology-service-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
     .topology-service-branch { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 180px; }
     .topology-layer { display: flex; justify-content: center; }
-    .topology-node { background: linear-gradient(180deg, rgba(18,18,26,0.95), rgba(10,10,15,0.98)); border-radius: 16px; overflow: hidden; }
+    .topology-node { background: #12121a; border-radius: 16px; overflow: hidden; padding: 4px; }
+    .topology-node-content {
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(180deg, rgba(18,18,26,0.95), rgba(10,10,15,0.98));
+      border-radius: 12px;
+      overflow: hidden;
+    }
     .topology-node-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 0; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7981a0; }
     .topology-node-kicker { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #7981a0; }
     .topology-node-status { font-size: 10px; color: #666; }
@@ -71,10 +78,10 @@
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
     }
-    /* Color states for overlays — subtle background tint, not opaque */
-    .node-color-active { background-color: rgba(57,255,20,0.06); }
-    .node-color-blocked { background-color: rgba(255,59,59,0.06); }
-    .node-color-amber { background-color: rgba(255,159,10,0.06); }
+    /* Color states for overlays — visible through the 4px padding frame gap */
+    .node-color-active { background-color: rgba(57,255,20,0.55); }
+    .node-color-blocked { background-color: rgba(255,59,59,0.55); }
+    .node-color-amber { background-color: rgba(255,159,10,0.55); }
     /* Node must be positioned for overlay */
     .topology-node { position: relative; }
     /* ─── Persistence mode toggle ────────────────────────────────────────── */
