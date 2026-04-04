@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.11.0
 milestone_name: Clean up Side Panel
-status: planning
-stopped_at: Phase 54 context gathered
-last_updated: "2026-04-04T10:20:52.970Z"
-last_activity: 2026-04-04 -- Roadmap created for v0.11.0
+status: verifying
+stopped_at: Completed 54-01-PLAN.md
+last_updated: "2026-04-04T10:34:09.827Z"
+last_activity: 2026-04-04
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.11.0 Clean up Side Panel -- Phase 54 (Data Layer)
+**Current focus:** Phase 54 — data-layer
 
 ## Current Position
 
-Phase: 54 (1 of 3 in v0.11.0) (Data Layer)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-04-04 -- Roadmap created for v0.11.0
+Phase: 54 (data-layer) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -42,6 +42,7 @@ Recent decisions affecting current work:
 - v0.11.0: 3 phases derived from 8 requirements -- Data Layer -> Tab Reorganization -> Contextual Filtering
 - Research recommends explicit relevantRoles field on ConstantDef rather than implicit pkg-to-role mapping
 - Kinds tab scope: BusKind.* (8) + AUTH_KIND (1) = 9 read-only protocol kind constants
+- [Phase 54]: Import TopologyNodeRole from topology.ts; getByRole includes globals by default; no separate getKindsDefs method
 
 ### Quick Tasks Completed
 
@@ -60,6 +61,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-04T10:20:52.967Z
-Stopped at: Phase 54 context gathered
+Last session: 2026-04-04T10:34:09.823Z
+Stopped at: Completed 54-01-PLAN.md
 Resume: `/gsd:plan-phase 54`

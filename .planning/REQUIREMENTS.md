@@ -9,8 +9,8 @@ Requirements for Clean up Side Panel milestone. Each maps to roadmap phases.
 
 ### Data Layer
 
-- [ ] **DATA-01**: Each ConstantDef has a relevantRoles field mapping it to topology node roles
-- [ ] **DATA-02**: DemoConfig exposes query methods for filtering by role, editability, and category
+- [x] **DATA-01**: Each ConstantDef has a relevantRoles field mapping it to topology node roles
+- [x] **DATA-02**: DemoConfig exposes query methods for filtering by role, editability, and category
 
 ### Tab Reorganization
 
@@ -41,8 +41,8 @@ Requirements for Clean up Side Panel milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 54 | Pending |
-| DATA-02 | Phase 54 | Pending |
+| DATA-01 | Phase 54 | Complete |
+| DATA-02 | Phase 54 | Complete |
 | TAB-01 | Phase 55 | Pending |
 | TAB-02 | Phase 55 | Pending |
 | TAB-03 | Phase 55 | Pending |

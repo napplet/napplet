@@ -139,7 +139,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Make the side panel contextual and better organized — constants filter to the selected node, Kinds get their own tab, and editable values are separated from read-only constants.
 
-- [ ] **Phase 54: Data Layer** - Add role annotations and query methods to ConstantDef for downstream filtering
+- [x] **Phase 54: Data Layer** - Add role annotations and query methods to ConstantDef for downstream filtering (completed 2026-04-04)
 - [ ] **Phase 55: Tab Reorganization** - Split Kinds into a read-only tab, constrain Constants to editable values, and fix tab persistence
 - [ ] **Phase 56: Contextual Filtering** - Filter constants by selected node role with show-all fallback and toggle
 
@@ -154,9 +154,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Calling getEditableDefs() returns only editable constants (expected: 17 items)
   3. Calling getReadOnlyDefs() returns only read-only constants (expected: 10 items, including 9 kinds)
   4. Calling getByRole('runtime') returns only constants annotated as relevant to the runtime role
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 54-01-PLAN.md -- Add relevantRoles field and query methods to ConstantDef and DemoConfig
+- [x] 54-01-PLAN.md -- Add relevantRoles field and query methods to ConstantDef and DemoConfig
 
 ### Phase 55: Tab Reorganization
 **Goal**: Users see three distinct inspector tabs — Node, Constants (editable only), and Kinds (read-only protocol references) — and their active tab stays selected when clicking different nodes
@@ -189,6 +189,6 @@ Phases execute in numeric order: 54 -> 55 -> 56
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 54. Data Layer | 0/1 | Planned | - |
+| 54. Data Layer | 1/1 | Complete   | 2026-04-04 |
 | 55. Tab Reorganization | 0/TBD | Not started | - |
 | 56. Contextual Filtering | 0/TBD | Not started | - |
