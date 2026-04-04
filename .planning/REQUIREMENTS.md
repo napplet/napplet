@@ -16,7 +16,7 @@ Requirements for Clean up Side Panel milestone. Each maps to roadmap phases.
 
 - [x] **TAB-01**: Kinds tab displays all protocol kind numbers as read-only reference cards
 - [x] **TAB-02**: Constants tab displays only editable behavioral values with live-edit controls
-- [ ] **TAB-03**: Active tab persists when the selected node changes (no reset to 'node')
+- [x] **TAB-03**: Active tab persists when the selected node changes (no reset to 'node')
 
 ### Contextual Filtering
 
@@ -45,7 +45,7 @@ Requirements for Clean up Side Panel milestone. Each maps to roadmap phases.
 | DATA-02 | Phase 54 | Complete |
 | TAB-01 | Phase 55 | Complete |
 | TAB-02 | Phase 55 | Complete |
-| TAB-03 | Phase 55 | Pending |
+| TAB-03 | Phase 55 | Complete |
 | FILT-01 | Phase 56 | Pending |
 | FILT-02 | Phase 56 | Pending |
 | FILT-03 | Phase 56 | Pending |
