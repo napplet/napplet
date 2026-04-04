@@ -41,20 +41,20 @@ Requirements for Clean up Side Panel milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| TAB-01 | — | Pending |
-| TAB-02 | — | Pending |
-| TAB-03 | — | Pending |
-| FILT-01 | — | Pending |
-| FILT-02 | — | Pending |
-| FILT-03 | — | Pending |
+| DATA-01 | Phase 54 | Pending |
+| DATA-02 | Phase 54 | Pending |
+| TAB-01 | Phase 55 | Pending |
+| TAB-02 | Phase 55 | Pending |
+| TAB-03 | Phase 55 | Pending |
+| FILT-01 | Phase 56 | Pending |
+| FILT-02 | Phase 56 | Pending |
+| FILT-03 | Phase 56 | Pending |
 
 **Coverage:**
 - v0.11.0 requirements: 8 total
-- Mapped to phases: 0
-- Unmapped: 8 ⚠️
+- Mapped to phases: 8
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-04*
-*Last updated: 2026-04-04 after initial definition*
+*Last updated: 2026-04-04 after roadmap creation*
