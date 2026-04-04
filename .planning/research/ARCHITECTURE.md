@@ -1,599 +1,428 @@
-# Architecture Patterns: Service Discovery & Feature Negotiation Integration
+# Architecture Research: Side Panel Cleanup
 
-**Domain:** Service discovery protocol integration into existing four-package napplet SDK
-**Researched:** 2026-03-31
-**Overall confidence:** HIGH (working from existing codebase, SPEC.md Section 11, and established patterns)
+**Domain:** Demo UI -- contextual filtering, tab reorganization, editable/read-only separation
+**Researched:** 2026-04-04
+**Confidence:** HIGH (based entirely on existing codebase analysis)
 
-## Recommended Architecture
+## Existing Architecture
 
-### Core Insight: Service Discovery Is a Runtime Concern, Not a Shell Concern
-
-The existing service type definitions (`ServiceDescriptor`, `ServiceHandler`, `ServiceRegistry`) live in `@napplet/shell/types.ts`. This was correct for the v0.3.0 design phase, but for implementation, service discovery dispatch **must live in `@napplet/runtime`** because:
-
-1. The runtime owns `handleReq()` -- it must intercept `REQ` for kind 29010 and respond with service descriptors instead of forwarding to the relay pool.
-2. The runtime owns `handleEvent()` -- it must route INTER_PANE events with service topic prefixes to the correct handler.
-3. Third-party (non-browser) shells that depend on `@napplet/runtime` must also support service discovery.
-4. The shell's role is to adapt browser APIs into `RuntimeHooks` -- service handlers that use browser APIs (like audioManager) provide their `ServiceHandler` implementation at the shell level, but the dispatch and discovery protocol lives in the runtime.
-
-**This means:** Core types for service discovery move to `@napplet/core`. The service registry and dispatch logic live in `@napplet/runtime`. The shell provides concrete `ServiceHandler` implementations (audio service) and passes them through `RuntimeHooks.services`.
-
-### Architecture Diagram
+### Current Side Panel Component Map
 
 ```
-@napplet/core (zero deps)
-  types.ts:       + ServiceDescriptor
-  constants.ts:   BusKind.SERVICE_DISCOVERY = 29010  (already exists)
-  topics.ts:      + SERVICE_DISCOVER topic constant
+index.html
+  #flow-area-inner (flex row)
+    #topology-pane (left, flex:1, scrollable)
+    #inspector-pane (right, 0px or 280px, animated)
 
-@napplet/runtime (core + acl)
-  types.ts:       + RuntimeServiceHooks (ServiceHandler, ServiceRegistry)
-                  + RuntimeHooks.services?: RuntimeServiceHooks
-  service-dispatch.ts:  NEW  -- handleServiceDiscovery(), routeServiceMessage()
-  runtime.ts:     MODIFIED -- wire service dispatch into handleReq + handleEvent
+node-inspector.ts          -- owns inspector pane lifecycle, tab bar, tab routing
+  constants-panel.ts       -- renders constants tab content (all constants, global)
+  node-details.ts          -- builds NodeDetail records (data only, no HTML)
+  acl-panel.ts             -- inline ACL toggles inside napplet cards
+  acl-modal.ts             -- full-screen policy matrix modal (opened from inspector)
 
-@napplet/shell (core + runtime)
-  types.ts:       ServiceDescriptor, ServiceHandler, ServiceRegistry  REMOVE (moved to core/runtime)
-                  ShellHooks.services remains, but type refs change to runtime types
-  hooks-adapter.ts: MODIFIED -- pass shellHooks.services through to RuntimeHooks.services
-  audio-service.ts: NEW  -- wraps audioManager as a ServiceHandler
-  audio-manager.ts: UNCHANGED (remains browser-specific singleton)
-
-@napplet/shim (core)
-  discovery.ts:   NEW  -- discoverServices(), hasService(), requireServices()
-  index.ts:       MODIFIED -- export discovery API
+demo-config.ts             -- DemoConfig singleton, ConstantDef[], get/set/reset/subscribe
+topology.ts                -- DemoTopology, node roles, edge rendering
 ```
+
+### Current Tab System
+
+Two tabs in `node-inspector.ts`:
+
+| Tab | Trigger | Content Source | Node Required? |
+|-----|---------|----------------|----------------|
+| `node` | Click topology node | `buildNodeDetails()` via `node-details.ts` | Yes |
+| `constants` | Click "Constants" tab or `openConstantsTab()` | `renderConstantsPanel()` via `constants-panel.ts` | No |
+
+Type definition: `type InspectorTab = 'node' | 'constants'`
+
+Tab switching is handled by `wireTabHandlers()` which reads `data-inspector-tab` attributes and calls `updateInspectorPane()`.
+
+### Current Constants Panel Architecture
+
+The constants panel renders ALL 26 `ConstantDef` entries from `demoConfig` regardless of which node is selected. It supports:
+
+- **Search filter:** Text match against key/label/description
+- **Grouping modes:** `package` | `domain` | `flat` (module-level `_groupingMode` state)
+- **Editable vs read-only:** Already distinguished in rendering -- editable constants get slider+input+reset, read-only get a static value display
+- **Modification tracking:** `demoConfig.isModified(key)` drives modified-dot indicator and reset buttons
+
+### Current Data Model
+
+Each `ConstantDef` has these fields relevant to the new features:
+
+| Field | Values in Codebase | Purpose |
+|-------|-------------------|---------|
+| `key` | e.g. `'core.REPLAY_WINDOW_SECONDS'` | Unique ID; prefix is package name |
+| `pkg` | `'core'` `'runtime'` `'shim'` `'services'` `'acl'` `'demo'` | Package grouping |
+| `domain` | `'timeouts'` `'sizes'` `'ui-timing'` `'protocol'` | Semantic domain grouping |
+| `editable` | `true` or `false` | Whether the constant can be changed |
+| `unit` | `'ms'` `'s'` `'count'` `'bytes'` `'px'` `''` | Display hint; `''` for protocol kinds |
+
+### ConstantDef Inventory by Editability
+
+**Editable (17):**
+- `core.REPLAY_WINDOW_SECONDS` (core/timeouts)
+- `runtime.RING_BUFFER_SIZE` (runtime/sizes)
+- `services.DEFAULT_EOSE_TIMEOUT_MS` (services/timeouts)
+- `services.EOSE_FALLBACK_MS` (services/timeouts)
+- `services.DEFAULT_MAX_PER_WINDOW` (services/sizes)
+- `acl.DEFAULT_QUOTA` (acl/sizes)
+- `demo.FLASH_DURATION` (demo/ui-timing)
+- `demo.FLASH_DURATION_MS` (demo/ui-timing)
+- `demo.TOAST_DISPLAY_MS` (demo/ui-timing)
+- `demo.MAX_RECENT_REQUESTS` (demo/sizes)
+- `demo.ROLLING_WINDOW_SIZE` (demo/ui-timing)
+- `demo.DECAY_DURATION_MS` (demo/ui-timing)
+- `demo.TRACE_HOP_DURATION_MS` (demo/ui-timing)
+- `demo.ACL_RING_BUFFER_SIZE` (demo/sizes)
+- `demo.HEADER_HEIGHT` (demo/ui-timing)
+- `demo.ROW_HEIGHT` (demo/ui-timing)
+
+**Read-only (10, almost all domain:'protocol'):**
+- `shim.REQUEST_TIMEOUT_MS` (shim/timeouts -- editable:false, not a protocol kind)
+- `core.AUTH_KIND` (22242)
+- `core.BusKind.REGISTRATION` (29000)
+- `core.BusKind.SIGNER_REQUEST` (29001)
+- `core.BusKind.SIGNER_RESPONSE` (29002)
+- `core.BusKind.IPC_PEER` (29003)
+- `core.BusKind.HOTKEY_FORWARD` (29004)
+- `core.BusKind.METADATA` (29005)
+- `core.BusKind.SERVICE_DISCOVERY` (29010)
+- `runtime.SECRET_LENGTH` (32)
+
+Note: `shim.REQUEST_TIMEOUT_MS` is editable:false but domain is 'timeouts' not 'protocol'. This is intentional -- the shim runs inside the iframe, so the value cannot be changed from the shell side. It belongs with read-only constants but is semantically a timeout, not a kind. It should display as a read-only constant, not a kind.
+
+### Topology Node Roles
+
+```
+TopologyNodeRole = 'napplet' | 'shell' | 'acl' | 'runtime' | 'service'
+```
+
+Each node has a stable `id` pattern:
+- `topology-node-napplet-{name}` (e.g. `topology-node-napplet-chat`)
+- `topology-node-shell`
+- `topology-node-acl`
+- `topology-node-runtime`
+- `topology-node-service-{name}` (e.g. `topology-node-service-signer`)
+
+### How Selections Flow
+
+```
+User clicks node in topology
+  -> wireNodeSelection() in main.ts
+  -> setSelectedNodeId(nodeId) in node-inspector.ts
+  -> showInspector(nodeId)
+    -> _activeTab = 'node'
+    -> _selectedNodeId = nodeId
+    -> updateInspectorPane()
+      -> finds DemoTopologyNode from _topology.nodes by id
+      -> buildNodeDetails(node, options) in node-details.ts
+      -> renders header + content + tabs
+```
+
+## Recommended Architecture Changes
+
+### New Tab Structure
+
+Replace the current 2-tab system with a 3-tab system:
+
+```
+Current:  [ Node ] [ Constants ]
+Proposed: [ Node ] [ Constants ] [ Kinds ]
+```
+
+Where:
+- **Node** -- unchanged (selected node state, activity, ACL denials)
+- **Constants** -- editable values only, filtered by selected node when one is selected
+- **Kinds** -- read-only protocol kind numbers, always showing all kinds
+
+Type change: `type InspectorTab = 'node' | 'constants' | 'kinds'`
 
 ### Component Boundaries
 
-| Component | Responsibility | Package | New/Modified |
-|-----------|---------------|---------|-------------|
-| **ServiceDescriptor** (type) | Metadata describing a service (name, version, description) | core | MOVED from shell |
-| **ServiceHandler** (interface) | Handler contract for service implementations | runtime | MOVED from shell, adapted |
-| **ServiceRegistry** (type) | Map of service name to handler | runtime | MOVED from shell |
-| **service-dispatch.ts** | Intercept kind 29010 REQ, route service topic messages | runtime | NEW |
-| **audio-service.ts** | Wraps audioManager as a ServiceHandler | shell | NEW |
-| **discovery.ts** | Shim-side API: discover, check, require services | shim | NEW |
-| **Manifest requires** | Napplet declares service dependencies in manifest tags | vite-plugin + shim | MODIFIED |
-| **Compatibility checker** | Compare discovered services against manifest requires | shim | NEW (in discovery.ts) |
+```
+node-inspector.ts (MODIFY)
+  |-- Tab bar: 3 tabs
+  |-- Tab routing: delegates to the right renderer
+  |-- Passes selected node context to constants-panel
+  |
+  |-- node-details.ts (NO CHANGE)
+  |-- constants-panel.ts (MODIFY)
+  |     |-- Now accepts optional node role filter
+  |     |-- Only renders editable constants
+  |     |-- Filters by node relevance when a node is selected
+  |
+  |-- kinds-panel.ts (NEW)
+        |-- Renders read-only protocol kind numbers
+        |-- Static list, no node filtering needed
+        |-- Simpler than constants-panel (no sliders, no reset)
 
-## Detailed Component Design
+demo-config.ts (MODIFY)
+  |-- Add getByRole(role: TopologyNodeRole): ConstantDef[]
+  |-- Add getEditableDefs(): ConstantDef[]
+  |-- Add getReadOnlyDefs(): ConstantDef[]
+  |-- Add relevantRoles field to ConstantDef (or derive from pkg)
+```
 
-### 1. Core Types (what moves to @napplet/core)
+### Node-to-Constants Mapping
 
-`ServiceDescriptor` must move to core because both the runtime (which creates discovery response events) and the shim (which parses them) need the type. The type is already simple and has no dependencies.
+This is the central design question. Constants must map to topology node roles so the panel can filter. The mapping uses a new `relevantRoles` field on `ConstantDef`:
+
+| Constant pkg | Primary Role | Rationale |
+|-------------|-------------|-----------|
+| `core` | `runtime` | Core constants govern runtime behavior (replay window, protocol kinds) |
+| `runtime` | `runtime` | Runtime ring buffer, secret length |
+| `shim` | `napplet` | Shim runs inside napplet iframes |
+| `services` | `service` | Service timeouts, per-window limits |
+| `acl` | `acl` | ACL quota |
+| `demo` | varies/global | Demo UI timing affects the whole visualization |
+
+Recommended approach: add a `relevantRoles` field to `ConstantDef`:
 
 ```typescript
-// @napplet/core/types.ts — additions
-
-/**
- * Metadata describing a registered shell service.
- * Services are optional capabilities a shell provides beyond the core protocol.
- */
-export interface ServiceDescriptor {
-  /** Unique service identifier (e.g., 'audio', 'notifications'). */
-  name: string;
-  /** Semver version of the service implementation. */
-  version: string;
-  /** Human-readable description of the service. */
-  description?: string;
-}
-```
-
-Add a topic constant:
-
-```typescript
-// @napplet/core/topics.ts — additions
-
-export const TOPICS = {
-  // ... existing ...
-
-  // ─── Service Discovery ─────────────────────────────────────────────────
-  SERVICE_DISCOVER: 'service:discover',
-} as const;
-```
-
-No new capability string is needed for v0.4.0. Per SPEC.md Section 11.6, service-level ACL is deferred. Discovery itself requires `relay:read` (it's a REQ), and service messages via INTER_PANE require `relay:write` -- both already exist.
-
-### 2. Runtime Service Dispatch (new module: service-dispatch.ts)
-
-The runtime needs two new capabilities:
-
-**A. Handle kind 29010 REQ (discovery)**
-
-When `handleReq()` sees a filter with `kinds: [29010]`, instead of forwarding to the relay pool, it generates synthetic EVENT responses from the service registry. This follows the same pattern as how the runtime handles bus-kind subscriptions today (the `isBusKind` check at line 340 of runtime.ts).
-
-```typescript
-// @napplet/runtime/service-dispatch.ts
-
-import type { NostrEvent } from '@napplet/core';
-import { BusKind } from '@napplet/core';
-import type { SendToNapplet } from './types.js';
-
-export interface ServiceDescriptorRuntime {
-  name: string;
-  version: string;
-  description?: string;
-}
-
-export interface ServiceHandlerRuntime {
-  descriptor: ServiceDescriptorRuntime;
-  handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void;
-  onWindowDestroyed?(windowId: string): void;
-}
-
-export type ServiceRegistryRuntime = Record<string, ServiceHandlerRuntime>;
-
-/**
- * Handle a service discovery REQ.
- * Sends one kind 29010 EVENT per registered service, then EOSE.
- */
-export function handleServiceDiscovery(
-  windowId: string,
-  subId: string,
-  services: ServiceRegistryRuntime | undefined,
-  sendToNapplet: SendToNapplet,
-): void {
-  if (services) {
-    for (const handler of Object.values(services)) {
-      const event: NostrEvent = {
-        id: `svc-${handler.descriptor.name}-${Date.now()}`,
-        pubkey: '__shell__',
-        created_at: Math.floor(Date.now() / 1000),
-        kind: BusKind.SERVICE_DISCOVERY,
-        tags: [
-          ['s', handler.descriptor.name],
-          ['v', handler.descriptor.version],
-          ...(handler.descriptor.description ? [['d', handler.descriptor.description]] : []),
-        ],
-        content: '{}',
-        sig: '',
-      };
-      sendToNapplet(windowId, ['EVENT', subId, event]);
-    }
-  }
-  sendToNapplet(windowId, ['EOSE', subId]);
-}
-
-/**
- * Route an INTER_PANE event to the matching service handler by topic prefix.
- * Returns true if a service handled the message, false otherwise.
- */
-export function routeServiceMessage(
-  windowId: string,
-  event: NostrEvent,
-  topic: string,
-  services: ServiceRegistryRuntime | undefined,
-): boolean {
-  if (!services) return false;
-  const colonIndex = topic.indexOf(':');
-  if (colonIndex === -1) return false;
-  const prefix = topic.slice(0, colonIndex);
-  const handler = services[prefix];
-  if (!handler) return false;
-
-  let content: unknown;
-  try { content = event.content ? JSON.parse(event.content) : {}; }
-  catch { content = {}; }
-
-  handler.handleRequest(windowId, topic, content, event);
-  return true;
-}
-```
-
-**B. Integrate into runtime.ts**
-
-Two modification points in `createRuntime()`:
-
-1. In `handleReq()`: detect kind 29010 filters, call `handleServiceDiscovery()`, skip relay pool.
-2. In `handleEvent()` under `BusKind.INTER_PANE`: before the `shell:` prefix checks, try `routeServiceMessage()`. If a service handled it, return early.
-
-The integration points are precise:
-
-```
-handleReq():
-  Line 340 (isBusKind check) — add specific check for SERVICE_DISCOVERY kind
-  Before relay pool subscribe — if filters match 29010, call handleServiceDiscovery and return
-
-handleEvent():
-  Line 289 (INTER_PANE case) — add routeServiceMessage() call before shell: prefix checks
-  After topic extraction, before shell:state- check
-```
-
-**RuntimeHooks extension:**
-
-```typescript
-// @napplet/runtime/types.ts — addition to RuntimeHooks
-
-export interface RuntimeHooks {
+interface ConstantDef {
   // ... existing fields ...
-
-  /** Optional service extensions. */
-  services?: ServiceRegistryRuntime;
+  /** Which topology node roles this constant is relevant to. Empty = global/all. */
+  relevantRoles: TopologyNodeRole[];
 }
 ```
 
-### 3. Shell Audio Service (new module: audio-service.ts)
+Mapping for each existing constant:
 
-The audio manager is currently handled as a special case in `runtime.ts` line 294-298 where `shell:audio-*` topics are just forwarded as inter-pane events. With the service pattern, this becomes a proper `ServiceHandler`:
+| Constant | relevantRoles |
+|----------|---------------|
+| `core.REPLAY_WINDOW_SECONDS` | `['runtime']` |
+| `runtime.RING_BUFFER_SIZE` | `['runtime']` |
+| `shim.REQUEST_TIMEOUT_MS` | `['napplet']` |
+| `services.DEFAULT_EOSE_TIMEOUT_MS` | `['service']` |
+| `services.EOSE_FALLBACK_MS` | `['service']` |
+| `services.DEFAULT_MAX_PER_WINDOW` | `['service', 'napplet']` |
+| `acl.DEFAULT_QUOTA` | `['acl']` |
+| `demo.FLASH_DURATION` | `[]` (global) |
+| `demo.FLASH_DURATION_MS` | `[]` (global) |
+| `demo.TOAST_DISPLAY_MS` | `['service']` |
+| `demo.MAX_RECENT_REQUESTS` | `['service']` |
+| `demo.ROLLING_WINDOW_SIZE` | `[]` (global) |
+| `demo.DECAY_DURATION_MS` | `[]` (global) |
+| `demo.TRACE_HOP_DURATION_MS` | `[]` (global) |
+| `demo.ACL_RING_BUFFER_SIZE` | `['acl']` |
+| `demo.HEADER_HEIGHT` | `[]` (global) |
+| `demo.ROW_HEIGHT` | `[]` (global) |
+| `core.AUTH_KIND` | `['shell', 'napplet']` |
+| `core.BusKind.REGISTRATION` | `['shell', 'napplet']` |
+| `core.BusKind.SIGNER_REQUEST` | `['service', 'napplet']` |
+| `core.BusKind.SIGNER_RESPONSE` | `['service', 'napplet']` |
+| `core.BusKind.IPC_PEER` | `['runtime', 'napplet']` |
+| `core.BusKind.HOTKEY_FORWARD` | `['napplet']` |
+| `core.BusKind.METADATA` | `['napplet']` |
+| `core.BusKind.SERVICE_DISCOVERY` | `['runtime', 'service']` |
+| `runtime.SECRET_LENGTH` | `['runtime']` |
 
-```typescript
-// @napplet/shell/audio-service.ts
+**Filtering rule:** When a node is selected, show constants where `relevantRoles` includes the node's role OR `relevantRoles` is empty (global). When no node is selected, show all constants for that tab (editable for Constants, read-only for Kinds).
 
-import type { ServiceHandlerRuntime } from '@napplet/runtime';
-import type { NostrEvent } from '@napplet/core';
-import { audioManager } from './audio-manager.js';
-
-export function createAudioService(): ServiceHandlerRuntime {
-  return {
-    descriptor: {
-      name: 'audio',
-      version: '1.0.0',
-      description: 'Audio playback management and mute control',
-    },
-
-    handleRequest(windowId: string, topic: string, content: unknown, event: NostrEvent): void {
-      const payload = content as Record<string, string>;
-      switch (topic) {
-        case 'audio:register':
-          audioManager.register(windowId, payload.nappClass ?? '', payload.title ?? '');
-          break;
-        case 'audio:unregister':
-          audioManager.unregister(windowId);
-          break;
-        case 'audio:state-changed':
-          audioManager.updateState(windowId, { title: payload.title });
-          break;
-      }
-    },
-
-    onWindowDestroyed(windowId: string): void {
-      audioManager.unregister(windowId);
-    },
-  };
-}
-```
-
-**Note on backwards compatibility:** The existing `shell:audio-*` topic handling in runtime.ts (lines 294-298) must remain operational during migration. The migration path is:
-
-1. Add service dispatch alongside existing `shell:audio-*` handling.
-2. Register `createAudioService()` as the `audio` service handler.
-3. Service dispatch intercepts `audio:*` topics (not `shell:audio-*`).
-4. Deprecate `shell:audio-*` prefix in a later version.
-5. Both prefixes work during the transition period.
-
-**Decision point:** Either (a) migrate audio topics from `shell:audio-*` to `audio:*` immediately and break the old format, or (b) make the audio service handler respond to both prefixes during migration. Option (b) is safer for backwards compatibility.
-
-### 4. Hooks Adapter Changes
-
-The `adaptHooks()` function in `hooks-adapter.ts` needs to pass services through:
-
-```typescript
-// hooks-adapter.ts — additions
-
-export function adaptHooks(shellHooks: ShellHooks, deps: BrowserDeps): RuntimeHooks {
-  // ... existing adaptation ...
-
-  return {
-    // ... existing fields ...
-    services: shellHooks.services
-      ? Object.fromEntries(
-          Object.entries(shellHooks.services).map(([name, handler]) => [name, handler])
-        )
-      : undefined,
-  };
-}
-```
-
-This is trivial because `ShellHooks.services` already has the right shape -- it just needs to be passed through. The shell's `ServiceHandler` and runtime's `ServiceHandlerRuntime` can share the same interface imported from runtime.
-
-### 5. Shim Discovery API (new module: discovery.ts)
-
-The shim needs a developer-friendly API for service discovery. This is a new module in `@napplet/shim`:
-
-```typescript
-// @napplet/shim/discovery.ts
-
-import { subscribe, query } from './relay-shim.js';
-import { BusKind } from './types.js';
-import type { NostrEvent } from './types.js';
-
-export interface DiscoveredService {
-  name: string;
-  version: string;
-  description?: string;
-}
-
-/**
- * Discover all services the shell provides.
- * Sends a REQ for kind 29010, collects responses until EOSE.
- * Returns a map of service name to descriptor.
- */
-export async function discoverServices(): Promise<Map<string, DiscoveredService>> {
-  const events = await query({ kinds: [BusKind.SERVICE_DISCOVERY] });
-  const services = new Map<string, DiscoveredService>();
-  for (const event of events) {
-    const name = event.tags.find(t => t[0] === 's')?.[1];
-    const version = event.tags.find(t => t[0] === 'v')?.[1];
-    const description = event.tags.find(t => t[0] === 'd')?.[1];
-    if (name && version) {
-      services.set(name, { name, version, description });
-    }
-  }
-  return services;
-}
-
-/**
- * Check if a specific service is available.
- */
-export async function hasService(name: string): Promise<boolean> {
-  const services = await discoverServices();
-  return services.has(name);
-}
-
-/**
- * Check manifest requires against discovered services.
- * Returns list of missing services.
- */
-export async function checkCompatibility(
-  requires?: string[],
-): Promise<{ compatible: boolean; missing: string[] }> {
-  if (!requires || requires.length === 0) {
-    return { compatible: true, missing: [] };
-  }
-  const services = await discoverServices();
-  const missing = requires.filter(name => !services.has(name));
-  return { compatible: missing.length === 0, missing };
-}
-```
-
-**Caching consideration:** `discoverServices()` should cache the result for the session. Service availability does not change after shell startup. A module-level cache with the promise stored avoids redundant REQs:
-
-```typescript
-let _discoveryPromise: Promise<Map<string, DiscoveredService>> | null = null;
-
-export function discoverServices(): Promise<Map<string, DiscoveredService>> {
-  if (!_discoveryPromise) {
-    _discoveryPromise = _doDiscover();
-  }
-  return _discoveryPromise;
-}
-```
-
-### 6. Manifest Requires Tags
-
-Napplet manifests can declare service dependencies via `requires` tags in the NIP-5A manifest. The vite-plugin needs a configuration option:
-
-```typescript
-// @napplet/vite-plugin — config addition
-
-export interface Nip5aManifestOptions {
-  nappType: string;
-  /** Services this napplet requires (e.g., ['audio', 'notifications']). */
-  requires?: string[];
-}
-```
-
-The plugin adds `['requires', 'audio']` tags to the kind 35128 manifest event and injects a meta tag:
-
-```html
-<meta name="napplet-requires" content="audio,notifications">
-```
-
-The shim reads this meta tag and feeds it to `checkCompatibility()`.
-
-### 7. Compatibility Reporting
-
-When a napplet discovers missing services, the shim surfaces this to the developer/user. Two levels:
-
-1. **Console warning** (always): `[napplet] Missing required services: audio, notifications`
-2. **Callback hook** (opt-in): The napplet registers a handler for compatibility issues.
-
-```typescript
-// @napplet/shim — compatibility surface
-
-export function onCompatibilityIssue(
-  callback: (missing: string[]) => void,
-): void {
-  // Called after discovery completes if required services are missing
-}
-```
-
-The napplet developer can choose how to handle this -- show a banner, disable features, etc. The shim does NOT force any UI.
-
-## Data Flow
-
-### Service Discovery Flow (post-AUTH)
+### Data Flow Changes
 
 ```
-Napplet (shim)                        Shell (runtime)
-     |                                      |
-     |  discoverServices() called           |
-     |                                      |
-     |-- ['REQ', 'svc-xxx', {kinds:[29010]}] -->
-     |                                      |
-     |  handleReq detects kind 29010        |
-     |  calls handleServiceDiscovery()      |
-     |                                      |
-     | <-- ['EVENT', 'svc-xxx', {kind:29010, tags:[['s','audio'],['v','1.0.0']]}]
-     | <-- ['EVENT', 'svc-xxx', {kind:29010, tags:[['s','state'],['v','1.0.0']]}]
-     | <-- ['EOSE', 'svc-xxx']              |
-     |                                      |
-     |  Parse events, build service map     |
-     |  Check against manifest requires     |
-     |  Report missing services             |
+Current flow (Constants tab):
+  updateInspectorPane()
+    -> renderConstantsPanel()      // reads ALL defs from demoConfig
+    -> wireConstantsPanelEvents()
+
+Proposed flow (Constants tab):
+  updateInspectorPane()
+    -> renderConstantsPanel({ role: selectedNode?.role ?? null })  // NEW: pass context
+    -> constants-panel filters defs by: editable:true AND matchesRole(role)
+    -> wireConstantsPanelEvents()
+
+Proposed flow (Kinds tab):
+  updateInspectorPane()
+    -> renderKindsPanel({ role: selectedNode?.role ?? null })  // NEW: pass context
+    -> kinds-panel filters defs by: editable:false AND matchesRole(role)
+    -> no event wiring needed (read-only, no sliders)
 ```
 
-### Service Message Flow (runtime dispatch)
+### Integration Points
 
-```
-Napplet (shim)                        Shell (runtime)                  Service Handler
-     |                                      |                              |
-     |-- ['EVENT', {kind:29003,             |                              |
-     |    tags:[['t','audio:register']],    |                              |
-     |    content:'{"nappClass":"player"}'  |                              |
-     |   }] -------------------------------->                              |
-     |                                      |                              |
-     |  handleEvent: kind 29003, INTER_PANE |                              |
-     |  topic = 'audio:register'            |                              |
-     |  routeServiceMessage():              |                              |
-     |    prefix = 'audio'                  |                              |
-     |    handler = services['audio']       |                              |
-     |    handler.handleRequest() --------------------------------->       |
-     |                                      |                   audioManager.register()
-     |                                      |                              |
-     | <-- ['OK', eventId, true, '']        |                              |
-```
+| Boundary | Change Type | Details |
+|----------|-------------|--------|
+| `node-inspector.ts` -> `constants-panel.ts` | Signature change | `renderConstantsPanel()` gains optional `{ role?: TopologyNodeRole }` param |
+| `node-inspector.ts` -> `kinds-panel.ts` | New import | New module for kinds tab rendering |
+| `demo-config.ts` -> `constants-panel.ts` | New methods | `getEditableDefs()`, `getByRole()` |
+| `demo-config.ts` data | Field addition | `relevantRoles: TopologyNodeRole[]` on each `ConstantDef` |
+| `index.html` | CSS additions | Styles for `.kinds-row` (simpler than `.const-row`) |
 
 ## Patterns to Follow
 
-### Pattern 1: REQ Interception for Bus Kinds
+### Pattern 1: Filtered Rendering via Context Prop
 
-**What:** Detect bus-kind-only REQs and handle them locally instead of forwarding to relay pool.
-**When:** Kind 29010 discovery requests.
-**Precedent:** The existing `isBusKind` check in `handleReq()` (line 340) already skips relay pool for all 29000-29999 kinds. Service discovery piggybacks on this pattern.
-**Why this matters:** The runtime already sends EOSE for bus-kind-only REQs when the relay pool is unavailable (line 374). Service discovery should send its events BEFORE this EOSE, within the same subscription lifecycle.
+**What:** Pass the current selection context to tab renderers as an optional parameter, letting each tab decide how to filter.
 
-### Pattern 2: Topic Prefix Routing
+**When to use:** When a tab's content depends on external state (selected node) but should also work without it.
 
-**What:** Extract the prefix before `:` in a topic string and dispatch to a handler map.
-**When:** INTER_PANE events with service-prefixed topics.
-**Precedent:** The existing `shell:state-*`, `shell:audio-*`, `shell:acl-*` routing in `handleEvent()` already does prefix-based dispatch, but with hardcoded `if/else` chains. The service registry generalizes this into a map lookup.
-**Why this matters:** New services can be added without modifying runtime.ts -- they just register a handler.
+**Trade-offs:** Simple, no new state management. The constants panel remains a stateless renderer. Downside: must pass the role on every re-render, but `updateInspectorPane` already handles this.
 
-### Pattern 3: Synthetic Shell Events
+**Example:**
+```typescript
+// constants-panel.ts
+export function renderConstantsPanel(options?: { role?: TopologyNodeRole }): string {
+  const role = options?.role ?? null;
+  const defs = demoConfig.getEditableDefs().filter(def =>
+    matchesSearch(def) &&
+    (role === null || def.relevantRoles.length === 0 || def.relevantRoles.includes(role))
+  );
+  // ... render filtered defs with existing grouping/search
+}
+```
 
-**What:** The runtime creates NostrEvent objects with `pubkey: '__shell__'` and empty `sig` for shell-originated responses.
-**When:** Service discovery responses, state responses, audio mute notifications.
-**Precedent:** `handleShellCommand()` already creates synthetic events with `pubkey: ''` (line 488-492). The `audioManager.mute()` creates events with `pubkey: '__shell__'` (line 105 of audio-manager.ts).
-**Standardize:** Use `pubkey: '__shell__'` consistently for all shell-originated events. This is what SPEC.md Section 11.2 specifies.
+### Pattern 2: Separate Module for Distinct UI Concern
 
-### Pattern 4: Module-Level Promise Cache (Shim)
+**What:** Extract the kinds (read-only protocol numbers) into a new `kinds-panel.ts` rather than overloading `constants-panel.ts` with conditional branching.
 
-**What:** Cache the discovery result as a module-level promise so repeated calls reuse the same query.
-**When:** `discoverServices()` in the shim.
-**Precedent:** The shim already uses module-level state for keypair management (`keypairReady` promise, line 96 of index.ts). Same pattern, same module.
+**When to use:** When two views share a data source but have fundamentally different interaction models (editable vs read-only).
+
+**Trade-offs:** Clean separation, easier to test. The kinds panel is ~60-80 lines vs the constants panel at ~280 lines. No shared state complexity.
+
+**Example:**
+```typescript
+// kinds-panel.ts
+export function renderKindsPanel(options?: { role?: TopologyNodeRole }): string {
+  const role = options?.role ?? null;
+  const defs = demoConfig.getReadOnlyDefs().filter(def =>
+    role === null || def.relevantRoles.length === 0 || def.relevantRoles.includes(role)
+  );
+  return defs.map(def => renderKindRow(def)).join('');
+}
+```
+
+### Pattern 3: Context Indicator in Tab Bar
+
+**What:** Show the selected node's role in the Constants/Kinds tab labels to indicate contextual filtering is active.
+
+**When to use:** Whenever filtering changes the visible set without the user explicitly requesting it.
+
+**Trade-offs:** Gives the user confidence that filtering is active. Small visual change, no architectural cost.
+
+**Example:**
+```typescript
+function renderTabBar(): string {
+  const contextLabel = _selectedNodeId && _topology
+    ? _topology.nodes.find(n => n.id === _selectedNodeId)?.role ?? ''
+    : '';
+  const constLabel = contextLabel ? `Constants (${contextLabel})` : 'Constants';
+  const kindsLabel = contextLabel ? `Kinds (${contextLabel})` : 'Kinds';
+  // ... render tabs with contextLabel
+}
+```
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Service Types in Shell Only
+### Anti-Pattern 1: Overloading the Constants Panel
 
-**What:** Keeping `ServiceDescriptor`, `ServiceHandler`, `ServiceRegistry` only in `@napplet/shell/types.ts`
-**Why bad:** The runtime needs these types to perform dispatch, and the shim needs `ServiceDescriptor` to parse discovery responses. Importing from shell would create a circular dependency (shim depends on shell).
-**Instead:** `ServiceDescriptor` lives in core. `ServiceHandler` and `ServiceRegistry` live in runtime. Shell re-exports for backwards compatibility.
+**What people do:** Add `if (showKinds) { ... } else { ... }` branches inside `renderConstantsPanel()` and `wireConstantsPanelEvents()` to handle both editable and kinds views.
 
-### Anti-Pattern 2: Discovery in the Shell Bridge
+**Why it's wrong:** The constants panel already has ~280 lines of slider wiring, search, grouping modes, and reset logic. Cramming a fundamentally different view (static list) into it creates a branching mess and makes both views harder to change.
 
-**What:** Adding service discovery handling to `shell-bridge.ts` or `hooks-adapter.ts` instead of the runtime.
-**Why bad:** This defeats the purpose of the runtime extraction in v0.3.0. Non-browser shells would not get service discovery. Every shell implementation would need to duplicate the discovery logic.
-**Instead:** All protocol logic lives in the runtime. Shell only adapts browser APIs.
+**Do this instead:** Create `kinds-panel.ts` as a separate module. It shares the `demoConfig` data source but owns its own rendering.
 
-### Anti-Pattern 3: New Capability for Service Discovery
+### Anti-Pattern 2: Role Mapping via String Matching on Key Prefix
 
-**What:** Adding `service:discover` as a new Capability string to gate discovery REQs.
-**Why bad:** Discovery is a standard REQ for kind 29010. The existing `relay:read` capability already gates all REQs. Adding a separate capability for discovery creates unnecessary ACL complexity and breaks the principle that discovery should "just work" for any authenticated napplet.
-**Instead:** Use existing `relay:read` for discovery REQs. Defer per-service capabilities to a future version per SPEC.md Section 11.6.
+**What people do:** Derive node relevance from `key.startsWith('core.')` or `pkg === 'core'` at filter time, without an explicit mapping.
 
-### Anti-Pattern 4: Automatic Discovery on Shim Init
+**Why it's wrong:** The `pkg` field is a package grouping, not a role mapping. `core` constants are relevant to the `runtime` node (runtime uses core). `demo` constants are global but could touch any node. Implicit derivation will produce wrong results.
 
-**What:** Running service discovery automatically during shim initialization (alongside AUTH).
-**Why bad:** Discovery requires AUTH to complete first (unauthenticated REQs are rejected). Adding it to the init sequence introduces timing complexity and delays napplet startup for apps that don't need discovery.
-**Instead:** Discovery is opt-in. The napplet calls `discoverServices()` when it needs to. The shim caches the result.
+**Do this instead:** Add explicit `relevantRoles` to each `ConstantDef`. The mapping is small (27 entries) and easily auditable.
 
-### Anti-Pattern 5: Breaking Audio Topic Migration
+### Anti-Pattern 3: Storing Filter State in DemoConfig
 
-**What:** Changing audio topics from `shell:audio-*` to `audio:*` immediately without a transition period.
-**Why bad:** Existing napplets in the hyprgate reference implementation use `shell:audio-*`. A hard rename would break them.
-**Instead:** Audio service handler responds to both `audio:*` (new, service-routed) and `shell:audio-*` (legacy, direct routing in handleEvent). Deprecate the old prefix in v0.5.0.
+**What people do:** Add `selectedRole` state to `DemoConfig` and have it filter internally.
 
-## Integration Points: Exact Code Modifications
+**Why it's wrong:** `DemoConfig` is a data registry (holds values, tracks modifications, notifies subscribers). Adding view-layer filtering state violates its single responsibility. The filter is a UI concern that belongs in the panel renderer or inspector.
 
-### @napplet/core
+**Do this instead:** Keep `DemoConfig` as a pure data registry. Add query methods (`getEditableDefs()`, `getReadOnlyDefs()`, `getByRole()`) that return filtered copies. Let the UI layer compose the final filter.
 
-| File | Change | What |
-|------|--------|------|
-| `types.ts` | ADD | `ServiceDescriptor` interface |
-| `topics.ts` | ADD | `SERVICE_DISCOVER` topic constant |
-| `index.ts` | ADD | Export `ServiceDescriptor` and new topic |
+## Files to Create or Modify
 
-### @napplet/runtime
+### New Files
 
-| File | Change | What |
-|------|--------|------|
-| `types.ts` | ADD | `ServiceHandlerRuntime`, `ServiceRegistryRuntime` interfaces |
-| `types.ts` | MODIFY | Add `services?` to `RuntimeHooks` |
-| `service-dispatch.ts` | NEW | `handleServiceDiscovery()`, `routeServiceMessage()` |
-| `runtime.ts` | MODIFY | Wire service dispatch into `handleReq()` and `handleEvent()` |
-| `index.ts` | MODIFY | Export service dispatch types and functions |
+| File | Purpose | Estimated Size |
+|------|---------|---------------|
+| `apps/demo/src/kinds-panel.ts` | Read-only protocol kind numbers tab renderer | ~60-80 lines |
 
-### @napplet/shell
+### Modified Files
 
-| File | Change | What |
-|------|--------|------|
-| `types.ts` | MODIFY | Import service types from runtime instead of defining locally |
-| `hooks-adapter.ts` | MODIFY | Pass `services` through to RuntimeHooks |
-| `audio-service.ts` | NEW | `createAudioService()` wrapping audioManager |
-| `index.ts` | MODIFY | Export `createAudioService`, re-export service types from runtime |
+| File | Changes | Scope |
+|------|---------|-------|
+| `apps/demo/src/demo-config.ts` | Add `relevantRoles` to `ConstantDef`, add `getEditableDefs()`, `getReadOnlyDefs()`, `getByRole()` methods, annotate each def with roles | Medium |
+| `apps/demo/src/node-inspector.ts` | Add 'kinds' to `InspectorTab` union, add third tab button, route to `renderKindsPanel()`, pass role context to `renderConstantsPanel()` | Medium |
+| `apps/demo/src/constants-panel.ts` | Accept optional role filter in `renderConstantsPanel()`, filter to editable-only defs, apply role filtering | Small |
+| `apps/demo/index.html` | Add CSS for `.kinds-row` and `.kinds-value` styles | Small |
 
-### @napplet/shim
+### Unchanged Files
 
-| File | Change | What |
-|------|--------|------|
-| `discovery.ts` | NEW | `discoverServices()`, `hasService()`, `checkCompatibility()` |
-| `index.ts` | MODIFY | Export discovery API |
-
-### @napplet/vite-plugin
-
-| File | Change | What |
-|------|--------|------|
-| `index.ts` | MODIFY | Accept `requires` option, add requires tags to manifest, inject meta tag |
+| File | Why No Change |
+|------|--------------|
+| `node-details.ts` | Data-only module, no rendering, no tab awareness |
+| `topology.ts` | Topology structure unchanged |
+| `acl-panel.ts` | Inline ACL toggles, independent of inspector tabs |
+| `acl-modal.ts` | Full-screen modal, independent of inspector tabs |
+| `main.ts` | Inspector initialization unchanged; `openConstantsTab()` still works |
+| `shell-host.ts` | No UI changes |
 
 ## Suggested Build Order
 
-Dependencies flow left to right. Each step depends on the previous.
+The following order minimizes blocked work and ensures testable increments:
 
-```
-Step 1: Core types           Step 2: Runtime dispatch     Step 3: Shell adapter      Step 4: Shim discovery
- ServiceDescriptor            service-dispatch.ts           hooks-adapter pass-thru    discovery.ts
- SERVICE_DISCOVER topic       runtime.ts wiring             audio-service.ts           checkCompatibility
-                              RuntimeHooks.services         type migration
+### Phase 1: Data Layer (demo-config.ts)
 
-Step 5: Vite plugin           Step 6: Integration tests
- requires option              Discovery e2e test
- meta tag injection           Audio service test
-                              Compatibility test
-```
+**What:** Add `relevantRoles` field to `ConstantDef`, annotate all 27 defs, add query methods.
 
-**Step ordering rationale:**
+**Why first:** All downstream rendering depends on the data model. No UI changes yet, so existing behavior is preserved.
 
-1. **Core types first** because runtime, shell, and shim all need `ServiceDescriptor`.
-2. **Runtime dispatch second** because it is the core protocol change. Everything else is wiring.
-3. **Shell adapter third** because it wires shell's concrete service implementations to the runtime.
-4. **Shim discovery fourth** because it depends on the runtime responding to kind 29010 REQs.
-5. **Vite plugin fifth** because `requires` is additive and doesn't block the discovery flow.
-6. **Integration tests last** because they prove the full chain works end-to-end.
+**Dependencies:** None.
 
-**Parallelism opportunity:** Steps 3 (shell) and 4 (shim) can execute in parallel after step 2, since they both depend only on core types and runtime dispatch being complete.
+**Testable:** Verify `getEditableDefs()` returns 17 items, `getReadOnlyDefs()` returns 10 items, `getByRole('runtime')` returns the expected subset.
 
-## Scalability Considerations
+### Phase 2: Kinds Panel (kinds-panel.ts + index.html CSS)
 
-| Concern | 3 services (v0.4.0) | 10 services | 50+ services |
-|---------|---------------------|-------------|-------------|
-| Discovery response size | Negligible (3 events) | Tiny (~10 events, each <200 bytes) | May want paged discovery |
-| Topic prefix routing | O(1) map lookup | O(1) map lookup | O(1) map lookup |
-| Service handler map | Static, set at shell startup | Static | May want dynamic registration API |
-| Discovery cache (shim) | Single promise, reused | Same | Same -- services don't change mid-session |
-| Backwards compat | Dual prefix support | Consider removing old prefixes | Must have removed old prefixes |
+**What:** Create `kinds-panel.ts` rendering read-only protocol kind numbers. Add `.kinds-*` CSS to `index.html`.
+
+**Why second:** Self-contained new file, no modifications to existing rendering. Can be built and tested in isolation before wiring into the tab system.
+
+**Dependencies:** Phase 1 (`getReadOnlyDefs()`).
+
+**Testable:** Import and call `renderKindsPanel()`, verify HTML output contains protocol kind numbers.
+
+### Phase 3: Tab System Expansion (node-inspector.ts)
+
+**What:** Add 'kinds' to `InspectorTab`, add third tab button to `renderTabBar()`, route the kinds tab to `renderKindsPanel()`. Wire tab handler.
+
+**Why third:** Integrates the new kinds panel into the existing tab system. Requires Phase 2 to exist.
+
+**Dependencies:** Phase 2 (kinds-panel module exists).
+
+**Testable:** Click the Kinds tab, verify read-only constants render correctly. Node and Constants tabs still work as before.
+
+### Phase 4: Contextual Filtering (constants-panel.ts + node-inspector.ts)
+
+**What:** Modify `renderConstantsPanel()` to accept `{ role?: TopologyNodeRole }`, filter to editable-only defs, apply role filtering. Modify `updateInspectorPane()` in `node-inspector.ts` to pass the selected node's role. Optionally add role-based filtering to `renderKindsPanel()` as well. Update tab labels to show context indicator.
+
+**Why last:** This is the most complex change and touches two files. By this point the tab system already works with 3 tabs, so this phase only changes what the Constants and Kinds tabs display based on selection.
+
+**Dependencies:** Phase 1 (relevantRoles data), Phase 3 (tab system wired).
+
+**Testable:** Select a runtime node, verify Constants tab shows only runtime-relevant + global constants. Select an ACL node, verify it shows ACL-relevant + global. Deselect node, verify all editable constants appear. Tab labels show context indicator.
 
 ## Sources
 
-- SPEC.md Section 11 (Service Discovery protocol definition) -- HIGH confidence, authoritative
-- SPEC.md Section 15.5 (Service Discovery Kind allocation) -- HIGH confidence, authoritative
-- `packages/runtime/src/runtime.ts` (existing dispatch logic) -- HIGH confidence, direct code reading
-- `packages/shell/src/types.ts` (existing service type stubs) -- HIGH confidence, direct code reading
-- `packages/shell/src/audio-manager.ts` (existing audio implementation) -- HIGH confidence, direct code reading
-- `packages/shim/src/relay-shim.ts` (existing query() pattern) -- HIGH confidence, direct code reading
-- `packages/runtime/src/state-handler.ts` (pattern for topic-based handlers) -- HIGH confidence, direct code reading
+All findings derived from direct codebase analysis:
+- `apps/demo/src/node-inspector.ts` -- tab system, inspector lifecycle
+- `apps/demo/src/constants-panel.ts` -- current constants rendering
+- `apps/demo/src/demo-config.ts` -- ConstantDef data model, DemoConfig class
+- `apps/demo/src/node-details.ts` -- NodeDetail data shape, role-specific builders
+- `apps/demo/src/topology.ts` -- TopologyNodeRole, node IDs
+- `apps/demo/src/main.ts` -- wiring, initialization flow
+- `apps/demo/index.html` -- layout, CSS
 
 ---
-
-*Architecture research: 2026-03-31*
+*Architecture research for: v0.11.0 Side Panel Cleanup*
+*Researched: 2026-04-04*
