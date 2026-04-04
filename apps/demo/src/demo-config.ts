@@ -6,6 +6,8 @@
  * Session-scoped: all state lives in-memory, page reload resets to defaults.
  */
 
+import type { TopologyNodeRole } from './topology.js';
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 /** Describes a single protocol constant for display and editing. */
@@ -34,6 +36,8 @@ export interface ConstantDef {
   editable: boolean;
   /** Tooltip/hover description. */
   description: string;
+  /** Which topology node roles this constant is relevant to. Empty array = global (shown for all nodes). */
+  relevantRoles: TopologyNodeRole[];
 }
 
 // ─── Constant Inventory ──────────────────────────────────────────────────────
@@ -53,6 +57,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'timeouts',
     editable: true,
     description: 'Maximum age in seconds for an event to be accepted (replay protection)',
+    relevantRoles: ['runtime', 'acl'],
   },
   {
     key: 'runtime.RING_BUFFER_SIZE',
@@ -67,6 +72,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'sizes',
     editable: true,
     description: 'Maximum events held in the ring buffer before oldest is evicted',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'shim.REQUEST_TIMEOUT_MS',
@@ -81,6 +87,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'timeouts',
     editable: false,
     description: 'Timeout for shim state requests (display only — shim runs in iframe)',
+    relevantRoles: ['napplet'],
   },
   {
     key: 'services.DEFAULT_EOSE_TIMEOUT_MS',
@@ -95,6 +102,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'timeouts',
     editable: true,
     description: 'Default timeout for EOSE (end of stored events) in coordinated relay',
+    relevantRoles: ['service'],
   },
   {
     key: 'services.EOSE_FALLBACK_MS',
@@ -109,6 +117,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'timeouts',
     editable: true,
     description: 'Fallback timeout for EOSE in relay pool service',
+    relevantRoles: ['service'],
   },
   {
     key: 'services.DEFAULT_MAX_PER_WINDOW',
@@ -123,6 +132,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'sizes',
     editable: true,
     description: 'Maximum notifications per napplet window before oldest is discarded',
+    relevantRoles: ['service'],
   },
   {
     key: 'acl.DEFAULT_QUOTA',
@@ -137,6 +147,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'sizes',
     editable: true,
     description: 'Default state storage quota per napplet (512 KB)',
+    relevantRoles: ['acl'],
   },
   {
     key: 'demo.FLASH_DURATION',
@@ -151,6 +162,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'Duration of node/edge flash animations in the flow animator',
+    relevantRoles: [],
   },
   {
     key: 'demo.FLASH_DURATION_MS',
@@ -165,6 +177,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'Duration of Leader Line edge flash animations in the topology view',
+    relevantRoles: [],
   },
   {
     key: 'demo.TOAST_DISPLAY_MS',
@@ -179,6 +192,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'How long notification toasts remain visible before auto-dismiss',
+    relevantRoles: [],
   },
   {
     key: 'demo.MAX_RECENT_REQUESTS',
@@ -193,6 +207,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'sizes',
     editable: true,
     description: 'Maximum signer request records held in the rolling history',
+    relevantRoles: [],
   },
   {
     key: 'demo.ROLLING_WINDOW_SIZE',
@@ -207,6 +222,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'Number of recent messages per edge direction used to determine persistent color (rolling window mode)',
+    relevantRoles: [],
   },
   {
     key: 'demo.DECAY_DURATION_MS',
@@ -221,6 +237,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'Milliseconds before edge color fades to neutral after last message (decay mode)',
+    relevantRoles: [],
   },
   {
     key: 'demo.TRACE_HOP_DURATION_MS',
@@ -235,6 +252,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'Duration of each hop in per-message trace animation (edge lights up for this long per hop)',
+    relevantRoles: [],
   },
   {
     key: 'demo.ACL_RING_BUFFER_SIZE',
@@ -249,6 +267,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'sizes',
     editable: true,
     description: 'Number of ACL check events retained per napplet',
+    relevantRoles: [],
   },
   {
     key: 'demo.HEADER_HEIGHT',
@@ -263,6 +282,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'Height of the header row in the SVG sequence diagram',
+    relevantRoles: [],
   },
   {
     key: 'demo.ROW_HEIGHT',
@@ -277,6 +297,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'ui-timing',
     editable: true,
     description: 'Height of each message row in the SVG sequence diagram',
+    relevantRoles: [],
   },
 
   // ─── Read-only protocol constants ──────────────────────────────────────────
@@ -293,6 +314,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'NIP-42 AUTH event kind for napplet authentication handshakes',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'core.BusKind.REGISTRATION',
@@ -307,6 +329,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Bus event kind for napplet registration (29000)',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'core.BusKind.SIGNER_REQUEST',
@@ -321,6 +344,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Bus event kind for signer requests from napplets (29001)',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'core.BusKind.SIGNER_RESPONSE',
@@ -335,6 +359,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Bus event kind for signer responses to napplets (29002)',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'core.BusKind.IPC_PEER',
@@ -349,6 +374,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Bus event kind for peer-to-peer IPC between napplets (29003)',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'core.BusKind.HOTKEY_FORWARD',
@@ -363,6 +389,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Bus event kind for keyboard shortcut forwarding (29004)',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'core.BusKind.METADATA',
@@ -377,6 +404,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Bus event kind for napplet metadata exchange (29005)',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'core.BusKind.SERVICE_DISCOVERY',
@@ -391,6 +419,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Bus event kind for service discovery queries (29010)',
+    relevantRoles: ['runtime'],
   },
   {
     key: 'runtime.SECRET_LENGTH',
@@ -405,6 +434,7 @@ const CONSTANT_DEFS: ConstantDef[] = [
     domain: 'protocol',
     editable: false,
     description: 'Length of the shell secret used for deterministic keypair derivation',
+    relevantRoles: ['runtime'],
   },
 ];
 
