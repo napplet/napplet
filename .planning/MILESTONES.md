@@ -1,5 +1,26 @@
 # Milestones
 
+## v0.10.0 Demo Consistency and Usability Pass (Shipped: 2026-04-04)
+
+**Phases completed:** 5 phases, 20 plans, 28 tasks
+
+**Key accomplishments:**
+
+- AclCheckEvent now carries the triggering NIP-01 message, and every enforce() decision is captured in a per-napplet ring buffer
+- Full-screen capability matrix modal shows granted/revoked/default state for all napplets across all 10 ACL capabilities
+- Inspector panel now shows per-capability status, denial history with expandable raw events, and a policy matrix button on the ACL node
+- ACL ring buffer size wired to demo-config constants panel; full build and type-check pass clean
+- Persistent handler store and toggleService()/isServiceEnabled() API in shell-host.ts for runtime service disable/re-enable
+- Interactive capability grid cells and services toggle section in ACL policy modal with external refresh support
+- Toggle icon overlay on topology service nodes with visual dimming for disabled state and callback-based event wiring
+- Full bidirectional sync between topology toggles, ACL modal, and inline ACL panel for consistent state across all views
+- Hop-by-hop edge color sweep animation engine with active animation counter and configurable 150ms hop duration
+- Extended PersistenceMode to 4-way union with 'trace' — no-op recording and null queries for ephemeral animation mode
+- Trace button added as 4th color mode option; flow animator dispatches hop-by-hop animateTrace on each message in trace mode
+- Clean transitions between trace and other modes — cancels pending animations and clears node overlays
+
+---
+
 ## v0.9.0 Identity & Trust (Shipped: 2026-04-03)
 
 **Phases completed:** 3 phases, 7 plans, 15 tasks

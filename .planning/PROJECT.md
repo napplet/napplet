@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.10.0 Demo Consistency and Usability Pass
+
+Constants panel exposing all 23 protocol magic numbers with live editing. ACL detail panel with per-napplet capability status, rejection history, and full-screen policy matrix. Directional edge/node coloring with 5 persistence modes (flash, rolling, decay, last-message, trace). Service enable/disable toggles and individual capability toggles with cross-view sync. Hop-by-hop trace animation mode. 5 phases, 20 plans shipped 2026-04-04. See [archive](milestones/v0.10.0-ROADMAP.md).
+
 ## Shipped: v0.9.0 Identity & Trust
 
 Shell-delegated keypair handshake (REGISTER → IDENTITY → AUTH) with deterministic key derivation via HMAC-SHA256. Storage rekeyed to `dTag:aggregateHash` (pubkey removed) — persists across reloads. Shell-side aggregate hash verification with caching. Per-iframe persistent GUID. Delegated keys confined to protocol auth only. RuntimeHooks/ShellHooks deprecated aliases removed. SPEC.md §2, §5, §14 updated. 3 phases, 7 plans shipped 2026-04-02. See [archive](milestones/v0.9.0-ROADMAP.md).
@@ -93,25 +97,16 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Delegated keys confined to protocol auth, blocked from relay publishing — v0.9.0 Phase 46 (SEC-01, SEC-02)
 - ✓ RuntimeHooks/ShellHooks deprecated aliases removed — v0.9.0 Phase 47 (DEP-03, DEP-04)
 - ✓ SPEC.md Sections 2, 5, 14 updated for v0.9.0 handshake, storage, and security models — v0.9.0 Phase 48 (DOC-01..03)
-
-## Current Milestone: v0.10.0 Demo Consistency and Usability Pass
-
-**Goal:** Make the demo an honest, interactive sandbox — expose protocol internals, fix color accuracy, and let users toggle services/capabilities to see real system behavior.
-
-**Target features:**
-- Protocol transparency: Expose magic numbers (rate limits, timeouts, queue caps) in UI with editing. ACL detail panel shows all restrictions and rejection reasons.
-- Accurate color routing: Persistent edge/node coloring reflects actual pass/fail/warn state. Per-message animation trace mode via toggle.
-- Service & capability toggles: Disable any service (including core infra) and toggle individual capabilities. Live-reload on next message.
+- ✓ Protocol magic numbers exposed in constants panel with live editing — v0.10.0 Phase 49 (TRANS-01, TRANS-02)
+- ✓ ACL detail panel with per-napplet capabilities, rejection history, and full-screen policy matrix — v0.10.0 Phase 50 (TRANS-03, TRANS-04)
+- ✓ Directional edge/node coloring with 5 persistence modes (flash, rolling, decay, last, trace) — v0.10.0 Phase 51 (COLOR-01, COLOR-02)
+- ✓ Per-message hop-by-hop trace animation mode — v0.10.0 Phase 53 (COLOR-03)
+- ✓ Service enable/disable toggles with cross-view sync (topology, modal, inline panel) — v0.10.0 Phase 52 (TOGL-01, TOGL-03)
+- ✓ Individual ACL capability toggles per napplet with live-reload — v0.10.0 Phase 52 (TOGL-02)
 
 ### Active
 
-- [x] Expose protocol magic numbers in demo UI with editing — Validated in Phase 49: Constants Panel
-- [x] ACL detail panel shows restrictions, rejection reasons (what + why) — Validated in Phase 50: ACL Detail Panel
-- [x] Persistent edge/node coloring reflects actual pass/fail/warn routing state — Validated in Phase 51: Accurate Color Routing
-- [x] Per-message animation trace mode (toggle) — Validated in Phase 53: Per-Message Trace Mode
-- [x] Disable/enable any service (audio, notifications, signer, relay pool, cache) — Validated in Phase 52: Service & Capability Toggles
-- [x] Toggle individual capabilities (e.g. sign:nip44 off, sign:event on) — Validated in Phase 52: Service & Capability Toggles
-- [x] ACL edits take effect live on next message (no re-register) — Validated in Phase 52: Service & Capability Toggles
+(Next milestone not yet planned — run `/gsd:new-milestone` to start)
 
 ### Out of Scope
 
@@ -128,7 +123,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.10.0 in progress (Demo Consistency and Usability Pass). Focus on making the demo an honest sandbox: transparent internals, accurate color routing, service/capability toggles. 8 packages in the monorepo.
+- **Current state**: v0.10.0 shipped (Demo Consistency and Usability Pass). Demo is now an interactive sandbox with transparent protocol internals, accurate directional color routing, and full service/capability toggle controls. 8 packages in the monorepo.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
@@ -204,4 +199,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-03 after Phase 52 (Service & Capability Toggles) completion*
+*Last updated: 2026-04-04 after v0.10.0 milestone*
