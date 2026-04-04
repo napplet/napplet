@@ -182,7 +182,9 @@ Plans:
   2. When no node is selected, the Constants tab shows all editable constants (no empty or broken state)
   3. A visible "show all" toggle lets the user bypass contextual filtering and see all constants regardless of the selected node
   4. When the contextual filter produces zero results for a role, a meaningful empty-state message is shown with a link/button to show all
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 56-01-PLAN.md -- Add role-based contextual filtering with toggle and empty state to Constants tab
 **UI hint**: yes
 
 ## Progress
@@ -194,4 +196,4 @@ Phases execute in numeric order: 54 -> 55 -> 56
 |-------|----------------|--------|-----------|
 | 54. Data Layer | 1/1 | Complete    | 2026-04-04 |
 | 55. Tab Reorganization | 2/2 | Complete    | 2026-04-04 |
-| 56. Contextual Filtering | 0/TBD | Not started | - |
+| 56. Contextual Filtering | 0/1 | Not started | - |
