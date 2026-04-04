@@ -10,7 +10,7 @@
  *   - opening the inspector resizes the top workspace, not the debugger
  */
 
-import type { DemoTopology, DemoTopologyNode } from './topology.js';
+import type { DemoTopology, DemoTopologyNode, TopologyNodeRole } from './topology.js';
 import {
   buildNodeDetails,
   getNodeActivity,
@@ -19,7 +19,7 @@ import type { NodeDetail, NodeDetailOptions, NodeActivityEntry } from './node-de
 import type { AclHistoryEntry } from './acl-history.js';
 import { DEMO_CAPABILITY_LABELS } from './acl-panel.js';
 import { openPolicyModal } from './acl-modal.js';
-import { renderConstantsPanel, wireConstantsPanelEvents } from './constants-panel.js';
+import { renderConstantsPanel, wireConstantsPanelEvents, resetShowAll } from './constants-panel.js';
 import { renderKindsPanel } from './kinds-panel.js';
 
 // ─── Module State ─────────────────────────────────────────────────────────────
@@ -30,6 +30,14 @@ let _selectedNodeId: string | null = null;
 let _getOptions: (() => NodeDetailOptions) | null = null;
 let _topology: DemoTopology | null = null;
 let _updateTimer: ReturnType<typeof setInterval> | null = null;
+
+// ─── Role Derivation ─────────────────────────────────────────────────────────
+
+function getSelectedNodeRole(): TopologyNodeRole | undefined {
+  if (!_selectedNodeId || !_topology) return undefined;
+  const node = _topology.nodes.find(n => n.id === _selectedNodeId);
+  return node?.role;
+}
 
 // ─── DOM Helpers ──────────────────────────────────────────────────────────────
 
@@ -281,7 +289,7 @@ function updateInspectorPane(): void {
       <div style="height:100%;display:flex;flex-direction:column;overflow:hidden">
         ${renderTabBar()}
         <div style="flex:1;overflow-y:auto;padding-top:4px">
-          ${renderConstantsPanel()}
+          ${renderConstantsPanel(getSelectedNodeRole())}
         </div>
       </div>
     `;
@@ -358,6 +366,7 @@ function showInspector(nodeId: string): void {
   const inner = getFlowAreaInner();
   if (inner) inner.classList.add('inspector-open');
   _selectedNodeId = nodeId;
+  resetShowAll();  // Per D-07: selecting a new node re-engages filtering
   updateInspectorPane();
 
   // Mark the selected node
@@ -370,6 +379,7 @@ function hideInspector(): void {
   const inner = getFlowAreaInner();
   if (inner) inner.classList.remove('inspector-open');
   _selectedNodeId = null;
+  resetShowAll();
   const pane = getInspectorPane();
   if (pane) pane.innerHTML = renderEmptyInspector();
 
