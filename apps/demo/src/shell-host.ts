@@ -503,6 +503,15 @@ export function bootShell(notificationOnChange?: (notifications: readonly Notifi
   };
 
   relay = createShellBridge(hooks);
+
+  // Pre-populate serviceHandlerStore with adapter-provided services
+  // (these bypass the registerService wrapper since they're passed via ShellAdapter.services)
+  if (hooks.services) {
+    for (const [name, handler] of Object.entries(hooks.services)) {
+      serviceHandlerStore.set(name, handler);
+    }
+  }
+
   const originalRegisterService = relay.runtime.registerService.bind(relay.runtime);
   relay.runtime.registerService = (name, handler) => {
     demoServiceNames.add(name);

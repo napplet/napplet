@@ -8,6 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    /* Page flex-column layout (utility classes have no CSS definitions) */
+    body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; margin: 0; }
+    #flow-area { flex: 1; min-height: 0; overflow: hidden; }
+    #debugger-section { flex-shrink: 0; }
     .node-box { border: none; }
     /* .topology-edge CSS bar rules removed — edges now rendered by Leader Line (SVG) */
     .acl-btn { transition: all 0.15s; }
@@ -116,7 +120,7 @@
       width: 0; overflow: hidden; transition: width 0.22s ease;
       background: linear-gradient(180deg, rgba(18,18,26,0.98), rgba(10,10,15,0.99));
       border-left: 1px solid #1f2235; font-family: 'JetBrains Mono', monospace;
-      font-size: 11px; color: #a5abc2; flex-shrink: 0; height: 100%;
+      font-size: 11px; color: #a5abc2; flex-shrink: 0; height: 100%; overflow-y: auto;
     }
     #flow-area-inner.inspector-open #inspector-pane { width: 280px; overflow: hidden; }
     /* Selected node highlight */
