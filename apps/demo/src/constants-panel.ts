@@ -8,11 +8,14 @@
 
 import { demoConfig } from './demo-config.js';
 import type { ConstantDef } from './demo-config.js';
+import type { TopologyNodeRole } from './topology.js';
 
 // ─── Module State ────────────────────────────────────────────────────────────
 
 let _groupingMode: 'package' | 'domain' | 'flat' = 'package';
 let _searchQuery = '';
+let _showAll = false;
+let _currentRole: TopologyNodeRole | null = null;
 
 // ─── Formatting Helpers ──────────────────────────────────────────────────────
 
@@ -90,12 +93,39 @@ function renderConstantRow(def: ConstantDef): string {
   `;
 }
 
-function getGroupedDefs(): Array<{ groupLabel: string; defs: ConstantDef[] }> {
+function getGroupedDefs(role?: TopologyNodeRole): Array<{ groupLabel: string; defs: ConstantDef[] }> {
   const groups: Array<{ groupLabel: string; defs: ConstantDef[] }> = [];
+  const useRoleFilter = !!role && !_showAll;
 
   if (_groupingMode === 'flat') {
-    const all = demoConfig.getEditableDefs().filter(matchesSearch);
+    const source = useRoleFilter
+      ? demoConfig.getByRole(role).filter(d => d.editable)
+      : demoConfig.getEditableDefs();
+    const all = source.filter(matchesSearch);
     if (all.length > 0) groups.push({ groupLabel: 'all constants', defs: all });
+    return groups;
+  }
+
+  if (useRoleFilter) {
+    // Role-filtered grouped mode: start from role-filtered editable defs, then group
+    const roleDefs = demoConfig.getByRole(role).filter(d => d.editable && matchesSearch(d));
+    const groupMap = new Map<string, ConstantDef[]>();
+    for (const d of roleDefs) {
+      const key = _groupingMode === 'package' ? d.pkg : d.domain;
+      const list = groupMap.get(key) ?? [];
+      list.push(d);
+      groupMap.set(key, list);
+    }
+    for (const [label, defs] of groupMap) {
+      const displayLabel = _groupingMode === 'domain' && label === 'protocol'
+        ? 'protocol (read-only)'
+        : label === 'ui-timing'
+          ? 'ui timing'
+          : label === 'sizes'
+            ? 'sizes & limits'
+            : label;
+      groups.push({ groupLabel: displayLabel, defs });
+    }
     return groups;
   }
 
@@ -123,12 +153,22 @@ function getGroupedDefs(): Array<{ groupLabel: string; defs: ConstantDef[] }> {
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
+ * Reset the show-all toggle. Called by node-inspector when the selected node
+ * changes so that contextual filtering re-engages (per D-07).
+ */
+export function resetShowAll(): void {
+  _showAll = false;
+}
+
+/**
  * Render the constants panel HTML. Called from node-inspector when the
  * constants tab is active.
  *
+ * @param role - Optional topology node role to filter constants by
  * @returns HTML string for the constants panel content
  */
-export function renderConstantsPanel(): string {
+export function renderConstantsPanel(role?: TopologyNodeRole): string {
+  _currentRole = role ?? null;
   const hasModified = demoConfig.getModifiedKeys().length > 0;
   const resetAllDisplay = hasModified ? 'inline-block' : 'none';
 
@@ -139,7 +179,7 @@ export function renderConstantsPanel(): string {
     })
     .join('');
 
-  const groups = getGroupedDefs();
+  const groups = getGroupedDefs(role);
   const groupsHtml = groups
     .map(({ groupLabel, defs }) => {
       const rows = defs.map(renderConstantRow).join('');
@@ -150,8 +190,25 @@ export function renderConstantsPanel(): string {
     })
     .join('');
 
+  // Toggle UI: only visible when a role is provided (per D-08)
+  const isFiltering = !!role && !_showAll;
+  const toggleHtml = role ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
+      <button id="constants-filter-toggle"
+        style="background:transparent;border:1px solid #2a2d42;border-radius:4px;color:${isFiltering ? '#7981a0' : '#00f0ff'};font-size:10px;cursor:pointer;padding:3px 8px;font-family:inherit"
+      >${isFiltering ? 'Show all' : `Filter to ${role}`}</button>
+      ${isFiltering ? `<span style="font-size:9px;color:#555">filtered to ${role}</span>` : ''}
+    </div>
+  ` : '';
+
+  // Role-aware empty state (per D-09, D-10)
   const emptyHtml = groups.length === 0
-    ? '<div style="padding:12px 0;color:#3a3a4a;font-size:11px;text-align:center">no matching constants</div>'
+    ? (role && !_showAll
+      ? `<div style="padding:16px 0;color:#3a3a4a;font-size:11px;text-align:center">
+          <div style="margin-bottom:8px">no editable constants for <span style="color:#7981a0">${role}</span></div>
+          <button id="constants-empty-show-all" style="background:transparent;border:1px solid #2a2d42;border-radius:4px;color:#00f0ff;font-size:10px;cursor:pointer;padding:3px 8px;font-family:inherit">Show all</button>
+        </div>`
+      : '<div style="padding:12px 0;color:#3a3a4a;font-size:11px;text-align:center">no matching constants</div>')
     : '';
 
   return `
@@ -160,6 +217,7 @@ export function renderConstantsPanel(): string {
         <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7c86a7">editable constants</div>
         <button id="constants-reset-all" class="const-reset-all-btn" style="display:${resetAllDisplay}">Reset All</button>
       </div>
+      ${toggleHtml}
       <input id="constants-search" class="const-search-input" type="text" placeholder="filter..." value="${escapeHtml(_searchQuery)}" />
       <div style="display:flex;gap:4px">${groupingButtons}</div>
       <div id="constants-list">
@@ -256,6 +314,24 @@ export function wireConstantsPanelEvents(rerender: () => void): void {
       rerender();
     });
   });
+
+  // Filter toggle button
+  const filterToggle = document.getElementById('constants-filter-toggle');
+  if (filterToggle) {
+    filterToggle.addEventListener('click', () => {
+      _showAll = !_showAll;
+      rerender();
+    });
+  }
+
+  // Empty state "Show all" button (per D-10)
+  const emptyShowAll = document.getElementById('constants-empty-show-all');
+  if (emptyShowAll) {
+    emptyShowAll.addEventListener('click', () => {
+      _showAll = true;
+      rerender();
+    });
+  }
 }
 
 // ─── Internal Helpers ────────────────────────────────────────────────────────
