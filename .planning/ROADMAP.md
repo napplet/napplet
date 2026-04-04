@@ -135,9 +135,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### 🚧 v0.11.0 Clean up Side Panel (In Progress)
+### v0.11.0 Clean up Side Panel (In Progress)
 
-**Milestone Goal:** Make the side panel contextual and better organized — constants filter to the selected node, Kinds get their own tab, and editable values are separated from read-only constants.
+**Milestone Goal:** Make the side panel contextual and better organized -- constants filter to the selected node, Kinds get their own tab, and editable values are separated from read-only constants.
 
 - [x] **Phase 54: Data Layer** - Add role annotations and query methods to ConstantDef for downstream filtering (completed 2026-04-04)
 - [ ] **Phase 55: Tab Reorganization** - Split Kinds into a read-only tab, constrain Constants to editable values, and fix tab persistence
@@ -159,15 +159,18 @@ Plans:
 - [x] 54-01-PLAN.md -- Add relevantRoles field and query methods to ConstantDef and DemoConfig
 
 ### Phase 55: Tab Reorganization
-**Goal**: Users see three distinct inspector tabs — Node, Constants (editable only), and Kinds (read-only protocol references) — and their active tab stays selected when clicking different nodes
+**Goal**: Users see three distinct inspector tabs -- Node, Constants (editable only), and Kinds (read-only protocol references) -- and their active tab stays selected when clicking different nodes
 **Depends on**: Phase 54
 **Requirements**: TAB-01, TAB-02, TAB-03
 **Success Criteria** (what must be TRUE):
   1. A "Kinds" tab exists in the inspector showing all 9 protocol kind numbers as read-only reference cards (no sliders or edit controls)
   2. The "Constants" tab shows only editable behavioral values with live-edit controls (sliders, inputs, reset buttons)
-  3. Selecting a different topology node does not reset the active tab back to "Node" — the user's tab choice persists across node selections
+  3. Selecting a different topology node does not reset the active tab back to "Node" -- the user's tab choice persists across node selections
   4. The 1500ms polling timer only re-renders when the Node tab is active (does not destroy slider/input focus on Constants or Kinds tabs)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 55-01-PLAN.md -- Create kinds-panel.ts and constrain constants-panel.ts to editable-only
+- [ ] 55-02-PLAN.md -- Wire 3-tab system, fix tab persistence, guard polling timer
 **UI hint**: yes
 
 ### Phase 56: Contextual Filtering
@@ -190,5 +193,5 @@ Phases execute in numeric order: 54 -> 55 -> 56
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 54. Data Layer | 1/1 | Complete    | 2026-04-04 |
-| 55. Tab Reorganization | 0/TBD | Not started | - |
+| 55. Tab Reorganization | 0/2 | Planning complete | - |
 | 56. Contextual Filtering | 0/TBD | Not started | - |
