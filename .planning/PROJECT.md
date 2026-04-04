@@ -130,7 +130,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.11.0 in progress (Clean up Side Panel). Phases 54-55 complete — data model extended with relevantRoles, inspector split into 3 tabs (Node/Constants/Kinds), tab persistence fixed, polling timer guarded. Phase 56 will add contextual filtering. 8 packages in the monorepo.
+- **Current state**: v0.11.0 complete (Clean up Side Panel). All 3 phases shipped — data model extended with relevantRoles (54), inspector split into 3 tabs Node/Constants/Kinds with persistence (55), contextual filtering by selected node with show-all toggle (56). 8 packages in the monorepo.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
@@ -206,4 +206,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-04 after Phase 55 completion*
+*Last updated: 2026-04-04 after Phase 56 completion (v0.11.0 all phases complete)*
