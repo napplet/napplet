@@ -1,46 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.10.0
-milestone_name: Demo Consistency and Usability Pass
-status: executing
-stopped_at: All 5 phases complete. Post-phase color refinements applied. Ready for milestone audit/completion.
-last_updated: "2026-04-04T08:06:47.897Z"
+milestone: v0.11.0
+milestone_name: Clean up Side Panel
+status: defining_requirements
+stopped_at: Defining requirements for v0.11.0
+last_updated: "2026-04-04"
 last_activity: 2026-04-04
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 20
-  completed_plans: 20
-  percent: 40
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-03)
+See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 53 — per-message-trace-mode
+**Current focus:** Defining requirements for v0.11.0
 
 ## Current Position
 
-Phase: 53
-Plan: Not started
-Status: Executing Phase 53
-Last activity: 2026-04-04
-
-Progress: [####......] 40%
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 8 (v0.10.0)
-- Average duration: --
-- Total execution time: --
-
-*Updated after each plan completion*
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-04 — Milestone v0.11.0 started
 
 ## Accumulated Context
 
@@ -63,6 +51,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-03
-Stopped at: All 5 phases complete. Post-phase color refinements applied. Ready for milestone audit/completion.
-Resume: `/gsd:audit-milestone` or `/gsd:complete-milestone`
+Last session: 2026-04-04
+Stopped at: Defining requirements for v0.11.0
+Resume: Define requirements, then `/gsd:plan-phase`

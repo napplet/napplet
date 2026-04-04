@@ -106,7 +106,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(Next milestone not yet planned — run `/gsd:new-milestone` to start)
+## Current Milestone: v0.11.0 Clean up Side Panel
+
+**Goal:** Make the side panel contextual and better organized — constants filter to the selected node, Kinds get their own tab, and editable values are separated from read-only constants.
+
+**Target features:**
+- Constants tab filters to show only constants relevant to the currently selected node
+- Kinds separated into their own tab
+- Read-only values displayed as "Constants", editable values in a separate tab
 
 ### Out of Scope
 
@@ -123,7 +130,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.10.0 shipped (Demo Consistency and Usability Pass). Demo is now an interactive sandbox with transparent protocol internals, accurate directional color routing, and full service/capability toggle controls. 8 packages in the monorepo.
+- **Current state**: v0.11.0 in progress (Clean up Side Panel). Side panel constants tab needs contextual filtering by selected node, Kinds tab separation, and editable vs read-only split. 8 packages in the monorepo.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
 - **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
@@ -199,4 +206,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-04 after v0.10.0 milestone*
+*Last updated: 2026-04-04 after v0.11.0 milestone start*
