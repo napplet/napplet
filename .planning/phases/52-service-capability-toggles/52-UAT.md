@@ -64,9 +64,15 @@ blocked: 0
   reason: "User reported: I cannot disable them from the modal, only enable. When I click to disable nothing happens. Toggling from topology works, but within the matrix can only enable."
   severity: major
   test: 5
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Two issues: (1) Toggle button missing appearance:none — native GTK rendering on Linux/Chromium overrides inline background color, making toggle always appear OFF. User thinks first click enables but it actually disables (state was already enabled). (2) unregisterService wrapper unconditionally deleted from demoServiceNames, creating state confusion."
+  artifacts:
+    - path: "apps/demo/src/acl-modal.ts"
+      issue: "Toggle button missing appearance:none CSS"
+    - path: "apps/demo/src/shell-host.ts"
+      issue: "unregisterService wrapper deleting from demoServiceNames"
+  missing:
+    - "Add appearance:none to toggle button cssText"
+    - "Remove demoServiceNames.delete from unregister wrapper"
   debug_session: ""
 
 - truth: "Service toggles in policy modal should reflect actual enabled/disabled state on modal open"
@@ -74,7 +80,10 @@ blocked: 0
   reason: "User reported: The toggles in the policy modal are always disabled when I load the modal, even though services are actually enabled (green dots visible on topology nodes). Initial toggle state not read correctly on modal open."
   severity: major
   test: 7
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Toggle button element lacks appearance:none — native GTK button rendering on Linux/Chromium overrides the inline background:#39ff14, making all toggles appear gray/off regardless of isServiceEnabled() return value"
+  artifacts:
+    - path: "apps/demo/src/acl-modal.ts"
+      issue: "Toggle button missing appearance:none;-webkit-appearance:none"
+  missing:
+    - "Add appearance:none;-webkit-appearance:none to toggle button cssText"
   debug_session: ""

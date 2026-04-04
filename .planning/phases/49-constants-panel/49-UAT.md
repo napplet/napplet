@@ -78,7 +78,10 @@ blocked: 0
   reason: "User reported: there are so many things in the panel, and there is no overflow so I cannot even see everything in the panel, but it pushes the debug log down. It should instead be max-height to the top of the debug bar (whereever it is) with scroll overflow"
   severity: major
   test: 12
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "#inspector-pane CSS missing height:100% — inner flex/overflow structure was correct but pane didn't claim its full height in the flex container"
+  artifacts:
+    - path: "apps/demo/index.html"
+      issue: "#inspector-pane missing height:100%"
+  missing:
+    - "Add height:100% to #inspector-pane CSS rule"
   debug_session: ""

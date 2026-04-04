@@ -511,7 +511,6 @@ export function bootShell(notificationOnChange?: (notifications: readonly Notifi
   };
   const originalUnregisterService = relay.runtime.unregisterService.bind(relay.runtime);
   relay.runtime.unregisterService = (name) => {
-    demoServiceNames.delete(name);
     originalUnregisterService(name);
   };
 
@@ -649,8 +648,6 @@ export function toggleService(name: string, enabled: boolean): void {
   } else {
     disabledServices.add(name);
     relay.runtime.unregisterService(name);
-    // Re-add to demoServiceNames so it still appears in topology (just disabled)
-    demoServiceNames.add(name);
     console.log(`[service] DISABLED ${name}`);
   }
 }

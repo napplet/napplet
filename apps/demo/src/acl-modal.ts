@@ -130,7 +130,7 @@ export function openPolicyModal(): void {
     // Toggle switch
     const toggle = document.createElement('button');
     const enabled = isServiceEnabled(name);
-    toggle.style.cssText = `width:32px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;transition:background 0.2s;background:${enabled ? '#39ff14' : '#3a3a4a'}`;
+    toggle.style.cssText = `appearance:none;-webkit-appearance:none;width:32px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;transition:background 0.2s;background:${enabled ? '#39ff14' : '#3a3a4a'}`;
 
     const knob = document.createElement('span');
     knob.style.cssText = `display:block;width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;top:2px;transition:left 0.2s;left:${enabled ? '18px' : '2px'}`;
