@@ -530,6 +530,23 @@ export class DemoConfig {
     return groups;
   }
 
+  /** Get only editable constant definitions. */
+  getEditableDefs(): ConstantDef[] {
+    return [...this._defs.values()].filter(d => d.editable);
+  }
+
+  /** Get only read-only constant definitions. */
+  getReadOnlyDefs(): ConstantDef[] {
+    return [...this._defs.values()].filter(d => !d.editable);
+  }
+
+  /** Get constant definitions relevant to a topology node role. Includes globals (empty relevantRoles). */
+  getByRole(role: TopologyNodeRole): ConstantDef[] {
+    return [...this._defs.values()].filter(d =>
+      d.relevantRoles.length === 0 || d.relevantRoles.includes(role)
+    );
+  }
+
   /**
    * Subscribe to constant value changes.
    * @returns An unsubscribe function.
