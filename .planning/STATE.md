@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.11.0
 milestone_name: Clean up Side Panel
 status: verifying
-stopped_at: Phase 56 context gathered
-last_updated: "2026-04-04T12:28:35.196Z"
+stopped_at: Completed 56-01-PLAN.md
+last_updated: "2026-04-04T12:40:00.647Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 55 — tab-reorganization
+**Current focus:** Phase 56 — contextual-filtering
 
 ## Current Position
 
-Phase: 56
-Plan: Not started
+Phase: 56 (contextual-filtering) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
@@ -47,6 +47,7 @@ Recent decisions affecting current work:
 - [Phase 55]: Constants panel uses getEditableDefs() in flat mode and d.editable filter in grouped mode
 - [Phase 55]: Polling timer guarded with _activeTab === 'node' check to prevent input destruction
 - [Phase 55]: Tab persistence via removing _activeTab = 'node' reset from showInspector
+- [Phase 56]: Role filter uses getByRole(role).filter(editable) with session-scoped _showAll toggle and resetShowAll() cross-module contract
 
 ### Quick Tasks Completed
 
@@ -65,6 +66,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-04T12:28:35.192Z
-Stopped at: Phase 56 context gathered
+Last session: 2026-04-04T12:40:00.644Z
+Stopped at: Completed 56-01-PLAN.md
 Resume: `/gsd:plan-phase 54`

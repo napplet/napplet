@@ -20,9 +20,9 @@ Requirements for Clean up Side Panel milestone. Each maps to roadmap phases.
 
 ### Contextual Filtering
 
-- [ ] **FILT-01**: Constants tab filters to show only constants relevant to the currently selected node
-- [ ] **FILT-02**: When no node is selected, all constants are shown (show-all fallback)
-- [ ] **FILT-03**: User can toggle a "show all" override to see all constants regardless of selection
+- [x] **FILT-01**: Constants tab filters to show only constants relevant to the currently selected node
+- [x] **FILT-02**: When no node is selected, all constants are shown (show-all fallback)
+- [x] **FILT-03**: User can toggle a "show all" override to see all constants regardless of selection
 
 ## Future Requirements
 
@@ -46,9 +46,9 @@ Requirements for Clean up Side Panel milestone. Each maps to roadmap phases.
 | TAB-01 | Phase 55 | Complete |
 | TAB-02 | Phase 55 | Complete |
 | TAB-03 | Phase 55 | Complete |
-| FILT-01 | Phase 56 | Pending |
-| FILT-02 | Phase 56 | Pending |
-| FILT-03 | Phase 56 | Pending |
+| FILT-01 | Phase 56 | Complete |
+| FILT-02 | Phase 56 | Complete |
+| FILT-03 | Phase 56 | Complete |
 
 **Coverage:**
 - v0.11.0 requirements: 8 total

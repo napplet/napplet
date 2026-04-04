@@ -141,7 +141,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 54: Data Layer** - Add role annotations and query methods to ConstantDef for downstream filtering (completed 2026-04-04)
 - [x] **Phase 55: Tab Reorganization** - Split Kinds into a read-only tab, constrain Constants to editable values, and fix tab persistence (completed 2026-04-04)
-- [ ] **Phase 56: Contextual Filtering** - Filter constants by selected node role with show-all fallback and toggle
+- [x] **Phase 56: Contextual Filtering** - Filter constants by selected node role with show-all fallback and toggle (completed 2026-04-04)
 
 ## Phase Details
 
@@ -182,9 +182,9 @@ Plans:
   2. When no node is selected, the Constants tab shows all editable constants (no empty or broken state)
   3. A visible "show all" toggle lets the user bypass contextual filtering and see all constants regardless of the selected node
   4. When the contextual filter produces zero results for a role, a meaningful empty-state message is shown with a link/button to show all
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 56-01-PLAN.md -- Add role-based contextual filtering with toggle and empty state to Constants tab
+- [x] 56-01-PLAN.md -- Add role-based contextual filtering with toggle and empty state to Constants tab
 **UI hint**: yes
 
 ## Progress
@@ -196,4 +196,4 @@ Phases execute in numeric order: 54 -> 55 -> 56
 |-------|----------------|--------|-----------|
 | 54. Data Layer | 1/1 | Complete    | 2026-04-04 |
 | 55. Tab Reorganization | 2/2 | Complete    | 2026-04-04 |
-| 56. Contextual Filtering | 0/1 | Not started | - |
+| 56. Contextual Filtering | 1/1 | Complete   | 2026-04-04 |
