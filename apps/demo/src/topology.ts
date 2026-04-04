@@ -251,14 +251,28 @@ export function initTopologyEdges(topology: DemoTopology): EdgeFlasher {
     } catch { /* best-effort — may fail if elements not visible */ }
   }
 
-  // Reposition lines when topology layout or inspector pane changes size
-  const ro = new ResizeObserver(() => {
+  // Shared repositioner — calls line.position() on every active line
+  const repositionAll = () => {
     lines.forEach((line) => { try { line.position(); } catch { /* best-effort */ } });
-  });
+  };
+
+  // Reposition lines when topology layout or inspector pane changes size
+  const ro = new ResizeObserver(repositionAll);
   const topologyRoot = document.getElementById('topology-root');
   if (topologyRoot) ro.observe(topologyRoot);
   const flowAreaInner = document.getElementById('flow-area-inner');
   if (flowAreaInner) ro.observe(flowAreaInner);
+
+  // Reposition lines when the topology pane scrolls — LeaderLine SVGs live
+  // on document.body and don't move with the scroll container automatically.
+  const topologyPane = document.getElementById('topology-pane');
+  if (topologyPane) {
+    topologyPane.addEventListener('scroll', repositionAll, { passive: true });
+  }
+
+  // Safety net: reposition after window resize in case flex reflow settles
+  // after LeaderLine's built-in positionByWindowResize handler fires.
+  window.addEventListener('resize', repositionAll, { passive: true });
 
   return {
     flash(edgeId: string, cls: 'active' | 'blocked'): void {
