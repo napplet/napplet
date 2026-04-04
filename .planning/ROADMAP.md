@@ -154,7 +154,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Calling getEditableDefs() returns only editable constants (expected: 17 items)
   3. Calling getReadOnlyDefs() returns only read-only constants (expected: 10 items, including 9 kinds)
   4. Calling getByRole('runtime') returns only constants annotated as relevant to the runtime role
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 54-01-PLAN.md -- Add relevantRoles field and query methods to ConstantDef and DemoConfig
 
 ### Phase 55: Tab Reorganization
 **Goal**: Users see three distinct inspector tabs — Node, Constants (editable only), and Kinds (read-only protocol references) — and their active tab stays selected when clicking different nodes
@@ -187,6 +189,6 @@ Phases execute in numeric order: 54 -> 55 -> 56
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 54. Data Layer | 0/TBD | Not started | - |
+| 54. Data Layer | 0/1 | Planned | - |
 | 55. Tab Reorganization | 0/TBD | Not started | - |
 | 56. Contextual Filtering | 0/TBD | Not started | - |
