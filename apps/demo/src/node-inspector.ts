@@ -20,10 +20,11 @@ import type { AclHistoryEntry } from './acl-history.js';
 import { DEMO_CAPABILITY_LABELS } from './acl-panel.js';
 import { openPolicyModal } from './acl-modal.js';
 import { renderConstantsPanel, wireConstantsPanelEvents } from './constants-panel.js';
+import { renderKindsPanel } from './kinds-panel.js';
 
 // ─── Module State ─────────────────────────────────────────────────────────────
 
-type InspectorTab = 'node' | 'constants';
+type InspectorTab = 'node' | 'constants' | 'kinds';
 let _activeTab: InspectorTab = 'node';
 let _selectedNodeId: string | null = null;
 let _getOptions: (() => NodeDetailOptions) | null = null;
@@ -214,6 +215,7 @@ function renderInspectorHeader(detail: NodeDetail): string {
 function renderTabBar(): string {
   const nodeActive = _activeTab === 'node';
   const constActive = _activeTab === 'constants';
+  const kindsActive = _activeTab === 'kinds';
   return `
     <div id="inspector-tab-bar" style="display:flex;border-bottom:1px solid #1f2235;padding:0 12px;gap:0;flex-shrink:0">
       <button data-inspector-tab="node"
@@ -229,6 +231,13 @@ function renderTabBar(): string {
                color:${constActive ? '#f0f6ff' : '#7981a0'};
                border-bottom:${constActive ? '2px solid #00f0ff' : '2px solid transparent'}">
         Constants
+      </button>
+      <button data-inspector-tab="kinds"
+        style="padding:8px 14px;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;font-family:inherit;
+               background:transparent;border:none;cursor:pointer;
+               color:${kindsActive ? '#f0f6ff' : '#7981a0'};
+               border-bottom:${kindsActive ? '2px solid #00f0ff' : '2px solid transparent'}">
+        Kinds
       </button>
     </div>
   `;
@@ -278,6 +287,23 @@ function updateInspectorPane(): void {
     `;
     wireTabHandlers();
     wireConstantsPanelEvents(() => updateInspectorPane());
+    return;
+  }
+
+  // Kinds tab: read-only protocol kind reference cards
+  if (_activeTab === 'kinds') {
+    const inner = getFlowAreaInner();
+    if (inner) inner.classList.add('inspector-open');
+
+    pane.innerHTML = `
+      <div style="height:100%;display:flex;flex-direction:column;overflow:hidden">
+        ${renderTabBar()}
+        <div style="flex:1;overflow-y:auto;padding-top:4px">
+          ${renderKindsPanel()}
+        </div>
+      </div>
+    `;
+    wireTabHandlers();
     return;
   }
 
@@ -331,7 +357,6 @@ function updateInspectorPane(): void {
 function showInspector(nodeId: string): void {
   const inner = getFlowAreaInner();
   if (inner) inner.classList.add('inspector-open');
-  _activeTab = 'node';
   _selectedNodeId = nodeId;
   updateInspectorPane();
 
@@ -408,6 +433,6 @@ export function initNodeInspector(
   // Start polling for live updates while inspector is open
   if (_updateTimer) clearInterval(_updateTimer);
   _updateTimer = setInterval(() => {
-    if (_selectedNodeId) updateInspectorPane();
+    if (_selectedNodeId && _activeTab === 'node') updateInspectorPane();
   }, 1500);
 }
