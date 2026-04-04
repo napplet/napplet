@@ -94,7 +94,7 @@ function getGroupedDefs(): Array<{ groupLabel: string; defs: ConstantDef[] }> {
   const groups: Array<{ groupLabel: string; defs: ConstantDef[] }> = [];
 
   if (_groupingMode === 'flat') {
-    const all = demoConfig.getAllDefs().filter(matchesSearch);
+    const all = demoConfig.getEditableDefs().filter(matchesSearch);
     if (all.length > 0) groups.push({ groupLabel: 'all constants', defs: all });
     return groups;
   }
@@ -104,7 +104,7 @@ function getGroupedDefs(): Array<{ groupLabel: string; defs: ConstantDef[] }> {
     : demoConfig.getByDomain();
 
   for (const [label, defs] of grouped) {
-    const filtered = defs.filter(matchesSearch);
+    const filtered = defs.filter(d => d.editable && matchesSearch(d));
     if (filtered.length > 0) {
       const displayLabel = _groupingMode === 'domain' && label === 'protocol'
         ? 'protocol (read-only)'
@@ -157,7 +157,7 @@ export function renderConstantsPanel(): string {
   return `
     <div style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7c86a7">protocol constants</div>
+        <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#7c86a7">editable constants</div>
         <button id="constants-reset-all" class="const-reset-all-btn" style="display:${resetAllDisplay}">Reset All</button>
       </div>
       <input id="constants-search" class="const-search-input" type="text" placeholder="filter..." value="${escapeHtml(_searchQuery)}" />
