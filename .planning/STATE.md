@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.11.0
 milestone_name: Clean up Side Panel
-status: verifying
-stopped_at: Phase 55 context gathered
-last_updated: "2026-04-04T10:39:16.481Z"
+status: executing
+stopped_at: Completed 55-01-PLAN.md
+last_updated: "2026-04-04T10:49:20.797Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 3
+  completed_plans: 2
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 54 — data-layer
+**Current focus:** Phase 55 — tab-reorganization
 
 ## Current Position
 
-Phase: 55
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 55 (tab-reorganization) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -43,6 +43,8 @@ Recent decisions affecting current work:
 - Research recommends explicit relevantRoles field on ConstantDef rather than implicit pkg-to-role mapping
 - Kinds tab scope: BusKind.* (8) + AUTH_KIND (1) = 9 read-only protocol kind constants
 - [Phase 54]: Import TopologyNodeRole from topology.ts; getByRole includes globals by default; no separate getKindsDefs method
+- [Phase 55]: Kinds panel splits getReadOnlyDefs() by domain: protocol kinds (9) vs other read-only (1)
+- [Phase 55]: Constants panel uses getEditableDefs() in flat mode and d.editable filter in grouped mode
 
 ### Quick Tasks Completed
 
@@ -61,6 +63,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-04T10:39:16.478Z
-Stopped at: Phase 55 context gathered
+Last session: 2026-04-04T10:49:20.794Z
+Stopped at: Completed 55-01-PLAN.md
 Resume: `/gsd:plan-phase 54`

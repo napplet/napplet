@@ -167,9 +167,9 @@ Plans:
   2. The "Constants" tab shows only editable behavioral values with live-edit controls (sliders, inputs, reset buttons)
   3. Selecting a different topology node does not reset the active tab back to "Node" -- the user's tab choice persists across node selections
   4. The 1500ms polling timer only re-renders when the Node tab is active (does not destroy slider/input focus on Constants or Kinds tabs)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 55-01-PLAN.md -- Create kinds-panel.ts and constrain constants-panel.ts to editable-only
+- [x] 55-01-PLAN.md -- Create kinds-panel.ts and constrain constants-panel.ts to editable-only
 - [ ] 55-02-PLAN.md -- Wire 3-tab system, fix tab persistence, guard polling timer
 **UI hint**: yes
 
@@ -193,5 +193,5 @@ Phases execute in numeric order: 54 -> 55 -> 56
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 54. Data Layer | 1/1 | Complete    | 2026-04-04 |
-| 55. Tab Reorganization | 0/2 | Planning complete | - |
+| 55. Tab Reorganization | 1/2 | In Progress|  |
 | 56. Contextual Filtering | 0/TBD | Not started | - |
