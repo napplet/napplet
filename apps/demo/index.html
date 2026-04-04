@@ -11,7 +11,8 @@
     /* Page flex-column layout (utility classes have no CSS definitions) */
     body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; margin: 0; }
     #flow-area { flex: 1; min-height: 0; overflow: hidden; }
-    #debugger-section { flex-shrink: 0; }
+    #debugger-section { flex-shrink: 0; position: relative; z-index: 1; }
+    #resize-handle { position: relative; z-index: 1; }
     .node-box { border: none; }
     /* .topology-edge CSS bar rules removed — edges now rendered by Leader Line (SVG) */
     .acl-btn { transition: all 0.15s; }
