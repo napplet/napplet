@@ -188,7 +188,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Broadcast is defined as a channel operation where the shell fans out to all open channels of a given type
   3. Channel capability section is integrated into the NIP draft as a MAY capability with its own `window.napplet.channels` API surface
   4. Naming decision documented (channels vs pipes vs connections) with rationale for avoiding NIP-28/29 collision
-**Plans**: TBD
+**Plans**: 59-01 (pipe wire format, broadcast semantics, NIP section)
 
 ### Phase 60: Channel Protocol Implementation
 **Goal**: Channel protocol working in shim and runtime, validating the spec design with passing tests
@@ -219,6 +219,6 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 |-------|----------------|--------|-----------|
 | 57. NIP Resolution & Pre-Engagement | 0/2 | Planned | - |
 | 58. Core Protocol NIP | 0/0 | Not started | - |
-| 59. Channel Protocol Design | 0/0 | Not started | - |
+| 59. Channel Protocol Design | 1/1 | Planned | - |
 | 60. Channel Protocol Implementation | 0/0 | Not started | - |
 | 61. Spec Packaging | 0/0 | Not started | - |

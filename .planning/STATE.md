@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
 status: executing
-stopped_at: Phase 59 context gathered
-last_updated: "2026-04-05T12:18:35.715Z"
-last_activity: 2026-04-05 — Roadmap created for v0.12.0
+stopped_at: Phase 59 planned
+last_updated: "2026-04-05T13:00:00.000Z"
+last_activity: 2026-04-05 — Phase 59 planning complete
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 2
+  total_plans: 3
   completed_plans: 0
   percent: 0
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.12.0 Phase 57 — NIP Resolution & Pre-Engagement
+**Current focus:** v0.12.0 Phase 59 — Channel Protocol Design (planned, ready to execute)
 
 ## Current Position
 
-Phase: 57 (1 of 5 in v0.12.0) — NIP Resolution & Pre-Engagement
-Plan: 0 of 2 in current phase (planned, not yet executed)
-Status: Ready to execute
-Last activity: 2026-04-05 — Roadmap created for v0.12.0
+Phase: 59 (3 of 5 in v0.12.0) — Channel Protocol Design
+Plan: 0 of 1 in current phase (planned, not yet executed)
+Status: Planned — ready to execute
+Last activity: 2026-04-05 — Phase 59 planning complete
 
 Progress: [..........] 0%
 
@@ -80,10 +80,10 @@ Recent decisions affecting current work:
 - CARRIED: npm publish blocked on human npm auth. Target for future milestone.
 - NIP number conflict with PR#2281 must be resolved before spec writing (Phase 57)
 - PR#2287 (aggregate hash extension) is unmerged -- NIP-5C depends on it for manifest identity
-- "Channels" naming may collide with NIP-28/29 -- needs finalization in Phase 59
+- "Channels" naming resolved: using "pipes" to avoid NIP-28 collision (decided in Phase 59 discuss)
 
 ## Session Continuity
 
-Last session: 2026-04-05T12:18:35.712Z
-Stopped at: Phase 59 context gathered
-Resume file: .planning/phases/59-channel-protocol-design/59-CONTEXT.md
+Last session: 2026-04-05T13:00:00.000Z
+Stopped at: Phase 59 planned
+Resume file: .planning/phases/59-channel-protocol-design/59-01-PLAN.md
