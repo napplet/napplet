@@ -239,3 +239,47 @@ After AUTH, the shell SHOULD check the napplet's `requires` tags from its
 [NIP-5A](5A.md) manifest (kind 35128) against available services. If
 requirements are unmet, the shell MAY reject the napplet or invoke a
 compatibility callback to surface the issue to the user.
+
+## Relay Proxy
+
+The relay proxy capability is MAY. Shells MAY provide transparent relay access.
+
+When provided, the shell acts as a [NIP-01](01.md) relay to the napplet. The
+napplet sends `REQ`, `EVENT`, and `CLOSE` messages; the shell forwards them to
+connected relays and delivers results back.
+
+### Subscriptions
+
+When the napplet sends `["REQ", <sub_id>, <filter>, ...]`:
+
+1. The shell MUST verify AUTH is complete
+2. The shell MUST enforce access control on the subscribe operation
+3. The shell delivers matching events from connected relays and local cache
+4. The shell sends `["EOSE", <sub_id>]` when stored events are exhausted
+5. New matching events are delivered as `["EVENT", <sub_id>, <event>]`
+
+Filter matching follows [NIP-01](01.md) semantics (`ids`, `authors`, `kinds`,
+`since`, `until`, `limit`, `#<tag>`).
+
+### Publishing
+
+When the napplet sends `["EVENT", <event>]`:
+
+1. The shell MUST verify AUTH is complete
+2. The shell MUST enforce access control on the publish operation
+3. The shell forwards the event to connected relays
+4. The shell responds with `["OK", <event_id>, <bool>, <msg>]`
+
+### Replay Protection
+
+The shell MUST reject:
+
+- Events with `created_at` older than 30 seconds
+- Events with `created_at` more than 10 seconds in the future
+- Events with duplicate event IDs
+
+### Bus Kinds
+
+Kinds 29000-29999 are postMessage bus traffic. They MUST NOT be forwarded to
+external relays. They are routed only to matching in-memory subscriptions within
+the shell. Standard kinds (outside this range) are forwarded to connected relays.
