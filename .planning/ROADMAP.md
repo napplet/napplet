@@ -222,6 +222,6 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 |-------|----------------|--------|-----------|
 | 57. NIP Resolution & Pre-Engagement | 2/2 | Complete | 2026-04-05 |
 | 58. Core Protocol NIP (v1) | 1/1 | Complete | 2026-04-05 |
-| 59. NIP Simplification & NUB Framework | 2/2 | Complete   | 2026-04-05 |
+| 59. NIP Simplification & NUB Framework | 2/2 | Complete    | 2026-04-05 |
 | 60. Initial NUB Interface Specs | 0/0 | Not started | - |
 | 61. Spec Packaging | 0/0 | Not started | - |
