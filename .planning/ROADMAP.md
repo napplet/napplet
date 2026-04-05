@@ -208,7 +208,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. Existing SPEC.md is renamed (e.g. SPEC-internal.md or similar) with a header noting it is the internal/runtime reference, not the NIP
   2. NIP file uses nostr-protocol/nips markdown conventions: setext headings, draft badge, correct event kind table format, References section
   3. Implementations section lists @napplet/shim + @napplet/shell (SDK) and hyprgate (reference shell) with links
-**Plans**: TBD
+**Plans**: 61-01 (rename SPEC.md + update cross-refs), 61-02 (finalize NIP-5D format + implementations)
 
 ## Progress
 
@@ -221,4 +221,4 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 | 58. Core Protocol NIP | 0/0 | Not started | - |
 | 59. Channel Protocol Design | 1/1 | Planned | - |
 | 60. Channel Protocol Implementation | 4/4 | Planned | - |
-| 61. Spec Packaging | 0/0 | Not started | - |
+| 61. Spec Packaging | 0/2 | Planned | - |

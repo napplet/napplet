@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
 status: executing
-stopped_at: Phase 60 planned
-last_updated: "2026-04-05T13:00:00.000Z"
-last_activity: 2026-04-05 — Phase 60 planning complete
+stopped_at: All phases planned
+last_updated: "2026-04-05T14:00:00.000Z"
+last_activity: 2026-04-05 — Phase 61 planning complete
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 8
+  total_plans: 10
   completed_plans: 0
   percent: 0
 ---
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.12.0 Phase 60 — Channel Protocol Implementation (planned, ready to execute)
+**Current focus:** v0.12.0 — All 5 phases planned, ready to execute starting Phase 57
 
 ## Current Position
 
-Phase: 60 (4 of 5 in v0.12.0) — Channel Protocol Implementation
-Plan: 0 of 4 in current phase (planned, not yet executed)
-Status: Planned — ready to execute
+Phase: 57 (1 of 5 in v0.12.0) — NIP Resolution & Pre-Engagement
+Plan: 0 of 2 in current phase (planned, not yet executed)
+Status: All phases planned — ready to execute
 Last activity: 2026-04-05 — Phase 59 planning complete
 
 Progress: [..........] 0%
