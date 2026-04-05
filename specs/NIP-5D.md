@@ -115,3 +115,127 @@ Shell delegates a deterministic keypair:
 ```json
 ["IDENTITY", {"pubkey": "deadbeef...", "privkey": "cafebabe...", "dTag": "chat", "aggregateHash": "e3b0c44298fc1c14..."}]
 ```
+
+## Authentication
+
+Authentication is MUST. All shells and napplets MUST implement the handshake
+defined in this section.
+
+```
+Napplet                              Shell
+  |                                    |
+  |--- REGISTER {dTag, hash} -------->|
+  |                                    |  derive keypair
+  |<--- IDENTITY {pub, priv} ---------|
+  |<--- AUTH <challenge> -------------|
+  |                                    |
+  |--- AUTH <signed kind 22242> ----->|
+  |                                    |  verify signature
+  |<--- OK <event_id, true, ""> -----|
+  |                                    |
+```
+
+### Step 1: REGISTER
+
+The napplet MUST send `REGISTER` as its first message:
+
+```json
+["REGISTER", {"dTag": "<napplet_type>", "claimedHash": "<aggregate_hash>"}]
+```
+
+- `dTag` (string, required): The napplet type identifier, read from
+  `<meta name="napplet-type">` in the napplet's document head.
+- `claimedHash` (string, required): The aggregate hash from
+  `<meta name="napplet-aggregate-hash">`, or empty string in dev mode.
+
+If the payload is invalid (missing or non-string `dTag`), the shell MUST respond
+with `["NOTICE", "REGISTER requires dTag"]` and MUST NOT proceed.
+
+### Step 2: IDENTITY
+
+After receiving a valid `REGISTER`, the shell derives a deterministic keypair
+and sends it to the napplet:
+
+```json
+["IDENTITY", {"pubkey": "<hex>", "privkey": "<hex>", "dTag": "<type>", "aggregateHash": "<hash>"}]
+```
+
+Key derivation:
+
+```
+seed = HMAC-SHA256(shellSecret, dTag + aggregateHash)
+pubkey = schnorr.getPublicKey(seed)
+```
+
+Where `shellSecret` is a 32-byte cryptographically random value generated once
+per shell instance and persisted across sessions. The same napplet type + same
+aggregate hash + same shell instance always produces the same keypair.
+
+The shell MUST send `IDENTITY` before sending the `AUTH` challenge.
+
+### Step 3: AUTH Challenge
+
+The shell sends an [NIP-42](42.md) challenge:
+
+```json
+["AUTH", "<uuid-challenge>"]
+```
+
+### Step 4: AUTH Response
+
+The napplet signs a kind 22242 event per [NIP-42](42.md) with the delegated
+private key:
+
+```json
+{
+  "kind": 22242,
+  "created_at": <unix_timestamp>,
+  "tags": [
+    ["relay", "napplet://shell"],
+    ["challenge", "<challenge_string>"],
+    ["type", "<napplet_type>"],
+    ["version", "2.0.0"],
+    ["aggregateHash", "<hash>"]
+  ],
+  "content": ""
+}
+```
+
+The `type`, `version`, and `aggregateHash` tags are MUST. The `relay` tag MUST
+be `"napplet://shell"`. The event MUST be signed with the delegated key received
+in the `IDENTITY` message.
+
+### Step 5: Verification
+
+The shell MUST verify:
+
+1. Kind is 22242
+2. `challenge` tag matches the pending challenge
+3. `relay` tag is `"napplet://shell"`
+4. `created_at` is within 60 seconds of current time
+5. Schnorr signature is valid
+6. `pubkey` matches the key sent in `IDENTITY`
+7. `type` and `aggregateHash` tags are present
+
+On success: `["OK", <event_id>, true, ""]`
+
+On failure: `["OK", <event_id>, false, "auth-required: <reason>"]`
+
+### Post-AUTH Identity
+
+After AUTH, the shell identifies senders by `MessageEvent.source` Window
+reference. No per-message signature verification is required. This "verify once,
+trust source" model avoids per-message cryptographic overhead.
+
+### Pre-AUTH Queueing
+
+Messages sent before AUTH completes MUST be queued and replayed on success, or
+dropped on failure. The queue MUST be capped at 50 messages by default. Messages
+exceeding the cap MUST be rejected with `["NOTICE", "pre-AUTH queue full"]`.
+
+### Manifest Compatibility Check
+
+After AUTH, the shell SHOULD check the napplet's `requires` tags from its
+[NIP-5A](5A.md) manifest (kind 35128) against available services. If
+requirements are unmet, the shell MAY reject the napplet or invoke a
+compatibility callback to surface the issue to the user.
