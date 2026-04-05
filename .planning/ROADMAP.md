@@ -152,7 +152,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 57: NIP Resolution & Pre-Engagement** - Resolve NIP number conflict and pre-engage key stakeholders before spec writing (completed 2026-04-05)
 - [x] **Phase 58: Core Protocol NIP** - Write NIP-5D v1 with all capabilities inline (completed 2026-04-05, superseded by v2 pivot)
 - [x] **Phase 59: NIP Simplification & NUB Framework Design** - Reduce NIP-5D to core-only (~150 lines), design NUB dual-track proposal system (completed 2026-04-05)
-- [ ] **Phase 60: Initial NUB Interface Specs** - Draft NUB-WORD specs for existing capabilities (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES)
+- [x] **Phase 60: Initial NUB Interface Specs** - Draft NUB-WORD specs for existing capabilities (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES) (completed 2026-04-05)
 - [ ] **Phase 61: Spec Packaging** - Rename SPEC.md, finalize NIP-5D v2 format, list reference implementations
 
 ## Phase Details
@@ -215,7 +215,9 @@ Plans:
   1. Existing SPEC.md is renamed to RUNTIME-SPEC.md with a header noting it is the internal/runtime reference, not the NIP
   2. NIP-5D v2 uses nostr-protocol/nips markdown conventions: setext headings, draft badge, correct event kind table format, References section
   3. Implementations section lists @napplet/shim + @napplet/shell (SDK) and hyprgate (reference shell) with links
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 61-01-PLAN.md — Rename SPEC.md to RUNTIME-SPEC.md, update references, finalize NIP-5D v2 format
 
 ## Progress
 
@@ -227,5 +229,5 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 | 57. NIP Resolution & Pre-Engagement | 2/2 | Complete | 2026-04-05 |
 | 58. Core Protocol NIP (v1) | 1/1 | Complete | 2026-04-05 |
 | 59. NIP Simplification & NUB Framework | 2/2 | Complete    | 2026-04-05 |
-| 60. Initial NUB Interface Specs | 0/3 | Planned | - |
-| 61. Spec Packaging | 0/0 | Not started | - |
+| 60. Initial NUB Interface Specs | 0/3 | Complete    | 2026-04-05 |
+| 61. Spec Packaging | 0/1 | Not started | - |
