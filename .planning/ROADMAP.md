@@ -150,7 +150,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Write a terse NIP-format specification for Nostr Web Applets extending NIP-5A, implement a channel protocol for inter-napplet communication, and package for submission to nostr-protocol/nips.
 
 - [x] **Phase 57: NIP Resolution & Pre-Engagement** - Resolve NIP number conflict and pre-engage key stakeholders before spec writing (completed 2026-04-05)
-- [ ] **Phase 58: Core Protocol NIP** - Write the NIP body: AUTH handshake, relay proxy, capability model, standard capabilities, security considerations
+- [x] **Phase 58: Core Protocol NIP** - Write the NIP body: AUTH handshake, relay proxy, capability model, standard capabilities, security considerations (completed 2026-04-05)
 - [ ] **Phase 59: Channel Protocol Design** - Design channel wire format, broadcast semantics, and write the NIP channel section
 - [ ] **Phase 60: Channel Protocol Implementation** - Build channels in shim and runtime with test coverage to validate the spec
 - [ ] **Phase 61: Spec Packaging** - Rename SPEC.md, finalize NIP in nostr-protocol/nips format, list reference implementations
@@ -218,7 +218,7 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 57. NIP Resolution & Pre-Engagement | 1/2 | Complete    | 2026-04-05 |
-| 58. Core Protocol NIP | 0/1 | Planned | - |
+| 58. Core Protocol NIP | 1/1 | Complete   | 2026-04-05 |
 | 59. Channel Protocol Design | 1/1 | Planned | - |
 | 60. Channel Protocol Implementation | 4/4 | Planned | - |
 | 61. Spec Packaging | 0/2 | Planned | - |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
-status: executing
-stopped_at: Phase 60 planned — ready to execute
-last_updated: "2026-04-05T13:04:18.703Z"
+status: completed
+stopped_at: Completed 58-01-PLAN.md
+last_updated: "2026-04-05T13:17:54.448Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 30
 ---
 
 # Project State
@@ -21,34 +21,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 57 — nip-resolution-pre-engagement
+**Current focus:** Phase 58 — core-protocol-nip
 
 ## Current Position
 
 Phase: 58
-Plan: Not started
-Status: Executing Phase 57
+Plan: 58-01 complete
+Status: Phase 58 complete — ready for Phase 59
 Last activity: 2026-04-05
 
-Progress: [..........] 0%
+Progress: [###.......] 30%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v0.12.0)
-- Average duration: -
-- Total execution time: -
+- Total plans completed: 3 (v0.12.0)
+- Average duration: ~7min
+- Total execution time: ~21min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 57 | 2 | ~14min | ~7min |
+| 58 | 1 | 7min | 7min |
 
 **Recent Trend:**
 
-- Last 5 plans: (from v0.11.0 -- see milestone archive)
+- Last 3 plans: 57-01, 57-02, 58-01
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - v0.12.0: Channel protocol needs design + implementation before spec section can be finalized
 - v0.12.0: Runtime internals (ACL, hooks, session management) explicitly excluded from NIP
 - v0.12.0: 5 phases derived from 22 requirements -- Resolution -> Core NIP -> Channel Design -> Channel Impl -> Packaging
+- [Phase 58]: AUTH handshake + service discovery are MUST; relay, IPC, storage, signer, nostrdb are MAY
+- [Phase 58]: NIP-5D is 499 lines with 38 MUSTs, 18 MAYs, 9 sections, zero banned implementation terms
+- [Phase 58]: Security section uses defensive framing for postMessage * origin (correct approach, not weakness)
 
 ### Quick Tasks Completed
 
@@ -84,6 +88,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-05T13:00:00.000Z
-Stopped at: Phase 60 planned — ready to execute
-Resume file: .planning/phases/60-channel-protocol-implementation/60-01-PLAN.md
+Last session: 2026-04-05T13:17:54.444Z
+Stopped at: Completed 58-01-PLAN.md
+Resume file: None
