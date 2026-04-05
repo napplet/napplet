@@ -9,8 +9,8 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 
 ### Resolution
 
-- [x] **RES-01**: NIP number conflict with Scrolls PR#2281 resolved (use 5D, contest 5C, or alternative)
-- [ ] **RES-02**: Key stakeholders (hzrd149, arthurfranca, fiatjaf) pre-engaged with draft or outline before formal spec writing
+- [ ] **RES-01**: NIP number conflict with Scrolls PR#2281 resolved (use 5D, contest 5C, or alternative)
+- [x] **RES-02**: Key stakeholders (hzrd149, arthurfranca, fiatjaf) pre-engaged with draft or outline before formal spec writing
 
 ### Core Protocol Spec
 
@@ -65,8 +65,8 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RES-01 | Phase 57 | Complete |
-| RES-02 | Phase 57 | Pending |
+| RES-01 | Phase 57 | Pending |
+| RES-02 | Phase 57 | Complete |
 | SPEC-01 | Phase 58 | Pending |
 | SPEC-02 | Phase 58 | Pending |
 | SPEC-03 | Phase 58 | Pending |
