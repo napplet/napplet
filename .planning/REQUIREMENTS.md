@@ -7,10 +7,10 @@
 
 Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each maps to roadmap phases.
 
-### NIP Resolution
+### Resolution
 
-- [ ] **NIP-01**: NIP number conflict with Scrolls PR#2281 resolved (use 5D, contest 5C, or alternative)
-- [ ] **NIP-02**: Key stakeholders (hzrd149, arthurfranca, fiatjaf) pre-engaged with draft or outline before formal spec writing
+- [ ] **RES-01**: NIP number conflict with Scrolls PR#2281 resolved (use 5D, contest 5C, or alternative)
+- [ ] **RES-02**: Key stakeholders (hzrd149, arthurfranca, fiatjaf) pre-engaged with draft or outline before formal spec writing
 
 ### Core Protocol Spec
 
@@ -65,34 +65,34 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NIP-01 | — | Pending |
-| NIP-02 | — | Pending |
-| SPEC-01 | — | Pending |
-| SPEC-02 | — | Pending |
-| SPEC-03 | — | Pending |
-| SPEC-04 | — | Pending |
-| SPEC-05 | — | Pending |
-| SPEC-06 | — | Pending |
-| CAP-01 | — | Pending |
-| CAP-02 | — | Pending |
-| CAP-03 | — | Pending |
-| CAP-04 | — | Pending |
-| CAP-05 | — | Pending |
-| CAP-06 | — | Pending |
-| CHAN-01 | — | Pending |
-| CHAN-02 | — | Pending |
-| CHAN-03 | — | Pending |
-| CHAN-04 | — | Pending |
-| CHAN-05 | — | Pending |
-| PKG-01 | — | Pending |
-| PKG-02 | — | Pending |
-| PKG-03 | — | Pending |
+| RES-01 | Phase 57 | Pending |
+| RES-02 | Phase 57 | Pending |
+| SPEC-01 | Phase 58 | Pending |
+| SPEC-02 | Phase 58 | Pending |
+| SPEC-03 | Phase 58 | Pending |
+| SPEC-04 | Phase 58 | Pending |
+| SPEC-05 | Phase 58 | Pending |
+| SPEC-06 | Phase 58 | Pending |
+| CAP-01 | Phase 58 | Pending |
+| CAP-02 | Phase 58 | Pending |
+| CAP-03 | Phase 58 | Pending |
+| CAP-04 | Phase 58 | Pending |
+| CAP-05 | Phase 58 | Pending |
+| CAP-06 | Phase 58 | Pending |
+| CHAN-01 | Phase 59 | Pending |
+| CHAN-02 | Phase 59 | Pending |
+| CHAN-03 | Phase 60 | Pending |
+| CHAN-04 | Phase 60 | Pending |
+| CHAN-05 | Phase 59 | Pending |
+| PKG-01 | Phase 61 | Pending |
+| PKG-02 | Phase 61 | Pending |
+| PKG-03 | Phase 61 | Pending |
 
 **Coverage:**
 - v0.12.0 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-05*
-*Last updated: 2026-04-05 after research synthesis*
+*Last updated: 2026-04-05 after roadmap creation*

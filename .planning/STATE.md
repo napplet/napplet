@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP [NIP-5C]
-status: defining_requirements
-stopped_at: Milestone started
-last_updated: "2026-04-05T11:00:00.000Z"
+status: ready_to_plan
+stopped_at: Roadmap created for v0.12.0
+last_updated: "2026-04-05T12:00:00.000Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,16 +21,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.12.0 — Draft Final "Nostr Web Applets" NIP [NIP-5C]
+**Current focus:** v0.12.0 Phase 57 — NIP Resolution & Pre-Engagement
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-05 — Milestone v0.12.0 started
+Phase: 57 (1 of 5 in v0.12.0) — NIP Resolution & Pre-Engagement
+Plan: 0 of 0 in current phase (not yet planned)
+Status: Ready to plan
+Last activity: 2026-04-05 — Roadmap created for v0.12.0
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [..........] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0 (v0.12.0)
+- Average duration: -
+- Total execution time: -
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: (from v0.11.0 -- see milestone archive)
+- Trend: Stable
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -39,15 +58,11 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- v0.11.0: 3 phases derived from 8 requirements -- Data Layer -> Tab Reorganization -> Contextual Filtering
-- Research recommends explicit relevantRoles field on ConstantDef rather than implicit pkg-to-role mapping
-- Kinds tab scope: BusKind.* (8) + AUTH_KIND (1) = 9 read-only protocol kind constants
-- [Phase 54]: Import TopologyNodeRole from topology.ts; getByRole includes globals by default; no separate getKindsDefs method
-- [Phase 55]: Kinds panel splits getReadOnlyDefs() by domain: protocol kinds (9) vs other read-only (1)
-- [Phase 55]: Constants panel uses getEditableDefs() in flat mode and d.editable filter in grouped mode
-- [Phase 55]: Polling timer guarded with _activeTab === 'node' check to prevent input destruction
-- [Phase 55]: Tab persistence via removing _activeTab = 'node' reset from showInspector
-- [Phase 56]: Role filter uses getByRole(role).filter(editable) with session-scoped _showAll toggle and resetShowAll() cross-module contract
+- v0.12.0: NIP-5C filename claimed by PR#2281 (Scrolls) -- must resolve number before writing
+- v0.12.0: Declarative-first capability negotiation (NIP-91 interactive pattern rejected by community)
+- v0.12.0: Channel protocol needs design + implementation before spec section can be finalized
+- v0.12.0: Runtime internals (ACL, hooks, session management) explicitly excluded from NIP
+- v0.12.0: 5 phases derived from 22 requirements -- Resolution -> Core NIP -> Channel Design -> Channel Impl -> Packaging
 
 ### Quick Tasks Completed
 
@@ -61,11 +76,12 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth. Target for future milestone.
-- Polling timer (1500ms updateInspectorPane) destroys active input state -- must be guarded in Phase 55
-- 280px inspector width is tight for 3 tab buttons -- verify label widths in Phase 55
+- NIP number conflict with PR#2281 must be resolved before spec writing (Phase 57)
+- PR#2287 (aggregate hash extension) is unmerged -- NIP-5C depends on it for manifest identity
+- "Channels" naming may collide with NIP-28/29 -- needs finalization in Phase 59
 
 ## Session Continuity
 
-Last session: 2026-04-04T12:40:00.644Z
-Stopped at: Completed 56-01-PLAN.md
-Resume: `/gsd:plan-phase 54`
+Last session: 2026-04-05
+Stopped at: Roadmap and state initialized for v0.12.0
+Resume file: None
