@@ -63,14 +63,8 @@ postMessage.
 
 The shell identifies napplet senders via `MessageEvent.source`, which provides
 an unforgeable `Window` reference within the browser security model. Messages
-from unregistered sources MUST be silently dropped.
-
-### Message Format
-
-All messages are JSON arrays using [NIP-01](01.md) relay wire format. The first
-element is the verb string. Messages are delivered asynchronously via the browser
-event loop. Napplets MUST NOT assume ordering between deliveries from different
-subscriptions.
+from unregistered sources MUST be silently dropped. All messages are JSON arrays
+using [NIP-01](01.md) relay wire format. The first element is the verb string.
 
 ## Wire Format
 
@@ -143,13 +137,11 @@ The napplet MUST send `REGISTER` as its first message:
 ["REGISTER", {"dTag": "<napplet_type>", "claimedHash": "<aggregate_hash>"}]
 ```
 
-- `dTag` (string, required): The napplet type identifier, read from
-  `<meta name="napplet-type">` in the napplet's document head.
-- `claimedHash` (string, required): The aggregate hash from
-  `<meta name="napplet-aggregate-hash">`, or empty string in dev mode.
+- `dTag` (string, required): Napplet type identifier from `<meta name="napplet-type">`.
+- `claimedHash` (string, required): Aggregate hash from `<meta name="napplet-aggregate-hash">`, or empty string in dev mode.
 
-If the payload is invalid (missing or non-string `dTag`), the shell MUST respond
-with `["NOTICE", "REGISTER requires dTag"]` and MUST NOT proceed.
+If `dTag` is missing or non-string, the shell MUST respond with
+`["NOTICE", "REGISTER requires dTag"]` and MUST NOT proceed.
 
 ### Step 2: IDENTITY
 
@@ -167,11 +159,9 @@ seed = HMAC-SHA256(shellSecret, dTag + aggregateHash)
 pubkey = schnorr.getPublicKey(seed)
 ```
 
-Where `shellSecret` is a 32-byte cryptographically random value generated once
-per shell instance and persisted across sessions. The same napplet type + same
-aggregate hash + same shell instance always produces the same keypair.
-
-The shell MUST send `IDENTITY` before sending the `AUTH` challenge.
+Where `shellSecret` is a 32-byte random value generated once per shell instance
+and persisted across sessions. Same `dTag` + same hash + same shell = same
+keypair. The shell MUST send `IDENTITY` before the `AUTH` challenge.
 
 ### Step 3: AUTH Challenge
 
@@ -221,32 +211,20 @@ On success: `["OK", <event_id>, true, ""]`
 
 On failure: `["OK", <event_id>, false, "auth-required: <reason>"]`
 
-### Post-AUTH Identity
+### Post-AUTH Behavior
 
 After AUTH, the shell identifies senders by `MessageEvent.source` Window
-reference. No per-message signature verification is required. This "verify once,
-trust source" model avoids per-message cryptographic overhead.
-
-### Pre-AUTH Queueing
-
-Messages sent before AUTH completes MUST be queued and replayed on success, or
-dropped on failure. The queue MUST be capped at 50 messages by default. Messages
-exceeding the cap MUST be rejected with `["NOTICE", "pre-AUTH queue full"]`.
-
-### Manifest Compatibility Check
-
-After AUTH, the shell SHOULD check the napplet's `requires` tags from its
-[NIP-5A](5A.md) manifest (kind 35128) against available services. If
-requirements are unmet, the shell MAY reject the napplet or invoke a
-compatibility callback to surface the issue to the user.
+reference. No per-message signature verification is required ("verify once, trust
+source"). Messages sent before AUTH completes MUST be queued and replayed on
+success, or dropped on failure. The queue MUST be capped at 50 messages. After
+AUTH, the shell SHOULD check the napplet's `requires` tags from its
+[NIP-5A](5A.md) manifest (kind 35128) against available services.
 
 ## Relay Proxy
 
-The relay proxy capability is MAY. Shells MAY provide transparent relay access.
-
-When provided, the shell acts as a [NIP-01](01.md) relay to the napplet. The
-napplet sends `REQ`, `EVENT`, and `CLOSE` messages; the shell forwards them to
-connected relays and delivers results back.
+The relay proxy capability is MAY. When provided, the shell acts as a
+[NIP-01](01.md) relay to the napplet, forwarding `REQ`, `EVENT`, and `CLOSE` to
+connected relays.
 
 ### Subscriptions
 
@@ -478,3 +456,44 @@ The protocol does NOT protect against:
 - A malicious shell implementation (napplets must trust the shell)
 - Side-channel attacks through timing or resource usage
 - Social engineering the user into granting capabilities
+
+## Event Kinds
+
+These are postMessage bus kinds used by this NIP. They exist only on the
+postMessage channel between iframe and host. They MUST NOT be published to
+external relays or stored by relay implementations.
+
+| Kind | Name | Usage |
+|------|------|-------|
+| 22242 | AUTH | Authentication event per [NIP-42](42.md) |
+| 29001 | SIGNER_REQUEST | Napplet-to-shell signer proxy request |
+| 29002 | SIGNER_RESPONSE | Shell-to-napplet signer proxy response |
+| 29003 | IPC_PEER | Inter-napplet messaging, storage commands, service dispatch |
+| 29006 | NIPDB_REQUEST | Napplet-to-shell event database query |
+| 29007 | NIPDB_RESPONSE | Shell-to-napplet event database result |
+| 29010 | SERVICE_DISCOVERY | Shell-to-napplet capability advertisement |
+
+Kinds 29000-29999 fall in [NIP-01](01.md)'s ephemeral event range. Relay
+implementations encountering these kinds over WebSocket MUST NOT store them.
+
+## Napplet API Surface
+
+Summary of normative `window.*` namespaces that napplet code interacts with:
+
+| Namespace | Requirement | Discovery Name |
+|-----------|-------------|----------------|
+| `window.napplet.services` | MUST | (always present) |
+| `window.napplet.relay` | MAY | `relay` |
+| `window.napplet.ipc` | MAY | `ipc` |
+| `window.napplet.storage` | MAY | `storage` |
+| `window.nostr` | MAY | `signer` |
+| `window.nostrdb` | MAY | `nostrdb` |
+
+Napplets MUST check `window.napplet.services.has(name)` before using any MAY
+namespace.
+
+## Implementations
+
+- [@napplet/shim](https://github.com/sandwichfarm/napplet) -- napplet-side SDK
+- [@napplet/shell](https://github.com/sandwichfarm/napplet) -- shell runtime
+- [hyprgate](https://github.com/sandwichfarm/hyprgate) -- reference shell implementation
