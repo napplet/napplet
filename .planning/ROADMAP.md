@@ -201,7 +201,11 @@ Plans:
   1. NUB governance document defines two tracks: NUB-WORD (interfaces, one canonical per name) and NUB-NN (message protocols, competing allowed)
   2. At least 6 initial NUB interface specs drafted: NUB-RELAY, NUB-STORAGE, NUB-SIGNER, NUB-NOSTRDB, NUB-IPC, NUB-PIPES
   3. NUB proposal template exists for both interface and message protocol submissions
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 60-01-PLAN.md — Write NUB-RELAY, NUB-STORAGE, NUB-SIGNER specs
+- [ ] 60-02-PLAN.md — Write NUB-NOSTRDB, NUB-IPC specs
+- [ ] 60-03-PLAN.md — Write NUB-PIPES spec and verify governance artifacts
 
 ### Phase 61: Spec Packaging
 **Goal**: NIP-5D v2 is in final submittable form and existing SPEC.md is repositioned as internal reference
@@ -223,5 +227,5 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 | 57. NIP Resolution & Pre-Engagement | 2/2 | Complete | 2026-04-05 |
 | 58. Core Protocol NIP (v1) | 1/1 | Complete | 2026-04-05 |
 | 59. NIP Simplification & NUB Framework | 2/2 | Complete    | 2026-04-05 |
-| 60. Initial NUB Interface Specs | 0/0 | Not started | - |
+| 60. Initial NUB Interface Specs | 0/3 | Planned | - |
 | 61. Spec Packaging | 0/0 | Not started | - |
