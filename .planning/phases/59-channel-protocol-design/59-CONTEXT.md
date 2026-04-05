@@ -1,47 +1,46 @@
-# Phase 59: Channel Protocol Design - Context
+# Phase 59: NIP Simplification & NUB Framework Design - Context
 
 **Gathered:** 2026-04-05
 **Status:** Ready for planning
+**Note:** This phase was pivoted from "Channel Protocol Design" to "NIP Simplification & NUB Framework Design." Old context/plans are superseded.
 
 <domain>
 ## Phase Boundary
 
-Design the pipe wire format, broadcast semantics, and write the NIP pipe section. This is protocol design — the implementation is Phase 60. Output is the pipe capability section of NIP-5D plus a wire format specification.
+Reduce NIP-5D from 499 lines (v1, all capabilities inline) to ~180 lines (v2, core-only). Design the NUB (Napplet Unified Blueprint) dual-track proposal framework for interface and message protocol extensions. NIP-5D v1 remains at specs/NIP-5D.md as reference until v2 replaces it.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Naming
-- **D-01:** Use "pipes" not "channels." `window.napplet.pipes`. Avoids collision with NIP-28 (Public Chat) which uses "channels." Verbs prefixed with PIPE_.
+### NIP-5D v2 Content
+- **D-01:** v2 keeps: Transport (postMessage, sandbox policy, sender ID), Wire format tables (verb tables for REQ/EVENT/CLOSE/REGISTER/IDENTITY/AUTH), Authentication (REGISTER → IDENTITY → AUTH sequence diagram + prose), Discovery (`shell.supports(nubId)` as MUST), Security considerations, NUB reference section. Target ~180 lines.
+- **D-02:** v2 removes: Relay Proxy details, all 6 Standard Capabilities sections (relay, IPC, storage, signer, nostrdb, services), Event Kinds table (kinds defined in NUB tracks, surfaced to NIP on approval). These move to NUB interface specs.
+- **D-03:** v2 adds: NUB reference section explaining the dual-track proposal system and where to find interface/protocol specs.
+- **D-04:** NIP-5D v1 (499 lines) stays at specs/NIP-5D.md until v2 is written, then v1 is archived or deleted.
 
-### Lifecycle Verbs
-- **D-02:** Four verbs in the wire format:
-  - `PIPE_OPEN` — Napplet requests a pipe to a target. Contains targetType (dTag) and optional targetKey (session pubkey).
-  - `PIPE_ACK` — Shell confirms pipe opened. Contains shell-assigned pipeId. Sent after auth verification.
-  - `PIPE` — Data message on an open pipe. Contains pipeId and arbitrary payload. Custom wire format — NOT NIP-01 events.
-  - `PIPE_CLOSE` — Either side tears down the pipe. Contains pipeId.
+### NUB Framework
+- **D-05:** NUB = "Napplet Unified Blueprint." Two tracks in one system:
+  - **NUB-WORD** (interfaces): NUB-RELAY, NUB-STORAGE, NUB-SIGNER, NUB-NOSTRDB, NUB-IPC, NUB-PIPES. One canonical spec per name. Defines `window.napplet.*` API contracts — what shells provide to napplets.
+  - **NUB-NN** (message protocols): NUB-01, NUB-02, etc. Multiple competing specs allowed per domain. Defines event semantics — what napplets agree on with each other. Napplets negotiate via discovery.
+- **D-06:** NUB-WORD vs NUB-NN boundary: interfaces are shell-provided AND define API surface; protocols are napplet-agreed AND define event semantics. Both criteria apply, edge cases judged pragmatically.
 
-### Broadcast
-- **D-03:** Dedicated `PIPE_BROADCAST` verb. Napplet sends PIPE_BROADCAST(data), shell fans out to ALL open pipes for that napplet. Simple — no named groups, no subscription model. Shell-mediated fan-out.
+### NUB Governance
+- **D-07:** NIP-style informal governance. Fork repo, add markdown, open PR. Community comments. Maintainer (dskvr) merges when it makes sense. No formal stages or review committee.
 
-### Targeting
-- **D-04:** Primary targeting by dTag (napplet type from manifest). `PIPE_OPEN(targetType: "synth-plugin")`. Shell resolves to instance(s).
-- **D-05:** Optional refinement by session pubkey. `PIPE_OPEN(targetType: "synth-plugin", targetKey: "abc...")` for when you need a specific instance.
-- **D-06:** Shell assigns opaque pipe IDs. How the shell resolves multiple instances of the same type is a runtime decision, not NIP-specified.
+### Discovery Protocol
+- **D-08:** NIP defines `shell.supports(nubId)` as MUST. Returns boolean. For checking both interface and protocol: `shell.supports("NUB-RELAY", "NUB-02")`.
+- **D-09:** No wire protocol prescribed in the NIP for discovery. Kind 29010 remains in the runtime implementation but is not NIP-specified. How the shell resolves supports() is implementation detail.
 
-### Auth on Open
-- **D-07:** PIPE_OPEN triggers auth verification by the shell (the napplet must have completed AUTH handshake). Target napplet does NOT opt-in — shell mediates. If auth fails, shell sends PIPE_CLOSE with error reason.
-
-### Wire Format After Open
-- **D-08:** After PIPE_ACK, PIPE messages carry arbitrary payloads — not NIP-01 events. The whole point is escaping NIP-01 overhead for low-latency use cases. Payload format is opaque to the shell (shell just routes by pipeId).
+### Kind Numbers
+- **D-10:** Kind 22242 (AUTH) stays in the NIP. All other kinds (29001-29010) move to NUB interface specs. NIP has a placeholder table that grows as NUB proposals are approved.
 
 ### Claude's Discretion
-- JSON structure of each verb's payload (exact field names)
-- Whether PIPE_CLOSE carries a reason code or just the pipeId
-- Error handling for edge cases (target not found, target disconnected mid-pipe)
-- Whether to include sequence diagrams in the NIP section (recommended: yes, one diagram)
+- Exact section ordering in NIP-5D v2
+- How to structure the NUB reference section in the NIP (brief paragraph + link, or more detailed)
+- NUB governance document format and structure
+- Whether to create NUB specs in specs/nubs/ directory or a separate location
 
 </decisions>
 
@@ -50,22 +49,17 @@ Design the pipe wire format, broadcast semantics, and write the NIP pipe section
 
 **Downstream agents MUST read these before planning or implementing.**
 
-### Research
-- `.planning/research/FEATURES-CHANNELS.md` — Channel (now pipe) protocol feature landscape: lifecycle patterns, postMessage performance, broadcast models, framework comparison
-- `.planning/research/ARCHITECTURE.md` — NIP structure, capability negotiation patterns
-- `.planning/research/PITFALLS.md` — NIP-28/29 naming collision risk (now resolved by using "pipes")
+### Source Material
+- `specs/NIP-5D.md` — NIP-5D v1 (499 lines). Source for v2 distillation. Keep: transport, wire format, AUTH, security. Remove: relay proxy, capabilities, event kinds.
+- `.planning/phases/58-core-protocol-nip/58-CONTEXT.md` — Phase 58 style decisions (one example per verb, sequence diagram for AUTH, defensive security section). These carry forward to v2.
 
-### Prior Phase Context
-- `.planning/phases/57-nip-resolution-pre-engagement/57-CONTEXT.md` — NIP-5D number, positioning
-- `.planning/phases/58-core-protocol-nip/58-CONTEXT.md` — Spec style decisions (one example per verb, API surface + behavior, sequence diagrams)
+### NUB Design Input
+- `.planning/research/ARCHITECTURE.md` — NIP structure, MUST/MAY model, capability negotiation patterns
+- `.planning/research/FEATURES-CHANNELS.md` — Pipe protocol design (becomes NUB-PIPES)
+- `.planning/phases/59-channel-protocol-design/59-CONTEXT.md` (old) — Pipe naming, lifecycle verbs, broadcast decisions. These carry into NUB-PIPES spec.
 
-### Source Protocol
-- `SPEC.md` §3 — AUTH handshake (pipes use the same auth model)
-- `packages/core/src/index.ts` — BusKind definitions (pipes are a new bus kind or sit outside the kind system)
-- `packages/shim/src/index.ts` — Current window.napplet.ipc (emit/on) — pipes complement this, don't replace it
-
-### External
-- NIP-28 — Public Chat "channels" (the reason we're using "pipes" instead)
+### Prior Decisions
+- `.planning/phases/57-nip-resolution-pre-engagement/57-CONTEXT.md` — NIP-5D number, three-layer positioning
 
 </canonical_refs>
 
@@ -73,41 +67,39 @@ Design the pipe wire format, broadcast semantics, and write the NIP pipe section
 ## Existing Code Insights
 
 ### Reusable Assets
-- `packages/shim/src/index.ts` — IPC emit/on pattern. Pipes will follow a similar shim installation pattern but with different verbs.
-- `packages/runtime/src/runtime.ts` — Message dispatch loop. Pipe verbs will need new dispatch branches.
-- `packages/core/src/index.ts` — BusKind enum. May need new kinds for pipe verbs, or pipes may sit outside the NIP-01 event system entirely.
+- `specs/NIP-5D.md` — v1 is the starting point for v2 distillation. Cut sections, don't rewrite from scratch.
+- `packages/core/src/index.ts` — BusKind enum, kind constants. These become the source for NUB interface spec kind numbers.
 
 ### Established Patterns
-- postMessage wire format: JSON arrays `[verb, ...args]` (matches NIP-01 relay protocol)
-- Shell mediates all napplet-to-napplet communication (no direct iframe-to-iframe)
-- Auth verification on every sensitive operation
+- NIP-5D v1 already uses setext headings, draft badge, NIP-01 references correctly. v2 inherits this formatting.
+- Kind 29010 discovery implementation exists in runtime. NUB-RELAY etc. specs can reference the existing implementation.
 
 ### Integration Points
-- Pipe verbs integrate into the same postMessage listener as NIP-01 verbs
-- Shell's dispatch loop needs to recognize PIPE_* verbs alongside REQ/EVENT/CLOSE
-- Service discovery (kind 29010) may need to advertise pipe capability
+- `shell.supports()` needs to replace or wrap the existing `window.napplet.services.has()` API
+- NUB specs reference the same window.napplet.* namespaces already implemented in @napplet/shim
 
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-- DAW use case as the litmus test: BPM sync = PIPE_BROADCAST, VST parameter changes = PIPE to specific instance
-- Pipe payloads should support both JSON and potentially ArrayBuffer/typed arrays for audio data (but NIP only needs to specify JSON — binary is a runtime optimization)
-- The sequence diagram style from Phase 58 (AUTH) should be consistent — use same format for pipe lifecycle diagram
+- NIP-5D v2 should be achievable by surgically removing sections from v1 and adding a NUB reference section — not a full rewrite
+- NUB specs should be self-contained markdown files that could eventually live in a github.com/napplets/nubs repo
+- The pipe protocol decisions from the old Phase 59 context (PIPE_OPEN/PIPE_ACK/PIPE/PIPE_CLOSE/PIPE_BROADCAST, targeting by dTag) carry directly into NUB-PIPES
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-- Named broadcast groups (PIPE_JOIN/PIPE_LEAVE) — deferred unless the simple fan-out proves insufficient
-- MessagePort upgrade for high-frequency pipes — deferred to post-v1
-- Binary/ArrayBuffer payloads — runtime optimization, not NIP-specified
+- NUB repo creation on github.com/napplets — design the framework first
+- NUB message protocol specs (NUB-01 feed, NUB-02 chat, etc.) — interface specs first
+- Pipe implementation in packages — NUB-PIPES spec first, implement in future milestone
+- NUB community onboarding documentation
 
 </deferred>
 
 ---
 
-*Phase: 59-channel-protocol-design*
+*Phase: 59-nip-simplification-nub-framework (pivoted from 59-channel-protocol-design)*
 *Context gathered: 2026-04-05*
