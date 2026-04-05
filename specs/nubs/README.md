@@ -17,12 +17,12 @@ consume them. Discovery: `shell.supports("NUB-RELAY")`.
 
 | NUB ID | Namespace | Description | Status |
 |--------|-----------|-------------|--------|
-| NUB-RELAY | `window.napplet.relay` | NIP-01 relay proxy | Draft |
-| NUB-STORAGE | `window.napplet.storage` | Scoped key-value storage | Draft |
-| NUB-SIGNER | `window.nostr` | NIP-07 signer proxy | Draft |
-| NUB-NOSTRDB | `window.nostrdb` | Local event database | Draft |
-| NUB-IPC | `window.napplet.ipc` | Inter-napplet pub/sub | Draft |
-| NUB-PIPES | `window.napplet.pipes` | Authenticated point-to-point connections | Draft |
+| [NUB-RELAY](NUB-RELAY.md) | `window.napplet.relay` | NIP-01 relay proxy | Draft |
+| [NUB-STORAGE](NUB-STORAGE.md) | `window.napplet.storage` | Scoped key-value storage | Draft |
+| [NUB-SIGNER](NUB-SIGNER.md) | `window.nostr` | NIP-07 signer proxy | Draft |
+| [NUB-NOSTRDB](NUB-NOSTRDB.md) | `window.nostrdb` | Local event database | Draft |
+| [NUB-IPC](NUB-IPC.md) | `window.napplet.ipc` | Inter-napplet pub/sub | Draft |
+| [NUB-PIPES](NUB-PIPES.md) | `window.napplet.pipes` | Authenticated point-to-point connections | Draft |
 
 ### NUB-NN (Message Protocol Specs)
 
