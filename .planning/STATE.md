@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
-status: planning
-stopped_at: Phase 58 context gathered
-last_updated: "2026-04-05T12:12:37.577Z"
-last_activity: 2026-04-05 — Roadmap created for v0.12.0
+status: planned
+stopped_at: Phase 57 planned (2 plans, 1 wave)
+last_updated: "2026-04-05T16:00:00.000Z"
+last_activity: 2026-04-05 — Phase 57 plans created
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
+  total_plans: 2
   completed_plans: 0
   percent: 0
 ---
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 ## Current Position
 
 Phase: 57 (1 of 5 in v0.12.0) — NIP Resolution & Pre-Engagement
-Plan: 0 of 0 in current phase (not yet planned)
-Status: Ready to plan
+Plan: 0 of 2 in current phase (planned, not yet executed)
+Status: Ready to execute
 Last activity: 2026-04-05 — Roadmap created for v0.12.0
 
 Progress: [..........] 0%
@@ -84,6 +84,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-05T12:12:37.574Z
-Stopped at: Phase 58 context gathered
-Resume file: .planning/phases/58-core-protocol-nip/58-CONTEXT.md
+Last session: 2026-04-05T16:00:00.000Z
+Stopped at: Phase 57 planned (2 plans, 1 wave)
+Resume file: .planning/phases/57-nip-resolution-pre-engagement/57-01-PLAN.md

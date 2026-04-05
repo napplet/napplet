@@ -165,7 +165,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. A NIP number is chosen (5D, 5E, or contested 5C) with rationale documented, confirmed not to collide with any open PR
   2. At least two of hzrd149, arthurfranca, fiatjaf have received an outline or draft framing that distinguishes NIP-5C scope from NIP-5A/5B
   3. Current status of PR#2281 (Scrolls), PR#2282 (5B), and PR#2287 (aggregate hash) is checked and documented as context for spec writing
-**Plans**: TBD
+**Plans**: 57-01 (NIP number resolution), 57-02 (stakeholder scope outline)
 
 ### Phase 58: Core Protocol NIP
 **Goal**: A complete NIP draft covering AUTH, relay proxy, capability discovery, all standard capabilities, MUST/MAY layering, and security model
@@ -217,7 +217,7 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 57. NIP Resolution & Pre-Engagement | 0/0 | Not started | - |
+| 57. NIP Resolution & Pre-Engagement | 0/2 | Planned | - |
 | 58. Core Protocol NIP | 0/0 | Not started | - |
 | 59. Channel Protocol Design | 0/0 | Not started | - |
 | 60. Channel Protocol Implementation | 0/0 | Not started | - |
