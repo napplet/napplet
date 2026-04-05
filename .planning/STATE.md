@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.11.0
-milestone_name: Clean up Side Panel
-status: complete
-stopped_at: Milestone archived
-last_updated: "2026-04-05T10:10:00.000Z"
+milestone: v0.12.0
+milestone_name: Draft Final "Nostr Web Applets" NIP [NIP-5C]
+status: defining_requirements
+stopped_at: Milestone started
+last_updated: "2026-04-05T11:00:00.000Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Planning next milestone
+**Current focus:** v0.12.0 — Draft Final "Nostr Web Applets" NIP [NIP-5C]
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: v0.11.0 milestone complete and archived
-Last activity: 2026-04-05
+Status: Defining requirements
+Last activity: 2026-04-05 — Milestone v0.12.0 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 

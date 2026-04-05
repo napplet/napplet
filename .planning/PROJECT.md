@@ -116,6 +116,26 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
+## Current Milestone: v0.12.0 Draft Final "Nostr Web Applets" NIP [NIP-5C]
+
+**Goal:** Write a terse NIP-format specification for Nostr Web Applets (NIP-5C) extending NIP-5A, with new channel protocol work, and submit as PR to nostr-protocol/nips.
+
+**Target features:**
+- Channel protocol: authenticated persistent point-to-point connections between napplets (NIP-01 AUTH on open, custom wire format after). Broadcast as channel operation (send to all open channels).
+- NIP-5C spec in nostr-protocol/nips format — terse, references NIP-01 and NIP-5A
+- MUST interfaces: AUTH handshake, service/feature discovery (`window.napplet.services`)
+- MAY interfaces (optional, discoverable): relay proxy (`window.napplet.relay`), IPC pub/sub (`window.napplet.ipc`), channels (`window.napplet.channels`), napplet state storage (`window.napplet.storage`), NIP-07 signer (`window.nostr`), nostr event database (`window.nostrdb`)
+- Napplet responsibility: discover capabilities, adapt gracefully, announce incompatibility visually
+- Rename existing SPEC.md to internal/runtime reference
+- PR to nostr-protocol/nips
+
+**Key design decisions:**
+- NIP defines only the napplet↔shell contract; runtime internals (ACL, service registry, session management) are out of scope
+- Shell ↔ services layer will eventually move to a separate "runtime" repo
+- Signer proxy (29001/29002) replaced by optional NIP-07 (`window.nostr`) — shell proxies transparently
+- Storage proxy replaced by optional `window.nostrdb` (nostr event DB) + `window.napplet.storage` (napplet state) — both optional, shell provides and proxies
+- Channels designed to be general enough to theoretically support low-latency use cases (DAW BPM sync, VST-like plugin communication) without building any
+
 ### Out of Scope
 
 - Mobile native wrapper — web-first protocol, native later
@@ -126,8 +146,8 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - Rate limiting on signer requests — document expected behavior, don't enforce yet
 - Restrictive ACL default mode — permissive default for developer adoption (v0.2.0 adds proper enforcement, restrictive mode later)
 - Manifest signature verification in shell — deferred to post-v1 security hardening
-- NIP PR submission — spec needs iterations before community submission
 - Arbitrary custom napplet loading in the demo shell — defer until the built-in demo is architecture-accurate and trustworthy again
+- DAW implementation or audio-specific protocols — NIP-5C only designs the channel primitive that could support it
 
 ## Context
 
@@ -207,4 +227,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-05 after v0.11.0 milestone*
+*Last updated: 2026-04-05 after v0.12.0 milestone start*
