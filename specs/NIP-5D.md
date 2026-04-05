@@ -343,3 +343,82 @@ After initial discovery `EOSE`, napplets MAY remain subscribed. The shell MUST
 send additional kind 29010 events for capabilities registered after the initial
 `EOSE`. If no capabilities are registered, the shell sends `EOSE` with zero
 events.
+
+## Standard Capabilities
+
+The following capabilities are defined by this NIP. All are MAY unless noted.
+Shells advertise supported capabilities via [Capability Discovery](#capability-discovery).
+
+### Relay Proxy -- MAY
+
+Discovery name: `relay`. Namespace: `window.napplet.relay`.
+
+- `subscribe(filter, onEvent)` -- open a relay subscription
+- `publish(event)` -- publish an event to connected relays
+- `query(filter)` -- one-shot query (returns matching events, then closes)
+
+The shell forwards `REQ`/`EVENT`/`CLOSE` to connected relays per [NIP-01](01.md).
+The shell MUST enforce access control on both subscribe and publish operations.
+See [Relay Proxy](#relay-proxy) for full protocol details.
+
+### IPC Pub/Sub -- MAY
+
+Discovery name: `ipc`. Namespace: `window.napplet.ipc`.
+
+- `emit(topic, payload)` -- publish a topic event to other napplets
+- `on(topic, callback)` -- subscribe to topic events
+
+Uses kind 29003 events with a `["t", "<topic>"]` tag for routing. Topics are
+free-form strings defined by napplets. The shell routes kind 29003 events to all
+subscribers except the sender (sender exclusion prevents echo).
+
+### Napplet State Storage -- MAY
+
+Discovery name: `storage`. Namespace: `window.napplet.storage`.
+
+- `get(key)` -- read a value
+- `set(key, value)` -- write a value
+- `remove(key)` -- delete a key
+- `keys()` -- list all keys
+- `clear()` -- remove all keys
+
+Storage is scoped by composite key `dTag:aggregateHash`. Napplets see only their
+own namespace. When the aggregate hash changes (new build), the napplet gets a
+fresh empty namespace. The shell MUST enforce a per-napplet quota (default
+512 KB, measured in UTF-8 bytes).
+
+### NIP-07 Signer Proxy -- MAY
+
+Discovery name: `signer`. Namespace: `window.nostr`.
+
+Provides the [NIP-07](07.md) `window.nostr` interface inside the sandboxed
+iframe. The shell proxies signing requests to the underlying signer (NIP-07
+extension, NIP-46 remote signer, etc.).
+
+- `getPublicKey()` -- returns the user's public key
+- `signEvent(event)` -- request event signing
+- `nip04.encrypt(pubkey, plaintext)` / `nip04.decrypt(pubkey, ciphertext)`
+- `nip44.encrypt(pubkey, plaintext)` / `nip44.decrypt(pubkey, ciphertext)`
+
+The shell MUST enforce access control per signing operation. Kinds 0 (metadata),
+3 (contacts), 5 (deletion), and 10002 (relay list) MUST always require explicit
+user consent regardless of access control settings.
+
+### Event Database -- MAY
+
+Discovery name: `nostrdb`. Namespace: `window.nostrdb`.
+
+- `query(filter)` -- query a shell-provided local event cache
+
+The shell MAY back this with any storage mechanism. This provides read access to
+events the shell has already seen, without requiring a relay round-trip.
+
+### Service Discovery -- MUST
+
+Discovery name: always present. Namespace: `window.napplet.services`.
+
+- `list()` -- returns all discovered capability descriptors
+- `has(name)` -- boolean check for capability presence
+
+This is the only MUST capability beyond the core AUTH handshake. See
+[Capability Discovery](#capability-discovery) for the full protocol.
