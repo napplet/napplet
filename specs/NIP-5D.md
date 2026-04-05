@@ -283,3 +283,63 @@ The shell MUST reject:
 Kinds 29000-29999 are postMessage bus traffic. They MUST NOT be forwarded to
 external relays. They are routed only to matching in-memory subscriptions within
 the shell. Standard kinds (outside this range) are forwarded to connected relays.
+
+## Capability Discovery
+
+Capability discovery is MUST. All shells MUST support kind 29010 discovery.
+
+Napplets discover shell capabilities via kind 29010 events. After AUTH, the
+napplet sends a standard [NIP-01](01.md) subscription:
+
+```json
+["REQ", "svc", {"kinds": [29010]}]
+```
+
+The shell responds with one `EVENT` per available capability, then `EOSE`:
+
+```json
+["EVENT", "svc", {
+  "kind": 29010,
+  "tags": [
+    ["s", "audio"],
+    ["v", "1.0.0"],
+    ["d", "Audio playback management"]
+  ],
+  "content": "{}"
+}]
+```
+
+```json
+["EOSE", "svc"]
+```
+
+### Discovery Event Tags
+
+| Tag | Required | Description |
+|-----|----------|-------------|
+| `s` | MUST | Service name (unique identifier, e.g., `relay`, `ipc`, `storage`) |
+| `v` | MUST | Semver version of the capability implementation |
+| `d` | MAY | Human-readable description |
+
+### Requirement Declaration
+
+Napplet manifests ([NIP-5A](5A.md) kind 35128) MAY include `["requires", "<service-name>"]`
+tags declaring which capabilities the napplet needs. The shell checks these
+during the post-AUTH compatibility check.
+
+### Feature Detection
+
+Napplets MUST discover capabilities before using them. The `window.napplet.services`
+namespace provides:
+
+- `list()` -- returns discovered service descriptors
+- `has(name)` -- boolean check for capability presence
+
+Napplets MUST gracefully degrade when a capability is absent.
+
+### Live Subscriptions
+
+After initial discovery `EOSE`, napplets MAY remain subscribed. The shell MUST
+send additional kind 29010 events for capabilities registered after the initial
+`EOSE`. If no capabilities are registered, the shell sends `EOSE` with zero
+events.
