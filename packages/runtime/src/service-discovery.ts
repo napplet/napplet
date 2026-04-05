@@ -3,7 +3,7 @@
  *
  * The runtime (not a service) handles discovery by enumerating its own
  * service registry and generating synthetic NIP-01 events. Follows
- * SPEC.md Section 11.2 for event format and tag structure.
+ * RUNTIME-SPEC.md Section 11.2 for event format and tag structure.
  */
 
 import type { NostrEvent } from '@napplet/core';
@@ -37,7 +37,7 @@ export interface DiscoverySubscription {
  * Create a synthetic kind 29010 discovery event for a single service.
  *
  * Uses sentinel values for pubkey and sig (consistent with injectEvent()
- * pattern). Tags follow SPEC.md Section 11.2: s (name), v (version),
+ * pattern). Tags follow RUNTIME-SPEC.md Section 11.2: s (name), v (version),
  * optional d (description).
  *
  * @param handler - The service handler containing the descriptor

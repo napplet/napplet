@@ -273,7 +273,7 @@ import type {
 
 ## Protocol Reference
 
-- [Napplet Shell Protocol Specification](../../SPEC.md)
+- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
 - [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md) -- Nsite specification
 - [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) -- Client-to-relay authentication
 

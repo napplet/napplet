@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1.0
-milestone_name: milestone
-status: completed
-stopped_at: Completed 60-03-PLAN.md
-last_updated: "2026-04-05T18:22:17.617Z"
+milestone: v0.12.0
+milestone_name: Spec Packaging
+status: in-progress
+stopped_at: Completed 61-01-PLAN.md
+last_updated: "2026-04-05T20:38:44.000Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 51
-  completed_phases: 48
-  total_plans: 156
-  completed_plans: 155
-  percent: 100
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 1
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 ## Current Position
 
-Phase: —
-Plan: —
-Status: v0.11.0 milestone complete and archived
+Phase: 61-spec-packaging
+Plan: 1 of 1 (in phase)
+Status: Plan 61-01 complete
 Last activity: 2026-04-05
 
-Progress: [██████████] 100%
+Progress: [█████-----] 50%
 
 ## Accumulated Context
 
@@ -48,7 +48,7 @@ Recent decisions affecting current work:
 - [Phase 55]: Polling timer guarded with _activeTab === 'node' check to prevent input destruction
 - [Phase 55]: Tab persistence via removing _activeTab = 'node' reset from showInspector
 - [Phase 56]: Role filter uses getByRole(role).filter(editable) with session-scoped _showAll toggle and resetShowAll() cross-module contract
-- [Phase 60]: NUB-PIPES uses 7 wire verbs with auth-on-open reusing existing session -- no new auth flow
+- [Phase 61]: SPEC.md renamed to RUNTIME-SPEC.md with internal-reference header; historical PROJECT.md references left as-is
 
 ### Quick Tasks Completed
 
@@ -67,6 +67,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-05T18:22:17.614Z
-Stopped at: Completed 60-03-PLAN.md
-Resume: `/gsd:plan-phase 54`
+Last session: 2026-04-05T20:38:44Z
+Stopped at: Completed 61-01-PLAN.md
+Resume: Continue phase 61-spec-packaging

@@ -282,7 +282,7 @@ import type { AclState, AclEntry, Identity } from '@napplet/acl';
 
 ## Protocol Reference
 
-- [Napplet Shell Protocol Specification](../../SPEC.md)
+- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
 
 ## License
 

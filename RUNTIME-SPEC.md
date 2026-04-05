@@ -1,3 +1,9 @@
+> **Internal Runtime Reference** -- This document describes the @napplet SDK's
+> internal protocol implementation. It is NOT the NIP standard. For the
+> authoritative protocol specification, see [NIP-5D](specs/NIP-5D.md).
+
+---
+
 NIP-XXXX
 ========
 

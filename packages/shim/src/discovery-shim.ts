@@ -33,7 +33,7 @@ function parseServiceEvent(event: NostrEvent): ServiceInfo | null {
  *
  * Sends a one-shot kind 29010 REQ via the existing relay shim query() function.
  * The shell responds with one event per registered service, each carrying
- * s (name), v (version), and optional d (description) tags per SPEC.md Section 11.2.
+ * s (name), v (version), and optional d (description) tags per RUNTIME-SPEC.md Section 11.2.
  *
  * Results are cached session-scoped — subsequent calls return the cached
  * array without sending another REQ. Cache is cleared on page reload.

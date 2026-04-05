@@ -184,6 +184,14 @@ a malicious shell, side-channel attacks, or social engineering.
 
 Interface-specific event kinds are defined in their respective NUB proposals.
 
+## References
+
+- [NIP-01](01.md) -- Basic protocol flow
+- [NIP-07](07.md) -- `window.nostr` signer capability
+- [NIP-42](42.md) -- Authentication of clients to relays
+- [NIP-45](45.md) -- Event counts
+- [NIP-5A](5A.md) -- Napplet manifest format and aggregate hash
+
 ## Implementations
 
 - [@napplet/shim](https://github.com/sandwichfarm/napplet) -- napplet-side SDK

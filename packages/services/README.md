@@ -270,7 +270,7 @@ All service factories return `ServiceHandler` from `@napplet/runtime`. Services 
 
 ## Protocol Reference
 
-- [Napplet Shell Protocol Specification](../../SPEC.md)
+- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
 - [@napplet/runtime](../runtime/README.md) — service registration and kind 29010 discovery
 
 ## License

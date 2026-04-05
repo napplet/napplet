@@ -1,7 +1,7 @@
 // @napplet/shim — Ephemeral keypair generation (LEGACY FALLBACK).
 // Used only when the shell does not support REGISTER/IDENTITY delegation.
 // In the standard flow, the shell derives and delegates the keypair.
-// See: REGISTER -> IDENTITY -> AUTH handshake in SPEC.md Section 2.
+// See: REGISTER -> IDENTITY -> AUTH handshake in RUNTIME-SPEC.md Section 2.
 
 import { generateSecretKey, getPublicKey } from 'nostr-tools/pure';
 
