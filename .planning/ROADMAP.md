@@ -188,7 +188,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Standard capabilities (relay, IPC, storage, signer, nostrdb) removed from NIP body — referenced as NUB proposals
   3. Discovery mechanism uses NUB proposal IDs: shell.supports("NUB-RELAY", "NUB-02") pattern
   4. NIP references NUB proposal track for all interface and message protocol extensions
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 59-01-PLAN.md — Distill NIP-5D v1 to core-only v2 (~180 lines)
+- [ ] 59-02-PLAN.md — Create NUB framework documents (governance, templates)
 
 ### Phase 60: Initial NUB Interface Specs
 **Goal**: NUB governance document and initial interface specs drafted for existing capabilities
@@ -219,6 +222,6 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 |-------|----------------|--------|-----------|
 | 57. NIP Resolution & Pre-Engagement | 2/2 | Complete | 2026-04-05 |
 | 58. Core Protocol NIP (v1) | 1/1 | Complete | 2026-04-05 |
-| 59. NIP Simplification & NUB Framework | 0/0 | Not started | - |
+| 59. NIP Simplification & NUB Framework | 0/2 | In progress | - |
 | 60. Initial NUB Interface Specs | 0/0 | Not started | - |
 | 61. Spec Packaging | 0/0 | Not started | - |
