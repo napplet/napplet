@@ -4,7 +4,7 @@ milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
 status: completed
 stopped_at: Completed 58-01-PLAN.md
-last_updated: "2026-04-05T13:17:54.448Z"
+last_updated: "2026-04-05T13:22:36.975Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 5
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 ## Current Position
 
-Phase: 58
-Plan: 58-01 complete
+Phase: 59
+Plan: Not started
 Status: Phase 58 complete — ready for Phase 59
 Last activity: 2026-04-05
 
