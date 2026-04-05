@@ -35,7 +35,7 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 - [x] **SIMP-01**: NIP-5D v2 reduced to core-only (~150 lines): handshake, transport, security model, NUB reference
 - [x] **SIMP-02**: Standard capabilities (relay, IPC, storage, signer, nostrdb) moved out of NIP into NUB interface track
 - [x] **SIMP-03**: Discovery mechanism updated from service names to NUB proposal IDs (shell.supports("NUB-RELAY", "NUB-02"))
-- [ ] **SIMP-04**: NIP references NUB proposal track (github.com/napplets) for interface and message protocol extensions
+- [x] **SIMP-04**: NIP references NUB proposal track (github.com/napplets) for interface and message protocol extensions
 
 ### NUB Framework
 
@@ -90,7 +90,7 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 | SIMP-01 | Phase 59 | Complete |
 | SIMP-02 | Phase 59 | Complete |
 | SIMP-03 | Phase 59 | Complete |
-| SIMP-04 | Phase 59 | Pending |
+| SIMP-04 | Phase 59 | Complete |
 | NUB-01 | Phase 60 | Pending |
 | NUB-02 | Phase 60 | Pending |
 | NUB-03 | Phase 60 | Pending |

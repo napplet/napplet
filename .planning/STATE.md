@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
-status: executing
-stopped_at: Completed 59-01-PLAN.md
-last_updated: "2026-04-05T14:18:00.463Z"
+status: verifying
+stopped_at: Completed 59-02-PLAN.md
+last_updated: "2026-04-05T14:22:35.674Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 4
+  completed_plans: 5
   percent: 30
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 
 Phase: 59 (channel-protocol-design) -- EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-05
 
 Progress: [###.......] 30%
@@ -54,6 +54,7 @@ Progress: [###.......] 30%
 
 *Updated after each plan completion*
 | Phase 59 P01 | 6min | 2 tasks | 1 files |
+| Phase 59 P02 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 58]: Security section uses defensive framing for postMessage * origin (correct approach, not weakness)
 - [Phase 59]: NIP-5D v2 compressed AUTH section from H3 subsections to inline bold-step format; Security Considerations from numbered paragraphs to inline format; Transport headings removed
 - [Phase 59]: NUB dual-track system established: NUB-WORD for interfaces (NUB-RELAY, NUB-STORAGE, etc.), NUB-NN for numbered message protocols
+- [Phase 59]: NUB governance follows NIP-style informal process: fork, PR, community comments, maintainer merges
+- [Phase 59]: NUB-WORD names are first-come-first-served with maintainer approval; NUB-NN numbers assigned sequentially on merge
 
 ### Quick Tasks Completed
 
@@ -91,6 +94,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-05T14:18:00.460Z
-Stopped at: Completed 59-01-PLAN.md
+Last session: 2026-04-05T14:22:35.671Z
+Stopped at: Completed 59-02-PLAN.md
 Resume file: None

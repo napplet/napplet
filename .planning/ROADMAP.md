@@ -151,7 +151,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 57: NIP Resolution & Pre-Engagement** - Resolve NIP number conflict and pre-engage key stakeholders before spec writing (completed 2026-04-05)
 - [x] **Phase 58: Core Protocol NIP** - Write NIP-5D v1 with all capabilities inline (completed 2026-04-05, superseded by v2 pivot)
-- [ ] **Phase 59: NIP Simplification & NUB Framework Design** - Reduce NIP-5D to core-only (~150 lines), design NUB dual-track proposal system
+- [x] **Phase 59: NIP Simplification & NUB Framework Design** - Reduce NIP-5D to core-only (~150 lines), design NUB dual-track proposal system (completed 2026-04-05)
 - [ ] **Phase 60: Initial NUB Interface Specs** - Draft NUB-WORD specs for existing capabilities (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES)
 - [ ] **Phase 61: Spec Packaging** - Rename SPEC.md, finalize NIP-5D v2 format, list reference implementations
 
@@ -191,7 +191,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Plans**: 2 plans
 Plans:
 - [x] 59-01-PLAN.md — Distill NIP-5D v1 to core-only v2 (~180 lines)
-- [ ] 59-02-PLAN.md — Create NUB framework documents (governance, templates)
+- [x] 59-02-PLAN.md — Create NUB framework documents (governance, templates)
 
 ### Phase 60: Initial NUB Interface Specs
 **Goal**: NUB governance document and initial interface specs drafted for existing capabilities
@@ -222,6 +222,6 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 |-------|----------------|--------|-----------|
 | 57. NIP Resolution & Pre-Engagement | 2/2 | Complete | 2026-04-05 |
 | 58. Core Protocol NIP (v1) | 1/1 | Complete | 2026-04-05 |
-| 59. NIP Simplification & NUB Framework | 1/2 | In Progress|  |
+| 59. NIP Simplification & NUB Framework | 2/2 | Complete   | 2026-04-05 |
 | 60. Initial NUB Interface Specs | 0/0 | Not started | - |
 | 61. Spec Packaging | 0/0 | Not started | - |
