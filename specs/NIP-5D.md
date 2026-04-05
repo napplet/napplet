@@ -35,10 +35,10 @@ Napplet iframes MUST use this sandbox attribute:
 
     allow-scripts allow-forms allow-popups allow-modals allow-downloads
 
-The `allow-same-origin` token MUST NOT be present. Napplets have no access to
-`localStorage`, `sessionStorage`, `IndexedDB`, direct WebSocket connections, or
-`window.nostr`. All storage, signing, and relay access is proxied through the
-shell via postMessage.
+The `allow-same-origin` token MUST NOT be present. Shells MAY add additional
+sandbox tokens as needed. Napplets have no access to `localStorage`,
+`sessionStorage`, `IndexedDB`, direct WebSocket connections, or `window.nostr`.
+All storage, signing, and relay access is proxied through the shell.
 
 The shell identifies senders via `MessageEvent.source` (unforgeable Window
 reference). Messages from unregistered sources MUST be silently dropped. All
