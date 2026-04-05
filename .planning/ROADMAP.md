@@ -198,7 +198,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. `window.napplet.channels` API exists in @napplet/shim with open/close/send/onMessage operations
   2. Runtime handles channel lifecycle (open, auth check, data relay, close) and broadcast fan-out
   3. Test suite covers channel open/close lifecycle, authenticated data exchange between two napplets, broadcast delivery, and error cases (denied open, closed channel send)
-**Plans**: TBD
+**Plans**: 60-01 (core types + pipe constants), 60-02 (runtime pipe handler), 60-03 (shim pipes integration), 60-04 (pipe test suite)
 
 ### Phase 61: Spec Packaging
 **Goal**: NIP is in final submittable form and existing SPEC.md is repositioned as internal reference
@@ -220,5 +220,5 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 | 57. NIP Resolution & Pre-Engagement | 0/2 | Planned | - |
 | 58. Core Protocol NIP | 0/0 | Not started | - |
 | 59. Channel Protocol Design | 1/1 | Planned | - |
-| 60. Channel Protocol Implementation | 0/0 | Not started | - |
+| 60. Channel Protocol Implementation | 4/4 | Planned | - |
 | 61. Spec Packaging | 0/0 | Not started | - |
