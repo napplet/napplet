@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.11.0
-milestone_name: Clean up Side Panel
-status: complete
-stopped_at: Milestone archived
-last_updated: "2026-04-05T10:10:00.000Z"
+milestone: v0.12.0
+milestone_name: Draft Final "Nostr Web Applets" NIP
+status: executing
+stopped_at: Completed 57-02-PLAN.md
+last_updated: "2026-04-05T12:55:22.787Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,38 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 57 — nip-resolution-pre-engagement
 
 ## Current Position
 
-Phase: —
-Plan: —
-Status: v0.11.0 milestone complete and archived
+Phase: 57 (nip-resolution-pre-engagement) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-05
 
-Progress: [██████████] 100%
+Progress: [..........] 0%
+
+## Performance Metrics
+
+**Velocity:**
+
+- Total plans completed: 0 (v0.12.0)
+- Average duration: -
+- Total execution time: -
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+
+- Last 5 plans: (from v0.11.0 -- see milestone archive)
+- Trend: Stable
+
+*Updated after each plan completion*
+| Phase 57 P02 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -39,15 +61,12 @@ Progress: [██████████] 100%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- v0.11.0: 3 phases derived from 8 requirements -- Data Layer -> Tab Reorganization -> Contextual Filtering
-- Research recommends explicit relevantRoles field on ConstantDef rather than implicit pkg-to-role mapping
-- Kinds tab scope: BusKind.* (8) + AUTH_KIND (1) = 9 read-only protocol kind constants
-- [Phase 54]: Import TopologyNodeRole from topology.ts; getByRole includes globals by default; no separate getKindsDefs method
-- [Phase 55]: Kinds panel splits getReadOnlyDefs() by domain: protocol kinds (9) vs other read-only (1)
-- [Phase 55]: Constants panel uses getEditableDefs() in flat mode and d.editable filter in grouped mode
-- [Phase 55]: Polling timer guarded with _activeTab === 'node' check to prevent input destruction
-- [Phase 55]: Tab persistence via removing _activeTab = 'node' reset from showInspector
-- [Phase 56]: Role filter uses getByRole(role).filter(editable) with session-scoped _showAll toggle and resetShowAll() cross-module contract
+- v0.12.0: NIP-5C filename claimed by PR#2281 (Scrolls) -- must resolve number before writing
+- v0.12.0: Declarative-first capability negotiation (NIP-91 interactive pattern rejected by community)
+- v0.12.0: Channel protocol needs design + implementation before spec section can be finalized
+- v0.12.0: Runtime internals (ACL, hooks, session management) explicitly excluded from NIP
+- v0.12.0: 5 phases derived from 22 requirements -- Resolution -> Core NIP -> Channel Design -> Channel Impl -> Packaging
+- [Phase 57]: NIP-5D scope outline uses 148-word DM version with three-layer positioning (5A=hosting, 5B=discovery, 5D=runtime)
 
 ### Quick Tasks Completed
 
@@ -61,11 +80,12 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth. Target for future milestone.
-- Polling timer (1500ms updateInspectorPane) destroys active input state -- must be guarded in Phase 55
-- 280px inspector width is tight for 3 tab buttons -- verify label widths in Phase 55
+- NIP number conflict with PR#2281 must be resolved before spec writing (Phase 57)
+- PR#2287 (aggregate hash extension) is unmerged -- NIP-5C depends on it for manifest identity
+- "Channels" naming resolved: using "pipes" to avoid NIP-28 collision (decided in Phase 59 discuss)
 
 ## Session Continuity
 
-Last session: 2026-04-04T12:40:00.644Z
-Stopped at: Completed 56-01-PLAN.md
-Resume: `/gsd:plan-phase 54`
+Last session: 2026-04-05T12:55:22.784Z
+Stopped at: Completed 57-02-PLAN.md
+Resume file: None

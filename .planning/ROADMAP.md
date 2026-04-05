@@ -13,6 +13,7 @@
 - ✅ **v0.9.0 Identity & Trust** — Phases 46-48 (shipped 2026-04-03) — [Archive](milestones/v0.9.0-ROADMAP.md)
 - ✅ **v0.10.0 Demo Consistency and Usability Pass** — Phases 49-53 (shipped 2026-04-04) — [Archive](milestones/v0.10.0-ROADMAP.md)
 - ✅ **v0.11.0 Clean up Side Panel** — Phases 54-56 (shipped 2026-04-05) — [Archive](milestones/v0.11.0-ROADMAP.md)
+- **v0.12.0 Draft Final "Nostr Web Applets" NIP** — Phases 57-61 (in progress)
 
 ## Phases
 
@@ -143,3 +144,81 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 56: Contextual Filtering** - Filter constants by selected node role with show-all fallback and toggle (completed 2026-04-04)
 
 </details>
+
+### v0.12.0 Draft Final "Nostr Web Applets" NIP (In Progress)
+
+**Milestone Goal:** Write a terse NIP-format specification for Nostr Web Applets extending NIP-5A, implement a channel protocol for inter-napplet communication, and package for submission to nostr-protocol/nips.
+
+- [ ] **Phase 57: NIP Resolution & Pre-Engagement** - Resolve NIP number conflict and pre-engage key stakeholders before spec writing
+- [ ] **Phase 58: Core Protocol NIP** - Write the NIP body: AUTH handshake, relay proxy, capability model, standard capabilities, security considerations
+- [ ] **Phase 59: Channel Protocol Design** - Design channel wire format, broadcast semantics, and write the NIP channel section
+- [ ] **Phase 60: Channel Protocol Implementation** - Build channels in shim and runtime with test coverage to validate the spec
+- [ ] **Phase 61: Spec Packaging** - Rename SPEC.md, finalize NIP in nostr-protocol/nips format, list reference implementations
+
+## Phase Details
+
+### Phase 57: NIP Resolution & Pre-Engagement
+**Goal**: NIP number confirmed and key Nostr stakeholders aware of the spec direction before any writing begins
+**Depends on**: Nothing (first phase of v0.12.0)
+**Requirements**: RES-01, RES-02
+**Success Criteria** (what must be TRUE):
+  1. A NIP number is chosen (5D, 5E, or contested 5C) with rationale documented, confirmed not to collide with any open PR
+  2. At least two of hzrd149, arthurfranca, fiatjaf have received an outline or draft framing that distinguishes NIP-5C scope from NIP-5A/5B
+  3. Current status of PR#2281 (Scrolls), PR#2282 (5B), and PR#2287 (aggregate hash) is checked and documented as context for spec writing
+**Plans**: 57-01 (NIP number resolution), 57-02 (stakeholder scope outline)
+
+### Phase 58: Core Protocol NIP
+**Goal**: A complete NIP draft covering AUTH, relay proxy, capability discovery, all standard capabilities, MUST/MAY layering, and security model
+**Depends on**: Phase 57
+**Requirements**: SPEC-01, SPEC-02, SPEC-03, SPEC-04, SPEC-05, SPEC-06, CAP-01, CAP-02, CAP-03, CAP-04, CAP-05, CAP-06
+**Success Criteria** (what must be TRUE):
+  1. NIP draft file exists with sections for transport, wire format, AUTH handshake (REGISTER/IDENTITY/AUTH referencing NIP-42), relay proxy forwarding, capability discovery (kind 29010), manifest integration (NIP-5A requires tags), and security considerations
+  2. Every standard capability (relay proxy, IPC, storage, NIP-07 signer, nostrdb, service discovery) has a defined interface section with MUST or MAY designation
+  3. The spec passes the "is it observable on the wire?" test -- no internal implementation details (ACL bitfields, hook interfaces, ring buffer sizing, class names)
+  4. Document is under 500 lines of markdown and uses RFC 2119 keywords consistently
+  5. MUST/MAY split is explicit: AUTH handshake + service discovery are MUST; relay proxy, IPC, storage, signer, nostrdb, channels are MAY
+**Plans**: 58-01 (write NIP-5D spec: transport, AUTH, relay proxy, capabilities, security)
+
+### Phase 59: Channel Protocol Design
+**Goal**: Channel wire format and broadcast semantics fully specified in the NIP, ready for implementation
+**Depends on**: Phase 58
+**Requirements**: CHAN-01, CHAN-02, CHAN-05
+**Success Criteria** (what must be TRUE):
+  1. Channel wire format defines open/auth/data/close lifecycle verbs with concrete JSON array examples
+  2. Broadcast is defined as a channel operation where the shell fans out to all open channels of a given type
+  3. Channel capability section is integrated into the NIP draft as a MAY capability with its own `window.napplet.channels` API surface
+  4. Naming decision documented (channels vs pipes vs connections) with rationale for avoiding NIP-28/29 collision
+**Plans**: 59-01 (pipe wire format, broadcast semantics, NIP section)
+
+### Phase 60: Channel Protocol Implementation
+**Goal**: Channel protocol working in shim and runtime, validating the spec design with passing tests
+**Depends on**: Phase 59
+**Requirements**: CHAN-03, CHAN-04
+**Success Criteria** (what must be TRUE):
+  1. `window.napplet.channels` API exists in @napplet/shim with open/close/send/onMessage operations
+  2. Runtime handles channel lifecycle (open, auth check, data relay, close) and broadcast fan-out
+  3. Test suite covers channel open/close lifecycle, authenticated data exchange between two napplets, broadcast delivery, and error cases (denied open, closed channel send)
+**Plans**: 60-01 (core types + pipe constants), 60-02 (runtime pipe handler), 60-03 (shim pipes integration), 60-04 (pipe test suite)
+
+### Phase 61: Spec Packaging
+**Goal**: NIP is in final submittable form and existing SPEC.md is repositioned as internal reference
+**Depends on**: Phase 60
+**Requirements**: PKG-01, PKG-02, PKG-03
+**Success Criteria** (what must be TRUE):
+  1. Existing SPEC.md is renamed (e.g. SPEC-internal.md or similar) with a header noting it is the internal/runtime reference, not the NIP
+  2. NIP file uses nostr-protocol/nips markdown conventions: setext headings, draft badge, correct event kind table format, References section
+  3. Implementations section lists @napplet/shim + @napplet/shell (SDK) and hyprgate (reference shell) with links
+**Plans**: 61-01 (rename SPEC.md + update cross-refs), 61-02 (finalize NIP-5D format + implementations)
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 57. NIP Resolution & Pre-Engagement | 1/2 | In Progress|  |
+| 58. Core Protocol NIP | 0/1 | Planned | - |
+| 59. Channel Protocol Design | 1/1 | Planned | - |
+| 60. Channel Protocol Implementation | 4/4 | Planned | - |
+| 61. Spec Packaging | 0/2 | Planned | - |
