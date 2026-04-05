@@ -177,7 +177,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. The spec passes the "is it observable on the wire?" test -- no internal implementation details (ACL bitfields, hook interfaces, ring buffer sizing, class names)
   4. Document is under 500 lines of markdown and uses RFC 2119 keywords consistently
   5. MUST/MAY split is explicit: AUTH handshake + service discovery are MUST; relay proxy, IPC, storage, signer, nostrdb, channels are MAY
-**Plans**: TBD
+**Plans**: 58-01 (write NIP-5D spec: transport, AUTH, relay proxy, capabilities, security)
 
 ### Phase 59: Channel Protocol Design
 **Goal**: Channel wire format and broadcast semantics fully specified in the NIP, ready for implementation
@@ -218,7 +218,7 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 57. NIP Resolution & Pre-Engagement | 0/2 | Planned | - |
-| 58. Core Protocol NIP | 0/0 | Not started | - |
+| 58. Core Protocol NIP | 0/1 | Planned | - |
 | 59. Channel Protocol Design | 1/1 | Planned | - |
 | 60. Channel Protocol Implementation | 4/4 | Planned | - |
 | 61. Spec Packaging | 0/2 | Planned | - |
