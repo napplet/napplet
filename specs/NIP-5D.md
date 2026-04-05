@@ -71,3 +71,47 @@ All messages are JSON arrays using [NIP-01](01.md) relay wire format. The first
 element is the verb string. Messages are delivered asynchronously via the browser
 event loop. Napplets MUST NOT assume ordering between deliveries from different
 subscriptions.
+
+## Wire Format
+
+### Napplet-to-Shell Messages
+
+| Verb | Format | Description |
+|------|--------|-------------|
+| `REGISTER` | `["REGISTER", <payload>]` | Announce napplet type and claimed hash (first message) |
+| `EVENT` | `["EVENT", <event>]` | Publish or command event |
+| `REQ` | `["REQ", <sub_id>, <filter>, ...]` | Open subscription per [NIP-01](01.md) |
+| `CLOSE` | `["CLOSE", <sub_id>]` | Close subscription |
+| `AUTH` | `["AUTH", <event>]` | AUTH handshake response |
+| `COUNT` | `["COUNT", <sub_id>, <filter>, ...]` | Request event count per [NIP-45](45.md) |
+
+### Shell-to-Napplet Messages
+
+| Verb | Format | Description |
+|------|--------|-------------|
+| `IDENTITY` | `["IDENTITY", <payload>]` | Delegate deterministic keypair |
+| `EVENT` | `["EVENT", <sub_id>, <event>]` | Deliver matching event |
+| `OK` | `["OK", <event_id>, <bool>, <msg>]` | Event acceptance/rejection |
+| `EOSE` | `["EOSE", <sub_id>]` | End of stored events |
+| `CLOSED` | `["CLOSED", <sub_id>, <msg>]` | Subscription closed by shell |
+| `AUTH` | `["AUTH", <challenge>]` | AUTH challenge |
+| `NOTICE` | `["NOTICE", <msg>]` | Human-readable notice |
+| `COUNT` | `["COUNT", <sub_id>, {"count": <n>}]` | Event count result |
+
+`REQ`, `EVENT`, `CLOSE`, `EOSE`, `OK`, `CLOSED`, `COUNT`, and `NOTICE` follow
+[NIP-01](01.md) semantics exactly. `REGISTER` and `IDENTITY` are new verbs
+defined by this NIP.
+
+### Examples
+
+Napplet announces its identity:
+
+```json
+["REGISTER", {"dTag": "chat", "claimedHash": "e3b0c44298fc1c14..."}]
+```
+
+Shell delegates a deterministic keypair:
+
+```json
+["IDENTITY", {"pubkey": "deadbeef...", "privkey": "cafebabe...", "dTag": "chat", "aggregateHash": "e3b0c44298fc1c14..."}]
+```
