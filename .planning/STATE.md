@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.12.0
-milestone_name: Draft Final "Nostr Web Applets" NIP
-status: planning
-stopped_at: Phase 60 plans created (3 plans)
-last_updated: "2026-04-05T18:30:00.000Z"
+milestone_name: Initial NUB Interface Specs
+status: active
+stopped_at: "Completed 60-01-PLAN.md"
+last_updated: "2026-04-05T18:20:33Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 5
-  completed_phases: 3
-  total_plans: 10
-  completed_plans: 5
-  percent: 30
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 33
 ---
 
 # Project State
@@ -21,40 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 59 — channel-protocol-design (NIP simplification + NUB)
+**Current focus:** Phase 60 - Initial NUB Interface Specs
 
 ## Current Position
 
-Phase: 60
-Plan: 3 plans created (60-01, 60-02, 60-03)
-Status: Ready for execution
+Phase: 60-channel-protocol-implementation
+Plan: 1 of 3
+Status: Plan 60-01 complete
 Last activity: 2026-04-05
 
-Progress: [###.......] 30%
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 3 (v0.12.0)
-- Average duration: ~7min
-- Total execution time: ~21min
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 57 | 2 | ~14min | ~7min |
-| 58 | 1 | 7min | 7min |
-
-**Recent Trend:**
-
-- Last 3 plans: 57-01, 57-02, 58-01
-- Trend: Stable
-
-*Updated after each plan completion*
-| Phase 59 P01 | 6min | 2 tasks | 1 files |
-| Phase 59 P02 | 2min | 2 tasks | 3 files |
+Progress: [███-------] 33%
 
 ## Accumulated Context
 
@@ -63,18 +39,18 @@ Progress: [###.......] 30%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- v0.12.0: NIP-5C filename claimed by PR#2281 (Scrolls) -- must resolve number before writing
-- v0.12.0: Declarative-first capability negotiation (NIP-91 interactive pattern rejected by community)
-- v0.12.0: Channel protocol needs design + implementation before spec section can be finalized
-- v0.12.0: Runtime internals (ACL, hooks, session management) explicitly excluded from NIP
-- v0.12.0: 5 phases derived from 22 requirements -- Resolution -> Core NIP -> Channel Design -> Channel Impl -> Packaging
-- [Phase 58]: AUTH handshake + service discovery are MUST; relay, IPC, storage, signer, nostrdb are MAY
-- [Phase 58]: NIP-5D is 499 lines with 38 MUSTs, 18 MAYs, 9 sections, zero banned implementation terms
-- [Phase 58]: Security section uses defensive framing for postMessage * origin (correct approach, not weakness)
-- [Phase 59]: NIP-5D v2 compressed AUTH section from H3 subsections to inline bold-step format; Security Considerations from numbered paragraphs to inline format; Transport headings removed
-- [Phase 59]: NUB dual-track system established: NUB-WORD for interfaces (NUB-RELAY, NUB-STORAGE, etc.), NUB-NN for numbered message protocols
-- [Phase 59]: NUB governance follows NIP-style informal process: fork, PR, community comments, maintainer merges
-- [Phase 59]: NUB-WORD names are first-come-first-served with maintainer approval; NUB-NN numbers assigned sequentially on merge
+- v0.11.0: 3 phases derived from 8 requirements -- Data Layer -> Tab Reorganization -> Contextual Filtering
+- Research recommends explicit relevantRoles field on ConstantDef rather than implicit pkg-to-role mapping
+- Kinds tab scope: BusKind.* (8) + AUTH_KIND (1) = 9 read-only protocol kind constants
+- [Phase 54]: Import TopologyNodeRole from topology.ts; getByRole includes globals by default; no separate getKindsDefs method
+- [Phase 55]: Kinds panel splits getReadOnlyDefs() by domain: protocol kinds (9) vs other read-only (1)
+- [Phase 55]: Constants panel uses getEditableDefs() in flat mode and d.editable filter in grouped mode
+- [Phase 55]: Polling timer guarded with _activeTab === 'node' check to prevent input destruction
+- [Phase 55]: Tab persistence via removing _activeTab = 'node' reset from showInspector
+- [Phase 56]: Role filter uses getByRole(role).filter(editable) with session-scoped _showAll toggle and resetShowAll() cross-module contract
+- [Phase 60]: NUB-WORD spec format established: setext heading, draft badge, NUB ID/Namespace/Discovery header, 6 sections
+- [Phase 60]: NUB-RELAY documents scoped relay operations alongside NIP-01 verb forwarding
+- [Phase 60]: NUB-SIGNER kept minimal per D-01 -- delegates entirely to NIP-07
 
 ### Quick Tasks Completed
 
@@ -88,12 +64,11 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth. Target for future milestone.
-- NIP number conflict with PR#2281 must be resolved before spec writing (Phase 57)
-- PR#2287 (aggregate hash extension) is unmerged -- NIP-5C depends on it for manifest identity
-- "Channels" naming resolved: using "pipes" to avoid NIP-28 collision (decided in Phase 59 discuss)
+- Polling timer (1500ms updateInspectorPane) destroys active input state -- must be guarded in Phase 55
+- 280px inspector width is tight for 3 tab buttons -- verify label widths in Phase 55
 
 ## Session Continuity
 
-Last session: 2026-04-05T17:58:37.280Z
-Stopped at: Phase 60 plans created
-Resume file: .planning/phases/60-channel-protocol-implementation/60-01-PLAN.md
+Last session: 2026-04-05T18:20:33Z
+Stopped at: Completed 60-01-PLAN.md
+Resume: Continue with 60-02-PLAN.md
