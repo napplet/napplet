@@ -142,6 +142,49 @@
 
 ---
 
+## Milestone: v0.11.0 — Clean up Side Panel
+
+**Shipped:** 2026-04-05
+**Phases:** 3 (54-56) | **Plans:** 4 | **Tasks:** 8
+
+### What Was Built
+
+- **Phase 54**: `relevantRoles` field on all 26 ConstantDef entries; `getEditableDefs()`, `getReadOnlyDefs()`, `getByRole()` query methods on DemoConfig
+- **Phase 55**: Kinds panel (kinds-panel.ts) with 9+1 read-only reference cards; Constants panel constrained to editable-only; 3-tab inspector with persistence and polling guard
+- **Phase 56**: Role-based contextual filtering on Constants tab; show-all toggle with per-session state; resetShowAll() cross-module contract; role-aware empty state
+
+### What Worked
+
+- **Clean phase dependency chain** — 54 built the data layer, 55 consumed it for UI split, 56 consumed both for filtering. Zero rework between phases.
+- **Polling guard approach** — guarding the 1500ms timer with `_activeTab === 'node'` was the simplest correct fix. No complex timer management needed.
+- **Tab persistence via deletion** — removing the `_activeTab = 'node'` reset line (rather than adding save/restore logic) was elegantly minimal.
+- **UAT coverage** — Phase 55 UAT (5/5 pass) confirmed all user-facing behaviors work as designed.
+
+### What Was Inefficient
+
+- **Phase 56 UAT only 1/8 completed** — session was created with 8 tests but only 1 was finished before milestone completion was initiated. Some tests overlapped with Phase 55 UAT.
+- **No milestone audit** — proceeded directly to completion without running `/gsd:audit-milestone`. Low risk given small scope (3 phases, 8 requirements all checked).
+
+### Patterns Established
+
+- **Data-first phase ordering** — building query methods before UI phases prevents UI code from encoding filtering logic inline
+- **Cross-module contract for state reset** — `resetShowAll()` exported from constants-panel and called from node-inspector on selection change
+- **Tab-aware polling** — inspector polling only fires for data-display tabs, not interactive tabs
+
+### Key Lessons
+
+- **Small milestones ship cleanly** — 3 phases with clear dependencies executed without any rework or inserted phases
+- **UAT tests across phases may overlap** — Phase 56 UAT included Phase 55 tests (tabs). Consider scoping UAT strictly to phase-specific deliverables.
+- **Milestone audits can be skipped for small, well-scoped milestones** — 8 requirements, 3 phases, all checked off. The overhead of a formal audit exceeds the risk.
+
+### Cost Observations
+
+- Timeline: single day (2026-04-04 execution, 2026-04-05 verification + archive)
+- 21 files changed, +1,937/-52 lines
+- All 3 phases executed sequentially with no parallelism needed (linear dependency chain)
+
+---
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | Plans | Tests | LOC (TS) | Duration |
@@ -155,12 +198,13 @@
 | v0.7.0 Ontology Audit | 7 | 16 | 220+ | — | 2 days |
 | v0.8.0 Shim/SDK Split | 4 | 10 | 220+ | — | 1 day |
 | v0.9.0 Identity & Trust | 3 | 7 | 220+ | +6,226 | 2 days |
+| v0.11.0 Clean up Side Panel | 3 | 4 | 220+ | +1,937 | 1 day |
 
 ### Observations
 
-- **Consistent short milestones** — each milestone ships in 1-2 focused sessions. v0.9.0 continued this pattern.
-- **Test count stable** — no new automated tests since v0.4.0. 220+ tests remain the baseline. New protocol verbs (REGISTER/IDENTITY) lack dedicated e2e assertions.
+- **Consistent short milestones** — each milestone ships in 1-2 focused sessions. v0.11.0 was the smallest yet (3 phases, 4 plans).
+- **Test count stable** — no new automated tests since v0.4.0. 220+ tests remain the baseline.
 - **Integration checker is essential** — found real issues in every milestone it has run: argument order bugs (v0.5.0), SPEC divergences (v0.9.0), hidden demo TS errors (v0.9.0).
 - **Nyquist validation consistently incomplete** — v0.4.0, v0.5.0, and v0.9.0 all had missing or incomplete VALIDATION.md files. This is the most persistent process gap.
 - **SUMMARY frontmatter quality varies** — `requirements_completed` field is populated inconsistently. The 3-source cross-reference degrades when summaries omit it.
-- **Documentation debt is a recurring pattern** — traceability tables, VERIFICATION.md files, and SUMMARY frontmatter all accumulate gaps that the integration checker catches retroactively.
+- **Small milestones can skip formal audit** — v0.11.0 shipped cleanly without a milestone audit, suggesting the overhead isn't justified for 3-phase milestones with complete requirements.
