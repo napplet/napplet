@@ -55,7 +55,7 @@ export const REPLAY_WINDOW_SECONDS = 30 as const;
  * | `IPC_BROADCAST` | TBD | Reserved | Future: broadcast to all napplets |
  * | `IPC_CHANNEL` | TBD | Reserved | Future: named channel pubsub |
  *
- * See SPEC.md for full IPC-* namespace semantics.
+ * See RUNTIME-SPEC.md for full IPC-* namespace semantics.
  *
  * @example
  * ```ts

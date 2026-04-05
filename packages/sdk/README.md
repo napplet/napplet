@@ -163,7 +163,7 @@ If you are writing a vanilla napplet with no build step, use `window.napplet.*` 
 
 ## Protocol Reference
 
-- [Napplet Shell Protocol Specification](../../SPEC.md)
+- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
 - [@napplet/shim](../shim/) -- Window installer package
 - [@napplet/core](../core/) -- Shared protocol types
 

@@ -205,7 +205,7 @@ interface Nip5aManifestOptions {
 
 ## Protocol Reference
 
-- [Napplet Shell Protocol Specification](../../SPEC.md)
+- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
 - [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md) -- Nsite specification
 - [Aggregate Hash PR](https://github.com/nostr-protocol/nips/pull/2287) -- NIP-5A aggregate hash extension (not yet merged)
 

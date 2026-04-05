@@ -297,7 +297,7 @@ For pre-built service implementations (audio, notifications, signer, relay pool,
 
 ## Protocol Reference
 
-- [Napplet Shell Protocol Specification](../../SPEC.md)
+- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
 - [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) — AUTH handshake
 - [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) — Basic protocol flow
 
