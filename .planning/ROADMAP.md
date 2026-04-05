@@ -147,13 +147,13 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 ### v0.12.0 Draft Final "Nostr Web Applets" NIP (In Progress)
 
-**Milestone Goal:** Write a terse NIP-format specification for Nostr Web Applets extending NIP-5A, implement a channel protocol for inter-napplet communication, and package for submission to nostr-protocol/nips.
+**Milestone Goal:** Write a terse NIP-format specification for Nostr Web Applets extending NIP-5A, design the NUB proposal framework for interface and message protocol extensions, and package for submission to nostr-protocol/nips.
 
 - [x] **Phase 57: NIP Resolution & Pre-Engagement** - Resolve NIP number conflict and pre-engage key stakeholders before spec writing (completed 2026-04-05)
-- [x] **Phase 58: Core Protocol NIP** - Write the NIP body: AUTH handshake, relay proxy, capability model, standard capabilities, security considerations (completed 2026-04-05)
-- [ ] **Phase 59: Channel Protocol Design** - Design channel wire format, broadcast semantics, and write the NIP channel section
-- [ ] **Phase 60: Channel Protocol Implementation** - Build channels in shim and runtime with test coverage to validate the spec
-- [ ] **Phase 61: Spec Packaging** - Rename SPEC.md, finalize NIP in nostr-protocol/nips format, list reference implementations
+- [x] **Phase 58: Core Protocol NIP** - Write NIP-5D v1 with all capabilities inline (completed 2026-04-05, superseded by v2 pivot)
+- [ ] **Phase 59: NIP Simplification & NUB Framework Design** - Reduce NIP-5D to core-only (~150 lines), design NUB dual-track proposal system
+- [ ] **Phase 60: Initial NUB Interface Specs** - Draft NUB-WORD specs for existing capabilities (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES)
+- [ ] **Phase 61: Spec Packaging** - Rename SPEC.md, finalize NIP-5D v2 format, list reference implementations
 
 ## Phase Details
 
@@ -179,36 +179,36 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   5. MUST/MAY split is explicit: AUTH handshake + service discovery are MUST; relay proxy, IPC, storage, signer, nostrdb, channels are MAY
 **Plans**: 58-01 (write NIP-5D spec: transport, AUTH, relay proxy, capabilities, security)
 
-### Phase 59: Channel Protocol Design
-**Goal**: Channel wire format and broadcast semantics fully specified in the NIP, ready for implementation
+### Phase 59: NIP Simplification & NUB Framework Design
+**Goal**: NIP-5D reduced to core-only (~150 lines) and NUB dual-track proposal framework designed
 **Depends on**: Phase 58
-**Requirements**: CHAN-01, CHAN-02, CHAN-05
+**Requirements**: SIMP-01, SIMP-02, SIMP-03, SIMP-04
 **Success Criteria** (what must be TRUE):
-  1. Channel wire format defines open/auth/data/close lifecycle verbs with concrete JSON array examples
-  2. Broadcast is defined as a channel operation where the shell fans out to all open channels of a given type
-  3. Channel capability section is integrated into the NIP draft as a MAY capability with its own `window.napplet.channels` API surface
-  4. Naming decision documented (channels vs pipes vs connections) with rationale for avoiding NIP-28/29 collision
-**Plans**: 59-01 (pipe wire format, broadcast semantics, NIP section)
+  1. NIP-5D v2 exists at specs/NIP-5D.md with only: handshake (REGISTER/IDENTITY/AUTH), transport (postMessage, sandbox), security model, and NUB reference — under 200 lines
+  2. Standard capabilities (relay, IPC, storage, signer, nostrdb) removed from NIP body — referenced as NUB proposals
+  3. Discovery mechanism uses NUB proposal IDs: shell.supports("NUB-RELAY", "NUB-02") pattern
+  4. NIP references NUB proposal track for all interface and message protocol extensions
+**Plans**: TBD
 
-### Phase 60: Channel Protocol Implementation
-**Goal**: Channel protocol working in shim and runtime, validating the spec design with passing tests
+### Phase 60: Initial NUB Interface Specs
+**Goal**: NUB governance document and initial interface specs drafted for existing capabilities
 **Depends on**: Phase 59
-**Requirements**: CHAN-03, CHAN-04
+**Requirements**: NUB-01, NUB-02, NUB-03
 **Success Criteria** (what must be TRUE):
-  1. `window.napplet.channels` API exists in @napplet/shim with open/close/send/onMessage operations
-  2. Runtime handles channel lifecycle (open, auth check, data relay, close) and broadcast fan-out
-  3. Test suite covers channel open/close lifecycle, authenticated data exchange between two napplets, broadcast delivery, and error cases (denied open, closed channel send)
-**Plans**: 60-01 (core types + pipe constants), 60-02 (runtime pipe handler), 60-03 (shim pipes integration), 60-04 (pipe test suite)
+  1. NUB governance document defines two tracks: NUB-WORD (interfaces, one canonical per name) and NUB-NN (message protocols, competing allowed)
+  2. At least 6 initial NUB interface specs drafted: NUB-RELAY, NUB-STORAGE, NUB-SIGNER, NUB-NOSTRDB, NUB-IPC, NUB-PIPES
+  3. NUB proposal template exists for both interface and message protocol submissions
+**Plans**: TBD
 
 ### Phase 61: Spec Packaging
-**Goal**: NIP is in final submittable form and existing SPEC.md is repositioned as internal reference
+**Goal**: NIP-5D v2 is in final submittable form and existing SPEC.md is repositioned as internal reference
 **Depends on**: Phase 60
 **Requirements**: PKG-01, PKG-02, PKG-03
 **Success Criteria** (what must be TRUE):
-  1. Existing SPEC.md is renamed (e.g. SPEC-internal.md or similar) with a header noting it is the internal/runtime reference, not the NIP
-  2. NIP file uses nostr-protocol/nips markdown conventions: setext headings, draft badge, correct event kind table format, References section
+  1. Existing SPEC.md is renamed to RUNTIME-SPEC.md with a header noting it is the internal/runtime reference, not the NIP
+  2. NIP-5D v2 uses nostr-protocol/nips markdown conventions: setext headings, draft badge, correct event kind table format, References section
   3. Implementations section lists @napplet/shim + @napplet/shell (SDK) and hyprgate (reference shell) with links
-**Plans**: 61-01 (rename SPEC.md + update cross-refs), 61-02 (finalize NIP-5D format + implementations)
+**Plans**: TBD
 
 ## Progress
 
@@ -217,8 +217,8 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 57. NIP Resolution & Pre-Engagement | 1/2 | Complete    | 2026-04-05 |
-| 58. Core Protocol NIP | 1/1 | Complete    | 2026-04-05 |
-| 59. Channel Protocol Design | 1/1 | Planned | - |
-| 60. Channel Protocol Implementation | 4/4 | Planned | - |
-| 61. Spec Packaging | 0/2 | Planned | - |
+| 57. NIP Resolution & Pre-Engagement | 2/2 | Complete | 2026-04-05 |
+| 58. Core Protocol NIP (v1) | 1/1 | Complete | 2026-04-05 |
+| 59. NIP Simplification & NUB Framework | 0/0 | Not started | - |
+| 60. Initial NUB Interface Specs | 0/0 | Not started | - |
+| 61. Spec Packaging | 0/0 | Not started | - |

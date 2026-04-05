@@ -30,25 +30,32 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 - [x] **CAP-05**: Nostr event database capability (`window.nostrdb`) interface defined as MAY
 - [x] **CAP-06**: Service/feature discovery capability (`window.napplet.services`) interface defined as MUST
 
-### Channel Protocol
+### NIP Simplification (PIVOT — replaces Channel Protocol)
 
-- [ ] **CHAN-01**: Channel wire format designed with open/auth/data/close lifecycle verbs
-- [ ] **CHAN-02**: Broadcast defined as channel operation (send to all open channels), shell-mediated fan-out
-- [ ] **CHAN-03**: Channel protocol implemented in @napplet/shim (`window.napplet.channels`) and runtime
-- [ ] **CHAN-04**: Channel protocol test suite validates lifecycle, broadcast, and error cases
-- [ ] **CHAN-05**: Channel NIP section written from implementation experience
+- [ ] **SIMP-01**: NIP-5D v2 reduced to core-only (~150 lines): handshake, transport, security model, NUB reference
+- [ ] **SIMP-02**: Standard capabilities (relay, IPC, storage, signer, nostrdb) moved out of NIP into NUB interface track
+- [ ] **SIMP-03**: Discovery mechanism updated from service names to NUB proposal IDs (shell.supports("NUB-RELAY", "NUB-02"))
+- [ ] **SIMP-04**: NIP references NUB proposal track (github.com/napplets) for interface and message protocol extensions
+
+### NUB Framework
+
+- [ ] **NUB-01**: NUB governance document defines two tracks: NUB-WORD (interfaces, one canonical per name) and NUB-NN (message protocols, competing allowed)
+- [ ] **NUB-02**: Initial NUB interface specs drafted: NUB-RELAY, NUB-STORAGE, NUB-SIGNER, NUB-NOSTRDB, NUB-IPC, NUB-PIPES
+- [ ] **NUB-03**: NUB template created for submitting new proposals (interface and message protocol variants)
 
 ### Spec Packaging
 
-- [ ] **PKG-01**: Existing SPEC.md renamed to internal/runtime reference document
-- [ ] **PKG-02**: NIP written in nostr-protocol/nips markdown format (terse, <500 lines, setext headings, draft badge)
+- [ ] **PKG-01**: Existing SPEC.md renamed to RUNTIME-SPEC.md as internal/runtime reference document
+- [ ] **PKG-02**: NIP-5D v2 in nostr-protocol/nips markdown format (terse, <200 lines, setext headings, draft badge)
 - [ ] **PKG-03**: NIP lists @napplet/shim + hyprgate as reference implementations
 
 ## Future Requirements
 
 - PR submission to nostr-protocol/nips (deferred to post-review)
-- Package alignment with NIP-5C (remove signer proxy kinds, rename internal interfaces)
-- MessagePort upgrade path for high-frequency channels
+- Package alignment with NIP-5D (remove signer proxy kinds, rename internal interfaces)
+- Channel/pipe protocol implementation in packages (NUB-PIPES — separate milestone)
+- MessagePort upgrade path for high-frequency pipes
+- Initial NUB message protocol specs (NUB-01 feed, NUB-02 chat, etc.)
 
 ## Out of Scope
 
@@ -56,41 +63,44 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 |---------|--------|
 | PR submission to nostr-protocol/nips | Write spec first, review internally, submit in next milestone |
 | Package refactoring to remove 29001/29002 proxy kinds | Spec first, then align packages in a follow-up milestone |
-| MessagePort channel optimization | Defer to v2 — postMessage is <1ms, sufficient for v1 |
-| DAW or audio-specific protocol implementation | NIP only designs the channel primitive that could support it |
+| Channel/pipe implementation in packages | Moved to future milestone — NUB-PIPES spec first, then implement |
+| DAW or audio-specific protocol implementation | NUB-PIPES only designs the primitive that could support it |
 | ACL internals in the NIP | Runtime implementation detail, not protocol standard |
-| Interactive capability negotiation | NIP-91 pattern rejected by community; use declarative advertisement |
+| NUB message protocol specs (NUB-01, NUB-02, etc.) | Interface specs first, message protocols follow |
+| NUB repo creation on github.com/napplets | Design the framework first, create repo when structure is finalized |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RES-01 | Phase 57 | Pending |
+| RES-01 | Phase 57 | Complete |
 | RES-02 | Phase 57 | Complete |
 | SPEC-01 | Phase 58 | Complete |
-| SPEC-02 | Phase 58 | Complete |
-| SPEC-03 | Phase 58 | Complete |
+| SPEC-02 | Phase 58 | Complete (moving to NUB-RELAY) |
+| SPEC-03 | Phase 58 | Complete (updating in Phase 59) |
 | SPEC-04 | Phase 58 | Complete |
 | SPEC-05 | Phase 58 | Complete |
-| SPEC-06 | Phase 58 | Complete |
-| CAP-01 | Phase 58 | Complete |
-| CAP-02 | Phase 58 | Complete |
-| CAP-03 | Phase 58 | Complete |
-| CAP-04 | Phase 58 | Complete |
-| CAP-05 | Phase 58 | Complete |
-| CAP-06 | Phase 58 | Complete |
-| CHAN-01 | Phase 59 | Pending |
-| CHAN-02 | Phase 59 | Pending |
-| CHAN-03 | Phase 60 | Pending |
-| CHAN-04 | Phase 60 | Pending |
-| CHAN-05 | Phase 59 | Pending |
+| SPEC-06 | Phase 58 | Complete (updating in Phase 59) |
+| CAP-01 | Phase 58 | Complete (moving to NUB-RELAY) |
+| CAP-02 | Phase 58 | Complete (moving to NUB-IPC) |
+| CAP-03 | Phase 58 | Complete (moving to NUB-STORAGE) |
+| CAP-04 | Phase 58 | Complete (moving to NUB-SIGNER) |
+| CAP-05 | Phase 58 | Complete (moving to NUB-NOSTRDB) |
+| CAP-06 | Phase 58 | Complete (updating in Phase 59) |
+| SIMP-01 | Phase 59 | Pending |
+| SIMP-02 | Phase 59 | Pending |
+| SIMP-03 | Phase 59 | Pending |
+| SIMP-04 | Phase 59 | Pending |
+| NUB-01 | Phase 60 | Pending |
+| NUB-02 | Phase 60 | Pending |
+| NUB-03 | Phase 60 | Pending |
 | PKG-01 | Phase 61 | Pending |
 | PKG-02 | Phase 61 | Pending |
 | PKG-03 | Phase 61 | Pending |
 
 **Coverage:**
-- v0.12.0 requirements: 22 total
-- Mapped to phases: 22
+- v0.12.0 requirements: 24 total (14 complete from Phases 57-58, 10 pending)
+- Mapped to phases: 24
 - Unmapped: 0
 
 ---
