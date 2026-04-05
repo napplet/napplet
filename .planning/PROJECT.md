@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.11.0 Clean up Side Panel
+
+Inspector side panel reorganized into 3 tabs (Node/Constants/Kinds) with contextual filtering. Data layer extended with role annotations and query methods. Constants tab shows only editable values filtered by selected topology node. Kinds tab shows read-only protocol references. Tab persistence across node selection. Show-all toggle escape hatch. 3 phases, 4 plans shipped 2026-04-05. See [archive](milestones/v0.11.0-ROADMAP.md).
+
 ## Shipped: v0.10.0 Demo Consistency and Usability Pass
 
 Constants panel exposing all 23 protocol magic numbers with live editing. ACL detail panel with per-napplet capability status, rejection history, and full-screen policy matrix. Directional edge/node coloring with 5 persistence modes (flash, rolling, decay, last-message, trace). Service enable/disable toggles and individual capability toggles with cross-view sync. Hop-by-hop trace animation mode. 5 phases, 20 plans shipped 2026-04-04. See [archive](milestones/v0.10.0-ROADMAP.md).
@@ -103,17 +107,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Per-message hop-by-hop trace animation mode — v0.10.0 Phase 53 (COLOR-03)
 - ✓ Service enable/disable toggles with cross-view sync (topology, modal, inline panel) — v0.10.0 Phase 52 (TOGL-01, TOGL-03)
 - ✓ Individual ACL capability toggles per napplet with live-reload — v0.10.0 Phase 52 (TOGL-02)
+- ✓ ConstantDef extended with relevantRoles topology annotations and query methods — v0.11.0 Phase 54 (DATA-01, DATA-02)
+- ✓ Kinds tab with read-only protocol kind reference cards — v0.11.0 Phase 55 (TAB-01)
+- ✓ Constants tab constrained to editable-only values — v0.11.0 Phase 55 (TAB-02)
+- ✓ Tab persistence across node selection — v0.11.0 Phase 55 (TAB-03)
+- ✓ Contextual filtering by selected node role with show-all fallback — v0.11.0 Phase 56 (FILT-01, FILT-02)
+- ✓ Show-all toggle to bypass contextual filtering — v0.11.0 Phase 56 (FILT-03)
 
 ### Active
-
-## Current Milestone: v0.11.0 Clean up Side Panel
-
-**Goal:** Make the side panel contextual and better organized — constants filter to the selected node, Kinds get their own tab, and editable values are separated from read-only constants.
-
-**Target features:**
-- Constants tab filters to show only constants relevant to the currently selected node
-- Kinds separated into their own tab
-- Read-only values displayed as "Constants", editable values in a separate tab
 
 ### Out of Scope
 
@@ -130,10 +131,10 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.11.0 complete (Clean up Side Panel). All 3 phases shipped — data model extended with relevantRoles (54), inspector split into 3 tabs Node/Constants/Kinds with persistence (55), contextual filtering by selected node with show-all toggle (56). 8 packages in the monorepo.
+- **Current state**: v0.11.0 shipped (Clean up Side Panel). Inspector side panel reorganized into 3 tabs with contextual filtering by node role. 8 packages in the monorepo. 11 milestones shipped.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
 - **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
-- **Demo architecture gap**: The debugger and host metadata are now path-aware, but the main flow UI still flattens key layers (`shell / acl`) until Phase 28 splits shell, ACL, runtime, and services into distinct nodes.
+- **Demo architecture**: Full topology view with distinct shell, ACL, runtime, and service nodes. Inspector has 3 tabs (Node, Constants, Kinds) with contextual filtering.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
 - **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
 - **Documentation**: All 8 packages have README.md. SPEC.md (41KB+) covers full protocol including Section 11 service discovery, shim/SDK split, and full 8-package reference. 3 portable skill files in skills/ directory.
@@ -206,4 +207,4 @@ After v0.6.0, likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-04 after Phase 56 completion (v0.11.0 all phases complete)*
+*Last updated: 2026-04-05 after v0.11.0 milestone*

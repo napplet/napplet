@@ -1,5 +1,18 @@
 # Milestones
 
+## v0.11.0 Clean up Side Panel (Shipped: 2026-04-05)
+
+**Phases completed:** 3 phases, 4 plans, 8 tasks
+
+**Key accomplishments:**
+
+- ConstantDef extended with relevantRoles topology annotations and three query methods (getEditableDefs, getReadOnlyDefs, getByRole) for downstream tab reorganization and contextual filtering
+- Read-only protocol kind reference cards in new kinds-panel.ts; Constants panel constrained to editable-only values with domain-based header update
+- Three-tab inspector (Node/Constants/Kinds) with tab persistence across node selection and polling timer guard preventing slider/input destruction
+- Constants tab filters by selected topology node role with show-all toggle and role-aware empty state
+
+---
+
 ## v0.10.0 Demo Consistency and Usability Pass (Shipped: 2026-04-04)
 
 **Phases completed:** 5 phases, 20 plans, 28 tasks
