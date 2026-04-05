@@ -1,218 +1,232 @@
-# Domain Pitfalls: Side Panel Cleanup
+# Domain Pitfalls: Writing and Submitting NIP-5C
 
-**Domain:** Contextual filtering, tab reorganization, and editable/read-only separation in an existing developer tool panel
-**Researched:** 2026-04-04
-**Overall confidence:** HIGH (findings grounded in actual codebase analysis of demo source files)
+**Domain:** NIP specification authorship for Nostr Web Applets (iframe sandbox + postMessage protocol)
+**Researched:** 2026-04-05
+**Overall confidence:** HIGH (findings grounded in actual NIP repository review history, PR comment threads, and maintainer feedback patterns)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause regressions, data loss, or require rework.
+Mistakes that cause NIP rejection, extended review cycles, or community opposition.
 
-### Pitfall 1: innerHTML Re-render Destroys Active Input State
+### Pitfall 1: Overspecification -- Specifying Runtime Internals in the NIP
 
-**What goes wrong:** The constants panel uses `innerHTML` assignment to re-render the entire panel on every change (search input, grouping toggle, tab switch). When `updateInspectorPane()` fires, any active `<input>` element (number input, slider, search box) is destroyed and recreated. The browser loses focus, cursor position, and any partially-typed value.
+**What goes wrong:** The NIP defines internal implementation details (ACL engine, service registry, session management, storage proxy internals) instead of the observable wire protocol between napplet and shell. The NIP becomes a 40+ page implementation manual rather than a terse protocol specification.
 
-**Why it happens:** `node-inspector.ts` line 271 does `pane.innerHTML = ...` on every tab switch and re-render. The constants panel already has a workaround for search focus (lines 244-248 in `constants-panel.ts` restore focus after re-render), but this is fragile and does not cover number inputs mid-edit or slider drag state.
+**Why it happens:** The SPEC.md in this repo is 41KB+ and covers everything from ACL bitfields to audit event routing. The temptation is to submit something close to it. But NIPs document what may be implemented, not how.
 
-**Consequences:**
-- User drags a slider, the 1500ms polling timer fires `updateInspectorPane()`, slider snaps back and focus is lost
-- User types a multi-digit number in an input, polling re-render wipes partial input
-- Adding more tabs multiplies the re-render surface where this can happen
+**Consequences:** fiatjaf has explicitly stated (PR #220, #880, #883) that NIPs should be "terse" and readable. A NIP that is "too long and complex" where "it's hard to read and come away with a coherent sense of the whole" will stall in review. NIP-5A itself took ~5 months to merge (#1538) and only succeeded by stripping prescriptive requirements.
 
 **Prevention:**
-- Do NOT re-render the constants panel tab content when the inspector polls for node state updates. The polling timer (line 410-412 in `node-inspector.ts`) calls `updateInspectorPane()` every 1500ms but should skip if the constants tab (or any new tab like Kinds or Editable) is active and has not changed.
-- Use surgical DOM updates for the constants panel content instead of full innerHTML replacement. Update only the values that changed (e.g., sync `currentValue` into existing input elements) rather than rebuilding the entire HTML tree.
-- Guard: if `_activeTab !== 'node'`, the polling timer should not trigger a full re-render. Only the Node tab shows live-updating data.
+- NIP-5C scope: only the observable napplet<->shell postMessage wire format and `window.*` API contracts
+- ACL, service registry, session management, storage engine = implementation concerns, NOT in the NIP
+- Use fiatjaf's suggested framing from NIP-5B review: "This NIP describes a method for [thing]. These are purely client-side apps made of web assets (HTML, CSS, JS) that can be loaded dynamically from inside higher-order apps."
+- Target: under 500 lines of markdown, ideally under 300
 
-**Detection:** Open inspector, go to constants tab, start editing a slider. If it resets every 1.5 seconds, this pitfall has been hit.
+**Detection:** If the NIP references internal data structures, class names, or module organization, it is overspecified. If a different shell implementation would need to change the spec to work, it is overspecified.
 
-### Pitfall 2: Contextual Filter Hides All Constants When No Node Selected
+**Confidence:** HIGH -- directly observed in NIP-5A review history and fiatjaf's inline comments on NIP-5B (#2282).
 
-**What goes wrong:** If contextual filtering is implemented as "show only constants relevant to the selected node," then when no node is selected (common state -- user opens constants tab directly via `openConstantsTab()`), the filter produces an empty list. The panel appears broken.
+### Pitfall 2: Defining What a "Nostr App" Is
 
-**Why it happens:** The current constants tab is always accessible even without a selected node (line 266 in `node-inspector.ts` explicitly states this). The `_selectedNodeId` can be `null`. A naive contextual filter that maps `ConstantDef.pkg` to the selected node's role would return zero results for `null`.
+**What goes wrong:** The NIP attempts to draw a definitional line between "static website" and "nostr app" based on NIP-07 support, creating a prescriptive classification that the community rejects.
 
-**Consequences:**
-- Constants tab shows "no matching constants" whenever user hasn't clicked a node
-- The current behavior (show everything) silently regresses to showing nothing
-- User who discovered constants via the tab bar (not via node selection) loses access to the panel's primary function
+**Why it happens:** It feels natural to say "if an nsite supports NIP-07, it is a nostr web app." But as dskvr argued in the NIP-5B thread (#2282): "There is no way to enforce this behavior. There are many reasons why an nsite would have NIP-07 and not want to be a napp." And from the NIP-C4 discussion: "A blog can have a comments section driven by nostr, doesn't make it an app."
 
-**Prevention:**
-- Contextual filtering must have a fallback: when no node is selected, show ALL constants (current behavior). Only filter when a node IS selected.
-- Make the filter opt-in, not opt-out: show a visible "filtering by: [node name]" indicator with a clear button so users understand why some constants disappeared.
-- The "all constants" view should remain the default landing state for the tab. Contextual narrowing should feel like a convenience, not a gate.
-
-**Detection:** Open inspector via constants tab button (no node selected). If the list is empty, this pitfall has been hit.
-
-### Pitfall 3: Node-to-Constant Mapping Is Ambiguous for Cross-Cutting Constants
-
-**What goes wrong:** Some constants don't map cleanly to a single topology node. The constant `core.REPLAY_WINDOW_SECONDS` is defined in `@napplet/core` (pkg: 'core'), used by the runtime for replay detection, but affects every napplet. Which node should it appear under? If the mapping is wrong, users can't find constants they're looking for.
-
-**Why it happens:** The current `ConstantDef` has `pkg` and `domain` fields but no `relevantNodes` or `relevantRoles` field. The demo topology has 5 node roles: `napplet`, `shell`, `acl`, `runtime`, `service`. Many constants span multiple roles:
-
-| Constant | pkg | Actually relevant to |
-|----------|-----|---------------------|
-| `core.REPLAY_WINDOW_SECONDS` | core | runtime, acl, all napplets |
-| `acl.DEFAULT_QUOTA` | acl | acl node, all napplets |
-| `demo.FLASH_DURATION_MS` | demo | all edges/nodes (UI-only) |
-| `services.DEFAULT_MAX_PER_WINDOW` | services | notification service node, napplets |
-| `shim.REQUEST_TIMEOUT_MS` | shim | napplet nodes only |
-| `core.BusKind.*` (8 read-only) | core | runtime, shell, all napplets |
-
-**Consequences:**
-- If mapping is 1:1 (one constant -> one node), cross-cutting constants are arbitrarily assigned and confusing
-- If mapping is 1:N (one constant -> many nodes), the "contextual" filter barely reduces the list for shell/runtime nodes
-- If mapping is missing for some constants, they silently disappear from the filtered view
+**Consequences:** dskvr filed CHANGES_REQUESTED on NIP-5B specifically for this. fiatjaf's own suggestion was to reframe as "embeddable web apps" that are "loaded dynamically from inside higher-order apps" -- focusing on the embedding relationship rather than a definitional taxonomy. Any NIP that says "if X then Y is a napp" will be challenged.
 
 **Prevention:**
-- Add a `relevantRoles: TopologyNodeRole[]` field to `ConstantDef` (or a parallel mapping object). Each constant explicitly declares which node roles it's relevant to.
-- For constants relevant to 3+ roles, treat them as "global" and always show them (or show them in a separate "shared" group within the filtered view).
-- Demo-specific UI timing constants (`demo.*`) should be visible regardless of selection since they affect the visual chrome, not a specific protocol node.
-- Validate: after implementing the mapping, check that selecting EVERY node type shows at least some constants. An empty filtered view for any node type means the mapping is incomplete.
+- Do NOT define what makes something a "nostr app" or "napplet"
+- Instead: define the shell-napplet communication protocol. A napplet is any iframe that speaks this protocol to a shell. Period.
+- The NIP describes the wire format and capability discovery, not a classification system
+- Use the NIP-5B lesson: the embedding relationship (loaded inside a higher-order app) is the defining characteristic, not NIP-07 support or any other feature
 
-**Detection:** Select each of the 5+ node types in the topology. If any shows zero constants in the filtered view, the mapping needs fixing.
+**Detection:** If the NIP has a sentence like "A napplet is defined as..." followed by capability requirements beyond "speaks the postMessage protocol defined herein," it is drawing dangerous definitional lines.
 
-### Pitfall 4: Tab Proliferation Breaks the 280px Inspector Width
+**Confidence:** HIGH -- directly observed in NIP-5B (#2282) and NIP-C4 (#2274) review threads.
 
-**What goes wrong:** The inspector pane is 280px wide (set in CSS: `#flow-area-inner.inspector-open #inspector-pane { width: 280px; }`). Currently there are 2 tabs ("Node" and "Constants"). Adding "Kinds" and "Editable" tabs (or splitting Constants into "Constants" + "Kinds" + "Editable") puts 4-5 tab labels in a 280px-wide tab bar. The tab labels overflow, wrap, or become unreadable.
+### Pitfall 3: Competing with NIP-5B and NIP-C4 Without Differentiation
 
-**Why it happens:** The tab bar (`renderTabBar()` in `node-inspector.ts`) uses `display:flex` with no overflow handling. Each tab button has `padding:8px 14px` and uppercase text at `10px` with `0.15em` letter-spacing. With 4+ tabs, horizontal space runs out.
+**What goes wrong:** NIP-5C is submitted and reviewers immediately ask "how is this different from NIP-5B (#2282) or NIP-C4 (#2274)?" and the discussion devolves into territorial NIPs-vs-NIPs debate rather than technical review.
 
-**Consequences:**
-- Tab labels wrap to a second line, pushing content down and making the tab bar look broken
-- Tab labels truncate mid-word without an ellipsis
-- On 768px screens (mobile breakpoint), the inspector is already squeezed to 220px, making this worse
-- The tab bar takes up a disproportionate fraction of the vertical space
+**Why it happens:** There are already three related proposals in the ecosystem:
+- **NIP-C4** (#2274, arthurfranca, closed): "Nostr Apps (aka napps or nsites v3)" -- app bundle format + app store listing
+- **NIP-CF** (#2277, dskvr, closed): "Combine Forces" -- napps as metadata layer on top of NIP-5A
+- **NIP-5B** (#2282, arthurfranca, open): "Embeddable Nostr Web Apps" -- lightweight app listing for NIP-5A nsites
+- **Smart Widgets** (#2025, YakiHonne): interactive components embedded in events
+
+The NIP-5B thread already descended into multi-front discussion across three PRs simultaneously.
+
+**Consequences:** Review energy is spent on jurisdictional questions rather than protocol review. The NIP stalls while competing proposals negotiate territory.
 
 **Prevention:**
-- Measure first: 280px at 10px font with 28px padding per tab supports roughly 3 tabs comfortably (Node, Constants, Kinds). A 4th requires reducing padding or shortening labels.
-- Use shorter tab labels: "Node", "Const", "Kinds", "Edit" (or icons with tooltips).
-- Consider whether "Editable" and "Constants" should be sub-sections within a single tab rather than separate tabs. The milestone description says "read-only values displayed as Constants, editable values in a separate tab" but the implementation could be two sections within one scrollable view rather than separate tabs.
-- If 4+ tabs are required, add `overflow-x: auto; white-space: nowrap` to the tab bar and scroll indicators.
+- NIP-5C must clearly differentiate: it defines the *communication protocol* between shell and embedded app, NOT the app listing/discovery format (that is NIP-5B/NIP-89's domain)
+- Explicitly reference NIP-5B for "how apps are advertised" and NIP-5A for "how app files are stored"
+- NIP-5C fills the gap neither NIP-5A nor NIP-5B covers: what happens *after* the iframe is loaded? How does the embedded app talk to the host?
+- Frame it as complementary: NIP-5A = file storage, NIP-5B = discovery/listing, NIP-5C = runtime communication protocol
+- Proactively engage arthurfranca and hzrd149 before submitting
 
-**Detection:** Render the tab bar with all planned tabs. If any label wraps or the total width exceeds 280px, this pitfall applies.
+**Detection:** If anyone asks "why can't NIP-5B just add a section for this?" and there is no clear answer, the differentiation has failed.
+
+**Confidence:** HIGH -- the NIP-C4/NIP-CF/NIP-5B territorial conflict is documented in real PR threads from March 2026.
+
+### Pitfall 4: Using Ephemeral Kind Numbers for Persistent Semantics
+
+**What goes wrong:** The NIP uses kind numbers 29001-29010 (in the 20000-29999 ephemeral range per NIP-01) for events that carry persistent semantic weight -- signer requests/responses, service discovery, IPC messages.
+
+**Why it happens:** The kind numbers were chosen during implementation without considering NIP-01's range semantics. Kinds 20000-29999 are explicitly "ephemeral events" that are "not expected to be stored by relays." This is fine for the actual use case (postMessage events never touch relays), but reviewers familiar with NIP-01 will flag the apparent mismatch.
+
+**Consequences:** A reviewer says "why are you using ephemeral kinds for what look like protocol commands?" and the discussion gets sidetracked into kind range philosophy. Or worse: a relay implementation that sees these events on the wire (unlikely but possible) would discard them.
+
+**Prevention:**
+- These events never touch relay WebSockets -- they exist only in the postMessage channel between iframe and host. The NIP must make this crystal clear upfront.
+- Consider whether the NIP even needs to specify kind numbers at all. The postMessage wire format could use string-based verbs (it already uses NIP-01 verb format: EVENT, REQ, CLOSE, AUTH). The kind numbers are an internal implementation detail of the event payloads.
+- If kind numbers are specified, explicitly note they are transport-layer identifiers for the postMessage channel, not relay-destined events.
+- Alternative: use regular kind range (1000-9999) or addressable range (30000-39999) if events might ever need relay persistence. Or define a custom "napplet protocol kind" concept that is explicitly not a relay kind.
+
+**Detection:** If a reviewer says "ephemeral events are not stored by relays, so why do you use this range?" and the answer requires a paragraph of explanation, the NIP is not clear enough.
+
+**Confidence:** HIGH -- NIP-01 kind range semantics are well-established and will be reviewed against.
 
 ---
 
 ## Moderate Pitfalls
 
-Issues that cause confusion, friction, or require patches but not rewrites.
+### Pitfall 5: postMessage Origin Wildcard (`*`) Without Adequate Security Analysis
 
-### Pitfall 5: Editable vs Read-Only Split Orphans the Grouping Controls
+**What goes wrong:** The NIP specifies `window.parent.postMessage(message, '*')` for all communication, and security-focused reviewers flag this as a vulnerability without understanding the full threat model.
 
-**What goes wrong:** The constants panel currently has grouping toggles ("package", "domain", "flat") and a search input. If editable constants move to one tab and read-only constants move to another, should both tabs have grouping toggles? If yes, do they share state? If no, users lose the ability to group read-only protocol constants by package (currently the most useful view for read-only kinds like `BusKind.*`).
+**Why it happens:** The `'*'` target origin is required because sandboxed iframes without `allow-same-origin` have opaque ("null") origins. You cannot target a specific origin -- `'*'` is the only option. But security reviewers will see `'*'` and immediately think "wildcard origin = insecure."
 
-**Why it happens:** The `_groupingMode` and `_searchQuery` are module-level singletons in `constants-panel.ts` (lines 14-15). They were designed for a single unified view. Splitting into two views means either duplicating this state or sharing it (which creates the confusion of toggling grouping in one tab and having it affect the other).
-
-**Consequences:**
-- If grouping state is shared: user sets grouping to "domain" in the constants tab, switches to editable tab, sees "domain" grouping there too (unexpected)
-- If grouping state is per-tab: user must re-configure grouping every time they switch tabs
-- If one tab drops grouping controls entirely: loss of a useful feature
+**Consequences:** Extended review cycle while the security model is explained and debated. Real-world postMessage vulnerabilities (CVE-2024-49038 in Copilot Studio, CVSS 9.3; Azure XSS via embedded iframes) make reviewers justifiably cautious.
 
 **Prevention:**
-- Keep grouping state per-tab with independent `_groupingMode` for each. Default read-only to "package" (best for protocol constants) and editable to "domain" (best for tuning related values).
-- Search should filter across whichever tab is active. The search state can be shared since users expect global search behavior.
-- If the Kinds tab is implemented as a separate view, it has a natural grouping: by kind number range. Don't force the same grouping modes on it.
+- The NIP MUST include a Security Considerations section that addresses this head-on
+- Explain that `allow-same-origin` is deliberately excluded, creating an opaque origin
+- Document that sender authentication uses `MessageEvent.source` (the window object reference), NOT `event.origin`
+- Document that `MessageEvent.source` verification is necessary but not sufficient -- the AUTH handshake with cryptographic challenge-response provides the actual identity verification
+- Reference the iframe sandbox policy explicitly: `allow-scripts allow-forms allow-popups allow-modals allow-downloads` (no `allow-same-origin`)
+- Document the threat model: what can a malicious iframe do? What can a malicious parent do? What mitigations exist?
+- Note that `allow-scripts` + `allow-same-origin` together allow sandbox escape (the iframe can remove its own sandbox attribute) -- this is why `allow-same-origin` is excluded
 
-### Pitfall 6: Tab Switch Resets Scroll Position
+**Detection:** If the Security Considerations section does not explicitly address `'*'` origin, `MessageEvent.source` validation, and why `allow-same-origin` is excluded, it is incomplete.
 
-**What goes wrong:** Switching between tabs destroys and recreates the tab content via `innerHTML`. If the user scrolled deep into the constants list, switches to the Node tab briefly to check a value, and switches back, they lose their scroll position.
+**Confidence:** HIGH -- postMessage security is a well-documented attack surface with multiple recent CVEs.
 
-**Why it happens:** The current implementation rebuilds the entire panel HTML on every tab switch. There's no scroll position memory per tab.
+### Pitfall 6: Mandating Too Many Capabilities
 
-**Consequences:**
-- Frustrating UX when the constants list is long (23 items currently, will grow with Kinds separation)
-- Users avoid switching tabs because they don't want to lose their place
-- Particularly annoying with contextual filtering where the list is shorter but the scroll position into a specific group matters
+**What goes wrong:** The NIP requires shells to implement relay proxy, IPC, channels, storage, NIP-07 signer, AND nostrdb support. This makes shell implementation so complex that no one besides this project will implement it.
 
-**Prevention:**
-- Cache scroll position per tab before switching. On return, restore `scrollTop` on the scrollable container (`flex:1;overflow-y:auto` div).
-- Alternative: keep all tab content panels in the DOM simultaneously, toggle visibility with `display:none`. This eliminates scroll position loss, preserves input state, and avoids re-render overhead. The tradeoff is slightly more DOM elements, which is negligible for this UI.
+**Why it happens:** The project has built all of these capabilities and wants them standardized. But the NIP review criteria state: "NIPs should be optional and backwards-compatible. Care must be taken such that clients and relays that choose to not implement them do not stop working."
 
-### Pitfall 7: Kinds Tab Content Scope Is Unclear
-
-**What goes wrong:** "Kinds" as a concept in Nostr is broad: NIP event kinds (0, 1, 3, 5, ...), BusKind protocol kinds (29000-29010), destructive kinds (0, 3, 5, 10002). Which kinds go in the Kinds tab? If it's only the `BusKind.*` constants, users expect to also see destructive kinds. If it's all of them, some overlap with the read-only constants tab.
-
-**Why it happens:** The current constants panel already contains all 8 `BusKind.*` entries as read-only protocol constants in the "protocol" domain group. The `DESTRUCTIVE_KINDS` set (0, 3, 5, 10002) is defined in `@napplet/core` but NOT currently exposed in the constants panel at all. There's also `AUTH_KIND` (22242). The Kinds tab needs a clear scope.
-
-**Consequences:**
-- If Kinds tab only shows BusKind values: underwhelming, just 8 numbers
-- If Kinds tab shows all event kinds the protocol cares about: need to add DESTRUCTIVE_KINDS and AUTH_KIND to `CONSTANT_DEFS` (currently missing)
-- If items appear in both Kinds tab and Constants tab: user confusion about where to look
+**Consequences:** fiatjaf's consistent feedback is that NIPs should not "introduce unnecessary complexity." A NIP that requires implementing 6+ subsystems to be conformant will be criticized as too complex. The "two implementations" requirement becomes impossible to meet if the bar is too high.
 
 **Prevention:**
-- Define Kinds tab as: ALL Nostr event kind numbers the protocol references, with context. This means BusKind.* (8), AUTH_KIND (1), DESTRUCTIVE_KINDS (4) = 13 items. Each gets a description explaining when the protocol uses it.
-- Remove these kind-number entries from the read-only Constants tab to avoid duplication.
-- In the Kinds tab, group by purpose: "bus protocol kinds (29000-29010)", "auth kinds (22242)", "consent-required kinds (0, 3, 5, 10002)".
-- Add DESTRUCTIVE_KINDS to `CONSTANT_DEFS` before or during this work. They're missing from the panel today.
+- Structure as MUST/MAY layers:
+  - MUST: AUTH handshake, service/feature discovery (`window.napplet.services`)
+  - MAY: relay proxy, IPC, channels, storage, NIP-07 signer, nostrdb
+- Each MAY capability should be independently implementable and discoverable
+- A minimal conformant shell implements only AUTH + discovery. Everything else is optional.
+- This mirrors the project's own architecture: `window.napplet.services.has('relay')` lets napplets discover what is available
+- The NIP already plans this (per PROJECT.md) -- ensure it is front and center, not buried
 
-### Pitfall 8: Constants Panel Event Handlers Accumulate on Re-render
+**Detection:** If a reader cannot identify the minimal conformant implementation within 2 minutes of reading, the MUST/MAY layering is not clear enough.
 
-**What goes wrong:** `wireConstantsPanelEvents()` attaches `input`, `click`, and other event listeners to DOM elements using `querySelectorAll` + `addEventListener`. Every call to `updateInspectorPane()` rebuilds the HTML and calls `wireConstantsPanelEvents()` again. The old DOM elements are garbage collected (since innerHTML replaced them), so their listeners are cleaned up. But if future changes keep DOM elements alive across re-renders (e.g., via the "keep all tabs in DOM" optimization from Pitfall 6), listeners will accumulate.
+**Confidence:** HIGH -- NIP review criteria explicitly require optionality.
 
-**Why it happens:** The wiring function doesn't check for existing listeners or use event delegation. It assumes a fresh DOM every time.
+### Pitfall 7: No Working Implementations at Submission Time
 
-**Consequences:**
-- If the "keep tabs in DOM" optimization is applied without updating event wiring: each re-render adds duplicate listeners
-- Slider input fires handler N times after N re-renders
-- Config values jump erratically, flash animation fires multiple times
+**What goes wrong:** The NIP is submitted as a theoretical specification without pointing to working implementations. It languishes in review because no one can verify the protocol works.
+
+**Why it happens:** The project has a full implementation (8 packages, 193 tests, interactive demo), but the NIP PR does not reference it. Reviewers treat it as theoretical.
+
+**Consequences:** NIPs need "two blessings" and are expected to be "fully implemented in at least two clients and one relay when applicable." A NIP with zero referenced implementations gets lower priority.
 
 **Prevention:**
-- Use event delegation: attach a single `input`/`click` listener on the panel container that checks `event.target.dataset` to dispatch. This is safe regardless of how many times the content is rebuilt.
-- Alternatively, use `AbortController` to cancel all previous listeners before re-wiring.
-- The `wireTabHandlers()` function in `node-inspector.ts` has the same pattern and same risk. Any fix should cover both.
+- Reference the napplet SDK as Implementation A (link to repo, test suite, demo)
+- Reference hyprgate as the shell host that uses these packages
+- If possible, get arthurfranca's 44billion.net platform to be Implementation B (it already embeds nsites with NIP-07 proxy)
+- Include an "Implementations" section at the bottom of the NIP listing known implementations
+- The demo playground at the project root is a strong selling point -- link it
+
+**Detection:** If the NIP does not have an "Implementations" section, add one.
+
+**Confidence:** HIGH -- NIP merge criteria explicitly mention implementation requirements.
+
+### Pitfall 8: Not Engaging Stakeholders Before Submission
+
+**What goes wrong:** The NIP PR appears without prior discussion, and the key players (fiatjaf, hzrd149, arthurfranca) discover it for the first time in the PR. Their feedback triggers major rewrites.
+
+**Why it happens:** The author wants to submit a polished spec. But the NIP ecosystem is social-consensus-driven, not formal-review-driven.
+
+**Consequences:** NIP-5A took 5 months partly because design discussions happened in the PR rather than before it. NIP-C4 and NIP-CF fragmented discussion across three fronts.
+
+**Prevention:**
+- Before submitting the PR: share the draft spec with hzrd149 (NIP-5A author), arthurfranca (NIP-5B/NIP-C4 author), and fiatjaf (gatekeeper) via nostr DM or GitHub issue
+- Frame it as: "NIP-5C defines the runtime communication protocol for embedded apps. NIP-5A handles file storage, NIP-5B handles discovery. This fills the gap for what happens after the iframe loads."
+- Get at least one "this makes sense as a separate NIP" before submitting
+- Consider publishing as a GitHub issue first (per Issue #545 NIP proposal process) before the full PR
+
+**Detection:** If the PR description does not mention prior discussion or reference known stakeholders' input, pre-engagement did not happen.
+
+**Confidence:** MEDIUM -- based on observed patterns in NIP-5A/5B/C4/CF threads, but pre-engagement practices vary.
 
 ---
 
 ## Minor Pitfalls
 
-Issues that cause small friction but are easy to fix once noticed.
+### Pitfall 9: Wrong NIP Format or Style
 
-### Pitfall 9: Active Tab State Does Not Persist Across Inspector Close/Open
-
-**What goes wrong:** When the user closes the inspector (`hideInspector()`), `_selectedNodeId` is set to null but `_activeTab` retains its value. When the user clicks a different node, `showInspector()` forces `_activeTab = 'node'` (line 334). If the user was on the Constants tab (or any new tab), closing and reopening always resets to the Node tab.
-
-**Why it happens:** `showInspector()` hardcodes `_activeTab = 'node'` because it's triggered by clicking a topology node, where showing the node details is the expected behavior.
-
-**Consequences:**
-- Minor friction: user who prefers the Constants/Kinds tab must re-click the tab every time they select a new node
-- More significant with 3-4 tabs: the "wrong tab" experience happens more often
+**What goes wrong:** The NIP uses a format or style inconsistent with other NIPs, causing friction.
 
 **Prevention:**
-- When the user clicks a node, switch to Node tab (current behavior is correct for this case).
-- When the user switches tabs manually, remember their preference. If they were on Constants tab and close/reopen via the Constants button, restore to Constants tab (this already works for `openConstantsTab()`).
-- Consider: after a node click opens the Node tab, a subsequent click on the SAME node could toggle back to the previously active tab. This gives power users quick access.
+- Use the exact format of NIP-5A as a template (it is the direct parent spec)
+- Title format: `NIP-5C` with subtitle on next line
+- Status tags: `` `draft` `optional` ``
+- Use RFC 2119 keywords: MUST, SHOULD, MAY (not "must", "should", "may")
+- Keep the markdown clean -- no complex HTML, no diagrams (use ASCII art if needed)
+- Event structures shown as JSON code blocks with clear field descriptions
+- Tags shown in array format: `["tag", "value1", "value2"]`
+- Reference other NIPs as `[NIP-XX](XX.md)` (relative links)
 
-### Pitfall 10: ConstantDef.editable Field Cannot Express "Editable in Some Contexts"
+**Confidence:** HIGH -- NIP format is consistent and observable.
 
-**What goes wrong:** The `editable` boolean on `ConstantDef` is a hard property. Some constants are editable in the demo context (e.g., `demo.FLASH_DURATION_MS`) but are not truly "protocol editable" -- they're demo-specific UI tuning knobs. The editable/read-only split might want to distinguish between "protocol constants you can't change" (BusKind values) and "demo parameters you shouldn't change in production but can tweak here."
+### Pitfall 10: Conflating Channels with Existing NIP Patterns
 
-**Why it happens:** The `editable` field was designed for the single constants panel where "can you edit it here?" was the only question. With a dedicated Editable tab, the semantics shift to "is this a tuning parameter?" which is a different question.
-
-**Consequences:**
-- The Editable tab might contain ONLY demo-specific UI timing values, since protocol constants like `REPLAY_WINDOW_SECONDS` are technically editable but feel out of place next to `TOAST_DISPLAY_MS`
-- Users may not realize that the "editable" tab is the place to find timeout values that affect protocol behavior
-
-**Prevention:**
-- Consider renaming the Editable tab to "Tuning" or "Parameters" to signal intent.
-- Add a `category` field to `ConstantDef`: `'protocol-tunable'` vs `'ui-tunable'` vs `'protocol-fixed'` (currently these map to: editable+non-demo, editable+demo, non-editable).
-- In the Editable/Tuning tab, show protocol-tunable values (replay window, buffer sizes, quotas) in a separate group from UI-tunable values (flash durations, toast display time).
-
-### Pitfall 11: No Visual Indicator of Which Tab Has Relevant Changes
-
-**What goes wrong:** With 3-4 tabs, the user can't tell at a glance which tab has content worth looking at. The current modified-dot indicator (blue dot on individual constants) is only visible inside the Constants tab content. If a value is modified while the user is on the Node tab, there's no tab-level badge or indicator.
-
-**Why it happens:** The tab bar is static HTML with no reactive state binding. Modified-value tracking is inside `demoConfig` but nothing reflects it onto the tab label.
-
-**Consequences:**
-- User forgets they modified a value and doesn't know to check the Editable tab
-- After a "Reset All," the tab still looks the same (no feedback at tab level)
+**What goes wrong:** The new "channels" concept (authenticated persistent point-to-point connections between napplets) is confused with NIP-28 (Public Chat Channels) or NIP-29 (Relay-based Groups), which use the word "channel" differently.
 
 **Prevention:**
-- Add a dot/badge on the "Editable" (or "Constants") tab label when `demoConfig.getModifiedKeys().length > 0`. This is a small visual cue that's cheap to implement.
-- On the Node tab, consider showing a badge when the selected node has recent activity or ACL denials.
+- Use a distinct term if possible. "Pipes" or "links" or "connections" instead of "channels"
+- If "channels" is used, the NIP must clearly state it refers to postMessage-based point-to-point connections between iframes, NOT relay channels
+- Never use kind numbers that overlap with NIP-28/NIP-29 (40-42 for NIP-28, 9000-9022 for NIP-29, 39000-39003 for NIP-29 metadata)
+
+**Confidence:** MEDIUM -- terminology collision is a common source of confusion in NIP reviews.
+
+### Pitfall 11: Forgetting to Update the README Kind Table
+
+**What goes wrong:** The NIP PR adds a new `.md` file but does not update the `README.md` kind table or NIP index. The PR sits in review waiting for this trivial fix.
+
+**Prevention:**
+- The NIP PR must include changes to `README.md` adding:
+  - NIP-5C to the NIP index list
+  - Any new kind numbers to the Event Kinds table
+  - Any new message types to the relevant tables
+- Look at PR #2286 ("Add NIP-5A and nsite kinds to README") as an example -- NIP-5A itself needed a separate follow-up PR just for the README
+
+**Confidence:** HIGH -- PR #2286 was merged 2026-03-25 specifically to fix this for NIP-5A.
+
+### Pitfall 12: Specifying window.nostr Proxy Behavior
+
+**What goes wrong:** The NIP defines how shells should proxy `window.nostr` (NIP-07) into sandboxed iframes, potentially conflicting with or duplicating NIP-07 itself.
+
+**Prevention:**
+- NIP-5C should say: "Shells MAY provide a `window.nostr` object inside the napplet iframe that proxies signing requests to the shell's signer." Full stop.
+- Do NOT redefine the NIP-07 interface. Reference NIP-07 and say shells provide a conformant implementation.
+- The internal proxy mechanism (postMessage-based signer request/response) is an implementation detail, not protocol.
+- The old kind 29001/29002 signer request/response flow is being replaced by standard `window.nostr` per PROJECT.md -- the NIP should reflect this final design.
+
+**Confidence:** MEDIUM -- NIP-07 is well-established and reviewers will push back on anything that redefines it.
 
 ---
 
@@ -220,37 +234,48 @@ Issues that cause small friction but are easy to fix once noticed.
 
 | Phase Topic | Likely Pitfall | Mitigation |
 |-------------|---------------|------------|
-| Contextual filtering of constants by selected node | Pitfall 2 (empty list), Pitfall 3 (ambiguous mapping) | Implement fallback-to-all behavior first. Build explicit role-to-constant mapping. Test all 5 node roles. |
-| Kinds tab separation | Pitfall 7 (scope unclear), Pitfall 4 (tab overflow) | Define scope as "all event kind numbers" including DESTRUCTIVE_KINDS. Add missing kinds to CONSTANT_DEFS. Measure tab bar width. |
-| Editable vs read-only split | Pitfall 5 (orphaned grouping), Pitfall 10 (editable semantics) | Decide on sub-sections vs separate tabs BEFORE implementing. Add `category` field for finer-grained grouping. |
-| Tab bar expansion (3+ tabs) | Pitfall 4 (width overflow), Pitfall 6 (scroll position lost), Pitfall 9 (tab state reset) | Use shorter labels. Cache scroll position or keep tabs in DOM. Respect user's tab preference on node re-selection. |
-| Re-render architecture | Pitfall 1 (input state destroyed), Pitfall 8 (listener accumulation) | Guard polling timer against non-Node tabs. Use event delegation. Consider visibility toggling over innerHTML replacement. |
+| Channel protocol design | Overspecification of channel lifecycle | Define only open/close/send verbs. Internal state machine is implementation detail. |
+| NIP-5C spec writing | Runtime internals leaking into spec | Hard rule: if it is not observable on the postMessage wire, it does not belong in the NIP. |
+| NIP-5C spec writing | Defining "what is a napp" | Avoid. A napplet is anything that speaks this protocol. |
+| NIP-5C spec writing | Too many MUST requirements | Minimize MUSTs to AUTH + discovery. Everything else is MAY. |
+| NIP submission | Territorial conflict with NIP-5B | Pre-engage arthurfranca and hzrd149. Frame NIP-5C as complementary. |
+| NIP submission | No referenced implementations | List napplet SDK + hyprgate in Implementations section. |
+| NIP submission | Missing README.md updates | Include README changes in the same PR. |
+| Kind number allocation | Ephemeral range semantics | Consider whether kinds need to be specified at all, or declare them as postMessage-channel-only identifiers. |
+| Security review | postMessage `*` origin | Proactive Security Considerations section. Address wildcard origin, sandbox flags, AUTH cryptographic verification. |
+| Community reception | "app platform on nostr" skepticism | Frame as minimal communication protocol, not an app platform. Let the protocol speak for itself. |
 
 ---
 
-## Integration Risk Summary
+## NIP Rejection Pattern Summary
 
-The demo's side panel currently works because it has exactly 2 tabs and a simple re-render model. The planned changes (contextual filtering, Kinds separation, editable split) interact with each other through several shared mechanisms:
+Based on analysis of the nostr-protocol/nips repository (PRs #1538, #2274, #2277, #2282, #2025, Issue #545):
 
-1. **Module-level state** (`_groupingMode`, `_searchQuery`, `_activeTab`, `_selectedNodeId`) -- all singletons that now must serve 3-4 contexts
-2. **The polling timer** -- designed for live Node tab updates but runs regardless of active tab, causing Pitfall 1
-3. **The `ConstantDef` schema** -- must grow to support node-role mapping and category tagging, affecting all render paths
-4. **The tab bar layout** -- designed for 2 tabs in 280px, must accommodate 3-4 without overflow
+| Pattern | Frequency | Example |
+|---------|-----------|---------|
+| Overspecification / too complex | Very common | fiatjaf on multiple PRs: "too long and complex" |
+| Duplicates existing NIP | Common | NIP-CF vs NIP-C4 vs NIP-5A territory disputes |
+| Prescriptive definitions | Common | NIP-5B: "if nsite has NIP-07, it is a napp" -- rejected by dskvr |
+| No working implementation | Common | Smart Widgets (#2025) -- 8 months open with no merge |
+| Mandatory complexity | Moderate | NIPs adding requirements that break optionality |
+| Missing README updates | Minor but frequent | NIP-5A needed follow-up PR #2286 |
+| Wrong format/style | Minor | Inconsistent with established NIP markdown conventions |
 
-The safest implementation order is:
-1. Fix the polling timer guard (Pitfall 1 -- this is a latent bug even today)
-2. Add `relevantRoles` to `ConstantDef` and build the mapping (Pitfall 3)
-3. Separate Kinds into their own tab (Pitfall 7, define scope clearly)
-4. Implement contextual filtering with fallback (Pitfall 2)
-5. Split editable/read-only as last step (Pitfall 5, 10)
-
-This order ensures each step builds on the previous one and the hardest design decision (what goes in which tab) is made explicitly before code is written.
+---
 
 ## Sources
 
-- Codebase analysis: `apps/demo/src/constants-panel.ts`, `node-inspector.ts`, `node-details.ts`, `demo-config.ts`, `topology.ts`, `acl-panel.ts`, `main.ts`, `index.html`
-- [Microsoft Support: innerHTML replaces DIVs containing INPUT fields](https://support.microsoft.com/en-us/topic/webpage-loses-focus-when-innerhtml-replaces-divs-containing-input-fields-2eeee6e6-40fc-02ef-f822-a37648198317)
-- [Chrome DevTools: Tab Reordering](https://developer.chrome.com/blog/devtools-digest-reordering-tabs-2)
-- [Pencil & Paper: Filter UX Design Patterns](https://www.pencilandpaper.io/articles/ux-pattern-analysis-enterprise-filtering)
-- [LogRocket: Filtering UX/UI Design Patterns](https://blog.logrocket.com/ux-design/filtering-ux-ui-design-patterns-best-practices/)
-- [Chrome DevTools: Breakpoints Sidebar UX Redesign](https://developer.chrome.com/blog/breakpoint-ux-redesign)
+- [NIP-5A PR #1538](https://github.com/nostr-protocol/nips/pull/1538) -- 5-month review history, format reference
+- [NIP-C4 PR #2274](https://github.com/nostr-protocol/nips/pull/2274) -- "Nostr Apps" proposal and territorial discussion
+- [NIP-CF PR #2277](https://github.com/nostr-protocol/nips/pull/2277) -- "Combine Forces" interoperability proposal
+- [NIP-5B PR #2282](https://github.com/nostr-protocol/nips/pull/2282) -- "Embeddable Nostr Web Apps", fiatjaf review comments
+- [Smart Widgets PR #2025](https://github.com/nostr-protocol/nips/pull/2025) -- interactive components proposal, stalled
+- [NIP Proposal Process Issue #545](https://github.com/nostr-protocol/nips/issues/545) -- proposed submission workflow
+- [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) -- kind number range semantics
+- [NIP-89](https://nips.nostr.com/89) -- Recommended Application Handlers (existing app discovery)
+- [NIP README](https://github.com/nostr-protocol/nips/blob/master/README.md) -- kind number registry (29001-29010 confirmed unclaimed)
+- [PostMessage Vulnerabilities (Medium)](https://medium.com/@instatunnel/postmessage-vulnerabilities-when-cross-window-communication-goes-wrong-4c82a5e8da63) -- attack patterns
+- [PostMessage + Sandbox Escape (InfoSec Write-ups)](https://infosecwriteups.com/postmessage-misconfiguration-ai-prompt-injection-sandbox-escape-xss-data-exfiltration-d1d29821a2de) -- CVE-2024-49038 analysis
+- [iframe Sandbox Security (Mozilla Discourse)](https://discourse.mozilla.org/t/can-someone-explain-the-issue-behind-the-rule-sandboxed-iframes-with-attributes-allow-scripts-and-allow-same-origin-are-not-allowed-for-security-reasons/110651) -- allow-scripts + allow-same-origin escape
+- [Microsoft PostMessage Security (MSRC Blog)](https://www.microsoft.com/en-us/msrc/blog/2025/08/postmessaged-and-compromised) -- postMessage vulnerability patterns
+- [2026 iframe Security Risks (Qrvey)](https://qrvey.com/blog/iframe-security/) -- comprehensive iframe security guide

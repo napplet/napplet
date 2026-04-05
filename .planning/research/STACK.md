@@ -1,151 +1,188 @@
-# Stack Research
+# Technology Stack
 
-**Domain:** Demo side panel reorganization (contextual filtering, tab separation, editable/read-only split)
-**Researched:** 2026-04-04
-**Confidence:** HIGH
+**Project:** NIP-5C "Nostr Web Applets" Specification
+**Researched:** 2026-04-05
 
-## Verdict: No New Dependencies
+## Critical Finding: NIP-5C Number Is Claimed
 
-The v0.11.0 side panel cleanup requires **zero new libraries, zero version changes, and zero new dev dependencies.** Every feature is achievable with the existing stack by restructuring the demo's own TypeScript modules and CSS.
+**NIP-5C is already claimed by fiatjaf's "Scrolls" (WASM programs) PR#2281**, opened 2026-03-22. If the project insists on using "5C", it will conflict with an existing open PR by the most influential Nostr developer. Available alternatives in the 5x range: **5D, 5E, 5F**.
 
-This is a pure refactoring milestone. The data model (`ConstantDef` with `pkg`, `domain`, `editable` fields), the tab system (`InspectorTab` union type in `node-inspector.ts`), and the rendering pipeline (`renderConstantsPanel` -> `wireConstantsPanelEvents`) already contain all the primitives needed.
+However: whether this matters depends on whether the project wants to fight for the number or take the next one. PR#2281 is open, not merged. The milestone description says "NIP-5C" -- **the user should decide** whether to keep that number or switch. This research flags the conflict and proceeds with the assumption that the number choice is a decision for the roadmap, not a blocker for research.
+
+**Confidence: HIGH** -- verified directly against nostr-protocol/nips repo open PRs.
 
 ## Recommended Stack
 
-### Core Technologies (Unchanged)
+This milestone is primarily a specification writing exercise, not a code-heavy implementation. The "stack" here is the set of standards, formats, and tools used to write and submit the NIP.
 
-| Technology | Version | Purpose | Why No Change |
-|------------|---------|---------|---------------|
-| TypeScript | 5.9.3 | Demo source | Already used; strict mode catches tab-type union changes at compile time |
-| Vite | 6.3.0 | Dev server + build | Hot reload gives instant feedback on panel layout changes |
-| UnoCSS | 66.2.0 | Utility classes + theme | Existing shortcuts (`panel`, `btn`, `btn-primary`) cover new tab styling needs |
+### Specification Format
 
-### Supporting Libraries (Unchanged)
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Markdown | CommonMark | NIP document format | All NIPs in nostr-protocol/nips are plain markdown files |
+| RFC 2119 keywords | BCP 14 | MUST/SHOULD/MAY semantics | NIP convention for requirement levels (used in NIP-42, NIP-46, etc.) |
+| JSON | RFC 8259 | Wire format examples | NIP-01 events are JSON; all examples in JSON |
 
-| Library | Version | Purpose | Relevant to v0.11.0? |
-|---------|---------|---------|----------------------|
-| leader-line | 1.0.7 | Topology edges | No -- side panel only |
-| nostr-tools | 2.23.3 | Protocol types | No -- panel is UI-only |
-| qrcode | 1.5.4 | Signer modal | No -- side panel only |
+### NIP File Header Format (Verified)
 
-### Development Tools (Unchanged)
+Every NIP follows this exact setext-heading format:
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Playwright | 1.58.2 | E2e tests for panel behavior | Existing `demo-node-inspector.spec.ts` covers inspector; extend for new tabs |
-| Vitest | 4.1.2 | Unit tests | Existing `demo-config-model.test.ts` covers DemoConfig; extend for node-filtering |
+```markdown
+NIP-XX
+======
 
-## What Changes (Code, Not Stack)
+Title of the NIP
+-----------------
 
-### 1. Contextual Constants Filtering by Selected Node
+`draft` `optional`
 
-**Current state:** `ConstantDef` already has a `pkg` field (`'core'`, `'runtime'`, `'shim'`, `'services'`, `'acl'`, `'demo'`). The `DemoConfig` class already has `getByPackage()` and `getByDomain()` grouping methods.
-
-**What's needed:** A mapping from `TopologyNodeRole` (5 roles: `napplet`, `shell`, `acl`, `runtime`, `service`) to relevant `pkg` values. This is a pure data mapping -- no library needed.
-
-| Node Role | Relevant Packages | Rationale |
-|-----------|-------------------|-----------|
-| `shell` | `core`, `runtime`, `demo` | Shell wraps runtime; sees all protocol constants and demo timing |
-| `runtime` | `core`, `runtime` | Runtime engine constants only |
-| `acl` | `acl`, `core` | ACL quota + protocol kinds it gates |
-| `napplet` | `shim`, `core` | Shim request timeout + auth/bus kinds the napplet speaks |
-| `service` | `services`, `core` | Service-specific timeouts + discovery kind |
-
-**Implementation approach:** Add a `getByNodeRole(role: TopologyNodeRole): ConstantDef[]` method to `DemoConfig` (or a standalone function in `constants-panel.ts`). Filter `getAllDefs()` using the mapping above. When no node is selected, show all constants (current behavior).
-
-### 2. Kinds Tab Separation
-
-**Current state:** The `InspectorTab` type is `'node' | 'constants'`. Tab rendering is in `renderTabBar()`. Read-only protocol kinds (domain `'protocol'`, `editable: false`) are mixed with editable behavioral constants in the same "Constants" tab.
-
-**What's needed:** Extend `InspectorTab` to `'node' | 'constants' | 'kinds'`. The `'kinds'` tab shows only `domain === 'protocol'` entries (the 9 read-only BusKind/AUTH_KIND/SECRET_LENGTH values). The `'constants'` tab shows only `editable === true` entries.
-
-**No library needed.** The `domain` and `editable` fields on `ConstantDef` already discriminate these two sets perfectly.
-
-### 3. Editable vs Read-Only Value Split
-
-**Current state:** `renderConstantRow()` already branches on `def.editable` -- non-editable rows render as static text (no slider/input), editable rows render with number input + range slider + reset button.
-
-**What's needed:** This is solved by feature #2 above. Once Kinds get their own tab, the Constants tab only contains editable values. The visual distinction already exists in the render code. No additional library or styling framework needed.
-
-## Installation
-
-```bash
-# No changes needed. Existing install is sufficient:
-pnpm install
+[Body content...]
 ```
+
+Status badge options: `draft`, `optional`, `mandatory`, `relay`. **No YAML frontmatter. No author fields. No date fields.**
+
+### Referenced Standards
+
+| Standard | Version/ID | Purpose | How Referenced |
+|----------|-----------|---------|----------------|
+| NIP-01 | Current (merged) | Event format, filter matching, relay verbs | "as defined in NIP-01" |
+| NIP-5A | Current (merged 2026-03-25) | Manifest format, aggregate hash, requires tags | "as defined in NIP-5A" |
+| NIP-07 | Current (merged) | window.nostr interface | "per NIP-07" |
+| NIP-42 | Current (merged) | AUTH event kind 22242 | "per NIP-42 with additional tags" |
+| NIP-44 | Current (merged) | Encryption methods | "per NIP-44" |
+
+### Implementation Tools (for channel protocol phase)
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| TypeScript | 5.9 | Channel protocol implementation in @napplet packages | Existing codebase language |
+| Vitest | 4.x | Channel protocol tests | Existing test framework |
+| Playwright | Current | E2E tests for channel behavior | Existing e2e framework |
+
+### Submission Tools
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| gh CLI | Latest | Create PR to nostr-protocol/nips | Standard GitHub workflow |
+| git | Latest | Version control | Fork + PR workflow |
+
+## NIP-5A Content Summary (Source of Truth)
+
+NIP-5A was **merged 2026-03-25** (PR#1538). Defines:
+
+- **Kind 15128**: Root site manifest (replaceable, no d tag, one per pubkey)
+- **Kind 35128**: Named site manifest (addressable, d tag = site identifier)
+- **Kind 34128**: Legacy/deprecated individual file events
+- `path` tags: `["path", "/absolute/path", "sha256hash"]`
+- `server` tags: Blossom server hints
+- `title`, `description`, `source` tags: Optional metadata
+- Host server resolution: npub subdomain for root sites, pubkeyB36+dTag for named sites
+- Path resolution via path tags, file resolution via Blossom/BUD-03
+
+**PR#2287** (open, by hzrd149) extends NIP-5A with:
+- `x` tag: `["x", "<sha256-hex>", "aggregate"]` for site aggregate hash
+- **Kind 5128**: Manifest snapshot (regular event, captures version state)
+- Aggregate hash computation algorithm (sort path lines, SHA-256)
+- Copied sites with `a`/`A` lineage tags
+- Snapshot addressing: `h<aggregateB36>.nsite-host.com`
+
+## Kind Number Allocations
+
+**The entire 29000-29999 range is unregistered in the official NIP kind number table.** Nearest registered kinds: 28934-28936 (NIP-43 Relay Access) and 30000+ (addressable events).
+
+Current protocol usage:
+
+| Kind | Name | Purpose |
+|------|------|---------|
+| 29000 | REGISTRATION | Napplet registration event |
+| 29001 | SIGNER_REQUEST | NIP-07 proxy request |
+| 29002 | SIGNER_RESPONSE | NIP-07 proxy response |
+| 29003 | IPC_PEER | Inter-pane communication |
+| 29004 | HOTKEY_FORWARD | Keyboard event forwarding |
+| 29005 | METADATA | Napplet state metadata |
+| 29006 | NIPDB_REQUEST | Event database request |
+| 29007 | NIPDB_RESPONSE | Event database response |
+| 29010 | SERVICE_DISCOVERY | Service capability query/response |
+
+**These are postMessage bus kinds, never published to relays.** The NIP should make this explicit. They are not "nostr event kinds" in the relay sense -- they are message types on the iframe-to-shell postMessage channel that borrow NIP-01 wire format. This distinction matters for NIP acceptance and whether they belong in the README.md Event Kinds table (they probably should not).
+
+## Related NIPs and Open PRs
+
+| NIP | Status | Relevance |
+|-----|--------|-----------|
+| NIP-01 | Merged | Wire format we borrow (EVENT/REQ/CLOSE/AUTH/OK/EOSE/CLOSED/NOTICE/COUNT) |
+| NIP-07 | Merged | `window.nostr` signer interface -- napplets get this proxied |
+| NIP-42 | Merged | AUTH challenge-response -- our handshake adapts this pattern |
+| NIP-44 | Merged | Encrypted payloads -- relevant for signer proxy NIP-44 operations |
+| NIP-5A | Merged | Static websites / nsites -- our base layer for napplet hosting |
+| NIP-5B (PR#2282) | Open draft | "Embeddable Nostr Web Apps" -- app listing kind 37348, app store discovery. Author: arthurfranca. |
+| NIP-5C (PR#2281) | Open draft | "Scrolls" (WASM programs) -- kind 1227. Author: fiatjaf. **BLOCKS "5C" filename.** |
+| NIP-89 | Merged | Application handlers -- "Open with" feature, related but different goal |
+| PR#2287 | Open | NIP-5A aggregate hash extension -- we depend on this for version identity. Author: hzrd149. |
+| NIP-CF (PR#2277) | Closed | "Combine Forces" convergence attempt by dskvr. Closed when NIP-5A merged. |
+| NIP-C4 (PR#2274) | Closed | "Nostr Apps" by arthurfranca. Replaced by NIP-5B. |
+
+### Political Landscape
+
+The NIP-5A/5B/5C discussion has active participants with opinions:
+- **hzrd149**: NIP-5A author, aggregate hash PR author. Focused on static website hosting.
+- **arthurfranca**: NIP-5B author (app store listings). Views "nostr apps" as NIP-5A sites with NIP-07 support.
+- **fiatjaf**: NIP-5C author (WASM scrolls). Most influential nostr developer.
+- **dskvr**: NIP-CF author, napplet project author. Previously proposed convergence approach.
+
+The napplet protocol is **orthogonal** to these existing proposals:
+- NIP-5A = how files are hosted and served
+- NIP-5B = how apps are discovered and listed
+- NIP-5C (Scrolls) = how WASM programs run
+- **Our NIP = how sandboxed web apps communicate with their host shell**
+
+This orthogonality is actually advantageous for acceptance -- it doesn't compete with any existing proposal.
+
+## PR Submission Process (Verified)
+
+1. **Fork** `nostr-protocol/nips` on GitHub (default branch: `master`)
+2. **Create branch** with new NIP file + README.md update
+3. **Add NIP file**: `5C.md` (or chosen number)
+4. **Update README.md**: Add to NIP list; optionally add kind numbers to Event Kinds table
+5. **Open PR** with brief description
+6. **Iterate on feedback** -- informal process, community + maintainer review
+
+**Acceptance criteria** (from README.md):
+1. Fully implemented in at least two clients and one relay -- when applicable
+2. Should make sense
+3. Optional and backwards-compatible
+4. No more than one way of doing the same thing
+
+**For our case**: "Two clients" = napplet SDK + hyprgate reference implementation. "One relay" = not applicable (postMessage, not WebSocket). Submit as `draft` `optional`.
+
+**No PR template, CONTRIBUTING.md, or formal process** exists beyond README.md criteria.
 
 ## Alternatives Considered
 
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| Extend `InspectorTab` union type | Use a sub-tab or accordion within Constants tab | Separate tabs are cleaner UX; the union type pattern is already proven; sub-tabs would add nesting complexity for 3 clear categories |
-| Node-role-to-package mapping in demo code | Add `relevantRoles` field to `ConstantDef` | The mapping is a demo-only concern; polluting the data model with UI routing belongs in the panel renderer, not the config registry |
-| Static mapping object `Record<TopologyNodeRole, string[]>` | Dynamic tagging system | 5 roles, 6 packages -- a simple lookup object is more maintainable than infrastructure for a 30-entry dataset |
-| Keep `DemoConfig` class as-is, add filtering in panel | Add filter methods to `DemoConfig` | Filtering by node role is presentation logic; `DemoConfig` should stay focused on get/set/subscribe. Put the filter in `constants-panel.ts` |
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| Spec format | Markdown (plain) | reStructuredText, AsciiDoc | NIPs are all markdown -- no choice here |
+| Requirement keywords | RFC 2119 (informal) | Formal IETF-style with BCP 14 header | Nostr NIPs use RFC 2119 words informally (NIP-07 says "must define" lowercase), but the more complex NIPs like NIP-42 capitalize them. Follow NIP-42 style |
+| Examples | JSON in fenced code blocks | TypeScript type definitions | NIPs show wire format (JSON), not language-specific types |
+| Diagrams | ASCII/text sequence diagrams | Mermaid, SVG | NIPs use text-only format; mermaid is not rendered in raw markdown on GitHub |
+| Kind number registration | Document as postMessage-only bus kinds | Register 29xxx in NIP kind table | These never appear on relays -- registering them may misrepresent their scope |
+| NIP number | 5C (match milestone name) or 5D (next available) | Arbitrary hex | 5x family groups "web content" NIPs together |
 
-## What NOT to Add
+## No Installation Needed
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| Tab UI library (e.g., headless-ui, radix-ui) | The demo is zero-framework by design constraint; adding a UI library for 3 tabs is unjustifiable overhead | Extend the existing `renderTabBar()` pattern -- it's 20 lines of HTML string template |
-| State management library | The tab state is 2 module-level variables (`_activeTab`, `_selectedNodeId`); no store needed | Keep module-level state pattern consistent with all other demo modules |
-| CSS-in-JS or styled-components | Demo uses UnoCSS utilities + `<style>` in index.html; mixing paradigms hurts consistency | Add new tab classes to existing `<style>` block in index.html |
-| Virtual scrolling library | 26 constants total across 3 tabs; even "all" view fits without scrolling | `overflow-y: auto` on the tab content div is sufficient |
-| Search/filter library (fuse.js, etc.) | The existing `matchesSearch()` function does substring matching on 3 fields; 26 items don't need fuzzy matching | Keep the existing 5-line filter function |
-
-## Stack Patterns by Feature
-
-**Contextual filtering when node is selected:**
-- Read `_selectedNodeId` from `node-inspector.ts` module state
-- Look up node role from topology
-- Pass role to `constants-panel.ts` render function
-- Filter defs by role-to-package mapping
-- Show "showing constants for: [node label]" indicator + "show all" button
-
-**Tab separation (3 tabs instead of 2):**
-- Extend `InspectorTab` type: `'node' | 'constants' | 'kinds'`
-- `renderTabBar()` adds third button
-- `updateInspectorPane()` adds third branch for `_activeTab === 'kinds'`
-- Create `renderKindsPanel()` in constants-panel.ts (reuses `renderConstantRow` for non-editable rows)
-- Kinds panel is read-only -- no `wireConstantsPanelEvents` needed for it
-
-**Editable/read-only split:**
-- Constants tab: `getAllDefs().filter(d => d.editable)` -- shows sliders, inputs, reset
-- Kinds tab: `getAllDefs().filter(d => d.domain === 'protocol')` -- shows static values only
-- Both tabs support search filtering (reuse `matchesSearch`)
-- Both tabs support grouping modes (reuse `getGroupedDefs` with pre-filtered set)
-
-## Version Compatibility
-
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| TypeScript 5.9.3 | All existing code | Union type extension is a safe refactor; `tsc --strict` catches any missed branches |
-| UnoCSS 66.2.0 | Vite 6.3.0 | No changes to UnoCSS config needed; existing theme colors and shortcuts cover new tab states |
-| Playwright 1.58.2 | New tab selectors | Tab buttons use `data-inspector-tab` attribute; Playwright locator `[data-inspector-tab="kinds"]` works out of the box |
-
-## Files That Change (Not Stack, But Useful for Roadmap)
-
-| File | Change Type | Scope |
-|------|-------------|-------|
-| `apps/demo/src/node-inspector.ts` | Extend `InspectorTab`, add `'kinds'` branch, pass node role to constants panel | ~30 lines added |
-| `apps/demo/src/constants-panel.ts` | Add `renderKindsPanel()`, add node-role filtering, accept optional role param in `renderConstantsPanel()` | ~60 lines added |
-| `apps/demo/src/demo-config.ts` | Possibly add `getByEditable()` convenience method (optional -- filtering can live in panel) | ~10 lines |
-| `apps/demo/index.html` | Add CSS for kinds tab styling (if different from constants tab) | ~5 lines |
-| `tests/e2e/demo-node-inspector.spec.ts` | Add tests for 3-tab behavior, contextual filtering | ~40 lines |
-| `tests/unit/demo-config-model.test.ts` | Add tests for filtering by editability | ~15 lines |
+This milestone requires no new dependencies. The specification is a markdown file. The channel protocol implementation uses the existing monorepo toolchain (TypeScript, tsup, turborepo, vitest, playwright).
 
 ## Sources
 
-- Direct codebase inspection (HIGH confidence -- these are first-party source files)
-  - `apps/demo/src/constants-panel.ts` -- current panel renderer with search, grouping, edit/reset
-  - `apps/demo/src/node-inspector.ts` -- current 2-tab system (`InspectorTab = 'node' | 'constants'`)
-  - `apps/demo/src/demo-config.ts` -- `ConstantDef` model with `pkg`, `domain`, `editable` fields; 26 total constants (17 editable, 9 read-only protocol kinds)
-  - `apps/demo/src/topology.ts` -- `TopologyNodeRole` type: 5 roles (`napplet`, `shell`, `acl`, `runtime`, `service`)
-  - `apps/demo/src/node-details.ts` -- node detail adapter with role-specific builders
-  - `apps/demo/package.json` -- current dependency versions confirmed
-  - `apps/demo/uno.config.ts` -- UnoCSS theme and shortcut configuration
-  - `apps/demo/index.html` -- existing CSS classes for constants panel and inspector tabs
-
----
-*Stack research for: v0.11.0 Side Panel Cleanup*
-*Researched: 2026-04-04*
+- nostr-protocol/nips repo: https://github.com/nostr-protocol/nips (verified 2026-04-05)
+- NIP-5A merged spec: https://github.com/nostr-protocol/nips/blob/master/5A.md
+- NIP-5A aggregate hash PR: https://github.com/nostr-protocol/nips/pull/2287
+- NIP-5B (Embeddable Nostr Web Apps): https://github.com/nostr-protocol/nips/pull/2282
+- NIP-5C (Scrolls, WASM): https://github.com/nostr-protocol/nips/pull/2281
+- NIP-C4 (closed, replaced by 5B): https://github.com/nostr-protocol/nips/pull/2274
+- NIP-CF (closed, convergence attempt): https://github.com/nostr-protocol/nips/pull/2277
+- NIP-07: https://github.com/nostr-protocol/nips/blob/master/07.md
+- NIP-42: https://github.com/nostr-protocol/nips/blob/master/42.md
+- NIP kind table: README.md Event Kinds section in nostr-protocol/nips
+- RFC 2119: https://datatracker.ietf.org/doc/html/rfc2119
+- Existing SPEC.md (1520 lines) -- source material to distill
