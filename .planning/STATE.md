@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.11.0
-milestone_name: Clean up Side Panel
-status: complete
-stopped_at: Milestone archived
-last_updated: "2026-04-05T10:10:00.000Z"
+milestone: v0.12.0
+milestone_name: Initial NUB Interface Specs
+status: executing
+stopped_at: "Completed 60-02-PLAN.md"
+last_updated: "2026-04-05T18:20:00.000Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 2
+  percent: 66
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 60: Initial NUB Interface Specs
 
 ## Current Position
 
-Phase: —
-Plan: —
-Status: v0.11.0 milestone complete and archived
+Phase: 60-channel-protocol-implementation
+Plan: 02 complete, 03 next
+Status: Executing phase 60 (NUB interface specs)
 Last activity: 2026-04-05
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 66%
 
 ## Accumulated Context
 
@@ -48,6 +48,7 @@ Recent decisions affecting current work:
 - [Phase 55]: Polling timer guarded with _activeTab === 'node' check to prevent input destruction
 - [Phase 55]: Tab persistence via removing _activeTab = 'node' reset from showInspector
 - [Phase 56]: Role filter uses getByRole(role).filter(editable) with session-scoped _showAll toggle and resetShowAll() cross-module contract
+- [Phase 60]: NUB-NOSTRDB documents full 7-method API; NUB-IPC includes built-in topics table and NUB-PIPES relationship
 
 ### Quick Tasks Completed
 
@@ -66,6 +67,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-04T12:40:00.644Z
-Stopped at: Completed 56-01-PLAN.md
-Resume: `/gsd:plan-phase 54`
+Last session: 2026-04-05T18:20:00Z
+Stopped at: Completed 60-02-PLAN.md
+Resume: Continue with 60-03-PLAN.md
