@@ -4,7 +4,7 @@ milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
 status: executing
 stopped_at: Phase 60 planned — ready to execute
-last_updated: "2026-04-05T13:03:34.905Z"
+last_updated: "2026-04-05T13:04:18.703Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 5
