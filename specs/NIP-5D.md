@@ -422,3 +422,59 @@ Discovery name: always present. Namespace: `window.napplet.services`.
 
 This is the only MUST capability beyond the core AUTH handshake. See
 [Capability Discovery](#capability-discovery) for the full protocol.
+
+## Security Considerations
+
+### Threat Model
+
+Napplets are untrusted code. The shell is trusted. The browser enforces iframe
+sandbox boundaries. The protocol assumes `MessageEvent.source` provides
+unforgeable sender identification within the browser security model.
+
+### Mitigations
+
+1. **Iframe sandbox.** `allow-scripts` without `allow-same-origin`. Napplets
+   have opaque origins, no direct state access, and no direct network access
+   beyond `fetch` to their serving origin. Note: `allow-scripts` combined with
+   `allow-same-origin` would allow sandbox escape -- shells MUST NOT combine
+   these tokens.
+
+2. **postMessage `*` origin.** Required because sandboxed iframes have opaque
+   ("null") origins. Sender authentication uses `MessageEvent.source`
+   (unforgeable Window reference), NOT `event.origin`. This is not a security
+   weakness -- it is the correct approach for sandboxed iframes where origin
+   strings are meaningless.
+
+3. **AUTH handshake.** One-time Schnorr signature verification establishes
+   napplet identity via [NIP-42](42.md) challenge-response. After AUTH, the
+   Window reference is the identity token. This "verify once, trust source"
+   model avoids per-message cryptographic overhead while maintaining security
+   through browser iframe isolation.
+
+4. **Delegated key confinement.** Shell-derived keypairs are confined to the
+   postMessage channel. Events signed with delegated keys MUST NOT be published
+   to external relays. The user's signer ([NIP-07](07.md)/NIP-46) is the only
+   source of events published to external relays. The publishing flow is:
+   napplet requests publish, shell checks access control, shell asks user's
+   signer to sign, shell publishes to relays. The delegated key is not in this
+   chain.
+
+5. **Storage isolation.** State is scoped by composite key `(dTag, aggregateHash)`.
+   Napplets cannot access each other's data. Hash changes create new namespaces.
+
+6. **Aggregate hash verification.** Shells verify napplet build integrity against
+   [NIP-5A](5A.md) manifests. Hash mismatch MAY result in AUTH rejection or a
+   user-visible warning.
+
+7. **Destructive kind safety floor.** Signing requests for kinds 0, 3, 5, and
+   10002 MUST always require user consent regardless of access control settings.
+   This cannot be waived by any configuration.
+
+### Non-Guarantees
+
+The protocol does NOT protect against:
+
+- A compromised browser (same as any web application)
+- A malicious shell implementation (napplets must trust the shell)
+- Side-channel attacks through timing or resource usage
+- Social engineering the user into granting capabilities
