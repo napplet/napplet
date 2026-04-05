@@ -1,43 +1,36 @@
-# Phase 60: Channel Protocol Implementation - Context
+# Phase 60: Initial NUB Interface Specs - Context
 
 **Gathered:** 2026-04-05
 **Status:** Ready for planning
+**Note:** This phase was pivoted from "Channel Protocol Implementation" to "Initial NUB Interface Specs." Old context is superseded.
 
 <domain>
 ## Phase Boundary
 
-Implement pipes in @napplet/shim and @napplet/runtime with test coverage validating the spec design from Phase 59. This is code implementation — the wire format and API design are locked.
+Draft 6 NUB-WORD interface specs (NUB-RELAY, NUB-STORAGE, NUB-SIGNER, NUB-NOSTRDB, NUB-IPC, NUB-PIPES) using the TEMPLATE-WORD.md format. Content is extracted from NIP-5D v1 capability sections. NUB-PIPES uses Phase 59 pipe design decisions.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Shim API Shape
-- **D-01:** `window.napplet.pipes.open(targetType, opts?)` returns a Pipe object with WebSocket-like API: `{ send(data), close(), onMessage(cb), onClose(cb), id }`. Familiar pattern for developers.
-- **D-02:** `window.napplet.pipes.broadcast(data)` for fan-out to all open pipes.
+### Spec Depth
+- **D-01:** Claude adapts depth per spec. Specs referencing existing NIPs (NUB-SIGNER → NIP-07, NUB-NOSTRDB) get minimal treatment. Specs with rich protocol (NUB-RELAY, NUB-PIPES) get full template sections.
 
-### Test Strategy
-- **D-03:** Vitest unit tests first for runtime dispatch logic (mock postMessage). One Playwright smoke test for the full postMessage path. Full e2e with multiple napplets deferred — the demo needs more napplets first (separate milestone).
+### NUB-PIPES
+- **D-02:** Full wire format spec from Phase 59 design (PIPE_OPEN/PIPE_ACK/PIPE/PIPE_CLOSE/PIPE_BROADCAST, dTag targeting, shell-assigned pipe IDs). Marked with `draft` badge — unimplemented. Implementation deferred to future milestone.
 
-### Package Placement
-- **D-04:** Follow existing file-per-concern pattern:
-  - `packages/shim/src/pipes-shim.ts` — Pipe client API (window.napplet.pipes install)
-  - `packages/runtime/src/pipe-handler.ts` — Pipe dispatch, lifecycle, broadcast fan-out
-  - `packages/core/src/pipes.ts` — Pipe types, verb constants (PIPE_OPEN, PIPE_ACK, PIPE, PIPE_CLOSE, PIPE_BROADCAST)
+### Source Material
+- **D-03:** NIP-5D v1 (Phase 58 output, archived at specs/NIP-5D.md before v2 replaced it) had ~10 lines per capability. The content from those sections is the starting point for each NUB spec. Expand with API surface and shell behavior details from the existing codebase.
 
-### Wire Format (locked from Phase 59)
-- **D-05:** PIPE_OPEN → PIPE_ACK → PIPE → PIPE_CLOSE + PIPE_BROADCAST
-- **D-06:** Targeting by dTag (napplet type), optional pubkey refinement
-- **D-07:** Shell-assigned opaque pipe IDs
-- **D-08:** Payloads opaque to shell after PIPE_ACK — custom wire, not NIP-01 events
+### File Location
+- **D-04:** Specs go in specs/nubs/ directory: NUB-RELAY.md, NUB-STORAGE.md, NUB-SIGNER.md, NUB-NOSTRDB.md, NUB-IPC.md, NUB-PIPES.md.
 
 ### Claude's Discretion
-- Exact Pipe object TypeScript interface (field names, callback signatures)
-- How pipe registry is stored in runtime (Map by pipeId)
-- Error handling for target-not-found, target-disconnected
-- Whether pipes need new BusKind entries or sit outside the kind system
-- Number and scope of vitest test cases
+- Which template sections to fill vs skip per spec
+- Event kind assignments (extract from existing core/index.ts BusKind enum)
+- Security section content per interface
+- Whether to add usage examples
 
 </decisions>
 
@@ -46,22 +39,22 @@ Implement pipes in @napplet/shim and @napplet/runtime with test coverage validat
 
 **Downstream agents MUST read these before planning or implementing.**
 
-### Phase 59 Output (wire format spec)
-- `.planning/phases/59-channel-protocol-design/59-CONTEXT.md` — All wire format decisions
-- `.planning/phases/59-channel-protocol-design/59-01-PLAN.md` — NIP pipe section plan (reference for what the spec says)
+### NUB Framework
+- `specs/nubs/README.md` — Governance doc with dual-track model and interface registry
+- `specs/nubs/TEMPLATE-WORD.md` — Interface proposal template (follow this format)
+- `specs/nubs/TEMPLATE-NN.md` — Message protocol template (reference only, not used in this phase)
 
-### Existing Code (follow these patterns)
-- `packages/shim/src/relay-shim.ts` — Pattern for shim file structure (subscribe/publish/query)
-- `packages/shim/src/nipdb-shim.ts` — Pattern for request/response correlation with pending Map + timeout
-- `packages/shim/src/state-shim.ts` — Pattern for shell-proxied operations
-- `packages/shim/src/discovery-shim.ts` — Pattern for service capability exposure
-- `packages/runtime/src/runtime.ts` — Message dispatch loop (where pipe verbs get added)
-- `packages/runtime/src/state-handler.ts` — Pattern for handler files with topic-based dispatch
-- `packages/core/src/index.ts` — BusKind enum, type exports
+### Source Material for Each Spec
+- `specs/NIP-5D.md` — NIP-5D v2 (191 lines). References NUB but doesn't define interfaces. The v1 content (499 lines) was the source — check git history if needed.
+- `packages/shim/src/relay-shim.ts` — Source for NUB-RELAY API surface
+- `packages/shim/src/state-shim.ts` — Source for NUB-STORAGE API surface
+- `packages/shim/src/index.ts` — Source for NUB-SIGNER (window.nostr installation)
+- `packages/shim/src/nipdb-shim.ts` — Source for NUB-NOSTRDB API surface
+- `packages/shim/src/index.ts` — Source for NUB-IPC (emit/on)
+- `packages/core/src/index.ts` — BusKind enum for event kind numbers
 
-### Prior Phase Context
-- `.planning/phases/57-nip-resolution-pre-engagement/57-CONTEXT.md` — NIP-5D identity
-- `.planning/phases/58-core-protocol-nip/58-CONTEXT.md` — Spec style decisions
+### Pipe Design Decisions
+- `.planning/phases/59-channel-protocol-design/59-CONTEXT.md` (old, pre-pivot) — Pipe naming (pipes not channels), lifecycle verbs, broadcast semantics, targeting by dTag
 
 </canonical_refs>
 
@@ -69,42 +62,41 @@ Implement pipes in @napplet/shim and @napplet/runtime with test coverage validat
 ## Existing Code Insights
 
 ### Reusable Assets
-- `packages/shim/src/nipdb-shim.ts` — Request/response correlation pattern with pending Map, UUID correlation IDs, and timeouts. Pipes can reuse this for PIPE_OPEN → PIPE_ACK correlation.
-- `packages/runtime/src/runtime.ts` — handleMessage dispatch switch. Pipe verbs get new cases here.
-- `packages/core/src/index.ts` — BusKind enum for adding pipe-related kinds if needed.
+- Each shim file (relay-shim.ts, state-shim.ts, nipdb-shim.ts, etc.) contains the exact API surface for its corresponding NUB spec
+- BusKind enum in core/index.ts has all event kind numbers
 
 ### Established Patterns
-- Shim files: install function called from index.ts, registers message handlers, exposes API on window.napplet.*
-- Runtime dispatch: switch on verb/kind in handleMessage, delegate to handler functions
-- Correlation: UUID id tags in events, pending Map, timeout rejection
+- window.napplet.relay: subscribe(filter, onEvent), publish(event), query(filter)
+- window.napplet.ipc: emit(topic, payload), on(topic, callback)
+- window.napplet.storage: get(key), set(key, value), remove(key), keys(), clear()
+- window.nostr: getPublicKey(), signEvent(event), nip04.*, nip44.*
+- window.nostrdb: query(filter), add(event), event(id), subscribe(filter)
 
 ### Integration Points
-- `packages/shim/src/index.ts` — import and call installPipesShim() alongside other shim installs
-- `packages/runtime/src/runtime.ts` — add PIPE_* verb handling in message dispatch
-- `packages/core/src/index.ts` — export pipe types and constants
-- Service discovery (kind 29010) — advertise pipes capability if shell supports it
+- NUB specs reference the NIP-5D discovery mechanism: shell.supports("NUB-RELAY")
+- Each spec defines which BusKind(s) it uses on the postMessage channel
 
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-- The Pipe object should feel like a WebSocket — developers already know that API
-- Pipe correlation (PIPE_OPEN → PIPE_ACK) should use the same UUID + pending Map pattern as nipdb-shim.ts
-- Broadcast is fire-and-forget from the napplet side — no ACK needed
+- NUB-SIGNER should be very short — just "provides NIP-07 window.nostr inside sandboxed iframe, shell proxies transparently"
+- NUB-PIPES should be the most detailed since it's a new protocol with no implementation
+- Each spec should include a "Discovery" section noting the shell.supports() identifier
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-- Full Playwright e2e tests with multiple napplet iframes (needs more demo napplets — separate milestone)
-- MessagePort upgrade for high-frequency pipes
-- Binary/ArrayBuffer payloads
+- NUB message protocol specs (NUB-01, NUB-02, etc.) — interface specs first
+- Pipe implementation in packages — separate milestone after NUB-PIPES spec is stable
+- NUB repo creation on github.com/napplets
 
 </deferred>
 
 ---
 
-*Phase: 60-channel-protocol-implementation*
+*Phase: 60-initial-nub-interface-specs (pivoted from 60-channel-protocol-implementation)*
 *Context gathered: 2026-04-05*
