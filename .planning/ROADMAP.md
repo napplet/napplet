@@ -217,7 +217,7 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 57. NIP Resolution & Pre-Engagement | 0/2 | Planned | - |
+| 57. NIP Resolution & Pre-Engagement | 1/2 | In Progress | - |
 | 58. Core Protocol NIP | 0/1 | Planned | - |
 | 59. Channel Protocol Design | 1/1 | Planned | - |
 | 60. Channel Protocol Implementation | 4/4 | Planned | - |

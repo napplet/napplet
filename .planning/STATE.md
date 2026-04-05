@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
 status: executing
-stopped_at: All phases planned
-last_updated: "2026-04-05T14:00:00.000Z"
-last_activity: 2026-04-05 — Phase 61 planning complete
+stopped_at: Phase 60 planned — ready to execute
+last_updated: "2026-04-05T12:50:58.201Z"
+last_activity: 2026-04-05 -- Phase 57 execution started
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 10
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 10
 ---
 
 # Project State
@@ -21,30 +21,30 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.12.0 — All 5 phases planned, ready to execute starting Phase 57
+**Current focus:** Phase 57 — nip-resolution-pre-engagement
 
 ## Current Position
 
-Phase: 57 (1 of 5 in v0.12.0) — NIP Resolution & Pre-Engagement
-Plan: 0 of 2 in current phase (planned, not yet executed)
-Status: All phases planned — ready to execute
-Last activity: 2026-04-05 — Phase 59 planning complete
+Phase: 57 (nip-resolution-pre-engagement) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 57
+Last activity: 2026-04-05 -- Phase 57 execution started
 
-Progress: [..........] 0%
+Progress: [#.........] 10%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v0.12.0)
-- Average duration: -
-- Total execution time: -
+- Total plans completed: 1 (v0.12.0)
+- Average duration: 2min
+- Total execution time: 2min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 57 | 1 | 2min | 2min |
 
 **Recent Trend:**
 
@@ -60,7 +60,10 @@ Progress: [..........] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- v0.12.0: NIP-5C filename claimed by PR#2281 (Scrolls) -- must resolve number before writing
+- [Phase 57]: NIP-5D confirmed available -- no file, no PR, no title reference in nostr-protocol/nips
+- [Phase 57]: All three dependency PRs still OPEN: #2281 (Scrolls, active), #2282 (5B, moderate), #2287 (aggregate hash, draft)
+- [Phase 57]: Three-layer model documented: 5A=hosting, 5B=discovery, 5D=runtime
+- v0.12.0: NIP-5C filename claimed by PR#2281 (Scrolls) -- resolved: using NIP-5D
 - v0.12.0: Declarative-first capability negotiation (NIP-91 interactive pattern rejected by community)
 - v0.12.0: Channel protocol needs design + implementation before spec section can be finalized
 - v0.12.0: Runtime internals (ACL, hooks, session management) explicitly excluded from NIP
@@ -84,6 +87,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-05T13:00:00.000Z
-Stopped at: Phase 60 planned — ready to execute
-Resume file: .planning/phases/60-channel-protocol-implementation/60-01-PLAN.md
+Last session: 2026-04-05T12:54:26Z
+Stopped at: Completed 57-01-PLAN.md
+Resume file: .planning/phases/57-nip-resolution-pre-engagement/57-02-PLAN.md
