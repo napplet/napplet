@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.11.0
-milestone_name: Clean up Side Panel
-status: complete
-stopped_at: Milestone archived
-last_updated: "2026-04-05T10:10:00.000Z"
+milestone: v0.1.0
+milestone_name: milestone
+status: completed
+stopped_at: Completed 60-03-PLAN.md
+last_updated: "2026-04-05T18:22:17.617Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 51
+  completed_phases: 48
+  total_plans: 156
+  completed_plans: 155
   percent: 100
 ---
 
@@ -48,6 +48,7 @@ Recent decisions affecting current work:
 - [Phase 55]: Polling timer guarded with _activeTab === 'node' check to prevent input destruction
 - [Phase 55]: Tab persistence via removing _activeTab = 'node' reset from showInspector
 - [Phase 56]: Role filter uses getByRole(role).filter(editable) with session-scoped _showAll toggle and resetShowAll() cross-module contract
+- [Phase 60]: NUB-PIPES uses 7 wire verbs with auth-on-open reusing existing session -- no new auth flow
 
 ### Quick Tasks Completed
 
@@ -66,6 +67,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-04T12:40:00.644Z
-Stopped at: Completed 56-01-PLAN.md
+Last session: 2026-04-05T18:22:17.614Z
+Stopped at: Completed 60-03-PLAN.md
 Resume: `/gsd:plan-phase 54`
