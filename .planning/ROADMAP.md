@@ -190,7 +190,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   4. NIP references NUB proposal track for all interface and message protocol extensions
 **Plans**: 2 plans
 Plans:
-- [ ] 59-01-PLAN.md — Distill NIP-5D v1 to core-only v2 (~180 lines)
+- [x] 59-01-PLAN.md — Distill NIP-5D v1 to core-only v2 (~180 lines)
 - [ ] 59-02-PLAN.md — Create NUB framework documents (governance, templates)
 
 ### Phase 60: Initial NUB Interface Specs
@@ -222,6 +222,6 @@ Phases execute in numeric order: 57 -> 58 -> 59 -> 60 -> 61
 |-------|----------------|--------|-----------|
 | 57. NIP Resolution & Pre-Engagement | 2/2 | Complete | 2026-04-05 |
 | 58. Core Protocol NIP (v1) | 1/1 | Complete | 2026-04-05 |
-| 59. NIP Simplification & NUB Framework | 0/2 | In progress | - |
+| 59. NIP Simplification & NUB Framework | 1/2 | In Progress|  |
 | 60. Initial NUB Interface Specs | 0/0 | Not started | - |
 | 61. Spec Packaging | 0/0 | Not started | - |

@@ -32,9 +32,9 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 
 ### NIP Simplification (PIVOT — replaces Channel Protocol)
 
-- [ ] **SIMP-01**: NIP-5D v2 reduced to core-only (~150 lines): handshake, transport, security model, NUB reference
-- [ ] **SIMP-02**: Standard capabilities (relay, IPC, storage, signer, nostrdb) moved out of NIP into NUB interface track
-- [ ] **SIMP-03**: Discovery mechanism updated from service names to NUB proposal IDs (shell.supports("NUB-RELAY", "NUB-02"))
+- [x] **SIMP-01**: NIP-5D v2 reduced to core-only (~150 lines): handshake, transport, security model, NUB reference
+- [x] **SIMP-02**: Standard capabilities (relay, IPC, storage, signer, nostrdb) moved out of NIP into NUB interface track
+- [x] **SIMP-03**: Discovery mechanism updated from service names to NUB proposal IDs (shell.supports("NUB-RELAY", "NUB-02"))
 - [ ] **SIMP-04**: NIP references NUB proposal track (github.com/napplets) for interface and message protocol extensions
 
 ### NUB Framework
@@ -87,9 +87,9 @@ Requirements for Draft Final "Nostr Web Applets" NIP [NIP-5C] milestone. Each ma
 | CAP-04 | Phase 58 | Complete (moving to NUB-SIGNER) |
 | CAP-05 | Phase 58 | Complete (moving to NUB-NOSTRDB) |
 | CAP-06 | Phase 58 | Complete (updating in Phase 59) |
-| SIMP-01 | Phase 59 | Pending |
-| SIMP-02 | Phase 59 | Pending |
-| SIMP-03 | Phase 59 | Pending |
+| SIMP-01 | Phase 59 | Complete |
+| SIMP-02 | Phase 59 | Complete |
+| SIMP-03 | Phase 59 | Complete |
 | SIMP-04 | Phase 59 | Pending |
 | NUB-01 | Phase 60 | Pending |
 | NUB-02 | Phase 60 | Pending |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.12.0
 milestone_name: Draft Final "Nostr Web Applets" NIP
-status: completed
-stopped_at: Phase 59 context gathered (pivoted)
-last_updated: "2026-04-05T13:59:46.262Z"
+status: executing
+stopped_at: Completed 59-01-PLAN.md
+last_updated: "2026-04-05T14:18:00.463Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 3
+  total_plans: 11
+  completed_plans: 4
   percent: 30
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 58 — core-protocol-nip
+**Current focus:** Phase 59 — channel-protocol-design (NIP simplification + NUB)
 
 ## Current Position
 
-Phase: 59
-Plan: Not started
-Status: Phase 58 complete — ready for Phase 59
+Phase: 59 (channel-protocol-design) -- EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-05
 
 Progress: [###.......] 30%
@@ -53,6 +53,7 @@ Progress: [###.......] 30%
 - Trend: Stable
 
 *Updated after each plan completion*
+| Phase 59 P01 | 6min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 58]: AUTH handshake + service discovery are MUST; relay, IPC, storage, signer, nostrdb are MAY
 - [Phase 58]: NIP-5D is 499 lines with 38 MUSTs, 18 MAYs, 9 sections, zero banned implementation terms
 - [Phase 58]: Security section uses defensive framing for postMessage * origin (correct approach, not weakness)
+- [Phase 59]: NIP-5D v2 compressed AUTH section from H3 subsections to inline bold-step format; Security Considerations from numbered paragraphs to inline format; Transport headings removed
+- [Phase 59]: NUB dual-track system established: NUB-WORD for interfaces (NUB-RELAY, NUB-STORAGE, etc.), NUB-NN for numbered message protocols
 
 ### Quick Tasks Completed
 
@@ -88,6 +91,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-05T13:59:46.259Z
-Stopped at: Phase 59 context gathered (pivoted)
-Resume file: .planning/phases/59-channel-protocol-design/59-CONTEXT.md
+Last session: 2026-04-05T14:18:00.460Z
+Stopped at: Completed 59-01-PLAN.md
+Resume file: None
