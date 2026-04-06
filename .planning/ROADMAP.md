@@ -226,7 +226,10 @@ Plans:
   1. GitHub Actions runs type-check and build on every PR to @napplet
   2. Changesets workflow versions and publishes @napplet/{core,shim,sdk,vite-plugin} to npm on merge to main
   3. All four packages are live on npm and installable via `npm install @napplet/core`
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 66-01-PLAN.md — CI/publish workflows, changeset cleanup, version normalization
+- [ ] 66-02-PLAN.md — Human npm auth setup, initial changeset, first publish + verification
 
 ### Phase 67: Cross-Repo Wiring & Docs
 **Goal**: Kehto consumes @napplet/core from npm (not workspace link) and all documentation reflects the split
@@ -250,5 +253,5 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 | 63. Package Migration | 2/2 | Complete    | 2026-04-06 |
 | 64. Demo & Test Migration | 3/3 | Complete    | 2026-04-06 |
 | 65. Napplet Cleanup | 1/1 | Complete    | 2026-04-06 |
-| 66. Publish Pipeline & Release | 0/TBD | Not started | - |
+| 66. Publish Pipeline & Release | 0/2 | Not started | - |
 | 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |
