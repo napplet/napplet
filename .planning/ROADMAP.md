@@ -174,7 +174,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. ~/Develop/kehto is a git repo with pnpm workspaces, turborepo, tsconfig, and ESM-only configuration
   2. @kehto/acl, @kehto/runtime, @kehto/shell, @kehto/services package directories exist with valid package.json files
   3. PROJECT.md and .planning/ directory are seeded with enough context for future /gsd:new-project
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 62-01-PLAN.md — Initialize monorepo root config and four @kehto package shells
+- [ ] 62-02-PLAN.md — Seed CLAUDE.md and .planning/ GSD context
 
 ### Phase 63: Package Migration
 **Goal**: All four kehto packages contain the migrated source and build cleanly
@@ -235,7 +238,7 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 62. Kehto Repo Scaffold | 0/TBD | Not started | - |
+| 62. Kehto Repo Scaffold | 0/2 | Planned | - |
 | 63. Package Migration | 0/TBD | Not started | - |
 | 64. Demo & Test Migration | 0/TBD | Not started | - |
 | 65. Napplet Cleanup | 0/TBD | Not started | - |
