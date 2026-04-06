@@ -15,7 +15,7 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 - [ ] **KEHTO-04**: @napplet/core consumed as npm dependency (published from @napplet repo)
 - [ ] **KEHTO-05**: Demo playground copied and running against @kehto packages
 - [ ] **KEHTO-06**: Relevant Playwright e2e and Vitest tests copied and passing
-- [ ] **KEHTO-07**: pnpm build + pnpm type-check succeeds in kehto monorepo
+- [x] **KEHTO-07**: pnpm build + pnpm type-check succeeds in kehto monorepo
 - [x] **KEHTO-08**: PROJECT.md and .planning/ seeded for future /gsd:new-project
 
 ### Napplet Cleanup
@@ -65,7 +65,7 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 | KEHTO-04 | Phase 67 | Pending |
 | KEHTO-05 | Phase 64 | Pending |
 | KEHTO-06 | Phase 64 | Pending |
-| KEHTO-07 | Phase 63 | Pending |
+| KEHTO-07 | Phase 63 | Complete |
 | KEHTO-08 | Phase 62 | Complete |
 | CLEAN-01 | Phase 65 | Pending |
 | CLEAN-02 | Phase 65 | Pending |

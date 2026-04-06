@@ -158,7 +158,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Extract runtime/shell/acl/services/demo into @kehto org (fresh repo at ~/Develop/kehto), clean up @napplet to 4 packages (core, shim, sdk, vite-plugin), and publish @napplet to npm.
 
 - [x] **Phase 62: Kehto Repo Scaffold** - Initialize ~/Develop/kehto as pnpm monorepo with package shells and GSD seed (completed 2026-04-06)
-- [ ] **Phase 63: Package Migration** - Copy source from @napplet, rewrite imports to @kehto/*, build and type-check green
+- [x] **Phase 63: Package Migration** - Copy source from @napplet, rewrite imports to @kehto/*, build and type-check green (completed 2026-04-06)
 - [ ] **Phase 64: Demo & Test Migration** - Demo playground and test suite running in kehto against @kehto packages
 - [ ] **Phase 65: Napplet Cleanup** - Remove extracted packages and demo from @napplet, reconfigure for 4-package monorepo
 - [ ] **Phase 66: Publish Pipeline & Release** - GitHub Actions CI/CD and npm publish for @napplet packages
@@ -190,7 +190,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 63-01-PLAN.md — Link @napplet/core, migrate @kehto/acl and @kehto/runtime source
-- [ ] 63-02-PLAN.md — Migrate @kehto/shell and @kehto/services source, verify full monorepo
+- [x] 63-02-PLAN.md — Migrate @kehto/shell and @kehto/services source, verify full monorepo
 
 ### Phase 64: Demo & Test Migration
 **Goal**: The demo playground runs and tests pass in the kehto repo, proving the extracted packages work end-to-end
@@ -242,7 +242,7 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 62. Kehto Repo Scaffold | 2/2 | Complete    | 2026-04-06 |
-| 63. Package Migration | 1/2 | In Progress|  |
+| 63. Package Migration | 2/2 | Complete   | 2026-04-06 |
 | 64. Demo & Test Migration | 0/TBD | Not started | - |
 | 65. Napplet Cleanup | 0/TBD | Not started | - |
 | 66. Publish Pipeline & Release | 0/TBD | Not started | - |

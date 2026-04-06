@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
-status: executing
-stopped_at: Completed 63-01-PLAN.md (acl + runtime migration)
-last_updated: "2026-04-06T16:28:10.778Z"
+status: verifying
+stopped_at: Completed 63-02-PLAN.md (shell + services migration)
+last_updated: "2026-04-06T16:35:44.445Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 Phase: 63 (package-migration) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 Progress: [----------] 0%
@@ -42,6 +42,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 62]: Kehto CLAUDE.md omits GSD auto-generated sections — /gsd:new-project will generate them after source migration
 - [Phase 63]: Used devDependency link for @napplet/core in runtime package.json (satisfies peer dep during dev)
 - [Phase 63]: Added vitest to runtime devDependencies for test file type-checking
+- [Phase 63]: Added DOM and DOM.Iterable libs to kehto shell tsconfig.json for browser type availability
+- [Phase 63]: Added vitest to services devDependencies for test file type-checking
 
 ### Quick Tasks Completed
 
@@ -60,6 +62,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06T16:28:10.775Z
-Stopped at: Completed 63-01-PLAN.md (acl + runtime migration)
+Last session: 2026-04-06T16:35:44.442Z
+Stopped at: Completed 63-02-PLAN.md (shell + services migration)
 Resume: `/gsd:plan-phase 62`
