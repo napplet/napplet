@@ -1,3 +1,0 @@
-[     134ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5199/favicon.ico:0
-[     254ms] [LOG] [napplet playground] initialized @ http://localhost:5199/src/main.ts:429
-[  301430ms] [LOG] [napplet playground] initialized @ http://localhost:5199/src/main.ts?t=1775061096376:429
