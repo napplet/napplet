@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.13.0
-milestone_name: Runtime Decoupling & Publish
-status: completed
-stopped_at: Milestone v0.13.0 complete
-last_updated: "2026-04-06T19:00:00.000Z"
+milestone: v0.14.0
+milestone_name: Repo Cleanup & Audit
+status: active
+stopped_at: Defining requirements
+last_updated: "2026-04-06T19:30:00.000Z"
 last_activity: 2026-04-06
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 11
-  completed_plans: 11
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Between milestones (v0.13.0 shipped)
+**Current focus:** v0.14.0 Repo Cleanup & Audit
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: Between milestones (v0.13.0 shipped)
-Last activity: 2026-04-06
+Status: Defining requirements
+Last activity: 2026-04-06 — Milestone v0.14.0 started
 
-Progress: [██████████] 100%
+Progress: [----------] 0%
 
 ## Accumulated Context
 
@@ -56,5 +56,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-04-06
-Stopped at: Milestone v0.13.0 complete
-Resume: /gsd:new-milestone
+Stopped at: Defining v0.14.0 requirements
+Resume: Continue requirements definition

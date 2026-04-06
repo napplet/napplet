@@ -134,7 +134,16 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.14.0 Repo Cleanup & Audit
+
+**Goal:** Audit @napplet repo for dead code, stale docs, and leftover artifacts from v0.13.0 extraction. Clean up and identify remaining candidates for @kehto migration.
+
+**Target features:**
+- Audit source files for dead code (unused exports, stale imports, orphaned modules)
+- Audit docs for stale references (RUNTIME-SPEC.md, skill files, configs referencing extracted packages)
+- Clean up turbo.json, tsconfig, package.json dead entries
+- Identify remaining code/docs that should move to @kehto
+- Remove stale test fixtures, screenshots, configs
 
 ### Out of Scope
 
@@ -232,4 +241,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-06 after v0.13.0 milestone*
+*Last updated: 2026-04-06 after v0.14.0 milestone start*
