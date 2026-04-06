@@ -15,6 +15,7 @@
 - ✅ **v0.11.0 Clean up Side Panel** — Phases 54-56 (shipped 2026-04-05) — [Archive](milestones/v0.11.0-ROADMAP.md)
 - ✅ **v0.12.0 Spec Packaging** — Phase 61 (shipped 2026-04-06) — [Archive](milestones/v0.12.0-ROADMAP.md)
 - ✅ **v0.13.0 Runtime Decoupling & Publish** — Phases 62-67 (shipped 2026-04-06) — [Archive](milestones/v0.13.0-ROADMAP.md)
+- **v0.14.0 Repo Cleanup & Audit** — Phases 68-69 (in progress)
 
 ## Phases
 
@@ -164,3 +165,44 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 67: Cross-Repo Wiring & Docs** - Switch kehto to npm @napplet/core dependency, update all READMEs (completed 2026-04-06)
 
 </details>
+
+### v0.14.0 Repo Cleanup & Audit (In Progress)
+
+**Milestone Goal:** Audit @napplet repo for dead code, stale docs, and leftover artifacts from v0.13.0 extraction. Clean up and identify remaining candidates for @kehto migration.
+
+- [ ] **Phase 68: Audit & Clean** - Remove dead code, stale docs, and leftover config from all 4 packages and repo root
+- [ ] **Phase 69: Migration Evaluation** - Assess remaining code and docs for @kehto migration or external repo placement
+
+## Phase Details
+
+### Phase 68: Audit & Clean
+**Goal**: The @napplet repo contains no dead code, stale references to extracted packages, or leftover build/test artifacts from v0.13.0
+**Depends on**: Nothing (first phase of milestone)
+**Requirements**: SRC-01, SRC-02, SRC-03, SRC-04, DOC-01, DOC-02, DOC-03, DOC-04, CFG-01, CFG-02, CFG-03
+**Success Criteria** (what must be TRUE):
+  1. Every export in packages/core, packages/shim, packages/sdk, and packages/vite-plugin is consumed by at least one other file or is a public API entry point
+  2. RUNTIME-SPEC.md, skills/ files, and specs/nubs/ contain no references to @napplet/shell, @napplet/runtime, @napplet/acl, or @napplet/services (the extracted packages)
+  3. turbo.json, vitest.config.ts, root package.json, and .changeset/config.json reference only the 4 remaining packages with no dead tasks or aliases
+  4. test-results/ directory, PRBODY.md, and any other stale root-level artifacts are removed
+  5. `pnpm build && pnpm type-check` passes clean after all removals
+**Plans**: TBD
+
+### Phase 69: Migration Evaluation
+**Goal**: A clear written assessment of what remaining @napplet content belongs elsewhere, with actionable recommendations
+**Depends on**: Phase 68
+**Requirements**: MIG-01, MIG-02, MIG-03
+**Success Criteria** (what must be TRUE):
+  1. An audit report exists documenting any remaining code or docs that should migrate to @kehto, with rationale for each item
+  2. specs/nubs/ has a documented stay-or-move recommendation with reasoning (protocol specs vs implementation specs distinction)
+  3. Each skills/ file has a documented recommendation: keep in @napplet, move to @kehto, or split across both -- based on which SDK the skill teaches
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 68 -> 69
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 68. Audit & Clean | 0/TBD | Not started | - |
+| 69. Migration Evaluation | 0/TBD | Not started | - |

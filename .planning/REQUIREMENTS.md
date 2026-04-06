@@ -51,26 +51,26 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SRC-01 | — | Pending |
-| SRC-02 | — | Pending |
-| SRC-03 | — | Pending |
-| SRC-04 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| DOC-04 | — | Pending |
-| CFG-01 | — | Pending |
-| CFG-02 | — | Pending |
-| CFG-03 | — | Pending |
-| MIG-01 | — | Pending |
-| MIG-02 | — | Pending |
-| MIG-03 | — | Pending |
+| SRC-01 | Phase 68 | Pending |
+| SRC-02 | Phase 68 | Pending |
+| SRC-03 | Phase 68 | Pending |
+| SRC-04 | Phase 68 | Pending |
+| DOC-01 | Phase 68 | Pending |
+| DOC-02 | Phase 68 | Pending |
+| DOC-03 | Phase 68 | Pending |
+| DOC-04 | Phase 68 | Pending |
+| CFG-01 | Phase 68 | Pending |
+| CFG-02 | Phase 68 | Pending |
+| CFG-03 | Phase 68 | Pending |
+| MIG-01 | Phase 69 | Pending |
+| MIG-02 | Phase 69 | Pending |
+| MIG-03 | Phase 69 | Pending |
 
 **Coverage:**
 - v0.14.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 after roadmap creation*
