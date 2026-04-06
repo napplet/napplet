@@ -4,7 +4,7 @@ milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
 status: verifying
 stopped_at: Completed 64-03-PLAN.md (e2e test migration)
-last_updated: "2026-04-06T17:17:11.483Z"
+last_updated: "2026-04-06T17:21:54.708Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 ## Current Position
 
-Phase: 64 (demo-test-migration) — EXECUTING
-Plan: 3 of 3
+Phase: 65
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
