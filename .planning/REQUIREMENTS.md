@@ -12,7 +12,7 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 - [x] **KEHTO-01**: ~/Develop/kehto initialized as pnpm monorepo with turborepo, tsconfig, ESM-only config
 - [x] **KEHTO-02**: @kehto/acl, @kehto/runtime, @kehto/shell, @kehto/services packages created with correct package.json
 - [x] **KEHTO-03**: Source copied from @napplet with internal imports updated to @kehto/*
-- [ ] **KEHTO-04**: @napplet/core consumed as npm dependency (published from @napplet repo)
+- [x] **KEHTO-04**: @napplet/core consumed as npm dependency (published from @napplet repo)
 - [x] **KEHTO-05**: Demo playground copied and running against @kehto packages
 - [x] **KEHTO-06**: Relevant Playwright e2e and Vitest tests copied and passing
 - [x] **KEHTO-07**: pnpm build + pnpm type-check succeeds in kehto monorepo
@@ -34,8 +34,8 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 
 ### Documentation
 
-- [ ] **DOC-01**: Root README updated for 4-package @napplet SDK with kehto cross-reference
-- [ ] **DOC-02**: Package READMEs (core, shim, sdk, vite-plugin) updated to reference @kehto for runtime/shell needs
+- [x] **DOC-01**: Root README updated for 4-package @napplet SDK with kehto cross-reference
+- [x] **DOC-02**: Package READMEs (core, shim, sdk, vite-plugin) updated to reference @kehto for runtime/shell needs
 
 ## Future Requirements
 
@@ -62,7 +62,7 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 | KEHTO-01 | Phase 62 | Complete |
 | KEHTO-02 | Phase 62 | Complete |
 | KEHTO-03 | Phase 63 | Complete |
-| KEHTO-04 | Phase 67 | Pending |
+| KEHTO-04 | Phase 67 | Complete |
 | KEHTO-05 | Phase 64 | Complete |
 | KEHTO-06 | Phase 64 | Complete |
 | KEHTO-07 | Phase 63 | Complete |
@@ -75,8 +75,8 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 | PUB-02 | Phase 66 | Complete |
 | PUB-03 | Phase 66 | Complete |
 | PUB-04 | Phase 66 | Pending |
-| DOC-01 | Phase 67 | Pending |
-| DOC-02 | Phase 67 | Pending |
+| DOC-01 | Phase 67 | Complete |
+| DOC-02 | Phase 67 | Complete |
 
 **Coverage:**
 - v0.13.0 requirements: 18 total
