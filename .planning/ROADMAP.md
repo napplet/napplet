@@ -171,7 +171,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Audit @napplet repo for dead code, stale docs, and leftover artifacts from v0.13.0 extraction. Clean up and identify remaining candidates for @kehto migration.
 
 - [x] **Phase 68: Audit & Clean** - Remove dead code, stale docs, and leftover config from all 4 packages and repo root (completed 2026-04-06)
-- [ ] **Phase 69: Migration Evaluation** - Assess remaining code and docs for @kehto migration or external repo placement
+- [x] **Phase 69: Migration Evaluation** - Assess remaining code and docs for @kehto migration or external repo placement (completed 2026-04-06)
 
 ## Phase Details
 
@@ -198,9 +198,9 @@ Plans:
   1. An audit report exists documenting any remaining code or docs that should migrate to @kehto, with rationale for each item
   2. specs/nubs/ has a documented stay-or-move recommendation with reasoning (protocol specs vs implementation specs distinction)
   3. Each skills/ file has a documented recommendation: keep in @napplet, move to @kehto, or split across both -- based on which SDK the skill teaches
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 69-01-PLAN.md — Read all remaining content, write MIGRATION-EVAL.md report
+- [x] 69-01-PLAN.md — Read all remaining content, write MIGRATION-EVAL.md report
 
 ## Progress
 
@@ -210,4 +210,4 @@ Phases execute in numeric order: 68 -> 69
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 68. Audit & Clean | 2/2 | Complete    | 2026-04-06 |
-| 69. Migration Evaluation | 0/1 | Not started | - |
+| 69. Migration Evaluation | 1/1 | Complete   | 2026-04-06 |

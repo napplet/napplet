@@ -29,9 +29,9 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 
 ### Migration Candidates
 
-- [ ] **MIG-01**: Audit report identifying any remaining code/docs that belong in @kehto
-- [ ] **MIG-02**: specs/nubs/ evaluated — stay in @napplet or move to napplet/nubs repo
-- [ ] **MIG-03**: skills/ evaluated — which skills belong in @napplet vs @kehto
+- [x] **MIG-01**: Audit report identifying any remaining code/docs that belong in @kehto
+- [x] **MIG-02**: specs/nubs/ evaluated — stay in @napplet or move to napplet/nubs repo
+- [x] **MIG-03**: skills/ evaluated — which skills belong in @napplet vs @kehto
 
 ## Future Requirements
 
@@ -62,9 +62,9 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 | CFG-01 | Phase 68 | Complete |
 | CFG-02 | Phase 68 | Complete |
 | CFG-03 | Phase 68 | Complete |
-| MIG-01 | Phase 69 | Pending |
-| MIG-02 | Phase 69 | Pending |
-| MIG-03 | Phase 69 | Pending |
+| MIG-01 | Phase 69 | Complete |
+| MIG-02 | Phase 69 | Complete |
+| MIG-03 | Phase 69 | Complete |
 
 **Coverage:**
 - v0.14.0 requirements: 14 total

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.14.0
 milestone_name: Repo Cleanup & Audit
 status: verifying
-stopped_at: Completed 68-02-PLAN.md
-last_updated: "2026-04-06T21:29:27.781Z"
+stopped_at: Completed 69-01-PLAN.md
+last_updated: "2026-04-06T21:38:25.258Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 68 — audit-clean
+**Current focus:** Phase 69 — migration-evaluation
 
 ## Current Position
 
-Phase: 69
-Plan: Not started
+Phase: 69 (migration-evaluation) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
@@ -40,6 +40,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 - [Phase 68]: All core exports retained as public API for downstream consumers
 - [Phase 68]: ShellHooks renamed to ShellAdapter in integrate-shell skill (follows v0.7.0 Phase 37 rename)
+- [Phase 69]: RUNTIME-SPEC.md stays in @napplet as cross-cutting reference
+- [Phase 69]: All 9 specs/nubs/ files should move to github.com/napplet/nubs
+- [Phase 69]: skills/integrate-shell and add-service should move to @kehto
 
 ### Quick Tasks Completed
 
@@ -58,6 +61,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06T21:25:32.829Z
-Stopped at: Completed 68-02-PLAN.md
+Last session: 2026-04-06T21:38:25.255Z
+Stopped at: Completed 69-01-PLAN.md
 Resume: `/gsd:plan-phase 68`
