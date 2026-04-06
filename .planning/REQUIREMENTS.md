@@ -27,9 +27,9 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 
 ### Publish @napplet
 
-- [ ] **PUB-01**: GitHub Actions CI workflow: type-check, build on PR
-- [ ] **PUB-02**: GitHub Actions publish workflow: changesets version + npm publish
-- [ ] **PUB-03**: changesets configured for @napplet scope
+- [x] **PUB-01**: GitHub Actions CI workflow: type-check, build on PR
+- [x] **PUB-02**: GitHub Actions publish workflow: changesets version + npm publish
+- [x] **PUB-03**: changesets configured for @napplet scope
 - [ ] **PUB-04**: @napplet packages published to npm (core, shim, sdk, vite-plugin)
 
 ### Documentation
@@ -71,9 +71,9 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 | CLEAN-02 | Phase 65 | Complete |
 | CLEAN-03 | Phase 65 | Complete |
 | CLEAN-04 | Phase 65 | Complete |
-| PUB-01 | Phase 66 | Pending |
-| PUB-02 | Phase 66 | Pending |
-| PUB-03 | Phase 66 | Pending |
+| PUB-01 | Phase 66 | Complete |
+| PUB-02 | Phase 66 | Complete |
+| PUB-03 | Phase 66 | Complete |
 | PUB-04 | Phase 66 | Pending |
 | DOC-01 | Phase 67 | Pending |
 | DOC-02 | Phase 67 | Pending |
