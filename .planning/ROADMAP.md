@@ -214,7 +214,9 @@ Plans:
   1. packages/acl, packages/runtime, packages/shell, packages/services, and demo/ are deleted from @napplet
   2. pnpm workspace, turbo.json, and root tsconfig reference only core, shim, sdk, and vite-plugin
   3. `pnpm build` and `pnpm type-check` succeed with the 4-package monorepo (no dangling references)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 65-01-PLAN.md — Delete extracted packages/demo/tests, update configs, verify clean build
 
 ### Phase 66: Publish Pipeline & Release
 **Goal**: @napplet packages are published to npm with automated CI/CD
@@ -247,6 +249,6 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 | 62. Kehto Repo Scaffold | 2/2 | Complete    | 2026-04-06 |
 | 63. Package Migration | 2/2 | Complete    | 2026-04-06 |
 | 64. Demo & Test Migration | 3/3 | Complete    | 2026-04-06 |
-| 65. Napplet Cleanup | 0/TBD | Not started | - |
+| 65. Napplet Cleanup | 0/1 | Not started | - |
 | 66. Publish Pipeline & Release | 0/TBD | Not started | - |
 | 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |
