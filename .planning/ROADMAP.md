@@ -240,7 +240,9 @@ Plans:
   2. `pnpm build` in kehto succeeds with npm-sourced @napplet/core
   3. Root README in @napplet describes the 4-package SDK and cross-references @kehto for runtime/shell needs
   4. Package READMEs for core, shim, sdk, and vite-plugin direct users to @kehto for runtime integration
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 67-01-PLAN.md -- Cross-repo peer dep verification and README updates for 4-package SDK
 
 ## Progress
 
@@ -254,4 +256,4 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 | 64. Demo & Test Migration | 3/3 | Complete    | 2026-04-06 |
 | 65. Napplet Cleanup | 1/1 | Complete    | 2026-04-06 |
 | 66. Publish Pipeline & Release | 1/2 | Complete    | 2026-04-06 |
-| 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |
+| 67. Cross-Repo Wiring & Docs | 0/1 | Not started | - |
