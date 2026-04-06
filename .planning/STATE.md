@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
-status: active
-stopped_at: Roadmap created, ready to plan Phase 62
-last_updated: "2026-04-06T12:30:00.000Z"
+status: executing
+stopped_at: Completed 62-01-PLAN.md (kehto repo scaffold)
+last_updated: "2026-04-06T16:02:25.159Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.13.0 Runtime Decoupling & Publish -- Phase 62 (Kehto Repo Scaffold)
+**Current focus:** Phase 62 — kehto-repo-scaffold
 
 ## Current Position
 
-Phase: 62 (1 of 6) — Kehto Repo Scaffold
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-04-06 — Roadmap created for v0.13.0
+Phase: 62 (kehto-repo-scaffold) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-06
 
 Progress: [----------] 0%
 
@@ -37,6 +37,8 @@ Progress: [----------] 0%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+- [Phase 62]: Added .npmrc to kehto repo with relaxed peer dep settings for unpublished @napplet/core
 
 ### Quick Tasks Completed
 
@@ -55,6 +57,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06
-Stopped at: Roadmap created for v0.13.0 (6 phases, 18 requirements mapped)
+Last session: 2026-04-06T16:02:25.157Z
+Stopped at: Completed 62-01-PLAN.md (kehto repo scaffold)
 Resume: `/gsd:plan-phase 62`
