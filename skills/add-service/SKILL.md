@@ -11,7 +11,7 @@ A service is a shell-side handler that napplets communicate with via INTER_PANE 
 
 ## Prerequisites
 
-- `@napplet/shell` installed in the host project (re-exports all required types)
+- `@kehto/shell` installed in the host project (re-exports all required types)
 - A working shell bridge (see `skills/integrate-shell/SKILL.md`)
 
 ## Step 1 — Define a ServiceDescriptor
@@ -19,7 +19,7 @@ A service is a shell-side handler that napplets communicate with via INTER_PANE 
 The `ServiceDescriptor` carries the metadata that napplets see when calling `discoverServices()`. All three fields are required.
 
 ```ts
-import type { ServiceDescriptor } from '@napplet/shell';
+import type { ServiceDescriptor } from '@kehto/shell';
 
 const MY_SERVICE_VERSION = '1.0.0';
 
@@ -35,9 +35,9 @@ const descriptor: ServiceDescriptor = {
 The `ServiceHandler` interface requires two methods: `handleMessage` and (optionally but recommended) `onWindowDestroyed`. Use the factory function pattern to encapsulate per-window state.
 
 ```ts
-import type { ServiceHandler } from '@napplet/shell';
-import type { NostrEvent } from '@napplet/shell';
-import { BusKind } from '@napplet/shell';
+import type { ServiceHandler } from '@kehto/shell';
+import type { NostrEvent } from '@kehto/shell';
+import { BusKind } from '@kehto/shell';
 
 export function createMyService(): ServiceHandler {
   // Per-window state — keyed by windowId
@@ -119,7 +119,7 @@ Two registration patterns are available.
 Use when the service is always present and ready before any napplet connects.
 
 ```ts
-import { createShellBridge } from '@napplet/shell';
+import { createShellBridge } from '@kehto/shell';
 import { createMyService } from './my-service.js';
 
 const bridge = createShellBridge({

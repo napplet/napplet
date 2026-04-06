@@ -1,13 +1,13 @@
 ---
 name: integrate-shell
-description: Use when hosting napplets using @napplet/shell — covers createShellBridge(hooks) wiring, minimum viable ShellHooks implementation, iframe registration via originRegistry, NIP-42 AUTH challenge, consent handling for destructive signing kinds, and optional service registration
+description: Use when hosting napplets using @kehto/shell — covers createShellBridge(hooks) wiring, minimum viable ShellAdapter implementation, iframe registration via originRegistry, NIP-42 AUTH challenge, consent handling for destructive signing kinds, and optional service registration
 ---
 
-# Integrating @napplet/shell into a Host Application
+# Integrating @kehto/shell into a Host Application
 
 ## Overview
 
-The shell (`@napplet/shell`) acts as a NIP-01 relay for sandboxed napplet iframes. It routes postMessage traffic, enforces ACL, proxies signing and storage requests, and manages the NIP-42 AUTH handshake. The host application provides relay pool, signer, and crypto hooks via dependency injection. This skill produces a working `createShellBridge()` integration with minimum viable hooks.
+The shell (`@kehto/shell`) acts as a NIP-01 relay for sandboxed napplet iframes. It routes postMessage traffic, enforces ACL, proxies signing and storage requests, and manages the NIP-42 AUTH handshake. The host application provides relay pool, signer, and crypto hooks via dependency injection. This skill produces a working `createShellBridge()` integration with minimum viable hooks.
 
 ## Prerequisites
 
@@ -19,21 +19,21 @@ The shell (`@napplet/shell`) acts as a NIP-01 relay for sandboxed napplet iframe
 ## Step 1 — Install
 
 ```bash
-pnpm add @napplet/shell nostr-tools
+pnpm add @kehto/shell nostr-tools
 ```
 
 ## Step 2 — Implement minimum viable hooks
 
-The `ShellHooks` interface is the primary integration point. The following shows all required hook groups with working stub implementations. Required groups are: `relayPool`, `relayConfig`, `auth`, `config`, `hotkeys`, `workerRelay`, `crypto`, and `windowManager`.
+The `ShellAdapter` interface is the primary integration point. The following shows all required hook groups with working stub implementations. Required groups are: `relayPool`, `relayConfig`, `auth`, `config`, `hotkeys`, `workerRelay`, `crypto`, and `windowManager`.
 
 ```ts
-import { createShellBridge, type ShellHooks } from '@napplet/shell';
+import { createShellBridge, type ShellAdapter } from '@kehto/shell';
 import { verifyEvent as _verifyEvent } from 'nostr-tools/pure';
 
 // Track relay subscriptions for lifecycle management
 const subscriptions = new Map<string, () => void>();
 
-const hooks: ShellHooks = {
+const hooks: ShellAdapter = {
   // ─── Required: Relay pool ───────────────────────────────────────────────
   relayPool: {
     // Return your relay pool wrapped as RelayPoolLike — see note below
@@ -124,7 +124,7 @@ window.addEventListener('message', bridge.handleMessage);
 When an iframe loads, register it with `originRegistry` and then send the NIP-42 AUTH challenge. Messages from unregistered windows are dropped silently, so registration MUST happen before `sendChallenge`.
 
 ```ts
-import { originRegistry } from '@napplet/shell';
+import { originRegistry } from '@kehto/shell';
 
 function onIframeLoad(iframe: HTMLIFrameElement, windowId: string): void {
   if (!iframe.contentWindow) return;
@@ -163,7 +163,7 @@ For production use, replace `confirm()` with a proper modal component.
 Services are shell-side handlers that napplets communicate with via inter-pane topic events. Register them after bridge creation via `bridge.runtime.registerService()`, or provide them statically in `hooks.services` at construction time.
 
 ```ts
-import { createAudioService } from '@napplet/services';
+import { createAudioService } from '@kehto/services';
 
 // Dynamic registration — allows lazy loading or post-login setup
 bridge.runtime.registerService('audio', createAudioService({
@@ -194,4 +194,4 @@ After `bridge.destroy()`, do NOT call any bridge methods. Create a new bridge in
 - `bridge.destroy()` does NOT remove the `window.message` listener. Always remove it manually first.
 - Consent handler fires for kinds 0, 3, 5, 10002 only. All other signing kinds pass automatically unless the napplet's ACL explicitly blocks `sign:event`.
 - After `bridge.destroy()`, do NOT call any bridge methods. Create a new bridge instance with `createShellBridge(hooks)` instead.
-- `ShellHooks` requires ALL listed groups (`relayPool`, `relayConfig`, `auth`, `config`, `hotkeys`, `workerRelay`, `crypto`, `windowManager`). Omitting any required group causes a TypeScript error at compile time and a runtime error at bridge creation.
+- `ShellAdapter` requires ALL listed groups (`relayPool`, `relayConfig`, `auth`, `config`, `hotkeys`, `workerRelay`, `crypto`, `windowManager`). Omitting any required group causes a TypeScript error at compile time and a runtime error at bridge creation.
