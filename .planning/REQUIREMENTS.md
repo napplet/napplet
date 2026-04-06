@@ -11,7 +11,7 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 
 - [x] **KEHTO-01**: ~/Develop/kehto initialized as pnpm monorepo with turborepo, tsconfig, ESM-only config
 - [x] **KEHTO-02**: @kehto/acl, @kehto/runtime, @kehto/shell, @kehto/services packages created with correct package.json
-- [ ] **KEHTO-03**: Source copied from @napplet with internal imports updated to @kehto/*
+- [x] **KEHTO-03**: Source copied from @napplet with internal imports updated to @kehto/*
 - [ ] **KEHTO-04**: @napplet/core consumed as npm dependency (published from @napplet repo)
 - [ ] **KEHTO-05**: Demo playground copied and running against @kehto packages
 - [ ] **KEHTO-06**: Relevant Playwright e2e and Vitest tests copied and passing
@@ -61,7 +61,7 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 |-------------|-------|--------|
 | KEHTO-01 | Phase 62 | Complete |
 | KEHTO-02 | Phase 62 | Complete |
-| KEHTO-03 | Phase 63 | Pending |
+| KEHTO-03 | Phase 63 | Complete |
 | KEHTO-04 | Phase 67 | Pending |
 | KEHTO-05 | Phase 64 | Pending |
 | KEHTO-06 | Phase 64 | Pending |
