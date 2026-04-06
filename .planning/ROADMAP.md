@@ -185,7 +185,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. turbo.json, vitest.config.ts, root package.json, and .changeset/config.json reference only the 4 remaining packages with no dead tasks or aliases
   4. test-results/ directory, PRBODY.md, and any other stale root-level artifacts are removed
   5. `pnpm build && pnpm type-check` passes clean after all removals
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 68-01-PLAN.md — Source audit, config cleanup, stale artifact removal
+- [ ] 68-02-PLAN.md — Documentation audit (RUNTIME-SPEC.md, skills/, specs/nubs/)
 
 ### Phase 69: Migration Evaluation
 **Goal**: A clear written assessment of what remaining @napplet content belongs elsewhere, with actionable recommendations
@@ -204,5 +207,5 @@ Phases execute in numeric order: 68 -> 69
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 68. Audit & Clean | 0/TBD | Not started | - |
+| 68. Audit & Clean | 0/2 | Planned | - |
 | 69. Migration Evaluation | 0/TBD | Not started | - |
