@@ -4,7 +4,7 @@ milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
 status: verifying
 stopped_at: Completed 65-01-PLAN.md (napplet cleanup)
-last_updated: "2026-04-06T17:31:02.329Z"
+last_updated: "2026-04-06T17:33:18.023Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 ## Current Position
 
-Phase: 65 (napplet-cleanup) — EXECUTING
-Plan: 1 of 1
+Phase: 66
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
