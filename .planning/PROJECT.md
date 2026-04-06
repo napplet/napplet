@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.13.0 Runtime Decoupling & Publish
+
+Runtime, shell, ACL, services, and demo extracted to ~/Develop/kehto (@kehto npm org, github.com/kehto/runtime). 40 source files migrated with import rewrites. Demo + 252 unit + 127 e2e tests passing in kehto. @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin) — 29,500 lines removed. GitHub Actions CI/CD with changesets. READMEs updated. npm publish deferred (PUB-04 — needs human auth). 6 phases, 11 plans shipped 2026-04-06. See [archive](milestones/v0.13.0-ROADMAP.md).
+
 ## Shipped: v0.12.0 Spec Packaging
 
 SPEC.md renamed to RUNTIME-SPEC.md as internal reference with header linking to NIP-5D. NIP-5D v2 finalized at 199 lines with References section (5 cited NIPs) and Implementations section. 8 package READMEs and 4 source files updated to reference RUNTIME-SPEC.md. 1 phase, 1 plan shipped 2026-04-06. See [archive](milestones/v0.12.0-ROADMAP.md).
@@ -121,30 +125,16 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ NIP-5D v2 in nostr-protocol/nips markdown format (<200 lines, setext headings) — v0.12.0 Phase 61 (PKG-02)
 - ✓ NIP-5D lists @napplet/shim + hyprgate as reference implementations — v0.12.0 Phase 61 (PKG-03)
 
+- ✓ ~/Develop/kehto initialized with 4 @kehto packages (acl, runtime, shell, services) — v0.13.0 Phase 62 (KEHTO-01, KEHTO-02, KEHTO-08)
+- ✓ 40 source files migrated with @kehto/* import rewrites — v0.13.0 Phase 63 (KEHTO-03, KEHTO-07)
+- ✓ Demo + 252 unit + 127 e2e tests passing in kehto — v0.13.0 Phase 64 (KEHTO-05, KEHTO-06)
+- ✓ @napplet slimmed to 4 packages, build clean — v0.13.0 Phase 65 (CLEAN-01..04)
+- ✓ GitHub Actions CI/CD workflows for @napplet — v0.13.0 Phase 66 (PUB-01..03)
+- ✓ READMEs updated for 4-package SDK — v0.13.0 Phase 67 (DOC-01, DOC-02)
+
 ### Active
 
-## Current Milestone: v0.13.0 Runtime Decoupling & Publish
-
-**Goal:** Extract runtime/shell/acl/services/demo into @kehto org (github.com/kehto/runtime), clean up @napplet for npm publish, and seed kehto for GSD.
-
-**Target features:**
-- Extract packages to ~/Develop/kehto (fresh repo, clean start):
-  - @napplet/acl → @kehto/acl
-  - @napplet/runtime → @kehto/runtime
-  - @napplet/shell → @kehto/shell
-  - @napplet/services → @kehto/services
-  - demo/ → kehto demo
-- @kehto packages depend on @napplet/core as peer dep
-- Update all internal imports in kehto packages (@napplet/runtime → @kehto/runtime, etc.)
-- Seed ~/Develop/kehto with PROJECT.md + GSD context for /gsd:new-project
-- Remove extracted packages from @napplet monorepo
-- Clean up turborepo config, tsconfig, pnpm workspace for 4-package @napplet
-- Create GitHub Actions workflow for @napplet npm publish (CI + changesets)
-- Update root README for 4-package SDK (core, shim, sdk, vite-plugin)
-
-**After split:**
-- @napplet: core | shim(core) | sdk(core) | vite-plugin
-- @kehto: acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -161,8 +151,8 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.12.0 shipped (Spec Packaging). RUNTIME-SPEC.md is the internal reference; NIP-5D v2 (`specs/NIP-5D.md`) is the terse standards-track spec. 8 packages in the monorepo. 12 milestones shipped.
-- **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
+- **Current state**: v0.13.0 shipped (Runtime Decoupling & Publish). @napplet is now a 4-package SDK. Runtime/shell/ACL/services extracted to @kehto. 13 milestones shipped.
+- **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin. @kehto (separate repo): acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
 - **Demo architecture**: Full topology view with distinct shell, ACL, runtime, and service nodes. Inspector has 3 tabs (Node, Constants, Kinds) with contextual filtering.
@@ -242,4 +232,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-06 after v0.13.0 milestone start*
+*Last updated: 2026-04-06 after v0.13.0 milestone*

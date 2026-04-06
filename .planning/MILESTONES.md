@@ -1,5 +1,25 @@
 # Milestones
 
+## v0.13.0 Runtime Decoupling & Publish (Shipped: 2026-04-06)
+
+**Phases completed:** 6 phases, 11 plans, 18 tasks
+
+**Key accomplishments:**
+
+- ~/Develop/kehto initialized as buildable pnpm monorepo with 4 @kehto packages (acl, runtime, shell, services), GSD context seeded
+- 40 source files migrated from @napplet with all internal imports rewritten to @kehto/* — full monorepo builds and type-checks clean
+- Demo playground and test suite (252 unit + 127 e2e) migrated and passing in kehto
+- @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin) — 29,500 lines removed
+- GitHub Actions CI/CD workflows for @napplet npm publishing with changesets integration
+- Root README and all package READMEs updated for 4-package SDK with @kehto cross-references
+
+### Known Gaps
+
+- `PUB-04`: npm publish deferred — requires human npm auth (npm login + NPM_TOKEN GitHub secret)
+- `KEHTO-04`: partial — workspace override for @napplet/core pending PUB-04 completion
+
+---
+
 ## v0.12.0 Spec Packaging (Shipped: 2026-04-06)
 
 **Phases completed:** 1 phase, 1 plan, 2 tasks
