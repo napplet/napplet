@@ -256,4 +256,4 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 | 64. Demo & Test Migration | 3/3 | Complete    | 2026-04-06 |
 | 65. Napplet Cleanup | 1/1 | Complete    | 2026-04-06 |
 | 66. Publish Pipeline & Release | 1/2 | Complete    | 2026-04-06 |
-| 67. Cross-Repo Wiring & Docs | 1/1 | Complete   | 2026-04-06 |
+| 67. Cross-Repo Wiring & Docs | 1/1 | Complete    | 2026-04-06 |

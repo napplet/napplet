@@ -4,7 +4,7 @@ milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
 status: verifying
 stopped_at: Completed 67-01-PLAN.md (cross-repo wiring docs)
-last_updated: "2026-04-06T18:02:12.625Z"
+last_updated: "2026-04-06T18:04:30.999Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 ## Current Position
 
-Phase: 67 (cross-repo-wiring-docs) — EXECUTING
-Plan: 1 of 1
+Phase: 67
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
