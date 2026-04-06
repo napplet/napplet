@@ -16,10 +16,10 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 
 ### Docs Audit
 
-- [ ] **DOC-01**: RUNTIME-SPEC.md references to extracted packages updated or removed
-- [ ] **DOC-02**: skills/ files updated — @napplet/shell → @kehto/shell, @napplet/services → @kehto/services
-- [ ] **DOC-03**: specs/nubs/ references to extracted packages updated
-- [ ] **DOC-04**: PRBODY.md and any stray root files cleaned up
+- [x] **DOC-01**: RUNTIME-SPEC.md references to extracted packages updated or removed
+- [x] **DOC-02**: skills/ files updated — @napplet/shell → @kehto/shell, @napplet/services → @kehto/services
+- [x] **DOC-03**: specs/nubs/ references to extracted packages updated
+- [x] **DOC-04**: PRBODY.md and any stray root files cleaned up
 
 ### Config Cleanup
 
@@ -55,10 +55,10 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 | SRC-02 | Phase 68 | Complete |
 | SRC-03 | Phase 68 | Complete |
 | SRC-04 | Phase 68 | Complete |
-| DOC-01 | Phase 68 | Pending |
-| DOC-02 | Phase 68 | Pending |
-| DOC-03 | Phase 68 | Pending |
-| DOC-04 | Phase 68 | Pending |
+| DOC-01 | Phase 68 | Complete |
+| DOC-02 | Phase 68 | Complete |
+| DOC-03 | Phase 68 | Complete |
+| DOC-04 | Phase 68 | Complete |
 | CFG-01 | Phase 68 | Complete |
 | CFG-02 | Phase 68 | Complete |
 | CFG-03 | Phase 68 | Complete |
