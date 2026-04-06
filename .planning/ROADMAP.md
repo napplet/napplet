@@ -170,7 +170,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Audit @napplet repo for dead code, stale docs, and leftover artifacts from v0.13.0 extraction. Clean up and identify remaining candidates for @kehto migration.
 
-- [ ] **Phase 68: Audit & Clean** - Remove dead code, stale docs, and leftover config from all 4 packages and repo root
+- [x] **Phase 68: Audit & Clean** - Remove dead code, stale docs, and leftover config from all 4 packages and repo root (completed 2026-04-06)
 - [ ] **Phase 69: Migration Evaluation** - Assess remaining code and docs for @kehto migration or external repo placement
 
 ## Phase Details
@@ -185,10 +185,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. turbo.json, vitest.config.ts, root package.json, and .changeset/config.json reference only the 4 remaining packages with no dead tasks or aliases
   4. test-results/ directory, PRBODY.md, and any other stale root-level artifacts are removed
   5. `pnpm build && pnpm type-check` passes clean after all removals
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 68-01-PLAN.md — Source audit, config cleanup, stale artifact removal
-- [ ] 68-02-PLAN.md — Documentation audit (RUNTIME-SPEC.md, skills/, specs/nubs/)
+- [x] 68-01-PLAN.md — Source audit, config cleanup, stale artifact removal
+- [x] 68-02-PLAN.md — Documentation audit (RUNTIME-SPEC.md, skills/, specs/nubs/)
 
 ### Phase 69: Migration Evaluation
 **Goal**: A clear written assessment of what remaining @napplet content belongs elsewhere, with actionable recommendations
@@ -207,5 +207,5 @@ Phases execute in numeric order: 68 -> 69
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 68. Audit & Clean | 0/2 | Planned | - |
+| 68. Audit & Clean | 2/2 | Complete   | 2026-04-06 |
 | 69. Migration Evaluation | 0/TBD | Not started | - |

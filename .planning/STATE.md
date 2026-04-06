@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.14.0
 milestone_name: Repo Cleanup & Audit
-status: active
-stopped_at: Roadmap created
-last_updated: "2026-04-06T20:00:00.000Z"
+status: executing
+stopped_at: Completed 68-01-PLAN.md
+last_updated: "2026-04-06T21:25:10.482Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 2
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.14.0 Repo Cleanup & Audit — Phase 68
+**Current focus:** Phase 68 — audit-clean
 
 ## Current Position
 
-Phase: 1 of 2 (Phase 68: Audit & Clean)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-04-06 — Roadmap created for v0.14.0
+Phase: 68 (audit-clean) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-06
 
 Progress: [----------] 0%
 
@@ -37,6 +37,8 @@ Progress: [----------] 0%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+- [Phase 68]: All core exports retained as public API for downstream consumers
 
 ### Quick Tasks Completed
 
@@ -55,6 +57,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06
-Stopped at: Roadmap created for v0.14.0
+Last session: 2026-04-06T21:25:10.479Z
+Stopped at: Completed 68-01-PLAN.md
 Resume: `/gsd:plan-phase 68`

@@ -9,10 +9,10 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 
 ### Source Audit
 
-- [ ] **SRC-01**: No unused exports in packages/core (dead code removed)
-- [ ] **SRC-02**: No unused exports in packages/shim, packages/sdk, packages/vite-plugin
-- [ ] **SRC-03**: vitest.config.ts cleaned (stale aliases removed)
-- [ ] **SRC-04**: turbo.json cleaned (dead test:e2e task removed)
+- [x] **SRC-01**: No unused exports in packages/core (dead code removed)
+- [x] **SRC-02**: No unused exports in packages/shim, packages/sdk, packages/vite-plugin
+- [x] **SRC-03**: vitest.config.ts cleaned (stale aliases removed)
+- [x] **SRC-04**: turbo.json cleaned (dead test:e2e task removed)
 
 ### Docs Audit
 
@@ -23,9 +23,9 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 
 ### Config Cleanup
 
-- [ ] **CFG-01**: test-results/ directory removed (stale Playwright artifacts)
-- [ ] **CFG-02**: Root package.json scripts audited (no references to deleted packages)
-- [ ] **CFG-03**: .changeset/config.json verified for 4-package scope
+- [x] **CFG-01**: test-results/ directory removed (stale Playwright artifacts)
+- [x] **CFG-02**: Root package.json scripts audited (no references to deleted packages)
+- [x] **CFG-03**: .changeset/config.json verified for 4-package scope
 
 ### Migration Candidates
 
@@ -51,17 +51,17 @@ Requirements for Repo Cleanup & Audit milestone. Audit @napplet for dead code, s
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SRC-01 | Phase 68 | Pending |
-| SRC-02 | Phase 68 | Pending |
-| SRC-03 | Phase 68 | Pending |
-| SRC-04 | Phase 68 | Pending |
+| SRC-01 | Phase 68 | Complete |
+| SRC-02 | Phase 68 | Complete |
+| SRC-03 | Phase 68 | Complete |
+| SRC-04 | Phase 68 | Complete |
 | DOC-01 | Phase 68 | Pending |
 | DOC-02 | Phase 68 | Pending |
 | DOC-03 | Phase 68 | Pending |
 | DOC-04 | Phase 68 | Pending |
-| CFG-01 | Phase 68 | Pending |
-| CFG-02 | Phase 68 | Pending |
-| CFG-03 | Phase 68 | Pending |
+| CFG-01 | Phase 68 | Complete |
+| CFG-02 | Phase 68 | Complete |
+| CFG-03 | Phase 68 | Complete |
 | MIG-01 | Phase 69 | Pending |
 | MIG-02 | Phase 69 | Pending |
 | MIG-03 | Phase 69 | Pending |
