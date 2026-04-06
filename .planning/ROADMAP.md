@@ -160,7 +160,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 62: Kehto Repo Scaffold** - Initialize ~/Develop/kehto as pnpm monorepo with package shells and GSD seed (completed 2026-04-06)
 - [x] **Phase 63: Package Migration** - Copy source from @napplet, rewrite imports to @kehto/*, build and type-check green (completed 2026-04-06)
 - [x] **Phase 64: Demo & Test Migration** - Demo playground and test suite running in kehto against @kehto packages (completed 2026-04-06)
-- [ ] **Phase 65: Napplet Cleanup** - Remove extracted packages and demo from @napplet, reconfigure for 4-package monorepo
+- [x] **Phase 65: Napplet Cleanup** - Remove extracted packages and demo from @napplet, reconfigure for 4-package monorepo (completed 2026-04-06)
 - [ ] **Phase 66: Publish Pipeline & Release** - GitHub Actions CI/CD and npm publish for @napplet packages
 - [ ] **Phase 67: Cross-Repo Wiring & Docs** - Switch kehto to npm @napplet/core dependency, update all READMEs
 
@@ -216,7 +216,7 @@ Plans:
   3. `pnpm build` and `pnpm type-check` succeed with the 4-package monorepo (no dangling references)
 **Plans**: 1 plan
 Plans:
-- [ ] 65-01-PLAN.md — Delete extracted packages/demo/tests, update configs, verify clean build
+- [x] 65-01-PLAN.md — Delete extracted packages/demo/tests, update configs, verify clean build
 
 ### Phase 66: Publish Pipeline & Release
 **Goal**: @napplet packages are published to npm with automated CI/CD
@@ -249,6 +249,6 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 | 62. Kehto Repo Scaffold | 2/2 | Complete    | 2026-04-06 |
 | 63. Package Migration | 2/2 | Complete    | 2026-04-06 |
 | 64. Demo & Test Migration | 3/3 | Complete    | 2026-04-06 |
-| 65. Napplet Cleanup | 0/1 | Not started | - |
+| 65. Napplet Cleanup | 1/1 | Complete   | 2026-04-06 |
 | 66. Publish Pipeline & Release | 0/TBD | Not started | - |
 | 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |

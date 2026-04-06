@@ -20,10 +20,10 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 
 ### Napplet Cleanup
 
-- [ ] **CLEAN-01**: packages/acl, packages/runtime, packages/shell, packages/services removed from @napplet
-- [ ] **CLEAN-02**: demo/ directory removed from @napplet
-- [ ] **CLEAN-03**: pnpm workspace, turborepo, root tsconfig updated for 4 packages (core, shim, sdk, vite-plugin)
-- [ ] **CLEAN-04**: pnpm build + pnpm type-check succeeds with 4-package monorepo
+- [x] **CLEAN-01**: packages/acl, packages/runtime, packages/shell, packages/services removed from @napplet
+- [x] **CLEAN-02**: demo/ directory removed from @napplet
+- [x] **CLEAN-03**: pnpm workspace, turborepo, root tsconfig updated for 4 packages (core, shim, sdk, vite-plugin)
+- [x] **CLEAN-04**: pnpm build + pnpm type-check succeeds with 4-package monorepo
 
 ### Publish @napplet
 
@@ -67,10 +67,10 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 | KEHTO-06 | Phase 64 | Complete |
 | KEHTO-07 | Phase 63 | Complete |
 | KEHTO-08 | Phase 62 | Complete |
-| CLEAN-01 | Phase 65 | Pending |
-| CLEAN-02 | Phase 65 | Pending |
-| CLEAN-03 | Phase 65 | Pending |
-| CLEAN-04 | Phase 65 | Pending |
+| CLEAN-01 | Phase 65 | Complete |
+| CLEAN-02 | Phase 65 | Complete |
+| CLEAN-03 | Phase 65 | Complete |
+| CLEAN-04 | Phase 65 | Complete |
 | PUB-01 | Phase 66 | Pending |
 | PUB-02 | Phase 66 | Pending |
 | PUB-03 | Phase 66 | Pending |
