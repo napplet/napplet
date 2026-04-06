@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
 status: active
-stopped_at: Defining requirements
-last_updated: "2026-04-06T12:00:00.000Z"
+stopped_at: Roadmap created, ready to plan Phase 62
+last_updated: "2026-04-06T12:30:00.000Z"
 last_activity: 2026-04-06
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.13.0 Runtime Decoupling & Publish
+**Current focus:** v0.13.0 Runtime Decoupling & Publish -- Phase 62 (Kehto Repo Scaffold)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-06 — Milestone v0.13.0 started
+Phase: 62 (1 of 6) — Kehto Repo Scaffold
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-04-06 — Roadmap created for v0.13.0
 
 Progress: [----------] 0%
 
@@ -49,11 +49,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-- CARRIED: npm publish blocked on human npm auth. Target for future milestone.
-- NIP number conflict with Scrolls PR#2281 (RES-01) — unresolved, carry forward.
+- CARRIED: npm publish blocked on human npm auth. Target for Phase 66 (PUB-04).
+- NIP number conflict with Scrolls PR#2281 (RES-01) -- unresolved, carry forward.
+- Phase 63-64 use workspace-linked @napplet/core; switch to npm happens in Phase 67 after publish.
 
 ## Session Continuity
 
 Last session: 2026-04-06
-Stopped at: Defining v0.13.0 requirements
-Resume: Continue requirements definition
+Stopped at: Roadmap created for v0.13.0 (6 phases, 18 requirements mapped)
+Resume: `/gsd:plan-phase 62`

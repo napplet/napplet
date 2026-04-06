@@ -59,30 +59,30 @@ Requirements for Runtime Decoupling & Publish milestone. Extract runtime/shell/a
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| KEHTO-01 | — | Pending |
-| KEHTO-02 | — | Pending |
-| KEHTO-03 | — | Pending |
-| KEHTO-04 | — | Pending |
-| KEHTO-05 | — | Pending |
-| KEHTO-06 | — | Pending |
-| KEHTO-07 | — | Pending |
-| KEHTO-08 | — | Pending |
-| CLEAN-01 | — | Pending |
-| CLEAN-02 | — | Pending |
-| CLEAN-03 | — | Pending |
-| CLEAN-04 | — | Pending |
-| PUB-01 | — | Pending |
-| PUB-02 | — | Pending |
-| PUB-03 | — | Pending |
-| PUB-04 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
+| KEHTO-01 | Phase 62 | Pending |
+| KEHTO-02 | Phase 62 | Pending |
+| KEHTO-03 | Phase 63 | Pending |
+| KEHTO-04 | Phase 67 | Pending |
+| KEHTO-05 | Phase 64 | Pending |
+| KEHTO-06 | Phase 64 | Pending |
+| KEHTO-07 | Phase 63 | Pending |
+| KEHTO-08 | Phase 62 | Pending |
+| CLEAN-01 | Phase 65 | Pending |
+| CLEAN-02 | Phase 65 | Pending |
+| CLEAN-03 | Phase 65 | Pending |
+| CLEAN-04 | Phase 65 | Pending |
+| PUB-01 | Phase 66 | Pending |
+| PUB-02 | Phase 66 | Pending |
+| PUB-03 | Phase 66 | Pending |
+| PUB-04 | Phase 66 | Pending |
+| DOC-01 | Phase 67 | Pending |
+| DOC-02 | Phase 67 | Pending |
 
 **Coverage:**
 - v0.13.0 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 after roadmap creation*

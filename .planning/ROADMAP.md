@@ -14,6 +14,7 @@
 - ✅ **v0.10.0 Demo Consistency and Usability Pass** — Phases 49-53 (shipped 2026-04-04) — [Archive](milestones/v0.10.0-ROADMAP.md)
 - ✅ **v0.11.0 Clean up Side Panel** — Phases 54-56 (shipped 2026-04-05) — [Archive](milestones/v0.11.0-ROADMAP.md)
 - ✅ **v0.12.0 Spec Packaging** — Phase 61 (shipped 2026-04-06) — [Archive](milestones/v0.12.0-ROADMAP.md)
+- **v0.13.0 Runtime Decoupling & Publish** — Phases 62-67 (in progress)
 
 ## Phases
 
@@ -151,3 +152,92 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 61: Spec Packaging** - Rename SPEC.md to RUNTIME-SPEC.md, finalize NIP-5D v2 format (completed 2026-04-05)
 
 </details>
+
+### v0.13.0 Runtime Decoupling & Publish (Phases 62-67)
+
+**Milestone Goal:** Extract runtime/shell/acl/services/demo into @kehto org (fresh repo at ~/Develop/kehto), clean up @napplet to 4 packages (core, shim, sdk, vite-plugin), and publish @napplet to npm.
+
+- [ ] **Phase 62: Kehto Repo Scaffold** - Initialize ~/Develop/kehto as pnpm monorepo with package shells and GSD seed
+- [ ] **Phase 63: Package Migration** - Copy source from @napplet, rewrite imports to @kehto/*, build and type-check green
+- [ ] **Phase 64: Demo & Test Migration** - Demo playground and test suite running in kehto against @kehto packages
+- [ ] **Phase 65: Napplet Cleanup** - Remove extracted packages and demo from @napplet, reconfigure for 4-package monorepo
+- [ ] **Phase 66: Publish Pipeline & Release** - GitHub Actions CI/CD and npm publish for @napplet packages
+- [ ] **Phase 67: Cross-Repo Wiring & Docs** - Switch kehto to npm @napplet/core dependency, update all READMEs
+
+## Phase Details
+
+### Phase 62: Kehto Repo Scaffold
+**Goal**: Kehto exists as a buildable monorepo with the right package structure and GSD planning context
+**Depends on**: Nothing (fresh repo)
+**Requirements**: KEHTO-01, KEHTO-02, KEHTO-08
+**Success Criteria** (what must be TRUE):
+  1. ~/Develop/kehto is a git repo with pnpm workspaces, turborepo, tsconfig, and ESM-only configuration
+  2. @kehto/acl, @kehto/runtime, @kehto/shell, @kehto/services package directories exist with valid package.json files
+  3. PROJECT.md and .planning/ directory are seeded with enough context for future /gsd:new-project
+**Plans**: TBD
+
+### Phase 63: Package Migration
+**Goal**: All four kehto packages contain the migrated source and build cleanly
+**Depends on**: Phase 62
+**Requirements**: KEHTO-03, KEHTO-07
+**Success Criteria** (what must be TRUE):
+  1. Source files from @napplet/{acl,runtime,shell,services} are present in @kehto/{acl,runtime,shell,services} with all internal cross-references updated to @kehto/* imports
+  2. @napplet/core is consumed as a workspace-linked dependency (switched to npm in Phase 67)
+  3. `pnpm build` and `pnpm type-check` succeed with zero errors across all four kehto packages
+**Plans**: TBD
+
+### Phase 64: Demo & Test Migration
+**Goal**: The demo playground runs and tests pass in the kehto repo, proving the extracted packages work end-to-end
+**Depends on**: Phase 63
+**Requirements**: KEHTO-05, KEHTO-06
+**Success Criteria** (what must be TRUE):
+  1. Demo playground launches in kehto and loads napplets that complete AUTH handshake and exchange messages through @kehto packages
+  2. Relevant Playwright e2e and Vitest tests are copied to kehto and pass against @kehto packages
+  3. Protocol behavior (AUTH, relay routing, ACL, storage, IPC, services) is identical to what the tests verified in @napplet
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 65: Napplet Cleanup
+**Goal**: The @napplet monorepo contains only the 4 portable SDK packages and builds cleanly
+**Depends on**: Phase 64
+**Requirements**: CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04
+**Success Criteria** (what must be TRUE):
+  1. packages/acl, packages/runtime, packages/shell, packages/services, and demo/ are deleted from @napplet
+  2. pnpm workspace, turbo.json, and root tsconfig reference only core, shim, sdk, and vite-plugin
+  3. `pnpm build` and `pnpm type-check` succeed with the 4-package monorepo (no dangling references)
+**Plans**: TBD
+
+### Phase 66: Publish Pipeline & Release
+**Goal**: @napplet packages are published to npm with automated CI/CD
+**Depends on**: Phase 65
+**Requirements**: PUB-01, PUB-02, PUB-03, PUB-04
+**Success Criteria** (what must be TRUE):
+  1. GitHub Actions runs type-check and build on every PR to @napplet
+  2. Changesets workflow versions and publishes @napplet/{core,shim,sdk,vite-plugin} to npm on merge to main
+  3. All four packages are live on npm and installable via `npm install @napplet/core`
+**Plans**: TBD
+
+### Phase 67: Cross-Repo Wiring & Docs
+**Goal**: Kehto consumes @napplet/core from npm (not workspace link) and all documentation reflects the split
+**Depends on**: Phase 66
+**Requirements**: KEHTO-04, DOC-01, DOC-02
+**Success Criteria** (what must be TRUE):
+  1. @kehto packages declare @napplet/core as a peer dependency resolved from npm (not a workspace link)
+  2. `pnpm build` in kehto succeeds with npm-sourced @napplet/core
+  3. Root README in @napplet describes the 4-package SDK and cross-references @kehto for runtime/shell needs
+  4. Package READMEs for core, shim, sdk, and vite-plugin direct users to @kehto for runtime integration
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 62. Kehto Repo Scaffold | 0/TBD | Not started | - |
+| 63. Package Migration | 0/TBD | Not started | - |
+| 64. Demo & Test Migration | 0/TBD | Not started | - |
+| 65. Napplet Cleanup | 0/TBD | Not started | - |
+| 66. Publish Pipeline & Release | 0/TBD | Not started | - |
+| 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |
