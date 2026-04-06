@@ -123,7 +123,28 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.13.0 Runtime Decoupling & Publish
+
+**Goal:** Extract runtime/shell/acl/services/demo into @kehto org (github.com/kehto/runtime), clean up @napplet for npm publish, and seed kehto for GSD.
+
+**Target features:**
+- Extract packages to ~/Develop/kehto (fresh repo, clean start):
+  - @napplet/acl → @kehto/acl
+  - @napplet/runtime → @kehto/runtime
+  - @napplet/shell → @kehto/shell
+  - @napplet/services → @kehto/services
+  - demo/ → kehto demo
+- @kehto packages depend on @napplet/core as peer dep
+- Update all internal imports in kehto packages (@napplet/runtime → @kehto/runtime, etc.)
+- Seed ~/Develop/kehto with PROJECT.md + GSD context for /gsd:new-project
+- Remove extracted packages from @napplet monorepo
+- Clean up turborepo config, tsconfig, pnpm workspace for 4-package @napplet
+- Create GitHub Actions workflow for @napplet npm publish (CI + changesets)
+- Update root README for 4-package SDK (core, shim, sdk, vite-plugin)
+
+**After split:**
+- @napplet: core | shim(core) | sdk(core) | vite-plugin
+- @kehto: acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo
 
 ### Out of Scope
 
@@ -221,4 +242,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-06 after v0.12.0 milestone*
+*Last updated: 2026-04-06 after v0.13.0 milestone start*
