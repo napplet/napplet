@@ -2,11 +2,15 @@
 
 ## What This Is
 
-A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via NIP-01 postMessage wire format. Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) into standalone `@napplet/*` npm packages. Includes a 66-test protocol conformance suite and an interactive Chat + Bot demo playground.
+A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via NIP-01 postMessage wire format. Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) into standalone `@napplet/*` npm packages. Includes a 193-test protocol conformance suite, an interactive Chat + Bot demo playground, and the NIP-5D specification draft.
 
 ## Core Value
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
+
+## Shipped: v0.12.0 Spec Packaging
+
+SPEC.md renamed to RUNTIME-SPEC.md as internal reference with header linking to NIP-5D. NIP-5D v2 finalized at 199 lines with References section (5 cited NIPs) and Implementations section. 8 package READMEs and 4 source files updated to reference RUNTIME-SPEC.md. 1 phase, 1 plan shipped 2026-04-06. See [archive](milestones/v0.12.0-ROADMAP.md).
 
 ## Shipped: v0.11.0 Clean up Side Panel
 
@@ -113,28 +117,13 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Tab persistence across node selection — v0.11.0 Phase 55 (TAB-03)
 - ✓ Contextual filtering by selected node role with show-all fallback — v0.11.0 Phase 56 (FILT-01, FILT-02)
 - ✓ Show-all toggle to bypass contextual filtering — v0.11.0 Phase 56 (FILT-03)
+- ✓ SPEC.md renamed to RUNTIME-SPEC.md as internal reference — v0.12.0 Phase 61 (PKG-01)
+- ✓ NIP-5D v2 in nostr-protocol/nips markdown format (<200 lines, setext headings) — v0.12.0 Phase 61 (PKG-02)
+- ✓ NIP-5D lists @napplet/shim + hyprgate as reference implementations — v0.12.0 Phase 61 (PKG-03)
 
 ### Active
 
-## Current Milestone: v0.12.0 Draft Final "Nostr Web Applets" NIP [NIP-5C]
-
-**Goal:** Write a terse NIP-format specification for Nostr Web Applets (NIP-5C) extending NIP-5A, with new channel protocol work, and submit as PR to nostr-protocol/nips.
-
-**Target features:**
-- Channel protocol: authenticated persistent point-to-point connections between napplets (NIP-01 AUTH on open, custom wire format after). Broadcast as channel operation (send to all open channels).
-- NIP-5C spec in nostr-protocol/nips format — terse, references NIP-01 and NIP-5A
-- MUST interfaces: AUTH handshake, service/feature discovery (`window.napplet.services`)
-- MAY interfaces (optional, discoverable): relay proxy (`window.napplet.relay`), IPC pub/sub (`window.napplet.ipc`), channels (`window.napplet.channels`), napplet state storage (`window.napplet.storage`), NIP-07 signer (`window.nostr`), nostr event database (`window.nostrdb`)
-- Napplet responsibility: discover capabilities, adapt gracefully, announce incompatibility visually
-- Rename existing SPEC.md to internal/runtime reference
-- PR to nostr-protocol/nips
-
-**Key design decisions:**
-- NIP defines only the napplet↔shell contract; runtime internals (ACL, service registry, session management) are out of scope
-- Shell ↔ services layer will eventually move to a separate "runtime" repo
-- Signer proxy (29001/29002) replaced by optional NIP-07 (`window.nostr`) — shell proxies transparently
-- Storage proxy replaced by optional `window.nostrdb` (nostr event DB) + `window.napplet.storage` (napplet state) — both optional, shell provides and proxies
-- Channels designed to be general enough to theoretically support low-latency use cases (DAW BPM sync, VST-like plugin communication) without building any
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -151,15 +140,15 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.11.0 shipped (Clean up Side Panel). Inspector side panel reorganized into 3 tabs with contextual filtering by node role. 8 packages in the monorepo. 11 milestones shipped.
+- **Current state**: v0.12.0 shipped (Spec Packaging). RUNTIME-SPEC.md is the internal reference; NIP-5D v2 (`specs/NIP-5D.md`) is the terse standards-track spec. 8 packages in the monorepo. 12 milestones shipped.
 - **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
-- **Demo purpose**: Teach the concept at a glance, provide a visual test harness for protocol behavior, let users tinker with values to see system effects, and eventually support loading custom napplets for shell/runtime testing.
+- **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
+- **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
 - **Demo architecture**: Full topology view with distinct shell, ACL, runtime, and service nodes. Inspector has 3 tabs (Node, Constants, Kinds) with contextual filtering.
 - **Tech stack**: TypeScript 5.9, Vite 6.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4 + Playwright for testing, UnoCSS for demo styling.
-- **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total, plus ~29 service/discovery tests added in v0.4.0). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
-- **Documentation**: All 8 packages have README.md. SPEC.md (41KB+) covers full protocol including Section 11 service discovery, shim/SDK split, and full 8-package reference. 3 portable skill files in skills/ directory.
-- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. npm publish blocked on human auth. SPEC.md SEC-01 says "29000-29999 range" but code uses explicit allowlist. No automated e2e tests for REGISTER/IDENTITY step (covered by UAT only).
-- **NIP-5A spec**: Refined SPEC.md at repo root (41KB+). References NIP-5A and nostr-protocol/nips#2287 for aggregate hash. Section 11 defines Service Discovery protocol (kind 29010).
+- **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
+- **Documentation**: All 8 packages have README.md. RUNTIME-SPEC.md (41KB+) covers full protocol. NIP-5D.md is the terse external spec. 3 portable skill files in skills/ directory.
+- **Known remaining issues**: Permissive ACL default. postMessage origin '*' trust boundary. Fake event IDs on shell-injected events. npm publish blocked on human auth. NIP number conflict with Scrolls PR#2281 (RES-01). No automated e2e tests for REGISTER/IDENTITY step (covered by UAT only).
 
 ## Constraints
 
@@ -198,6 +187,8 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 | Hash mismatch warns but doesn't block registration | Adoption-friendly — developers aren't locked out during development | ✓ Good — onHashMismatch callback gives host apps flexibility |
 | Triple-read storage migration across 3 historical formats | Zero data loss on upgrade — reads new format, then legacy with pubkey, then old napp-state: prefix | ✓ Good — backward compat with no user action |
 | SEC-01 explicit BusKind allowlist (not 29000-29999 range) | Principle of least privilege — future bus kinds must opt in | ✓ Good — though SPEC.md says range (known debt) |
+| SPEC.md → RUNTIME-SPEC.md with internal-reference header | Distinguishes internal reference from NIP standard; header links to NIP-5D | ✓ Good — no confusion between runtime spec and protocol NIP |
+| Historical PROJECT.md SPEC.md references left as-is | These are milestone descriptions, not active cross-references | ✓ Good — avoids rewriting history |
 
 ## Evolution
 
@@ -218,13 +209,16 @@ This document evolves at phase transitions and milestone boundaries.
 
 ## Future Milestone Candidates
 
-After v0.6.0, likely next candidates:
-- Load custom napplets into the demo shell for ad-hoc shell/ACL/runtime testing
+Likely next candidates:
+- Submit NIP-5D PR to nostr-protocol/nips
+- Formalize NUB governance (NUB-01/02/03) and create napplets org/repo
 - Publish all @napplet/* packages to npm (blocked on human npm auth)
+- Package alignment with NIP-5D (remove signer proxy kinds 29001/29002, rename internal interfaces)
+- Load custom napplets into the demo shell for ad-hoc shell/ACL/runtime testing
 - `@napplet/create` CLI / starter template
 - Deploy demo as a production nsite
-- Service ACL — per-service capability strings (service:audio, service:notifications)
+- Channel/pipe protocol implementation in packages (NUB-PIPES)
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-05 after v0.12.0 milestone start*
+*Last updated: 2026-04-06 after v0.12.0 milestone*

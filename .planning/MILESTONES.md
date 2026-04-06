@@ -1,5 +1,23 @@
 # Milestones
 
+## v0.12.0 Spec Packaging (Shipped: 2026-04-06)
+
+**Phases completed:** 1 phase, 1 plan, 2 tasks
+
+**Key accomplishments:**
+
+- Renamed SPEC.md to RUNTIME-SPEC.md with internal-reference header distinguishing it from the NIP standard
+- Finalized NIP-5D v2 with References section listing NIP-01, NIP-07, NIP-42, NIP-45, NIP-5A
+- Updated 8 package READMEs and 4 source files to reference RUNTIME-SPEC.md
+- NIP-5D at 199 lines — all nips format conventions met, ready for submission
+
+### Known Gaps
+
+- `RES-01`: NIP number conflict with Scrolls PR#2281 — unresolved, carry forward
+- `NUB-01`, `NUB-02`, `NUB-03`: NUB governance and interface specs — descoped from v0.12.0, move to future milestone
+
+---
+
 ## v0.11.0 Clean up Side Panel (Shipped: 2026-04-05)
 
 **Phases completed:** 3 phases, 4 plans, 8 tasks
