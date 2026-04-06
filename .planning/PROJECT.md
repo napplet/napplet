@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.14.0 Repo Cleanup & Audit
+
+Dead code, stale docs, and leftover artifacts from v0.13.0 extraction cleaned up. RUNTIME-SPEC.md, skills/, specs/nubs/ all updated to reference @kehto. MIGRATION-EVAL.md produced with stay/move/split recommendations for all remaining content. 2 phases, 3 plans shipped 2026-04-06. See [archive](milestones/v0.14.0-ROADMAP.md).
+
 ## Shipped: v0.13.0 Runtime Decoupling & Publish
 
 Runtime, shell, ACL, services, and demo extracted to ~/Develop/kehto (@kehto npm org, github.com/kehto/runtime). 40 source files migrated with import rewrites. Demo + 252 unit + 127 e2e tests passing in kehto. @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin) — 29,500 lines removed. GitHub Actions CI/CD with changesets. READMEs updated. npm publish deferred (PUB-04 — needs human auth). 6 phases, 11 plans shipped 2026-04-06. See [archive](milestones/v0.13.0-ROADMAP.md).
@@ -134,16 +138,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-## Current Milestone: v0.14.0 Repo Cleanup & Audit
-
-**Goal:** Audit @napplet repo for dead code, stale docs, and leftover artifacts from v0.13.0 extraction. Clean up and identify remaining candidates for @kehto migration.
-
-**Target features:**
-- Audit source files for dead code (unused exports, stale imports, orphaned modules)
-- Audit docs for stale references (RUNTIME-SPEC.md, skill files, configs referencing extracted packages)
-- Clean up turbo.json, tsconfig, package.json dead entries
-- Identify remaining code/docs that should move to @kehto
-- Remove stale test fixtures, screenshots, configs
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -160,7 +155,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.13.0 shipped (Runtime Decoupling & Publish). @napplet is now a 4-package SDK. Runtime/shell/ACL/services extracted to @kehto. 13 milestones shipped.
+- **Current state**: v0.14.0 shipped (Repo Cleanup & Audit). @napplet is a clean 4-package SDK. All stale refs to extracted packages removed. MIGRATION-EVAL.md documents what stays/moves. 14 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin. @kehto (separate repo): acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -241,4 +236,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-06 after v0.14.0 milestone start*
+*Last updated: 2026-04-06 after v0.14.0 milestone*

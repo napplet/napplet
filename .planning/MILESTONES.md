@@ -1,5 +1,17 @@
 # Milestones
 
+## v0.14.0 Repo Cleanup & Audit (Shipped: 2026-04-06)
+
+**Phases completed:** 2 phases, 3 plans, 5 tasks
+
+**Key accomplishments:**
+
+- Removed dead test:e2e turbo task, deleted stale Playwright artifacts and PRBODY.md, verified all 4 package exports and config files are clean
+- Updated RUNTIME-SPEC.md, 3 skills, and 6 NUB specs to replace stale @napplet/shell|runtime|acl|services references with @kehto equivalents
+- Structured assessment of all remaining @napplet content with concrete stay/move/split recommendations for @kehto and nubs repo
+
+---
+
 ## v0.13.0 Runtime Decoupling & Publish (Shipped: 2026-04-06)
 
 **Phases completed:** 6 phases, 11 plans, 18 tasks
