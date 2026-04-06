@@ -159,7 +159,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 62: Kehto Repo Scaffold** - Initialize ~/Develop/kehto as pnpm monorepo with package shells and GSD seed (completed 2026-04-06)
 - [x] **Phase 63: Package Migration** - Copy source from @napplet, rewrite imports to @kehto/*, build and type-check green (completed 2026-04-06)
-- [ ] **Phase 64: Demo & Test Migration** - Demo playground and test suite running in kehto against @kehto packages
+- [x] **Phase 64: Demo & Test Migration** - Demo playground and test suite running in kehto against @kehto packages (completed 2026-04-06)
 - [ ] **Phase 65: Napplet Cleanup** - Remove extracted packages and demo from @napplet, reconfigure for 4-package monorepo
 - [ ] **Phase 66: Publish Pipeline & Release** - GitHub Actions CI/CD and npm publish for @napplet packages
 - [ ] **Phase 67: Cross-Repo Wiring & Docs** - Switch kehto to npm @napplet/core dependency, update all READMEs
@@ -204,7 +204,7 @@ Plans:
 Plans:
 - [x] 64-01-PLAN.md — Copy demo playground, rewrite shell-side imports to @kehto/*, build
 - [x] 64-02-PLAN.md — Copy unit tests, create vitest config with @kehto/* aliases, verify passing
-- [ ] 64-03-PLAN.md — Copy e2e infrastructure and Playwright tests, verify protocol conformance + visual checkpoint
+- [x] 64-03-PLAN.md — Copy e2e infrastructure and Playwright tests, verify protocol conformance + visual checkpoint
 
 ### Phase 65: Napplet Cleanup
 **Goal**: The @napplet monorepo contains only the 4 portable SDK packages and builds cleanly
@@ -246,7 +246,7 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 |-------|----------------|--------|-----------|
 | 62. Kehto Repo Scaffold | 2/2 | Complete    | 2026-04-06 |
 | 63. Package Migration | 2/2 | Complete    | 2026-04-06 |
-| 64. Demo & Test Migration | 2/3 | In Progress|  |
+| 64. Demo & Test Migration | 3/3 | Complete   | 2026-04-06 |
 | 65. Napplet Cleanup | 0/TBD | Not started | - |
 | 66. Publish Pipeline & Release | 0/TBD | Not started | - |
 | 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |

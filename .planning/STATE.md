@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
-status: executing
-stopped_at: Completed 64-02-PLAN.md (unit test migration)
-last_updated: "2026-04-06T17:03:42.588Z"
+status: verifying
+stopped_at: Completed 64-03-PLAN.md (e2e test migration)
+last_updated: "2026-04-06T17:17:11.483Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 Phase: 64 (demo-test-migration) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 Progress: [----------] 0%
@@ -46,6 +46,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 63]: Added vitest to services devDependencies for test file type-checking
 - [Phase 64]: Removed stale Vite path aliases in chat/bot configs -- cross-repo links resolve via node_modules
 - [Phase 64]: Used absolute path to napplet core source for @napplet/core vitest alias in kehto
+- [Phase 64]: Pre-built fixture dist/ from napplet repo works in kehto (bundled shim code, not runtime imports)
+- [Phase 64]: 12 e2e test failures are all pre-existing (identical to napplet repo), not caused by migration
 
 ### Quick Tasks Completed
 
@@ -64,6 +66,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06T17:03:42.585Z
-Stopped at: Completed 64-02-PLAN.md (unit test migration)
+Last session: 2026-04-06T17:17:11.480Z
+Stopped at: Completed 64-03-PLAN.md (e2e test migration)
 Resume: `/gsd:plan-phase 62`
