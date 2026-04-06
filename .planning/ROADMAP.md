@@ -200,8 +200,11 @@ Plans:
   1. Demo playground launches in kehto and loads napplets that complete AUTH handshake and exchange messages through @kehto packages
   2. Relevant Playwright e2e and Vitest tests are copied to kehto and pass against @kehto packages
   3. Protocol behavior (AUTH, relay routing, ACL, storage, IPC, services) is identical to what the tests verified in @napplet
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans
+Plans:
+- [ ] 64-01-PLAN.md — Copy demo playground, rewrite shell-side imports to @kehto/*, build
+- [ ] 64-02-PLAN.md — Copy unit tests, create vitest config with @kehto/* aliases, verify passing
+- [ ] 64-03-PLAN.md — Copy e2e infrastructure and Playwright tests, verify protocol conformance + visual checkpoint
 
 ### Phase 65: Napplet Cleanup
 **Goal**: The @napplet monorepo contains only the 4 portable SDK packages and builds cleanly
@@ -243,7 +246,7 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 |-------|----------------|--------|-----------|
 | 62. Kehto Repo Scaffold | 2/2 | Complete    | 2026-04-06 |
 | 63. Package Migration | 2/2 | Complete    | 2026-04-06 |
-| 64. Demo & Test Migration | 0/TBD | Not started | - |
+| 64. Demo & Test Migration | 0/3 | Not started | - |
 | 65. Napplet Cleanup | 0/TBD | Not started | - |
 | 66. Publish Pipeline & Release | 0/TBD | Not started | - |
 | 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |
