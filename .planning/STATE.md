@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
 status: executing
-stopped_at: Completed 64-01-PLAN.md (demo migration)
-last_updated: "2026-04-06T16:55:40.764Z"
+stopped_at: Completed 64-02-PLAN.md (unit test migration)
+last_updated: "2026-04-06T17:03:42.588Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 64 (demo-test-migration) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -45,6 +45,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 63]: Added DOM and DOM.Iterable libs to kehto shell tsconfig.json for browser type availability
 - [Phase 63]: Added vitest to services devDependencies for test file type-checking
 - [Phase 64]: Removed stale Vite path aliases in chat/bot configs -- cross-repo links resolve via node_modules
+- [Phase 64]: Used absolute path to napplet core source for @napplet/core vitest alias in kehto
 
 ### Quick Tasks Completed
 
@@ -63,6 +64,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06T16:55:40.761Z
-Stopped at: Completed 64-01-PLAN.md (demo migration)
+Last session: 2026-04-06T17:03:42.585Z
+Stopped at: Completed 64-02-PLAN.md (unit test migration)
 Resume: `/gsd:plan-phase 62`

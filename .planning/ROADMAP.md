@@ -203,7 +203,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 64-01-PLAN.md — Copy demo playground, rewrite shell-side imports to @kehto/*, build
-- [ ] 64-02-PLAN.md — Copy unit tests, create vitest config with @kehto/* aliases, verify passing
+- [x] 64-02-PLAN.md — Copy unit tests, create vitest config with @kehto/* aliases, verify passing
 - [ ] 64-03-PLAN.md — Copy e2e infrastructure and Playwright tests, verify protocol conformance + visual checkpoint
 
 ### Phase 65: Napplet Cleanup
@@ -246,7 +246,7 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 |-------|----------------|--------|-----------|
 | 62. Kehto Repo Scaffold | 2/2 | Complete    | 2026-04-06 |
 | 63. Package Migration | 2/2 | Complete    | 2026-04-06 |
-| 64. Demo & Test Migration | 1/3 | In Progress|  |
+| 64. Demo & Test Migration | 2/3 | In Progress|  |
 | 65. Napplet Cleanup | 0/TBD | Not started | - |
 | 66. Publish Pipeline & Release | 0/TBD | Not started | - |
 | 67. Cross-Repo Wiring & Docs | 0/TBD | Not started | - |
