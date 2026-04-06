@@ -187,7 +187,10 @@ Plans:
   1. Source files from @napplet/{acl,runtime,shell,services} are present in @kehto/{acl,runtime,shell,services} with all internal cross-references updated to @kehto/* imports
   2. @napplet/core is consumed as a workspace-linked dependency (switched to npm in Phase 67)
   3. `pnpm build` and `pnpm type-check` succeed with zero errors across all four kehto packages
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 63-01-PLAN.md — Link @napplet/core, migrate @kehto/acl and @kehto/runtime source
+- [ ] 63-02-PLAN.md — Migrate @kehto/shell and @kehto/services source, verify full monorepo
 
 ### Phase 64: Demo & Test Migration
 **Goal**: The demo playground runs and tests pass in the kehto repo, proving the extracted packages work end-to-end
@@ -239,7 +242,7 @@ Phases execute in numeric order: 62 → 63 → 64 → 65 → 66 → 67
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 62. Kehto Repo Scaffold | 2/2 | Complete    | 2026-04-06 |
-| 63. Package Migration | 0/TBD | Not started | - |
+| 63. Package Migration | 0/2 | Not started | - |
 | 64. Demo & Test Migration | 0/TBD | Not started | - |
 | 65. Napplet Cleanup | 0/TBD | Not started | - |
 | 66. Publish Pipeline & Release | 0/TBD | Not started | - |
