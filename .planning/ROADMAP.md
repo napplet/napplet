@@ -198,7 +198,9 @@ Plans:
   1. An audit report exists documenting any remaining code or docs that should migrate to @kehto, with rationale for each item
   2. specs/nubs/ has a documented stay-or-move recommendation with reasoning (protocol specs vs implementation specs distinction)
   3. Each skills/ file has a documented recommendation: keep in @napplet, move to @kehto, or split across both -- based on which SDK the skill teaches
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 69-01-PLAN.md — Read all remaining content, write MIGRATION-EVAL.md report
 
 ## Progress
 
@@ -208,4 +210,4 @@ Phases execute in numeric order: 68 -> 69
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 68. Audit & Clean | 2/2 | Complete    | 2026-04-06 |
-| 69. Migration Evaluation | 0/TBD | Not started | - |
+| 69. Migration Evaluation | 0/1 | Not started | - |
