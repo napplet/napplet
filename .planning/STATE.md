@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
-status: verifying
-stopped_at: Completed 63-02-PLAN.md (shell + services migration)
-last_updated: "2026-04-06T16:38:55.593Z"
+status: executing
+stopped_at: Completed 64-01-PLAN.md (demo migration)
+last_updated: "2026-04-06T16:55:40.764Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 63 — package-migration
+**Current focus:** Phase 64 — demo-test-migration
 
 ## Current Position
 
-Phase: 64
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 64 (demo-test-migration) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-06
 
 Progress: [----------] 0%
@@ -44,6 +44,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 63]: Added vitest to runtime devDependencies for test file type-checking
 - [Phase 63]: Added DOM and DOM.Iterable libs to kehto shell tsconfig.json for browser type availability
 - [Phase 63]: Added vitest to services devDependencies for test file type-checking
+- [Phase 64]: Removed stale Vite path aliases in chat/bot configs -- cross-repo links resolve via node_modules
 
 ### Quick Tasks Completed
 
@@ -62,6 +63,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06T16:35:44.442Z
-Stopped at: Completed 63-02-PLAN.md (shell + services migration)
+Last session: 2026-04-06T16:55:40.761Z
+Stopped at: Completed 64-01-PLAN.md (demo migration)
 Resume: `/gsd:plan-phase 62`
