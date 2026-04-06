@@ -4,13 +4,13 @@ milestone: v0.13.0
 milestone_name: Runtime Decoupling & Publish
 status: executing
 stopped_at: Completed 66-01-PLAN.md (publish pipeline)
-last_updated: "2026-04-06T17:45:17.163Z"
+last_updated: "2026-04-06T17:53:33.355Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 ## Current Position
 
-Phase: 66 (publish-pipeline-release) — EXECUTING
-Plan: 2 of 2
+Phase: 67
+Plan: Not started
 Status: Ready to execute
 Last activity: 2026-04-06
 
