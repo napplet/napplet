@@ -6,7 +6,7 @@
 
 ### Prerequisites
 
-- A shell host running [@napplet/runtime](https://www.npmjs.com/package/@napplet/runtime) (or [@napplet/shell](https://www.npmjs.com/package/@napplet/shell) for browser environments)
+- A shell host running [@kehto/shell](https://github.com/sandwichfarm/kehto) or another napplet protocol shell implementation
 - [nostr-tools](https://www.npmjs.com/package/nostr-tools) as a peer dependency
 
 ### How It Works

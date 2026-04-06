@@ -27,7 +27,7 @@ The build-time manifest is for verifying the hash computation workflow locally, 
 
 ### When to Use This
 
-- You are building a napplet and testing locally with @napplet/shell
+- You are building a napplet and testing locally with [@kehto/shell](https://github.com/sandwichfarm/kehto)
 - You want to verify aggregate hash computation before deploying
 
 ### When NOT to Use This
@@ -145,9 +145,9 @@ At build time (with `VITE_DEV_PRIVKEY_HEX` set), the manifest event also include
 The host shell reads `<meta name="napplet-requires">` during napplet initialization and compares against registered services. Napplets can also check at runtime:
 
 ```ts
-import { hasService } from '@napplet/shim';
+import '@napplet/shim';
 
-if (!(await hasService('audio'))) {
+if (!(await window.napplet.services.has('audio'))) {
   console.warn('Audio service not available — some features disabled');
 }
 ```

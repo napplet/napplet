@@ -77,7 +77,7 @@ type Capability =
   | 'state:read' | 'state:write';
 ```
 
-The `@napplet/acl` package uses bitfield constants (`CAP_*`) for fast runtime checks. `Capability` strings are the human-readable protocol-level representation.
+The [`@kehto/acl`](https://github.com/sandwichfarm/kehto) package uses bitfield constants (`CAP_*`) for fast runtime checks. `Capability` strings are the human-readable protocol-level representation.
 
 #### `ServiceDescriptor`
 
@@ -195,7 +195,10 @@ import type {
 
 ## Integration Note
 
-`@napplet/core` is consumed by all other packages in the ecosystem. `@napplet/runtime` and `@napplet/shell` use `BusKind`, `TOPICS`, and all types. `@napplet/acl` adds bitfield constants on top of the `Capability` string union. `@napplet/shim` exports `NostrEvent` and `NostrFilter` for napplet authors.
+`@napplet/core` is consumed by all other packages in the napplet ecosystem:
+
+- **In this repo:** `@napplet/shim`, `@napplet/sdk`, and `@napplet/vite-plugin` import protocol types and constants from `@napplet/core`.
+- **In [@kehto](https://github.com/sandwichfarm/kehto):** `@kehto/runtime`, `@kehto/shell`, and `@kehto/services` depend on `@napplet/core` as a peer dependency for `BusKind`, `TOPICS`, and all shared protocol types.
 
 ## Protocol Reference
 
