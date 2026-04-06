@@ -90,4 +90,4 @@ All NIPDB_RESPONSE events include:
 ## Implementations
 
 - [@napplet/shim](https://github.com/sandwichfarm/napplet) -- napplet-side (`window.nostrdb` installation via `installNostrDb()`)
-- [@napplet/shell](https://github.com/sandwichfarm/napplet) -- shell-side (NIPDB request routing to WorkerRelay)
+- [@kehto/shell](https://github.com/sandwichfarm/kehto) -- shell-side (NIPDB request routing to WorkerRelay)

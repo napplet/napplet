@@ -366,4 +366,4 @@ channel used by NIP-01 relay messages, distinguished by their verb prefix.
 ## Implementations
 
 - No implementations exist. This spec is a draft for future implementation in
-  `@napplet/shim` (client) and `@napplet/runtime` (shell-side pipe router).
+  `@napplet/shim` (client) and `@kehto/runtime` (shell-side pipe router).

@@ -103,4 +103,4 @@ routing:
 ## Implementations
 
 - [@napplet/shim](https://github.com/sandwichfarm/napplet) (napplet-side: `packages/shim/src/state-shim.ts`)
-- [@napplet/shell](https://github.com/sandwichfarm/napplet) (shell-side: `packages/runtime/src/state-handler.ts`)
+- [@kehto/shell](https://github.com/sandwichfarm/kehto) (shell-side: `packages/runtime/src/state-handler.ts`)

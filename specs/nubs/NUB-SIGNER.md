@@ -81,4 +81,4 @@ This is the standard NIP-07 interface. NUB-SIGNER does not extend or modify it.
 ## Implementations
 
 - [@napplet/shim](https://github.com/sandwichfarm/napplet) (napplet-side: `packages/shim/src/index.ts`)
-- [@napplet/shell](https://github.com/sandwichfarm/napplet) (shell-side: `packages/runtime/src/signer-handler.ts`)
+- [@kehto/shell](https://github.com/sandwichfarm/kehto) (shell-side: `packages/runtime/src/signer-handler.ts`)

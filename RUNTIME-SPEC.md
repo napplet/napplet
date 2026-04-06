@@ -1495,11 +1495,13 @@ The portable SDK packages are in the [napplet](https://github.com/sandwichfarm/n
 - **@napplet/shim** (window installer): `packages/shim/src/` — side-effect-only module that installs `window.napplet` global and `window.nostr` NIP-07 bridge
 - **@napplet/sdk** (developer API): `packages/sdk/src/` — named TypeScript exports wrapping `window.napplet` for bundler consumers
 - **@napplet/core** (shared types): `packages/core/src/` — protocol types, constants, and bus kind definitions
-- **@napplet/runtime** (protocol engine): `packages/runtime/src/` — framework-agnostic NIP-01 message router, AUTH handler, ACL enforcement
-- **@napplet/acl** (access control): `packages/acl/src/` — pure, zero-dep ACL module with bitfield capabilities
-- **@napplet/services** (service handlers): `packages/services/src/` — audio and notification ServiceHandler implementations
-- **@napplet/shell** (browser adapter): `packages/shell/src/` — browser-specific shell adapter over runtime
 - **@napplet/vite-plugin** (dev tooling): `packages/vite-plugin/src/` — NIP-5A manifest generation at build time
+
+> **Note:** The runtime, ACL, services, and shell packages have moved to the [kehto](https://github.com/sandwichfarm/kehto) monorepo as `@kehto/*` packages:
+> - **@kehto/runtime** (protocol engine): framework-agnostic NIP-01 message router, AUTH handler, ACL enforcement
+> - **@kehto/acl** (access control): pure, zero-dep ACL module with bitfield capabilities
+> - **@kehto/services** (service handlers): audio and notification ServiceHandler implementations
+> - **@kehto/shell** (browser adapter): browser-specific shell adapter over runtime
 
 The Svelte reference implementation using these packages is [hyprgate](https://github.com/sandwichfarm/hyprgate).
 

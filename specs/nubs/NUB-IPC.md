@@ -102,4 +102,4 @@ NUB-IPC is for loose-coupled, topic-based pub/sub with per-message authenticatio
 ## Implementations
 
 - [@napplet/shim](https://github.com/sandwichfarm/napplet) -- napplet-side (`emit()` and `on()` installed on `window.napplet.ipc`)
-- [@napplet/shell](https://github.com/sandwichfarm/napplet) -- shell-side (IPC_PEER routing via ShellBridge subscription dispatch)
+- [@kehto/shell](https://github.com/sandwichfarm/kehto) -- shell-side (IPC_PEER routing via ShellBridge subscription dispatch)
