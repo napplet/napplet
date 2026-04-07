@@ -219,7 +219,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `shell.supports('svc:audio')` returns whether the shell provides the audio service
   4. `ShellSupports` type accepts `nub:${NubDomain}`, `perm:${string}`, and `svc:${string}` template literal types
   5. `NappletGlobalShell` type on `window.napplet.shell` reflects the namespaced supports() signature
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 80-01-PLAN.md — Update ShellSupports type, JSDoc, shim stub, and add type-level tests
 
 ### Phase 81: Dead Code & Legacy Removal
 **Goal**: Every dead service discovery artifact and legacy backward-compat shim is deleted from the codebase
@@ -251,6 +253,6 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 80. Namespaced Capability Query | 0/0 | Not started | - |
+| 80. Namespaced Capability Query | 0/1 | Not started | - |
 | 81. Dead Code & Legacy Removal | 0/0 | Not started | - |
 | 82. Documentation | 0/0 | Not started | - |
