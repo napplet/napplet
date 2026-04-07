@@ -1,5 +1,5 @@
 /**
- * @napplet/core — Shared protocol types, constants, and topic definitions.
+ * @napplet/core -- Shared protocol types, constants, and topic definitions.
  *
  * This package is the single source of truth for all protocol-level
  * definitions in the napplet ecosystem. All other @napplet/* packages
@@ -11,7 +11,7 @@
  * ```ts
  * import {
  *   type NostrEvent, type NostrFilter, type Capability,
- *   BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
+ *   BusKind, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
  *   DESTRUCTIVE_KINDS, ALL_CAPABILITIES, TOPICS,
  * } from '@napplet/core';
  * ```
@@ -30,8 +30,6 @@ export type {
   EventTemplate,
   ServiceInfo,
   NappletGlobal,
-  RegisterPayload,
-  IdentityPayload,
 } from './types.js';
 export { ALL_CAPABILITIES } from './types.js';
 
@@ -40,12 +38,9 @@ export { ALL_CAPABILITIES } from './types.js';
 export {
   PROTOCOL_VERSION,
   SHELL_BRIDGE_URI,
-  AUTH_KIND,
   REPLAY_WINDOW_SECONDS,
   BusKind,
   DESTRUCTIVE_KINDS,
-  VERB_REGISTER,
-  VERB_IDENTITY,
 } from './constants.js';
 export type { BusKindValue } from './constants.js';
 

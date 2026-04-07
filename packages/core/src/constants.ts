@@ -1,8 +1,9 @@
 /**
- * @napplet/core — Protocol constants for the napplet-shell communication protocol.
+ * @napplet/core -- Protocol constants for the napplet-shell communication protocol.
  *
  * These constants define event kinds, URIs, and protocol metadata
- * shared across all napplet packages.
+ * shared across all napplet packages. The wire protocol uses unsigned
+ * event templates from napplets; identity is handled by the shell/runtime.
  */
 
 // ─── Protocol Metadata ──────────────────────────────────────────────────────
@@ -11,29 +12,20 @@
  * Current protocol version for the napplet-shell communication protocol.
  * @example
  * ```ts
- * console.log(PROTOCOL_VERSION); // '2.0.0'
+ * console.log(PROTOCOL_VERSION); // '3.0.0'
  * ```
  */
-export const PROTOCOL_VERSION = '2.0.0' as const;
+export const PROTOCOL_VERSION = '3.0.0' as const;
 
 /**
  * URI identifying the shell bridge as a pseudo-relay endpoint.
- * Used in NIP-42 AUTH relay tags to distinguish shell messages from real relays.
+ * Used in relay tags to distinguish shell-routed messages from real relays.
  * @example
  * ```ts
  * const relayTag = ['relay', SHELL_BRIDGE_URI]; // ['relay', 'napplet://shell']
  * ```
  */
 export const SHELL_BRIDGE_URI = 'napplet://shell' as const;
-
-/**
- * NIP-42 AUTH event kind used for napplet authentication handshakes.
- * @example
- * ```ts
- * if (event.kind === AUTH_KIND) { // handle auth }
- * ```
- */
-export const AUTH_KIND = 22242 as const;
 
 /** Maximum age in seconds for an event to be accepted (replay protection window). */
 export const REPLAY_WINDOW_SECONDS = 30 as const;
@@ -63,7 +55,6 @@ export const REPLAY_WINDOW_SECONDS = 30 as const;
  * ```
  */
 export const BusKind = {
-  REGISTRATION: 29000,
   SIGNER_REQUEST: 29001,
   SIGNER_RESPONSE: 29002,
   IPC_PEER: 29003,
@@ -90,16 +81,3 @@ export type BusKindValue = (typeof BusKind)[keyof typeof BusKind];
  */
 export const DESTRUCTIVE_KINDS = new Set([0, 3, 5, 10002]);
 
-// ─── Handshake Verbs ───────────────────────────────────────────────────────
-
-/**
- * NIP-01 verb for napplet registration (napplet -> shell).
- * Sent before AUTH to announce napplet identity and claim an aggregate hash.
- */
-export const VERB_REGISTER = 'REGISTER' as const;
-
-/**
- * NIP-01 verb for identity delegation (shell -> napplet).
- * Shell sends a derived keypair to the napplet after verifying registration.
- */
-export const VERB_IDENTITY = 'IDENTITY' as const;
