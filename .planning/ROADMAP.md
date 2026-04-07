@@ -234,7 +234,9 @@ Plans:
   2. @napplet/sdk README no longer references napplet-side signing or ephemeral keys
   3. @napplet/core README is updated to reflect removed handshake types
   4. Root monorepo README's "Key Concepts" section describes identity as shell-assigned via message.source, not AUTH handshake
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 73-01-PLAN.md -- Update all package READMEs and root README for no-crypto wire protocol
 
 ## Progress
 
@@ -246,4 +248,4 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73
 | 70. Core Protocol Types | 1/1 | Complete    | 2026-04-07 |
 | 71. Shim Simplification | 1/1 | Complete    | 2026-04-07 |
 | 72. NIP-5D Update | 1/1 | Complete    | 2026-04-07 |
-| 73. SDK & README Update | 0/TBD | Not started | - |
+| 73. SDK & README Update | 0/1 | Not started | - |
