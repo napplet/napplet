@@ -1,8 +1,18 @@
-// @napplet/shim — Keyboard forwarding shim
+// @napplet/shim -- Keyboard forwarding shim
 // Captures keydown events in the napplet and forwards them to the parent shell
-// as unsigned kind 29004 event templates so WM hotkeys work even when an iframe has DOM focus.
+// as keyboard.forward envelope messages so WM hotkeys work even when an iframe has DOM focus.
 
-import { BusKind } from './types.js';
+// ─── Local envelope type (keyboard is not a NUB domain) ──────────────────────
+
+interface KeyboardForwardMessage {
+  type: 'keyboard.forward';
+  key: string;
+  code: string;
+  ctrl: boolean;
+  alt: boolean;
+  shift: boolean;
+  meta: boolean;
+}
 
 /**
  * Returns true if the given event target is a text-entry input element.
@@ -39,7 +49,7 @@ function isModifierOnly(key: string): boolean {
  *
  * Attaches a capture-phase keydown listener to the document. For every
  * keystroke that is NOT in a text input and NOT a bare modifier, sends
- * an unsigned kind 29004 event template to the parent shell via NIP-01 postMessage.
+ * a keyboard.forward envelope message to the parent shell via postMessage.
  *
  * @returns cleanup function that removes the listener
  */
@@ -55,20 +65,16 @@ export function installKeyboardShim(): () => void {
     if (isTextInput(event.target)) return;
     if (isModifierOnly(event.key)) return;
 
-    const hotkeyEvent = {
-      kind: BusKind.HOTKEY_FORWARD,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: [
-        ['key', event.key],
-        ['code', event.code],
-        ['ctrl', event.ctrlKey ? '1' : '0'],
-        ['alt', event.altKey ? '1' : '0'],
-        ['shift', event.shiftKey ? '1' : '0'],
-        ['meta', event.metaKey ? '1' : '0'],
-      ],
-      content: '',
+    const msg: KeyboardForwardMessage = {
+      type: 'keyboard.forward',
+      key: event.key,
+      code: event.code,
+      ctrl: event.ctrlKey,
+      alt: event.altKey,
+      shift: event.shiftKey,
+      meta: event.metaKey,
     };
-    window.parent.postMessage(['EVENT', hotkeyEvent], '*');
+    window.parent.postMessage(msg, '*');
   }
 
   document.addEventListener('keydown', handleKeydown, true);
