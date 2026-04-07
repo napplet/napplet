@@ -99,7 +99,7 @@ NUB specs MUST:
 Napplets are untrusted code. The shell is trusted. The browser enforces iframe sandbox boundaries. `MessageEvent.source` provides unforgeable sender identity.
 
 **Mitigations:**
-1. Iframe sandbox: `allow-scripts` only -- shells MUST NOT add `allow-same-origin`.
+1. Iframe sandbox: `allow-scripts` is the only required token -- shells MUST NOT add `allow-same-origin`.
 2. postMessage `'*'` origin is required for opaque-origin iframes; sender identification uses `MessageEvent.source`, NOT `event.origin`.
 3. Identity binding: the shell maps `MessageEvent.source` to napplet identity at iframe creation. The browser's `MessageEvent.source` is unforgeable within the same browsing context.
 4. Aggregate hash verification against [NIP-5A](5A.md) manifests; mismatch MAY result in napplet rejection.
