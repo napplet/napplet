@@ -86,16 +86,13 @@ Service discovery (e.g., audio, notifications) uses a separate API:
 
 ## NUB Extension Framework
 
-Protocol messages are defined by NUB (Napplet Unified Blueprint) specs. Each NUB owns a message domain and defines the `type` strings, payload shapes, and semantics for that domain:
+Protocol messages are defined by NUB (Napplet Unified Blueprint) specs. Each NUB owns a message domain and defines the `type` strings, payload shapes, and semantics for that domain. A NUB spec is self-contained — it references this NIP only for envelope format and transport.
 
-| NUB | Domain | Defines |
-|-----|--------|---------|
-| NUB-RELAY | `relay` | Relay proxy: subscribe, publish, event delivery, close |
-| NUB-SIGNER | `signer` | Signing delegation: sign request, response, get-public-key |
-| NUB-STORAGE | `storage` | Scoped storage: get, set, delete, keys |
-| NUB-IFC | `ifc` | Inter-frame communication: dispatch and channel modes |
-
-NUB specs are maintained at [github.com/napplet/nubs](https://github.com/napplet/nubs). Each NUB spec is self-contained and references this NIP only for envelope format and transport.
+NUB specs MUST:
+- Define all valid `type` strings for their domain (e.g., `domain.action`)
+- Specify the payload shape for each message type
+- Document expected shell behavior for each message
+- Be independently implementable — a shell MAY support any subset of NUBs
 
 ## Security Considerations
 
