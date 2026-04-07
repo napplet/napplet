@@ -66,18 +66,21 @@ Relay operations through the shell's relay pool. Mirrors `window.napplet.relay`.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `subscribe(filters, onEvent, onEose, options?)` | `Subscription` | Open a live NIP-01 subscription |
+| `subscribe(filters, onEvent, onEose, options?)` | `Subscription` | Open a live relay subscription through the shell's relay pool |
 | `publish(template, options?)` | `Promise<NostrEvent>` | Sign and broadcast via the shell's signer proxy |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: subscribe, collect until EOSE, resolve |
 
 ### `ipc`
 
-Inter-pane communication between napplets. Mirrors `window.napplet.ipc`.
+Inter-napplet communication between napplets. Mirrors `window.napplet.ipc`.
+
+Messages are sent as JSON envelope objects (`{ type: 'ifc.emit', topic, payload }`) and received as
+(`{ type: 'ifc.event', topic, payload, sender }`).
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `emit(topic, extraTags?, content?)` | `void` | Broadcast a kind 29003 event with the given topic |
-| `on(topic, callback)` | `{ close(): void }` | Subscribe to events on a topic |
+| `emit(topic, extraTags?, content?)` | `void` | Broadcast an IFC event to other napplets via the shell |
+| `on(topic, callback)` | `{ close(): void }` | Subscribe to IFC events on a topic |
 
 ### `services`
 
@@ -99,6 +102,28 @@ Sandboxed key-value storage. Mirrors `window.napplet.storage`. 512 KB quota per 
 | `removeItem(key)` | `Promise<void>` | Remove a stored key |
 | `keys()` | `Promise<string[]>` | List all stored keys |
 
+### `shell`
+
+Shell capability query interface. Access via `window.napplet.shell.supports()` after importing `@napplet/shim`.
+
+> Note: The SDK does not export a top-level `shell` object. Use `window.napplet.shell.supports('relay')` directly, or
+> import the `RELAY_DOMAIN` constant from `@napplet/sdk` for type-safe capability checks.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `supports(capability)` | `boolean` | Check whether the shell supports a NUB domain or sandbox permission |
+
+**Example:**
+
+```ts
+import '@napplet/shim';
+import { RELAY_DOMAIN } from '@napplet/sdk';
+
+if (window.napplet.shell.supports(RELAY_DOMAIN)) {
+  // shell supports relay operations
+}
+```
+
 ### Namespace Import
 
 `import * as napplet from '@napplet/sdk'` produces an object structurally identical to `window.napplet`:
@@ -112,25 +137,78 @@ napplet.storage.setItem('key', 'value');
 
 ## Types
 
-All protocol types are re-exported from `@napplet/core`:
+All protocol types are re-exported from `@napplet/core` and the NUB packages:
 
 ```ts
 import type {
+  // Protocol types (from @napplet/core)
   NostrEvent,
   NostrFilter,
   ServiceInfo,
   Subscription,
   EventTemplate,
+  NappletMessage,
+  NubDomain,
+  ShellSupports,
+  // NUB message types (re-exported from NUB packages)
+  RelayNubMessage,
+  SignerNubMessage,
+  StorageNubMessage,
+  IfcNubMessage,
 } from '@napplet/sdk';
 ```
 
+### Core Protocol Types
+
 | Type | Description |
 |------|-------------|
-| `NostrEvent` | Standard NIP-01 Nostr event |
-| `NostrFilter` | NIP-01 subscription filter |
+| `NostrEvent` | Standard Nostr event object |
+| `NostrFilter` | Relay subscription filter |
 | `ServiceInfo` | Service descriptor: `{ name, version, description? }` |
 | `Subscription` | Handle with `close()` method |
 | `EventTemplate` | Unsigned event for `relay.publish()` |
+| `NappletMessage` | Base JSON envelope type for all protocol messages |
+| `NubDomain` | String literal union of NUB domain names |
+| `ShellSupports` | Interface for the shell capability query API |
+
+### NUB Message Types
+
+These are discriminated union types covering all messages in each NUB domain. Useful for writing typed message
+handlers in shell implementations or protocol-aware code.
+
+| Type | NUB Package | Description |
+|------|-------------|-------------|
+| `RelayNubMessage` | `@napplet/nub-relay` | Discriminated union of all relay domain messages |
+| `SignerNubMessage` | `@napplet/nub-signer` | Discriminated union of all signer domain messages |
+| `StorageNubMessage` | `@napplet/nub-storage` | Discriminated union of all storage domain messages |
+| `IfcNubMessage` | `@napplet/nub-ifc` | Discriminated union of all IFC domain messages |
+
+Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage`) are also re-exported from
+`@napplet/sdk` for fine-grained typing.
+
+## NUB Domain Constants
+
+Each NUB domain has a string constant re-exported from its package:
+
+```ts
+import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'signer', 'storage', 'ifc'
+```
+
+These constants are re-exported from the individual NUB packages. Use them with the shell capability query
+API for type-safe conditional logic:
+
+```ts
+import { RELAY_DOMAIN, SIGNER_DOMAIN } from '@napplet/sdk';
+
+if (window.napplet.shell.supports(RELAY_DOMAIN)) {
+  // relay operations are available
+}
+
+if (window.napplet.shell.supports(SIGNER_DOMAIN)) {
+  // signer delegation is available
+}
+```
 
 ## Runtime Guard
 
