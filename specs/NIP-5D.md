@@ -30,6 +30,8 @@ The `allow-same-origin` token MUST NOT be present. Shells MAY add additional san
 
 The shell identifies senders via `MessageEvent.source` (unforgeable Window reference). Messages from unknown sources (iframes not created by the shell) MUST be silently dropped.
 
+Shells MUST provide a [NIP-07](07.md) `window.nostr` implementation to each napplet iframe. Since napplets cannot access the host's `window.nostr` directly (no `allow-same-origin`), the shell proxies signer operations into the iframe's context. This is the default interface available to all napplets regardless of NUB support.
+
 ## Wire Format
 
 All messages between napplet and shell are JSON objects with a `type` field:
