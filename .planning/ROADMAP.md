@@ -223,7 +223,11 @@ Plans:
   3. @napplet/core exports shell.supports() type and message dispatch infrastructure
   4. Each NUB module pattern is established: types + shim methods + exports per domain
   5. `pnpm build && pnpm type-check` passes
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 75-01-PLAN.md — Core envelope types + NIP-01 constant reorganization
+- [ ] 75-02-PLAN.md — NUB module scaffolds (relay, signer, storage, ifc)
 
 ### Phase 76: Core Envelope Types
 **Goal**: Core package defines the envelope type system, message dispatch, and NUB registration — completely NUB-agnostic
