@@ -191,7 +191,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Replace NIP-01 array wire format with generic JSON envelope. NIP-5D becomes transport+identity+manifest+NUB-negotiation only. Protocol messages defined by NUBs. Spec-first approach.
 
 - [x] **Phase 74: NIP-5D Rewrite** - Rewrite NIP-5D as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope (completed 2026-04-07)
-- [ ] **Phase 75: Package Architecture** - Restructure into envelope-only core + packages/nubs/ modular directory + shim/sdk as integration layers
+- [x] **Phase 75: Package Architecture** - Restructure into envelope-only core + packages/nubs/ modular directory + shim/sdk as integration layers (completed 2026-04-07)
 - [ ] **Phase 76: Core Envelope Types** - Core exports JSON envelope types, message dispatch, shell.supports(); NUB-agnostic
 - [ ] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with types and shim methods from NUB specs (BLOCKED: awaiting NUB specs from nubs repo)
 - [ ] **Phase 78: Shim & SDK Integration** - Shim wires NUB modules into window.napplet; SDK provides named exports per NUB
@@ -226,8 +226,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 75-01-PLAN.md — Core envelope types + NIP-01 constant reorganization
-- [ ] 75-02-PLAN.md — NUB module scaffolds (relay, signer, storage, ifc)
+- [x] 75-01-PLAN.md — Core envelope types + NIP-01 constant reorganization
+- [x] 75-02-PLAN.md — NUB module scaffolds (relay, signer, storage, ifc)
 
 ### Phase 76: Core Envelope Types
 **Goal**: Core package defines the envelope type system, message dispatch, and NUB registration — completely NUB-agnostic
@@ -281,7 +281,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 74. NIP-5D Rewrite | 1/1 | Complete | 2026-04-07 |
-| 75. Package Architecture | 0/TBD | Not started | - |
+| 75. Package Architecture | 2/2 | Complete    | 2026-04-07 |
 | 76. Core Envelope Types | 0/TBD | Not started | - |
 | 77. NUB Module Scaffold | 0/TBD | BLOCKED (NUB specs) | - |
 | 78. Shim & SDK Integration | 0/TBD | Not started | - |

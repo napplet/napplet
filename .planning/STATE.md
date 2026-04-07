@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
 status: executing
-stopped_at: Roadmap created for v0.16.0 (5 phases, 14 requirements)
-last_updated: "2026-04-07T10:28:17.079Z"
-last_activity: 2026-04-07 -- Phase 75 execution started
+stopped_at: Roadmap reframed — Phase 74 complete, Phases 75-76 ready, Phase 77+ blocked on NUB specs
+last_updated: "2026-04-07T11:06:48.929Z"
+last_activity: 2026-04-07
 progress:
-  total_phases: 5
-  completed_phases: 1
+  total_phases: 6
+  completed_phases: 2
   total_plans: 3
-  completed_plans: 1
-  percent: 0
+  completed_plans: 3
+  percent: 17
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.16.0 Wire Format & NUB Architecture — Phase 75 (Package Architecture)
+**Current focus:** Phase 75 — Package Architecture
 
 ## Current Position
 
-Phase: 75 (2 of 6) — Package Architecture
-Plan: —
-Status: Ready to plan (Phases 75-76 can proceed; Phase 77+ blocked on NUB specs from nubs repo)
-Last activity: 2026-04-07 — Roadmap reframed for modular NUB architecture
+Phase: 76
+Plan: Not started
+Status: Executing Phase 75
+Last activity: 2026-04-07
 
 Progress: [█░░░░░░░░░] 17%
 
