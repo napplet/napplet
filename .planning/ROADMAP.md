@@ -194,7 +194,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 75: Package Architecture** - Restructure into envelope-only core + packages/nubs/ modular directory + shim/sdk as integration layers (completed 2026-04-07)
 - [x] **Phase 76: Core Envelope Types** - Core exports JSON envelope types, message dispatch, shell.supports(); NUB-agnostic (completed 2026-04-07)
 - [x] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with typed message definitions from NUB specs (completed 2026-04-07)
-- [ ] **Phase 78: Shim & SDK Integration** - Shim wires NUB modules into window.napplet; SDK provides named exports per NUB
+- [x] **Phase 78: Shim & SDK Integration** - Shim wires NUB modules into window.napplet; SDK provides named exports per NUB (completed 2026-04-07)
 - [ ] **Phase 79: Documentation Update** - Update package READMEs for JSON envelope + modular NUB architecture
 
 ## Phase Details
@@ -272,7 +272,7 @@ Plans:
 
 Plans:
 - [x] 78-01-PLAN.md — Shim envelope migration (relay, signer, storage, IFC, keyboard, NIPDB)
-- [ ] 78-02-PLAN.md — SDK NUB type re-exports and build verification
+- [x] 78-02-PLAN.md — SDK NUB type re-exports and build verification
 
 ### Phase 79: Documentation Update
 **Goal**: Package READMEs describe JSON envelope + modular NUB architecture
@@ -295,5 +295,5 @@ Plans:
 | 75. Package Architecture | 2/2 | Complete    | 2026-04-07 |
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
 | 77. NUB Module Scaffold | 2/2 | Complete    | 2026-04-07 |
-| 78. Shim & SDK Integration | 1/2 | In Progress|  |
+| 78. Shim & SDK Integration | 2/2 | Complete   | 2026-04-07 |
 | 79. Documentation Update | 0/TBD | Not started | - |
