@@ -282,7 +282,11 @@ Plans:
   1. @napplet/core README documents envelope types and NUB registration
   2. @napplet/shim README describes JSON envelope wire format and NUB integration
   3. Root README describes modular NUB architecture with named import examples
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 79-01-PLAN.md — Rewrite @napplet/core and @napplet/shim READMEs for JSON envelope + NUB architecture
+- [ ] 79-02-PLAN.md — Rewrite @napplet/sdk and root README for JSON envelope + NUB packages
 
 ## Progress
 
@@ -296,4 +300,4 @@ Plans:
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
 | 77. NUB Module Scaffold | 2/2 | Complete    | 2026-04-07 |
 | 78. Shim & SDK Integration | 2/2 | Complete    | 2026-04-07 |
-| 79. Documentation Update | 0/TBD | Not started | - |
+| 79. Documentation Update | 0/2 | Not started | - |
