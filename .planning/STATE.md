@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
-status: Ready to plan
-stopped_at: Roadmap created, ready to plan Phase 74
-last_updated: "2026-04-07T00:00:00.000Z"
+status: planning
+stopped_at: Roadmap created for v0.16.0 (5 phases, 14 requirements)
+last_updated: "2026-04-07T10:22:01.908Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 0
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 74 (1 of 5) — NIP-5D Rewrite
-Plan: --
+Phase: 75 of 5 (nub specifications)
+Plan: Not started
 Status: Ready to plan
-Last activity: 2026-04-07 -- Roadmap created for v0.16.0
+Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
 

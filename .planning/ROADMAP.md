@@ -190,7 +190,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Replace NIP-01 array wire format with generic JSON envelope. NIP-5D becomes transport+identity+manifest+NUB-negotiation only. Protocol messages defined by NUBs. Spec-first approach.
 
-- [ ] **Phase 74: NIP-5D Rewrite** - Rewrite NIP-5D as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope
+- [x] **Phase 74: NIP-5D Rewrite** - Rewrite NIP-5D as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope (completed 2026-04-07)
 - [ ] **Phase 75: NUB Specifications** - Write NUB-RELAY, NUB-SIGNER, NUB-STORAGE, NUB-IFC specs defining protocol messages
 - [ ] **Phase 76: Core Envelope Types** - Replace NIP-01 array types in @napplet/core with JSON envelope types
 - [ ] **Phase 77: Shim Envelope Migration** - Update @napplet/shim to send and receive JSON envelope messages
@@ -207,10 +207,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. NIP-5D covers transport (postMessage), identity (message.source), and manifest -- and nothing else at the protocol-message level
   3. NIP-5D references NUBs as the source of all protocol message type definitions
   4. NIP-5D defines NUB negotiation flow (manifest `requires` tags, shell `supports`, compatibility resolution)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 74-01-PLAN.md — Rewrite NIP-5D spec (JSON envelope, transport, identity, manifest, NUB negotiation)
+- [x] 74-01-PLAN.md — Rewrite NIP-5D spec (JSON envelope, transport, identity, manifest, NUB negotiation)
 
 ### Phase 75: NUB Specifications
 **Goal**: Four NUB specs define all protocol messages that were previously implicit in NIP-5D, using the JSON envelope
@@ -274,7 +274,7 @@ Phases execute in numeric order: 74 -> 75 -> 76 -> 77 -> 78
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 74. NIP-5D Rewrite | 0/TBD | Not started | - |
+| 74. NIP-5D Rewrite | 1/1 | Complete    | 2026-04-07 |
 | 75. NUB Specifications | 0/TBD | Not started | - |
 | 76. Core Envelope Types | 0/TBD | Not started | - |
 | 77. Shim Envelope Migration | 0/TBD | Not started | - |
