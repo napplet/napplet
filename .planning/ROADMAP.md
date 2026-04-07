@@ -196,7 +196,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. The core types package builds and type-checks clean with no references to napplet-side signing or keypairs
   4. @napplet/core's exported types express that napplets send unsigned message templates and the runtime/shell is responsible for identity stamping
   5. Downstream packages (@napplet/shim, @napplet/sdk) still import from @napplet/core without type errors after the removals
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 70-01-PLAN.md -- Remove handshake types/constants from core, fix downstream imports
 
 ### Phase 71: Shim Simplification
 **Goal**: Napplet developers include @napplet/shim with zero crypto dependencies -- the shim sends plain NIP-01 messages and never touches keys or signatures
@@ -237,7 +239,7 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 70. Core Protocol Types | 0/TBD | Not started | - |
+| 70. Core Protocol Types | 0/1 | Not started | - |
 | 71. Shim Simplification | 0/TBD | Not started | - |
 | 72. NIP-5D Update | 0/TBD | Not started | - |
 | 73. SDK & README Update | 0/TBD | Not started | - |
