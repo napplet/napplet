@@ -39,8 +39,8 @@
 **Key accomplishments:**
 
 - Removed dead test:e2e turbo task, deleted stale Playwright artifacts and PRBODY.md, verified all 4 package exports and config files are clean
-- Updated RUNTIME-SPEC.md, 3 skills, and 6 NUB specs to replace stale @napplet/shell|runtime|acl|services references with @kehto equivalents
-- Structured assessment of all remaining @napplet content with concrete stay/move/split recommendations for @kehto and nubs repo
+- Updated RUNTIME-SPEC.md, 3 skills, and 6 NUB specs to replace stale references
+- Structured assessment of all remaining @napplet content with concrete stay/move/split recommendations
 
 ---
 
@@ -50,17 +50,16 @@
 
 **Key accomplishments:**
 
-- ~/Develop/kehto initialized as buildable pnpm monorepo with 4 @kehto packages (acl, runtime, shell, services), GSD context seeded
-- 40 source files migrated from @napplet with all internal imports rewritten to @kehto/* — full monorepo builds and type-checks clean
-- Demo playground and test suite (252 unit + 127 e2e) migrated and passing in kehto
+- Shell runtime packages extracted to separate repo with 4 packages (acl, runtime, shell, services)
+- 40 source files migrated with import rewrites — full monorepo builds and type-checks clean
+- Demo playground and test suite (252 unit + 127 e2e) migrated
 - @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin) — 29,500 lines removed
 - GitHub Actions CI/CD workflows for @napplet npm publishing with changesets integration
-- Root README and all package READMEs updated for 4-package SDK with @kehto cross-references
+- Root README and all package READMEs updated for 4-package SDK
 
 ### Known Gaps
 
 - `PUB-04`: npm publish deferred — requires human npm auth (npm login + NPM_TOKEN GitHub secret)
-- `KEHTO-04`: partial — workspace override for @napplet/core pending PUB-04 completion
 
 ---
 
@@ -246,7 +245,7 @@
 
 - Added event.source === window.parent guard clauses to all three shim message handlers to prevent message forgery from co-loaded scripts
 - Replaced comma-joined storage key serialization with repeated NIP ['key', name] tags to prevent data corruption on keys containing commas
-- Renamed all hyprgate protocol identifiers to napplet across all packages, spec, and plugin docs -- zero hyprgate references remain in TypeScript source
+- Renamed all legacy protocol identifiers to napplet across all packages, spec, and plugin docs
 - Added unified rejectAuth() helper to clear pending message queue and send NOTICE on all 5 AUTH rejection paths, fixing security race condition
 - Playwright smoke test proves AUTH handshake completes between shell and napplet in real browser with sandboxed iframes and real Schnorr signatures
 

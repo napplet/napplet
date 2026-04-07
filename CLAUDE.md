@@ -2,9 +2,7 @@
 
 ## Project Overview
 
-This is the **napplet** monorepo — npm packages for the napplet protocol. Napplets are Nostr-native sandboxed iframe apps that communicate with a host shell over postMessage using NIP-01 wire format.
-
-Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) (Phases 26-27 of v1.4 milestone). The hyprgate repo is the reference implementation; this repo is the portable SDK.
+This is the **napplet** monorepo — npm packages for the napplet protocol. Napplets are Nostr-native sandboxed iframe apps that communicate with a host shell over postMessage using a JSON envelope wire format defined by NIP-5D.
 
 ## Packages
 
@@ -45,14 +43,6 @@ pnpm version-packages
 pnpm publish-packages
 ```
 
-## Relationship to hyprgate
-
-- This repo contains the **portable, framework-agnostic** packages
-- hyprgate contains the **Svelte reference implementation** that uses these packages
-- The `@napplet/create` CLI lives in hyprgate at `packages/create/` (not here)
-- The NIP specification draft lives in hyprgate at `specs/NIP-napplet-shell-protocol.md`
-- When making protocol changes, update both repos
-
 ## Code Conventions
 
 - ESM-only (no CJS output)
@@ -65,7 +55,7 @@ pnpm publish-packages
 
 **Napplet Protocol SDK**
 
-A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via NIP-01 postMessage wire format. Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) into standalone `@napplet/*` npm packages. Includes a 66-test protocol conformance suite and an interactive Chat + Bot demo playground.
+A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via JSON envelope postMessage wire format defined by NIP-5D.
 
 **Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 

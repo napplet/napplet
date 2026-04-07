@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via NIP-01 postMessage wire format. Extracted from [hyprgate](https://github.com/sandwichfarm/hyprgate) into standalone `@napplet/*` npm packages. Includes a 193-test protocol conformance suite, an interactive Chat + Bot demo playground, and the NIP-5D specification draft.
+A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via JSON envelope postMessage wire format defined by NIP-5D.
 
 ## Core Value
 
@@ -18,11 +18,11 @@ Removed cryptographic identity from the napplet wire protocol. Napplets now send
 
 ## Shipped: v0.14.0 Repo Cleanup & Audit
 
-Dead code, stale docs, and leftover artifacts from v0.13.0 extraction cleaned up. RUNTIME-SPEC.md, skills/, specs/nubs/ all updated to reference @kehto. MIGRATION-EVAL.md produced with stay/move/split recommendations for all remaining content. 2 phases, 3 plans shipped 2026-04-06. See [archive](milestones/v0.14.0-ROADMAP.md).
+Dead code, stale docs, and leftover artifacts from v0.13.0 extraction cleaned up. 2 phases, 3 plans shipped 2026-04-06. See [archive](milestones/v0.14.0-ROADMAP.md).
 
 ## Shipped: v0.13.0 Runtime Decoupling & Publish
 
-Runtime, shell, ACL, services, and demo extracted to ~/Develop/kehto (@kehto npm org, github.com/kehto/runtime). 40 source files migrated with import rewrites. Demo + 252 unit + 127 e2e tests passing in kehto. @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin) — 29,500 lines removed. GitHub Actions CI/CD with changesets. READMEs updated. npm publish deferred (PUB-04 — needs human auth). 6 phases, 11 plans shipped 2026-04-06. See [archive](milestones/v0.13.0-ROADMAP.md).
+Runtime, shell, ACL, services, and demo extracted to a separate repo. @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin). GitHub Actions CI/CD with changesets. 6 phases, 11 plans shipped 2026-04-06. See [archive](milestones/v0.13.0-ROADMAP.md).
 
 ## Shipped: v0.12.0 Spec Packaging
 
@@ -135,11 +135,9 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Show-all toggle to bypass contextual filtering — v0.11.0 Phase 56 (FILT-03)
 - ✓ SPEC.md renamed to RUNTIME-SPEC.md as internal reference — v0.12.0 Phase 61 (PKG-01)
 - ✓ NIP-5D v2 in nostr-protocol/nips markdown format (<200 lines, setext headings) — v0.12.0 Phase 61 (PKG-02)
-- ✓ NIP-5D lists @napplet/shim + hyprgate as reference implementations — v0.12.0 Phase 61 (PKG-03)
+- ✓ NIP-5D lists @napplet/shim as reference implementation — v0.12.0 Phase 61 (PKG-03)
 
-- ✓ ~/Develop/kehto initialized with 4 @kehto packages (acl, runtime, shell, services) — v0.13.0 Phase 62 (KEHTO-01, KEHTO-02, KEHTO-08)
-- ✓ 40 source files migrated with @kehto/* import rewrites — v0.13.0 Phase 63 (KEHTO-03, KEHTO-07)
-- ✓ Demo + 252 unit + 127 e2e tests passing in kehto — v0.13.0 Phase 64 (KEHTO-05, KEHTO-06)
+- ✓ Shell runtime packages extracted to separate repo — v0.13.0 Phases 62-64
 - ✓ @napplet slimmed to 4 packages, build clean — v0.13.0 Phase 65 (CLEAN-01..04)
 - ✓ GitHub Actions CI/CD workflows for @napplet — v0.13.0 Phase 66 (PUB-01..03)
 - ✓ READMEs updated for 4-package SDK — v0.13.0 Phase 67 (DOC-01, DOC-02)
@@ -175,7 +173,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 ## Context
 
 - **Current state**: v0.16.0 shipped (Wire Format & NUB Architecture). JSON envelope wire format, modular NUB packages, dispatch infrastructure. 8 packages (4 core + 4 NUB). Protocol version 4.0.0. 16 milestones shipped.
-- **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin. @kehto (separate repo): acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo.
+- **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
 - **Demo architecture**: Full topology view with distinct shell, ACL, runtime, and service nodes. Inspector has 3 tabs (Node, Constants, Kinds) with contextual filtering.
@@ -196,7 +194,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Extract from hyprgate rather than rewrite | Proven protocol implementation, minimize risk | ✓ Good — packages working with targeted fixes |
+| Extract from reference implementation rather than rewrite | Proven protocol implementation, minimize risk | ✓ Good — packages working with targeted fixes |
 | Behavioral tests over unit tests first | Visually confirm protocol works end-to-end before testing internals | ✓ Good — 66 Playwright tests prove the protocol |
 | Refine existing NIP-5A spec, not write new | Spec already captures protocol; implementation surfaced 11 needed changes | ✓ Good — SPEC.md refined with all implementation learnings |
 | Permissive ACL default kept for v0.1 | Ease of development; document risk, add restrictive mode later | ✓ Good — tests verify permissive behavior, restrictive mode deferred |
@@ -224,7 +222,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 | SPEC.md → RUNTIME-SPEC.md with internal-reference header | Distinguishes internal reference from NIP standard; header links to NIP-5D | ✓ Good — no confusion between runtime spec and protocol NIP |
 | Historical PROJECT.md SPEC.md references left as-is | These are milestone descriptions, not active cross-references | ✓ Good — avoids rewriting history |
 | Remove crypto from napplet wire protocol | message.source is unforgeable; napplet can't hash itself; shell knows identity at iframe creation | ✓ Good — simpler spec, thinner shim, crypto is runtime impl detail |
-| Protocol version 2.0.0 → 3.0.0 | Breaking change to handshake; downstream kehto must update | ✓ Good — clean break |
+| Protocol version 2.0.0 → 3.0.0 | Breaking change to handshake; downstream shell must update | ✓ Good — clean break |
 | Replace NIP-01 arrays with JSON envelope | NIP-5D should describe transport, not relay semantics; simpler for NIP reviewers and shell implementors | ✓ Good — spec is 120 lines, 5-minute read |
 | NUBs own protocol messages, NIP-5D is transport-only | Composable: shells implement only the NUBs they support | ✓ Good — modular spec architecture |
 | Sandbox: allow-scripts only | Minimal trust; everything else is shell-granted privilege | ✓ Good — follows principle of least privilege |

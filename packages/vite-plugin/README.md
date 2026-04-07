@@ -27,7 +27,7 @@ The build-time manifest is for verifying the hash computation workflow locally, 
 
 ### When to Use This
 
-- You are building a napplet and testing locally with [@kehto/shell](https://github.com/sandwichfarm/kehto)
+- You are building a napplet and testing locally with a shell implementation
 - You want to verify aggregate hash computation before deploying
 
 ### When NOT to Use This

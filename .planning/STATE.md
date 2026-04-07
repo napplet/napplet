@@ -50,7 +50,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - v0.16.0: NIP-5D becomes transport+identity+manifest+NUB-negotiation only; no protocol messages
 - v0.16.0: Generic JSON envelope `{ type, ...payload }` replaces NIP-01 arrays
 - v0.16.0: NUB-IFC merges NUB-IPC + NUB-PIPES with dispatch (per-message ACL) and channel (ACL at open) modes
-- v0.16.0: Runtime translation layer is kehto's concern, not this repo
+- v0.16.0: Runtime translation layer is the shell's concern, not this repo
 - [Phase 78]: query() uses dedicated relay.query envelope instead of subscribe+collect+close
 - [Phase 78]: state-shim sends storage.* messages directly (no IPC-PEER indirection)
 - [Phase 78]: Non-NUB domains (keyboard, nostrdb) use local envelope types
@@ -63,7 +63,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260407-0i8 | Remove stale root files -- move RUNTIME-SPEC.md to kehto, skills to kehto, nub specs to nubs, delete PNGs and artifacts | 2026-04-07 | e16ed87 | [260407-0i8-remove-stale-root-files-from-napplet](.planning/quick/260407-0i8-remove-stale-root-files-from-napplet/) |
+| 260407-0i8 | Remove stale root files -- move specs and skills to their repos, delete PNGs and artifacts | 2026-04-07 | e16ed87 | [260407-0i8-remove-stale-root-files-from-napplet](.planning/quick/260407-0i8-remove-stale-root-files-from-napplet/) |
 | Phase 78 P01 | 7min | 3 tasks | 8 files |
 | Phase 78 P02 | 1min | 1 tasks | 3 files |
 | Phase 79-documentation-update P02 | 3 | 2 tasks | 2 files |
@@ -72,10 +72,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth (PUB-04). Run `npm login` then `pnpm publish-packages`.
-- KEHTO-04 partial: kehto workspace override for @napplet/core pending npm publish.
 - NIP number conflict with Scrolls PR#2281 (RES-01) -- unresolved, carry forward.
-- Core type changes will break kehto downstream -- kehto must update after @napplet/core v0.16.0.
-- **BLOCKING Phase 77+**: NUB specs (RELAY, SIGNER, STORAGE, IFC) live in nubs repo. Must be finalized before NUB module code can be written. User will seed current state when ready.
 
 ## Session Continuity
 

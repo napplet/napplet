@@ -7,7 +7,7 @@
 ### Prerequisites
 
 - `@napplet/shim` must be imported (side-effect) to install `window.napplet` before SDK methods are called
-- A shell host running [@kehto/shell](https://github.com/sandwichfarm/kehto) or another napplet protocol shell implementation
+- A shell host running a napplet protocol shell implementation
 
 ### How It Works
 
