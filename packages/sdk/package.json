@@ -18,7 +18,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/core": "workspace:*",
+    "@napplet/nub-relay": "workspace:*",
+    "@napplet/nub-signer": "workspace:*",
+    "@napplet/nub-storage": "workspace:*",
+    "@napplet/nub-ifc": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

@@ -244,3 +244,98 @@ export type { NostrFilter } from '@napplet/core';
 export type { ServiceInfo } from '@napplet/core';
 export type { Subscription } from '@napplet/core';
 export type { EventTemplate } from '@napplet/core';
+
+// ─── Core envelope types ───────────────────────────────────────────────────
+
+export type { NappletMessage, NubDomain, ShellSupports } from '@napplet/core';
+export { NUB_DOMAINS } from '@napplet/core';
+
+// ─── NUB Message Type Re-exports ───────────────────────────────────────────
+// These types let SDK consumers work with typed envelope messages directly.
+// Import from '@napplet/sdk' instead of individual NUB packages.
+
+// Relay NUB
+export type {
+  RelayMessage,
+  RelaySubscribeMessage,
+  RelayCloseMessage,
+  RelayPublishMessage,
+  RelayQueryMessage,
+  RelayEventMessage,
+  RelayEoseMessage,
+  RelayClosedMessage,
+  RelayPublishResultMessage,
+  RelayQueryResultMessage,
+  RelayOutboundMessage,
+  RelayInboundMessage,
+  RelayNubMessage,
+} from '@napplet/nub-relay';
+
+// Signer NUB
+export type {
+  SignerMessage,
+  SignerGetPublicKeyMessage,
+  SignerSignEventMessage,
+  SignerGetRelaysMessage,
+  SignerNip04EncryptMessage,
+  SignerNip04DecryptMessage,
+  SignerNip44EncryptMessage,
+  SignerNip44DecryptMessage,
+  SignerGetPublicKeyResultMessage,
+  SignerSignEventResultMessage,
+  SignerGetRelaysResultMessage,
+  SignerNip04EncryptResultMessage,
+  SignerNip04DecryptResultMessage,
+  SignerNip44EncryptResultMessage,
+  SignerNip44DecryptResultMessage,
+  SignerRequestMessage,
+  SignerResultMessage,
+  SignerNubMessage,
+} from '@napplet/nub-signer';
+
+// Storage NUB
+export type {
+  StorageMessage,
+  StorageGetMessage,
+  StorageSetMessage,
+  StorageRemoveMessage,
+  StorageKeysMessage,
+  StorageGetResultMessage,
+  StorageSetResultMessage,
+  StorageRemoveResultMessage,
+  StorageKeysResultMessage,
+  StorageRequestMessage,
+  StorageResultMessage,
+  StorageNubMessage,
+} from '@napplet/nub-storage';
+
+// IFC NUB
+export type {
+  IfcMessage,
+  IfcEmitMessage,
+  IfcSubscribeMessage,
+  IfcSubscribeResultMessage,
+  IfcUnsubscribeMessage,
+  IfcEventMessage,
+  IfcChannelOpenMessage,
+  IfcChannelOpenResultMessage,
+  IfcChannelEmitMessage,
+  IfcChannelEventMessage,
+  IfcChannelBroadcastMessage,
+  IfcChannelListMessage,
+  IfcChannelListResultMessage,
+  IfcChannelCloseMessage,
+  IfcChannelClosedMessage,
+  IfcTopicMessage,
+  IfcChannelMessage,
+  IfcOutboundMessage,
+  IfcInboundMessage,
+  IfcNubMessage,
+} from '@napplet/nub-ifc';
+
+// ─── NUB Domain Constants ──────────────────────────────────────────────────
+
+export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
+export { DOMAIN as SIGNER_DOMAIN, DESTRUCTIVE_KINDS } from '@napplet/nub-signer';
+export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
+export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
