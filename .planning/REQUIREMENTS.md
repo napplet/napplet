@@ -51,28 +51,28 @@ None — this is a cleanup milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAP-01 | — | Pending |
-| CAP-02 | — | Pending |
-| CAP-03 | — | Pending |
-| DEAD-01 | — | Pending |
-| DEAD-02 | — | Pending |
-| DEAD-03 | — | Pending |
-| DEAD-04 | — | Pending |
-| DEAD-05 | — | Pending |
-| DEAD-06 | — | Pending |
-| DEAD-07 | — | Pending |
-| COMPAT-01 | — | Pending |
-| COMPAT-02 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| DOC-04 | — | Pending |
+| CAP-01 | Phase 80 | Pending |
+| CAP-02 | Phase 80 | Pending |
+| CAP-03 | Phase 80 | Pending |
+| DEAD-01 | Phase 81 | Pending |
+| DEAD-02 | Phase 81 | Pending |
+| DEAD-03 | Phase 81 | Pending |
+| DEAD-04 | Phase 81 | Pending |
+| DEAD-05 | Phase 81 | Pending |
+| DEAD-06 | Phase 81 | Pending |
+| DEAD-07 | Phase 81 | Pending |
+| COMPAT-01 | Phase 81 | Pending |
+| COMPAT-02 | Phase 81 | Pending |
+| DOC-01 | Phase 82 | Pending |
+| DOC-02 | Phase 82 | Pending |
+| DOC-03 | Phase 82 | Pending |
+| DOC-04 | Phase 82 | Pending |
 
 **Coverage:**
 - v0.17.0 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-08*
-*Last updated: 2026-04-08 after initial definition*
+*Last updated: 2026-04-08 after roadmap creation*

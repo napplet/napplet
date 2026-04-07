@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v0.17.0
 milestone_name: Capability Cleanup
-status: defining-requirements
+status: ready-to-plan
 last_updated: "2026-04-08"
 last_activity: 2026-04-08
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Defining requirements for v0.17.0
+**Current focus:** v0.17.0 Phase 80 — Namespaced Capability Query
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 80 (1 of 3) — Namespaced Capability Query
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-08 — Milestone v0.17.0 started
+Status: Ready to plan
+Last activity: 2026-04-08 — Roadmap created for v0.17.0 (3 phases, 16 requirements)
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: —
+- Total execution time: 0 hours
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -38,6 +55,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - v0.17.0: Namespaced shell.supports() with nub:/perm:/svc: prefixes — replaces flat NubDomain | string
 - v0.17.0: No backward compatibility — unreleased monorepo, clean breaks only
 - v0.17.0: legacy.ts deletion is safe — DESTRUCTIVE_KINDS already migrated to nub-signer
+- v0.17.0: Dead code removal + backward compat removal combined into one phase (both are deletions)
 
 ### Blockers/Concerns
 
@@ -47,5 +65,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-04-08
-Stopped at: Defining requirements
-Resume: Continue milestone setup
+Stopped at: Roadmap created, ready to plan Phase 80
+Resume: `/gsd:plan-phase 80`
