@@ -155,7 +155,17 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.17.0 Capability Cleanup
+
+**Goal:** Replace flat `shell.supports()` with namespaced capability queries, remove all dead service discovery code, and delete every legacy/deprecated artifact.
+
+**Target features:**
+- Namespaced `shell.supports()` with `nub:`, `perm:`, `svc:` prefixes
+- Remove `discovery-shim.ts` and `window.napplet.services` API (kind 29010 model is dead)
+- Clean up `ServiceDescriptor`/`ServiceInfo` types
+- Delete `legacy.ts` and all deprecated re-exports from core
+- Remove `napplet-napp-type` backward compat fallback from shim + vite-plugin
+- Update types, NIP-5D, and READMEs to reflect changes
 
 ### Out of Scope
 
@@ -172,7 +182,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.16.0 shipped (Wire Format & NUB Architecture). JSON envelope wire format, modular NUB packages, dispatch infrastructure. 8 packages (4 core + 4 NUB). Protocol version 4.0.0. 16 milestones shipped.
+- **Current state**: v0.17.0 in progress (Capability Cleanup). Namespacing shell.supports(), removing dead service discovery, deleting legacy code. 9 packages (4 core + 5 NUB). Protocol version 4.0.0. 16 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -261,4 +271,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-07 after v0.16.0 milestone*
+*Last updated: 2026-04-08 after v0.17.0 milestone start*
