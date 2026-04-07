@@ -36,14 +36,12 @@ All messages between napplet and shell are JSON objects with a `type` field:
 
     { "type": "<domain>.<action>", ...payload }
 
-The `type` field is a string discriminant in `domain.action` format. Domains correspond to NUB capability names (e.g., `relay`, `signer`, `storage`, `ifc`). NUB specs define the valid type strings and payload shapes for their domain. This NIP does not enumerate message types.
+The `type` field is a string discriminant in `domain.action` format. Domains correspond to NUB capability names (e.g., a NUB named `foo` owns all `foo.*` types). NUB specs define the valid type strings and payload shapes for their domain. This NIP does not enumerate message types.
 
-Example messages:
+Example — a hypothetical `foo` NUB with a request/response pattern:
 
-    { "type": "foo.request", "id": "abc", "data": {...} }
-    { "type": "foo.response", "id": "abc", "result": {...} }
-    { "type": "bar.open", "channel": "ch1" }
-    { "type": "bar.message", "channel": "ch1", "payload": "hello" }
+    { "type": "foo.bar", "id": "abc", "data": {...} }
+    { "type": "foo.bar.result", "id": "abc", "result": {...} }
 
 Messages with an unrecognized `type` MUST be silently ignored. This allows forward compatibility as new NUBs are defined.
 
@@ -61,7 +59,7 @@ Napplet manifests ([NIP-5A](5A.md) kind 35128) declare required capabilities usi
 
     ["requires", "<nub-name>"]
 
-Each `requires` value is a short NUB name matching a NUB domain. Manifests MUST NOT use spec identifiers (e.g., use `relay`, not `NUB-RELAY`).
+Each `requires` value is a short NUB name matching a NUB domain (e.g., `foo`). Manifests MUST NOT use spec identifiers (e.g., use `foo`, not `NUB-FOO`).
 
 At napplet load time, the shell checks `requires` tags against its own capabilities. If a required capability is absent, the shell SHOULD reject the napplet or display a compatibility warning. If the manifest has no `requires` tags, the shell loads the napplet with whatever capabilities it provides.
 
@@ -69,12 +67,8 @@ At napplet load time, the shell checks `requires` tags against its own capabilit
 
 Napplets query capability support at runtime:
 
-    window.napplet.shell.supports('relay')    // boolean
-    window.napplet.shell.supports('signer')   // boolean
-
-This covers both NUB capabilities and sandbox permissions:
-
-    window.napplet.shell.supports('popups')   // boolean
+    window.napplet.shell.supports('foo')       // NUB capability — boolean
+    window.napplet.shell.supports('popups')    // sandbox permission — boolean
 
 Shells MUST implement `window.napplet.shell.supports()`. Napplets MUST gracefully degrade when a capability is absent.
 
@@ -86,8 +80,10 @@ Service discovery (e.g., audio, notifications) uses a separate API:
 
 Protocol messages are defined by NUB (Napplet Unified Blueprint) specs. Each NUB owns a message domain and defines the `type` strings, payload shapes, and semantics for that domain. A NUB spec is self-contained — it references this NIP only for envelope format and transport.
 
+For example, a NUB named `foo` would own all `foo.*` message types (e.g., `foo.bar`, `foo.bar.result`) and define their payloads and shell behavior.
+
 NUB specs MUST:
-- Define all valid `type` strings for their domain (e.g., `domain.action`)
+- Define all valid `type` strings for their domain
 - Specify the payload shape for each message type
 - Document expected shell behavior for each message
 - Be independently implementable — a shell MAY support any subset of NUBs
