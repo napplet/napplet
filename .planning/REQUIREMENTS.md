@@ -60,18 +60,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WIRE-01 | Phase 70 | Pending |
-| WIRE-02 | Phase 70 | Pending |
-| WIRE-03 | Phase 70 | Pending |
-| WIRE-04 | Phase 70 | Pending |
+| WIRE-01 | Phase 70 | Complete (types express unsigned contract) |
+| WIRE-02 | Phase 70 | Complete (type-level; runtime impl in kehto) |
+| WIRE-03 | Phase 70 | Complete (type-level; runtime impl in kehto) |
+| WIRE-04 | Phase 70 | Complete (handshake types removed from core) |
 | SHIM-01 | Phase 71 | Pending |
 | SHIM-02 | Phase 71 | Pending |
 | SHIM-03 | Phase 71 | Pending |
 | SHIM-04 | Phase 71 | Pending |
-| RT-01 | Phase 70 | Pending |
-| RT-02 | Phase 70 | Pending |
-| RT-03 | Phase 70 | Pending |
-| RT-04 | Phase 70 | Pending |
+| RT-01 | Phase 70 | Complete (type-level; runtime impl in kehto) |
+| RT-02 | Phase 70 | Complete (type-level; runtime impl in kehto) |
+| RT-03 | Phase 70 | Complete (ACL types preserved in core) |
+| RT-04 | Phase 70 | Complete (bus kinds for storage/IPC/signer intact) |
 | DOC-02 | Phase 72 | Pending |
 | DOC-03 | Phase 73 | Pending |
 

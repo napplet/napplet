@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.15.0
 milestone_name: Protocol Simplification
-status: Ready to plan
-stopped_at: Roadmap created, Phase 70 ready to plan
-last_updated: "2026-04-07T00:00:00.000Z"
+status: executing
+stopped_at: Roadmap created for v0.15.0 (4 phases, 15 requirements)
+last_updated: "2026-04-07T08:47:47.931Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,20 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.15.0 Protocol Simplification -- Phase 70: Core Protocol Types
+**Current focus:** Phase 70 — Core Protocol Types
 
 ## Current Position
 
-Phase: 70 (1 of 4) — Core Protocol Types
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-04-07 — Roadmap created for v0.15.0
+Phase: 71
+Plan: Not started
+Status: Executing Phase 70
+Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: —
 - Total execution time: 0 hours
