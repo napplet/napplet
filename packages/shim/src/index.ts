@@ -1,14 +1,28 @@
-// @napplet/shim — Napplet window installer
+// @napplet/shim -- Napplet window installer
 // Side-effect-only module: importing this file installs window.napplet and window.nostr globals.
 // No named exports. No allow-same-origin required.
 
 import { installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
-import { installStateShim, _setInterPaneEventSender, _nappletStorage } from './state-shim.js';
+import { installStateShim, _nappletStorage } from './state-shim.js';
 import { subscribe, publish, query } from './relay-shim.js';
 import { discoverServices } from './discovery-shim.js';
-import { BusKind } from './types.js';
-import type { NostrEvent, NappletGlobal } from '@napplet/core';
+import type { NappletGlobal, NostrEvent } from '@napplet/core';
+import type {
+  SignerGetPublicKeyMessage,
+  SignerSignEventMessage,
+  SignerGetRelaysMessage,
+  SignerNip04EncryptMessage,
+  SignerNip04DecryptMessage,
+  SignerNip44EncryptMessage,
+  SignerNip44DecryptMessage,
+} from '@napplet/nub-signer';
+import type {
+  IfcEmitMessage,
+  IfcSubscribeMessage,
+  IfcUnsubscribeMessage,
+  IfcEventMessage,
+} from '@napplet/nub-ifc';
 
 // ─── Global type augmentation ────────────────────────────────────────────────
 // Activates window.napplet TypeScript types on `import '@napplet/shim'`.
@@ -19,15 +33,20 @@ declare global {
   }
 }
 
+// ─── IFC topic subscription registry ────────────────────────────────────────
+
+/** Map of topic -> array of callbacks for IFC event dispatch. */
+const ifcTopicHandlers = new Map<string, Array<(payload: unknown, sender: string) => void>>();
+
 /**
- * Broadcast an IPC-PEER event to other napplets via the shell.
+ * Broadcast an IFC event to other napplets via the shell.
  *
- * Creates an unsigned kind 29003 event template with the given topic as a 't' tag
- * and posts it to the ShellBridge for delivery to matching subscribers.
+ * Sends an `ifc.emit` envelope message to the shell for delivery
+ * to matching topic subscribers.
  *
- * @param topic     The 't' tag value (e.g., 'profile:open', 'stream:channel-switch')
- * @param extraTags Additional NIP-01 tags beyond the 't' tag (default: [])
- * @param content   Event content (default: empty string)
+ * @param topic     The topic string (e.g., 'profile:open', 'stream:channel-switch')
+ * @param extraTags Additional tags (legacy parameter -- ignored in envelope format)
+ * @param content   Event content string (sent as payload)
  *
  * @example
  * ```ts
@@ -39,18 +58,30 @@ function emit(
   extraTags: string[][] = [],
   content: string = '',
 ): void {
-  sendEvent(BusKind.IPC_PEER, [['t', topic], ...extraTags], content);
+  let payload: unknown;
+  try {
+    payload = content ? JSON.parse(content) : undefined;
+  } catch {
+    payload = content || undefined;
+  }
+
+  const msg: IfcEmitMessage = {
+    type: 'ifc.emit',
+    topic,
+    ...(payload !== undefined ? { payload } : {}),
+  };
+  window.parent.postMessage(msg, '*');
 }
 
 /**
- * Subscribe to IPC-PEER events on a specific topic.
+ * Subscribe to IFC events on a specific topic.
  *
- * Thin wrapper around subscribe() that filters by IPC-PEER event kind
- * and topic tag, then parses event content as JSON.
+ * Sends an `ifc.subscribe` envelope message to the shell and registers
+ * a local handler for `ifc.event` messages on that topic.
  *
- * @param topic    The 't' tag value to listen for
+ * @param topic    The topic string to listen for
  * @param callback Called with `(payload, event)` for each matching event.
- *                 `payload` is the JSON-parsed content (or `{}` if parsing fails).
+ *                 `payload` is the parsed content (or `{}` if unavailable).
  * @returns Object with `close()` method to unsubscribe
  *
  * @example
@@ -65,32 +96,59 @@ function on(
   topic: string,
   callback: (payload: unknown, event: NostrEvent) => void,
 ): { close(): void } {
-  return subscribe(
-    { kinds: [BusKind.IPC_PEER], '#t': [topic] },
-    (event: NostrEvent) => {
-      let payload: unknown;
-      try {
-        payload = event.content ? JSON.parse(event.content) : {};
-      } catch {
-        payload = {};
+  // Register local handler -- construct a synthetic NostrEvent-like wrapper
+  // from IFC envelope for backward compatibility with the window.napplet type
+  const handler = (payload: unknown, sender: string) => {
+    const syntheticEvent: NostrEvent = {
+      id: '',
+      pubkey: sender,
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 0,
+      tags: [['t', topic]],
+      content: typeof payload === 'string' ? payload : JSON.stringify(payload ?? {}),
+      sig: '',
+    };
+    callback(payload, syntheticEvent);
+  };
+  if (!ifcTopicHandlers.has(topic)) {
+    ifcTopicHandlers.set(topic, []);
+  }
+  ifcTopicHandlers.get(topic)!.push(handler);
+
+  // Send subscription request to shell
+  const subscribeMsg: IfcSubscribeMessage = {
+    type: 'ifc.subscribe',
+    id: crypto.randomUUID(),
+    topic,
+  };
+  window.parent.postMessage(subscribeMsg, '*');
+
+  return {
+    close(): void {
+      // Remove local handler
+      const handlers = ifcTopicHandlers.get(topic);
+      if (handlers) {
+        const idx = handlers.indexOf(handler);
+        if (idx >= 0) handlers.splice(idx, 1);
+        if (handlers.length === 0) ifcTopicHandlers.delete(topic);
       }
-      callback(payload, event);
+
+      // Send unsubscribe to shell
+      const unsubMsg: IfcUnsubscribeMessage = {
+        type: 'ifc.unsubscribe',
+        topic,
+      };
+      window.parent.postMessage(unsubMsg, '*');
     },
-    () => { /* EOSE — no action needed for IPC-PEER subscriptions */ },
-  );
+  };
 }
 
-// Pending signer requests: correlation id -> resolve/reject pair
+// ─── Pending signer requests ────────────────────────────────────────────────
+
 const pendingRequests = new Map<string, {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
 }>();
-
-// Signer response subscription ID
-const SIGNER_SUB_ID = '__signer__';
-
-// NIPDB response subscription ID
-const NIPDB_SUB_ID = '__nipdb__';
 
 // ─── Napplet type resolution ──────────────────────────────────────────────────────
 
@@ -105,23 +163,10 @@ function getNappletType(): string {
   return meta?.getAttribute('content') ?? 'unknown';
 }
 
-// ─── Outbound helpers ─────────────────────────────────────────────────────────
+// ─── Signer request helper ──────────────────────────────────────────────────
 
 /**
- * Build and post an unsigned NIP-01 event template to the parent shell.
- */
-function sendEvent(kind: number, tags: string[][], content: string = ''): void {
-  const event = {
-    kind,
-    created_at: Math.floor(Date.now() / 1000),
-    tags,
-    content,
-  };
-  window.parent.postMessage(['EVENT', event], '*');
-}
-
-/**
- * Send a signer request as an unsigned kind 29001 event template.
+ * Send a signer request as a typed signer.* envelope message.
  */
 async function sendSignerRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
   const id = crypto.randomUUID();
@@ -129,17 +174,39 @@ async function sendSignerRequest(method: string, params?: Record<string, unknown
   return new Promise((resolve, reject) => {
     pendingRequests.set(id, { resolve, reject });
 
-    const event = {
-      kind: BusKind.SIGNER_REQUEST,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: [
-        ['method', method],
-        ['id', id],
-        ...(params ? Object.entries(params).map(([k, v]) => ['param', k, JSON.stringify(v)]) : []),
-      ],
-      content: '',
-    };
-    window.parent.postMessage(['EVENT', event], '*');
+    // Build typed signer message based on method
+    let msg: SignerGetPublicKeyMessage | SignerSignEventMessage | SignerGetRelaysMessage |
+      SignerNip04EncryptMessage | SignerNip04DecryptMessage |
+      SignerNip44EncryptMessage | SignerNip44DecryptMessage;
+
+    switch (method) {
+      case 'getPublicKey':
+        msg = { type: 'signer.getPublicKey', id };
+        break;
+      case 'signEvent':
+        msg = { type: 'signer.signEvent', id, event: params!.event as import('@napplet/core').EventTemplate };
+        break;
+      case 'getRelays':
+        msg = { type: 'signer.getRelays', id };
+        break;
+      case 'nip04.encrypt':
+        msg = { type: 'signer.nip04.encrypt', id, pubkey: params!.pubkey as string, plaintext: params!.plaintext as string };
+        break;
+      case 'nip04.decrypt':
+        msg = { type: 'signer.nip04.decrypt', id, pubkey: params!.pubkey as string, ciphertext: params!.ciphertext as string };
+        break;
+      case 'nip44.encrypt':
+        msg = { type: 'signer.nip44.encrypt', id, pubkey: params!.pubkey as string, plaintext: params!.plaintext as string };
+        break;
+      case 'nip44.decrypt':
+        msg = { type: 'signer.nip44.decrypt', id, pubkey: params!.pubkey as string, ciphertext: params!.ciphertext as string };
+        break;
+      default:
+        reject(new Error(`Unknown signer method: ${method}`));
+        return;
+    }
+
+    window.parent.postMessage(msg, '*');
 
     setTimeout(() => {
       if (pendingRequests.delete(id)) {
@@ -149,67 +216,72 @@ async function sendSignerRequest(method: string, params?: Record<string, unknown
   });
 }
 
-// ─── Inbound message handler ──────────────────────────────────────────────────
-
-function handleRelayMessage(event: MessageEvent): void {
-  if (event.source !== window.parent) return;
-  const msg = event.data;
-  if (!Array.isArray(msg) || msg.length < 2) return;
-
-  const [verb] = msg;
-
-  switch (verb) {
-    case 'OK': {
-      const [, eventId, success, reason] = msg;
-      if (success === false && typeof eventId === 'string') {
-        const pending = pendingRequests.get(eventId);
-        if (pending) {
-          pendingRequests.delete(eventId);
-          pending.reject(new Error(typeof reason === 'string' ? reason : 'Signer request denied'));
-        }
-      }
-      break;
-    }
-    case 'EVENT': {
-      const [, subId, nostrEvent] = msg;
-      if (subId === SIGNER_SUB_ID) {
-        handleSignerResponse(nostrEvent as NostrEvent);
-      }
-      break;
-    }
-    case 'EOSE':
-    case 'CLOSED':
-    case 'NOTICE':
-      break;
-  }
-}
-
 // ─── Signer response handler ──────────────────────────────────────────────────
 
-function handleSignerResponse(event: NostrEvent): void {
-  const idTag = event.tags.find(t => t[0] === 'id');
-  if (!idTag) return;
-
-  const correlationId = idTag[1];
-  if (!correlationId) return;
-  const pending = pendingRequests.get(correlationId);
+/**
+ * Handle signer.*.result envelope messages.
+ * Extracts the result field from the type-specific response.
+ */
+function handleSignerResponse(msg: { type: string; id: string; error?: string; [key: string]: unknown }): void {
+  const pending = pendingRequests.get(msg.id);
   if (!pending) return;
 
-  pendingRequests.delete(correlationId);
+  pendingRequests.delete(msg.id);
 
-  const errorTag = event.tags.find(t => t[0] === 'error');
-  if (errorTag) {
-    pending.reject(new Error(errorTag[1]));
+  if (msg.error) {
+    pending.reject(new Error(msg.error));
     return;
   }
 
-  const resultTag = event.tags.find(t => t[0] === 'result');
-  try {
-    const raw = resultTag?.[1] ?? event.content;
-    const result = raw ? JSON.parse(raw) : undefined;
-    pending.resolve(result);
-  } catch {
+  // Extract the result value based on the message type
+  const type = msg.type;
+  if (type === 'signer.getPublicKey.result') {
+    pending.resolve(msg.pubkey);
+  } else if (type === 'signer.signEvent.result') {
+    pending.resolve(msg.event);
+  } else if (type === 'signer.getRelays.result') {
+    pending.resolve(msg.relays);
+  } else if (type === 'signer.nip04.encrypt.result' || type === 'signer.nip44.encrypt.result') {
+    pending.resolve(msg.ciphertext);
+  } else if (type === 'signer.nip04.decrypt.result' || type === 'signer.nip44.decrypt.result') {
+    pending.resolve(msg.plaintext);
+  } else {
+    // Generic fallback: resolve with undefined
     pending.resolve(undefined);
+  }
+}
+
+// ─── Central envelope message handler ───────────────────────────────────────
+
+/**
+ * Central message handler for JSON envelope messages from the shell.
+ * Routes messages to appropriate handlers based on type prefix.
+ */
+function handleEnvelopeMessage(event: MessageEvent): void {
+  if (event.source !== window.parent) return;
+  const msg = event.data;
+  if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
+
+  const type = msg.type as string;
+
+  // Route signer result messages
+  if (type.startsWith('signer.') && type.endsWith('.result')) {
+    handleSignerResponse(msg as { type: string; id: string; error?: string; [key: string]: unknown });
+    return;
+  }
+
+  // Route IFC event messages to topic handlers
+  if (type === 'ifc.event') {
+    const ifcMsg = msg as IfcEventMessage;
+    const handlers = ifcTopicHandlers.get(ifcMsg.topic);
+    if (handlers) {
+      const payload = ifcMsg.payload ?? {};
+      const sender = ifcMsg.sender ?? '';
+      for (const handler of handlers) {
+        handler(payload, sender);
+      }
+    }
+    return;
   }
 }
 
@@ -285,12 +357,8 @@ function handleSignerResponse(event: NostrEvent): void {
 
 // ─── Initialize ───────────────────────────────────────────────────────────────
 
-// Install relay message listener
-window.addEventListener('message', handleRelayMessage);
-
-// Subscribe to signer and NIPDB responses immediately
-window.parent.postMessage(['REQ', SIGNER_SUB_ID, { kinds: [BusKind.SIGNER_RESPONSE] }], '*');
-window.parent.postMessage(['REQ', NIPDB_SUB_ID, { kinds: [BusKind.NIPDB_RESPONSE] }], '*');
+// Install central envelope message listener
+window.addEventListener('message', handleEnvelopeMessage);
 
 // Install window.nostrdb NIP-DB proxy
 installNostrDb();
@@ -298,6 +366,5 @@ installNostrDb();
 // Install keyboard forwarding (hotkeys work when iframe has focus)
 installKeyboardShim();
 
-// Install napplet-side storage proxy (wire sender to break circular dep)
-_setInterPaneEventSender(emit);
+// Install napplet-side storage proxy
 installStateShim();

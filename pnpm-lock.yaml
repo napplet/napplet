@@ -106,6 +106,18 @@ importers:
       '@napplet/core':
         specifier: workspace:*
         version: link:../core
+      '@napplet/nub-ifc':
+        specifier: workspace:*
+        version: link:../nubs/ifc
+      '@napplet/nub-relay':
+        specifier: workspace:*
+        version: link:../nubs/relay
+      '@napplet/nub-signer':
+        specifier: workspace:*
+        version: link:../nubs/signer
+      '@napplet/nub-storage':
+        specifier: workspace:*
+        version: link:../nubs/storage
     devDependencies:
       tsup:
         specifier: ^8.5.0
