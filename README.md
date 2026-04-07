@@ -1,6 +1,6 @@
 # napplet
 
-Monorepo for the **napplet** SDK -- libraries for building Nostr-native iframe applications ("napplets").
+Monorepo for the **napplet** SDK -- libraries for building NIP-5D Nostr Web Applets - "napplets" 
 
 A **napplet** is a sandboxed web app that runs inside a **shell** (window manager). The shell and napplet communicate over `postMessage` using the NIP-01 wire format. The napplet never touches `localStorage`, relay connections, or signing keys directly -- the shell proxies everything through a `ShellBridge`.
 
