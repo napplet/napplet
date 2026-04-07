@@ -1,16 +1,53 @@
 /**
  * @napplet/nub-signer -- Signer NUB module.
  *
- * Exports message types for the signer NUB domain.
- * Shim methods will be added in Phase 77/78 when the NUB spec is finalized.
+ * Exports typed message definitions for the signer domain and registers
+ * the 'signer' domain with the core dispatch infrastructure on import.
  *
  * @example
  * ```ts
- * import type { SignerMessage } from '@napplet/nub-signer';
+ * import type { SignerSignEventMessage, SignerNubMessage } from '@napplet/nub-signer';
+ * import { DOMAIN, DESTRUCTIVE_KINDS } from '@napplet/nub-signer';
  * ```
  *
  * @packageDocumentation
  */
 
-export type { SignerMessage } from './types.js';
-export { DOMAIN } from './types.js';
+export { DOMAIN, DESTRUCTIVE_KINDS } from './types.js';
+
+// ─── Type Exports ──────────────────────────────────────────────────────────
+
+export type {
+  SignerMessage,
+  SignerGetPublicKeyMessage,
+  SignerSignEventMessage,
+  SignerGetRelaysMessage,
+  SignerNip04EncryptMessage,
+  SignerNip04DecryptMessage,
+  SignerNip44EncryptMessage,
+  SignerNip44DecryptMessage,
+  SignerGetPublicKeyResultMessage,
+  SignerSignEventResultMessage,
+  SignerGetRelaysResultMessage,
+  SignerNip04EncryptResultMessage,
+  SignerNip04DecryptResultMessage,
+  SignerNip44EncryptResultMessage,
+  SignerNip44DecryptResultMessage,
+  SignerRequestMessage,
+  SignerResultMessage,
+  SignerNubMessage,
+} from './types.js';
+
+// ─── Domain Registration ───────────────────────────────────────────────────
+
+import { registerNub } from '@napplet/core';
+import { DOMAIN } from './types.js';
+
+/**
+ * Register the signer domain with the core dispatch singleton.
+ * Handler is a no-op placeholder -- the shell/shim provide real handlers.
+ * Registration ensures dispatch.getRegisteredDomains() includes 'signer'.
+ */
+registerNub(DOMAIN, (_msg) => {
+  /* Shell or shim replaces this handler at runtime */
+});
