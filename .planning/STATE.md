@@ -4,13 +4,13 @@ milestone: v0.15.0
 milestone_name: Protocol Simplification
 status: executing
 stopped_at: Roadmap created for v0.15.0 (4 phases, 15 requirements)
-last_updated: "2026-04-07T09:03:16.550Z"
+last_updated: "2026-04-07T09:14:01.791Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 3
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 71 — Shim Simplification
+**Current focus:** Phase 72 — NIP-5D Update
 
 ## Current Position
 
-Phase: 72
+Phase: 73
 Plan: Not started
-Status: Executing Phase 71
+Status: Executing Phase 72
 Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
