@@ -1,7 +1,7 @@
 {
-  "name": "@napplet/sdk",
+  "name": "@napplet/nub-theme",
   "version": "0.1.0",
-  "description": "Typed named exports wrapping window.napplet for bundler-consuming napplet developers",
+  "description": "NUB-THEME message types for shell-provided theming",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -18,12 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*",
-    "@napplet/nub-relay": "workspace:*",
-    "@napplet/nub-signer": "workspace:*",
-    "@napplet/nub-storage": "workspace:*",
-    "@napplet/nub-ifc": "workspace:*",
-    "@napplet/nub-theme": "workspace:*"
+    "@napplet/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
@@ -36,8 +31,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sandwichfarm/napplet.git",
-    "directory": "packages/sdk"
+    "url": "git+https://github.com/napplet/napplet.git",
+    "directory": "packages/nubs/theme"
   },
-  "keywords": ["nostr", "napplet", "sdk", "iframe", "nip-01"]
+  "keywords": ["nostr", "napplet", "nub", "theme"]
 }

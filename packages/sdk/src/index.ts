@@ -333,9 +333,25 @@ export type {
   IfcNubMessage,
 } from '@napplet/nub-ifc';
 
+// Theme NUB
+export type {
+  ThemeColors,
+  ThemeFont,
+  ThemeBackground,
+  Theme,
+  ThemeMessage,
+  ThemeGetMessage,
+  ThemeGetResultMessage,
+  ThemeChangedMessage,
+  ThemeRequestMessage,
+  ThemeResultMessage,
+  ThemeNubMessage,
+} from '@napplet/nub-theme';
+
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
 export { DOMAIN as SIGNER_DOMAIN, DESTRUCTIVE_KINDS } from '@napplet/nub-signer';
 export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
 export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
+export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';

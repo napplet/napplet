@@ -58,7 +58,7 @@ export interface NappletMessage {
  * const isValid = NUB_DOMAINS.includes(domain); // true
  * ```
  */
-export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc';
+export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme';
 
 /**
  * Runtime-accessible constant array of all NUB domain names.
@@ -71,7 +71,7 @@ export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc';
  * }
  * ```
  */
-export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc'] as const;
+export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme'] as const;
 
 // ─── Shell Capability Query ────────────────────────────────────────────────
 
