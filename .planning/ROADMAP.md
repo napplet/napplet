@@ -300,4 +300,4 @@ Plans:
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
 | 77. NUB Module Scaffold | 2/2 | Complete    | 2026-04-07 |
 | 78. Shim & SDK Integration | 2/2 | Complete    | 2026-04-07 |
-| 79. Documentation Update | 2/2 | Complete   | 2026-04-07 |
+| 79. Documentation Update | 2/2 | Complete    | 2026-04-07 |
