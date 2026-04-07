@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.15.0 Protocol Simplification
+
+Removed cryptographic identity from the napplet wire protocol. Napplets now send plain unsigned NIP-01 messages; shell identifies senders via unforgeable MessageEvent.source at iframe creation. AUTH handshake (REGISTER/IDENTITY/AUTH) eliminated. @napplet/shim dropped nostr-tools dependency. Protocol version bumped to 3.0.0. NIP-5D and all READMEs updated. 4 phases, 4 plans shipped 2026-04-07. See [archive](milestones/v0.15.0-ROADMAP.md).
+
 ## Shipped: v0.14.0 Repo Cleanup & Audit
 
 Dead code, stale docs, and leftover artifacts from v0.13.0 extraction cleaned up. RUNTIME-SPEC.md, skills/, specs/nubs/ all updated to reference @kehto. MIGRATION-EVAL.md produced with stay/move/split recommendations for all remaining content. 2 phases, 3 plans shipped 2026-04-06. See [archive](milestones/v0.14.0-ROADMAP.md).
@@ -136,19 +140,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ GitHub Actions CI/CD workflows for @napplet — v0.13.0 Phase 66 (PUB-01..03)
 - ✓ READMEs updated for 4-package SDK — v0.13.0 Phase 67 (DOC-01, DOC-02)
 
+- ✓ Handshake types (RegisterPayload, IdentityPayload, AUTH_KIND, VERB_REGISTER, VERB_IDENTITY) removed from @napplet/core — v0.15.0 Phase 70 (WIRE-01..04, RT-01..04)
+- ✓ @napplet/shim stripped of all signing, keypair, AUTH code; nostr-tools dependency dropped — v0.15.0 Phase 71 (SHIM-01..04)
+- ✓ NIP-5D v3 rewritten for simplified wire protocol (no AUTH, shell-assigned identity via MessageEvent.source) — v0.15.0 Phase 72 (DOC-02)
+- ✓ All package READMEs updated for no-crypto API surface — v0.15.0 Phase 73 (DOC-03)
+
 ### Active
 
-## Current Milestone: v0.15.0 Protocol Simplification
-
-**Goal:** Remove cryptographic identity from the napplet wire protocol — napplets send unsigned messages, the shell establishes identity at iframe creation time via message.source, and nostr crypto identity becomes a shell/runtime implementation detail.
-
-**Target features:**
-- Remove REGISTER/IDENTITY/AUTH handshake from the spec and shim
-- Shim drops all crypto dependencies (no signing, no keypair)
-- Shell stamps events with napplet identity internally (message.source → derived pubkey)
-- Identity established at iframe creation (shell knows dTag + aggregateHash from manifest)
-- Update RUNTIME-SPEC.md and NIP-5D for simplified wire protocol
-- Update @napplet/sdk to reflect the thinner API surface
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -165,7 +164,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.15.0 in progress (Protocol Simplification). Removing crypto from the napplet wire protocol. @napplet is a clean 4-package SDK. 14 milestones shipped previously.
+- **Current state**: v0.15.0 shipped (Protocol Simplification). Napplets send plain unsigned NIP-01 messages; shell identifies via MessageEvent.source. @napplet/shim has zero crypto dependencies. Protocol version 3.0.0. 15 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin. @kehto (separate repo): acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -214,6 +213,8 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 | SEC-01 explicit BusKind allowlist (not 29000-29999 range) | Principle of least privilege — future bus kinds must opt in | ✓ Good — though SPEC.md says range (known debt) |
 | SPEC.md → RUNTIME-SPEC.md with internal-reference header | Distinguishes internal reference from NIP standard; header links to NIP-5D | ✓ Good — no confusion between runtime spec and protocol NIP |
 | Historical PROJECT.md SPEC.md references left as-is | These are milestone descriptions, not active cross-references | ✓ Good — avoids rewriting history |
+| Remove crypto from napplet wire protocol | message.source is unforgeable; napplet can't hash itself; shell knows identity at iframe creation | ✓ Good — simpler spec, thinner shim, crypto is runtime impl detail |
+| Protocol version 2.0.0 → 3.0.0 | Breaking change to handshake; downstream kehto must update | ✓ Good — clean break |
 
 ## Evolution
 
@@ -246,4 +247,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-07 after v0.15.0 milestone start*
+*Last updated: 2026-04-07 after v0.15.0 milestone*

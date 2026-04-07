@@ -1,5 +1,18 @@
 # Milestones
 
+## v0.15.0 Protocol Simplification (Shipped: 2026-04-07)
+
+**Phases completed:** 4 phases, 4 plans, 8 tasks
+
+**Key accomplishments:**
+
+- Removed AUTH/handshake types and constants from @napplet/core, bumped protocol to v3.0.0, and updated EventTemplate to document unsigned-message contract
+- Strip all signing code, keypair handling, AUTH flow, and nostr-tools dependency from @napplet/shim -- zero-crypto shim sends unsigned event templates via postMessage
+- NIP-5D v3 rewritten for simplified wire protocol -- AUTH/REGISTER/IDENTITY removed, shell-assigned identity via MessageEvent.source, unsigned event templates
+- All 5 package READMEs updated to reflect v0.15.0 no-crypto wire protocol: removed AUTH/keypair/nostr-tools/NIP-42 references, added message.source identity model, replaced RUNTIME-SPEC.md links with NIP-5D
+
+---
+
 ## v0.14.0 Repo Cleanup & Audit (Shipped: 2026-04-06)
 
 **Phases completed:** 2 phases, 3 plans, 5 tasks

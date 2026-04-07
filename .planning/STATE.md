@@ -4,7 +4,7 @@ milestone: v0.15.0
 milestone_name: Protocol Simplification
 status: executing
 stopped_at: Roadmap created for v0.15.0 (4 phases, 15 requirements)
-last_updated: "2026-04-07T09:25:06.933Z"
+last_updated: "2026-04-07T09:26:54.870Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 4
