@@ -247,7 +247,7 @@ export type { EventTemplate } from '@napplet/core';
 
 // ─── Core envelope types ───────────────────────────────────────────────────
 
-export type { NappletMessage, NubDomain, ShellSupports } from '@napplet/core';
+export type { NappletMessage, NubDomain, NamespacedCapability, ShellSupports } from '@napplet/core';
 export { NUB_DOMAINS } from '@napplet/core';
 
 // ─── NUB Message Type Re-exports ───────────────────────────────────────────
