@@ -180,7 +180,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Remove cryptographic identity from the napplet wire protocol. Napplets send plain NIP-01 messages without signing. The shell identifies napplets via message.source and stamps events internally. Auth handshake eliminated from the spec and SDK.
 
 - [x] **Phase 70: Core Protocol Types** - Remove AUTH/handshake types and constants from @napplet/core, update protocol contract for unsigned napplet messages (completed 2026-04-07)
-- [ ] **Phase 71: Shim Simplification** - Strip all signing, keypair, and AUTH handling from @napplet/shim; drop nostr-tools peer dependency
+- [x] **Phase 71: Shim Simplification** - Strip all signing, keypair, and AUTH handling from @napplet/shim; drop nostr-tools peer dependency (completed 2026-04-07)
 - [ ] **Phase 72: NIP-5D Update** - Update NIP-5D for simplified wire protocol
 - [ ] **Phase 73: SDK & README Update** - Update @napplet/sdk and package READMEs for no-crypto API surface
 
@@ -210,9 +210,9 @@ Plans:
   3. nostr-tools is removed from @napplet/shim's peerDependencies and dependencies in package.json
   4. subscribe(), publish(), and query() continue to work from the napplet developer's perspective -- same function signatures, same return types
   5. IPC emit/on, signer proxy (window.nostr), keyboard forwarding, storage, and service discovery all function without requiring a keypair
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 71-01-PLAN.md -- Strip signing, keypair, AUTH code and nostr-tools dependency from shim
+- [x] 71-01-PLAN.md -- Strip signing, keypair, AUTH code and nostr-tools dependency from shim
 
 ### Phase 72: NIP-5D Update
 **Goal**: NIP-5D accurately describes the simplified wire protocol where napplets send unsigned messages and the shell handles identity
@@ -242,6 +242,6 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 70. Core Protocol Types | 1/1 | Complete    | 2026-04-07 |
-| 71. Shim Simplification | 0/1 | Planned    | - |
+| 71. Shim Simplification | 1/1 | Complete    | 2026-04-07 |
 | 72. NIP-5D Update | 0/TBD | Not started | - |
 | 73. SDK & README Update | 0/TBD | Not started | - |
