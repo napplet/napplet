@@ -222,10 +222,11 @@ Plans:
   3. NUB-STORAGE spec defines scoped storage messages (get, set, delete, keys) within the JSON envelope format
   4. NUB-IFC spec defines inter-frame communication with both dispatch mode (per-message ACL) and channel mode (ACL at open), merging the former IPC and PIPES concepts
   5. All four NUB specs reference the NIP-5D envelope and are self-contained message catalogs
-**Plans:** 1 plan
+**Plans:** 2 plans
 
 Plans:
-- [ ] 74-01-PLAN.md — Rewrite NIP-5D spec (JSON envelope, transport, identity, manifest, NUB negotiation)
+- [ ] 75-01-PLAN.md — NUB-RELAY and NUB-SIGNER specs (relay proxy + signing delegation)
+- [ ] 75-02-PLAN.md — NUB-STORAGE and NUB-IFC specs (scoped storage + inter-frame communication)
 
 ### Phase 76: Core Envelope Types
 **Goal**: @napplet/core exports typed JSON envelope message definitions that replace all NIP-01 array types
