@@ -19,7 +19,7 @@
 ### Installation
 
 ```bash
-npm install @napplet/sdk @napplet/shim nostr-tools
+npm install @napplet/sdk @napplet/shim
 ```
 
 ## Quick Start
@@ -147,9 +147,9 @@ This protects against importing `@napplet/sdk` without the side-effect shim impo
 | | `@napplet/sdk` | `@napplet/shim` |
 |---|---|---|
 | **Import style** | `import { relay } from '@napplet/sdk'` | `import '@napplet/shim'` (side-effect) |
-| **What it does** | Named exports wrapping `window.napplet` | Installs `window.napplet` + AUTH handshake |
-| **Dependencies** | `@napplet/core` (types only) | `nostr-tools` (peer) |
-| **Side effects** | None | Yes -- installs globals, starts AUTH |
+| **What it does** | Named exports wrapping `window.napplet` | Installs `window.napplet` + shell registration |
+| **Dependencies** | `@napplet/core` (types only) | None (types from `@napplet/core`) |
+| **Side effects** | None | Yes -- installs globals, registers with shell |
 | **Required** | Optional convenience | Required in every napplet |
 
 **Typical usage:** Import both -- shim for runtime, SDK for developer API:
@@ -163,7 +163,7 @@ If you are writing a vanilla napplet with no build step, use `window.napplet.*` 
 
 ## Protocol Reference
 
-- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
+- [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
 - [@napplet/shim](../shim/) -- Window installer package
 - [@napplet/core](../core/) -- Shared protocol types
 

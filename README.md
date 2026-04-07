@@ -9,7 +9,7 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 | Package | npm | Description |
 |---------|-----|-------------|
 | [@napplet/core](packages/core) | `@napplet/core` | Shared protocol types and constants. `NostrEvent`, `NostrFilter`, `BusKind`, `ServiceDescriptor`, topic constants -- imported by all other packages. |
-| [@napplet/shim](packages/shim) | `@napplet/shim` | Side-effect-only window installer for napplet iframes. Importing `@napplet/shim` installs the `window.napplet` global and completes the NIP-42 AUTH handshake. No named exports. |
+| [@napplet/shim](packages/shim) | `@napplet/shim` | Side-effect-only window installer for napplet iframes. Importing `@napplet/shim` installs the `window.napplet` global and registers with the shell. Zero crypto dependencies. No named exports. |
 | [@napplet/sdk](packages/sdk) | `@napplet/sdk` | Named TypeScript exports wrapping `window.napplet` for bundler consumers. Provides `relay`, `ipc`, `services`, `storage` as importable objects. |
 | [@napplet/vite-plugin](packages/vite-plugin) | `@napplet/vite-plugin` | Vite plugin for NIP-5A manifest generation. Computes per-file SHA-256 hashes, signs a kind 35128 manifest event at build time, and injects `requires` meta tags. |
 
@@ -32,7 +32,7 @@ Shell (host page)                          Napplet (sandboxed iframe)
 @kehto/shell (or any shell)                @napplet/shim
   ShellBridge                                subscribe / publish / query
   ├── NIP-01 message routing                 emit / on (inter-pane events)
-  ├── NIP-42 AUTH handshake                  nappletState (proxied storage)
+  ├── Identity via message.source            nappletState (proxied storage)
   ├── ACL enforcement                        window.nostr (NIP-07 proxy)
   ├── Service dispatch (kind 29010)          window.napplet.services.has(...)
   └── Signer + storage proxy
@@ -51,7 +51,7 @@ These packages were extracted from [hyprgate](https://github.com/sandwichfarm/hy
 
 The shell-side runtime packages (ACL, protocol engine, browser adapter, service handlers) were subsequently extracted into the [@kehto](https://github.com/sandwichfarm/kehto) monorepo, leaving `@napplet` as the focused napplet-side SDK.
 
-The protocol is documented in a [NIP specification draft](specs/NIP-5D.md) and the detailed [Runtime Reference](RUNTIME-SPEC.md).
+The protocol is documented in the [NIP-5D specification draft](specs/NIP-5D.md). The runtime spec lives in [@kehto](https://github.com/sandwichfarm/kehto).
 
 ## Development
 

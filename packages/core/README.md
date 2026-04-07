@@ -21,7 +21,7 @@ npm install @napplet/core
 ```ts
 import {
   type NostrEvent, type NostrFilter, type Capability,
-  BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
+  BusKind, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
   DESTRUCTIVE_KINDS, ALL_CAPABILITIES, TOPICS,
 } from '@napplet/core';
 ```
@@ -105,31 +105,29 @@ for (const cap of ALL_CAPABILITIES) {
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `PROTOCOL_VERSION` | `'2.0.0'` | Current napplet-shell protocol version |
-| `SHELL_BRIDGE_URI` | `'napplet://shell'` | URI identifying the shell bridge in NIP-42 AUTH relay tags |
-| `AUTH_KIND` | `22242` | NIP-42 AUTH event kind |
+| `PROTOCOL_VERSION` | `'3.0.0'` | Current napplet-shell protocol version |
+| `SHELL_BRIDGE_URI` | `'napplet://shell'` | URI identifying the shell bridge in relay tags |
 | `REPLAY_WINDOW_SECONDS` | `30` | Maximum event age (seconds) for replay protection |
 | `DESTRUCTIVE_KINDS` | `Set([0, 3, 5, 10002])` | Event kinds requiring explicit user consent before signing |
 
 ### Bus Event Kinds
 
-All bus kinds are in the `29000–29999` ephemeral range. Ephemeral events are auto-discarded by real relays per NIP-01 — they never persist beyond the ShellBridge.
+All bus kinds are in the `29000-29999` ephemeral range. Ephemeral events are auto-discarded by real relays per NIP-01 -- they never persist beyond the ShellBridge.
 
 | `BusKind.*` | Value | Description |
 |-------------|-------|-------------|
-| `BusKind.REGISTRATION` | `29000` | Napplet registration events |
 | `BusKind.SIGNER_REQUEST` | `29001` | Signer request from napplet to shell |
 | `BusKind.SIGNER_RESPONSE` | `29002` | Signer response from shell to napplet |
-| `BusKind.INTER_PANE` | `29003` | Inter-pane pubsub events between napplets |
+| `BusKind.IPC_PEER` | `29003` | Inter-napplet IPC peer events |
 | `BusKind.HOTKEY_FORWARD` | `29004` | Keyboard shortcut forwarding |
 | `BusKind.METADATA` | `29005` | Napplet metadata events |
 | `BusKind.NIPDB_REQUEST` | `29006` | NIP-DB request events |
 | `BusKind.NIPDB_RESPONSE` | `29007` | NIP-DB response events |
-| `BusKind.SERVICE_DISCOVERY` | `29010` | Service discovery — napplets query available shell services |
+| `BusKind.SERVICE_DISCOVERY` | `29010` | Service discovery -- napplets query available shell services |
 
 ```ts
-if (event.kind === BusKind.INTER_PANE) {
-  // handle inter-pane message
+if (event.kind === BusKind.IPC_PEER) {
+  // handle IPC peer message
 }
 if (DESTRUCTIVE_KINDS.has(event.kind)) {
   // prompt user for consent
@@ -138,7 +136,7 @@ if (DESTRUCTIVE_KINDS.has(event.kind)) {
 
 ### Topic Constants
 
-The `TOPICS` object contains string constants for the napplet inter-pane event bus. Topics identify command and event types on `BusKind.INTER_PANE` (kind 29003) events.
+The `TOPICS` object contains string constants for the napplet inter-pane event bus. Topics identify command and event types on `BusKind.IPC_PEER` (kind 29003) events.
 
 ```ts
 import { TOPICS } from '@napplet/core';
@@ -202,8 +200,8 @@ import type {
 
 ## Protocol Reference
 
-- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
-- [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) — Basic protocol flow
+- [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
+- [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) -- Basic protocol flow
 
 ## License
 

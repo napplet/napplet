@@ -1,25 +1,24 @@
 # @napplet/shim
 
-> Side-effect-only window installer for napplet iframes. Importing `@napplet/shim` installs the `window.napplet` global. No named exports.
+> Side-effect-only window installer for napplet iframes. Importing `@napplet/shim` installs the `window.napplet` global. No named exports. No cryptographic dependencies -- the shim sends plain NIP-01 messages and the shell handles identity.
 
 ## Getting Started
 
 ### Prerequisites
 
 - A shell host running [@kehto/shell](https://github.com/sandwichfarm/kehto) or another napplet protocol shell implementation
-- [nostr-tools](https://www.npmjs.com/package/nostr-tools) as a peer dependency
 
 ### How It Works
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
-2. The shim generates an ephemeral keypair and completes the NIP-42 AUTH handshake with the shell
-3. Once authenticated, `window.napplet` is populated with `relay`, `ipc`, `services`, and `storage` sub-objects
+2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
+3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `services`, and `storage` sub-objects
 4. The shim also installs `window.nostr` (NIP-07 compatible) for transparent signer proxy access
 
 ### Installation
 
 ```bash
-npm install @napplet/shim nostr-tools
+npm install @napplet/shim
 ```
 
 ## Quick Start
@@ -153,7 +152,8 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 | | `@napplet/shim` | `@napplet/sdk` |
 |---|---|---|
 | **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
-| **What it does** | Installs `window.napplet` global + AUTH handshake | Named exports wrapping `window.napplet` |
+| **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
+| **Dependencies** | None (types from `@napplet/core`) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
 | **Named exports** | None | `relay`, `ipc`, `services`, `storage`, plus types |
 
@@ -166,9 +166,8 @@ import { relay, ipc, storage } from '@napplet/sdk';
 
 ## Protocol Reference
 
-- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
+- [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
 - [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) -- Basic protocol flow
-- [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) -- Authentication
 
 ## License
 

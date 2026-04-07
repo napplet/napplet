@@ -163,7 +163,7 @@ Injects two meta tags into the HTML `<head>`:
 <meta name="napplet-napp-type" content="<nappletType>">
 ```
 
-The empty aggregate hash tells the shell this is a development build. The napplet shim reads these tags during AUTH to include in the handshake.
+The empty aggregate hash tells the shell this is a development build. The shell reads these tags during napplet registration to resolve the aggregate hash for ACL scoping.
 
 ### Build Mode (`closeBundle`)
 
@@ -205,7 +205,7 @@ interface Nip5aManifestOptions {
 
 ## Protocol Reference
 
-- [Napplet Runtime Reference](../../RUNTIME-SPEC.md)
+- [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
 - [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md) -- Nsite specification
 - [Aggregate Hash PR](https://github.com/nostr-protocol/nips/pull/2287) -- NIP-5A aggregate hash extension (not yet merged)
 
