@@ -4,7 +4,7 @@ milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
 status: verifying
 stopped_at: Completed 78-02-PLAN.md
-last_updated: "2026-04-07T12:46:19.940Z"
+last_updated: "2026-04-07T12:46:53.812Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 78 (Shim & SDK Integration) — EXECUTING
-Plan: 2 of 2
+Phase: 79
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
