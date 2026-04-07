@@ -6,53 +6,46 @@ Nostr Web Applets
 
 `draft` `optional`
 
-This NIP defines a protocol for sandboxed web applications ("napplets") running in iframes to communicate with a hosting application ("shell") via postMessage using [NIP-01](01.md) wire format. Extensions are defined in the NUB (Napplet Unified Blueprint) proposal track.
+This NIP defines a protocol for sandboxed web applications ("napplets") running in iframes to communicate with a hosting application ("shell") via postMessage using a generic JSON envelope. Protocol messages are defined by NUB (Napplet Unified Blueprint) extension specs.
 
 ## Terminology
 
 | Term | Definition |
 |------|------------|
-| Shell | Web application hosting napplet iframes, acting as NIP-01 relay proxy |
+| Shell | Web application hosting napplet iframes |
 | Napplet | Sandboxed iframe application communicating with the shell via postMessage |
 | dTag | Napplet type identifier from the [NIP-5A](5A.md) manifest `d` tag |
 | Aggregate hash | SHA-256 of napplet build files per [NIP-5A](5A.md) |
-| NUB | Napplet Unified Blueprint -- extension proposal system for interface and protocol specs |
+| NUB | Napplet Unified Blueprint -- extension spec defining protocol messages for a capability domain |
 
 ## Transport
 
-Communication uses `postMessage`. Napplet to shell: `window.parent.postMessage(msg, '*')`. Shell to napplet: `iframeWindow.postMessage(msg, '*')`. The `'*'` origin is required because napplets have opaque origins (no `allow-same-origin`). Sender authentication uses `MessageEvent.source`, not origin checking.
+Communication uses `postMessage`. Napplet to shell: `window.parent.postMessage(msg, '*')`. Shell to napplet: `iframeWindow.postMessage(msg, '*')`. The `'*'` target origin is required because napplets have opaque origins (no `allow-same-origin`).
 
 Napplet iframes MUST use this sandbox attribute:
 
-    allow-scripts allow-forms allow-popups allow-modals allow-downloads
+    sandbox="allow-scripts"
 
-The `allow-same-origin` token MUST NOT be present. Shells MAY add additional sandbox tokens as needed. Napplets have no access to `localStorage`, `sessionStorage`, `IndexedDB`, direct WebSocket connections, or `window.nostr`. All storage, signing, and relay access is proxied through the shell.
+The `allow-same-origin` token MUST NOT be present. Shells MAY add additional sandbox tokens (`allow-forms`, `allow-modals`, `allow-downloads`, `allow-popups`) based on shell policy. Napplets have no access to `localStorage`, `sessionStorage`, `IndexedDB`, direct WebSocket connections, or `window.nostr`. All storage, signing, and relay access is proxied through the shell.
 
-The shell identifies senders via `MessageEvent.source` (unforgeable Window reference). The shell maps each iframe's Window reference to its napplet identity (dTag, aggregateHash) at iframe creation time. Messages from unknown sources (iframes not created by the shell) MUST be silently dropped. All messages are JSON arrays using [NIP-01](01.md) wire format.
+The shell identifies senders via `MessageEvent.source` (unforgeable Window reference). Messages from unknown sources (iframes not created by the shell) MUST be silently dropped.
 
 ## Wire Format
 
-### Napplet-to-Shell Messages
+All messages between napplet and shell are JSON objects with a `type` field:
 
-| Verb | Format | Description |
-|------|--------|-------------|
-| `EVENT` | `["EVENT", <event>]` | Publish or command event |
-| `REQ` | `["REQ", <sub_id>, <filter>, ...]` | Open subscription per [NIP-01](01.md) |
-| `CLOSE` | `["CLOSE", <sub_id>]` | Close subscription |
-| `COUNT` | `["COUNT", <sub_id>, <filter>, ...]` | Request event count per [NIP-45](45.md) |
+    { "type": "<domain>.<action>", ...payload }
 
-### Shell-to-Napplet Messages
+The `type` field is a string discriminant in `domain.action` format. Domains correspond to NUB capability names (e.g., `relay`, `signer`, `storage`, `ifc`). NUB specs define the valid type strings and payload shapes for their domain. This NIP does not enumerate message types.
 
-| Verb | Format | Description |
-|------|--------|-------------|
-| `EVENT` | `["EVENT", <sub_id>, <event>]` | Deliver matching event |
-| `OK` | `["OK", <event_id>, <bool>, <msg>]` | Event acceptance/rejection |
-| `EOSE` | `["EOSE", <sub_id>]` | End of stored events |
-| `CLOSED` | `["CLOSED", <sub_id>, <msg>]` | Subscription closed by shell |
-| `NOTICE` | `["NOTICE", <msg>]` | Human-readable notice |
-| `COUNT` | `["COUNT", <sub_id>, {"count": <n>}]` | Event count result |
+Example messages (defined by their respective NUB specs):
 
-All verbs follow [NIP-01](01.md) relay semantics. The shell acts as a virtual relay to each napplet.
+    { "type": "relay.subscribe", "id": "sub1", "filters": [...] }
+    { "type": "relay.event", "id": "sub1", "event": {...} }
+    { "type": "signer.sign", "id": "req1", "template": {...} }
+    { "type": "storage.get", "key": "prefs" }
+
+Messages with an unrecognized `type` MUST be silently ignored. This allows forward compatibility as new NUBs are defined.
 
 ## Identity
 
@@ -64,49 +57,66 @@ Napplets send unsigned event templates (kind, created_at, tags, content) without
 
 The shell MUST verify `MessageEvent.source` on every inbound message. Messages from Window references not mapped to a napplet identity MUST be silently dropped.
 
-The shell SHOULD check `requires` tags from the [NIP-5A](5A.md) manifest against available capabilities at iframe creation time.
+## Manifest and NUB Negotiation
 
-## Extension Discovery
+Napplet manifests ([NIP-5A](5A.md) kind 35128) declare required capabilities using `requires` tags:
 
-Extension discovery is MUST. All shells MUST implement `shell.supports()`. Napplets discover capabilities by querying NUB proposal support:
+    ["requires", "relay"]
+    ["requires", "signer"]
+    ["requires", "storage"]
 
-- `shell.supports("NUB-RELAY")` -- boolean, interface present
-- `shell.supports("NUB-RELAY", "NUB-02")` -- boolean, interface + protocol
+Each `requires` value is a short NUB name: `relay`, `signer`, `storage`, `ifc`. Manifests MUST NOT use spec identifiers like `NUB-RELAY`.
 
-How shells resolve `supports()` is an implementation detail. This NIP does not prescribe a wire protocol for discovery. Napplets MUST discover capabilities before using them and MUST gracefully degrade when a capability is absent.
+At napplet load time, the shell checks `requires` tags against its own capabilities. If a required capability is absent, the shell SHOULD reject the napplet or display a compatibility warning. If the manifest has no `requires` tags, the shell loads the napplet with whatever capabilities it provides.
 
-Napplet manifests ([NIP-5A](5A.md) kind 35128) MAY include `["requires", "<nub-id>"]` tags. The shell checks these at napplet load time.
+### Runtime Capability Query
+
+Napplets query capability support at runtime:
+
+    window.napplet.shell.supports('relay')    // boolean
+    window.napplet.shell.supports('signer')   // boolean
+
+This covers both NUB capabilities and sandbox permissions:
+
+    window.napplet.shell.supports('popups')   // boolean
+
+Shells MUST implement `window.napplet.shell.supports()`. Napplets MUST gracefully degrade when a capability is absent.
+
+Service discovery (e.g., audio, notifications) uses a separate API:
+
+    window.napplet.services.has('audio')      // boolean
 
 ## NUB Extension Framework
 
-Capabilities beyond the core protocol are defined as NUB (Napplet Unified Blueprint) proposals with two tracks:
+Protocol messages are defined by NUB (Napplet Unified Blueprint) specs. Each NUB owns a message domain and defines the `type` strings, payload shapes, and semantics for that domain:
 
-**NUB-WORD** (interfaces): One canonical spec per name defining shell-provided API contracts on `window.napplet.*` namespaces (e.g., NUB-RELAY, NUB-STORAGE, NUB-SIGNER, NUB-NOSTRDB, NUB-IPC, NUB-PIPES).
+| NUB | Domain | Defines |
+|-----|--------|---------|
+| NUB-RELAY | `relay` | Relay proxy: subscribe, publish, event delivery, close |
+| NUB-SIGNER | `signer` | Signing delegation: sign request, response, get-public-key |
+| NUB-STORAGE | `storage` | Scoped storage: get, set, delete, keys |
+| NUB-IFC | `ifc` | Inter-frame communication: dispatch and channel modes |
 
-**NUB-NN** (message protocols): Numbered proposals defining event semantics napplets agree on with each other. Multiple competing specs allowed per domain.
-
-NUB proposals are maintained at [github.com/napplet/nubs](https://github.com/napplet/nubs). Event kinds used by NUB interfaces are defined in their respective proposals.
+NUB specs are maintained at [github.com/napplet/nubs](https://github.com/napplet/nubs). Each NUB spec is self-contained and references this NIP only for envelope format and transport.
 
 ## Security Considerations
 
 Napplets are untrusted code. The shell is trusted. The browser enforces iframe sandbox boundaries. `MessageEvent.source` provides unforgeable sender identity.
 
 **Mitigations:**
-1. Iframe sandbox: `allow-scripts` without `allow-same-origin` -- shells MUST NOT combine these tokens.
-2. postMessage `*` origin is required for opaque-origin iframes; sender identification uses `MessageEvent.source`, NOT `event.origin`.
-3. Identity binding: the shell maps `MessageEvent.source` to napplet identity at iframe creation. No per-message or one-time signature verification is needed -- the browser's `MessageEvent.source` is unforgeable within the same browsing context.
+1. Iframe sandbox: `allow-scripts` only -- shells MUST NOT add `allow-same-origin`.
+2. postMessage `'*'` origin is required for opaque-origin iframes; sender identification uses `MessageEvent.source`, NOT `event.origin`.
+3. Identity binding: the shell maps `MessageEvent.source` to napplet identity at iframe creation. The browser's `MessageEvent.source` is unforgeable within the same browsing context.
 4. Internal identity confinement: events stamped with shell-derived napplet pubkeys MUST NOT be published to external relays; the user's signer ([NIP-07](07.md)/NIP-46) is the only source of externally published events.
-5. Aggregate hash verification against [NIP-5A](5A.md) manifests; mismatch MAY result in napplet rejection. Storage isolation, signing safety, and relay access control are defined by their respective NUB interface specs.
+5. Aggregate hash verification against [NIP-5A](5A.md) manifests; mismatch MAY result in napplet rejection.
+6. Unrecognized message types are silently ignored, preventing capability probing.
+
+Storage isolation, signing safety, relay access control, and ACL enforcement are defined by their respective NUB specs.
 
 **Non-Guarantees:** The protocol does NOT protect against a compromised browser, a malicious shell, side-channel attacks, or social engineering.
-
-## Event Kinds
-
-Interface-specific event kinds are defined in their respective NUB proposals.
 
 ## References
 
 - [NIP-01](01.md) -- Basic protocol flow
 - [NIP-07](07.md) -- `window.nostr` signer capability
-- [NIP-45](45.md) -- Event counts
 - [NIP-5A](5A.md) -- Napplet manifest format and aggregate hash
