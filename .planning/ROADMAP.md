@@ -210,7 +210,9 @@ Plans:
   3. nostr-tools is removed from @napplet/shim's peerDependencies and dependencies in package.json
   4. subscribe(), publish(), and query() continue to work from the napplet developer's perspective -- same function signatures, same return types
   5. IPC emit/on, signer proxy (window.nostr), keyboard forwarding, storage, and service discovery all function without requiring a keypair
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 71-01-PLAN.md -- Strip signing, keypair, AUTH code and nostr-tools dependency from shim
 
 ### Phase 72: NIP-5D Update
 **Goal**: NIP-5D accurately describes the simplified wire protocol where napplets send unsigned messages and the shell handles identity
@@ -240,6 +242,6 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 70. Core Protocol Types | 1/1 | Complete    | 2026-04-07 |
-| 71. Shim Simplification | 0/TBD | Not started | - |
+| 71. Shim Simplification | 0/1 | Planned    | - |
 | 72. NIP-5D Update | 0/TBD | Not started | - |
 | 73. SDK & README Update | 0/TBD | Not started | - |
