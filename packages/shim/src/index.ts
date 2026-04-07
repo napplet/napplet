@@ -275,6 +275,12 @@ function handleSignerResponse(event: NostrEvent): void {
     removeItem: _nappletStorage.removeItem.bind(_nappletStorage),
     keys: _nappletStorage.keys.bind(_nappletStorage),
   },
+  shell: {
+    supports(_capability: string): boolean {
+      // TODO: Shell populates supported capabilities at iframe creation
+      return false;
+    },
+  },
 };
 
 // ─── Initialize ───────────────────────────────────────────────────────────────

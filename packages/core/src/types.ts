@@ -1,10 +1,11 @@
 /**
- * @napplet/core -- Protocol type definitions shared across all napplet packages.
+ * @napplet/core — Protocol type definitions shared across all napplet packages.
  *
  * These types define the NIP-01 wire format structures and capability system
- * used by the napplet-shell communication protocol. Napplets send unsigned
- * event templates; the shell/runtime handles identity and signing.
+ * used by the napplet-shell communication protocol.
  */
+
+import type { NappletGlobalShell } from './envelope.js';
 
 // ─── NIP-01 Types ─────────────────────────────────────────────────────────────
 
@@ -116,6 +117,51 @@ export interface ServiceDescriptor {
   description?: string;
 }
 
+// ─── Handshake Message Payloads ─────────────────────────────────────────────
+
+/**
+ * Payload for the REGISTER verb (napplet -> shell).
+ * Napplet announces its type and claimed aggregate hash before AUTH.
+ *
+ * @example
+ * ```ts
+ * // Napplet sends:
+ * window.parent.postMessage(['REGISTER', { dTag: 'chat', claimedHash: 'abc123...' }], '*');
+ * ```
+ */
+export interface RegisterPayload {
+  /** Napplet type identifier from <meta name="napplet-type"> */
+  readonly dTag: string;
+  /** Aggregate hash from <meta name="napplet-aggregate-hash">, empty string in dev mode */
+  readonly claimedHash: string;
+}
+
+/**
+ * Payload for the IDENTITY verb (shell -> napplet).
+ * Shell sends a deterministic keypair derived from the napplet's verified identity.
+ *
+ * @example
+ * ```ts
+ * // Shell sends to napplet iframe:
+ * iframe.contentWindow.postMessage(['IDENTITY', {
+ *   pubkey: 'deadbeef...',
+ *   privkey: 'cafebabe...',
+ *   dTag: 'chat',
+ *   aggregateHash: 'abc123...',
+ * }], '*');
+ * ```
+ */
+export interface IdentityPayload {
+  /** Hex-encoded public key of the delegated keypair */
+  readonly pubkey: string;
+  /** Hex-encoded private key of the delegated keypair (32 bytes = 64 hex chars) */
+  readonly privkey: string;
+  /** Napplet type identifier (echoed back from REGISTER) */
+  readonly dTag: string;
+  /** Verified aggregate hash (may differ from claimed if shell overrides) */
+  readonly aggregateHash: string;
+}
+
 // ─── Shim API Types ──────────────────────────────────────────────────────────
 
 /**
@@ -135,15 +181,8 @@ export interface Subscription {
 }
 
 /**
- * Unsigned event template sent by napplets to the shell via postMessage.
- *
- * Napplets never sign events themselves. The shell identifies the sender
- * via the iframe's `MessageEvent.source` Window reference and stamps
- * the event with an internally-derived pubkey before relay broadcast.
- *
- * This is the primary outbound message type in the simplified wire protocol
- * (v0.15.0+). The napplet provides kind, content, tags, and created_at;
- * the shell/runtime adds id, pubkey, and sig.
+ * Unsigned event template passed to relay.publish().
+ * The shell signs it via the NIP-07 proxy before broadcasting.
  *
  * @example
  * ```ts
@@ -289,4 +328,15 @@ export interface NappletGlobal {
      */
     keys(): Promise<string[]>;
   };
+  /**
+   * Shell capability queries. Check whether the shell supports a NUB or sandbox permission.
+   *
+   * @example
+   * ```ts
+   * if (window.napplet.shell.supports('signer')) {
+   *   // Shell can sign events on behalf of the napplet
+   * }
+   * ```
+   */
+  shell: NappletGlobalShell;
 }

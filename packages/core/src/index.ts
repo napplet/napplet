@@ -11,13 +11,19 @@
  * ```ts
  * import {
  *   type NostrEvent, type NostrFilter, type Capability,
- *   BusKind, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
- *   DESTRUCTIVE_KINDS, ALL_CAPABILITIES, TOPICS,
+ *   type NappletMessage, type NubDomain, type ShellSupports,
+ *   NUB_DOMAINS, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
+ *   BusKind, DESTRUCTIVE_KINDS, ALL_CAPABILITIES, TOPICS,
  * } from '@napplet/core';
  * ```
  *
  * @packageDocumentation
  */
+
+// ─── Envelope Types ────────────────────────────────────────────────────────
+
+export type { NappletMessage, NubDomain, ShellSupports, NappletGlobalShell } from './envelope.js';
+export { NUB_DOMAINS } from './envelope.js';
 
 // ─── Protocol Types ─────────────────────────────────────────────────────────
 
@@ -30,6 +36,8 @@ export type {
   EventTemplate,
   ServiceInfo,
   NappletGlobal,
+  RegisterPayload,
+  IdentityPayload,
 } from './types.js';
 export { ALL_CAPABILITIES } from './types.js';
 
@@ -39,10 +47,12 @@ export {
   PROTOCOL_VERSION,
   SHELL_BRIDGE_URI,
   REPLAY_WINDOW_SECONDS,
-  BusKind,
-  DESTRUCTIVE_KINDS,
 } from './constants.js';
-export type { BusKindValue } from './constants.js';
+
+// ─── Legacy Constants (deprecated) ──────────────────────────────────────────
+
+export { BusKind, DESTRUCTIVE_KINDS, VERB_REGISTER, VERB_IDENTITY, AUTH_KIND } from './legacy.js';
+export type { BusKindValue } from './legacy.js';
 
 // ─── Topic Constants ────────────────────────────────────────────────────────
 
