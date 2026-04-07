@@ -69,7 +69,7 @@ ipcSub.close();
 
 ## Wire Format
 
-The shim communicates with the shell using JSON envelope messages. NIP-01 arrays (`["REQ", ...]`) are NOT used -- this is the JSON envelope format from NIP-5D.
+The shim communicates with the shell using JSON envelope messages (`{ type: "domain.action", ...payload }`) as defined by NIP-5D.
 
 ### Outbound (napplet → shell)
 
@@ -250,7 +250,6 @@ import { relay, ipc, storage } from '@napplet/sdk';
 ## Protocol Reference
 
 - [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
-- [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) -- Basic protocol flow
 
 ## License
 

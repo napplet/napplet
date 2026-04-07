@@ -59,7 +59,7 @@ Shell (host page)                          Napplet (sandboxed iframe)
   └── NIP-5D manifest generation + requires tag injection
 ```
 
-The iframe sandbox is `allow-scripts allow-forms allow-popups allow-modals allow-downloads` -- **no `allow-same-origin`**. This means napplets cannot access the host shell's DOM, cookies, localStorage, or service workers. All persistent state goes through the shell's proxies.
+The iframe sandbox requires only `allow-scripts` -- **no `allow-same-origin`**. Shells MAY add additional tokens (`allow-forms`, `allow-popups`, etc.) per shell policy. Napplets cannot access the host shell's DOM, cookies, localStorage, or service workers. All persistent state goes through the shell's proxies.
 
 ## Origin
 

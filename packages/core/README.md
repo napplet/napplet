@@ -69,10 +69,10 @@ type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc';
 
 | Domain    | Scope                                    |
 |-----------|------------------------------------------|
-| `relay`   | NIP-01 relay proxy (subscribe, publish)  |
-| `signer`  | NIP-07/NIP-44 signing delegation         |
-| `storage` | Scoped key-value storage proxy           |
-| `ifc`     | Inter-frame communication (IPC peer bus) |
+| `relay`   | Relay proxy (subscribe, publish, query)   |
+| `signer`  | Signing delegation (NIP-07 surface)       |
+| `storage` | Scoped key-value storage proxy            |
+| `ifc`     | Inter-frame communication (dispatch + channel) |
 
 #### `NUB_DOMAINS`
 
@@ -203,11 +203,11 @@ interface NubDispatch {
 
 ### Protocol Types
 
-Types shared by all napplet packages for NIP-01 structures and the capability system.
+Types shared by all napplet packages for Nostr event structures and the capability system.
 
 #### `NostrEvent`
 
-Standard NIP-01 Nostr event structure.
+Standard Nostr event structure (used by relay NUB and signer NUB).
 
 ```ts
 interface NostrEvent {
@@ -223,7 +223,7 @@ interface NostrEvent {
 
 #### `NostrFilter`
 
-NIP-01 subscription filter.
+Subscription filter (used by relay NUB for `relay.subscribe` and `relay.query`).
 
 ```ts
 interface NostrFilter {
@@ -311,34 +311,18 @@ interface EventTemplate {
 
 ### Topic Constants
 
-The `TOPICS` object contains string constants for the napplet inter-pane event bus. Topics identify command and event types on IFC envelope messages.
+The `TOPICS` object contains string constants for IFC topic-based routing. These are legacy constants from the pre-envelope era — with JSON envelope messages, topic strings are passed directly in `ifc.emit` and `ifc.subscribe` payloads.
 
 ```ts
 import { TOPICS } from '@napplet/core';
 
-// Auth
-TOPICS.AUTH_IDENTITY_CHANGED    // 'auth:identity-changed'
-
-// State operations
 TOPICS.STATE_GET                // 'shell:state-get'
-TOPICS.STATE_SET                // 'shell:state-set'
-TOPICS.STATE_REMOVE             // 'shell:state-remove'
-TOPICS.STATE_RESPONSE           // 'napplet:state-response'
-
-// Shell config
 TOPICS.SHELL_CONFIG_GET         // 'shell:config-get'
-TOPICS.SHELL_CONFIG_UPDATE      // 'shell:config-update'
-
-// Audio
-TOPICS.AUDIO_REGISTER           // 'shell:audio-register'
-TOPICS.AUDIO_UNREGISTER         // 'shell:audio-unregister'
-TOPICS.AUDIO_MUTED              // 'napplet:audio-muted'
-
-// Window manager
 TOPICS.WM_FOCUSED_WINDOW_CHANGED // 'wm:focused-window-changed'
-
-// ... and more (see source for full list)
+// ... see source for full list
 ```
+
+> **Note:** With JSON envelope wire format (v0.16.0+), state operations use `storage.*` messages directly rather than IFC topic routing. These constants are retained for backward compatibility with kehto runtime.
 
 ---
 
@@ -371,15 +355,7 @@ if (event.kind === BusKind.IPC_PEER) {
 
 #### `DESTRUCTIVE_KINDS`
 
-`Set([0, 3, 5, 10002])` — event kinds requiring user consent. Deprecated: will move to the signer NUB module.
-
-#### `VERB_REGISTER` / `VERB_IDENTITY`
-
-NIP-01 handshake verbs from the v0.9.0 era. Deprecated: replaced by JSON envelope handshake messages.
-
-#### `AUTH_KIND`
-
-NIP-42 AUTH event kind (`22242`). Deprecated: will move to the auth/handshake NUB module.
+`Set([0, 3, 5, 10002])` — event kinds requiring user consent before signing. Also exported from `@napplet/nub-signer`.
 
 ---
 
@@ -390,9 +366,7 @@ import type {
   NappletMessage, NubDomain, ShellSupports, NappletGlobalShell,
   NubHandler, NubDispatch,
   NostrEvent, NostrFilter, Capability, ServiceDescriptor,
-  Subscription, EventTemplate, ServiceInfo, NappletGlobal,
-  RegisterPayload, IdentityPayload,
-  BusKindValue, TopicKey, TopicValue,
+  Subscription, EventTemplate, NappletGlobal,
 } from '@napplet/core';
 ```
 
@@ -404,15 +378,12 @@ import type {
 | `NappletGlobalShell` | Type for `window.napplet.shell` (extends `ShellSupports`) |
 | `NubHandler` | Callback type for NUB domain handlers |
 | `NubDispatch` | Interface returned by `createDispatch()` |
-| `NostrEvent` | NIP-01 event structure |
-| `NostrFilter` | NIP-01 subscription filter |
+| `NostrEvent` | Nostr event structure |
+| `NostrFilter` | Subscription filter for relay NUB |
 | `Capability` | Human-readable capability string union |
-| `ServiceDescriptor` | Service metadata for discovery events |
+| `ServiceDescriptor` | Service metadata for discovery |
 | `Subscription` | Handle with `close()` returned by subscribe/on |
 | `EventTemplate` | Unsigned event template for publishing |
-| `BusKindValue` | Union of all `BusKind.*` values (deprecated) |
-| `TopicKey` | Key of the `TOPICS` object |
-| `TopicValue` | Value of the `TOPICS` object |
 
 ## Integration Note
 
@@ -425,7 +396,6 @@ import type {
 ## Protocol Reference
 
 - [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
-- [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) -- Basic protocol flow
 
 ## License
 
