@@ -4,7 +4,7 @@ milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
 status: verifying
 stopped_at: Completed 79-01-PLAN.md
-last_updated: "2026-04-07T12:58:57.198Z"
+last_updated: "2026-04-07T13:46:17.165Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6

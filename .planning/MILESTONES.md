@@ -1,5 +1,24 @@
 # Milestones
 
+## v0.16.0 Wire Format & NUB Architecture (Shipped: 2026-04-07)
+
+**Phases completed:** 6 phases, 10 plans, 20 tasks
+
+**Key accomplishments:**
+
+- NIP-5D v4 rewritten as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope { type, ...payload } wire format -- zero protocol message definitions, 122 lines
+- JSON envelope base types (NappletMessage, NubDomain, ShellSupports) added to @napplet/core with NIP-01 bus constants isolated in legacy.ts
+- 4 NUB scaffold packages (relay, signer, storage, ifc) with domain-specific message types extending NappletMessage and template literal type constraints
+- NUB dispatch infrastructure with factory-isolated registries, domain-prefix routing, and 12-test conformance suite
+- Relay (9 messages) and signer (14 messages) NUB modules with full discriminated unions and core dispatch registration
+- Storage (8 types) and IFC (14 types) NUB modules with full discriminated unions and core dispatch registration
+- All 6 shim source files migrated from NIP-01 array wire format to JSON envelope messages using NUB module types, with window.napplet API signatures unchanged
+- SDK re-exports all 62 NUB message types, 4 aliased domain constants, and core envelope types -- `import { RelaySubscribeMessage, relay } from '@napplet/sdk'` works
+- @napplet/core and @napplet/shim READMEs rewritten for JSON envelope + NUB architecture with full wire format reference and deprecation notices
+- Rewrote @napplet/sdk README and root README to reflect JSON envelope wire format and modular NUB architecture introduced in Phases 74-78.
+
+---
+
 ## v0.15.0 Protocol Simplification (Shipped: 2026-04-07)
 
 **Phases completed:** 4 phases, 4 plans, 8 tasks
