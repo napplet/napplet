@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
-status: verifying
-stopped_at: Completed 78-02-PLAN.md
-last_updated: "2026-04-07T12:46:53.812Z"
+status: executing
+stopped_at: Completed 79-02-PLAN.md
+last_updated: "2026-04-07T12:56:40.639Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
   percent: 17
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 78 — Shim & SDK Integration
+**Current focus:** Phase 79 — Documentation Update
 
 ## Current Position
 
-Phase: 79
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 79 (Documentation Update) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-07
 
 Progress: [█░░░░░░░░░] 17%
@@ -55,6 +55,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 78]: state-shim sends storage.* messages directly (no IPC-PEER indirection)
 - [Phase 78]: Non-NUB domains (keyboard, nostrdb) use local envelope types
 - [Phase 78]: Domain constants aliased (RELAY_DOMAIN, SIGNER_DOMAIN) to avoid naming conflicts in SDK barrel export
+- [Phase 79-documentation-update]: SDK README and root README updated for JSON envelope + NUB architecture without code changes
 
 ### Quick Tasks Completed
 
@@ -63,6 +64,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 | 260407-0i8 | Remove stale root files -- move RUNTIME-SPEC.md to kehto, skills to kehto, nub specs to nubs, delete PNGs and artifacts | 2026-04-07 | e16ed87 | [260407-0i8-remove-stale-root-files-from-napplet](.planning/quick/260407-0i8-remove-stale-root-files-from-napplet/) |
 | Phase 78 P01 | 7min | 3 tasks | 8 files |
 | Phase 78 P02 | 1min | 1 tasks | 3 files |
+| Phase 79-documentation-update P02 | 3 | 2 tasks | 2 files |
 
 ### Blockers/Concerns
 
@@ -74,6 +76,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T12:46:19.937Z
-Stopped at: Completed 78-02-PLAN.md
+Last session: 2026-04-07T12:56:40.636Z
+Stopped at: Completed 79-02-PLAN.md
 Resume: `/gsd:plan-phase 75` (Package Architecture) or `/gsd:autonomous` to run 75-76

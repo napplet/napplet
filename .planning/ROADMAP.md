@@ -286,7 +286,7 @@ Plans:
 
 Plans:
 - [ ] 79-01-PLAN.md — Rewrite @napplet/core and @napplet/shim READMEs for JSON envelope + NUB architecture
-- [ ] 79-02-PLAN.md — Rewrite @napplet/sdk and root README for JSON envelope + NUB packages
+- [x] 79-02-PLAN.md — Rewrite @napplet/sdk and root README for JSON envelope + NUB packages
 
 ## Progress
 
@@ -300,4 +300,4 @@ Plans:
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
 | 77. NUB Module Scaffold | 2/2 | Complete    | 2026-04-07 |
 | 78. Shim & SDK Integration | 2/2 | Complete    | 2026-04-07 |
-| 79. Documentation Update | 0/2 | Not started | - |
+| 79. Documentation Update | 1/2 | In Progress|  |

@@ -34,7 +34,7 @@ Requirements for Wire Format & NUB Architecture milestone. Each maps to roadmap 
 
 ### Docs
 
-- [ ] **DOC-01**: Package READMEs updated for JSON envelope wire format
+- [x] **DOC-01**: Package READMEs updated for JSON envelope wire format
 
 ## Future Requirements
 
@@ -72,7 +72,7 @@ Deferred to future release.
 | SHIM-01 | Phase 78 | Complete |
 | SHIM-02 | Phase 78 | Complete |
 | SHIM-03 | Phase 78 | Complete |
-| DOC-01 | Phase 79 | Pending |
+| DOC-01 | Phase 79 | Complete |
 
 **Coverage:**
 - v0.16.0 requirements: 14 total
