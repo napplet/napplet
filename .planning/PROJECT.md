@@ -147,7 +147,17 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.16.0 Wire Format & NUB Architecture
+
+**Goal:** Replace NIP-01 array wire format with generic JSON envelope. NIP-5D becomes transport+identity only — protocol messages defined by NUBs. Merge NUB-IPC and NUB-PIPES into NUB-IFC with dispatch/channel modes. Spec-first approach.
+
+**Target features:**
+- NIP-5D rewrite: transport envelope + identity + manifest + NUB negotiation only
+- Generic JSON message format: `{ type, ...payload }` replaces NIP-01 arrays
+- NUB-RELAY, NUB-SIGNER, NUB-STORAGE, NUB-IFC specs define protocol messages
+- NUB-IFC merges IPC + PIPES with dispatch/channel modes
+- @napplet/core types updated for new envelope format
+- @napplet/shim updated to send/receive JSON envelope
 
 ### Out of Scope
 
@@ -164,7 +174,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.15.0 shipped (Protocol Simplification). Napplets send plain unsigned NIP-01 messages; shell identifies via MessageEvent.source. @napplet/shim has zero crypto dependencies. Protocol version 3.0.0. 15 milestones shipped.
+- **Current state**: v0.16.0 in progress (Wire Format & NUB Architecture). Replacing NIP-01 arrays with generic JSON envelope, NIP-5D becoming transport-only, protocol messages moving to NUBs. 15 milestones shipped previously.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin. @kehto (separate repo): acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -247,4 +257,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-07 after v0.15.0 milestone*
+*Last updated: 2026-04-07 after v0.16.0 milestone start*

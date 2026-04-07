@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.15.0
-milestone_name: Protocol Simplification
-status: executing
-stopped_at: Roadmap created for v0.15.0 (4 phases, 15 requirements)
-last_updated: "2026-04-07T09:26:54.870Z"
+milestone: v0.16.0
+milestone_name: Wire Format & NUB Architecture
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-04-07T00:00:00.000Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 73 — SDK & README Update
+**Current focus:** v0.16.0 Wire Format & NUB Architecture — defining requirements
 
 ## Current Position
 
-Phase: 73
-Plan: Not started
-Status: Executing Phase 73
-Last activity: 2026-04-07
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-07 — Milestone v0.16.0 started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -65,5 +65,5 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-04-07
-Stopped at: Roadmap created for v0.15.0 (4 phases, 15 requirements)
-Resume: /gsd:plan-phase 70
+Stopped at: Defining v0.16.0 requirements
+Resume: /gsd:new-milestone (in progress)
