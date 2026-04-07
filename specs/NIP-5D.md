@@ -38,12 +38,12 @@ All messages between napplet and shell are JSON objects with a `type` field:
 
 The `type` field is a string discriminant in `domain.action` format. Domains correspond to NUB capability names (e.g., `relay`, `signer`, `storage`, `ifc`). NUB specs define the valid type strings and payload shapes for their domain. This NIP does not enumerate message types.
 
-Example messages (defined by their respective NUB specs):
+Example messages:
 
-    { "type": "relay.subscribe", "id": "sub1", "filters": [...] }
-    { "type": "relay.event", "id": "sub1", "event": {...} }
-    { "type": "signer.sign", "id": "req1", "template": {...} }
-    { "type": "storage.get", "key": "prefs" }
+    { "type": "foo.request", "id": "abc", "data": {...} }
+    { "type": "foo.response", "id": "abc", "result": {...} }
+    { "type": "bar.open", "channel": "ch1" }
+    { "type": "bar.message", "channel": "ch1", "payload": "hello" }
 
 Messages with an unrecognized `type` MUST be silently ignored. This allows forward compatibility as new NUBs are defined.
 
