@@ -1,2 +1,7 @@
 packages:
   - packages/*
+  - packages/nubs/*
+  - apps/*
+  - apps/demo/napplets/*
+  - tests/fixtures/napplets/*
+  - tests/e2e/harness
