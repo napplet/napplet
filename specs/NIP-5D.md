@@ -49,11 +49,9 @@ Messages with an unrecognized `type` MUST be silently ignored. This allows forwa
 
 ## Identity
 
-The shell assigns napplet identity at iframe creation time. No multi-step negotiation is required.
+The shell assigns napplet identity at iframe creation time. No negotiation is required.
 
-When the shell creates a napplet iframe, it maps the iframe's `Window` reference to the napplet's `(dTag, aggregateHash)` tuple. The shell derives an internal identity pubkey for each napplet using `HMAC-SHA256(shellSecret, dTag + aggregateHash)` where `shellSecret` is a 32-byte random value persisted per shell instance. Same dTag + same aggregateHash + same shell = same identity.
-
-Napplets send unsigned event templates (kind, created_at, tags, content) without id, pubkey, or sig fields. The shell stamps inbound messages with the napplet's derived pubkey internally. Events signed with a user's key ([NIP-07](07.md)/NIP-46) go through the shell's signer proxy, not the napplet's identity.
+When the shell creates a napplet iframe, it maps the iframe's `Window` reference to the napplet's `(dTag, aggregateHash)` tuple from the [NIP-5A](5A.md) manifest. This mapping is the napplet's identity for the session. How the shell internally represents or derives identity is an implementation detail.
 
 The shell MUST verify `MessageEvent.source` on every inbound message. Messages from Window references not mapped to a napplet identity MUST be silently dropped.
 
@@ -107,9 +105,8 @@ Napplets are untrusted code. The shell is trusted. The browser enforces iframe s
 1. Iframe sandbox: `allow-scripts` only -- shells MUST NOT add `allow-same-origin`.
 2. postMessage `'*'` origin is required for opaque-origin iframes; sender identification uses `MessageEvent.source`, NOT `event.origin`.
 3. Identity binding: the shell maps `MessageEvent.source` to napplet identity at iframe creation. The browser's `MessageEvent.source` is unforgeable within the same browsing context.
-4. Internal identity confinement: events stamped with shell-derived napplet pubkeys MUST NOT be published to external relays; the user's signer ([NIP-07](07.md)/NIP-46) is the only source of externally published events.
-5. Aggregate hash verification against [NIP-5A](5A.md) manifests; mismatch MAY result in napplet rejection.
-6. Unrecognized message types are silently ignored, preventing capability probing.
+4. Aggregate hash verification against [NIP-5A](5A.md) manifests; mismatch MAY result in napplet rejection.
+5. Unrecognized message types are silently ignored, preventing capability probing.
 
 Storage isolation, signing safety, relay access control, and ACL enforcement are defined by their respective NUB specs.
 
@@ -117,6 +114,5 @@ Storage isolation, signing safety, relay access control, and ACL enforcement are
 
 ## References
 
-- [NIP-01](01.md) -- Basic protocol flow
 - [NIP-07](07.md) -- `window.nostr` signer capability
 - [NIP-5A](5A.md) -- Napplet manifest format and aggregate hash
