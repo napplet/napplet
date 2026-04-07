@@ -182,7 +182,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 70: Core Protocol Types** - Remove AUTH/handshake types and constants from @napplet/core, update protocol contract for unsigned napplet messages (completed 2026-04-07)
 - [x] **Phase 71: Shim Simplification** - Strip all signing, keypair, and AUTH handling from @napplet/shim; drop nostr-tools peer dependency (completed 2026-04-07)
 - [x] **Phase 72: NIP-5D Update** - Update NIP-5D for simplified wire protocol (completed 2026-04-07)
-- [ ] **Phase 73: SDK & README Update** - Update @napplet/sdk and package READMEs for no-crypto API surface
+- [x] **Phase 73: SDK & README Update** - Update @napplet/sdk and package READMEs for no-crypto API surface (completed 2026-04-07)
 
 ## Phase Details
 
@@ -234,9 +234,9 @@ Plans:
   2. @napplet/sdk README no longer references napplet-side signing or ephemeral keys
   3. @napplet/core README is updated to reflect removed handshake types
   4. Root monorepo README's "Key Concepts" section describes identity as shell-assigned via message.source, not AUTH handshake
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 73-01-PLAN.md -- Update all package READMEs and root README for no-crypto wire protocol
+- [x] 73-01-PLAN.md -- Update all package READMEs and root README for no-crypto wire protocol
 
 ## Progress
 
@@ -248,4 +248,4 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73
 | 70. Core Protocol Types | 1/1 | Complete    | 2026-04-07 |
 | 71. Shim Simplification | 1/1 | Complete    | 2026-04-07 |
 | 72. NIP-5D Update | 1/1 | Complete    | 2026-04-07 |
-| 73. SDK & README Update | 0/1 | Not started | - |
+| 73. SDK & README Update | 1/1 | Complete    | 2026-04-07 |
