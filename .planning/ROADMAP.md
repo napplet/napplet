@@ -193,7 +193,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 74: NIP-5D Rewrite** - Rewrite NIP-5D as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope (completed 2026-04-07)
 - [x] **Phase 75: Package Architecture** - Restructure into envelope-only core + packages/nubs/ modular directory + shim/sdk as integration layers (completed 2026-04-07)
 - [x] **Phase 76: Core Envelope Types** - Core exports JSON envelope types, message dispatch, shell.supports(); NUB-agnostic (completed 2026-04-07)
-- [ ] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with types and shim methods from NUB specs (BLOCKED: awaiting NUB specs from nubs repo)
+- [ ] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with typed message definitions from NUB specs
 - [ ] **Phase 78: Shim & SDK Integration** - Shim wires NUB modules into window.napplet; SDK provides named exports per NUB
 - [ ] **Phase 79: Documentation Update** - Update package READMEs for JSON envelope + modular NUB architecture
 
@@ -245,14 +245,18 @@ Plans:
 
 ### Phase 77: NUB Module Scaffold
 **Goal**: Create packages/nubs/{relay,signer,storage,ifc} with types and shim methods derived from NUB specs
-**Depends on**: Phase 76 + NUB specs from nubs repo (BLOCKED)
+**Depends on**: Phase 76
 **Requirements**: NUB-01, NUB-02, NUB-03, NUB-04
 **Success Criteria** (what must be TRUE):
   1. Each NUB module exports typed message definitions for its domain
   2. Each NUB module exports shim methods (e.g., relay exports subscribe/publish/query)
   3. Named imports work: `import { subscribe } from '@napplet/nubs/relay'`
   4. `pnpm build && pnpm type-check` passes
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 77-01-PLAN.md — Relay + Signer NUB typed messages and domain registration
+- [ ] 77-02-PLAN.md — Storage + IFC NUB typed messages and domain registration
 
 ### Phase 78: Shim & SDK Integration
 **Goal**: Shim wires NUB modules into window.napplet global; SDK provides named exports per NUB — same DX as today
@@ -279,13 +283,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-74 → 75 → 76 → [BLOCKED: awaiting NUB specs] → 77 → 78 → 79
+74 → 75 → 76 → 77 → 78 → 79
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 74. NIP-5D Rewrite | 1/1 | Complete | 2026-04-07 |
 | 75. Package Architecture | 2/2 | Complete    | 2026-04-07 |
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
-| 77. NUB Module Scaffold | 0/TBD | BLOCKED (NUB specs) | - |
+| 77. NUB Module Scaffold | 0/2 | In Progress | - |
 | 78. Shim & SDK Integration | 0/TBD | Not started | - |
 | 79. Documentation Update | 0/TBD | Not started | - |
