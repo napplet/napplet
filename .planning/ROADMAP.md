@@ -195,7 +195,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 76: Core Envelope Types** - Core exports JSON envelope types, message dispatch, shell.supports(); NUB-agnostic (completed 2026-04-07)
 - [x] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with typed message definitions from NUB specs (completed 2026-04-07)
 - [x] **Phase 78: Shim & SDK Integration** - Shim wires NUB modules into window.napplet; SDK provides named exports per NUB (completed 2026-04-07)
-- [ ] **Phase 79: Documentation Update** - Update package READMEs for JSON envelope + modular NUB architecture
+- [x] **Phase 79: Documentation Update** - Update package READMEs for JSON envelope + modular NUB architecture (completed 2026-04-07)
 
 ## Phase Details
 
@@ -285,7 +285,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 79-01-PLAN.md — Rewrite @napplet/core and @napplet/shim READMEs for JSON envelope + NUB architecture
+- [x] 79-01-PLAN.md — Rewrite @napplet/core and @napplet/shim READMEs for JSON envelope + NUB architecture
 - [x] 79-02-PLAN.md — Rewrite @napplet/sdk and root README for JSON envelope + NUB packages
 
 ## Progress
@@ -300,4 +300,4 @@ Plans:
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
 | 77. NUB Module Scaffold | 2/2 | Complete    | 2026-04-07 |
 | 78. Shim & SDK Integration | 2/2 | Complete    | 2026-04-07 |
-| 79. Documentation Update | 1/2 | In Progress|  |
+| 79. Documentation Update | 2/2 | Complete   | 2026-04-07 |
