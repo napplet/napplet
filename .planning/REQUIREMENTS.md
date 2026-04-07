@@ -64,16 +64,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WIRE-02 | Phase 70 | Complete (type-level; runtime impl in kehto) |
 | WIRE-03 | Phase 70 | Complete (type-level; runtime impl in kehto) |
 | WIRE-04 | Phase 70 | Complete (handshake types removed from core) |
-| SHIM-01 | Phase 71 | Pending |
-| SHIM-02 | Phase 71 | Pending |
-| SHIM-03 | Phase 71 | Pending |
-| SHIM-04 | Phase 71 | Pending |
+| SHIM-01 | Phase 71 | Complete (signing code removed, verified) |
+| SHIM-02 | Phase 71 | Complete (nostr-tools imports removed, verified) |
+| SHIM-03 | Phase 71 | Complete (napplet-keypair.ts deleted, verified) |
+| SHIM-04 | Phase 71 | Complete (API signatures unchanged, verified) |
 | RT-01 | Phase 70 | Complete (type-level; runtime impl in kehto) |
 | RT-02 | Phase 70 | Complete (type-level; runtime impl in kehto) |
 | RT-03 | Phase 70 | Complete (ACL types preserved in core) |
 | RT-04 | Phase 70 | Complete (bus kinds for storage/IPC/signer intact) |
-| DOC-02 | Phase 72 | Pending |
-| DOC-03 | Phase 73 | Pending |
+| DOC-02 | Phase 72 | Complete (NIP-5D rewritten for v3.0.0) |
+| DOC-03 | Phase 73 | Complete (all READMEs updated) |
 
 **Coverage:**
 - v0.15.0 requirements: 14 total
