@@ -191,10 +191,11 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Replace NIP-01 array wire format with generic JSON envelope. NIP-5D becomes transport+identity+manifest+NUB-negotiation only. Protocol messages defined by NUBs. Spec-first approach.
 
 - [x] **Phase 74: NIP-5D Rewrite** - Rewrite NIP-5D as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope (completed 2026-04-07)
-- [ ] **Phase 75: NUB Specifications** - Write NUB-RELAY, NUB-SIGNER, NUB-STORAGE, NUB-IFC specs defining protocol messages
-- [ ] **Phase 76: Core Envelope Types** - Replace NIP-01 array types in @napplet/core with JSON envelope types
-- [ ] **Phase 77: Shim Envelope Migration** - Update @napplet/shim to send and receive JSON envelope messages
-- [ ] **Phase 78: Documentation Update** - Update package READMEs for JSON envelope wire format
+- [ ] **Phase 75: Package Architecture** - Restructure into envelope-only core + packages/nubs/ modular directory + shim/sdk as integration layers
+- [ ] **Phase 76: Core Envelope Types** - Core exports JSON envelope types, message dispatch, shell.supports(); NUB-agnostic
+- [ ] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with types and shim methods from NUB specs (BLOCKED: awaiting NUB specs from nubs repo)
+- [ ] **Phase 78: Shim & SDK Integration** - Shim wires NUB modules into window.napplet; SDK provides named exports per NUB
+- [ ] **Phase 79: Documentation Update** - Update package READMEs for JSON envelope + modular NUB architecture
 
 ## Phase Details
 
@@ -212,71 +213,72 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 Plans:
 - [x] 74-01-PLAN.md — Rewrite NIP-5D spec (JSON envelope, transport, identity, manifest, NUB negotiation)
 
-### Phase 75: NUB Specifications
-**Goal**: Four NUB specs define all protocol messages that were previously implicit in NIP-5D, using the JSON envelope
+### Phase 75: Package Architecture
+**Goal**: Restructure @napplet packages for modular NUB architecture — envelope-only core, packages/nubs/ directory, shim/sdk as integration layers
 **Depends on**: Phase 74
-**Requirements**: NUB-01, NUB-02, NUB-03, NUB-04
+**Requirements**: CORE-01, CORE-02
 **Success Criteria** (what must be TRUE):
-  1. NUB-RELAY spec defines relay proxy messages (subscribe, event, close, count) within the JSON envelope format
-  2. NUB-SIGNER spec defines signing delegation messages (sign request, sign response, get-public-key) within the JSON envelope format
-  3. NUB-STORAGE spec defines scoped storage messages (get, set, delete, keys) within the JSON envelope format
-  4. NUB-IFC spec defines inter-frame communication with both dispatch mode (per-message ACL) and channel mode (ACL at open), merging the former IPC and PIPES concepts
-  5. All four NUB specs reference the NIP-5D envelope and are self-contained message catalogs
-**Plans:** 2 plans
-
-Plans:
-- [ ] 75-01-PLAN.md — NUB-RELAY and NUB-SIGNER specs (relay proxy + signing delegation)
-- [ ] 75-02-PLAN.md — NUB-STORAGE and NUB-IFC specs (scoped storage + inter-frame communication)
+  1. packages/nubs/ directory exists with scaffold for modular NUB packages
+  2. @napplet/core exports JSON envelope types (message discriminant, base payload) and removes NIP-01 array types/verb constants
+  3. @napplet/core exports shell.supports() type and message dispatch infrastructure
+  4. Each NUB module pattern is established: types + shim methods + exports per domain
+  5. `pnpm build && pnpm type-check` passes
+**Plans**: TBD
 
 ### Phase 76: Core Envelope Types
-**Goal**: @napplet/core exports typed JSON envelope message definitions that replace all NIP-01 array types
+**Goal**: Core package defines the envelope type system, message dispatch, and NUB registration — completely NUB-agnostic
 **Depends on**: Phase 75
 **Requirements**: CORE-01, CORE-02
 **Success Criteria** (what must be TRUE):
-  1. @napplet/core exports discriminated union types for envelope messages (relay, signer, storage, ifc) matching the NUB specs
-  2. NIP-01 verb constants (REQ, EVENT, CLOSE, etc.) are removed; JSON envelope type discriminants are the canonical message identifiers
-  3. `pnpm build && pnpm type-check` passes with the new types and no NIP-01 array type exports
-**Plans:** 1 plan
+  1. Envelope message base type with `type` discriminant field exported from core
+  2. NUB registration mechanism — a NUB module registers its domain and message handlers
+  3. NIP-01 verb constants removed; `type` string discriminants are canonical
+  4. `pnpm build && pnpm type-check` passes
+**Plans**: TBD
 
-Plans:
-- [ ] 74-01-PLAN.md — Rewrite NIP-5D spec (JSON envelope, transport, identity, manifest, NUB negotiation)
+### Phase 77: NUB Module Scaffold
+**Goal**: Create packages/nubs/{relay,signer,storage,ifc} with types and shim methods derived from NUB specs
+**Depends on**: Phase 76 + NUB specs from nubs repo (BLOCKED)
+**Requirements**: NUB-01, NUB-02, NUB-03, NUB-04
+**Success Criteria** (what must be TRUE):
+  1. Each NUB module exports typed message definitions for its domain
+  2. Each NUB module exports shim methods (e.g., relay exports subscribe/publish/query)
+  3. Named imports work: `import { subscribe } from '@napplet/nubs/relay'`
+  4. `pnpm build && pnpm type-check` passes
+**Plans**: TBD
 
-### Phase 77: Shim Envelope Migration
-**Goal**: @napplet/shim sends and receives JSON envelope messages while preserving the window.napplet developer API unchanged
-**Depends on**: Phase 76
+### Phase 78: Shim & SDK Integration
+**Goal**: Shim wires NUB modules into window.napplet global; SDK provides named exports per NUB — same DX as today
+**Depends on**: Phase 77
 **Requirements**: SHIM-01, SHIM-02, SHIM-03
 **Success Criteria** (what must be TRUE):
-  1. @napplet/shim sends JSON envelope objects (not NIP-01 arrays) via postMessage for all operations (subscribe, publish, query, emit, storage)
-  2. @napplet/shim receives and correctly dispatches JSON envelope messages from the shell (events, EOSE, notices, storage responses)
-  3. The window.napplet API (subscribe, publish, query, emit, on, storage) has identical call signatures and return types as before
-  4. `pnpm build && pnpm type-check` passes across all packages
-**Plans:** 1 plan
+  1. @napplet/shim sends JSON envelope objects via postMessage (not NIP-01 arrays)
+  2. @napplet/shim receives and dispatches JSON envelope messages from shell
+  3. window.napplet API (subscribe, publish, query, emit, on, storage) has identical signatures
+  4. @napplet/sdk re-exports NUB methods as named exports
+  5. `pnpm build && pnpm type-check` passes
+**Plans**: TBD
 
-Plans:
-- [ ] 74-01-PLAN.md — Rewrite NIP-5D spec (JSON envelope, transport, identity, manifest, NUB negotiation)
-
-### Phase 78: Documentation Update
-**Goal**: Package READMEs accurately describe the JSON envelope wire format
-**Depends on**: Phase 77
+### Phase 79: Documentation Update
+**Goal**: Package READMEs describe JSON envelope + modular NUB architecture
+**Depends on**: Phase 78
 **Requirements**: DOC-01
 **Success Criteria** (what must be TRUE):
-  1. @napplet/core README documents envelope message types and type discriminants instead of NIP-01 arrays
-  2. @napplet/shim README describes JSON envelope as the wire format
-  3. Root README references JSON envelope wire format and NUB architecture
-**Plans:** 1 plan
-
-Plans:
-- [ ] 74-01-PLAN.md — Rewrite NIP-5D spec (JSON envelope, transport, identity, manifest, NUB negotiation)
+  1. @napplet/core README documents envelope types and NUB registration
+  2. @napplet/shim README describes JSON envelope wire format and NUB integration
+  3. Root README describes modular NUB architecture with named import examples
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 74 -> 75 -> 76 -> 77 -> 78
+74 → 75 → 76 → [BLOCKED: awaiting NUB specs] → 77 → 78 → 79
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 74. NIP-5D Rewrite | 1/1 | Complete    | 2026-04-07 |
-| 75. NUB Specifications | 0/TBD | Not started | - |
+| 74. NIP-5D Rewrite | 1/1 | Complete | 2026-04-07 |
+| 75. Package Architecture | 0/TBD | Not started | - |
 | 76. Core Envelope Types | 0/TBD | Not started | - |
-| 77. Shim Envelope Migration | 0/TBD | Not started | - |
-| 78. Documentation Update | 0/TBD | Not started | - |
+| 77. NUB Module Scaffold | 0/TBD | BLOCKED (NUB specs) | - |
+| 78. Shim & SDK Integration | 0/TBD | Not started | - |
+| 79. Documentation Update | 0/TBD | Not started | - |

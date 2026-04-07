@@ -59,26 +59,27 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPEC-01 | Phase 74 | Pending |
-| SPEC-02 | Phase 74 | Pending |
-| SPEC-03 | Phase 74 | Pending |
-| SPEC-04 | Phase 74 | Pending |
-| NUB-01 | Phase 75 | Pending |
-| NUB-02 | Phase 75 | Pending |
-| NUB-03 | Phase 75 | Pending |
-| NUB-04 | Phase 75 | Pending |
-| CORE-01 | Phase 76 | Pending |
-| CORE-02 | Phase 76 | Pending |
-| SHIM-01 | Phase 77 | Pending |
-| SHIM-02 | Phase 77 | Pending |
-| SHIM-03 | Phase 77 | Pending |
-| DOC-01 | Phase 78 | Pending |
+| SPEC-01 | Phase 74 | Complete |
+| SPEC-02 | Phase 74 | Complete |
+| SPEC-03 | Phase 74 | Complete |
+| SPEC-04 | Phase 74 | Complete |
+| CORE-01 | Phase 75/76 | Pending |
+| CORE-02 | Phase 75/76 | Pending |
+| NUB-01 | Phase 77 | BLOCKED (awaiting NUB specs from nubs repo) |
+| NUB-02 | Phase 77 | BLOCKED (awaiting NUB specs from nubs repo) |
+| NUB-03 | Phase 77 | BLOCKED (awaiting NUB specs from nubs repo) |
+| NUB-04 | Phase 77 | BLOCKED (awaiting NUB specs from nubs repo) |
+| SHIM-01 | Phase 78 | Pending |
+| SHIM-02 | Phase 78 | Pending |
+| SHIM-03 | Phase 78 | Pending |
+| DOC-01 | Phase 79 | Pending |
 
 **Coverage:**
 - v0.16.0 requirements: 14 total
 - Mapped to phases: 14
 - Unmapped: 0
+- Blocked: 4 (NUB-01..04 awaiting external specs)
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after roadmap creation*
+*Last updated: 2026-04-07 after roadmap reframe*

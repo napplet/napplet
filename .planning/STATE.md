@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
-status: planning
+status: executing
 stopped_at: Roadmap created for v0.16.0 (5 phases, 14 requirements)
-last_updated: "2026-04-07T10:22:01.908Z"
-last_activity: 2026-04-07
+last_updated: "2026-04-07T10:28:17.079Z"
+last_activity: 2026-04-07 -- Phase 75 execution started
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 1
+  total_plans: 3
   completed_plans: 1
   percent: 0
 ---
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.16.0 Wire Format & NUB Architecture -- Phase 74 (NIP-5D Rewrite)
+**Current focus:** v0.16.0 Wire Format & NUB Architecture — Phase 75 (Package Architecture)
 
 ## Current Position
 
-Phase: 75 of 5 (nub specifications)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-04-07
+Phase: 75 (2 of 6) — Package Architecture
+Plan: —
+Status: Ready to plan (Phases 75-76 can proceed; Phase 77+ blocked on NUB specs from nubs repo)
+Last activity: 2026-04-07 — Roadmap reframed for modular NUB architecture
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 17%
 
 ## Performance Metrics
 
@@ -64,9 +64,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - KEHTO-04 partial: kehto workspace override for @napplet/core pending npm publish.
 - NIP number conflict with Scrolls PR#2281 (RES-01) -- unresolved, carry forward.
 - Core type changes will break kehto downstream -- kehto must update after @napplet/core v0.16.0.
+- **BLOCKING Phase 77+**: NUB specs (RELAY, SIGNER, STORAGE, IFC) live in nubs repo. Must be finalized before NUB module code can be written. User will seed current state when ready.
 
 ## Session Continuity
 
 Last session: 2026-04-07
-Stopped at: Roadmap created for v0.16.0 (5 phases, 14 requirements)
-Resume: `/gsd:plan-phase 74`
+Stopped at: Roadmap reframed — Phase 74 complete, Phases 75-76 ready, Phase 77+ blocked on NUB specs
+Resume: `/gsd:plan-phase 75` (Package Architecture) or `/gsd:autonomous` to run 75-76
