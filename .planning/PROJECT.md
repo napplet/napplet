@@ -138,7 +138,17 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.15.0 Protocol Simplification
+
+**Goal:** Remove cryptographic identity from the napplet wire protocol — napplets send unsigned messages, the shell establishes identity at iframe creation time via message.source, and nostr crypto identity becomes a shell/runtime implementation detail.
+
+**Target features:**
+- Remove REGISTER/IDENTITY/AUTH handshake from the spec and shim
+- Shim drops all crypto dependencies (no signing, no keypair)
+- Shell stamps events with napplet identity internally (message.source → derived pubkey)
+- Identity established at iframe creation (shell knows dTag + aggregateHash from manifest)
+- Update RUNTIME-SPEC.md and NIP-5D for simplified wire protocol
+- Update @napplet/sdk to reflect the thinner API surface
 
 ### Out of Scope
 
@@ -155,7 +165,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.14.0 shipped (Repo Cleanup & Audit). @napplet is a clean 4-package SDK. All stale refs to extracted packages removed. MIGRATION-EVAL.md documents what stays/moves. 14 milestones shipped.
+- **Current state**: v0.15.0 in progress (Protocol Simplification). Removing crypto from the napplet wire protocol. @napplet is a clean 4-package SDK. 14 milestones shipped previously.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin. @kehto (separate repo): acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -236,4 +246,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-06 after v0.14.0 milestone*
+*Last updated: 2026-04-07 after v0.15.0 milestone start*

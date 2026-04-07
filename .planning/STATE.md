@@ -1,36 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1.0
-milestone_name: milestone
-status: Between milestones (v0.14.0 shipped)
-stopped_at: Completed quick/260407-0i8 (remove stale root files)
-last_updated: "2026-04-06T22:25:46.669Z"
+milestone: v0.15.0
+milestone_name: Protocol Simplification
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-04-07T00:00:00.000Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 51
-  completed_phases: 49
-  total_plans: 160
-  completed_plans: 158
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-06)
+See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Between milestones (v0.14.0 shipped)
+**Current focus:** v0.15.0 Protocol Simplification — removing crypto from napplet wire protocol
 
 ## Current Position
 
-Phase: —
+Phase: Not started (defining requirements)
 Plan: —
-Status: Between milestones (v0.14.0 shipped)
-Last activity: 2026-04-07
+Status: Defining requirements
+Last activity: 2026-04-07 — Milestone v0.15.0 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
@@ -52,6 +52,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-06T22:25:46.666Z
-Stopped at: Completed quick/260407-0i8 (remove stale root files)
-Resume: /gsd:new-milestone
+Last session: 2026-04-07
+Stopped at: Defining v0.15.0 requirements
+Resume: /gsd:new-milestone (in progress)
