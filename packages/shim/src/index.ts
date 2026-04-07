@@ -2,16 +2,12 @@
 // Side-effect-only module: importing this file installs window.napplet and window.nostr globals.
 // No named exports. No allow-same-origin required.
 
-import { finalizeEvent } from 'nostr-tools/pure';
-import { createEphemeralKeypair } from './napplet-keypair.js';
-import type { NappletKeypair } from './napplet-keypair.js';
-import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js';
+import { installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _setInterPaneEventSender, _nappletStorage } from './state-shim.js';
 import { subscribe, publish, query } from './relay-shim.js';
 import { discoverServices } from './discovery-shim.js';
-import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, VERB_REGISTER, VERB_IDENTITY } from './types.js';
-import { hexToBytes } from 'nostr-tools/utils';
+import { BusKind } from './types.js';
 import type { NostrEvent, NappletGlobal } from '@napplet/core';
 
 // ─── Global type augmentation ────────────────────────────────────────────────
@@ -26,7 +22,7 @@ declare global {
 /**
  * Broadcast an IPC-PEER event to other napplets via the shell.
  *
- * Creates a signed kind 29003 event with the given topic as a 't' tag
+ * Creates an unsigned kind 29003 event template with the given topic as a 't' tag
  * and posts it to the ShellBridge for delivery to matching subscribers.
  *
  * @param topic     The 't' tag value (e.g., 'profile:open', 'stream:channel-switch')
@@ -84,18 +80,11 @@ function on(
   );
 }
 
-let keypair: NappletKeypair | null = null;
-
 // Pending signer requests: correlation id -> resolve/reject pair
 const pendingRequests = new Map<string, {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
 }>();
-const pendingSignerRequestEvents = new Map<string, string>();
-
-// Promise that resolves when the keypair is ready
-let _resolveKeypairReady!: () => void;
-const keypairReady = new Promise<void>((resolve) => { _resolveKeypairReady = resolve; });
 
 // Signer response subscription ID
 const SIGNER_SUB_ID = '__signer__';
@@ -119,43 +108,41 @@ function getNappletType(): string {
 // ─── Outbound helpers ─────────────────────────────────────────────────────────
 
 /**
- * Finalize and post a signed NIP-01 event to the parent shell.
+ * Build and post an unsigned NIP-01 event template to the parent shell.
  */
-function sendEvent(kind: number, tags: string[][], content: string = ''): NostrEvent | null {
-  if (!keypair) return null;
-  const event = finalizeEvent({
+function sendEvent(kind: number, tags: string[][], content: string = ''): void {
+  const event = {
     kind,
     created_at: Math.floor(Date.now() / 1000),
     tags,
     content,
-  }, keypair.privkey);
+  };
   window.parent.postMessage(['EVENT', event], '*');
-  return event;
 }
 
 /**
- * Send a signer request as a signed kind 29001 event.
+ * Send a signer request as an unsigned kind 29001 event template.
  */
 async function sendSignerRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
-  await keypairReady;
-
   const id = crypto.randomUUID();
 
   return new Promise((resolve, reject) => {
     pendingRequests.set(id, { resolve, reject });
 
-    const requestEvent = sendEvent(BusKind.SIGNER_REQUEST, [
-      ['method', method],
-      ['id', id],
-      ...(params ? Object.entries(params).map(([k, v]) => ['param', k, JSON.stringify(v)]) : []),
-    ]);
-    if (requestEvent) pendingSignerRequestEvents.set(requestEvent.id, id);
+    const event = {
+      kind: BusKind.SIGNER_REQUEST,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [
+        ['method', method],
+        ['id', id],
+        ...(params ? Object.entries(params).map(([k, v]) => ['param', k, JSON.stringify(v)]) : []),
+      ],
+      content: '',
+    };
+    window.parent.postMessage(['EVENT', event], '*');
 
     setTimeout(() => {
       if (pendingRequests.delete(id)) {
-        for (const [eventId, correlationId] of pendingSignerRequestEvents.entries()) {
-          if (correlationId === id) pendingSignerRequestEvents.delete(eventId);
-        }
         reject(new Error('Signer request timed out'));
       }
     }, 30_000);
@@ -172,22 +159,13 @@ function handleRelayMessage(event: MessageEvent): void {
   const [verb] = msg;
 
   switch (verb) {
-    case 'AUTH': {
-      const challenge = msg[1] as string;
-      handleAuthChallenge(challenge);
-      break;
-    }
     case 'OK': {
       const [, eventId, success, reason] = msg;
       if (success === false && typeof eventId === 'string') {
-        const correlationId = pendingSignerRequestEvents.get(eventId);
-        if (correlationId) {
-          pendingSignerRequestEvents.delete(eventId);
-          const pending = pendingRequests.get(correlationId);
-          if (pending) {
-            pendingRequests.delete(correlationId);
-            pending.reject(new Error(typeof reason === 'string' ? reason : 'Signer request denied'));
-          }
+        const pending = pendingRequests.get(eventId);
+        if (pending) {
+          pendingRequests.delete(eventId);
+          pending.reject(new Error(typeof reason === 'string' ? reason : 'Signer request denied'));
         }
       }
       break;
@@ -199,65 +177,11 @@ function handleRelayMessage(event: MessageEvent): void {
       }
       break;
     }
-    case VERB_IDENTITY: {
-      const payload = msg[1] as { pubkey: string; privkey: string; dTag: string; aggregateHash: string } | undefined;
-      if (!payload || typeof payload !== 'object' || !payload.privkey || !payload.pubkey) {
-        break;
-      }
-      // Accept the shell-delegated keypair
-      keypair = {
-        privkey: hexToBytes(payload.privkey),
-        pubkey: payload.pubkey,
-      };
-      setKeyboardShimKeypair(keypair);
-      _resolveKeypairReady();
-      break;
-    }
     case 'EOSE':
     case 'CLOSED':
     case 'NOTICE':
       break;
   }
-}
-
-// ─── Aggregate hash resolution ────────────────────────────────────────────────
-
-/**
- * Read the napp's NIP-5A aggregate hash from a meta tag in the document head.
- */
-function getAggregateHash(): string {
-  const meta = document.querySelector('meta[name="napplet-aggregate-hash"]');
-  return meta?.getAttribute('content') ?? '';
-}
-
-// ─── NIP-42 AUTH handshake ────────────────────────────────────────────────────
-
-function handleAuthChallenge(challenge: string): void {
-  if (!keypair) {
-    // Fallback: if IDENTITY was not received (legacy shell or dev mode),
-    // create an ephemeral keypair as before
-    keypair = createEphemeralKeypair();
-    setKeyboardShimKeypair(keypair);
-    _resolveKeypairReady();
-  }
-
-  const authEvent = finalizeEvent({
-    kind: AUTH_KIND,
-    created_at: Math.floor(Date.now() / 1000),
-    tags: [
-      ['relay', SHELL_BRIDGE_URI],
-      ['challenge', challenge],
-      ['type', getNappletType()],
-      ['version', PROTOCOL_VERSION],
-      ['aggregateHash', getAggregateHash()],
-    ],
-    content: '',
-  }, keypair.privkey);
-
-  window.parent.postMessage(['AUTH', authEvent], '*');
-
-  window.parent.postMessage(['REQ', SIGNER_SUB_ID, { kinds: [BusKind.SIGNER_RESPONSE] }], '*');
-  window.parent.postMessage(['REQ', NIPDB_SUB_ID, { kinds: [BusKind.NIPDB_RESPONSE] }], '*');
 }
 
 // ─── Signer response handler ──────────────────────────────────────────────────
@@ -272,9 +196,6 @@ function handleSignerResponse(event: NostrEvent): void {
   if (!pending) return;
 
   pendingRequests.delete(correlationId);
-  for (const [eventId, id] of pendingSignerRequestEvents.entries()) {
-    if (id === correlationId) pendingSignerRequestEvents.delete(eventId);
-  }
 
   const errorTag = event.tags.find(t => t[0] === 'error');
   if (errorTag) {
@@ -361,6 +282,10 @@ function handleSignerResponse(event: NostrEvent): void {
 // Install relay message listener
 window.addEventListener('message', handleRelayMessage);
 
+// Subscribe to signer and NIPDB responses immediately
+window.parent.postMessage(['REQ', SIGNER_SUB_ID, { kinds: [BusKind.SIGNER_RESPONSE] }], '*');
+window.parent.postMessage(['REQ', NIPDB_SUB_ID, { kinds: [BusKind.NIPDB_RESPONSE] }], '*');
+
 // Install window.nostrdb NIP-DB proxy
 installNostrDb();
 
@@ -370,11 +295,3 @@ installKeyboardShim();
 // Install napplet-side storage proxy (wire sender to break circular dep)
 _setInterPaneEventSender(emit);
 installStateShim();
-
-// Send REGISTER to shell — the shell will respond with IDENTITY (delegated keypair)
-// then send AUTH challenge. Keypair is NOT created locally.
-{
-  const dTag = getNappletType();
-  const claimedHash = getAggregateHash();
-  window.parent.postMessage([VERB_REGISTER, { dTag, claimedHash }], '*');
-}

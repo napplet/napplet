@@ -1,22 +1,8 @@
 // @napplet/shim — Keyboard forwarding shim
 // Captures keydown events in the napplet and forwards them to the parent shell
-// as signed kind 29004 events so WM hotkeys work even when an iframe has DOM focus.
+// as unsigned kind 29004 event templates so WM hotkeys work even when an iframe has DOM focus.
 
-import { finalizeEvent } from 'nostr-tools/pure';
 import { BusKind } from './types.js';
-import type { NappletKeypair } from './napplet-keypair.js';
-
-// keypair is set by index.ts after createEphemeralKeypair via setKeyboardShimKeypair()
-let shimKeypair: NappletKeypair | null = null;
-
-/**
- * Provide the napplet keypair to the keyboard shim so it can sign forwarded hotkey events.
- * Called by index.ts immediately after createEphemeralKeypair() resolves and also inside
- * handleAuthChallenge() as a safety net in case AUTH challenge arrives before eager init.
- */
-export function setKeyboardShimKeypair(kp: NappletKeypair): void {
-  shimKeypair = kp;
-}
 
 /**
  * Returns true if the given event target is a text-entry input element.
@@ -53,7 +39,7 @@ function isModifierOnly(key: string): boolean {
  *
  * Attaches a capture-phase keydown listener to the document. For every
  * keystroke that is NOT in a text input and NOT a bare modifier, sends
- * a signed kind 29004 event to the parent shell via NIP-01 postMessage.
+ * an unsigned kind 29004 event template to the parent shell via NIP-01 postMessage.
  *
  * @returns cleanup function that removes the listener
  */
@@ -68,9 +54,8 @@ export function installKeyboardShim(): () => void {
   function handleKeydown(event: KeyboardEvent): void {
     if (isTextInput(event.target)) return;
     if (isModifierOnly(event.key)) return;
-    if (!shimKeypair) return;
 
-    const hotkeyEvent = finalizeEvent({
+    const hotkeyEvent = {
       kind: BusKind.HOTKEY_FORWARD,
       created_at: Math.floor(Date.now() / 1000),
       tags: [
@@ -82,8 +67,7 @@ export function installKeyboardShim(): () => void {
         ['meta', event.metaKey ? '1' : '0'],
       ],
       content: '',
-    }, shimKeypair.privkey);
-
+    };
     window.parent.postMessage(['EVENT', hotkeyEvent], '*');
   }
 

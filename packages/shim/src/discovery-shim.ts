@@ -38,10 +38,6 @@ function parseServiceEvent(event: NostrEvent): ServiceInfo | null {
  * Results are cached session-scoped — subsequent calls return the cached
  * array without sending another REQ. Cache is cleared on page reload.
  *
- * The REQ flows through the pre-AUTH message queue automatically, so calling
- * discoverServices() before AUTH completes is safe — the promise resolves
- * after AUTH + discovery round-trip.
- *
  * @returns Array of ServiceInfo objects describing available services
  *
  * @example
