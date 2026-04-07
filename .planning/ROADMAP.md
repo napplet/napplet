@@ -16,6 +16,7 @@
 - ✅ **v0.12.0 Spec Packaging** — Phase 61 (shipped 2026-04-06) — [Archive](milestones/v0.12.0-ROADMAP.md)
 - ✅ **v0.13.0 Runtime Decoupling & Publish** — Phases 62-67 (shipped 2026-04-06) — [Archive](milestones/v0.13.0-ROADMAP.md)
 - ✅ **v0.14.0 Repo Cleanup & Audit** — Phases 68-69 (shipped 2026-04-06) — [Archive](milestones/v0.14.0-ROADMAP.md)
+- **v0.15.0 Protocol Simplification** — Phases 70-73 (in progress)
 
 ## Phases
 
@@ -173,3 +174,72 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 69: Migration Evaluation** - Assess remaining content for @kehto or nubs repo (completed 2026-04-06)
 
 </details>
+
+### v0.15.0 Protocol Simplification (Phases 70-73)
+
+**Milestone Goal:** Remove cryptographic identity from the napplet wire protocol. Napplets send plain NIP-01 messages without signing. The shell identifies napplets via message.source and stamps events internally. Auth handshake eliminated from the spec and SDK.
+
+- [ ] **Phase 70: Core Protocol Types** - Remove AUTH/handshake types and constants from @napplet/core, update protocol contract for unsigned napplet messages
+- [ ] **Phase 71: Shim Simplification** - Strip all signing, keypair, and AUTH handling from @napplet/shim; drop nostr-tools peer dependency
+- [ ] **Phase 72: Spec & NIP Update** - Rewrite RUNTIME-SPEC.md handshake sections and update NIP-5D for simplified wire protocol
+- [ ] **Phase 73: SDK & README Update** - Update @napplet/sdk and package READMEs for no-crypto API surface
+
+## Phase Details
+
+### Phase 70: Core Protocol Types
+**Goal**: @napplet/core defines a wire protocol with no cryptographic identity requirement for napplets
+**Depends on**: Nothing (first phase of v0.15.0)
+**Requirements**: WIRE-01, WIRE-02, WIRE-03, WIRE-04, RT-01, RT-02, RT-03, RT-04
+**Success Criteria** (what must be TRUE):
+  1. RegisterPayload, IdentityPayload, VERB_REGISTER, VERB_IDENTITY, and AUTH_KIND are removed from @napplet/core exports
+  2. BusKind.REGISTRATION (29000) is removed since registration is no longer a bus event
+  3. The core types package builds and type-checks clean with no references to napplet-side signing or keypairs
+  4. @napplet/core's exported types express that napplets send unsigned message templates and the runtime/shell is responsible for identity stamping
+  5. Downstream packages (@napplet/shim, @napplet/sdk) still import from @napplet/core without type errors after the removals
+**Plans**: TBD
+
+### Phase 71: Shim Simplification
+**Goal**: Napplet developers include @napplet/shim with zero crypto dependencies -- the shim sends plain NIP-01 messages and never touches keys or signatures
+**Depends on**: Phase 70
+**Requirements**: SHIM-01, SHIM-02, SHIM-03, SHIM-04
+**Success Criteria** (what must be TRUE):
+  1. napplet-keypair.ts is deleted and no shim code imports generateSecretKey, getPublicKey, finalizeEvent, or hexToBytes from nostr-tools
+  2. The shim no longer handles AUTH challenges, IDENTITY messages, or REGISTER sends -- the message handler only processes EVENT, EOSE, CLOSED, NOTICE, and OK
+  3. nostr-tools is removed from @napplet/shim's peerDependencies and dependencies in package.json
+  4. subscribe(), publish(), and query() continue to work from the napplet developer's perspective -- same function signatures, same return types
+  5. IPC emit/on, signer proxy (window.nostr), keyboard forwarding, storage, and service discovery all function without requiring a keypair
+**Plans**: TBD
+
+### Phase 72: Spec & NIP Update
+**Goal**: The protocol specification accurately describes the simplified wire protocol where napplets send unsigned messages and the shell handles identity
+**Depends on**: Phase 71
+**Requirements**: DOC-01, DOC-02
+**Success Criteria** (what must be TRUE):
+  1. RUNTIME-SPEC.md Section 2 (handshake) is rewritten to describe iframe-creation-time identity via message.source instead of REGISTER/IDENTITY/AUTH
+  2. RUNTIME-SPEC.md references to napplet signing, ephemeral keypairs, and NIP-42 AUTH challenge-response are removed or moved to a "historical" note
+  3. NIP-5D no longer lists AUTH as a required protocol step -- wire protocol described as plain NIP-01 messages from napplet to shell
+  4. Both spec files are internally consistent (no dangling references to removed handshake verbs)
+**Plans**: TBD
+
+### Phase 73: SDK & README Update
+**Goal**: All package documentation reflects the no-crypto API surface so developers never encounter stale signing references
+**Depends on**: Phase 71
+**Requirements**: DOC-03
+**Success Criteria** (what must be TRUE):
+  1. @napplet/shim README describes the shim as a zero-crypto window installer with no mention of keypairs, signing, or AUTH
+  2. @napplet/sdk README no longer references napplet-side signing or ephemeral keys
+  3. @napplet/core README is updated to reflect removed handshake types
+  4. Root monorepo README's "Key Concepts" section describes identity as shell-assigned via message.source, not AUTH handshake
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 70 -> 71 -> 72 -> 73
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 70. Core Protocol Types | 0/TBD | Not started | - |
+| 71. Shim Simplification | 0/TBD | Not started | - |
+| 72. Spec & NIP Update | 0/TBD | Not started | - |
+| 73. SDK & README Update | 0/TBD | Not started | - |

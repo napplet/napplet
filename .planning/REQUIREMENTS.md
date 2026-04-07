@@ -60,27 +60,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WIRE-01 | — | Pending |
-| WIRE-02 | — | Pending |
-| WIRE-03 | — | Pending |
-| WIRE-04 | — | Pending |
-| SHIM-01 | — | Pending |
-| SHIM-02 | — | Pending |
-| SHIM-03 | — | Pending |
-| SHIM-04 | — | Pending |
-| RT-01 | — | Pending |
-| RT-02 | — | Pending |
-| RT-03 | — | Pending |
-| RT-04 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
+| WIRE-01 | Phase 70 | Pending |
+| WIRE-02 | Phase 70 | Pending |
+| WIRE-03 | Phase 70 | Pending |
+| WIRE-04 | Phase 70 | Pending |
+| SHIM-01 | Phase 71 | Pending |
+| SHIM-02 | Phase 71 | Pending |
+| SHIM-03 | Phase 71 | Pending |
+| SHIM-04 | Phase 71 | Pending |
+| RT-01 | Phase 70 | Pending |
+| RT-02 | Phase 70 | Pending |
+| RT-03 | Phase 70 | Pending |
+| RT-04 | Phase 70 | Pending |
+| DOC-01 | Phase 72 | Pending |
+| DOC-02 | Phase 72 | Pending |
+| DOC-03 | Phase 73 | Pending |
 
 **Coverage:**
 - v0.15.0 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after initial definition*
+*Last updated: 2026-04-07 after roadmap creation*
