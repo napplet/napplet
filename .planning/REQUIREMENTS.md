@@ -59,26 +59,26 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPEC-01 | — | Pending |
-| SPEC-02 | — | Pending |
-| SPEC-03 | — | Pending |
-| SPEC-04 | — | Pending |
-| NUB-01 | — | Pending |
-| NUB-02 | — | Pending |
-| NUB-03 | — | Pending |
-| NUB-04 | — | Pending |
-| CORE-01 | — | Pending |
-| CORE-02 | — | Pending |
-| SHIM-01 | — | Pending |
-| SHIM-02 | — | Pending |
-| SHIM-03 | — | Pending |
-| DOC-01 | — | Pending |
+| SPEC-01 | Phase 74 | Pending |
+| SPEC-02 | Phase 74 | Pending |
+| SPEC-03 | Phase 74 | Pending |
+| SPEC-04 | Phase 74 | Pending |
+| NUB-01 | Phase 75 | Pending |
+| NUB-02 | Phase 75 | Pending |
+| NUB-03 | Phase 75 | Pending |
+| NUB-04 | Phase 75 | Pending |
+| CORE-01 | Phase 76 | Pending |
+| CORE-02 | Phase 76 | Pending |
+| SHIM-01 | Phase 77 | Pending |
+| SHIM-02 | Phase 77 | Pending |
+| SHIM-03 | Phase 77 | Pending |
+| DOC-01 | Phase 78 | Pending |
 
 **Coverage:**
 - v0.16.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after initial definition*
+*Last updated: 2026-04-07 after roadmap creation*
