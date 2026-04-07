@@ -24,7 +24,7 @@
 
 // ─── Envelope Types ────────────────────────────────────────────────────────
 
-export type { NappletMessage, NubDomain, ShellSupports, NappletGlobalShell } from './envelope.js';
+export type { NappletMessage, NubDomain, NamespacedCapability, ShellSupports, NappletGlobalShell } from './envelope.js';
 export { NUB_DOMAINS } from './envelope.js';
 
 // ─── Dispatch Infrastructure ───────────────────────────────────────────────

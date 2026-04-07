@@ -329,13 +329,20 @@ export interface NappletGlobal {
     keys(): Promise<string[]>;
   };
   /**
-   * Shell capability queries. Check whether the shell supports a NUB or sandbox permission.
+   * Shell capability queries. Check whether the shell supports a NUB,
+   * permission, or service.
    *
    * @example
    * ```ts
-   * if (window.napplet.shell.supports('signer')) {
-   *   // Shell can sign events on behalf of the napplet
-   * }
+   * // NUB domain (bare shorthand or prefixed):
+   * if (window.napplet.shell.supports('signer')) { ... }
+   * if (window.napplet.shell.supports('nub:signer')) { ... }
+   *
+   * // Permission:
+   * if (window.napplet.shell.supports('perm:sign')) { ... }
+   *
+   * // Service:
+   * if (window.napplet.shell.supports('svc:audio')) { ... }
    * ```
    */
   shell: NappletGlobalShell;
