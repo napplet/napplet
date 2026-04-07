@@ -30,7 +30,6 @@ Requirements for Protocol Simplification milestone. Each maps to roadmap phases.
 
 ### Spec & Docs
 
-- [ ] **DOC-01**: RUNTIME-SPEC.md updated — handshake sections rewritten for simplified protocol
 - [ ] **DOC-02**: NIP-5D updated to remove AUTH handshake requirement
 - [ ] **DOC-03**: @napplet/shim and @napplet/sdk READMEs updated to reflect no-crypto API
 
@@ -52,6 +51,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Removing nostr crypto from runtime/shell internals | Shell's internal identity system is preserved — only the wire protocol changes |
 | Test suite updates in @kehto | Kehto is a separate repo with its own lifecycle |
 | Demo updates | Demo lives in kehto now |
+| RUNTIME-SPEC.md updates | Lives in kehto now; update there when runtime changes land |
 | npm publish | Still blocked on human auth (PUB-04) |
 
 ## Traceability
@@ -72,13 +72,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RT-02 | Phase 70 | Pending |
 | RT-03 | Phase 70 | Pending |
 | RT-04 | Phase 70 | Pending |
-| DOC-01 | Phase 72 | Pending |
 | DOC-02 | Phase 72 | Pending |
 | DOC-03 | Phase 73 | Pending |
 
 **Coverage:**
-- v0.15.0 requirements: 15 total
-- Mapped to phases: 15
+- v0.15.0 requirements: 14 total
+- Mapped to phases: 14
 - Unmapped: 0
 
 ---

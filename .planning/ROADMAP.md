@@ -181,7 +181,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [ ] **Phase 70: Core Protocol Types** - Remove AUTH/handshake types and constants from @napplet/core, update protocol contract for unsigned napplet messages
 - [ ] **Phase 71: Shim Simplification** - Strip all signing, keypair, and AUTH handling from @napplet/shim; drop nostr-tools peer dependency
-- [ ] **Phase 72: Spec & NIP Update** - Rewrite RUNTIME-SPEC.md handshake sections and update NIP-5D for simplified wire protocol
+- [ ] **Phase 72: NIP-5D Update** - Update NIP-5D for simplified wire protocol
 - [ ] **Phase 73: SDK & README Update** - Update @napplet/sdk and package READMEs for no-crypto API surface
 
 ## Phase Details
@@ -210,15 +210,13 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   5. IPC emit/on, signer proxy (window.nostr), keyboard forwarding, storage, and service discovery all function without requiring a keypair
 **Plans**: TBD
 
-### Phase 72: Spec & NIP Update
-**Goal**: The protocol specification accurately describes the simplified wire protocol where napplets send unsigned messages and the shell handles identity
+### Phase 72: NIP-5D Update
+**Goal**: NIP-5D accurately describes the simplified wire protocol where napplets send unsigned messages and the shell handles identity
 **Depends on**: Phase 71
-**Requirements**: DOC-01, DOC-02
+**Requirements**: DOC-02
 **Success Criteria** (what must be TRUE):
-  1. RUNTIME-SPEC.md Section 2 (handshake) is rewritten to describe iframe-creation-time identity via message.source instead of REGISTER/IDENTITY/AUTH
-  2. RUNTIME-SPEC.md references to napplet signing, ephemeral keypairs, and NIP-42 AUTH challenge-response are removed or moved to a "historical" note
-  3. NIP-5D no longer lists AUTH as a required protocol step -- wire protocol described as plain NIP-01 messages from napplet to shell
-  4. Both spec files are internally consistent (no dangling references to removed handshake verbs)
+  1. NIP-5D no longer lists AUTH as a required protocol step -- wire protocol described as plain NIP-01 messages from napplet to shell
+  2. NIP-5D is internally consistent (no dangling references to removed handshake verbs or napplet signing)
 **Plans**: TBD
 
 ### Phase 73: SDK & README Update
@@ -241,5 +239,5 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73
 |-------|----------------|--------|-----------|
 | 70. Core Protocol Types | 0/TBD | Not started | - |
 | 71. Shim Simplification | 0/TBD | Not started | - |
-| 72. Spec & NIP Update | 0/TBD | Not started | - |
+| 72. NIP-5D Update | 0/TBD | Not started | - |
 | 73. SDK & README Update | 0/TBD | Not started | - |
