@@ -59,11 +59,9 @@ The shell MUST verify `MessageEvent.source` on every inbound message. Messages f
 
 Napplet manifests ([NIP-5A](5A.md) kind 35128) declare required capabilities using `requires` tags:
 
-    ["requires", "relay"]
-    ["requires", "signer"]
-    ["requires", "storage"]
+    ["requires", "<nub-name>"]
 
-Each `requires` value is a short NUB name: `relay`, `signer`, `storage`, `ifc`. Manifests MUST NOT use spec identifiers like `NUB-RELAY`.
+Each `requires` value is a short NUB name matching a NUB domain. Manifests MUST NOT use spec identifiers (e.g., use `relay`, not `NUB-RELAY`).
 
 At napplet load time, the shell checks `requires` tags against its own capabilities. If a required capability is absent, the shell SHOULD reject the napplet or display a compatibility warning. If the manifest has no `requires` tags, the shell loads the napplet with whatever capabilities it provides.
 
