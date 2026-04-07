@@ -4,13 +4,13 @@ milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
 status: executing
 stopped_at: Roadmap reframed — Phase 74 complete, Phases 75-76 ready, Phase 77+ blocked on NUB specs
-last_updated: "2026-04-07T11:19:59.710Z"
+last_updated: "2026-04-07T12:26:00.505Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 4
+  total_plans: 6
+  completed_plans: 6
   percent: 17
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 76 — Core Envelope Types
+**Current focus:** Phase 77 — NUB Module Scaffold
 
 ## Current Position
 
-Phase: 77
+Phase: 78
 Plan: Not started
-Status: Executing Phase 76
+Status: Executing Phase 77
 Last activity: 2026-04-07
 
 Progress: [█░░░░░░░░░] 17%

@@ -193,7 +193,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 74: NIP-5D Rewrite** - Rewrite NIP-5D as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope (completed 2026-04-07)
 - [x] **Phase 75: Package Architecture** - Restructure into envelope-only core + packages/nubs/ modular directory + shim/sdk as integration layers (completed 2026-04-07)
 - [x] **Phase 76: Core Envelope Types** - Core exports JSON envelope types, message dispatch, shell.supports(); NUB-agnostic (completed 2026-04-07)
-- [ ] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with typed message definitions from NUB specs
+- [x] **Phase 77: NUB Module Scaffold** - Create packages/nubs/{relay,signer,storage,ifc} with typed message definitions from NUB specs (completed 2026-04-07)
 - [ ] **Phase 78: Shim & SDK Integration** - Shim wires NUB modules into window.napplet; SDK provides named exports per NUB
 - [ ] **Phase 79: Documentation Update** - Update package READMEs for JSON envelope + modular NUB architecture
 
@@ -255,8 +255,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 77-01-PLAN.md — Relay + Signer NUB typed messages and domain registration
-- [ ] 77-02-PLAN.md — Storage + IFC NUB typed messages and domain registration
+- [x] 77-01-PLAN.md — Relay + Signer NUB typed messages and domain registration
+- [x] 77-02-PLAN.md — Storage + IFC NUB typed messages and domain registration
 
 ### Phase 78: Shim & SDK Integration
 **Goal**: Shim wires NUB modules into window.napplet global; SDK provides named exports per NUB — same DX as today
@@ -290,6 +290,6 @@ Plans:
 | 74. NIP-5D Rewrite | 1/1 | Complete | 2026-04-07 |
 | 75. Package Architecture | 2/2 | Complete    | 2026-04-07 |
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
-| 77. NUB Module Scaffold | 0/2 | In Progress | - |
+| 77. NUB Module Scaffold | 2/2 | Complete    | 2026-04-07 |
 | 78. Shim & SDK Integration | 0/TBD | Not started | - |
 | 79. Documentation Update | 0/TBD | Not started | - |
