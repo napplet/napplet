@@ -1,9 +1,0 @@
-[     167ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts:419
-[   29534ms] The requested module '/node_modules/.vite/deps/leader-line.js?v=21cd7a93' does not provide an export named 'default'
-[   36381ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5174/@vite/client:963
-[   36382ms] [ERROR] WebSocket connection to 'ws://localhost:5174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:5174/@vite/client:1034
-[   37521ms] The requested module '/node_modules/.vite/deps/leader-line.js?v=21cd7a93' does not provide an export named 'default'
-[   39738ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5174/@vite/client:963
-[   39740ms] [ERROR] WebSocket connection to 'ws://localhost:5174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:5174/@vite/client:1034
-[   40873ms] The requested module '/node_modules/.vite/deps/leader-line.js?v=0579ca63' does not provide an export named 'default'
-[   44218ms] [LOG] [napplet playground] initialized @ http://localhost:5174/src/main.ts?t=1775049073239:419

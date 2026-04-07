@@ -1,19 +1,29 @@
-// @napplet/shim — Napp relay API
-// NIP-01 wire format over postMessage to the ShellBridge.
+// @napplet/shim -- Napp relay API
+// JSON envelope wire format over postMessage to the ShellBridge.
 
 import type { NostrEvent, NostrFilter, Subscription, EventTemplate } from '@napplet/core';
+import type {
+  RelaySubscribeMessage,
+  RelayCloseMessage,
+  RelayPublishMessage,
+  RelayQueryMessage,
+  RelayEventMessage,
+  RelayEoseMessage,
+  RelayClosedMessage,
+  RelayQueryResultMessage,
+} from '@napplet/nub-relay';
 
 /**
- * Open a live NIP-01 subscription through the shell's relay pool.
+ * Open a live relay subscription through the shell's relay pool.
  *
- * Sends `['REQ', subId, ...filters]` via postMessage to the parent shell.
+ * Sends a `relay.subscribe` envelope message via postMessage to the parent shell.
  * The shell queries its local cache and connected relays, streaming
- * matching events back via `['EVENT', subId, event]`.
+ * matching events back via `relay.event` messages.
  *
  * @param filters   One or more NIP-01 subscription filters
  * @param onEvent   Called for each matching event delivered by the shell
  * @param onEose    Called when the shell signals end of stored events (EOSE)
- * @param options   Optional: `{ relay, group }` for NIP-29 scoped relay subscriptions
+ * @param options   Optional: `{ relay, group }` for scoped relay subscriptions
  * @returns A Subscription handle with a `close()` method to tear down the subscription
  *
  * @example
@@ -38,57 +48,41 @@ export function subscribe(
   function handleMessage(msgEvent: MessageEvent): void {
     if (msgEvent.source !== window.parent) return;
     const msg = msgEvent.data;
-    if (!Array.isArray(msg) || msg.length < 2) return;
-    const [verb, msgSubId] = msg;
-    if (msgSubId !== subId) return;
+    if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
+    if (!msg.type.startsWith('relay.')) return;
 
-    if (verb === 'EVENT' && msg.length >= 3) {
-      onEvent(msg[2] as NostrEvent);
-    } else if (verb === 'EOSE') {
+    const typedMsg = msg as RelayEventMessage | RelayEoseMessage | RelayClosedMessage;
+    if (!('subId' in typedMsg) || typedMsg.subId !== subId) return;
+
+    if (msg.type === 'relay.event') {
+      onEvent((msg as RelayEventMessage).event);
+    } else if (msg.type === 'relay.eose') {
       onEose();
-    } else if (verb === 'CLOSED') {
+    } else if (msg.type === 'relay.closed') {
       window.removeEventListener('message', handleMessage);
     }
   }
 
   window.addEventListener('message', handleMessage);
 
-  if (options?.relay) {
-    // Scoped relay (NIP-29 group relay)
-    const connectEvent = {
-      kind: 29001,
-      content: '',
-      tags: [
-        ['t', 'shell:relay-scoped-connect'],
-        ['url', options.relay],
-        ['group', options.group ?? ''],
-        ['sub-id', subId],
-        ['filters', JSON.stringify(normalizedFilters)],
-      ],
-      created_at: Math.floor(Date.now() / 1000),
-    };
-    window.parent.postMessage(['EVENT', connectEvent], '*');
-
-    return {
-      close(): void {
-        const closeEvent = {
-          kind: 29001,
-          content: '',
-          tags: [['t', 'shell:relay-scoped-close']],
-          created_at: Math.floor(Date.now() / 1000),
-        };
-        window.parent.postMessage(['EVENT', closeEvent], '*');
-        window.removeEventListener('message', handleMessage);
-      },
-    };
-  }
-
-  // Standard shared pool REQ
-  window.parent.postMessage(['REQ', subId, ...normalizedFilters], '*');
+  // Send relay.subscribe envelope (handles both standard and scoped relay)
+  const subscribeMsg: RelaySubscribeMessage = {
+    type: 'relay.subscribe',
+    id: crypto.randomUUID(),
+    subId,
+    filters: normalizedFilters,
+    ...(options?.relay ? { relay: options.relay } : {}),
+  };
+  window.parent.postMessage(subscribeMsg, '*');
 
   return {
     close(): void {
-      window.parent.postMessage(['CLOSE', subId], '*');
+      const closeMsg: RelayCloseMessage = {
+        type: 'relay.close',
+        id: crypto.randomUUID(),
+        subId,
+      };
+      window.parent.postMessage(closeMsg, '*');
       window.removeEventListener('message', handleMessage);
     },
   };
@@ -99,7 +93,8 @@ export function subscribe(
  * Sign and publish a Nostr event through the shell.
  *
  * The event template is signed via `window.nostr.signEvent()` (NIP-07 proxy),
- * then posted to the parent shell for relay broadcast.
+ * then posted to the parent shell as a `relay.publish` envelope message
+ * for relay broadcast.
  *
  * @param template  Unsigned event template (kind, content, tags, created_at)
  * @param options   Optional: `{ relay: true }` to publish via the scoped relay instead of the shared pool
@@ -126,31 +121,21 @@ export async function publish(
 
   const signedEvent = await w.nostr.signEvent(template) as unknown as NostrEvent;
 
-  if (options?.relay) {
-    // Publish to scoped relay
-    const publishEvent = {
-      kind: 29001,
-      content: '',
-      tags: [
-        ['t', 'shell:relay-scoped-publish'],
-        ['event', JSON.stringify(signedEvent)],
-      ],
-      created_at: Math.floor(Date.now() / 1000),
-    };
-    window.parent.postMessage(['EVENT', publishEvent], '*');
-  } else {
-    // Publish to shared pool
-    window.parent.postMessage(['EVENT', signedEvent], '*');
-  }
+  const publishMsg: RelayPublishMessage = {
+    type: 'relay.publish',
+    id: crypto.randomUUID(),
+    event: signedEvent,
+  };
+  window.parent.postMessage(publishMsg, '*');
 
   return signedEvent;
 }
 
 /**
- * One-shot query: subscribe, collect events until EOSE, then close and resolve.
+ * One-shot query: send a relay.query message, await relay.query.result, resolve.
  *
- * Equivalent to calling subscribe() and collecting results until EOSE,
- * but packaged as a single Promise-based call for convenience.
+ * Uses the dedicated `relay.query` envelope message for a cleaner protocol
+ * instead of subscribe + collect + close.
  *
  * @param filters  NIP-01 subscription filters (single or array)
  * @returns Promise resolving to an array of matching NostrEvent objects
@@ -161,12 +146,34 @@ export async function publish(
  * ```
  */
 export function query(filters: NostrFilter | NostrFilter[]): Promise<NostrEvent[]> {
-  return new Promise((resolve) => {
-    const events: NostrEvent[] = [];
-    const sub = subscribe(
-      filters,
-      (ev) => events.push(ev),
-      () => { sub.close(); resolve(events); },
-    );
+  const normalizedFilters = Array.isArray(filters) ? filters : [filters];
+  const queryId = crypto.randomUUID();
+
+  return new Promise((resolve, reject) => {
+    function handleMessage(msgEvent: MessageEvent): void {
+      if (msgEvent.source !== window.parent) return;
+      const msg = msgEvent.data;
+      if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
+      if (msg.type !== 'relay.query.result') return;
+
+      const result = msg as RelayQueryResultMessage;
+      if (result.id !== queryId) return;
+
+      window.removeEventListener('message', handleMessage);
+      if (result.error) {
+        reject(new Error(result.error));
+      } else {
+        resolve(result.events);
+      }
+    }
+
+    window.addEventListener('message', handleMessage);
+
+    const queryMsg: RelayQueryMessage = {
+      type: 'relay.query',
+      id: queryId,
+      filters: normalizedFilters,
+    };
+    window.parent.postMessage(queryMsg, '*');
   });
 }

@@ -1,10 +1,6 @@
 /**
- * @napplet/shim — Protocol types re-exported from @napplet/core.
- *
- * Shim previously maintained its own copies of these types.
- * They now live in @napplet/core as the single source of truth.
+ * @napplet/shim -- Protocol types re-exported from @napplet/core.
  */
 
 export type { NostrEvent, NostrFilter } from '@napplet/core';
-export { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, VERB_REGISTER, VERB_IDENTITY } from '@napplet/core';
-export type { BusKindValue } from '@napplet/core';
+export { PROTOCOL_VERSION, SHELL_BRIDGE_URI } from '@napplet/core';

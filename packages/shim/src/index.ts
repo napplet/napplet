@@ -1,18 +1,28 @@
-// @napplet/shim — Napplet window installer
+// @napplet/shim -- Napplet window installer
 // Side-effect-only module: importing this file installs window.napplet and window.nostr globals.
 // No named exports. No allow-same-origin required.
 
-import { finalizeEvent } from 'nostr-tools/pure';
-import { createEphemeralKeypair } from './napplet-keypair.js';
-import type { NappletKeypair } from './napplet-keypair.js';
-import { setKeyboardShimKeypair, installKeyboardShim } from './keyboard-shim.js';
+import { installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
-import { installStateShim, _setInterPaneEventSender, _nappletStorage } from './state-shim.js';
+import { installStateShim, _nappletStorage } from './state-shim.js';
 import { subscribe, publish, query } from './relay-shim.js';
 import { discoverServices } from './discovery-shim.js';
-import { BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION, VERB_REGISTER, VERB_IDENTITY } from './types.js';
-import { hexToBytes } from 'nostr-tools/utils';
-import type { NostrEvent, NappletGlobal } from '@napplet/core';
+import type { NappletGlobal, NostrEvent } from '@napplet/core';
+import type {
+  SignerGetPublicKeyMessage,
+  SignerSignEventMessage,
+  SignerGetRelaysMessage,
+  SignerNip04EncryptMessage,
+  SignerNip04DecryptMessage,
+  SignerNip44EncryptMessage,
+  SignerNip44DecryptMessage,
+} from '@napplet/nub-signer';
+import type {
+  IfcEmitMessage,
+  IfcSubscribeMessage,
+  IfcUnsubscribeMessage,
+  IfcEventMessage,
+} from '@napplet/nub-ifc';
 
 // ─── Global type augmentation ────────────────────────────────────────────────
 // Activates window.napplet TypeScript types on `import '@napplet/shim'`.
@@ -23,15 +33,20 @@ declare global {
   }
 }
 
+// ─── IFC topic subscription registry ────────────────────────────────────────
+
+/** Map of topic -> array of callbacks for IFC event dispatch. */
+const ifcTopicHandlers = new Map<string, Array<(payload: unknown, sender: string) => void>>();
+
 /**
- * Broadcast an IPC-PEER event to other napplets via the shell.
+ * Broadcast an IFC event to other napplets via the shell.
  *
- * Creates a signed kind 29003 event with the given topic as a 't' tag
- * and posts it to the ShellBridge for delivery to matching subscribers.
+ * Sends an `ifc.emit` envelope message to the shell for delivery
+ * to matching topic subscribers.
  *
- * @param topic     The 't' tag value (e.g., 'profile:open', 'stream:channel-switch')
- * @param extraTags Additional NIP-01 tags beyond the 't' tag (default: [])
- * @param content   Event content (default: empty string)
+ * @param topic     The topic string (e.g., 'profile:open', 'stream:channel-switch')
+ * @param extraTags Additional tags (legacy parameter -- ignored in envelope format)
+ * @param content   Event content string (sent as payload)
  *
  * @example
  * ```ts
@@ -43,18 +58,30 @@ function emit(
   extraTags: string[][] = [],
   content: string = '',
 ): void {
-  sendEvent(BusKind.IPC_PEER, [['t', topic], ...extraTags], content);
+  let payload: unknown;
+  try {
+    payload = content ? JSON.parse(content) : undefined;
+  } catch {
+    payload = content || undefined;
+  }
+
+  const msg: IfcEmitMessage = {
+    type: 'ifc.emit',
+    topic,
+    ...(payload !== undefined ? { payload } : {}),
+  };
+  window.parent.postMessage(msg, '*');
 }
 
 /**
- * Subscribe to IPC-PEER events on a specific topic.
+ * Subscribe to IFC events on a specific topic.
  *
- * Thin wrapper around subscribe() that filters by IPC-PEER event kind
- * and topic tag, then parses event content as JSON.
+ * Sends an `ifc.subscribe` envelope message to the shell and registers
+ * a local handler for `ifc.event` messages on that topic.
  *
- * @param topic    The 't' tag value to listen for
+ * @param topic    The topic string to listen for
  * @param callback Called with `(payload, event)` for each matching event.
- *                 `payload` is the JSON-parsed content (or `{}` if parsing fails).
+ *                 `payload` is the parsed content (or `{}` if unavailable).
  * @returns Object with `close()` method to unsubscribe
  *
  * @example
@@ -69,39 +96,59 @@ function on(
   topic: string,
   callback: (payload: unknown, event: NostrEvent) => void,
 ): { close(): void } {
-  return subscribe(
-    { kinds: [BusKind.IPC_PEER], '#t': [topic] },
-    (event: NostrEvent) => {
-      let payload: unknown;
-      try {
-        payload = event.content ? JSON.parse(event.content) : {};
-      } catch {
-        payload = {};
+  // Register local handler -- construct a synthetic NostrEvent-like wrapper
+  // from IFC envelope for backward compatibility with the window.napplet type
+  const handler = (payload: unknown, sender: string) => {
+    const syntheticEvent: NostrEvent = {
+      id: '',
+      pubkey: sender,
+      created_at: Math.floor(Date.now() / 1000),
+      kind: 0,
+      tags: [['t', topic]],
+      content: typeof payload === 'string' ? payload : JSON.stringify(payload ?? {}),
+      sig: '',
+    };
+    callback(payload, syntheticEvent);
+  };
+  if (!ifcTopicHandlers.has(topic)) {
+    ifcTopicHandlers.set(topic, []);
+  }
+  ifcTopicHandlers.get(topic)!.push(handler);
+
+  // Send subscription request to shell
+  const subscribeMsg: IfcSubscribeMessage = {
+    type: 'ifc.subscribe',
+    id: crypto.randomUUID(),
+    topic,
+  };
+  window.parent.postMessage(subscribeMsg, '*');
+
+  return {
+    close(): void {
+      // Remove local handler
+      const handlers = ifcTopicHandlers.get(topic);
+      if (handlers) {
+        const idx = handlers.indexOf(handler);
+        if (idx >= 0) handlers.splice(idx, 1);
+        if (handlers.length === 0) ifcTopicHandlers.delete(topic);
       }
-      callback(payload, event);
+
+      // Send unsubscribe to shell
+      const unsubMsg: IfcUnsubscribeMessage = {
+        type: 'ifc.unsubscribe',
+        topic,
+      };
+      window.parent.postMessage(unsubMsg, '*');
     },
-    () => { /* EOSE — no action needed for IPC-PEER subscriptions */ },
-  );
+  };
 }
 
-let keypair: NappletKeypair | null = null;
+// ─── Pending signer requests ────────────────────────────────────────────────
 
-// Pending signer requests: correlation id -> resolve/reject pair
 const pendingRequests = new Map<string, {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
 }>();
-const pendingSignerRequestEvents = new Map<string, string>();
-
-// Promise that resolves when the keypair is ready
-let _resolveKeypairReady!: () => void;
-const keypairReady = new Promise<void>((resolve) => { _resolveKeypairReady = resolve; });
-
-// Signer response subscription ID
-const SIGNER_SUB_ID = '__signer__';
-
-// NIPDB response subscription ID
-const NIPDB_SUB_ID = '__nipdb__';
 
 // ─── Napplet type resolution ──────────────────────────────────────────────────────
 
@@ -116,179 +163,125 @@ function getNappletType(): string {
   return meta?.getAttribute('content') ?? 'unknown';
 }
 
-// ─── Outbound helpers ─────────────────────────────────────────────────────────
+// ─── Signer request helper ──────────────────────────────────────────────────
 
 /**
- * Finalize and post a signed NIP-01 event to the parent shell.
- */
-function sendEvent(kind: number, tags: string[][], content: string = ''): NostrEvent | null {
-  if (!keypair) return null;
-  const event = finalizeEvent({
-    kind,
-    created_at: Math.floor(Date.now() / 1000),
-    tags,
-    content,
-  }, keypair.privkey);
-  window.parent.postMessage(['EVENT', event], '*');
-  return event;
-}
-
-/**
- * Send a signer request as a signed kind 29001 event.
+ * Send a signer request as a typed signer.* envelope message.
  */
 async function sendSignerRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
-  await keypairReady;
-
   const id = crypto.randomUUID();
 
   return new Promise((resolve, reject) => {
     pendingRequests.set(id, { resolve, reject });
 
-    const requestEvent = sendEvent(BusKind.SIGNER_REQUEST, [
-      ['method', method],
-      ['id', id],
-      ...(params ? Object.entries(params).map(([k, v]) => ['param', k, JSON.stringify(v)]) : []),
-    ]);
-    if (requestEvent) pendingSignerRequestEvents.set(requestEvent.id, id);
+    // Build typed signer message based on method
+    let msg: SignerGetPublicKeyMessage | SignerSignEventMessage | SignerGetRelaysMessage |
+      SignerNip04EncryptMessage | SignerNip04DecryptMessage |
+      SignerNip44EncryptMessage | SignerNip44DecryptMessage;
+
+    switch (method) {
+      case 'getPublicKey':
+        msg = { type: 'signer.getPublicKey', id };
+        break;
+      case 'signEvent':
+        msg = { type: 'signer.signEvent', id, event: params!.event as import('@napplet/core').EventTemplate };
+        break;
+      case 'getRelays':
+        msg = { type: 'signer.getRelays', id };
+        break;
+      case 'nip04.encrypt':
+        msg = { type: 'signer.nip04.encrypt', id, pubkey: params!.pubkey as string, plaintext: params!.plaintext as string };
+        break;
+      case 'nip04.decrypt':
+        msg = { type: 'signer.nip04.decrypt', id, pubkey: params!.pubkey as string, ciphertext: params!.ciphertext as string };
+        break;
+      case 'nip44.encrypt':
+        msg = { type: 'signer.nip44.encrypt', id, pubkey: params!.pubkey as string, plaintext: params!.plaintext as string };
+        break;
+      case 'nip44.decrypt':
+        msg = { type: 'signer.nip44.decrypt', id, pubkey: params!.pubkey as string, ciphertext: params!.ciphertext as string };
+        break;
+      default:
+        reject(new Error(`Unknown signer method: ${method}`));
+        return;
+    }
+
+    window.parent.postMessage(msg, '*');
 
     setTimeout(() => {
       if (pendingRequests.delete(id)) {
-        for (const [eventId, correlationId] of pendingSignerRequestEvents.entries()) {
-          if (correlationId === id) pendingSignerRequestEvents.delete(eventId);
-        }
         reject(new Error('Signer request timed out'));
       }
     }, 30_000);
   });
 }
 
-// ─── Inbound message handler ──────────────────────────────────────────────────
-
-function handleRelayMessage(event: MessageEvent): void {
-  if (event.source !== window.parent) return;
-  const msg = event.data;
-  if (!Array.isArray(msg) || msg.length < 2) return;
-
-  const [verb] = msg;
-
-  switch (verb) {
-    case 'AUTH': {
-      const challenge = msg[1] as string;
-      handleAuthChallenge(challenge);
-      break;
-    }
-    case 'OK': {
-      const [, eventId, success, reason] = msg;
-      if (success === false && typeof eventId === 'string') {
-        const correlationId = pendingSignerRequestEvents.get(eventId);
-        if (correlationId) {
-          pendingSignerRequestEvents.delete(eventId);
-          const pending = pendingRequests.get(correlationId);
-          if (pending) {
-            pendingRequests.delete(correlationId);
-            pending.reject(new Error(typeof reason === 'string' ? reason : 'Signer request denied'));
-          }
-        }
-      }
-      break;
-    }
-    case 'EVENT': {
-      const [, subId, nostrEvent] = msg;
-      if (subId === SIGNER_SUB_ID) {
-        handleSignerResponse(nostrEvent as NostrEvent);
-      }
-      break;
-    }
-    case VERB_IDENTITY: {
-      const payload = msg[1] as { pubkey: string; privkey: string; dTag: string; aggregateHash: string } | undefined;
-      if (!payload || typeof payload !== 'object' || !payload.privkey || !payload.pubkey) {
-        break;
-      }
-      // Accept the shell-delegated keypair
-      keypair = {
-        privkey: hexToBytes(payload.privkey),
-        pubkey: payload.pubkey,
-      };
-      setKeyboardShimKeypair(keypair);
-      _resolveKeypairReady();
-      break;
-    }
-    case 'EOSE':
-    case 'CLOSED':
-    case 'NOTICE':
-      break;
-  }
-}
-
-// ─── Aggregate hash resolution ────────────────────────────────────────────────
-
-/**
- * Read the napp's NIP-5A aggregate hash from a meta tag in the document head.
- */
-function getAggregateHash(): string {
-  const meta = document.querySelector('meta[name="napplet-aggregate-hash"]');
-  return meta?.getAttribute('content') ?? '';
-}
-
-// ─── NIP-42 AUTH handshake ────────────────────────────────────────────────────
-
-function handleAuthChallenge(challenge: string): void {
-  if (!keypair) {
-    // Fallback: if IDENTITY was not received (legacy shell or dev mode),
-    // create an ephemeral keypair as before
-    keypair = createEphemeralKeypair();
-    setKeyboardShimKeypair(keypair);
-    _resolveKeypairReady();
-  }
-
-  const authEvent = finalizeEvent({
-    kind: AUTH_KIND,
-    created_at: Math.floor(Date.now() / 1000),
-    tags: [
-      ['relay', SHELL_BRIDGE_URI],
-      ['challenge', challenge],
-      ['type', getNappletType()],
-      ['version', PROTOCOL_VERSION],
-      ['aggregateHash', getAggregateHash()],
-    ],
-    content: '',
-  }, keypair.privkey);
-
-  window.parent.postMessage(['AUTH', authEvent], '*');
-
-  window.parent.postMessage(['REQ', SIGNER_SUB_ID, { kinds: [BusKind.SIGNER_RESPONSE] }], '*');
-  window.parent.postMessage(['REQ', NIPDB_SUB_ID, { kinds: [BusKind.NIPDB_RESPONSE] }], '*');
-}
-
 // ─── Signer response handler ──────────────────────────────────────────────────
 
-function handleSignerResponse(event: NostrEvent): void {
-  const idTag = event.tags.find(t => t[0] === 'id');
-  if (!idTag) return;
-
-  const correlationId = idTag[1];
-  if (!correlationId) return;
-  const pending = pendingRequests.get(correlationId);
+/**
+ * Handle signer.*.result envelope messages.
+ * Extracts the result field from the type-specific response.
+ */
+function handleSignerResponse(msg: { type: string; id: string; error?: string; [key: string]: unknown }): void {
+  const pending = pendingRequests.get(msg.id);
   if (!pending) return;
 
-  pendingRequests.delete(correlationId);
-  for (const [eventId, id] of pendingSignerRequestEvents.entries()) {
-    if (id === correlationId) pendingSignerRequestEvents.delete(eventId);
-  }
+  pendingRequests.delete(msg.id);
 
-  const errorTag = event.tags.find(t => t[0] === 'error');
-  if (errorTag) {
-    pending.reject(new Error(errorTag[1]));
+  if (msg.error) {
+    pending.reject(new Error(msg.error));
     return;
   }
 
-  const resultTag = event.tags.find(t => t[0] === 'result');
-  try {
-    const raw = resultTag?.[1] ?? event.content;
-    const result = raw ? JSON.parse(raw) : undefined;
-    pending.resolve(result);
-  } catch {
+  // Extract the result value based on the message type
+  const type = msg.type;
+  if (type === 'signer.getPublicKey.result') {
+    pending.resolve(msg.pubkey);
+  } else if (type === 'signer.signEvent.result') {
+    pending.resolve(msg.event);
+  } else if (type === 'signer.getRelays.result') {
+    pending.resolve(msg.relays);
+  } else if (type === 'signer.nip04.encrypt.result' || type === 'signer.nip44.encrypt.result') {
+    pending.resolve(msg.ciphertext);
+  } else if (type === 'signer.nip04.decrypt.result' || type === 'signer.nip44.decrypt.result') {
+    pending.resolve(msg.plaintext);
+  } else {
+    // Generic fallback: resolve with undefined
     pending.resolve(undefined);
+  }
+}
+
+// ─── Central envelope message handler ───────────────────────────────────────
+
+/**
+ * Central message handler for JSON envelope messages from the shell.
+ * Routes messages to appropriate handlers based on type prefix.
+ */
+function handleEnvelopeMessage(event: MessageEvent): void {
+  if (event.source !== window.parent) return;
+  const msg = event.data;
+  if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
+
+  const type = msg.type as string;
+
+  // Route signer result messages
+  if (type.startsWith('signer.') && type.endsWith('.result')) {
+    handleSignerResponse(msg as { type: string; id: string; error?: string; [key: string]: unknown });
+    return;
+  }
+
+  // Route IFC event messages to topic handlers
+  if (type === 'ifc.event') {
+    const ifcMsg = msg as IfcEventMessage;
+    const handlers = ifcTopicHandlers.get(ifcMsg.topic);
+    if (handlers) {
+      const payload = ifcMsg.payload ?? {};
+      const sender = ifcMsg.sender ?? '';
+      for (const handler of handlers) {
+        handler(payload, sender);
+      }
+    }
+    return;
   }
 }
 
@@ -354,12 +347,18 @@ function handleSignerResponse(event: NostrEvent): void {
     removeItem: _nappletStorage.removeItem.bind(_nappletStorage),
     keys: _nappletStorage.keys.bind(_nappletStorage),
   },
+  shell: {
+    supports(_capability: string): boolean {
+      // TODO: Shell populates supported capabilities at iframe creation
+      return false;
+    },
+  },
 };
 
 // ─── Initialize ───────────────────────────────────────────────────────────────
 
-// Install relay message listener
-window.addEventListener('message', handleRelayMessage);
+// Install central envelope message listener
+window.addEventListener('message', handleEnvelopeMessage);
 
 // Install window.nostrdb NIP-DB proxy
 installNostrDb();
@@ -367,14 +366,5 @@ installNostrDb();
 // Install keyboard forwarding (hotkeys work when iframe has focus)
 installKeyboardShim();
 
-// Install napplet-side storage proxy (wire sender to break circular dep)
-_setInterPaneEventSender(emit);
+// Install napplet-side storage proxy
 installStateShim();
-
-// Send REGISTER to shell — the shell will respond with IDENTITY (delegated keypair)
-// then send AUTH challenge. Keypair is NOT created locally.
-{
-  const dTag = getNappletType();
-  const claimedHash = getAggregateHash();
-  window.parent.postMessage([VERB_REGISTER, { dTag, claimedHash }], '*');
-}

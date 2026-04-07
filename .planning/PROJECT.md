@@ -8,6 +8,22 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.16.0 Wire Format & NUB Architecture
+
+Replaced NIP-01 array wire format with generic JSON envelope `{ type: "domain.action", ...payload }`. NIP-5D v4 is now transport+identity+manifest+NUB-negotiation only — zero protocol messages. 4 NUB packages (@napplet/nub-relay, nub-signer, nub-storage, nub-ifc) with 52 typed message definitions. Core dispatch infrastructure with registerNub/dispatch. Shim fully migrated to JSON envelope. SDK re-exports 62 NUB types. Protocol version 4.0.0. 6 phases, 10 plans shipped 2026-04-07. See [archive](milestones/v0.16.0-ROADMAP.md).
+
+## Shipped: v0.15.0 Protocol Simplification
+
+Removed cryptographic identity from the napplet wire protocol. Napplets now send plain unsigned NIP-01 messages; shell identifies senders via unforgeable MessageEvent.source at iframe creation. AUTH handshake (REGISTER/IDENTITY/AUTH) eliminated. @napplet/shim dropped nostr-tools dependency. Protocol version bumped to 3.0.0. NIP-5D and all READMEs updated. 4 phases, 4 plans shipped 2026-04-07. See [archive](milestones/v0.15.0-ROADMAP.md).
+
+## Shipped: v0.14.0 Repo Cleanup & Audit
+
+Dead code, stale docs, and leftover artifacts from v0.13.0 extraction cleaned up. RUNTIME-SPEC.md, skills/, specs/nubs/ all updated to reference @kehto. MIGRATION-EVAL.md produced with stay/move/split recommendations for all remaining content. 2 phases, 3 plans shipped 2026-04-06. See [archive](milestones/v0.14.0-ROADMAP.md).
+
+## Shipped: v0.13.0 Runtime Decoupling & Publish
+
+Runtime, shell, ACL, services, and demo extracted to ~/Develop/kehto (@kehto npm org, github.com/kehto/runtime). 40 source files migrated with import rewrites. Demo + 252 unit + 127 e2e tests passing in kehto. @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin) — 29,500 lines removed. GitHub Actions CI/CD with changesets. READMEs updated. npm publish deferred (PUB-04 — needs human auth). 6 phases, 11 plans shipped 2026-04-06. See [archive](milestones/v0.13.0-ROADMAP.md).
+
 ## Shipped: v0.12.0 Spec Packaging
 
 SPEC.md renamed to RUNTIME-SPEC.md as internal reference with header linking to NIP-5D. NIP-5D v2 finalized at 199 lines with References section (5 cited NIPs) and Implementations section. 8 package READMEs and 4 source files updated to reference RUNTIME-SPEC.md. 1 phase, 1 plan shipped 2026-04-06. See [archive](milestones/v0.12.0-ROADMAP.md).
@@ -121,6 +137,24 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ NIP-5D v2 in nostr-protocol/nips markdown format (<200 lines, setext headings) — v0.12.0 Phase 61 (PKG-02)
 - ✓ NIP-5D lists @napplet/shim + hyprgate as reference implementations — v0.12.0 Phase 61 (PKG-03)
 
+- ✓ ~/Develop/kehto initialized with 4 @kehto packages (acl, runtime, shell, services) — v0.13.0 Phase 62 (KEHTO-01, KEHTO-02, KEHTO-08)
+- ✓ 40 source files migrated with @kehto/* import rewrites — v0.13.0 Phase 63 (KEHTO-03, KEHTO-07)
+- ✓ Demo + 252 unit + 127 e2e tests passing in kehto — v0.13.0 Phase 64 (KEHTO-05, KEHTO-06)
+- ✓ @napplet slimmed to 4 packages, build clean — v0.13.0 Phase 65 (CLEAN-01..04)
+- ✓ GitHub Actions CI/CD workflows for @napplet — v0.13.0 Phase 66 (PUB-01..03)
+- ✓ READMEs updated for 4-package SDK — v0.13.0 Phase 67 (DOC-01, DOC-02)
+
+- ✓ Handshake types (RegisterPayload, IdentityPayload, AUTH_KIND, VERB_REGISTER, VERB_IDENTITY) removed from @napplet/core — v0.15.0 Phase 70 (WIRE-01..04, RT-01..04)
+- ✓ @napplet/shim stripped of all signing, keypair, AUTH code; nostr-tools dependency dropped — v0.15.0 Phase 71 (SHIM-01..04)
+- ✓ NIP-5D v3 rewritten for simplified wire protocol (no AUTH, shell-assigned identity via MessageEvent.source) — v0.15.0 Phase 72 (DOC-02)
+- ✓ All package READMEs updated for no-crypto API surface — v0.15.0 Phase 73 (DOC-03)
+
+- ✓ NIP-5D v4: JSON envelope `{ type, ...payload }`, transport+identity+manifest+NUB-negotiation only — v0.16.0 Phase 74 (SPEC-01..04)
+- ✓ Core envelope types (NappletMessage, NubDomain, ShellSupports) + NUB dispatch infrastructure — v0.16.0 Phases 75-76 (CORE-01, CORE-02)
+- ✓ 4 NUB packages with 52 typed message definitions (relay 13, signer 14, storage 10, ifc 15) — v0.16.0 Phase 77 (NUB-01..04)
+- ✓ Shim fully migrated to JSON envelope wire format, window.napplet API unchanged — v0.16.0 Phase 78 (SHIM-01..03)
+- ✓ SDK re-exports 62 NUB types + domain constants; all READMEs updated — v0.16.0 Phases 78-79 (DOC-01)
+
 ### Active
 
 (No active milestone — ready for `/gsd:new-milestone`)
@@ -140,8 +174,8 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.12.0 shipped (Spec Packaging). RUNTIME-SPEC.md is the internal reference; NIP-5D v2 (`specs/NIP-5D.md`) is the terse standards-track spec. 8 packages in the monorepo. 12 milestones shipped.
-- **Package architecture**: core(0 deps) → acl(0 deps) → runtime(core+acl) → shell(core+runtime) | shim(core) | sdk(core) | services(runtime). Runtime is browser-agnostic via RuntimeAdapter DI. 8 packages total.
+- **Current state**: v0.16.0 shipped (Wire Format & NUB Architecture). JSON envelope wire format, modular NUB packages, dispatch infrastructure. 8 packages (4 core + 4 NUB). Protocol version 4.0.0. 16 milestones shipped.
+- **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin. @kehto (separate repo): acl(0) → runtime(@napplet/core, acl) → shell(core, runtime) | services(runtime) | demo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
 - **Demo architecture**: Full topology view with distinct shell, ACL, runtime, and service nodes. Inspector has 3 tabs (Node, Constants, Kinds) with contextual filtering.
@@ -189,6 +223,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 | SEC-01 explicit BusKind allowlist (not 29000-29999 range) | Principle of least privilege — future bus kinds must opt in | ✓ Good — though SPEC.md says range (known debt) |
 | SPEC.md → RUNTIME-SPEC.md with internal-reference header | Distinguishes internal reference from NIP standard; header links to NIP-5D | ✓ Good — no confusion between runtime spec and protocol NIP |
 | Historical PROJECT.md SPEC.md references left as-is | These are milestone descriptions, not active cross-references | ✓ Good — avoids rewriting history |
+| Remove crypto from napplet wire protocol | message.source is unforgeable; napplet can't hash itself; shell knows identity at iframe creation | ✓ Good — simpler spec, thinner shim, crypto is runtime impl detail |
+| Protocol version 2.0.0 → 3.0.0 | Breaking change to handshake; downstream kehto must update | ✓ Good — clean break |
+| Replace NIP-01 arrays with JSON envelope | NIP-5D should describe transport, not relay semantics; simpler for NIP reviewers and shell implementors | ✓ Good — spec is 120 lines, 5-minute read |
+| NUBs own protocol messages, NIP-5D is transport-only | Composable: shells implement only the NUBs they support | ✓ Good — modular spec architecture |
+| Sandbox: allow-scripts only | Minimal trust; everything else is shell-granted privilege | ✓ Good — follows principle of least privilege |
+| window.napplet.shell.supports() for NUBs + sandbox permissions | Single flat namespace, no collision between NUB names and browser tokens | ✓ Good — simple API |
+| NUB-IFC merges IPC + PIPES | dispatch (per-msg ACL) and channel (ACL at open) are modes, not separate specs | ✓ Good — one NUB, two patterns |
+| Protocol version 3.0.0 → 4.0.0 | JSON envelope replaces NIP-01 arrays; breaking wire format change | ✓ Good — clean break |
 
 ## Evolution
 
@@ -221,4 +263,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-06 after v0.12.0 milestone*
+*Last updated: 2026-04-07 after v0.16.0 milestone*

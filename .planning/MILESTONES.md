@@ -1,5 +1,69 @@
 # Milestones
 
+## v0.16.0 Wire Format & NUB Architecture (Shipped: 2026-04-07)
+
+**Phases completed:** 6 phases, 10 plans, 20 tasks
+
+**Key accomplishments:**
+
+- NIP-5D v4 rewritten as transport+identity+manifest+NUB-negotiation spec with generic JSON envelope { type, ...payload } wire format -- zero protocol message definitions, 122 lines
+- JSON envelope base types (NappletMessage, NubDomain, ShellSupports) added to @napplet/core with NIP-01 bus constants isolated in legacy.ts
+- 4 NUB scaffold packages (relay, signer, storage, ifc) with domain-specific message types extending NappletMessage and template literal type constraints
+- NUB dispatch infrastructure with factory-isolated registries, domain-prefix routing, and 12-test conformance suite
+- Relay (9 messages) and signer (14 messages) NUB modules with full discriminated unions and core dispatch registration
+- Storage (8 types) and IFC (14 types) NUB modules with full discriminated unions and core dispatch registration
+- All 6 shim source files migrated from NIP-01 array wire format to JSON envelope messages using NUB module types, with window.napplet API signatures unchanged
+- SDK re-exports all 62 NUB message types, 4 aliased domain constants, and core envelope types -- `import { RelaySubscribeMessage, relay } from '@napplet/sdk'` works
+- @napplet/core and @napplet/shim READMEs rewritten for JSON envelope + NUB architecture with full wire format reference and deprecation notices
+- Rewrote @napplet/sdk README and root README to reflect JSON envelope wire format and modular NUB architecture introduced in Phases 74-78.
+
+---
+
+## v0.15.0 Protocol Simplification (Shipped: 2026-04-07)
+
+**Phases completed:** 4 phases, 4 plans, 8 tasks
+
+**Key accomplishments:**
+
+- Removed AUTH/handshake types and constants from @napplet/core, bumped protocol to v3.0.0, and updated EventTemplate to document unsigned-message contract
+- Strip all signing code, keypair handling, AUTH flow, and nostr-tools dependency from @napplet/shim -- zero-crypto shim sends unsigned event templates via postMessage
+- NIP-5D v3 rewritten for simplified wire protocol -- AUTH/REGISTER/IDENTITY removed, shell-assigned identity via MessageEvent.source, unsigned event templates
+- All 5 package READMEs updated to reflect v0.15.0 no-crypto wire protocol: removed AUTH/keypair/nostr-tools/NIP-42 references, added message.source identity model, replaced RUNTIME-SPEC.md links with NIP-5D
+
+---
+
+## v0.14.0 Repo Cleanup & Audit (Shipped: 2026-04-06)
+
+**Phases completed:** 2 phases, 3 plans, 5 tasks
+
+**Key accomplishments:**
+
+- Removed dead test:e2e turbo task, deleted stale Playwright artifacts and PRBODY.md, verified all 4 package exports and config files are clean
+- Updated RUNTIME-SPEC.md, 3 skills, and 6 NUB specs to replace stale @napplet/shell|runtime|acl|services references with @kehto equivalents
+- Structured assessment of all remaining @napplet content with concrete stay/move/split recommendations for @kehto and nubs repo
+
+---
+
+## v0.13.0 Runtime Decoupling & Publish (Shipped: 2026-04-06)
+
+**Phases completed:** 6 phases, 11 plans, 18 tasks
+
+**Key accomplishments:**
+
+- ~/Develop/kehto initialized as buildable pnpm monorepo with 4 @kehto packages (acl, runtime, shell, services), GSD context seeded
+- 40 source files migrated from @napplet with all internal imports rewritten to @kehto/* — full monorepo builds and type-checks clean
+- Demo playground and test suite (252 unit + 127 e2e) migrated and passing in kehto
+- @napplet slimmed to 4-package SDK (core, shim, sdk, vite-plugin) — 29,500 lines removed
+- GitHub Actions CI/CD workflows for @napplet npm publishing with changesets integration
+- Root README and all package READMEs updated for 4-package SDK with @kehto cross-references
+
+### Known Gaps
+
+- `PUB-04`: npm publish deferred — requires human npm auth (npm login + NPM_TOKEN GitHub secret)
+- `KEHTO-04`: partial — workspace override for @napplet/core pending PUB-04 completion
+
+---
+
 ## v0.12.0 Spec Packaging (Shipped: 2026-04-06)
 
 **Phases completed:** 1 phase, 1 plan, 2 tasks

@@ -2,8 +2,10 @@
 // Queries available shell services via kind 29010 and caches results.
 
 import { query } from './relay-shim.js';
-import { BusKind } from './types.js';
 import type { NostrEvent, ServiceInfo } from '@napplet/core';
+
+/** Kind number for service discovery events. */
+const SERVICE_DISCOVERY_KIND = 29010;
 
 // ─── Session-scoped cache ───────────────────────────────────────────────────
 
@@ -38,10 +40,6 @@ function parseServiceEvent(event: NostrEvent): ServiceInfo | null {
  * Results are cached session-scoped — subsequent calls return the cached
  * array without sending another REQ. Cache is cleared on page reload.
  *
- * The REQ flows through the pre-AUTH message queue automatically, so calling
- * discoverServices() before AUTH completes is safe — the promise resolves
- * after AUTH + discovery round-trip.
- *
  * @returns Array of ServiceInfo objects describing available services
  *
  * @example
@@ -53,7 +51,7 @@ function parseServiceEvent(event: NostrEvent): ServiceInfo | null {
 async function discoverServices(): Promise<ServiceInfo[]> {
   if (cachedServices !== null) return cachedServices;
 
-  const events = await query({ kinds: [BusKind.SERVICE_DISCOVERY] });
+  const events = await query({ kinds: [SERVICE_DISCOVERY_KIND] });
   const services: ServiceInfo[] = [];
 
   for (const event of events) {

@@ -13,7 +13,7 @@ A napplet is a sandboxed iframe app that communicates with a host shell via post
 
 - Node.js 18+, pnpm (or npm/yarn)
 - A Vite-based project (`pnpm create vite`)
-- A host shell running `@napplet/shell` (or a test harness that implements the NIP-01 postMessage protocol)
+- A host shell running `@kehto/shell` (or a test harness that implements the NIP-01 postMessage protocol)
 
 ## Step 1 — Install dependencies
 

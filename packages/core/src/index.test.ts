@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   BusKind,
-  AUTH_KIND,
   SHELL_BRIDGE_URI,
   PROTOCOL_VERSION,
   ALL_CAPABILITIES,
@@ -17,7 +16,6 @@ describe('@napplet/core exports', () => {
   describe('BusKind constants', () => {
     it('exports BusKind with all protocol kinds', () => {
       expect(BusKind).toBeDefined();
-      expect(typeof BusKind.REGISTRATION).toBe('number');
       expect(typeof BusKind.SIGNER_REQUEST).toBe('number');
       expect(typeof BusKind.SIGNER_RESPONSE).toBe('number');
       expect(typeof BusKind.IPC_PEER).toBe('number');
@@ -35,11 +33,6 @@ describe('@napplet/core exports', () => {
   });
 
   describe('protocol constants', () => {
-    it('exports AUTH_KIND as 22242', () => {
-      expect(typeof AUTH_KIND).toBe('number');
-      expect(AUTH_KIND).toBe(22242);
-    });
-
     it('exports SHELL_BRIDGE_URI as napplet:// URI', () => {
       expect(typeof SHELL_BRIDGE_URI).toBe('string');
       expect(SHELL_BRIDGE_URI).toMatch(/^napplet:\/\//);
@@ -53,6 +46,20 @@ describe('@napplet/core exports', () => {
     it('exports REPLAY_WINDOW_SECONDS as positive number', () => {
       expect(typeof REPLAY_WINDOW_SECONDS).toBe('number');
       expect(REPLAY_WINDOW_SECONDS).toBeGreaterThan(0);
+    });
+  });
+
+  describe('removed handshake exports', () => {
+    it('BusKind does not have REGISTRATION', () => {
+      expect('REGISTRATION' in BusKind).toBe(false);
+    });
+
+    it('does not export handshake constants', () => {
+      // Verify via the BusKind object shape -- AUTH_KIND, VERB_REGISTER,
+      // VERB_IDENTITY are standalone exports that TypeScript will catch
+      // at compile time. BusKind.REGISTRATION is the runtime-checkable one.
+      const busKindKeys = Object.keys(BusKind);
+      expect(busKindKeys).not.toContain('REGISTRATION');
     });
   });
 

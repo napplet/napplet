@@ -1,11 +1,31 @@
-// @napplet/shim — NIP-DB window.nostrdb proxy
+// @napplet/shim -- NIP-DB window.nostrdb proxy
 // Proxies query, add, event, replaceable, count, supports, subscribe through postMessage
 // to the ShellBridge, which dispatches to WorkerRelayService (OPFS cache).
 
-import { finalizeEvent } from 'nostr-tools/pure';
-import { BusKind } from './types.js';
-import type { NostrEvent, NostrFilter } from './types.js';
-import type { NappletKeypair } from './napplet-keypair.js';
+import type { NostrEvent, NostrFilter } from '@napplet/core';
+
+// ─── Local envelope types (nostrdb is not a NUB domain) ──────────────────────
+
+interface NostrDbRequestMessage {
+  type: 'nostrdb.request';
+  id: string;
+  method: string;
+  content: string;
+  subId?: string;
+}
+
+interface NostrDbResultMessage {
+  type: 'nostrdb.result';
+  id: string;
+  method?: string;
+  content: string;
+}
+
+interface NostrDbEventPushMessage {
+  type: 'nostrdb.event-push';
+  subId: string;
+  content: string;
+}
 
 // ─── Module-level state ────────────────────────────────────────────────────────
 
@@ -14,9 +34,6 @@ const nipdbPending = new Map<string, {
   resolve: (value: unknown) => void;
   reject: (reason: Error) => void;
 }>();
-
-/** Subscription ID used for NIPDB response routing. */
-const NIPDB_SUB_ID = '__nipdb__';
 
 /**
  * Active subscribe handlers: subId -> event callback.
@@ -28,44 +45,23 @@ export const nipdbSubscribeHandlers = new Map<string, (event: NostrEvent) => voi
  */
 export const nipdbSubscribeCancellers = new Map<string, () => void>();
 
-/** Current keypair — set when installNostrDb is called. */
-let _keypair: NappletKeypair | null = null;
-
 // ─── Outbound helper ──────────────────────────────────────────────────────────
 
 function sendNipdbRequestRaw(
   method: string,
   content: string,
-  extraTags: string[][] = [],
+  subId?: string,
 ): string {
   const correlationId = crypto.randomUUID();
 
-  const tags: string[][] = [
-    ['method', method],
-    ['id', correlationId],
-    ...extraTags,
-  ];
-
-  if (_keypair) {
-    const event = finalizeEvent({
-      kind: BusKind.NIPDB_REQUEST,
-      created_at: Math.floor(Date.now() / 1000),
-      tags,
-      content,
-    }, _keypair.privkey);
-    window.parent.postMessage(['EVENT', event], '*');
-  } else {
-    const event = {
-      kind: BusKind.NIPDB_REQUEST,
-      created_at: Math.floor(Date.now() / 1000),
-      tags,
-      content,
-      id: crypto.randomUUID(),
-      pubkey: '',
-      sig: '',
-    };
-    window.parent.postMessage(['EVENT', event], '*');
-  }
+  const msg: NostrDbRequestMessage = {
+    type: 'nostrdb.request',
+    id: correlationId,
+    method,
+    content,
+    ...(subId ? { subId } : {}),
+  };
+  window.parent.postMessage(msg, '*');
 
   return correlationId;
 }
@@ -73,10 +69,10 @@ function sendNipdbRequestRaw(
 function sendNipdbRequest(
   method: string,
   content: string,
-  extraTags: string[][] = [],
+  subId?: string,
 ): Promise<unknown> {
   return new Promise<unknown>((resolve, reject) => {
-    const correlationId = sendNipdbRequestRaw(method, content, extraTags);
+    const correlationId = sendNipdbRequestRaw(method, content, subId);
 
     nipdbPending.set(correlationId, { resolve, reject });
 
@@ -90,41 +86,29 @@ function sendNipdbRequest(
 
 // ─── Inbound response handler ─────────────────────────────────────────────────
 
-export function handleNipdbResponse(event: NostrEvent): void {
-  const methodTag = event.tags.find(t => t[0] === 'method');
-  const method = methodTag?.[1];
-
-  if (method === 'event-push') {
-    const subIdTag = event.tags.find(t => t[0] === 'sub-id');
-    const subId = subIdTag?.[1];
-    if (!subId) return;
-
-    const handler = nipdbSubscribeHandlers.get(subId);
-    if (handler) {
-      try {
-        const pushedEvent = JSON.parse(event.content) as NostrEvent;
-        handler(pushedEvent);
-      } catch {
-        // Malformed push — ignore
-      }
-    }
-    return;
-  }
-
-  const idTag = event.tags.find(t => t[0] === 'id');
-  const correlationId = idTag?.[1];
-  if (!correlationId) return;
-
-  const pending = nipdbPending.get(correlationId);
+function handleNipdbResult(msg: NostrDbResultMessage): void {
+  const pending = nipdbPending.get(msg.id);
   if (!pending) return;
 
-  nipdbPending.delete(correlationId);
+  nipdbPending.delete(msg.id);
 
   try {
-    const result = event.content ? JSON.parse(event.content) : undefined;
+    const result = msg.content ? JSON.parse(msg.content) : undefined;
     pending.resolve(result);
   } catch {
     pending.resolve(undefined);
+  }
+}
+
+function handleNipdbEventPush(msg: NostrDbEventPushMessage): void {
+  const handler = nipdbSubscribeHandlers.get(msg.subId);
+  if (handler) {
+    try {
+      const pushedEvent = JSON.parse(msg.content) as NostrEvent;
+      handler(pushedEvent);
+    } catch {
+      // Malformed push -- ignore
+    }
   }
 }
 
@@ -134,23 +118,22 @@ const SUPPORTED_METHODS = ['query', 'add', 'event', 'replaceable', 'count', 'sub
 
 function handleNipdbMessage(msgEvent: MessageEvent): void {
   const msg = msgEvent.data;
-  if (!Array.isArray(msg) || msg.length < 3) return;
-  const [verb, subId, event] = msg;
-  if (verb !== 'EVENT' || subId !== NIPDB_SUB_ID) return;
-  handleNipdbResponse(event as NostrEvent);
+  if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
+  if (!msg.type.startsWith('nostrdb.')) return;
+
+  if (msg.type === 'nostrdb.result') {
+    handleNipdbResult(msg as NostrDbResultMessage);
+  } else if (msg.type === 'nostrdb.event-push') {
+    handleNipdbEventPush(msg as NostrDbEventPushMessage);
+  }
 }
 
 /**
  * Install window.nostrdb with the full NIP-DB spec surface.
  *
- * @param keypair - Optional keypair for signing NIPDB_REQUEST events.
  * @returns cleanup function that removes window.nostrdb.
  */
-export function installNostrDb(keypair?: NappletKeypair): () => void {
-  if (keypair) {
-    _keypair = keypair;
-  }
-
+export function installNostrDb(): () => void {
   window.addEventListener('message', handleNipdbMessage);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -192,7 +175,7 @@ export function installNostrDb(keypair?: NappletKeypair): () => void {
       const subId = crypto.randomUUID();
       const normalizedFilters = Array.isArray(filters) ? filters : [filters];
 
-      sendNipdbRequestRaw('subscribe', JSON.stringify(normalizedFilters), [['sub-id', subId]]);
+      sendNipdbRequestRaw('subscribe', JSON.stringify(normalizedFilters), subId);
 
       const queue: NostrEvent[] = [];
       let wakeResolve: (() => void) | null = null;
@@ -226,7 +209,7 @@ export function installNostrDb(keypair?: NappletKeypair): () => void {
       } finally {
         nipdbSubscribeHandlers.delete(subId);
         nipdbSubscribeCancellers.delete(subId);
-        sendNipdbRequestRaw('unsubscribe', JSON.stringify({ subId }), [['sub-id', subId]]);
+        sendNipdbRequestRaw('unsubscribe', JSON.stringify({ subId }), subId);
       }
     },
   };

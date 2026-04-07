@@ -1,5 +1,5 @@
 /**
- * @napplet/core — Shared protocol types, constants, and topic definitions.
+ * @napplet/core -- Shared protocol types, constants, and topic definitions.
  *
  * This package is the single source of truth for all protocol-level
  * definitions in the napplet ecosystem. All other @napplet/* packages
@@ -11,13 +11,26 @@
  * ```ts
  * import {
  *   type NostrEvent, type NostrFilter, type Capability,
- *   BusKind, AUTH_KIND, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
- *   DESTRUCTIVE_KINDS, ALL_CAPABILITIES, TOPICS,
+ *   type NappletMessage, type NubDomain, type ShellSupports,
+ *   type NubHandler, type NubDispatch,
+ *   NUB_DOMAINS, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
+ *   createDispatch, registerNub, dispatch, getRegisteredDomains,
+ *   ALL_CAPABILITIES, TOPICS,
  * } from '@napplet/core';
  * ```
  *
  * @packageDocumentation
  */
+
+// ─── Envelope Types ────────────────────────────────────────────────────────
+
+export type { NappletMessage, NubDomain, ShellSupports, NappletGlobalShell } from './envelope.js';
+export { NUB_DOMAINS } from './envelope.js';
+
+// ─── Dispatch Infrastructure ───────────────────────────────────────────────
+
+export type { NubHandler, NubDispatch } from './dispatch.js';
+export { createDispatch, registerNub, dispatch, getRegisteredDomains } from './dispatch.js';
 
 // ─── Protocol Types ─────────────────────────────────────────────────────────
 
@@ -40,14 +53,18 @@ export { ALL_CAPABILITIES } from './types.js';
 export {
   PROTOCOL_VERSION,
   SHELL_BRIDGE_URI,
-  AUTH_KIND,
   REPLAY_WINDOW_SECONDS,
-  BusKind,
-  DESTRUCTIVE_KINDS,
-  VERB_REGISTER,
-  VERB_IDENTITY,
 } from './constants.js';
-export type { BusKindValue } from './constants.js';
+
+// ─── Legacy Constants (deprecated) ──────────────────────────────────────────
+
+/**
+ * @deprecated NIP-01 bus constants -- use JSON envelope message types instead.
+ * These re-exports will be removed in a future major version.
+ * Import from '@napplet/core/legacy' directly if you still need them.
+ */
+export { BusKind, DESTRUCTIVE_KINDS, VERB_REGISTER, VERB_IDENTITY, AUTH_KIND } from './legacy.js';
+export type { BusKindValue } from './legacy.js';
 
 // ─── Topic Constants ────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 {
   "name": "@napplet/shim",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0",
   "description": "Napplet SDK — subscribe, publish, query, emit, on, nappStorage for Nostr-native iframe applications",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,13 +18,13 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "nostr-tools": ">=2.23.3 <3.0.0"
+    "@napplet/core": "workspace:*",
+    "@napplet/nub-relay": "workspace:*",
+    "@napplet/nub-signer": "workspace:*",
+    "@napplet/nub-storage": "workspace:*",
+    "@napplet/nub-ifc": "workspace:*"
   },
   "devDependencies": {
-    "nostr-tools": "^2.23.3",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3"
   },

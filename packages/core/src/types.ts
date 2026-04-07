@@ -5,6 +5,8 @@
  * used by the napplet-shell communication protocol.
  */
 
+import type { NappletGlobalShell } from './envelope.js';
+
 // ─── NIP-01 Types ─────────────────────────────────────────────────────────────
 
 /**
@@ -326,4 +328,15 @@ export interface NappletGlobal {
      */
     keys(): Promise<string[]>;
   };
+  /**
+   * Shell capability queries. Check whether the shell supports a NUB or sandbox permission.
+   *
+   * @example
+   * ```ts
+   * if (window.napplet.shell.supports('signer')) {
+   *   // Shell can sign events on behalf of the napplet
+   * }
+   * ```
+   */
+  shell: NappletGlobalShell;
 }
