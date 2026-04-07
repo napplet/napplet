@@ -1,6 +1,6 @@
 {
   "name": "@napplet/nub-theme",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "NUB-THEME message types for shell-provided theming",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
@@ -34,5 +36,10 @@
     "url": "git+https://github.com/napplet/napplet.git",
     "directory": "packages/nubs/theme"
   },
-  "keywords": ["nostr", "napplet", "nub", "theme"]
+  "keywords": [
+    "nostr",
+    "napplet",
+    "nub",
+    "theme"
+  ]
 }

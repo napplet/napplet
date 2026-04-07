@@ -1,6 +1,6 @@
 {
   "name": "@napplet/vite-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vite plugin for napplet development — injects aggregate hash meta tag during dev and optionally generates NIP-5A manifest at build time for local testing",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
@@ -40,5 +42,12 @@
     "url": "git+https://github.com/sandwichfarm/napplet.git",
     "directory": "packages/vite-plugin"
   },
-  "keywords": ["nostr", "napplet", "vite", "plugin", "nip-5a", "manifest"]
+  "keywords": [
+    "nostr",
+    "napplet",
+    "vite",
+    "plugin",
+    "nip-5a",
+    "manifest"
+  ]
 }

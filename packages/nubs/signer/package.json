@@ -1,6 +1,6 @@
 {
   "name": "@napplet/nub-signer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "NUB-SIGNER message types and shim methods for signing delegation",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
@@ -34,5 +36,10 @@
     "url": "git+https://github.com/sandwichfarm/napplet.git",
     "directory": "packages/nubs/signer"
   },
-  "keywords": ["nostr", "napplet", "nub", "signer"]
+  "keywords": [
+    "nostr",
+    "napplet",
+    "nub",
+    "signer"
+  ]
 }

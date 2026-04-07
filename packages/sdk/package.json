@@ -1,6 +1,6 @@
 {
   "name": "@napplet/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Typed named exports wrapping window.napplet for bundler-consuming napplet developers",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,7 +12,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
@@ -39,5 +41,11 @@
     "url": "git+https://github.com/sandwichfarm/napplet.git",
     "directory": "packages/sdk"
   },
-  "keywords": ["nostr", "napplet", "sdk", "iframe", "nip-01"]
+  "keywords": [
+    "nostr",
+    "napplet",
+    "sdk",
+    "iframe",
+    "nip-01"
+  ]
 }
