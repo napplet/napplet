@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
 status: executing
-stopped_at: Roadmap reframed — Phase 74 complete, Phases 75-76 ready, Phase 77+ blocked on NUB specs
-last_updated: "2026-04-07T12:26:00.505Z"
+stopped_at: Completed 78-01-PLAN.md
+last_updated: "2026-04-07T12:43:14.156Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 17
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 77 — NUB Module Scaffold
+**Current focus:** Phase 78 — Shim & SDK Integration
 
 ## Current Position
 
-Phase: 78
-Plan: Not started
-Status: Executing Phase 77
+Phase: 78 (Shim & SDK Integration) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-07
 
 Progress: [█░░░░░░░░░] 17%
@@ -51,12 +51,16 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - v0.16.0: Generic JSON envelope `{ type, ...payload }` replaces NIP-01 arrays
 - v0.16.0: NUB-IFC merges NUB-IPC + NUB-PIPES with dispatch (per-message ACL) and channel (ACL at open) modes
 - v0.16.0: Runtime translation layer is kehto's concern, not this repo
+- [Phase 78]: query() uses dedicated relay.query envelope instead of subscribe+collect+close
+- [Phase 78]: state-shim sends storage.* messages directly (no IPC-PEER indirection)
+- [Phase 78]: Non-NUB domains (keyboard, nostrdb) use local envelope types
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260407-0i8 | Remove stale root files -- move RUNTIME-SPEC.md to kehto, skills to kehto, nub specs to nubs, delete PNGs and artifacts | 2026-04-07 | e16ed87 | [260407-0i8-remove-stale-root-files-from-napplet](.planning/quick/260407-0i8-remove-stale-root-files-from-napplet/) |
+| Phase 78 P01 | 7min | 3 tasks | 8 files |
 
 ### Blockers/Concerns
 
@@ -68,6 +72,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07
-Stopped at: Roadmap reframed — Phase 74 complete, Phases 75-76 ready, Phase 77+ blocked on NUB specs
+Last session: 2026-04-07T12:43:14.154Z
+Stopped at: Completed 78-01-PLAN.md
 Resume: `/gsd:plan-phase 75` (Package Architecture) or `/gsd:autonomous` to run 75-76

@@ -28,9 +28,9 @@ Requirements for Wire Format & NUB Architecture milestone. Each maps to roadmap 
 
 ### Code — Shim
 
-- [ ] **SHIM-01**: @napplet/shim sends JSON envelope messages via postMessage (not NIP-01 arrays)
-- [ ] **SHIM-02**: @napplet/shim receives and dispatches JSON envelope messages from shell
-- [ ] **SHIM-03**: window.napplet API (subscribe, publish, query, emit, on, storage) unchanged
+- [x] **SHIM-01**: @napplet/shim sends JSON envelope messages via postMessage (not NIP-01 arrays)
+- [x] **SHIM-02**: @napplet/shim receives and dispatches JSON envelope messages from shell
+- [x] **SHIM-03**: window.napplet API (subscribe, publish, query, emit, on, storage) unchanged
 
 ### Docs
 
@@ -69,9 +69,9 @@ Deferred to future release.
 | NUB-02 | Phase 77 | BLOCKED (awaiting NUB specs from nubs repo) |
 | NUB-03 | Phase 77 | BLOCKED (awaiting NUB specs from nubs repo) |
 | NUB-04 | Phase 77 | BLOCKED (awaiting NUB specs from nubs repo) |
-| SHIM-01 | Phase 78 | Pending |
-| SHIM-02 | Phase 78 | Pending |
-| SHIM-03 | Phase 78 | Pending |
+| SHIM-01 | Phase 78 | Complete |
+| SHIM-02 | Phase 78 | Complete |
+| SHIM-03 | Phase 78 | Complete |
 | DOC-01 | Phase 79 | Pending |
 
 **Coverage:**

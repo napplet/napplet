@@ -271,7 +271,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 78-01-PLAN.md — Shim envelope migration (relay, signer, storage, IFC, keyboard, NIPDB)
+- [x] 78-01-PLAN.md — Shim envelope migration (relay, signer, storage, IFC, keyboard, NIPDB)
 - [ ] 78-02-PLAN.md — SDK NUB type re-exports and build verification
 
 ### Phase 79: Documentation Update
@@ -295,5 +295,5 @@ Plans:
 | 75. Package Architecture | 2/2 | Complete    | 2026-04-07 |
 | 76. Core Envelope Types | 1/1 | Complete    | 2026-04-07 |
 | 77. NUB Module Scaffold | 2/2 | Complete    | 2026-04-07 |
-| 78. Shim & SDK Integration | 0/2 | Not started | - |
+| 78. Shim & SDK Integration | 1/2 | In Progress|  |
 | 79. Documentation Update | 0/TBD | Not started | - |
