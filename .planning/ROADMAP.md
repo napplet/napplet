@@ -221,7 +221,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. NIP-5D no longer lists AUTH as a required protocol step -- wire protocol described as plain NIP-01 messages from napplet to shell
   2. NIP-5D is internally consistent (no dangling references to removed handshake verbs or napplet signing)
-**Plans**: TBD
+**Plans:** 1 plans
+Plans:
+- [ ] 72-01-PLAN.md -- Rewrite NIP-5D for simplified wire protocol (remove AUTH/handshake, add Identity section)
 
 ### Phase 73: SDK & README Update
 **Goal**: All package documentation reflects the no-crypto API surface so developers never encounter stale signing references
@@ -243,5 +245,5 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73
 |-------|----------------|--------|-----------|
 | 70. Core Protocol Types | 1/1 | Complete    | 2026-04-07 |
 | 71. Shim Simplification | 1/1 | Complete    | 2026-04-07 |
-| 72. NIP-5D Update | 0/TBD | Not started | - |
+| 72. NIP-5D Update | 0/1 | Not started | - |
 | 73. SDK & README Update | 0/TBD | Not started | - |
