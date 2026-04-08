@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.18.0
 milestone_name: Spec Conformance Audit
-status: executing
-stopped_at: Phase 86 context gathered
-last_updated: "2026-04-08T14:48:00.927Z"
+status: completed
+stopped_at: Completed 85-01-PLAN.md
+last_updated: "2026-04-08T14:55:19.624Z"
 last_activity: 2026-04-08
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 84 — spec-gap-inventory
+**Current focus:** Phase 85 — stale-documentation-fixes (complete)
 
 ## Current Position
 
 Phase: 85
-Plan: Not started
-Status: Executing Phase 84
+Plan: 1/1 complete
+Status: Phase 85 complete
 Last activity: 2026-04-08
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 *Updated after each plan completion*
+| Phase 85 P01 | 3min | 5 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-08T14:44:39.560Z
-Stopped at: Phase 86 context gathered
+Last session: 2026-04-08T14:55:19.621Z
+Stopped at: Completed 85-01-PLAN.md
 Resume: `/gsd:execute-phase 83` to execute the dead code removal plan

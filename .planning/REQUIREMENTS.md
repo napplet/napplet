@@ -35,11 +35,11 @@ Each item must be documented with: location, what it does, evidence of no spec b
 
 ### Stale Documentation Cleanup
 
-- [ ] **DOC-01**: Fix SDK README — remove references to "services" namespace
-- [ ] **DOC-02**: Fix vite-plugin README — remove `window.napplet.services.has()` references, update to `shell.supports('svc:...')`
-- [ ] **DOC-03**: Fix core README — NubDomain table lists 4 domains but code has 5 (theme)
-- [ ] **DOC-04**: Fix core envelope.ts JSDoc — NubDomain table lists 4 domains, references nonexistent D-02/D-03 decision IDs
-- [ ] **DOC-05**: Remove `window.napplet.services.has()` from NIP-5D.md — replaced by `shell.supports('svc:...')`
+- [x] **DOC-01**: Fix SDK README — remove references to "services" namespace
+- [x] **DOC-02**: Fix vite-plugin README — remove `window.napplet.services.has()` references, update to `shell.supports('svc:...')`
+- [x] **DOC-03**: Fix core README — NubDomain table lists 4 domains but code has 5 (theme)
+- [x] **DOC-04**: Fix core envelope.ts JSDoc — NubDomain table lists 4 domains, references nonexistent D-02/D-03 decision IDs
+- [x] **DOC-05**: Remove `window.napplet.services.has()` from NIP-5D.md — replaced by `shell.supports('svc:...')`
 
 ### Final Decision Gate
 
@@ -84,11 +84,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GAP-06 | Phase 84 | Pending |
 | GAP-07 | Phase 84 | Pending |
 | GAP-09 | Phase 84 | Pending |
-| DOC-01 | Phase 85 | Pending |
-| DOC-02 | Phase 85 | Pending |
-| DOC-03 | Phase 85 | Pending |
-| DOC-04 | Phase 85 | Pending |
-| DOC-05 | Phase 85 | Pending |
+| DOC-01 | Phase 85 | Complete |
+| DOC-02 | Phase 85 | Complete |
+| DOC-03 | Phase 85 | Complete |
+| DOC-04 | Phase 85 | Complete |
+| DOC-05 | Phase 85 | Complete |
 | DECIDE-01 | Phase 86 | Pending |
 
 **Coverage:**

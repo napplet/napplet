@@ -214,7 +214,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 83: Dead Code Removal** - Delete unreachable types, uncalled functions, and dead files across core and shim (completed 2026-04-08)
 - [x] **Phase 84: Spec Gap Inventory** - Document every function, type, constant, and behavior not covered by NIP-5D or any NUB spec (completed 2026-04-08)
-- [ ] **Phase 85: Stale Documentation Fixes** - Fix incorrect references in READMEs, JSDoc, and NIP-5D
+- [x] **Phase 85: Stale Documentation Fixes** - Fix incorrect references in READMEs, JSDoc, and NIP-5D (completed 2026-04-08)
 - [ ] **Phase 86: Decision Gate** - Present the complete gap inventory for drop-or-amend decisions
 
 ## Phase Details
@@ -273,5 +273,5 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 |-------|----------------|--------|-----------|
 | 83. Dead Code Removal | 1/1 | Complete    | 2026-04-08 |
 | 84. Spec Gap Inventory | 1/1 | Complete    | 2026-04-08 |
-| 85. Stale Documentation Fixes | 1/1 | Planned | - |
+| 85. Stale Documentation Fixes | 1/1 | Complete   | 2026-04-08 |
 | 86. Decision Gate | 0/0 | Not started | - |
