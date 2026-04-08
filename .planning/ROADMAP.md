@@ -241,7 +241,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `window.nostrdb` proxy (nipdb-shim.ts) and `keyboard.forward` shim (keyboard-shim.ts) are documented as unspecified parallel protocols
   4. IFC channel types (ifc.channel.* messages) are documented as defined-but-unimplemented
   5. Each gap entry includes one of: future NUB, unknown, superseded, or shell-only as its recommendation category
-**Plans**: TBD
+**Plans**: 84-01
 
 ### Phase 85: Stale Documentation Fixes
 **Goal**: Every README, JSDoc block, and NIP-5D reference accurately reflects the current codebase
@@ -272,6 +272,6 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 83. Dead Code Removal | 1/1 | Complete    | 2026-04-08 |
-| 84. Spec Gap Inventory | 0/0 | Not started | - |
+| 84. Spec Gap Inventory | 0/1 | Planned | - |
 | 85. Stale Documentation Fixes | 0/0 | Not started | - |
 | 86. Decision Gate | 0/0 | Not started | - |
