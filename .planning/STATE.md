@@ -1,52 +1,44 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.17.0
-milestone_name: Capability Cleanup
-status: planning
-stopped_at: Phase 80 context gathered
-last_updated: "2026-04-07T23:45:53.888Z"
-last_activity: 2026-04-08 — Roadmap created for v0.17.0 (3 phases, 16 requirements)
+milestone: v0.16.0
+milestone_name: Wire Format & NUB Architecture
+status: executing
+stopped_at: Completed 80-01-PLAN.md
+last_updated: "2026-04-07T23:59:02Z"
+last_activity: 2026-04-08
 progress:
-  total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 11
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-08)
+See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.17.0 Phase 80 — Namespaced Capability Query
+**Current focus:** Phase 80 — Namespaced Capability Query
 
 ## Current Position
 
-Phase: 80 (1 of 3) — Namespaced Capability Query
-Plan: —
-Status: Ready to plan
-Last activity: 2026-04-08 — Roadmap created for v0.17.0 (3 phases, 16 requirements)
+Phase: 80
+Plan: 1/1 complete
+Status: Phase complete
+Last activity: 2026-04-08
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
 - Total plans completed: 0
-- Average duration: —
+- Average duration: --
 - Total execution time: 0 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -54,10 +46,30 @@ Progress: [░░░░░░░░░░] 0%
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-- v0.17.0: Namespaced shell.supports() with nub:/perm:/svc: prefixes — replaces flat NubDomain | string
-- v0.17.0: No backward compatibility — unreleased monorepo, clean breaks only
-- v0.17.0: legacy.ts deletion is safe — DESTRUCTIVE_KINDS already migrated to nub-signer
-- v0.17.0: Dead code removal + backward compat removal combined into one phase (both are deletions)
+- v0.16.0: Spec-first ordering -- NIP-5D rewrite before NUB specs before code changes
+- v0.16.0: NIP-5D becomes transport+identity+manifest+NUB-negotiation only; no protocol messages
+- v0.16.0: Generic JSON envelope `{ type, ...payload }` replaces NIP-01 arrays
+- v0.16.0: NUB-IFC merges NUB-IPC + NUB-PIPES with dispatch (per-message ACL) and channel (ACL at open) modes
+- v0.16.0: Runtime translation layer is the shell's concern, not this repo
+- [Phase 78]: query() uses dedicated relay.query envelope instead of subscribe+collect+close
+- [Phase 78]: state-shim sends storage.* messages directly (no IPC-PEER indirection)
+- [Phase 78]: Non-NUB domains (keyboard, nostrdb) use local envelope types
+- [Phase 78]: Domain constants aliased (RELAY_DOMAIN, SIGNER_DOMAIN) to avoid naming conflicts in SDK barrel export
+- [Phase 79-documentation-update]: SDK README and root README updated for JSON envelope + NUB architecture without code changes
+- [Phase 79-01]: BusKind legacy constants kept in README with explicit deprecated callout block - they still exist in code and need migration docs
+- [Phase 79-01]: Full Wire Format section added to shim README (all outbound/inbound JSON envelope messages) as protocol reference ground truth
+- [Phase 80-01]: NamespacedCapability exported as public type (not kept inline) for consumer access
+- [Phase 80-01]: SDK re-exports NamespacedCapability (Rule 2 deviation) so downstream consumers can type-annotate capability strings
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260407-0i8 | Remove stale root files -- move specs and skills to their repos, delete PNGs and artifacts | 2026-04-07 | e16ed87 | [260407-0i8-remove-stale-root-files-from-napplet](.planning/quick/260407-0i8-remove-stale-root-files-from-napplet/) |
+| Phase 78 P01 | 7min | 3 tasks | 8 files |
+| Phase 78 P02 | 1min | 1 tasks | 3 files |
+| Phase 79-documentation-update P02 | 3 | 2 tasks | 2 files |
+| Phase 79-documentation-update P01 | 3 | 2 tasks | 2 files |
 
 ### Blockers/Concerns
 
@@ -66,6 +78,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T23:45:53.886Z
-Stopped at: Phase 80 context gathered
-Resume: `/gsd:plan-phase 80`
+Last session: 2026-04-07T23:59:02Z
+Stopped at: Completed 80-01-PLAN.md
+Resume: Phase 80 complete -- ready for verification
