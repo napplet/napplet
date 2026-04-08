@@ -272,6 +272,6 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 83. Dead Code Removal | 1/1 | Complete    | 2026-04-08 |
-| 84. Spec Gap Inventory | 1/1 | Complete   | 2026-04-08 |
+| 84. Spec Gap Inventory | 1/1 | Complete    | 2026-04-08 |
 | 85. Stale Documentation Fixes | 1/1 | Planned | - |
 | 86. Decision Gate | 0/0 | Not started | - |
