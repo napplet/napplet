@@ -92,15 +92,6 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
           },
           injectTo: 'head' as const,
         },
-        // Backward compatibility: also inject old attribute name for one release cycle
-        {
-          tag: 'meta',
-          attrs: {
-            name: 'napplet-napp-type',
-            content: options.nappletType,
-          },
-          injectTo: 'head' as const,
-        },
       ];
 
       // Inject requires meta tag if service dependencies are declared

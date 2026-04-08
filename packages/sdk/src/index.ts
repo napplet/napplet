@@ -1,7 +1,7 @@
 /**
  * @napplet/sdk — Typed named exports wrapping window.napplet.
  *
- * Provides `relay`, `ipc`, `services`, and `storage` objects that delegate
+ * Provides `relay`, `ipc`, and `storage` objects that delegate
  * to `window.napplet.*` at call time. Developers using a bundler can import
  * individual namespaces without depending on the shim's side-effect install:
  *
@@ -19,7 +19,6 @@ import type {
   NappletGlobal,
   NostrEvent,
   NostrFilter,
-  ServiceInfo,
   Subscription,
   EventTemplate,
 } from '@napplet/core';
@@ -154,39 +153,6 @@ export const ipc = {
 
 // ─── Services namespace ─────────────────────────────────────────────────────
 
-/**
- * Shell service discovery: enumerate and probe available services.
- *
- * @example
- * ```ts
- * import { services } from '@napplet/sdk';
- *
- * const available = await services.list();
- * if (await services.has('audio', '1.0.0')) {
- *   console.log('Audio service available');
- * }
- * ```
- */
-export const services = {
-  /**
-   * Discover all available services in the shell.
-   * @returns Array of ServiceInfo objects describing available services
-   */
-  list(): Promise<ServiceInfo[]> {
-    return requireNapplet().services.list();
-  },
-
-  /**
-   * Check whether a named service is available, optionally at a specific version.
-   * @param name     Service name to check (e.g., 'audio', 'notifications')
-   * @param version  Optional exact version string to match
-   * @returns true if the service is registered
-   */
-  has(name: string, version?: string): Promise<boolean> {
-    return requireNapplet().services.has(name, version);
-  },
-};
-
 // ─── Storage namespace ──────────────────────────────────────────────────────
 
 /**
@@ -241,7 +207,6 @@ export const storage = {
 
 export type { NostrEvent } from '@napplet/core';
 export type { NostrFilter } from '@napplet/core';
-export type { ServiceInfo } from '@napplet/core';
 export type { Subscription } from '@napplet/core';
 export type { EventTemplate } from '@napplet/core';
 
