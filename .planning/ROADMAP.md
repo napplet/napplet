@@ -230,7 +230,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `legacy.ts` does not exist in @napplet/core and `core/src/index.ts` has zero legacy re-exports
   4. `napplet-napp-type` meta tag is not read by shim or injected by vite-plugin
   5. `pnpm build && pnpm type-check` passes with zero errors
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 81-01-PLAN.md -- Delete legacy.ts, remove ServiceDescriptor/ServiceInfo/legacy exports from core
+- [ ] 81-02-PLAN.md -- Delete discovery-shim, remove services API from shim/SDK, remove napplet-napp-type compat
 
 ### Phase 82: Documentation
 **Goal**: All package documentation and NIP-5D accurately reflect the cleaned-up API surface
@@ -241,7 +244,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. shim/README.md does not reference `window.napplet.services` or discovery API
   3. sdk/README.md shows namespaced `supports()` examples
   4. NIP-5D does not reference old flat `supports()` signature or kind 29010 service discovery
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 81-01-PLAN.md -- Delete legacy.ts, remove ServiceDescriptor/ServiceInfo/legacy exports from core
+- [ ] 81-02-PLAN.md -- Delete discovery-shim, remove services API from shim/SDK, remove napplet-napp-type compat
 
 ## Progress
 
@@ -251,5 +257,5 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 80. Namespaced Capability Query | 1/1 | Complete | 2026-04-08 |
-| 81. Dead Code & Legacy Removal | 0/0 | Not started | - |
+| 81. Dead Code & Legacy Removal | 0/2 | Planned | - |
 | 82. Documentation | 0/0 | Not started | - |
