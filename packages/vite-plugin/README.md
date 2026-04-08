@@ -80,7 +80,7 @@ An array of service names this napplet requires from its host shell (e.g., `['au
 - Injects a `<meta name="napplet-requires">` tag into HTML (comma-separated service names)
 - Adds `['requires', 'service-name']` tags to the kind 35128 manifest event
 
-If the shell does not have all required services, the napplet can detect this at runtime via `discoverServices()` or the shell can show a compatibility warning.
+If the shell does not support all required capabilities, the napplet can detect this at runtime via `window.napplet.shell.supports()` or the shell can show a compatibility warning.
 
 ### Environment Variables
 
@@ -99,7 +99,7 @@ node -e "import('nostr-tools/pure').then(m => console.log(Buffer.from(m.generate
 
 ## Service Dependencies
 
-Use the `requires` option when your napplet needs specific shell services (like audio playback or push notifications) to function correctly.
+Use the `requires` option when your napplet needs specific shell capabilities (like audio playback or push notifications) to function correctly.
 
 ```ts
 // vite.config.ts
@@ -142,12 +142,12 @@ At build time (with `VITE_DEV_PRIVKEY_HEX` set), the manifest event also include
 
 ### Runtime compatibility checking
 
-The host shell reads `<meta name="napplet-requires">` during napplet initialization and compares against registered services. Napplets can also check at runtime:
+The host shell reads `<meta name="napplet-requires">` during napplet initialization and compares against its supported capabilities. Napplets can also check at runtime:
 
 ```ts
 import '@napplet/shim';
 
-if (!(await window.napplet.services.has('audio'))) {
+if (!window.napplet.shell.supports('svc:audio')) {
   console.warn('Audio service not available — some features disabled');
 }
 ```
