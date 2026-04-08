@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.17.0 Capability Cleanup
+
+Namespaced `shell.supports()` with `nub:`/`perm:`/`svc:` prefixes replacing flat `NubDomain | string`. Deleted `legacy.ts`, `discovery-shim.ts`, `ServiceDescriptor`/`ServiceInfo` types, `window.napplet.services` API, and `napplet-napp-type` backward compat. All READMEs updated. 3 phases, 3 plans shipped 2026-04-08. See [archive](milestones/v0.17.0-ROADMAP.md).
+
 ## Shipped: v0.16.0 Wire Format & NUB Architecture
 
 Replaced NIP-01 array wire format with generic JSON envelope `{ type: "domain.action", ...payload }`. NIP-5D v4 is now transport+identity+manifest+NUB-negotiation only — zero protocol messages. 4 NUB packages (@napplet/nub-relay, nub-signer, nub-storage, nub-ifc) with 52 typed message definitions. Core dispatch infrastructure with registerNub/dispatch. Shim fully migrated to JSON envelope. SDK re-exports 62 NUB types. Protocol version 4.0.0. 6 phases, 10 plans shipped 2026-04-07. See [archive](milestones/v0.16.0-ROADMAP.md).
@@ -153,19 +157,13 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Shim fully migrated to JSON envelope wire format, window.napplet API unchanged — v0.16.0 Phase 78 (SHIM-01..03)
 - ✓ SDK re-exports 62 NUB types + domain constants; all READMEs updated — v0.16.0 Phases 78-79 (DOC-01)
 
+- ✓ Namespaced `shell.supports()` with `nub:`/`perm:`/`svc:` prefixes — v0.17.0 Phase 80 (CAP-01..03)
+- ✓ Dead service discovery code removed (discovery-shim, ServiceDescriptor, legacy.ts, services API) — v0.17.0 Phase 81 (DEAD-01..07, COMPAT-01..02)
+- ✓ READMEs updated for cleaned-up API surface — v0.17.0 Phase 82 (DOC-01..04)
+
 ### Active
 
-## Current Milestone: v0.17.0 Capability Cleanup
-
-**Goal:** Replace flat `shell.supports()` with namespaced capability queries, remove all dead service discovery code, and delete every legacy/deprecated artifact.
-
-**Target features:**
-- Namespaced `shell.supports()` with `nub:`, `perm:`, `svc:` prefixes
-- Remove `discovery-shim.ts` and `window.napplet.services` API (kind 29010 model is dead)
-- Clean up `ServiceDescriptor`/`ServiceInfo` types
-- Delete `legacy.ts` and all deprecated re-exports from core
-- Remove `napplet-napp-type` backward compat fallback from shim + vite-plugin
-- Update types, NIP-5D, and READMEs to reflect changes
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -182,7 +180,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.17.0 in progress (Capability Cleanup). Namespacing shell.supports(), removing dead service discovery, deleting legacy code. 9 packages (4 core + 5 NUB). Protocol version 4.0.0. 16 milestones shipped.
+- **Current state**: v0.17.0 shipped (Capability Cleanup). Namespaced shell.supports(), dead service discovery removed, legacy code deleted. 9 packages (4 core + 5 NUB). Protocol version 4.0.0. 17 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -236,7 +234,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 | Replace NIP-01 arrays with JSON envelope | NIP-5D should describe transport, not relay semantics; simpler for NIP reviewers and shell implementors | ✓ Good — spec is 120 lines, 5-minute read |
 | NUBs own protocol messages, NIP-5D is transport-only | Composable: shells implement only the NUBs they support | ✓ Good — modular spec architecture |
 | Sandbox: allow-scripts only | Minimal trust; everything else is shell-granted privilege | ✓ Good — follows principle of least privilege |
-| window.napplet.shell.supports() for NUBs + sandbox permissions | Single flat namespace, no collision between NUB names and browser tokens | ✓ Good — simple API |
+| Namespaced shell.supports() with nub:/perm:/svc: prefixes | Flat NubDomain\|string caused collision risk; three namespaces with explicit prefixes; bare NUB shorthand kept for ergonomics | ✓ Good — replaced v0.16.0 flat API |
 | NUB-IFC merges IPC + PIPES | dispatch (per-msg ACL) and channel (ACL at open) are modes, not separate specs | ✓ Good — one NUB, two patterns |
 | Protocol version 3.0.0 → 4.0.0 | JSON envelope replaces NIP-01 arrays; breaking wire format change | ✓ Good — clean break |
 
@@ -271,4 +269,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-08 after v0.17.0 milestone start*
+*Last updated: 2026-04-08 after v0.17.0 milestone*

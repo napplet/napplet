@@ -1,5 +1,15 @@
 # Milestones
 
+## v0.17.0 Capability Cleanup (Shipped: 2026-04-08)
+
+**Phases completed:** 3 phases, 3 plans, 2 tasks
+
+**Key accomplishments:**
+
+- NamespacedCapability template literal union type replacing flat NubDomain|string with structured nub:/perm:/svc: prefixes on ShellSupports.supports()
+
+---
+
 ## v0.16.0 Wire Format & NUB Architecture (Shipped: 2026-04-07)
 
 **Phases completed:** 6 phases, 10 plans, 20 tasks
