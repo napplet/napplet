@@ -10,8 +10,8 @@ This NIP defines a protocol for sandboxed web applications ("napplets") running 
 
 ## Philosophy
 
-A napplet is a Nostr applet — a small, focused application that does one thing well. Napplets SHOULD be single-purpose rather than monolithic. A chat widget, a feed viewer, a profile editor, and a relay manager are four napplets, not one application with four tabs. The shell composes napplets; napplets do not compose themselves.
-
+A napplet is a Nostr applet - a small, focused application that does one thing well. Napplets SHOULD be single-purpose rather than monolithic. A chat widget, a feed viewer, a profile editor, and a relay manager are four napplets, not one application with four tabs. The shell composes napplets; napplets do not compose themselves.
+ 
 ## Terminology
 
 | Term | Definition |
@@ -73,14 +73,20 @@ At napplet load time, the shell checks `requires` tags against its own capabilit
 
 Napplets query capability support at runtime:
 
-    window.napplet.shell.supports('foo')       // NUB capability — boolean
-    window.napplet.shell.supports('popups')    // sandbox permission — boolean
+    window.napplet.shell.supports('foo')           // NUB capability — boolean
+    window.napplet.shell.supports('perm:popups')   // permission — boolean
+    window.napplet.shell.supports('svc:audio')     // service — boolean
 
-Shells MUST implement `window.napplet.shell.supports()`. Napplets MUST gracefully degrade when a capability is absent.
+Shells MUST implement `window.napplet.shell.supports()`. The argument is a namespaced capability string:
 
-Service discovery (e.g., audio, notifications) uses a separate API:
+| Prefix   | Example            | Meaning                         |
+|----------|--------------------|---------------------------------|
+| *(bare)* | `'relay'`          | Shorthand for `'nub:relay'`     |
+| `nub:`   | `'nub:signer'`     | Shell implements the signer NUB |
+| `perm:`  | `'perm:popups'`    | Shell grants popup permission   |
+| `svc:`   | `'svc:audio'`      | Shell provides audio service    |
 
-    window.napplet.services.has('audio')      // boolean
+Napplets MUST gracefully degrade when a capability is absent.
 
 ## NUB Extension Framework
 
