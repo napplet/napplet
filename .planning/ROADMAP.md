@@ -229,7 +229,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `shim/types.ts` file does not exist (dead re-export file deleted)
   4. `nipdbSubscribeHandlers` and `nipdbSubscribeCancellers` are not exported from nipdb-shim.ts (private internals only)
   5. `pnpm build && pnpm type-check` passes with zero errors after all deletions
-**Plans**: TBD
+**Plans**: 83-01
 
 ### Phase 84: Spec Gap Inventory
 **Goal**: Every piece of code not covered by NIP-5D or a NUB spec is documented with location, purpose, and a recommendation category
@@ -271,7 +271,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 83. Dead Code Removal | 0/0 | Not started | - |
+| 83. Dead Code Removal | 1/1 | Planned | - |
 | 84. Spec Gap Inventory | 0/0 | Not started | - |
 | 85. Stale Documentation Fixes | 0/0 | Not started | - |
 | 86. Decision Gate | 0/0 | Not started | - |
