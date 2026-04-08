@@ -244,10 +244,7 @@ Plans:
   2. shim/README.md does not reference `window.napplet.services` or discovery API
   3. sdk/README.md shows namespaced `supports()` examples
   4. NIP-5D does not reference old flat `supports()` signature or kind 29010 service discovery
-**Plans**: 2 plans
-Plans:
-- [ ] 81-01-PLAN.md -- Delete legacy.ts, remove ServiceDescriptor/ServiceInfo/legacy exports from core
-- [ ] 81-02-PLAN.md -- Delete discovery-shim, remove services API from shim/SDK, remove napplet-napp-type compat
+**Plans**: TBD
 
 ## Progress
 
