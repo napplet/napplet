@@ -262,18 +262,6 @@ for (const cap of ALL_CAPABILITIES) {
 }
 ```
 
-#### `ServiceDescriptor`
-
-Metadata describing a registered shell service.
-
-```ts
-interface ServiceDescriptor {
-  name: string;       // e.g., 'audio', 'notifications'
-  version: string;    // semver
-  description?: string;
-}
-```
-
 #### `Subscription`
 
 Handle returned by `relay.subscribe()` and `ipc.on()`.
@@ -326,46 +314,13 @@ TOPICS.WM_FOCUSED_WINDOW_CHANGED // 'wm:focused-window-changed'
 
 ---
 
-### Legacy (deprecated)
-
-> **Deprecated:** The following constants are from the NIP-01 array wire format era. They will be removed in a future major version. Migrate to JSON envelope message types from `@napplet/nub-relay`, `@napplet/nub-signer`, etc.
-
-#### `BusKind`
-
-NIP-01 bus event kind numbers (29000–29999 ephemeral range).
-
-```ts
-// DEPRECATED -- use JSON envelope message types instead
-if (event.kind === BusKind.IPC_PEER) {
-  // handle IPC peer message
-}
-```
-
-| `BusKind.*` | Value | Description |
-|-------------|-------|-------------|
-| `BusKind.REGISTRATION` | `29000` | Napplet registration events |
-| `BusKind.SIGNER_REQUEST` | `29001` | Signer request from napplet to shell |
-| `BusKind.SIGNER_RESPONSE` | `29002` | Signer response from shell to napplet |
-| `BusKind.IPC_PEER` | `29003` | Inter-napplet IPC peer events |
-| `BusKind.HOTKEY_FORWARD` | `29004` | Keyboard shortcut forwarding |
-| `BusKind.METADATA` | `29005` | Napplet metadata events |
-| `BusKind.NIPDB_REQUEST` | `29006` | NIP-DB request events |
-| `BusKind.NIPDB_RESPONSE` | `29007` | NIP-DB response events |
-| `BusKind.SERVICE_DISCOVERY` | `29010` | Service discovery events |
-
-#### `DESTRUCTIVE_KINDS`
-
-`Set([0, 3, 5, 10002])` — event kinds requiring user consent before signing. Also exported from `@napplet/nub-signer`.
-
----
-
 ## Types
 
 ```ts
 import type {
-  NappletMessage, NubDomain, ShellSupports, NappletGlobalShell,
+  NappletMessage, NubDomain, NamespacedCapability, ShellSupports, NappletGlobalShell,
   NubHandler, NubDispatch,
-  NostrEvent, NostrFilter, Capability, ServiceDescriptor,
+  NostrEvent, NostrFilter, Capability,
   Subscription, EventTemplate, NappletGlobal,
 } from '@napplet/core';
 ```
@@ -373,7 +328,8 @@ import type {
 | Type | Description |
 |------|-------------|
 | `NappletMessage` | Base interface for all JSON envelope messages |
-| `NubDomain` | Union of the four NUB domain strings |
+| `NubDomain` | Union of the five NUB domain strings |
+| `NamespacedCapability` | Union of `NubDomain \| nub:* \| perm:* \| svc:*` for `supports()` |
 | `ShellSupports` | Interface with `supports()` capability query method |
 | `NappletGlobalShell` | Type for `window.napplet.shell` (extends `ShellSupports`) |
 | `NubHandler` | Callback type for NUB domain handlers |
@@ -381,13 +337,12 @@ import type {
 | `NostrEvent` | Nostr event structure |
 | `NostrFilter` | Subscription filter for relay NUB |
 | `Capability` | Human-readable capability string union |
-| `ServiceDescriptor` | Service metadata for discovery |
 | `Subscription` | Handle with `close()` returned by subscribe/on |
 | `EventTemplate` | Unsigned event template for publishing |
 
 ## Integration Note
 
-`@napplet/core` is consumed by all packages in the napplet ecosystem for envelope types and NUB dispatch — not just BusKind and TOPICS.
+`@napplet/core` is consumed by all packages in the napplet ecosystem for envelope types and NUB dispatch.
 
 - **In this repo:** `@napplet/shim`, `@napplet/sdk`, and `@napplet/vite-plugin` import `NappletMessage`, `NubDomain`, `ShellSupports`, and all shared protocol types from `@napplet/core`.
 - **NUB packages** (`@napplet/nub-relay`, `@napplet/nub-signer`, `@napplet/nub-storage`, `@napplet/nub-ifc`): extend `NappletMessage` for their domain-specific message types and call `registerNub` at import time.

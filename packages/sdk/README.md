@@ -82,15 +82,6 @@ Messages are sent as JSON envelope objects (`{ type: 'ifc.emit', topic, payload 
 | `emit(topic, extraTags?, content?)` | `void` | Broadcast an IFC event to other napplets via the shell |
 | `on(topic, callback)` | `{ close(): void }` | Subscribe to IFC events on a topic |
 
-### `services`
-
-Service discovery. Mirrors `window.napplet.services`.
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `list()` | `Promise<ServiceInfo[]>` | Query available shell services (cached per session) |
-| `has(name, version?)` | `Promise<boolean>` | Check if a service is available |
-
 ### `storage`
 
 Sandboxed key-value storage. Mirrors `window.napplet.storage`. 512 KB quota per napplet.
@@ -104,24 +95,26 @@ Sandboxed key-value storage. Mirrors `window.napplet.storage`. 512 KB quota per 
 
 ### `shell`
 
-Shell capability query interface. Access via `window.napplet.shell.supports()` after importing `@napplet/shim`.
+Namespaced capability query. Access via `window.napplet.shell.supports()` after importing `@napplet/shim`.
 
-> Note: The SDK does not export a top-level `shell` object. Use `window.napplet.shell.supports('relay')` directly, or
-> import the `RELAY_DOMAIN` constant from `@napplet/sdk` for type-safe capability checks.
+> Note: The SDK does not export a top-level `shell` object. Use `window.napplet.shell.supports()` directly.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `supports(capability)` | `boolean` | Check whether the shell supports a NUB domain or sandbox permission |
+| `supports(capability)` | `boolean` | Check shell support for a NUB (`nub:relay`), permission (`perm:popups`), or service (`svc:audio`). Bare NUB names also accepted (`relay`). |
 
 **Example:**
 
 ```ts
 import '@napplet/shim';
-import { RELAY_DOMAIN } from '@napplet/sdk';
 
-if (window.napplet.shell.supports(RELAY_DOMAIN)) {
-  // shell supports relay operations
-}
+// NUB domains (bare shorthand or nub: prefix)
+if (window.napplet.shell.supports('relay')) { /* ... */ }
+if (window.napplet.shell.supports('nub:signer')) { /* ... */ }
+
+// Permissions and services
+if (window.napplet.shell.supports('perm:popups')) { /* ... */ }
+if (window.napplet.shell.supports('svc:audio')) { /* ... */ }
 ```
 
 ### Namespace Import
@@ -144,11 +137,11 @@ import type {
   // Protocol types (from @napplet/core)
   NostrEvent,
   NostrFilter,
-  ServiceInfo,
   Subscription,
   EventTemplate,
   NappletMessage,
   NubDomain,
+  NamespacedCapability,
   ShellSupports,
   // NUB message types (re-exported from NUB packages)
   RelayNubMessage,
@@ -164,11 +157,11 @@ import type {
 |------|-------------|
 | `NostrEvent` | Standard Nostr event object |
 | `NostrFilter` | Relay subscription filter |
-| `ServiceInfo` | Service descriptor: `{ name, version, description? }` |
 | `Subscription` | Handle with `close()` method |
 | `EventTemplate` | Unsigned event for `relay.publish()` |
 | `NappletMessage` | Base JSON envelope type for all protocol messages |
 | `NubDomain` | String literal union of NUB domain names |
+| `NamespacedCapability` | Union of `NubDomain \| nub:* \| perm:* \| svc:*` for `supports()` |
 | `ShellSupports` | Interface for the shell capability query API |
 
 ### NUB Message Types
@@ -199,14 +192,16 @@ These constants are re-exported from the individual NUB packages. Use them with 
 API for type-safe conditional logic:
 
 ```ts
-import { RELAY_DOMAIN, SIGNER_DOMAIN } from '@napplet/sdk';
-
-if (window.napplet.shell.supports(RELAY_DOMAIN)) {
+if (window.napplet.shell.supports('nub:relay')) {
   // relay operations are available
 }
 
-if (window.napplet.shell.supports(SIGNER_DOMAIN)) {
+if (window.napplet.shell.supports('nub:signer')) {
   // signer delegation is available
+}
+
+if (window.napplet.shell.supports('svc:audio')) {
+  // audio service is available
 }
 ```
 

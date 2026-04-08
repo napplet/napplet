@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `services`, `storage`, and `shell` sub-objects
+3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, and `shell` sub-objects
 4. The shim also installs `window.nostr` (NIP-07 compatible) for transparent signer proxy access
 
 ### Installation
@@ -51,14 +51,8 @@ const ipcSub = window.napplet.ipc.on('profile:open', (payload) => {
 await window.napplet.storage.setItem('theme', 'dark');
 const theme = await window.napplet.storage.getItem('theme'); // 'dark'
 
-// Discover available shell services
-const services = await window.napplet.services.list();
-if (await window.napplet.services.has('audio')) {
-  console.log('Audio service available');
-}
-
-// Check shell NUB support before using a domain
-if (window.napplet.shell.supports('signer')) {
+// Check shell capability support (namespaced)
+if (window.napplet.shell.supports('nub:signer')) {
   const pubkey = await window.nostr.getPublicKey();
 }
 
@@ -142,10 +136,6 @@ window.napplet = {
     emit(topic, extraTags?, content?): void;
     on(topic, callback): { close(): void };
   },
-  services: {
-    list(): Promise<ServiceInfo[]>;
-    has(name, version?): Promise<boolean>;
-  },
   storage: {
     getItem(key): Promise<string | null>;
     setItem(key, value): Promise<void>;
@@ -153,7 +143,7 @@ window.napplet = {
     keys(): Promise<string[]>;
   },
   shell: {
-    supports(capability: string): boolean;
+    supports(capability: NamespacedCapability): boolean;
   },
 };
 ```
@@ -177,15 +167,6 @@ Inter-pane communication between napplets via the shell.
 | `emit(topic, extraTags?, content?)` | `void` | Send an `ifc.emit` JSON envelope to the shell for delivery to matching topic subscribers. |
 | `on(topic, callback)` | `{ close(): void }` | Subscribe to `ifc.event` JSON envelopes on a topic. Callback receives `(payload, event)`. |
 
-### `window.napplet.services`
-
-Service discovery for shell capabilities.
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `list()` | `Promise<ServiceInfo[]>` | Query available services. Results are cached for the session. |
-| `has(name, version?)` | `Promise<boolean>` | Check if a named service (optionally at a specific version) is available. |
-
 ### `window.napplet.storage`
 
 Sandboxed key-value storage proxied through the shell. Scoped by napplet identity -- napplets cannot read each other's data. 512 KB quota per napplet.
@@ -199,16 +180,21 @@ Sandboxed key-value storage proxied through the shell. Scoped by napplet identit
 
 ### `window.napplet.shell`
 
-Capability query interface. `supports()` checks whether the shell declared support for a NUB domain.
+Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain, permission, or service.
 
 ```ts
-window.napplet.shell.supports('relay');   // true if shell has a relay NUB
-window.napplet.shell.supports('signer');  // true if shell can sign events
-window.napplet.shell.supports('storage'); // true if shell provides storage proxy
-window.napplet.shell.supports('ifc');     // true if shell has inter-frame communication
+// NUB domains (bare shorthand or nub: prefix)
+window.napplet.shell.supports('relay');       // bare shorthand
+window.napplet.shell.supports('nub:signer');  // explicit prefix
+
+// Permissions
+window.napplet.shell.supports('perm:popups');
+
+// Services
+window.napplet.shell.supports('svc:audio');
 ```
 
-Currently returns `false` until the shell populates it at iframe creation time. Use as a feature gate before calling APIs that depend on a specific NUB domain.
+Currently returns `false` until the shell populates it at iframe creation time. Use as a feature gate before calling APIs that depend on a specific capability.
 
 ## TypeScript Support
 
@@ -218,7 +204,7 @@ Importing `@napplet/shim` activates a global Window type augmentation:
 // This side-effect import gives TypeScript full autocompletion for window.napplet.*
 import '@napplet/shim';
 
-// TypeScript knows about window.napplet.relay, .ipc, .services, .storage, .shell
+// TypeScript knows about window.napplet.relay, .ipc, .storage, .shell
 window.napplet.relay.subscribe({ kinds: [1] }, (event) => {
   // event is typed as NostrEvent
 });
@@ -238,7 +224,7 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
 | **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc` (types only) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
-| **Named exports** | None | `relay`, `ipc`, `services`, `storage`, plus types |
+| **Named exports** | None | `relay`, `ipc`, `storage`, plus types |
 
 **Typical usage:** Import both -- shim for window installation, SDK for typed API access:
 
