@@ -42,7 +42,7 @@ export interface NappletMessage {
 // ─── NUB Domain Types ──────────────────────────────────────────────────────
 
 /**
- * String literal union of the four NUB (Napplet Unified Blueprint) domains.
+ * String literal union of the five NUB (Napplet Unified Blueprint) domains.
  * Each domain corresponds to a capability namespace that a shell may support.
  *
  * | Domain    | Scope                                     |
@@ -51,6 +51,7 @@ export interface NappletMessage {
  * | `signer`  | NIP-07/NIP-44 signing delegation          |
  * | `storage` | Scoped key-value storage proxy            |
  * | `ifc`     | Inter-frame communication (IPC peer bus)  |
+ * | `theme`   | Theme tokens and appearance settings      |
  *
  * @example
  * ```ts
@@ -87,8 +88,8 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 
  * | `svc:`  | `'svc:audio'`       | Shell provides audio service   |
  * | *(bare)*| `'relay'`           | Shorthand for `'nub:relay'`    |
  *
- * Bare strings are only valid for NUB domains (per D-02).
- * Permissions and services MUST use their prefix (per D-03).
+ * Bare strings are valid only for NUB domains.
+ * Permissions and services MUST use their prefix.
  *
  * @example
  * ```ts
