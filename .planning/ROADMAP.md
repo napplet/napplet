@@ -197,3 +197,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 79: Documentation Update** - All READMEs updated (completed 2026-04-07)
 
 </details>
+
+### Phase 80: Namespaced Capability Query
+
+- [x] **Phase 80: Namespaced Capability Query** - NamespacedCapability type with nub:/perm:/svc: prefixes for shell.supports() (completed 2026-04-08)

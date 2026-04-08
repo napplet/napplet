@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.16.0
 milestone_name: Wire Format & NUB Architecture
-status: verifying
-stopped_at: Completed 79-01-PLAN.md
-last_updated: "2026-04-07T13:46:17.165Z"
-last_activity: 2026-04-07
+status: executing
+stopped_at: Completed 80-01-PLAN.md
+last_updated: "2026-04-07T23:59:02Z"
+last_activity: 2026-04-08
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 10
-  completed_plans: 10
-  percent: 17
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 11
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 79 — Documentation Update
+**Current focus:** Phase 80 — Namespaced Capability Query
 
 ## Current Position
 
-Phase: 79
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-07
+Phase: 80
+Plan: 1/1 complete
+Status: Phase complete
+Last activity: 2026-04-08
 
-Progress: [█░░░░░░░░░] 17%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 79-documentation-update]: SDK README and root README updated for JSON envelope + NUB architecture without code changes
 - [Phase 79-01]: BusKind legacy constants kept in README with explicit deprecated callout block - they still exist in code and need migration docs
 - [Phase 79-01]: Full Wire Format section added to shim README (all outbound/inbound JSON envelope messages) as protocol reference ground truth
+- [Phase 80-01]: NamespacedCapability exported as public type (not kept inline) for consumer access
+- [Phase 80-01]: SDK re-exports NamespacedCapability (Rule 2 deviation) so downstream consumers can type-annotate capability strings
 
 ### Quick Tasks Completed
 
@@ -76,6 +78,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T12:58:13.841Z
-Stopped at: Completed 79-01-PLAN.md
-Resume: `/gsd:plan-phase 75` (Package Architecture) or `/gsd:autonomous` to run 75-76
+Last session: 2026-04-07T23:59:02Z
+Stopped at: Completed 80-01-PLAN.md
+Resume: Phase 80 complete -- ready for verification
