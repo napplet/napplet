@@ -4,8 +4,8 @@ milestone: v0.18.0
 milestone_name: Spec Conformance Audit
 status: executing
 stopped_at: Phase 84 context gathered
-last_updated: "2026-04-08T14:15:46.815Z"
-last_activity: 2026-04-08 -- Phase 83 planned (1 plan, 1 wave)
+last_updated: "2026-04-08T14:25:28.341Z"
+last_activity: 2026-04-08 -- Phase 83 execution started
 progress:
   total_phases: 4
   completed_phases: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.18.0 Phase 83 (Dead Code Removal)
+**Current focus:** Phase 83 — Dead Code Removal
 
 ## Current Position
 
-Phase: 1 of 4 (Phase 83: Dead Code Removal)
-Plan: 0 of 1 in current phase
-Status: Planned, ready to execute
-Last activity: 2026-04-08 -- Phase 83 planned (1 plan, 1 wave)
+Phase: 83 (Dead Code Removal) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 83
+Last activity: 2026-04-08 -- Phase 83 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
