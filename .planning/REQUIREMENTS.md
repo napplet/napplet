@@ -9,11 +9,11 @@ Requirements for the Spec Conformance Audit milestone. Organized into four categ
 
 ### Dead Code Removal
 
-- [ ] **DEAD-01**: Remove `RegisterPayload` and `IdentityPayload` types from core/types.ts and core/index.ts exports
-- [ ] **DEAD-02**: Remove `getNappletType()` function from shim/index.ts (defined, never called)
-- [ ] **DEAD-03**: Delete `shim/types.ts` file (dead re-export of PROTOCOL_VERSION and SHELL_BRIDGE_URI, nothing imports it)
-- [ ] **DEAD-04**: Make `nipdbSubscribeHandlers` / `nipdbSubscribeCancellers` private in nipdb-shim.ts (exported but only used internally)
-- [ ] **DEAD-05**: Remove or update tests for deleted exports in core/index.test.ts
+- [x] **DEAD-01**: Remove `RegisterPayload` and `IdentityPayload` types from core/types.ts and core/index.ts exports
+- [x] **DEAD-02**: Remove `getNappletType()` function from shim/index.ts (defined, never called)
+- [x] **DEAD-03**: Delete `shim/types.ts` file (dead re-export of PROTOCOL_VERSION and SHELL_BRIDGE_URI, nothing imports it)
+- [x] **DEAD-04**: Make `nipdbSubscribeHandlers` / `nipdbSubscribeCancellers` private in nipdb-shim.ts (exported but only used internally)
+- [x] **DEAD-05**: Remove or update tests for deleted exports in core/index.test.ts
 
 ### Spec Gap Inventory
 
@@ -71,11 +71,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEAD-01 | Phase 83 | Pending |
-| DEAD-02 | Phase 83 | Pending |
-| DEAD-03 | Phase 83 | Pending |
-| DEAD-04 | Phase 83 | Pending |
-| DEAD-05 | Phase 83 | Pending |
+| DEAD-01 | Phase 83 | Complete |
+| DEAD-02 | Phase 83 | Complete |
+| DEAD-03 | Phase 83 | Complete |
+| DEAD-04 | Phase 83 | Complete |
+| DEAD-05 | Phase 83 | Complete |
 | GAP-01 | Phase 84 | Pending |
 | GAP-02 | Phase 84 | Pending |
 | GAP-03 | Phase 84 | Pending |
