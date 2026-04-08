@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1.0
-milestone_name: milestone
+milestone: v0.17.0
+milestone_name: Capability Cleanup
 status: executing
 stopped_at: Phase 80 context gathered
-last_updated: "2026-04-08T00:03:49.718Z"
+last_updated: "2026-04-08T00:15:47.872Z"
 last_activity: 2026-04-08
 progress:
-  total_phases: 1
+  total_phases: 3
   completed_phases: 1
-  total_plans: 1
+  total_plans: 3
   completed_plans: 1
   percent: 0
 ---
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 80 — namespaced-capability-query
+**Current focus:** Phase 81 — dead-code-legacy-removal
 
 ## Current Position
 
-Phase: 80
+Phase: 82
 Plan: Not started
-Status: Executing Phase 80
+Status: Executing Phase 81
 Last activity: 2026-04-08
 
 Progress: [░░░░░░░░░░] 0%
