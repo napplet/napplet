@@ -204,7 +204,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 80: Namespaced Capability Query** - shell.supports() accepts nub:/perm:/svc: prefixed strings with typed ShellSupports interface (completed 2026-04-08)
 - [x] **Phase 81: Dead Code & Legacy Removal** - Delete discovery shim, services API, legacy re-exports, backward-compat fallbacks, and all associated types/tests (completed 2026-04-08)
-- [ ] **Phase 82: Documentation** - Update core/shim/sdk READMEs and NIP-5D to reflect cleanup
+- [x] **Phase 82: Documentation** - Update core/shim/sdk READMEs and NIP-5D to reflect cleanup (completed 2026-04-08)
 
 ## Phase Details
 
@@ -255,4 +255,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 80. Namespaced Capability Query | 1/1 | Complete | 2026-04-08 |
 | 81. Dead Code & Legacy Removal | 0/2 | Complete    | 2026-04-08 |
-| 82. Documentation | 0/0 | Not started | - |
+| 82. Documentation | 0/0 | Complete    | 2026-04-08 |
