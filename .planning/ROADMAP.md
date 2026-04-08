@@ -198,6 +198,58 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### Phase 80: Namespaced Capability Query
+### v0.17.0 Capability Cleanup (In Progress)
 
-- [x] **Phase 80: Namespaced Capability Query** - NamespacedCapability type with nub:/perm:/svc: prefixes for shell.supports() (completed 2026-04-08)
+**Milestone Goal:** Replace flat `shell.supports()` with namespaced capability queries, remove all dead service discovery code, and delete every legacy/deprecated artifact.
+
+- [x] **Phase 80: Namespaced Capability Query** - shell.supports() accepts nub:/perm:/svc: prefixed strings with typed ShellSupports interface (completed 2026-04-08)
+- [ ] **Phase 81: Dead Code & Legacy Removal** - Delete discovery shim, services API, legacy re-exports, backward-compat fallbacks, and all associated types/tests
+- [ ] **Phase 82: Documentation** - Update core/shim/sdk READMEs and NIP-5D to reflect cleanup
+
+## Phase Details
+
+### Phase 80: Namespaced Capability Query
+**Goal**: Napplets can query shell capabilities using namespaced prefixes that distinguish NUBs, permissions, and services
+**Depends on**: Nothing (first phase of v0.17.0)
+**Requirements**: CAP-01, CAP-02, CAP-03
+**Success Criteria** (what must be TRUE):
+  1. `shell.supports('nub:relay')` returns whether the shell implements the relay NUB
+  2. `shell.supports('perm:sign')` returns whether the shell grants signing permission
+  3. `shell.supports('svc:audio')` returns whether the shell provides the audio service
+  4. `ShellSupports` type accepts `nub:${NubDomain}`, `perm:${string}`, and `svc:${string}` template literal types
+  5. `NappletGlobalShell` type on `window.napplet.shell` reflects the namespaced supports() signature
+**Plans**: 80-01 (complete)
+
+### Phase 81: Dead Code & Legacy Removal
+**Goal**: Every dead service discovery artifact and legacy backward-compat shim is deleted from the codebase
+**Depends on**: Phase 80
+**Requirements**: DEAD-01, DEAD-02, DEAD-03, DEAD-04, DEAD-05, DEAD-06, DEAD-07, COMPAT-01, COMPAT-02
+**Success Criteria** (what must be TRUE):
+  1. `discovery-shim.ts` does not exist in @napplet/shim and `window.napplet.services` is gone
+  2. `ServiceDescriptor` and `ServiceInfo` types do not exist anywhere in @napplet/core
+  3. `legacy.ts` does not exist in @napplet/core and `core/src/index.ts` has zero legacy re-exports
+  4. `napplet-napp-type` meta tag is not read by shim or injected by vite-plugin
+  5. `pnpm build && pnpm type-check` passes with zero errors
+**Plans**: TBD
+
+### Phase 82: Documentation
+**Goal**: All package documentation and NIP-5D accurately reflect the cleaned-up API surface
+**Depends on**: Phase 81
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04
+**Success Criteria** (what must be TRUE):
+  1. core/README.md documents namespaced `shell.supports()` and does not mention BusKind or service discovery types
+  2. shim/README.md does not reference `window.napplet.services` or discovery API
+  3. sdk/README.md shows namespaced `supports()` examples
+  4. NIP-5D does not reference old flat `supports()` signature or kind 29010 service discovery
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+80 -> 81 -> 82
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 80. Namespaced Capability Query | 1/1 | Complete | 2026-04-08 |
+| 81. Dead Code & Legacy Removal | 0/0 | Not started | - |
+| 82. Documentation | 0/0 | Not started | - |
