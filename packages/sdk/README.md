@@ -12,7 +12,7 @@
 ### How It Works
 
 1. Import `@napplet/shim` in your entry point to install the `window.napplet` global
-2. Import named exports from `@napplet/sdk` -- `relay`, `ipc`, `services`, `storage`
+2. Import named exports from `@napplet/sdk` -- `relay`, `ipc`, `storage`
 3. Each SDK method delegates to its `window.napplet.*` counterpart at call time
 4. If `window.napplet` is not installed when a method is called, a descriptive error is thrown
 
