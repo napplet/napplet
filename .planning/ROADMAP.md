@@ -18,6 +18,7 @@
 - ✅ **v0.14.0 Repo Cleanup & Audit** — Phases 68-69 (shipped 2026-04-06) — [Archive](milestones/v0.14.0-ROADMAP.md)
 - ✅ **v0.15.0 Protocol Simplification** — Phases 70-73 (shipped 2026-04-07) — [Archive](milestones/v0.15.0-ROADMAP.md)
 - ✅ **v0.16.0 Wire Format & NUB Architecture** — Phases 74-79 (shipped 2026-04-07) — [Archive](milestones/v0.16.0-ROADMAP.md)
+- ✅ **v0.17.0 Capability Cleanup** — Phases 80-82 (shipped 2026-04-08) — [Archive](milestones/v0.17.0-ROADMAP.md)
 
 ## Phases
 
@@ -198,61 +199,79 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### v0.17.0 Capability Cleanup (In Progress)
-
-**Milestone Goal:** Replace flat `shell.supports()` with namespaced capability queries, remove all dead service discovery code, and delete every legacy/deprecated artifact.
+<details>
+<summary>v0.17.0 Capability Cleanup (Phases 80-82) — SHIPPED 2026-04-08</summary>
 
 - [x] **Phase 80: Namespaced Capability Query** - shell.supports() accepts nub:/perm:/svc: prefixed strings with typed ShellSupports interface (completed 2026-04-08)
 - [x] **Phase 81: Dead Code & Legacy Removal** - Delete discovery shim, services API, legacy re-exports, backward-compat fallbacks, and all associated types/tests (completed 2026-04-08)
 - [x] **Phase 82: Documentation** - Update core/shim/sdk READMEs and NIP-5D to reflect cleanup (completed 2026-04-08)
 
+</details>
+
+### v0.18.0 Spec Conformance Audit (In Progress)
+
+**Milestone Goal:** Audit the entire codebase against NIP-5D and NUB specs -- remove all dead code, document every spec gap, fix stale documentation, and present a decision inventory for the spec author.
+
+- [ ] **Phase 83: Dead Code Removal** - Delete unreachable types, uncalled functions, and dead files across core and shim
+- [ ] **Phase 84: Spec Gap Inventory** - Document every function, type, constant, and behavior not covered by NIP-5D or any NUB spec
+- [ ] **Phase 85: Stale Documentation Fixes** - Fix incorrect references in READMEs, JSDoc, and NIP-5D
+- [ ] **Phase 86: Decision Gate** - Present the complete gap inventory for drop-or-amend decisions
+
 ## Phase Details
 
-### Phase 80: Namespaced Capability Query
-**Goal**: Napplets can query shell capabilities using namespaced prefixes that distinguish NUBs, permissions, and services
-**Depends on**: Nothing (first phase of v0.17.0)
-**Requirements**: CAP-01, CAP-02, CAP-03
+### Phase 83: Dead Code Removal
+**Goal**: Every unreachable type, uncalled function, and dead file is deleted from the codebase
+**Depends on**: Nothing (first phase of v0.18.0)
+**Requirements**: DEAD-01, DEAD-02, DEAD-03, DEAD-04, DEAD-05
 **Success Criteria** (what must be TRUE):
-  1. `shell.supports('nub:relay')` returns whether the shell implements the relay NUB
-  2. `shell.supports('perm:sign')` returns whether the shell grants signing permission
-  3. `shell.supports('svc:audio')` returns whether the shell provides the audio service
-  4. `ShellSupports` type accepts `nub:${NubDomain}`, `perm:${string}`, and `svc:${string}` template literal types
-  5. `NappletGlobalShell` type on `window.napplet.shell` reflects the namespaced supports() signature
-**Plans**: 80-01 (complete)
+  1. `RegisterPayload` and `IdentityPayload` types do not exist in core/types.ts or core/index.ts exports
+  2. `getNappletType()` function does not exist in shim/index.ts
+  3. `shim/types.ts` file does not exist (dead re-export file deleted)
+  4. `nipdbSubscribeHandlers` and `nipdbSubscribeCancellers` are not exported from nipdb-shim.ts (private internals only)
+  5. `pnpm build && pnpm type-check` passes with zero errors after all deletions
+**Plans**: TBD
 
-### Phase 81: Dead Code & Legacy Removal
-**Goal**: Every dead service discovery artifact and legacy backward-compat shim is deleted from the codebase
-**Depends on**: Phase 80
-**Requirements**: DEAD-01, DEAD-02, DEAD-03, DEAD-04, DEAD-05, DEAD-06, DEAD-07, COMPAT-01, COMPAT-02
+### Phase 84: Spec Gap Inventory
+**Goal**: Every piece of code not covered by NIP-5D or a NUB spec is documented with location, purpose, and a recommendation category
+**Depends on**: Phase 83
+**Requirements**: GAP-01, GAP-02, GAP-03, GAP-04, GAP-05, GAP-06, GAP-07, GAP-09
 **Success Criteria** (what must be TRUE):
-  1. `discovery-shim.ts` does not exist in @napplet/shim and `window.napplet.services` is gone
-  2. `ServiceDescriptor` and `ServiceInfo` types do not exist anywhere in @napplet/core
-  3. `legacy.ts` does not exist in @napplet/core and `core/src/index.ts` has zero legacy re-exports
-  4. `napplet-napp-type` meta tag is not read by shim or injected by vite-plugin
-  5. `pnpm build && pnpm type-check` passes with zero errors
-**Plans**: 2 plans
-Plans:
-- [ ] 81-01-PLAN.md -- Delete legacy.ts, remove ServiceDescriptor/ServiceInfo/legacy exports from core
-- [ ] 81-02-PLAN.md -- Delete discovery-shim, remove services API from shim/SDK, remove napplet-napp-type compat
+  1. A gap inventory document exists listing every unspecified type, constant, function, and behavior with file location, description, and recommendation category (future NUB, unknown, superseded, shell-only)
+  2. `Capability` type, `ALL_CAPABILITIES` constant, `TOPICS`, `SHELL_BRIDGE_URI`, `REPLAY_WINDOW_SECONDS`, and `PROTOCOL_VERSION` each have a documented entry
+  3. `window.nostrdb` proxy (nipdb-shim.ts) and `keyboard.forward` shim (keyboard-shim.ts) are documented as unspecified parallel protocols
+  4. IFC channel types (ifc.channel.* messages) are documented as defined-but-unimplemented
+  5. Each gap entry includes one of: future NUB, unknown, superseded, or shell-only as its recommendation category
+**Plans**: TBD
 
-### Phase 82: Documentation
-**Goal**: All package documentation and NIP-5D accurately reflect the cleaned-up API surface
-**Depends on**: Phase 81
-**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04
+### Phase 85: Stale Documentation Fixes
+**Goal**: Every README, JSDoc block, and NIP-5D reference accurately reflects the current codebase
+**Depends on**: Phase 83
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04, DOC-05
 **Success Criteria** (what must be TRUE):
-  1. core/README.md documents namespaced `shell.supports()` and does not mention BusKind or service discovery types
-  2. shim/README.md does not reference `window.napplet.services` or discovery API
-  3. sdk/README.md shows namespaced `supports()` examples
-  4. NIP-5D does not reference old flat `supports()` signature or kind 29010 service discovery
+  1. SDK README does not reference a "services" namespace
+  2. vite-plugin README does not reference `window.napplet.services.has()` and uses `shell.supports('svc:...')` instead
+  3. core README NubDomain table lists all 5 domains (relay, signer, storage, ifc, theme)
+  4. core envelope.ts JSDoc NubDomain table lists all 5 domains and does not reference nonexistent D-02/D-03 decision IDs
+  5. NIP-5D.md does not reference `window.napplet.services.has()` and uses `shell.supports()` instead
+**Plans**: TBD
+
+### Phase 86: Decision Gate
+**Goal**: The spec author has a complete, actionable gap inventory and makes drop-or-amend decisions for every item
+**Depends on**: Phase 84, Phase 85
+**Requirements**: DECIDE-01
+**Success Criteria** (what must be TRUE):
+  1. The full gap inventory from Phase 84 is presented to the user in a reviewable format
+  2. Every gap item has a recorded decision: drop from code, amend spec, defer, or keep as shell-only
 **Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-80 -> 81 -> 82
+83 -> 84 -> 85 -> 86 (Phases 84 and 85 can run in parallel; Phase 86 depends on both)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 80. Namespaced Capability Query | 1/1 | Complete | 2026-04-08 |
-| 81. Dead Code & Legacy Removal | 0/2 | Complete    | 2026-04-08 |
-| 82. Documentation | 0/0 | Complete    | 2026-04-08 |
+| 83. Dead Code Removal | 0/0 | Not started | - |
+| 84. Spec Gap Inventory | 0/0 | Not started | - |
+| 85. Stale Documentation Fixes | 0/0 | Not started | - |
+| 86. Decision Gate | 0/0 | Not started | - |

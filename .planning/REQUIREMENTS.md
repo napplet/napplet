@@ -71,31 +71,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEAD-01 | — | Pending |
-| DEAD-02 | — | Pending |
-| DEAD-03 | — | Pending |
-| DEAD-04 | — | Pending |
-| DEAD-05 | — | Pending |
-| GAP-01 | — | Pending |
-| GAP-02 | — | Pending |
-| GAP-03 | — | Pending |
-| GAP-04 | — | Pending |
-| GAP-05 | — | Pending |
-| GAP-06 | — | Pending |
-| GAP-07 | — | Pending |
-| GAP-09 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| DOC-04 | — | Pending |
-| DOC-05 | — | Pending |
-| DECIDE-01 | — | Pending |
+| DEAD-01 | Phase 83 | Pending |
+| DEAD-02 | Phase 83 | Pending |
+| DEAD-03 | Phase 83 | Pending |
+| DEAD-04 | Phase 83 | Pending |
+| DEAD-05 | Phase 83 | Pending |
+| GAP-01 | Phase 84 | Pending |
+| GAP-02 | Phase 84 | Pending |
+| GAP-03 | Phase 84 | Pending |
+| GAP-04 | Phase 84 | Pending |
+| GAP-05 | Phase 84 | Pending |
+| GAP-06 | Phase 84 | Pending |
+| GAP-07 | Phase 84 | Pending |
+| GAP-09 | Phase 84 | Pending |
+| DOC-01 | Phase 85 | Pending |
+| DOC-02 | Phase 85 | Pending |
+| DOC-03 | Phase 85 | Pending |
+| DOC-04 | Phase 85 | Pending |
+| DOC-05 | Phase 85 | Pending |
+| DECIDE-01 | Phase 86 | Pending |
 
 **Coverage:**
 - v0.18.0 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19 ⚠️
+- Mapped to phases: 19
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-08*
-*Last updated: 2026-04-08 after initial definition*
+*Last updated: 2026-04-08 after roadmap creation*
