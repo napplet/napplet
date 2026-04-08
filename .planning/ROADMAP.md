@@ -262,7 +262,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Success Criteria** (what must be TRUE):
   1. The full gap inventory from Phase 84 is presented to the user in a reviewable format
   2. Every gap item has a recorded decision: drop from code, amend spec, defer, or keep as shell-only
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 86-01-PLAN.md â€” Present gap inventory and capture drop-or-amend decisions— Present gap inventory and capture drop-or-amend decisions
 
 ## Progress
 
@@ -274,4 +276,4 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 | 83. Dead Code Removal | 1/1 | Complete    | 2026-04-08 |
 | 84. Spec Gap Inventory | 1/1 | Complete    | 2026-04-08 |
 | 85. Stale Documentation Fixes | 1/1 | Complete   | 2026-04-08 |
-| 86. Decision Gate | 0/0 | Not started | - |
+| 86. Decision Gate | 0/1 | Planned | - |
