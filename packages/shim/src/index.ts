@@ -6,7 +6,6 @@ import { installKeyboardShim } from './keyboard-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _nappletStorage } from './state-shim.js';
 import { subscribe, publish, query } from './relay-shim.js';
-import { discoverServices } from './discovery-shim.js';
 import type { NappletGlobal, NostrEvent } from '@napplet/core';
 import type {
   SignerGetPublicKeyMessage,
@@ -157,9 +156,7 @@ const pendingRequests = new Map<string, {
  * Falls back to 'unknown' if the meta tag is absent.
  */
 function getNappletType(): string {
-  // Try new canonical attribute first; fall back to old name for backward compat
-  const meta = document.querySelector('meta[name="napplet-type"]')
-    ?? document.querySelector('meta[name="napplet-napp-type"]');
+  const meta = document.querySelector('meta[name="napplet-type"]');
   return meta?.getAttribute('content') ?? 'unknown';
 }
 
@@ -330,16 +327,6 @@ function handleEnvelopeMessage(event: MessageEvent): void {
   ipc: {
     emit,
     on,
-  },
-  services: {
-    list: discoverServices,
-    has: async (name: string, version?: string): Promise<boolean> => {
-      const services = await discoverServices();
-      if (version !== undefined) {
-        return services.some(s => s.name === name && s.version === version);
-      }
-      return services.some(s => s.name === name);
-    },
   },
   storage: {
     getItem: _nappletStorage.getItem.bind(_nappletStorage),
