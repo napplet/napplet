@@ -57,14 +57,14 @@ interface RelaySubscribe extends NappletMessage {
 }
 ```
 
-The `type` field domain prefix (`relay`, `signer`, `storage`, `ifc`) routes messages to the correct NUB handler via `dispatch()`.
+The `type` field domain prefix (`relay`, `signer`, `storage`, `ifc`, `theme`) routes messages to the correct NUB handler via `dispatch()`.
 
 #### `NubDomain`
 
-String literal union of the four NUB capability domains.
+String literal union of the five NUB capability domains.
 
 ```ts
-type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc';
+type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme';
 ```
 
 | Domain    | Scope                                    |
@@ -73,13 +73,14 @@ type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc';
 | `signer`  | Signing delegation (NIP-07 surface)       |
 | `storage` | Scoped key-value storage proxy            |
 | `ifc`     | Inter-frame communication (dispatch + channel) |
+| `theme`   | Theme tokens and appearance settings      |
 
 #### `NUB_DOMAINS`
 
 Runtime constant array of all NUB domain strings. Useful for iteration and validation.
 
 ```ts
-const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc'];
+const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme'];
 
 for (const domain of NUB_DOMAINS) {
   console.log(`Checking support for: ${domain}`);
