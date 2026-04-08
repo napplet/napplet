@@ -92,31 +92,6 @@ export const ALL_CAPABILITIES: readonly Capability[] = [
   'state:write',
 ] as const;
 
-// ─── Service Types ──────────────────────────────────────────────────────────
-
-/**
- * Metadata describing a registered shell service.
- * Services are optional capabilities a shell provides beyond the core protocol.
- * Napplets discover available services via kind 29010 service discovery events.
- *
- * @example
- * ```ts
- * const descriptor: ServiceDescriptor = {
- *   name: 'audio',
- *   version: '1.0.0',
- *   description: 'Audio playback management and mute control',
- * };
- * ```
- */
-export interface ServiceDescriptor {
-  /** Unique service identifier (e.g., 'audio', 'notifications', 'clipboard'). */
-  name: string;
-  /** Semver version of the service implementation. */
-  version: string;
-  /** Human-readable description of the service. */
-  description?: string;
-}
-
 // ─── Handshake Message Payloads ─────────────────────────────────────────────
 
 /**
@@ -206,20 +181,6 @@ export interface EventTemplate {
 }
 
 /**
- * Describes an available service in the shell.
- * Returned by window.napplet.services.list().
- *
- * @example
- * ```ts
- * const services = await window.napplet.services.list();
- * for (const svc of services) {
- *   console.log(`${svc.name} v${svc.version}`);
- * }
- * ```
- */
-export type ServiceInfo = ServiceDescriptor;
-
-/**
  * The window.napplet global installed by @napplet/shim.
  *
  * Activated by a side-effect import:
@@ -280,24 +241,6 @@ export interface NappletGlobal {
      * @returns A Subscription handle with a `close()` method
      */
     on(topic: string, callback: (payload: unknown, event: NostrEvent) => void): Subscription;
-  };
-  /**
-   * Shell service discovery: enumerate and probe available services.
-   */
-  services: {
-    /**
-     * Discover all available services in the shell.
-     * Results are cached session-scoped — subsequent calls return cached data.
-     * @returns Array of ServiceInfo objects describing available services
-     */
-    list(): Promise<ServiceInfo[]>;
-    /**
-     * Check whether a named service is available, optionally at a specific version.
-     * @param name     Service name to check (e.g., 'audio', 'notifications')
-     * @param version  Optional exact version string to match
-     * @returns true if the service is registered (and at the specified version, if provided)
-     */
-    has(name: string, version?: string): Promise<boolean>;
   };
   /**
    * Napplet-scoped storage: async localStorage-like API proxied through the shell.

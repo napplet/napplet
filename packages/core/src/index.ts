@@ -38,10 +38,8 @@ export type {
   NostrEvent,
   NostrFilter,
   Capability,
-  ServiceDescriptor,
   Subscription,
   EventTemplate,
-  ServiceInfo,
   NappletGlobal,
   RegisterPayload,
   IdentityPayload,
@@ -55,16 +53,6 @@ export {
   SHELL_BRIDGE_URI,
   REPLAY_WINDOW_SECONDS,
 } from './constants.js';
-
-// ─── Legacy Constants (deprecated) ──────────────────────────────────────────
-
-/**
- * @deprecated NIP-01 bus constants -- use JSON envelope message types instead.
- * These re-exports will be removed in a future major version.
- * Import from '@napplet/core/legacy' directly if you still need them.
- */
-export { BusKind, DESTRUCTIVE_KINDS, VERB_REGISTER, VERB_IDENTITY, AUTH_KIND } from './legacy.js';
-export type { BusKindValue } from './legacy.js';
 
 // ─── Topic Constants ────────────────────────────────────────────────────────
 

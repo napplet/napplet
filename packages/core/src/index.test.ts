@@ -1,37 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import {
-  BusKind,
   SHELL_BRIDGE_URI,
   PROTOCOL_VERSION,
   ALL_CAPABILITIES,
-  DESTRUCTIVE_KINDS,
   REPLAY_WINDOW_SECONDS,
   TOPICS,
 } from './index.js';
 
 // Type-level imports (compile check — if this file compiles, types are exported)
-import type { NostrEvent, NostrFilter, Capability, BusKindValue, TopicKey, TopicValue, NamespacedCapability, ShellSupports } from './index.js';
+import type { NostrEvent, NostrFilter, Capability, TopicKey, TopicValue, NamespacedCapability, ShellSupports } from './index.js';
 
 describe('@napplet/core exports', () => {
-  describe('BusKind constants', () => {
-    it('exports BusKind with all protocol kinds', () => {
-      expect(BusKind).toBeDefined();
-      expect(typeof BusKind.SIGNER_REQUEST).toBe('number');
-      expect(typeof BusKind.SIGNER_RESPONSE).toBe('number');
-      expect(typeof BusKind.IPC_PEER).toBe('number');
-      expect(typeof BusKind.HOTKEY_FORWARD).toBe('number');
-      expect(typeof BusKind.METADATA).toBe('number');
-      expect(typeof BusKind.SERVICE_DISCOVERY).toBe('number');
-    });
-
-    it('all bus kinds are in the 29000-29999 ephemeral range', () => {
-      for (const [, value] of Object.entries(BusKind)) {
-        expect(value).toBeGreaterThanOrEqual(29000);
-        expect(value).toBeLessThan(30000);
-      }
-    });
-  });
-
   describe('protocol constants', () => {
     it('exports SHELL_BRIDGE_URI as napplet:// URI', () => {
       expect(typeof SHELL_BRIDGE_URI).toBe('string');
@@ -49,20 +28,6 @@ describe('@napplet/core exports', () => {
     });
   });
 
-  describe('removed handshake exports', () => {
-    it('BusKind does not have REGISTRATION', () => {
-      expect('REGISTRATION' in BusKind).toBe(false);
-    });
-
-    it('does not export handshake constants', () => {
-      // Verify via the BusKind object shape -- AUTH_KIND, VERB_REGISTER,
-      // VERB_IDENTITY are standalone exports that TypeScript will catch
-      // at compile time. BusKind.REGISTRATION is the runtime-checkable one.
-      const busKindKeys = Object.keys(BusKind);
-      expect(busKindKeys).not.toContain('REGISTRATION');
-    });
-  });
-
   describe('capability constants', () => {
     it('exports ALL_CAPABILITIES with known capabilities', () => {
       expect(Array.isArray(ALL_CAPABILITIES)).toBe(true);
@@ -77,16 +42,6 @@ describe('@napplet/core exports', () => {
       expect(ALL_CAPABILITIES).toContain('cache:read');
       expect(ALL_CAPABILITIES).toContain('cache:write');
       expect(ALL_CAPABILITIES).toContain('hotkey:forward');
-    });
-  });
-
-  describe('DESTRUCTIVE_KINDS', () => {
-    it('exports DESTRUCTIVE_KINDS as a Set containing metadata, contacts, deletion, relay list', () => {
-      expect(DESTRUCTIVE_KINDS).toBeInstanceOf(Set);
-      expect(DESTRUCTIVE_KINDS.has(0)).toBe(true);     // metadata
-      expect(DESTRUCTIVE_KINDS.has(3)).toBe(true);     // contacts
-      expect(DESTRUCTIVE_KINDS.has(5)).toBe(true);     // deletion
-      expect(DESTRUCTIVE_KINDS.has(10002)).toBe(true); // relay list
     });
   });
 
@@ -125,7 +80,6 @@ describe('@napplet/core exports', () => {
       const _event: NostrEvent = {} as NostrEvent;
       const _filter: NostrFilter = {} as NostrFilter;
       const _cap: Capability = 'relay:read';
-      const _busKindVal: BusKindValue = BusKind.IPC_PEER;
       const _topicKey: TopicKey = 'STATE_GET';
       const _topicVal: TopicValue = TOPICS.STATE_GET;
       expect(true).toBe(true);
