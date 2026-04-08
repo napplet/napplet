@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.17.0
-milestone_name: Capability Cleanup
-status: executing
-stopped_at: Phase 80 context gathered
-last_updated: "2026-04-08T00:21:35.714Z"
+milestone: v0.18.0
+milestone_name: Spec Conformance Audit
+status: defining-requirements
+stopped_at: null
+last_updated: "2026-04-08"
 last_activity: 2026-04-08
 progress:
-  total_phases: 3
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 1
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -21,16 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 81 — dead-code-legacy-removal
+**Current focus:** Defining requirements for v0.18.0
 
 ## Current Position
 
-Phase: 82
-Plan: Not started
-Status: Executing Phase 81
-Last activity: 2026-04-08
-
-Progress: [░░░░░░░░░░] 0%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-08 — Milestone v0.18.0 started
 
 ## Performance Metrics
 
@@ -66,6 +64,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-07T23:45:53.886Z
-Stopped at: Phase 80 context gathered
-Resume: `/gsd:plan-phase 80`
+Last session: 2026-04-08
+Stopped at: Milestone v0.18.0 started — defining requirements
+Resume: Continue with requirements definition
