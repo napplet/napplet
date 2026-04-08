@@ -253,7 +253,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. core README NubDomain table lists all 5 domains (relay, signer, storage, ifc, theme)
   4. core envelope.ts JSDoc NubDomain table lists all 5 domains and does not reference nonexistent D-02/D-03 decision IDs
   5. NIP-5D.md does not reference `window.napplet.services.has()` and uses `shell.supports()` instead
-**Plans**: TBD
+**Plans**: 85-01
 
 ### Phase 86: Decision Gate
 **Goal**: The spec author has a complete, actionable gap inventory and makes drop-or-amend decisions for every item
@@ -273,5 +273,5 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 |-------|----------------|--------|-----------|
 | 83. Dead Code Removal | 1/1 | Complete    | 2026-04-08 |
 | 84. Spec Gap Inventory | 0/1 | Planned | - |
-| 85. Stale Documentation Fixes | 0/0 | Not started | - |
+| 85. Stale Documentation Fixes | 1/1 | Planned | - |
 | 86. Decision Gate | 0/0 | Not started | - |
