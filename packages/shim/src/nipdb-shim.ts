@@ -38,12 +38,12 @@ const nipdbPending = new Map<string, {
 /**
  * Active subscribe handlers: subId -> event callback.
  */
-export const nipdbSubscribeHandlers = new Map<string, (event: NostrEvent) => void>();
+const nipdbSubscribeHandlers = new Map<string, (event: NostrEvent) => void>();
 
 /**
  * Subscribe cancellers: subId -> function that unblocks the waiting generator.
  */
-export const nipdbSubscribeCancellers = new Map<string, () => void>();
+const nipdbSubscribeCancellers = new Map<string, () => void>();
 
 // ─── Outbound helper ──────────────────────────────────────────────────────────
 

@@ -149,17 +149,6 @@ const pendingRequests = new Map<string, {
   reject: (reason: Error) => void;
 }>();
 
-// ─── Napplet type resolution ──────────────────────────────────────────────────────
-
-/**
- * Determine napplet type from a meta tag in the document head.
- * Falls back to 'unknown' if the meta tag is absent.
- */
-function getNappletType(): string {
-  const meta = document.querySelector('meta[name="napplet-type"]');
-  return meta?.getAttribute('content') ?? 'unknown';
-}
-
 // ─── Signer request helper ──────────────────────────────────────────────────
 
 /**

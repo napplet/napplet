@@ -41,8 +41,6 @@ export type {
   Subscription,
   EventTemplate,
   NappletGlobal,
-  RegisterPayload,
-  IdentityPayload,
 } from './types.js';
 export { ALL_CAPABILITIES } from './types.js';
 
