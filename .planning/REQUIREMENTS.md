@@ -1,11 +1,11 @@
 # Requirements: Napplet Protocol SDK
 
 **Defined:** 2026-04-09
-**Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
+**Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
 
 ## v0.20.0 Requirements
 
-Implement the Keys NUB (napplet/nubs#9) — bidirectional keyboard protocol with action registration, shell-delegated keybindings, and smart forwarding.
+Implement the Keys NUB (napplet/nubs#9) -- bidirectional keyboard protocol with action registration, shell-delegated keybindings, and smart forwarding.
 
 ### NUB Type Package
 
@@ -42,7 +42,7 @@ Deferred to future milestones.
 
 ### Keyboard Extensions
 
-- **KEY-EXT-01**: Capture mode (keybinds:capture-start/end) — let napplet enter a mode where all keystrokes are captured for rebinding UI
+- **KEY-EXT-01**: Capture mode (keybinds:capture-start/end) -- let napplet enter a mode where all keystrokes are captured for rebinding UI
 - **KEY-EXT-02**: Action categories/groups for shell keybinding UI
 - **KEY-EXT-03**: `event.repeat` opt-in per action (e.g., arrow key repeat for scroll)
 
@@ -60,26 +60,26 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NUB-01 | — | Pending |
-| NUB-02 | — | Pending |
-| CORE-01 | — | Pending |
-| CORE-02 | — | Pending |
-| SHIM-01 | — | Pending |
-| SHIM-02 | — | Pending |
-| SHIM-03 | — | Pending |
-| SHIM-04 | — | Pending |
-| SDK-01 | — | Pending |
-| SDK-02 | — | Pending |
-| SDK-03 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
+| NUB-01 | Phase 88 | Pending |
+| NUB-02 | Phase 88 | Pending |
+| CORE-01 | Phase 89 | Pending |
+| CORE-02 | Phase 89 | Pending |
+| SHIM-01 | Phase 90 | Pending |
+| SHIM-02 | Phase 90 | Pending |
+| SHIM-03 | Phase 90 | Pending |
+| SHIM-04 | Phase 90 | Pending |
+| SDK-01 | Phase 91 | Pending |
+| SDK-02 | Phase 91 | Pending |
+| SDK-03 | Phase 91 | Pending |
+| DOC-01 | Phase 92 | Pending |
+| DOC-02 | Phase 92 | Pending |
+| DOC-03 | Phase 92 | Pending |
 
 **Coverage:**
 - v0.20.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after initial definition*
+*Last updated: 2026-04-09 after roadmap creation*
