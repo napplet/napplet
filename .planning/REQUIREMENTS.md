@@ -1,101 +1,61 @@
 # Requirements: Napplet Protocol SDK
 
-**Defined:** 2026-04-08
+**Defined:** 2026-04-09
 **Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## v0.18.0 Requirements
+## v0.19.0 Requirements
 
-Requirements for the Spec Conformance Audit milestone. Organized into four categories: dead code removal, spec gap inventory, stale documentation cleanup, and final decision gate.
+Execute all "drop" verdicts from the v0.18.0 spec conformance audit (SPEC-GAPS.md).
 
-### Dead Code Removal
+### Code Drops
 
-- [x] **DEAD-01**: Remove `RegisterPayload` and `IdentityPayload` types from core/types.ts and core/index.ts exports
-- [x] **DEAD-02**: Remove `getNappletType()` function from shim/index.ts (defined, never called)
-- [x] **DEAD-03**: Delete `shim/types.ts` file (dead re-export of PROTOCOL_VERSION and SHELL_BRIDGE_URI, nothing imports it)
-- [x] **DEAD-04**: Make `nipdbSubscribeHandlers` / `nipdbSubscribeCancellers` private in nipdb-shim.ts (exported but only used internally)
-- [x] **DEAD-05**: Remove or update tests for deleted exports in core/index.test.ts
-
-### Spec Gap Inventory
-
-Each item must be documented with: location, what it does, evidence of no spec backing, and a recommendation category (future NUB, unknown, superseded, shell-only).
-
-- [ ] **GAP-01**: Document `Capability` type + `ALL_CAPABILITIES` constant — ACL string union in core/types.ts, not in NIP-5D or any NUB spec, shell runtime concern
-- [ ] **GAP-02**: Document `TOPICS` constant (28 IPC topic strings) in core/topics.ts — broken down by fate:
-  - **Future NUB messages** (PR coming): `chat:open-dm`, `profile:open`, `stream:*`
-  - **Unknowns** (no clear home): `keybinds:*`, `audio:*`, `wm:*`, `shell:config-*`
-  - **Superseded** (replaced by storage.* NUB): `STATE_*`, `STATE_RESPONSE`
-  - **Superseded** (AUTH removed): `AUTH_IDENTITY_CHANGED`
-  - **Unknown**: `RELAY_SCOPED_*` (scoped relay ops)
-- [ ] **GAP-03**: Document `SHELL_BRIDGE_URI` constant in core/constants.ts — "napplet://shell", references NIP-42 AUTH which was removed
-- [ ] **GAP-04**: Document `REPLAY_WINDOW_SECONDS` constant in core/constants.ts — replay protection, shell implementation detail not in NIP-5D
-- [ ] **GAP-05**: Document `PROTOCOL_VERSION` constant in core/constants.ts — "4.0.0", NIP-5D doesn't define a version constant
-- [ ] **GAP-06**: Document `window.nostrdb` proxy in shim/nipdb-shim.ts — entire parallel protocol for NIP-DB local cache, not a NUB, not in NIP-5D
-- [ ] **GAP-07**: Document `keyboard.forward` shim in shim/keyboard-shim.ts — hotkey forwarding protocol, not a NUB, not in NIP-5D
-- [ ] **GAP-09**: Document IFC channel types (9 message types) in nub-ifc/types.ts — `ifc.channel.*` messages defined but never implemented in shim
-
-### Stale Documentation Cleanup
-
-- [x] **DOC-01**: Fix SDK README — remove references to "services" namespace
-- [x] **DOC-02**: Fix vite-plugin README — remove `window.napplet.services.has()` references, update to `shell.supports('svc:...')`
-- [x] **DOC-03**: Fix core README — NubDomain table lists 4 domains but code has 5 (theme)
-- [x] **DOC-04**: Fix core envelope.ts JSDoc — NubDomain table lists 4 domains, references nonexistent D-02/D-03 decision IDs
-- [x] **DOC-05**: Remove `window.napplet.services.has()` from NIP-5D.md — replaced by `shell.supports('svc:...')`
-
-### Final Decision Gate
-
-- [ ] **DECIDE-01**: Present full documented gap inventory for drop-or-amend decisions on each GAP item
+- [ ] **DROP-01**: Delete `Capability` type and `ALL_CAPABILITIES` constant from core/types.ts and core/index.ts
+- [ ] **DROP-02**: Delete 7 superseded TOPICS (AUTH_IDENTITY_CHANGED, STATE_GET, STATE_SET, STATE_REMOVE, STATE_CLEAR, STATE_KEYS, STATE_RESPONSE) from core/topics.ts
+- [ ] **DROP-03**: Delete 3 config TOPICS (SHELL_CONFIG_GET, SHELL_CONFIG_UPDATE, SHELL_CONFIG_CURRENT) from core/topics.ts
+- [ ] **DROP-04**: Delete 3 scoped relay TOPICS (RELAY_SCOPED_CONNECT, RELAY_SCOPED_CLOSE, RELAY_SCOPED_PUBLISH) from core/topics.ts
+- [ ] **DROP-05**: Delete `SHELL_BRIDGE_URI` from core/constants.ts and core/index.ts
+- [ ] **DROP-06**: Delete `REPLAY_WINDOW_SECONDS` from core/constants.ts and core/index.ts
+- [ ] **DROP-07**: Delete `PROTOCOL_VERSION` from core/constants.ts and core/index.ts
+- [ ] **DROP-08**: Update core/index.test.ts — remove tests for deleted exports
+- [ ] **DROP-09**: Verify `pnpm build && pnpm type-check` passes clean after all deletions
 
 ## Future Requirements
 
-Deferred to future milestones. Tracked but not in current roadmap.
+Deferred to future milestones.
 
-### Spec Alignment
+### v0.20.0 Keys NUB
 
-- **ALIGN-01**: Implement `shell.supports()` properly (currently a stub returning false) — depends on shell-side capability population mechanism
-- **ALIGN-02**: Formalize NUB governance (NUB-01/02/03) and create napplets org/repo
+- **KEYS-01**: Keys NUB protocol — bidirectional keybinding protocol (napplet registers actions, shell binds keys, napplet suppresses forwarding for bound keys)
+- **KEYS-02**: SDK convenience — auto-listener setup, forward suppression, handler binding for shell-delegated keybinds
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
 | Feature | Reason |
 |---------|--------|
-| Dropping any beyond-spec code | This milestone documents gaps; drop/amend decisions happen in DECIDE-01 |
-| Implementing missing spec features | shell.supports() implementation is a shell-side concern |
-| NUB spec authoring | NUB specs live in napplet/nubs repo, not here |
-| npm publish | Blocked on human npm auth (PUB-04), orthogonal to this audit |
+| Deferred TOPICS (keybinds, audio, wm, future NUB) | Kept per v0.18.0 decision — not dropped |
+| nostrdb proxy conformance audit | Deferred to future milestone |
+| NIP-5D spec amendment for keyboard | Deferred to v0.20.0 keys NUB |
+| npm publish | Blocked on human npm auth (PUB-04) |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEAD-01 | Phase 83 | Complete |
-| DEAD-02 | Phase 83 | Complete |
-| DEAD-03 | Phase 83 | Complete |
-| DEAD-04 | Phase 83 | Complete |
-| DEAD-05 | Phase 83 | Complete |
-| GAP-01 | Phase 84 | Pending |
-| GAP-02 | Phase 84 | Pending |
-| GAP-03 | Phase 84 | Pending |
-| GAP-04 | Phase 84 | Pending |
-| GAP-05 | Phase 84 | Pending |
-| GAP-06 | Phase 84 | Pending |
-| GAP-07 | Phase 84 | Pending |
-| GAP-09 | Phase 84 | Pending |
-| DOC-01 | Phase 85 | Complete |
-| DOC-02 | Phase 85 | Complete |
-| DOC-03 | Phase 85 | Complete |
-| DOC-04 | Phase 85 | Complete |
-| DOC-05 | Phase 85 | Complete |
-| DECIDE-01 | Phase 86 | Pending |
+| DROP-01 | — | Pending |
+| DROP-02 | — | Pending |
+| DROP-03 | — | Pending |
+| DROP-04 | — | Pending |
+| DROP-05 | — | Pending |
+| DROP-06 | — | Pending |
+| DROP-07 | — | Pending |
+| DROP-08 | — | Pending |
+| DROP-09 | — | Pending |
 
 **Coverage:**
-- v0.18.0 requirements: 19 total
-- Mapped to phases: 19
-- Unmapped: 0
+- v0.19.0 requirements: 9 total
+- Mapped to phases: 0
+- Unmapped: 9 ⚠️
 
 ---
-*Requirements defined: 2026-04-08*
-*Last updated: 2026-04-08 after roadmap creation*
+*Requirements defined: 2026-04-09*
+*Last updated: 2026-04-09 after initial definition*
