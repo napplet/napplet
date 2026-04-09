@@ -24,6 +24,7 @@
 - ✅ **v0.20.0 Keys NUB** — Phases 88-92 (shipped 2026-04-09) — [Archive](milestones/v0.20.0-ROADMAP.md)
 - ✅ **v0.21.0 NUB Modularization** — Phases 93-95 (shipped 2026-04-09) — [Archive](milestones/v0.21.0-ROADMAP.md)
 - ✅ **v0.22.0 Media NUB + Kill Services** — Phases 96-100 (shipped 2026-04-09) — [Archive](milestones/v0.22.0-ROADMAP.md)
+- ✅ **v0.23.0 Notify NUB** — Phases 101-104 (shipped 2026-04-09) — [Archive](milestones/v0.23.0-ROADMAP.md)
 
 ## Phases
 
@@ -261,69 +262,105 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### v0.23.0 Notify NUB (In Progress)
+<details>
+<summary>v0.23.0 Notify NUB (Phases 101-104) — SHIPPED 2026-04-09</summary>
 
-**Milestone Goal:** Draft NUB-NOTIFY spec, implement @napplet/nub-notify (8th NUB, 12th package), and integrate notify into core/shim/SDK with full documentation.
+- [x] **Phase 101: NUB-NOTIFY Spec** - Draft NUB-NOTIFY spec in nubs repo, PR to napplet/nubs
+- [x] **Phase 102: NUB Notify Package** - @napplet/nub-notify with types, shim installer, SDK wrappers
+- [x] **Phase 103: Core + Shim Integration** - Add 'notify' to NubDomain, NappletGlobal, and shim entry point
+- [x] **Phase 104: Documentation** - READMEs for nub-notify, NIP-5D domain table update, core/shim/SDK docs
 
-- [ ] **Phase 101: NUB-NOTIFY Spec** - Draft NUB-NOTIFY spec in nubs repo, PR to napplet/nubs
-- [ ] **Phase 102: NUB Notify Package** - @napplet/nub-notify with types, shim installer, SDK wrappers
-- [ ] **Phase 103: Core + Shim Integration** - Add 'notify' to NubDomain, NappletGlobal, and shim entry point
-- [ ] **Phase 104: Documentation** - READMEs for nub-notify, NIP-5D domain table update, core/shim/SDK docs
+</details>
+
+### v0.24.0 Identity NUB + Kill NIP-07 (In Progress)
+
+**Milestone Goal:** Remove NIP-07 window.nostr proxy and signer NUB entirely. Replace with read-only identity NUB. Add shell-mediated encrypted publishing to relay NUB. Napplets never touch crypto primitives.
+
+- [ ] **Phase 105: Kill NIP-07 + Signer** - Remove window.nostr, delete nub-signer, strip signer from core/shim/SDK
+- [ ] **Phase 106: NUB-IDENTITY Spec** - Draft NUB-IDENTITY spec in nubs repo, PR to napplet/nubs
+- [ ] **Phase 107: NUB Identity Package** - @napplet/nub-identity with types, shim installer, SDK wrappers
+- [ ] **Phase 108: Relay NUB Update** - Add publishEncrypted + shell-decrypts-incoming to relay NUB
+- [ ] **Phase 109: Core + Shim Integration** - Replace signer with identity in core/shim dispatch
+- [ ] **Phase 110: Documentation** - NIP-5D security rationale, nub-identity README, core/shim/SDK docs
 
 ## Phase Details
 
-### Phase 101: NUB-NOTIFY Spec
-**Goal**: NUB-NOTIFY spec exists as a PR in the napplet/nubs repo, covering the full notification protocol
-**Depends on**: Nothing (first phase of v0.23.0)
-**Requirements**: SPEC-01
+### Phase 105: Kill NIP-07 + Signer
+**Goal**: The signer NUB and NIP-07 window.nostr proxy are completely removed -- napplets have zero access to signing or encryption primitives
+**Depends on**: Nothing (first phase of v0.24.0 -- clean break before building new)
+**Requirements**: KILL-01, KILL-02, KILL-03, KILL-04
 **Success Criteria** (what must be TRUE):
-  1. A NUB-NOTIFY.md file exists in ~/Develop/nubs/ following the structure of existing NUB specs (NUB-KEYS, NUB-MEDIA)
-  2. Spec covers notification send/dismiss lifecycle, permission request/grant flow, and action handling
-  3. Spec covers channels (grouping/categorization), badges (unread counts), priority levels (low/normal/high/urgent), and shell controls
-  4. Spec contains zero references to private repos, internal tooling, or non-public identifiers
-  5. A PR is opened against napplet/nubs (same pattern as napplet/nubs#10 for NUB-MEDIA)
+  1. `window.nostr` is no longer installed by `import '@napplet/shim'` -- accessing it returns undefined
+  2. `packages/nubs/signer/` directory does not exist and `@napplet/nub-signer` is removed from pnpm workspace
+  3. `'signer'` does not appear in the `NubDomain` union, `NUB_DOMAINS` array, or `NappletGlobal` type in core
+  4. No signer imports or routing remain in shim entry point or SDK barrel exports
+  5. `pnpm build && pnpm type-check` passes clean across all packages
 **Plans**: TBD
 
-### Phase 102: NUB Notify Package
-**Goal**: @napplet/nub-notify package exists with typed messages, shim installer, and SDK wrappers per the modular NUB pattern
-**Depends on**: Phase 101 (types derive from the spec)
+### Phase 106: NUB-IDENTITY Spec
+**Goal**: A public NUB-IDENTITY spec exists in the nubs repo defining the read-only identity query protocol
+**Depends on**: Phase 105 (signer must be gone so spec can reference identity as its replacement)
+**Requirements**: SPEC-01
+**Success Criteria** (what must be TRUE):
+  1. A NUB-IDENTITY.md file exists in ~/Develop/nubs/ following the structure of existing NUB specs
+  2. Spec covers all identity queries: getPublicKey, getRelays, getProfile, getFollows, getList(type), getZaps, getMutes, getBlocked, getBadges
+  3. Spec contains zero references to private repos, internal tooling, or signing/encryption (read-only by design)
+  4. A PR is opened against napplet/nubs (same pattern as previous NUB spec PRs)
+**Plans**: TBD
+
+### Phase 107: NUB Identity Package
+**Goal**: @napplet/nub-identity package exists with typed messages, shim installer, and SDK wrappers per the modular NUB pattern
+**Depends on**: Phase 106 (types derive from the spec)
 **Requirements**: NUB-01, NUB-02
 **Success Criteria** (what must be TRUE):
-  1. `packages/nubs/notify/` exists with types.ts defining all message interfaces (notify.send, notify.send.result, notify.dismiss, notify.badge, notify.channel.register, notify.permission.request, notify.permission.result, notify.action, notify.clicked, notify.dismissed, notify.controls)
-  2. shim.ts exports `installNotifyShim()` with notification send/dismiss handling, permission flow, channel registration, and action callbacks
-  3. sdk.ts exports convenience wrappers for sending notifications, requesting permissions, registering channels, and handling actions
+  1. `packages/nubs/identity/` exists with types.ts defining message interfaces for all identity queries (identity.getPublicKey, identity.getRelays, identity.getProfile, identity.getFollows, identity.getList, identity.getZaps, identity.getMutes, identity.getBlocked, identity.getBadges) and their result types
+  2. shim.ts exports `installIdentityShim()` with request/response handling for all identity queries
+  3. sdk.ts exports convenience wrappers (getPublicKey(), getRelays(), getProfile(), etc.) per modular pattern
   4. Package builds clean with tsup and exports via barrel index.ts
 **Plans**: TBD
 
-### Phase 103: Core + Shim Integration
-**Goal**: The notify NUB is wired into the monorepo -- core recognizes the domain, shim installs it
-**Depends on**: Phase 102 (nub-notify package must exist)
+### Phase 108: Relay NUB Update
+**Goal**: The relay NUB supports shell-mediated encrypted publishing and auto-decryption of incoming events
+**Depends on**: Phase 105 (signer removal motivates why crypto goes through relay NUB)
+**Requirements**: RELAY-01, RELAY-02, RELAY-03
+**Success Criteria** (what must be TRUE):
+  1. `relay.publishEncrypted` message type exists in @napplet/nub-relay with cleartext, recipient pubkey, and encryption method (NIP-44 default) fields
+  2. NUB-RELAY spec in ~/Develop/nubs/ is updated with publishEncrypted semantics and shell-decrypts-incoming behavior
+  3. Relay shim handles relay.publishEncrypted requests and auto-decrypted incoming event delivery
+  4. `pnpm build && pnpm type-check` passes clean
+**Plans**: TBD
+
+### Phase 109: Core + Shim Integration
+**Goal**: The identity NUB is wired into the monorepo -- core recognizes the domain, shim installs it, signer references are fully replaced
+**Depends on**: Phase 107 (nub-identity package must exist)
 **Requirements**: CORE-01, CORE-02, SHIM-01
 **Success Criteria** (what must be TRUE):
-  1. `'notify'` is in the `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
-  2. `NappletGlobal` type in types.ts includes a `notify` namespace matching the SDK surface
-  3. `import '@napplet/shim'` calls `installNotifyShim()` and `window.napplet.notify.*` is available
+  1. `'identity'` is in the `NubDomain` union and `NUB_DOMAINS` array in envelope.ts (replacing 'signer')
+  2. `NappletGlobal` type in types.ts includes an `identity` namespace matching the SDK surface (no `signer` namespace)
+  3. `import '@napplet/shim'` calls `installIdentityShim()` and `window.napplet.identity.*` is available
   4. `pnpm build && pnpm type-check` passes clean across all packages
 **Plans**: TBD
 
-### Phase 104: Documentation
-**Goal**: All documentation reflects the new notify NUB across the monorepo and NIP-5D
-**Depends on**: Phase 102, Phase 103 (needs final API shape)
+### Phase 110: Documentation
+**Goal**: All documentation reflects the signer-to-identity transition, NIP-07 removal rationale, and encrypted relay publishing
+**Depends on**: Phase 107, Phase 108, Phase 109 (needs final API shapes)
 **Requirements**: DOC-01, DOC-02, DOC-03
 **Success Criteria** (what must be TRUE):
-  1. @napplet/nub-notify has a README with full message reference table covering all notify.* message types
-  2. NIP-5D Known NUBs domain table includes `notify` row with domain prefix and description
-  3. Core, shim, and SDK READMEs reference the notify NUB in their package listings and domain tables
+  1. NIP-5D no longer says "Shells MUST provide NIP-07 window.nostr" -- replaced with security rationale explaining why napplets have no crypto access, and domain table updated (signer removed, identity added)
+  2. @napplet/nub-identity has a README with full message reference table covering all identity.* message types
+  3. Core, shim, and SDK READMEs reference identity NUB instead of signer, document window.nostr removal, and note relay.publishEncrypted
 **Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 101 -> 102 -> 103 -> 104
+Phases execute in numeric order: 105 -> 106 -> 107 -> 108 (can parallel 107) -> 109 -> 110
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 101. NUB-NOTIFY Spec | 0/0 | Not started | - |
-| 102. NUB Notify Package | 0/0 | Not started | - |
-| 103. Core + Shim Integration | 0/0 | Not started | - |
-| 104. Documentation | 0/0 | Not started | - |
+| 105. Kill NIP-07 + Signer | 0/0 | Not started | - |
+| 106. NUB-IDENTITY Spec | 0/0 | Not started | - |
+| 107. NUB Identity Package | 0/0 | Not started | - |
+| 108. Relay NUB Update | 0/0 | Not started | - |
+| 109. Core + Shim Integration | 0/0 | Not started | - |
+| 110. Documentation | 0/0 | Not started | - |

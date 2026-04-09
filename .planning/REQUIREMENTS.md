@@ -54,28 +54,28 @@ Remove NIP-07 from napplets. Replace signer NUB with identity NUB. Add shell-med
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| KILL-01 | — | Pending |
-| KILL-02 | — | Pending |
-| KILL-03 | — | Pending |
-| KILL-04 | — | Pending |
-| SPEC-01 | — | Pending |
-| NUB-01 | — | Pending |
-| NUB-02 | — | Pending |
-| RELAY-01 | — | Pending |
-| RELAY-02 | — | Pending |
-| RELAY-03 | — | Pending |
-| CORE-01 | — | Pending |
-| CORE-02 | — | Pending |
-| SHIM-01 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
+| KILL-01 | Phase 105 | Pending |
+| KILL-02 | Phase 105 | Pending |
+| KILL-03 | Phase 105 | Pending |
+| KILL-04 | Phase 105 | Pending |
+| SPEC-01 | Phase 106 | Pending |
+| NUB-01 | Phase 107 | Pending |
+| NUB-02 | Phase 107 | Pending |
+| RELAY-01 | Phase 108 | Pending |
+| RELAY-02 | Phase 108 | Pending |
+| RELAY-03 | Phase 108 | Pending |
+| CORE-01 | Phase 109 | Pending |
+| CORE-02 | Phase 109 | Pending |
+| SHIM-01 | Phase 109 | Pending |
+| DOC-01 | Phase 110 | Pending |
+| DOC-02 | Phase 110 | Pending |
+| DOC-03 | Phase 110 | Pending |
 
 **Coverage:**
 - v0.24.0 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16
+- Mapped to phases: 16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after initial definition*
+*Last updated: 2026-04-09 after roadmap creation*
