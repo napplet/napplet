@@ -2,6 +2,18 @@
 
 ## v0.20.0 Keys NUB (Shipped: 2026-04-09)
 
+**Phases completed:** 3 phases, 3 plans, 4 tasks
+
+**Key accomplishments:**
+
+- NUB-KEYS smart forwarding verified -- suppress list from keys.bindings, action keybinding API on window.napplet.keys, safety guards for IME/modifiers/Tab, unbound keys forwarded to shell
+- keys namespace wrapper with register() convenience and full nub-keys type re-exports in @napplet/sdk
+- NIP-5D Known NUBs domain table added with 6 domains; all package READMEs verified complete for keys NUB documentation
+
+---
+
+## v0.20.0 Keys NUB (Shipped: 2026-04-09)
+
 **Phases completed:** 5 phases, 2 plans, 4 tasks
 
 **Key accomplishments:**
