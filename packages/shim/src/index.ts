@@ -21,7 +21,7 @@ import {
 } from '@napplet/nub-notify';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStorageShim, nappletStorage } from '@napplet/nub-storage';
-import { subscribe, publish, query } from '@napplet/nub-relay';
+import { subscribe, publish, publishEncrypted, query } from '@napplet/nub-relay';
 import {
   installIdentityShim,
   handleIdentityMessage,
@@ -103,6 +103,7 @@ installIfcShim();
   relay: {
     subscribe,
     publish,
+    publishEncrypted,
     query,
   },
   ipc: {

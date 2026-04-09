@@ -126,6 +126,15 @@ export interface NappletGlobal {
      */
     publish(template: EventTemplate, options?: { relay?: boolean }): Promise<NostrEvent>;
     /**
+     * Publish an encrypted Nostr event through the shell.
+     * The shell encrypts content, signs the event, and broadcasts it.
+     * @param template    Unsigned event template
+     * @param recipient   Hex-encoded recipient public key
+     * @param encryption  Encryption scheme: 'nip44' (default) or 'nip04'
+     * @returns The signed encrypted NostrEvent after successful publication
+     */
+    publishEncrypted(template: EventTemplate, recipient: string, encryption?: 'nip44' | 'nip04'): Promise<NostrEvent>;
+    /**
      * One-shot query: subscribe, collect events until EOSE, then resolve.
      * @param filters  NIP-01 subscription filters
      * @returns Promise resolving to array of matching NostrEvent objects

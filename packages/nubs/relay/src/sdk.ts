@@ -94,3 +94,33 @@ export function relayPublish(
 export function relayQuery(filters: NostrFilter | NostrFilter[]): Promise<NostrEvent[]> {
   return requireRelay().query(filters);
 }
+
+/**
+ * Publish an encrypted Nostr event through the shell.
+ *
+ * @param template    Unsigned event template
+ * @param recipient   Hex-encoded recipient public key
+ * @param encryption  Encryption scheme: 'nip44' (default) or 'nip04'
+ * @returns The signed encrypted NostrEvent after successful publication
+ *
+ * @example
+ * ```ts
+ * import { relayPublishEncrypted } from '@napplet/nub-relay';
+ *
+ * const signed = await relayPublishEncrypted(
+ *   { kind: 4, content: 'secret', tags: [], created_at: now },
+ *   'recipientPubkey...',
+ * );
+ * ```
+ */
+export function relayPublishEncrypted(
+  template: EventTemplate,
+  recipient: string,
+  encryption: 'nip44' | 'nip04' = 'nip44',
+): Promise<NostrEvent> {
+  const w = window as Window & { napplet?: NappletGlobal };
+  if (!w.napplet?.relay?.publishEncrypted) {
+    throw new Error('window.napplet.relay.publishEncrypted not installed -- import @napplet/shim first');
+  }
+  return w.napplet.relay.publishEncrypted(template, recipient, encryption);
+}

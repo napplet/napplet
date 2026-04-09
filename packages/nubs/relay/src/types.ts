@@ -1,15 +1,15 @@
 /**
  * @napplet/nub-relay -- Relay proxy message types for the JSON envelope wire protocol.
  *
- * Defines the 9 message types exchanged between napplet and shell for relay operations:
- * - Napplet -> Shell: subscribe, close, publish, query
- * - Shell -> Napplet: event, eose, closed, publish.result, query.result
+ * Defines the 11 message types exchanged between napplet and shell for relay operations:
+ * - Napplet -> Shell: subscribe, close, publish, publishEncrypted, query
+ * - Shell -> Napplet: event, eose, closed, publish.result, publishEncrypted.result, query.result
  *
  * All types form a discriminated union on the `type` field.
  */
 
 import type { NappletMessage } from '@napplet/core';
-import type { NostrEvent, NostrFilter } from '@napplet/core';
+import type { NostrEvent, NostrFilter, EventTemplate } from '@napplet/core';
 
 // ─── Domain Constants ──────────────────────────────────────────────────────
 
@@ -115,6 +115,63 @@ export interface RelayQueryMessage extends RelayMessage {
   filters: NostrFilter[];
 }
 
+/**
+ * Publish an encrypted Nostr event through the shell.
+ * The shell encrypts the content using the specified encryption scheme,
+ * signs the event, and broadcasts it. Napplets never have direct access
+ * to encryption keys -- the shell mediates all crypto operations.
+ *
+ * @example
+ * ```ts
+ * const msg: RelayPublishEncryptedMessage = {
+ *   type: 'relay.publishEncrypted',
+ *   id: crypto.randomUUID(),
+ *   event: { kind: 4, content: 'secret message', tags: [], created_at: now },
+ *   recipient: 'recipientPubkey...',
+ *   encryption: 'nip44',
+ * };
+ * ```
+ */
+export interface RelayPublishEncryptedMessage extends RelayMessage {
+  type: 'relay.publishEncrypted';
+  /** Correlation ID for this request. */
+  id: string;
+  /** Unsigned event template. The shell encrypts content before signing. */
+  event: EventTemplate;
+  /** Hex-encoded recipient public key for encryption. */
+  recipient: string;
+  /** Encryption scheme. Defaults to 'nip44'. */
+  encryption?: 'nip44' | 'nip04';
+}
+
+/**
+ * Result of a relay.publishEncrypted request.
+ * Same shape as relay.publish.result -- the shell returns the signed event.
+ *
+ * @example
+ * ```ts
+ * const msg: RelayPublishEncryptedResultMessage = {
+ *   type: 'relay.publishEncrypted.result',
+ *   id: 'req-1',
+ *   ok: true,
+ *   event: signedEncryptedEvent,
+ * };
+ * ```
+ */
+export interface RelayPublishEncryptedResultMessage extends RelayMessage {
+  type: 'relay.publishEncrypted.result';
+  /** Correlation ID matching the original request. */
+  id: string;
+  /** Whether the publish succeeded. */
+  ok: boolean;
+  /** The signed encrypted event returned by the shell. */
+  event?: NostrEvent;
+  /** The event ID if publish succeeded. */
+  eventId?: string;
+  /** Error message if publish failed. */
+  error?: string;
+}
+
 // ─── Shell -> Napplet Messages ─────────────────────────────────────────────
 
 /**
@@ -187,6 +244,7 @@ export type RelayOutboundMessage =
   | RelaySubscribeMessage
   | RelayCloseMessage
   | RelayPublishMessage
+  | RelayPublishEncryptedMessage
   | RelayQueryMessage;
 
 /** Shell -> Napplet relay messages. */
@@ -195,6 +253,7 @@ export type RelayInboundMessage =
   | RelayEoseMessage
   | RelayClosedMessage
   | RelayPublishResultMessage
+  | RelayPublishEncryptedResultMessage
   | RelayQueryResultMessage;
 
 /** All relay NUB message types (discriminated union on `type` field). */

@@ -22,11 +22,13 @@ export type {
   RelaySubscribeMessage,
   RelayCloseMessage,
   RelayPublishMessage,
+  RelayPublishEncryptedMessage,
   RelayQueryMessage,
   RelayEventMessage,
   RelayEoseMessage,
   RelayClosedMessage,
   RelayPublishResultMessage,
+  RelayPublishEncryptedResultMessage,
   RelayQueryResultMessage,
   RelayOutboundMessage,
   RelayInboundMessage,
@@ -35,11 +37,11 @@ export type {
 
 // ─── Shim Exports ─────────────────────────────────────────────────────────
 
-export { installRelayShim, subscribe, publish, query } from './shim.js';
+export { installRelayShim, subscribe, publish, publishEncrypted, query } from './shim.js';
 
 // ─── SDK Exports ──────────────────────────────────────────────────────────
 
-export { relaySubscribe, relayPublish, relayQuery } from './sdk.js';
+export { relaySubscribe, relayPublish, relayPublishEncrypted, relayQuery } from './sdk.js';
 
 // ─── Domain Registration ───────────────────────────────────────────────────
 

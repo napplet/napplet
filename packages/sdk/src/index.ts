@@ -107,6 +107,21 @@ export const relay = {
   },
 
   /**
+   * Publish an encrypted Nostr event through the shell.
+   * @param template    Unsigned event template
+   * @param recipient   Hex-encoded recipient public key
+   * @param encryption  Encryption scheme: 'nip44' (default) or 'nip04'
+   * @returns The signed encrypted NostrEvent after successful publication
+   */
+  publishEncrypted(
+    template: EventTemplate,
+    recipient: string,
+    encryption: 'nip44' | 'nip04' = 'nip44',
+  ): Promise<NostrEvent> {
+    return requireNapplet().relay.publishEncrypted(template, recipient, encryption);
+  },
+
+  /**
    * One-shot query: subscribe, collect events until EOSE, then resolve.
    * @param filters  NIP-01 subscription filters
    * @returns Promise resolving to array of matching NostrEvent objects
@@ -659,11 +674,13 @@ export type {
   RelaySubscribeMessage,
   RelayCloseMessage,
   RelayPublishMessage,
+  RelayPublishEncryptedMessage,
   RelayQueryMessage,
   RelayEventMessage,
   RelayEoseMessage,
   RelayClosedMessage,
   RelayPublishResultMessage,
+  RelayPublishEncryptedResultMessage,
   RelayQueryResultMessage,
   RelayOutboundMessage,
   RelayInboundMessage,
@@ -840,7 +857,7 @@ export { installNotifyShim } from '@napplet/nub-notify';
 // ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
 
-export { relaySubscribe, relayPublish, relayQuery } from '@napplet/nub-relay';
+export { relaySubscribe, relayPublish, relayPublishEncrypted, relayQuery } from '@napplet/nub-relay';
 export { identityGetPublicKey, identityGetRelays, identityGetProfile, identityGetFollows, identityGetList, identityGetZaps, identityGetMutes, identityGetBlocked, identityGetBadges } from '@napplet/nub-identity';
 export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub-storage';
 export { ifcEmit, ifcOn } from '@napplet/nub-ifc';

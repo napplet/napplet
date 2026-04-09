@@ -7,6 +7,8 @@ import type {
   RelayCloseMessage,
   RelayPublishMessage,
   RelayPublishResultMessage,
+  RelayPublishEncryptedMessage,
+  RelayPublishEncryptedResultMessage,
   RelayQueryMessage,
   RelayEventMessage,
   RelayEoseMessage,
@@ -145,6 +147,65 @@ export function publish(
       event: template as unknown as NostrEvent,
     };
     window.parent.postMessage(publishMsg, '*');
+  });
+}
+
+/**
+ * Publish an encrypted Nostr event through the shell.
+ *
+ * The shell encrypts the event content using the specified scheme (NIP-44 or NIP-04),
+ * signs the event, and broadcasts it. Napplets never have direct access to encryption
+ * keys -- this ensures the shell can inspect content before encryption.
+ *
+ * @param template    Unsigned event template (kind, content, tags, created_at)
+ * @param recipient   Hex-encoded recipient public key
+ * @param encryption  Encryption scheme: 'nip44' (default) or 'nip04'
+ * @returns The signed encrypted NostrEvent after successful publication
+ *
+ * @example
+ * ```ts
+ * const signed = await publishEncrypted(
+ *   { kind: 4, content: 'secret', tags: [], created_at: now },
+ *   'recipientPubkey...',
+ *   'nip44',
+ * );
+ * ```
+ */
+export function publishEncrypted(
+  template: EventTemplate,
+  recipient: string,
+  encryption: 'nip44' | 'nip04' = 'nip44',
+): Promise<NostrEvent> {
+  const requestId = crypto.randomUUID();
+
+  return new Promise((resolve, reject) => {
+    function handleMessage(msgEvent: MessageEvent): void {
+      if (msgEvent.source !== window.parent) return;
+      const msg = msgEvent.data;
+      if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
+      if (msg.type !== 'relay.publishEncrypted.result') return;
+
+      const result = msg as RelayPublishEncryptedResultMessage;
+      if (result.id !== requestId) return;
+
+      window.removeEventListener('message', handleMessage);
+      if (result.error) {
+        reject(new Error(result.error));
+      } else {
+        resolve(result.event as unknown as NostrEvent);
+      }
+    }
+
+    window.addEventListener('message', handleMessage);
+
+    const msg: RelayPublishEncryptedMessage = {
+      type: 'relay.publishEncrypted',
+      id: requestId,
+      event: template,
+      recipient,
+      encryption,
+    };
+    window.parent.postMessage(msg, '*');
   });
 }
 
