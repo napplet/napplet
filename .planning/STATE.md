@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.20.0
 milestone_name: Keys NUB
-status: executing
+status: completed
 stopped_at: Completed 91-01-PLAN.md
-last_updated: "2026-04-09T11:12:18Z"
+last_updated: "2026-04-09T11:15:31.535Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
   percent: 80
 ---
 
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 
 ## Current Position
 
-Phase: 91 of 5 (sdk wrappers)
-Plan: 1 of 1 complete
+Phase: 92 of 5 (documentation)
+Plan: Not started
 Status: Phase 91 complete -- ready for Phase 92 (Documentation)
 Last activity: 2026-04-09
 
