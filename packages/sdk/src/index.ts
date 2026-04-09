@@ -255,6 +255,44 @@ export const keys = {
   onAction(actionId: string, callback: () => void): Subscription {
     return requireNapplet().keys.onAction(actionId, callback);
   },
+
+  /**
+   * Convenience: register a named action AND wire a local handler in one call.
+   * Returns a handle whose `close()` both unregisters the action and removes
+   * the onAction listener.
+   *
+   * @param action   The action to register (id, label, optional defaultKey)
+   * @param handler  Called when the shell triggers this action
+   * @returns The assigned binding plus a `close()` teardown function
+   *
+   * @example
+   * ```ts
+   * import { keys } from '@napplet/sdk';
+   *
+   * const handle = await keys.register(
+   *   { id: 'editor.save', label: 'Save', defaultKey: 'Ctrl+S' },
+   *   () => saveDocument(),
+   * );
+   *
+   * // Later, tear down both registration and listener:
+   * handle.close();
+   * ```
+   */
+  async register(
+    action: { id: string; label: string; defaultKey?: string },
+    handler: () => void,
+  ): Promise<{ actionId: string; binding?: string; close: () => void }> {
+    const n = requireNapplet();
+    const result = await n.keys.registerAction(action);
+    const sub = n.keys.onAction(action.id, handler);
+    return {
+      ...result,
+      close() {
+        sub.close();
+        n.keys.unregisterAction(action.id);
+      },
+    };
+  },
 };
 
 // ─── Type re-exports from @napplet/core ─────────────────────────────────────
