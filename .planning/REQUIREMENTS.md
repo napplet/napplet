@@ -3,79 +3,81 @@
 **Defined:** 2026-04-09
 **Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## v0.21.0 Requirements
+## v0.22.0 Requirements
 
-Move all domain-specific logic from shim and SDK into NUB packages. Shim and SDK become thin hosts.
+Draft NUB-MEDIA spec, implement @napplet/nub-media, remove svc: namespace.
 
-### NUB Package Internals
+### Kill Services Concept
 
-- [ ] **NUB-01**: Each NUB package exports a shim installer function (e.g., `installRelayShim()`) that installs `window.napplet.{domain}` and registers message handlers
-- [ ] **NUB-02**: Each NUB package exports SDK helper functions (e.g., relay `subscribe()`, `publish()`, `query()`) that wrap `window.napplet.{domain}.*`
-- [ ] **NUB-03**: Move `relay-shim.ts` logic (179 lines) into `@napplet/nub-relay`
-- [ ] **NUB-04**: Move `state-shim.ts` logic (169 lines) into `@napplet/nub-storage`
-- [ ] **NUB-05**: Move `keys-shim.ts` logic (286 lines) into `@napplet/nub-keys`
-- [ ] **NUB-06**: Move signer logic (~100 lines from index.ts) into `@napplet/nub-signer`
-- [ ] **NUB-07**: Move IFC logic (~90 lines from index.ts) into `@napplet/nub-ifc`
+- [ ] **SVC-01**: Remove `svc:` prefix from `NamespacedCapability` type in envelope.ts
+- [ ] **SVC-02**: Remove all `svc:` references from NIP-5D.md, READMEs, JSDoc
+- [ ] **SVC-03**: Drop 4 deferred AUDIO_* TOPICS from core/topics.ts (superseded by media NUB)
 
-### Shim DX
+### NUB-MEDIA Spec
 
-- [ ] **SHIM-01**: `import '@napplet/shim'` installs all available NUB shims (default side-effect behavior, unchanged DX)
-- [ ] **SHIM-02**: Named exports allow cherry-picking: `import { installRelayShim, installKeysShim } from '@napplet/shim'`
-- [ ] **SHIM-03**: After refactor, `@napplet/shim` contains zero domain-specific logic — only imports NUB installers and calls them
-- [ ] **SHIM-04**: Delete `relay-shim.ts`, `state-shim.ts`, `keys-shim.ts` from shim package (logic moved to NUBs)
+- [ ] **SPEC-01**: Draft NUB-MEDIA spec following NUB-KEYS pattern — PR to napplet/nubs. Covers: explicit session lifecycle (create/update/destroy), multiple sessions per napplet, dynamic capabilities, dual volume, shell control list, full metadata (title, artist, album, artwork URL/blossom, duration, mediaType — all optional)
 
-### SDK DX
+### NUB Type Package
 
-- [ ] **SDK-01**: Default SDK import provides all NUB helpers (unchanged DX)
-- [ ] **SDK-02**: Named exports allow cherry-picking per NUB domain
-- [ ] **SDK-03**: After refactor, `@napplet/sdk` contains zero domain-specific logic — re-exports from NUB packages
+- [ ] **NUB-01**: Create `@napplet/nub-media` package with typed message definitions (media.session.create, media.session.create.result, media.session.update, media.session.destroy, media.state, media.capabilities, media.command, media.controls)
+- [ ] **NUB-02**: Package includes shim.ts (installMediaShim, session management, state reporting, command handling) and sdk.ts (convenience wrappers) per v0.21.0 modular pattern
 
-### Verification
+### Core Integration
 
-- [ ] **VER-01**: `pnpm build && pnpm type-check` passes clean across all 10 packages
-- [ ] **VER-02**: Public API surface is identical before and after (no breaking changes for consumers)
+- [ ] **CORE-01**: Add `'media'` to `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
+- [ ] **CORE-02**: Add `media` namespace to `NappletGlobal` type in types.ts
+
+### Shim Integration
+
+- [ ] **SHIM-01**: Import and call `installMediaShim()` from `@napplet/nub-media` in shim entry point + add named export
+
+### Documentation
+
+- [ ] **DOC-01**: `@napplet/nub-media` README with full message reference and metadata schema
+- [ ] **DOC-02**: Update NIP-5D domain table (add media, remove svc: examples and service discovery text)
+- [ ] **DOC-03**: Update core/shim/SDK READMEs for media NUB and removed svc: prefix
 
 ## Future Requirements
 
 Deferred to future milestones.
 
-- **MOD-EXT-01**: Theme NUB shim installer (theme currently has zero napplet-side logic — defer until needed)
+### Media Extensions
+
+- **MEDIA-EXT-01**: Waveform/visualization data streaming
+- **MEDIA-EXT-02**: Lyrics/subtitle sync protocol
+- **MEDIA-EXT-03**: Crossfade/gapless playback coordination between napplets
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| NUB plugin registry / dynamic loading | Over-engineering — explicit imports are sufficient |
-| Theme shim installer | Theme is shell-driven, no napplet-side logic needed |
-| nostrdb shim refactor | nipdb-shim.ts is not a NUB domain — separate concern |
+| Shell-side media UI implementation | Shell concern, not SDK |
+| Audio/video encoding/decoding | Browser handles this, not the protocol |
+| DRM/content protection | Out of scope for v1 |
 | npm publish | Blocked on human npm auth (PUB-04) |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NUB-01 | Phase 93 | Pending |
-| NUB-02 | Phase 93 | Pending |
-| NUB-03 | Phase 93 | Pending |
-| NUB-04 | Phase 93 | Pending |
-| NUB-05 | Phase 93 | Pending |
-| NUB-06 | Phase 93 | Pending |
-| NUB-07 | Phase 93 | Pending |
-| SHIM-01 | Phase 94 | Pending |
-| SHIM-02 | Phase 94 | Pending |
-| SHIM-03 | Phase 94 | Pending |
-| SHIM-04 | Phase 94 | Pending |
-| SDK-01 | Phase 94 | Pending |
-| SDK-02 | Phase 94 | Pending |
-| SDK-03 | Phase 94 | Pending |
-| VER-01 | Phase 95 | Pending |
-| VER-02 | Phase 95 | Pending |
+| SVC-01 | — | Pending |
+| SVC-02 | — | Pending |
+| SVC-03 | — | Pending |
+| SPEC-01 | — | Pending |
+| NUB-01 | — | Pending |
+| NUB-02 | — | Pending |
+| CORE-01 | — | Pending |
+| CORE-02 | — | Pending |
+| SHIM-01 | — | Pending |
+| DOC-01 | — | Pending |
+| DOC-02 | — | Pending |
+| DOC-03 | — | Pending |
 
 **Coverage:**
-- v0.21.0 requirements: 16 total
-- Mapped to phases: 16
-- Unmapped: 0
+- v0.22.0 requirements: 12 total
+- Mapped to phases: 0
+- Unmapped: 12 ⚠️
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after roadmap creation*
+*Last updated: 2026-04-09 after initial definition*
