@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 Phase: Not started (defining requirements)
 Plan: —
 Status: Defining requirements
-Last activity: 2026-04-09 — Milestone v0.20.0 started
+Last activity: 2026-04-09 - Completed quick task 260409-gkz: Reformat napplet/nubs PR #9 body to match other NUB PR format
 
 ## Performance Metrics
 
@@ -60,6 +60,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 - CARRIED: npm publish blocked on human npm auth (PUB-04). Run `npm login` then `pnpm publish-packages`.
 - NIP number conflict with Scrolls PR#2281 (RES-01) -- unresolved, carry forward.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260409-gkz | Reformat napplet/nubs PR #9 body to match other NUB PR format | 2026-04-09 | n/a (no code) | [260409-gkz-reformat-napplet-nubs-pr-9-body-to-match](./quick/260409-gkz-reformat-napplet-nubs-pr-9-body-to-match/) |
 
 ## Session Continuity
 
