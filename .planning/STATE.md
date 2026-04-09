@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.19.0
-milestone_name: Spec Gap Drops
-status: completed
-stopped_at: Completed 87-01-PLAN.md
-last_updated: "2026-04-09T09:20:14.777Z"
+milestone: v0.20.0
+milestone_name: Keys NUB
+status: defining-requirements
+stopped_at: null
+last_updated: "2026-04-09"
 last_activity: 2026-04-09
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,30 +21,28 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-09)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 87 -- Spec Gap Code Drops
+**Current focus:** Defining requirements for v0.20.0
 
 ## Current Position
 
-Phase: 1 of 1 (Spec Gap Code Drops)
-Plan: 1 of 1 in current phase (COMPLETE)
-Status: Phase complete
-Last activity: 2026-04-09
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-09 — Milestone v0.20.0 started
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: 3 min
-- Total execution time: 3 min
+- Total plans completed: 0
+- Average duration: —
+- Total execution time: 0 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 87-spec-gap-code-drops | 1 | 3 min | 3 min |
+| - | - | - | - |
 
 *Updated after each plan completion*
 
@@ -54,10 +52,9 @@ Progress: [██████████] 100%
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-- v0.18.0: 7 code items marked for drop (Capability, TOPICS superseded/config/relay, SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS, PROTOCOL_VERSION)
-- v0.18.0: 5 items deferred (future NUB topics, keybinds, wm, audio, nostrdb)
-- v0.18.0: keyboard.forward marked for spec amendment
-- [Phase 87]: Deleted constants.ts entirely rather than leaving empty file -- all 3 exports dropped
+- v0.18.0: keyboard.forward marked for spec amendment (GAP-07)
+- v0.18.0: keybind TOPICS (6) deferred — may inform keys NUB design
+- v0.19.0: All unspecced code removed from core — clean baseline
 
 ### Blockers/Concerns
 
@@ -66,6 +63,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09T09:03:00.094Z
-Stopped at: Completed 87-01-PLAN.md
-Resume: Phase 87 complete. Ready for v0.19.0 changeset/publish.
+Last session: 2026-04-09
+Stopped at: Milestone v0.20.0 started — defining requirements
+Resume: Continue with requirements definition
