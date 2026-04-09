@@ -1,5 +1,15 @@
 # Milestones
 
+## v0.21.0 NUB Modularization (Shipped: 2026-04-09)
+
+**Phases completed:** 3 phases, 0 plans, 0 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 ## v0.20.0 Keys NUB (Shipped: 2026-04-09)
 
 **Phases completed:** 3 phases, 3 plans, 4 tasks

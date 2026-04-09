@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.20.0
-milestone_name: Keys NUB
+milestone: v0.21.0
+milestone_name: NUB Modularization
 status: completed
 stopped_at: Completed 92-01-PLAN.md
-last_updated: "2026-04-09T11:29:42.147Z"
+last_updated: "2026-04-09T11:46:49.333Z"
 last_activity: 2026-04-09
 progress:
-  total_phases: 5
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 100
 ---
 

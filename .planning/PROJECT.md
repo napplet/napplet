@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.21.0 NUB Modularization
+
+Moved ALL domain-specific logic from `@napplet/shim` and `@napplet/sdk` into the 5 NUB packages. Each NUB now exports `shim.ts` (installer + message handlers) and `sdk.ts` (convenience wrappers) alongside its type definitions. Shim went from 19KB to 5.75KB — now a thin host that imports NUB installers. Old domain files (`relay-shim.ts`, `state-shim.ts`, `keys-shim.ts`) deleted. DX unchanged: `import '@napplet/shim'` installs all NUBs; named exports allow cherry-picking. 3 phases shipped 2026-04-09. See [archive](milestones/v0.21.0-ROADMAP.md).
+
 ## Shipped: v0.20.0 Keys NUB
 
 New `@napplet/nub-keys` package (6th NUB, 10th package) implementing the NUB-KEYS spec (napplet/nubs#9). Bidirectional keyboard protocol: napplet registers named actions, shell binds keys and pushes binding updates, shim suppresses bound keys locally and triggers actions with zero latency. Replaced one-way `keyboard-shim.ts` with full `keys-shim.ts` smart forwarding. SDK convenience wrappers. All READMEs and NIP-5D updated. 5 phases, 2 plans shipped 2026-04-09. See [archive](milestones/v0.20.0-ROADMAP.md).
@@ -186,18 +190,13 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ SDK keys namespace + convenience registerAction() + type re-exports — v0.20.0 Phase 91 (SDK-01..03)
 - ✓ nub-keys README, NIP-5D keys row, core/shim/SDK README updates — v0.20.0 Phase 92 (DOC-01..03)
 
+- ✓ All 5 NUB packages export shim installers + SDK helpers — v0.21.0 Phase 93 (NUB-01..07)
+- ✓ Shim/SDK refactored to thin hosts importing from NUB packages — v0.21.0 Phase 94 (SHIM-01..04, SDK-01..03)
+- ✓ Build clean, API surface identical — v0.21.0 Phase 95 (VER-01..02)
+
 ### Active
 
-## Current Milestone: v0.21.0 NUB Modularization
-
-**Goal:** Move ALL domain-specific logic from shim and SDK into the NUB packages. Shim and SDK become plugin hosts that NUBs register into.
-
-**Target features:**
-- Each NUB package exports: types + shim installer + SDK helpers
-- Shim provides registerNubShim() hook — NUBs register their window.napplet.* API and message handlers
-- SDK provides registration pattern for NUB convenience wrappers
-- Move ~824 lines of domain logic out of shim into NUB packages
-- After: adding/removing a NUB requires zero source edits to shim or SDK
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -214,7 +213,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.21.0 in progress (NUB Modularization). Moving domain logic from shim/SDK into NUB packages. 10 packages (4 core + 6 NUB). 20 milestones shipped.
+- **Current state**: v0.21.0 shipped (NUB Modularization). NUB packages own all domain logic. Shim/SDK are thin hosts. 10 packages (4 core + 6 NUB). 21 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -303,4 +302,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.21.0 milestone start*
+*Last updated: 2026-04-09 after v0.21.0 milestone*
