@@ -98,22 +98,6 @@ NUB specs MUST:
 - Document expected shell behavior for each message
 - Be independently implementable — a shell MAY support any subset of NUBs
 
-## Known NUBs
-
-The following NUB specs are defined for this protocol:
-
-| Domain     | Spec         | Scope                                       |
-|------------|--------------|---------------------------------------------|
-| `relay`    | NUB-RELAY    | Relay proxy (subscribe, publish, query)     |
-| `identity` | NUB-IDENTITY | Read-only user identity queries             |
-| `storage`  | NUB-STORAGE  | Scoped key-value storage proxy              |
-| `ifc`      | NUB-IFC      | Inter-frame communication                   |
-| `theme`    | NUB-THEME    | Theme tokens and appearance settings        |
-| `keys`     | NUB-KEYS     | Keyboard forwarding and action keybindings  |
-| `media`    | NUB-MEDIA    | Media session control and playback          |
-| `notify`   | NUB-NOTIFY   | Shell-rendered notifications                |
-
-Shells MAY support any subset of these NUBs. New NUBs may be proposed independently of this NIP.
 
 ## Security Rationale: Cleartext-Only Napplets
 
