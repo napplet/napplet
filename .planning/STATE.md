@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.20.0
 milestone_name: Keys NUB
-status: completed
-stopped_at: Completed 88-01-PLAN.md
-last_updated: "2026-04-09T10:09:44.644Z"
-last_activity: 2026-04-09 -- Phase 88 Plan 01 completed (NUB Type Package)
+status: verifying
+stopped_at: Completed 89-01-PLAN.md
+last_updated: "2026-04-09T10:52:11.830Z"
+last_activity: 2026-04-09
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
   percent: 100
 ---
 
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 
 Phase: 88 (1 of 5 in v0.20.0) -- NUB Type Package
 Plan: 01 of 1 -- COMPLETE
-Status: Phase 88 complete
-Last activity: 2026-04-09 -- Phase 88 Plan 01 completed (NUB Type Package)
+Status: Phase complete — ready for verification
+Last activity: 2026-04-09
 
 Progress: [██████████] 100%
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100%
 | 88-nub-type-package | 1 | 2min | 2min |
 
 *Updated after each plan completion*
+| Phase 89 P01 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - v0.19.0: All unspecced code removed from core -- clean baseline
 - v0.20.0: Keys NUB follows NUB-KEYS spec at napplet/nubs#9
 - v0.20.0: @napplet/nub-keys follows exact pattern of existing NUB packages (theme as template)
+- [Phase 89]: Inline structural types used for keys namespace in NappletGlobal (core cannot depend on NUB packages)
 
 ### Blockers/Concerns
 
@@ -73,6 +75,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09T10:09:44.642Z
-Stopped at: Completed 88-01-PLAN.md
+Last session: 2026-04-09T10:52:11.827Z
+Stopped at: Completed 89-01-PLAN.md
 Resume: `/gsd:plan-phase 89` to plan Core Integration

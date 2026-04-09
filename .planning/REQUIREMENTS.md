@@ -14,8 +14,8 @@ Implement the Keys NUB (napplet/nubs#9) -- bidirectional keyboard protocol with 
 
 ### Core Integration
 
-- [ ] **CORE-01**: Add `'keys'` to `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
-- [ ] **CORE-02**: Add `keys` namespace to `NappletGlobal` type in types.ts (registerAction, unregisterAction, onAction)
+- [x] **CORE-01**: Add `'keys'` to `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
+- [x] **CORE-02**: Add `keys` namespace to `NappletGlobal` type in types.ts (registerAction, unregisterAction, onAction)
 
 ### Shim Implementation
 
@@ -62,8 +62,8 @@ Deferred to future milestones.
 |-------------|-------|--------|
 | NUB-01 | Phase 88 | Complete |
 | NUB-02 | Phase 88 | Complete |
-| CORE-01 | Phase 89 | Pending |
-| CORE-02 | Phase 89 | Pending |
+| CORE-01 | Phase 89 | Complete |
+| CORE-02 | Phase 89 | Complete |
 | SHIM-01 | Phase 90 | Pending |
 | SHIM-02 | Phase 90 | Pending |
 | SHIM-03 | Phase 90 | Pending |

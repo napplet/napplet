@@ -232,7 +232,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Create a keys NUB that formalizes keyboard interaction between napplet and shell -- action registration, shell-delegated keybindings, and smart forwarding. @napplet/nub-keys package with typed messages, core/shim/SDK integration, and documentation.
 
 - [x] **Phase 88: NUB Type Package** - Create @napplet/nub-keys with typed message definitions per NUB-KEYS spec (completed 2026-04-09)
-- [ ] **Phase 89: Core Integration** - Add 'keys' to NubDomain union and NappletGlobal type
+- [x] **Phase 89: Core Integration** - Add 'keys' to NubDomain union and NappletGlobal type (completed 2026-04-09)
 - [ ] **Phase 90: Shim Implementation** - Replace keyboard-shim.ts with NUB-KEYS smart forwarding and action API
 - [ ] **Phase 91: SDK Wrappers** - Add keys namespace to SDK with registerAction() convenience and NUB type re-exports
 - [ ] **Phase 92: Documentation** - README for nub-keys, NIP-5D domain table update, core/shim/SDK README updates
@@ -262,7 +262,7 @@ Plans:
   3. `pnpm build && pnpm type-check` passes with zero errors across all packages
 **Plans**: 1 plan
 Plans:
-- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
+- [x] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
 
 ### Phase 90: Shim Implementation
 **Goal**: Napplets get smart keyboard forwarding and action registration out of the box by importing the shim
@@ -310,7 +310,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 88. NUB Type Package | 1/1 | Complete   | 2026-04-09 |
-| 89. Core Integration | 0/? | Not started | - |
+| 89. Core Integration | 1/1 | Complete   | 2026-04-09 |
 | 90. Shim Implementation | 0/? | Not started | - |
 | 91. SDK Wrappers | 0/? | Not started | - |
 | 92. Documentation | 0/? | Not started | - |
