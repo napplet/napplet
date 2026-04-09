@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.20.0
 milestone_name: Keys NUB
 status: completed
-stopped_at: Completed 91-01-PLAN.md
-last_updated: "2026-04-09T11:15:31.535Z"
+stopped_at: Completed 92-01-PLAN.md
+last_updated: "2026-04-09T11:22:00Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
-  percent: 80
+  completed_phases: 5
+  total_plans: 5
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-09)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 91 -- SDK Wrappers
+**Current focus:** Phase 92 -- Documentation (complete)
 
 ## Current Position
 
 Phase: 92 of 5 (documentation)
-Plan: Not started
-Status: Phase 91 complete -- ready for Phase 92 (Documentation)
+Plan: 1 of 1 complete
+Status: All phases complete -- v0.20.0 ready for milestone closure
 Last activity: 2026-04-09
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [████████░░] 80%
 | Phase 89 P01 | 1min | 2 tasks | 2 files |
 | Phase 90 P01 | 2min | 1 tasks | 0 files |
 | Phase 91 P01 | 1min | 1 tasks | 1 files |
+| Phase 92 P01 | 2min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:12:18Z
-Stopped at: Completed 91-01-PLAN.md
-Resume: `/gsd:execute-phase 92` to execute Documentation phase
+Last session: 2026-04-09T11:22:00Z
+Stopped at: Completed 92-01-PLAN.md
+Resume: `/gsd:complete-milestone` to close v0.20.0

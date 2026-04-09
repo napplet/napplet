@@ -235,7 +235,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 89: Core Integration** - Add 'keys' to NubDomain union and NappletGlobal type (completed 2026-04-09)
 - [x] **Phase 90: Shim Implementation** - Replace keyboard-shim.ts with NUB-KEYS smart forwarding and action API (completed 2026-04-09)
 - [x] **Phase 91: SDK Wrappers** - Add keys namespace to SDK with registerAction() convenience and NUB type re-exports (completed 2026-04-09)
-- [ ] **Phase 92: Documentation** - README for nub-keys, NIP-5D domain table update, core/shim/SDK README updates
+- [x] **Phase 92: Documentation** - README for nub-keys, NIP-5D domain table update, core/shim/SDK README updates (completed 2026-04-09)
 
 ## Phase Details
 
@@ -300,7 +300,7 @@ Plans:
   3. Core, shim, and SDK READMEs mention the keys NUB with usage examples for action registration and smart forwarding
 **Plans**: 1 plan
 Plans:
-- [ ] 92-01-PLAN.md — Verify and complete keys NUB documentation
+- [x] 92-01-PLAN.md — Verify and complete keys NUB documentation
 
 ## Progress
 
@@ -313,4 +313,4 @@ Plans:
 | 89. Core Integration | 1/1 | Complete    | 2026-04-09 |
 | 90. Shim Implementation | 1/1 | Complete    | 2026-04-09 |
 | 91. SDK Wrappers | 1/1 | Complete    | 2026-04-09 |
-| 92. Documentation | 0/? | Not started | - |
+| 92. Documentation | 1/1 | Complete    | 2026-04-09 |
