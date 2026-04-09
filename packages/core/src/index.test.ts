@@ -39,6 +39,7 @@ describe('@napplet/core exports', () => {
       const _storage: NamespacedCapability = 'storage';
       const _ifc: NamespacedCapability = 'ifc';
       const _theme: NamespacedCapability = 'theme';
+      const _media: NamespacedCapability = 'media';
       expect(true).toBe(true);
     });
 
@@ -49,6 +50,7 @@ describe('@napplet/core exports', () => {
       const _nubStorage: NamespacedCapability = 'nub:storage';
       const _nubIfc: NamespacedCapability = 'nub:ifc';
       const _nubTheme: NamespacedCapability = 'nub:theme';
+      const _nubMedia: NamespacedCapability = 'nub:media';
       expect(true).toBe(true);
     });
 

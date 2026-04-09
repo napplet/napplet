@@ -209,6 +209,114 @@ export const storage = {
   },
 };
 
+// ─── Media namespace ───────────────────────────────────────────────────────
+
+/**
+ * Media session control: create sessions, report state and metadata,
+ * declare capabilities, receive commands from the shell.
+ *
+ * @example
+ * ```ts
+ * import { media } from '@napplet/sdk';
+ *
+ * const { sessionId } = await media.createSession({
+ *   title: 'My Song', artist: 'The Artist',
+ * });
+ *
+ * media.reportState(sessionId, { status: 'playing', position: 42.5 });
+ * ```
+ */
+export const media = {
+  /**
+   * Create a new media session with the shell.
+   * @param metadata  Optional initial metadata
+   * @returns The confirmed session result with sessionId
+   */
+  createSession(metadata?: {
+    title?: string;
+    artist?: string;
+    album?: string;
+    artwork?: { url?: string; hash?: string };
+    duration?: number;
+    mediaType?: 'audio' | 'video';
+  }): Promise<{ sessionId: string }> {
+    return requireNapplet().media.createSession(metadata);
+  },
+
+  /**
+   * Update metadata for an existing session.
+   * @param sessionId  The session to update
+   * @param metadata   Partial metadata fields to update
+   */
+  updateSession(sessionId: string, metadata: {
+    title?: string;
+    artist?: string;
+    album?: string;
+    artwork?: { url?: string; hash?: string };
+    duration?: number;
+    mediaType?: 'audio' | 'video';
+  }): void {
+    requireNapplet().media.updateSession(sessionId, metadata);
+  },
+
+  /**
+   * Destroy a media session.
+   * @param sessionId  The session to destroy
+   */
+  destroySession(sessionId: string): void {
+    requireNapplet().media.destroySession(sessionId);
+  },
+
+  /**
+   * Report current playback state for a session.
+   * @param sessionId  The session to report state for
+   * @param state      Current playback state
+   */
+  reportState(sessionId: string, state: {
+    status: 'playing' | 'paused' | 'stopped' | 'buffering';
+    position?: number;
+    duration?: number;
+    volume?: number;
+  }): void {
+    requireNapplet().media.reportState(sessionId, state);
+  },
+
+  /**
+   * Declare which media actions the session currently supports.
+   * @param sessionId  The session to update capabilities for
+   * @param actions    Currently supported actions
+   */
+  reportCapabilities(sessionId: string, actions: ('play' | 'pause' | 'stop' | 'next' | 'prev' | 'seek' | 'volume')[]): void {
+    requireNapplet().media.reportCapabilities(sessionId, actions);
+  },
+
+  /**
+   * Listen for media commands from the shell.
+   * @param sessionId  The session to listen for commands on
+   * @param callback   Called with (action, value?) when a command is received
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onCommand(
+    sessionId: string,
+    callback: (action: 'play' | 'pause' | 'stop' | 'next' | 'prev' | 'seek' | 'volume', value?: number) => void,
+  ): Subscription {
+    return requireNapplet().media.onCommand(sessionId, callback);
+  },
+
+  /**
+   * Listen for the shell's media control list.
+   * @param sessionId  The session to associate controls with
+   * @param callback   Called with the shell's supported controls
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onControls(
+    sessionId: string,
+    callback: (controls: ('play' | 'pause' | 'stop' | 'next' | 'prev' | 'seek' | 'volume')[]) => void,
+  ): Subscription {
+    return requireNapplet().media.onControls(sessionId, callback);
+  },
+};
+
 // ─── Keys namespace ────────────────────────────────────────────────────────
 
 /**
@@ -428,6 +536,26 @@ export type {
   KeysNubMessage,
 } from '@napplet/nub-keys';
 
+// Media NUB
+export type {
+  MediaMetadata,
+  MediaArtwork,
+  MediaState,
+  MediaAction,
+  MediaMessage,
+  MediaSessionCreateMessage,
+  MediaSessionCreateResultMessage,
+  MediaSessionUpdateMessage,
+  MediaSessionDestroyMessage,
+  MediaStateMessage,
+  MediaCapabilitiesMessage,
+  MediaCommandMessage,
+  MediaControlsMessage,
+  MediaRequestMessage,
+  MediaResultMessage,
+  MediaNubMessage,
+} from '@napplet/nub-media';
+
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
@@ -436,6 +564,7 @@ export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
 export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
 export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
 export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub-keys';
+export { DOMAIN as MEDIA_DOMAIN } from '@napplet/nub-media';
 
 // ─── NUB Shim Installer Re-exports ─────────────────────────────────────────
 // Allow consumers to cherry-pick shim installers per domain.
@@ -445,6 +574,7 @@ export { installSignerShim } from '@napplet/nub-signer';
 export { installStorageShim } from '@napplet/nub-storage';
 export { installIfcShim } from '@napplet/nub-ifc';
 export { installKeysShim } from '@napplet/nub-keys';
+export { installMediaShim } from '@napplet/nub-media';
 
 // ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
@@ -454,3 +584,4 @@ export { signerGetPublicKey, signerSignEvent, signerGetRelays, signerNip04, sign
 export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub-storage';
 export { ifcEmit, ifcOn } from '@napplet/nub-ifc';
 export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub-keys';
+export { mediaCreateSession, mediaUpdateSession, mediaDestroySession, mediaReportState, mediaReportCapabilities, mediaOnCommand, mediaOnControls } from '@napplet/nub-media';

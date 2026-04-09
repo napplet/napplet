@@ -5,6 +5,7 @@
 // Domain logic lives in NUB packages. This file orchestrates installation.
 
 import { installKeysShim, handleKeysMessage, registerAction, unregisterAction, onAction } from '@napplet/nub-keys';
+import { installMediaShim, handleMediaMessage, createSession, updateSession, destroySession, reportState, reportCapabilities, onCommand, onControls } from '@napplet/nub-media';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStorageShim, nappletStorage } from '@napplet/nub-storage';
 import { subscribe, publish, query } from '@napplet/nub-relay';
@@ -47,6 +48,12 @@ function handleEnvelopeMessage(event: MessageEvent): void {
     return;
   }
 
+  // Route media.* messages to media shim
+  if (type.startsWith('media.')) {
+    handleMediaMessage(msg as { type: string; [key: string]: unknown });
+    return;
+  }
+
   // Route IFC event messages to topic handlers
   if (type === 'ifc.event') {
     handleIfcEvent(msg as IfcEventMessage);
@@ -85,6 +92,15 @@ installIfcShim();
     unregisterAction,
     onAction,
   },
+  media: {
+    createSession,
+    updateSession,
+    destroySession,
+    reportState,
+    reportCapabilities,
+    onCommand,
+    onControls,
+  },
   shell: {
     supports(_capability: string): boolean {
       // TODO: Shell populates supported capabilities at iframe creation
@@ -103,6 +119,9 @@ installNostrDb();
 
 // Install keys shim (smart forwarding + action keybindings)
 installKeysShim();
+
+// Install media shim (session management + command handlers)
+installMediaShim();
 
 // Install napplet-side storage proxy
 installStorageShim();

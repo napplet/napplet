@@ -230,8 +230,94 @@ export interface NappletGlobal {
     onAction(actionId: string, callback: () => void): Subscription;
   };
   /**
-   * Shell capability queries. Check whether the shell supports a NUB,
-   * permission, or service.
+   * Media session control: create sessions, report state and metadata,
+   * declare capabilities, receive commands from the shell.
+   *
+   * @example
+   * ```ts
+   * // Create a media session:
+   * const { sessionId } = await window.napplet.media.createSession({
+   *   title: 'My Song', artist: 'The Artist',
+   * });
+   *
+   * // Report playback state:
+   * window.napplet.media.reportState(sessionId, {
+   *   status: 'playing', position: 42.5, duration: 240,
+   * });
+   *
+   * // Listen for shell commands:
+   * window.napplet.media.onCommand(sessionId, (action, value) => {
+   *   if (action === 'pause') player.pause();
+   * });
+   * ```
+   */
+  media: {
+    /**
+     * Create a new media session with the shell.
+     * @param metadata  Optional initial metadata (title, artist, album, artwork, duration, mediaType)
+     * @returns The confirmed session result with sessionId
+     */
+    createSession(metadata?: {
+      title?: string;
+      artist?: string;
+      album?: string;
+      artwork?: { url?: string; hash?: string };
+      duration?: number;
+      mediaType?: 'audio' | 'video';
+    }): Promise<{ sessionId: string }>;
+    /**
+     * Update metadata for an existing session. Partial updates supported.
+     * @param sessionId  The session to update
+     * @param metadata   Partial metadata fields to update
+     */
+    updateSession(sessionId: string, metadata: {
+      title?: string;
+      artist?: string;
+      album?: string;
+      artwork?: { url?: string; hash?: string };
+      duration?: number;
+      mediaType?: 'audio' | 'video';
+    }): void;
+    /**
+     * Destroy a media session.
+     * @param sessionId  The session to destroy
+     */
+    destroySession(sessionId: string): void;
+    /**
+     * Report current playback state for a session.
+     * @param sessionId  The session to report state for
+     * @param state      Current playback state
+     */
+    reportState(sessionId: string, state: {
+      status: 'playing' | 'paused' | 'stopped' | 'buffering';
+      position?: number;
+      duration?: number;
+      volume?: number;
+    }): void;
+    /**
+     * Declare which media actions the session currently supports.
+     * @param sessionId  The session to update capabilities for
+     * @param actions    Currently supported actions
+     */
+    reportCapabilities(sessionId: string, actions: ('play' | 'pause' | 'stop' | 'next' | 'prev' | 'seek' | 'volume')[]): void;
+    /**
+     * Listen for media commands from the shell.
+     * @param sessionId  The session to listen for commands on
+     * @param callback   Called with (action, value?) when a command is received
+     * @returns A Subscription with `close()` to stop listening
+     */
+    onCommand(sessionId: string, callback: (action: 'play' | 'pause' | 'stop' | 'next' | 'prev' | 'seek' | 'volume', value?: number) => void): Subscription;
+    /**
+     * Listen for the shell's media control list.
+     * @param sessionId  The session to associate controls with
+     * @param callback   Called with the shell's supported controls
+     * @returns A Subscription with `close()` to stop listening
+     */
+    onControls(sessionId: string, callback: (controls: ('play' | 'pause' | 'stop' | 'next' | 'prev' | 'seek' | 'volume')[]) => void): Subscription;
+  };
+  /**
+   * Shell capability queries. Check whether the shell supports a NUB
+   * or permission.
    *
    * @example
    * ```ts
