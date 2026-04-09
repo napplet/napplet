@@ -110,6 +110,7 @@ The following NUB specs are defined for this protocol:
 | `ifc`     | NUB-IFC     | Inter-frame communication                |
 | `theme`   | NUB-THEME   | Theme tokens and appearance settings     |
 | `keys`    | NUB-KEYS    | Keyboard forwarding and action keybindings |
+| `media`   | NUB-MEDIA   | Media session control and playback       |
 
 Shells MAY support any subset of these NUBs. New NUBs may be proposed independently of this NIP.
 
@@ -133,3 +134,4 @@ Storage isolation, signing safety, relay access control, and ACL enforcement are
 - [NIP-07](07.md) -- `window.nostr` signer capability
 - [NIP-5A](5A.md) -- Napplet manifest format and aggregate hash
 - [NUB-KEYS](https://github.com/napplet/nubs/blob/main/NUB-KEYS.md) -- Keyboard forwarding and action keybindings
+- [NUB-MEDIA](https://github.com/napplet/nubs/blob/main/NUB-MEDIA.md) -- Media session control and playback

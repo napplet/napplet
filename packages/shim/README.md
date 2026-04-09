@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, and `shell` sub-objects
+3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, `media`, and `shell` sub-objects
 4. The shim also installs `window.nostr` (NIP-07 compatible) for transparent signer proxy access
 
 ### Installation
@@ -61,6 +61,21 @@ const keySub = window.napplet.keys.onAction('editor.save', () => {
   console.log('Save triggered!');
 });
 
+// Create a media session
+const { sessionId } = await window.napplet.media.createSession({
+  title: 'My Song', artist: 'The Artist',
+});
+
+// Report playback state
+window.napplet.media.reportState(sessionId, {
+  status: 'playing', position: 42.5, duration: 240,
+});
+
+// Listen for shell media commands
+const mediaSub = window.napplet.media.onCommand(sessionId, (action, value) => {
+  if (action === 'pause') player.pause();
+});
+
 // Check shell capability support (namespaced)
 if (window.napplet.shell.supports('nub:signer')) {
   const pubkey = await window.nostr.getPublicKey();
@@ -70,6 +85,7 @@ if (window.napplet.shell.supports('nub:signer')) {
 sub.close();
 ipcSub.close();
 keySub.close();
+mediaSub.close();
 ```
 
 ## Wire Format
@@ -106,6 +122,12 @@ Messages sent via `window.parent.postMessage(msg, '*')`:
 { type: 'keys.forward', key: string, code: string, ctrl: boolean, alt: boolean, shift: boolean, meta: boolean }
 { type: 'keys.registerAction', id: string, action: { id: string, label: string, defaultKey?: string } }
 { type: 'keys.unregisterAction', actionId: string }
+
+{ type: 'media.session.create', id: string, sessionId: string, metadata?: object }
+{ type: 'media.session.update', sessionId: string, metadata: object }
+{ type: 'media.session.destroy', sessionId: string }
+{ type: 'media.state', sessionId: string, status: string, position?: number, duration?: number, volume?: number }
+{ type: 'media.capabilities', sessionId: string, actions: string[] }
 ```
 
 ### Inbound (shell → napplet)
@@ -136,6 +158,10 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'keys.registerAction.result', id: string, actionId: string, binding?: string, error?: string }
 { type: 'keys.bindings', bindings: Array<{ actionId: string, key: string }> }
 { type: 'keys.action', actionId: string }
+
+{ type: 'media.session.create.result', id: string, sessionId: string, error?: string }
+{ type: 'media.command', sessionId: string, action: string, value?: number }
+{ type: 'media.controls', controls: string[] }
 ```
 
 All request/response pairs are correlated by the `id` field. Signer request timeouts after 30 seconds.
@@ -165,6 +191,15 @@ window.napplet = {
     registerAction(action): Promise<{ actionId: string; binding?: string }>;
     unregisterAction(actionId): void;
     onAction(actionId, callback): { close(): void };
+  },
+  media: {
+    createSession(metadata?): Promise<{ sessionId: string }>;
+    updateSession(sessionId, metadata): void;
+    destroySession(sessionId): void;
+    reportState(sessionId, state): void;
+    reportCapabilities(sessionId, actions): void;
+    onCommand(sessionId, callback): { close(): void };
+    onControls(sessionId, callback): { close(): void };
   },
   shell: {
     supports(capability: NamespacedCapability): boolean;
@@ -220,6 +255,20 @@ Smart forwarding rules:
 - Bound keys: `preventDefault()` + local action handler, no `keys.forward`
 - Unbound keys: forwarded to shell via `keys.forward`
 
+### `window.napplet.media`
+
+Media session control. Create sessions, report playback state and metadata, declare capabilities, and receive commands from the shell.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `createSession(metadata?)` | `Promise<{ sessionId }>` | Create a new media session with optional metadata. |
+| `updateSession(sessionId, metadata)` | `void` | Update metadata for an existing session. Fire-and-forget. |
+| `destroySession(sessionId)` | `void` | Destroy a session. Fire-and-forget. |
+| `reportState(sessionId, state)` | `void` | Report playback state (status, position, duration, volume). |
+| `reportCapabilities(sessionId, actions)` | `void` | Declare supported media actions (dynamic). |
+| `onCommand(sessionId, callback)` | `{ close(): void }` | Listen for shell media commands (play, pause, seek, volume, etc.). |
+| `onControls(sessionId, callback)` | `{ close(): void }` | Listen for the shell's supported control list. |
+
 ### `window.napplet.shell`
 
 Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain or permission.
@@ -261,7 +310,7 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 |---|---|---|
 | **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
-| **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc`, `@napplet/nub-keys` (types only) | `@napplet/core` (types only) |
+| **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media` (types only) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
 | **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, plus types |
 

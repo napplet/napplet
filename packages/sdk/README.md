@@ -26,7 +26,7 @@ npm install @napplet/sdk @napplet/shim
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys, type NostrEvent } from '@napplet/sdk';
+import { relay, ipc, storage, keys, media, type NostrEvent } from '@napplet/sdk';
 
 // Subscribe to kind 1 notes
 const sub = relay.subscribe(
@@ -62,6 +62,12 @@ const result = await keys.registerAction({
 const keySub = keys.onAction('editor.save', () => {
   console.log('Save triggered!');
 });
+
+// Create a media session
+const { sessionId } = await media.createSession({
+  title: 'My Song', artist: 'The Artist',
+});
+media.reportState(sessionId, { status: 'playing', position: 42.5, duration: 240 });
 
 // Clean up
 sub.close();
@@ -103,6 +109,20 @@ Sandboxed key-value storage. Mirrors `window.napplet.storage`. 512 KB quota per 
 | `setItem(key, value)` | `Promise<void>` | Store a key-value pair |
 | `removeItem(key)` | `Promise<void>` | Remove a stored key |
 | `keys()` | `Promise<string[]>` | List all stored keys |
+
+### `media`
+
+Media session control. Mirrors `window.napplet.media`.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `createSession(metadata?)` | `Promise<{ sessionId }>` | Create a new media session with optional metadata |
+| `updateSession(sessionId, metadata)` | `void` | Update metadata for an existing session |
+| `destroySession(sessionId)` | `void` | Destroy a session |
+| `reportState(sessionId, state)` | `void` | Report playback state |
+| `reportCapabilities(sessionId, actions)` | `void` | Declare supported media actions |
+| `onCommand(sessionId, callback)` | `{ close(): void }` | Listen for shell media commands |
+| `onControls(sessionId, callback)` | `{ close(): void }` | Listen for the shell's supported control list |
 
 ### `keys`
 
@@ -198,6 +218,7 @@ handlers in shell implementations or protocol-aware code.
 | `StorageNubMessage` | `@napplet/nub-storage` | Discriminated union of all storage domain messages |
 | `IfcNubMessage` | `@napplet/nub-ifc` | Discriminated union of all IFC domain messages |
 | `KeysNubMessage` | `@napplet/nub-keys` | Discriminated union of all keys domain messages |
+| `MediaNubMessage` | `@napplet/nub-media` | Discriminated union of all media domain messages |
 
 Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
@@ -207,8 +228,8 @@ Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage
 Each NUB domain has a string constant re-exported from its package:
 
 ```ts
-import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN } from '@napplet/sdk';
-// Values: 'relay', 'signer', 'storage', 'ifc', 'theme', 'keys'
+import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media'
 ```
 
 These constants are re-exported from the individual NUB packages. Use them with the shell capability query
@@ -248,7 +269,7 @@ This protects against importing `@napplet/sdk` without the side-effect shim impo
 
 ```ts
 import '@napplet/shim';                                      // required: installs window.napplet
-import { relay, ipc, storage, keys } from '@napplet/sdk';  // optional: typed API
+import { relay, ipc, storage, keys, media } from '@napplet/sdk';  // optional: typed API
 ```
 
 If you are writing a vanilla napplet with no build step, use `window.napplet.*` directly after importing the shim -- the SDK is not required.
