@@ -203,6 +203,60 @@ export const storage = {
   },
 };
 
+// ─── Keys namespace ────────────────────────────────────────────────────────
+
+/**
+ * Keyboard forwarding and action keybindings: register named actions the shell
+ * can bind to keys, listen for shell-triggered actions locally.
+ *
+ * @example
+ * ```ts
+ * import { keys } from '@napplet/sdk';
+ *
+ * const result = await keys.registerAction({
+ *   id: 'editor.save',
+ *   label: 'Save',
+ *   defaultKey: 'Ctrl+S',
+ * });
+ *
+ * const sub = keys.onAction('editor.save', () => {
+ *   console.log('Save triggered!');
+ * });
+ * ```
+ */
+export const keys = {
+  /**
+   * Declare a named action that the shell can bind to a key.
+   * @param action  The action to register (id, label, optional defaultKey)
+   * @returns The assigned binding, if any
+   */
+  registerAction(action: {
+    id: string;
+    label: string;
+    defaultKey?: string;
+  }): Promise<{ actionId: string; binding?: string }> {
+    return requireNapplet().keys.registerAction(action);
+  },
+
+  /**
+   * Remove a previously registered action.
+   * @param actionId  The action to unregister
+   */
+  unregisterAction(actionId: string): void {
+    requireNapplet().keys.unregisterAction(actionId);
+  },
+
+  /**
+   * Register a local handler for when a bound key is pressed.
+   * @param actionId  The action to listen for
+   * @param callback  Called when the action is triggered
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onAction(actionId: string, callback: () => void): Subscription {
+    return requireNapplet().keys.onAction(actionId, callback);
+  },
+};
+
 // ─── Type re-exports from @napplet/core ─────────────────────────────────────
 
 export type { NostrEvent } from '@napplet/core';
@@ -313,6 +367,23 @@ export type {
   ThemeNubMessage,
 } from '@napplet/nub-theme';
 
+// Keys NUB
+export type {
+  Action,
+  RegisterResult,
+  KeyBinding,
+  KeysMessage,
+  KeysForwardMessage,
+  KeysRegisterActionMessage,
+  KeysRegisterActionResultMessage,
+  KeysUnregisterActionMessage,
+  KeysBindingsMessage,
+  KeysActionMessage,
+  KeysRequestMessage,
+  KeysResultMessage,
+  KeysNubMessage,
+} from '@napplet/nub-keys';
+
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
@@ -320,3 +391,4 @@ export { DOMAIN as SIGNER_DOMAIN, DESTRUCTIVE_KINDS } from '@napplet/nub-signer'
 export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
 export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
 export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
+export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub-keys';

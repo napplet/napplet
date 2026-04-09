@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, and `shell` sub-objects
+3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, and `shell` sub-objects
 4. The shim also installs `window.nostr` (NIP-07 compatible) for transparent signer proxy access
 
 ### Installation
@@ -51,6 +51,16 @@ const ipcSub = window.napplet.ipc.on('profile:open', (payload) => {
 await window.napplet.storage.setItem('theme', 'dark');
 const theme = await window.napplet.storage.getItem('theme'); // 'dark'
 
+// Register a keyboard action the shell can bind to a key
+const result = await window.napplet.keys.registerAction({
+  id: 'editor.save', label: 'Save', defaultKey: 'Ctrl+S',
+});
+
+// Listen for the bound key locally (zero-latency, no postMessage round-trip)
+const keySub = window.napplet.keys.onAction('editor.save', () => {
+  console.log('Save triggered!');
+});
+
 // Check shell capability support (namespaced)
 if (window.napplet.shell.supports('nub:signer')) {
   const pubkey = await window.nostr.getPublicKey();
@@ -59,6 +69,7 @@ if (window.napplet.shell.supports('nub:signer')) {
 // Clean up
 sub.close();
 ipcSub.close();
+keySub.close();
 ```
 
 ## Wire Format
@@ -91,6 +102,10 @@ Messages sent via `window.parent.postMessage(msg, '*')`:
 { type: 'storage.set', id: string, key: string, value: string }
 { type: 'storage.remove', id: string, key: string }
 { type: 'storage.keys', id: string }
+
+{ type: 'keys.forward', key: string, code: string, ctrl: boolean, alt: boolean, shift: boolean, meta: boolean }
+{ type: 'keys.registerAction', id: string, action: { id: string, label: string, defaultKey?: string } }
+{ type: 'keys.unregisterAction', actionId: string }
 ```
 
 ### Inbound (shell → napplet)
@@ -117,6 +132,10 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'storage.set.result', id: string, error?: string }
 { type: 'storage.remove.result', id: string, error?: string }
 { type: 'storage.keys.result', id: string, keys?: string[], error?: string }
+
+{ type: 'keys.registerAction.result', id: string, actionId: string, binding?: string, error?: string }
+{ type: 'keys.bindings', bindings: Array<{ actionId: string, key: string }> }
+{ type: 'keys.action', actionId: string }
 ```
 
 All request/response pairs are correlated by the `id` field. Signer request timeouts after 30 seconds.
@@ -141,6 +160,11 @@ window.napplet = {
     setItem(key, value): Promise<void>;
     removeItem(key): Promise<void>;
     keys(): Promise<string[]>;
+  },
+  keys: {
+    registerAction(action): Promise<{ actionId: string; binding?: string }>;
+    unregisterAction(actionId): void;
+    onAction(actionId, callback): { close(): void };
   },
   shell: {
     supports(capability: NamespacedCapability): boolean;
@@ -178,6 +202,24 @@ Sandboxed key-value storage proxied through the shell. Scoped by napplet identit
 | `removeItem(key)` | `Promise<void>` | Remove a stored key. |
 | `keys()` | `Promise<string[]>` | List all keys stored by this napplet. |
 
+### `window.napplet.keys`
+
+Keyboard forwarding and action keybindings. The shim installs a capture-phase keydown listener that implements smart forwarding: unbound keys are forwarded to the shell via `keys.forward`, while bound keys are handled locally with zero latency.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `registerAction(action)` | `Promise<{ actionId, binding? }>` | Declare a named action the shell can bind to a key. `defaultKey` is a hint. |
+| `unregisterAction(actionId)` | `void` | Remove a previously registered action. Fire-and-forget. |
+| `onAction(actionId, callback)` | `{ close(): void }` | Register a local handler for a bound key. NOT a wire message -- zero latency. |
+
+Smart forwarding rules:
+- Text inputs (`<input>`, `<textarea>`, `contenteditable`) are never forwarded (prevents credential leakage)
+- Bare modifier keys are never forwarded
+- IME composition events are never forwarded
+- Reserved keys (`Tab`, `Shift+Tab`, `Escape`) are never suppressed
+- Bound keys: `preventDefault()` + local action handler, no `keys.forward`
+- Unbound keys: forwarded to shell via `keys.forward`
+
 ### `window.napplet.shell`
 
 Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain, permission, or service.
@@ -204,7 +246,7 @@ Importing `@napplet/shim` activates a global Window type augmentation:
 // This side-effect import gives TypeScript full autocompletion for window.napplet.*
 import '@napplet/shim';
 
-// TypeScript knows about window.napplet.relay, .ipc, .storage, .shell
+// TypeScript knows about window.napplet.relay, .ipc, .storage, .keys, .shell
 window.napplet.relay.subscribe({ kinds: [1] }, (event) => {
   // event is typed as NostrEvent
 });
@@ -222,15 +264,15 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 |---|---|---|
 | **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
-| **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc` (types only) | `@napplet/core` (types only) |
+| **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc`, `@napplet/nub-keys` (types only) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
-| **Named exports** | None | `relay`, `ipc`, `storage`, plus types |
+| **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, plus types |
 
 **Typical usage:** Import both -- shim for window installation, SDK for typed API access:
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage } from '@napplet/sdk';
+import { relay, ipc, storage, keys } from '@napplet/sdk';
 ```
 
 ## Protocol Reference

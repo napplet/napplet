@@ -181,6 +181,55 @@ export interface NappletGlobal {
     keys(): Promise<string[]>;
   };
   /**
+   * Keyboard forwarding and action keybindings: register named actions the shell
+   * can bind to keys, forward unbound keystrokes to the shell, listen for
+   * shell-triggered actions locally.
+   *
+   * @example
+   * ```ts
+   * // Register an action the shell can bind to a key:
+   * const result = await window.napplet.keys.registerAction({
+   *   id: 'editor.save', label: 'Save', defaultKey: 'Ctrl+S',
+   * });
+   *
+   * // Listen for the bound key locally:
+   * const sub = window.napplet.keys.onAction('editor.save', () => {
+   *   console.log('Save triggered!');
+   * });
+   *
+   * // Unregister when no longer needed:
+   * window.napplet.keys.unregisterAction('editor.save');
+   * ```
+   */
+  keys: {
+    /**
+     * Declare a named action that the shell can bind to a key.
+     * The shell decides the actual binding; `defaultKey` is a hint only.
+     * @param action  The action to register (id, label, optional defaultKey)
+     * @returns The assigned binding, if any
+     */
+    registerAction(action: {
+      id: string;
+      label: string;
+      defaultKey?: string;
+    }): Promise<{ actionId: string; binding?: string }>;
+    /**
+     * Remove a previously registered action. The shell removes any binding
+     * and updates the suppress list.
+     * @param actionId  The action to unregister
+     */
+    unregisterAction(actionId: string): void;
+    /**
+     * Register a local handler for when a bound key is pressed.
+     * This is NOT a wire message — the shim intercepts the key locally
+     * and invokes the callback with zero latency.
+     * @param actionId  The action to listen for
+     * @param callback  Called when the action is triggered
+     * @returns A Subscription with `close()` to stop listening
+     */
+    onAction(actionId: string, callback: () => void): Subscription;
+  };
+  /**
    * Shell capability queries. Check whether the shell supports a NUB,
    * permission, or service.
    *

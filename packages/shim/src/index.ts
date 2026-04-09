@@ -2,7 +2,7 @@
 // Side-effect-only module: importing this file installs window.napplet and window.nostr globals.
 // No named exports. No allow-same-origin required.
 
-import { installKeyboardShim } from './keyboard-shim.js';
+import { installKeysShim, handleKeysMessage, registerAction, unregisterAction, onAction } from './keys-shim.js';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStateShim, _nappletStorage } from './state-shim.js';
 import { subscribe, publish, query } from './relay-shim.js';
@@ -256,6 +256,12 @@ function handleEnvelopeMessage(event: MessageEvent): void {
     return;
   }
 
+  // Route keys.* messages to keys shim
+  if (type.startsWith('keys.')) {
+    handleKeysMessage(msg as { type: string; [key: string]: unknown });
+    return;
+  }
+
   // Route IFC event messages to topic handlers
   if (type === 'ifc.event') {
     const ifcMsg = msg as IfcEventMessage;
@@ -323,6 +329,11 @@ function handleEnvelopeMessage(event: MessageEvent): void {
     removeItem: _nappletStorage.removeItem.bind(_nappletStorage),
     keys: _nappletStorage.keys.bind(_nappletStorage),
   },
+  keys: {
+    registerAction,
+    unregisterAction,
+    onAction,
+  },
   shell: {
     supports(_capability: string): boolean {
       // TODO: Shell populates supported capabilities at iframe creation
@@ -339,8 +350,8 @@ window.addEventListener('message', handleEnvelopeMessage);
 // Install window.nostrdb NIP-DB proxy
 installNostrDb();
 
-// Install keyboard forwarding (hotkeys work when iframe has focus)
-installKeyboardShim();
+// Install keys shim (smart forwarding + action keybindings)
+installKeysShim();
 
 // Install napplet-side storage proxy
 installStateShim();

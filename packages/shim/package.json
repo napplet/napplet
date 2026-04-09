@@ -24,7 +24,8 @@
     "@napplet/nub-relay": "workspace:*",
     "@napplet/nub-signer": "workspace:*",
     "@napplet/nub-storage": "workspace:*",
-    "@napplet/nub-ifc": "workspace:*"
+    "@napplet/nub-ifc": "workspace:*",
+    "@napplet/nub-keys": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

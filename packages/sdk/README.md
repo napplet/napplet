@@ -12,7 +12,7 @@
 ### How It Works
 
 1. Import `@napplet/shim` in your entry point to install the `window.napplet` global
-2. Import named exports from `@napplet/sdk` -- `relay`, `ipc`, `storage`
+2. Import named exports from `@napplet/sdk` -- `relay`, `ipc`, `storage`, `keys`
 3. Each SDK method delegates to its `window.napplet.*` counterpart at call time
 4. If `window.napplet` is not installed when a method is called, a descriptive error is thrown
 
@@ -26,7 +26,7 @@ npm install @napplet/sdk @napplet/shim
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, type NostrEvent } from '@napplet/sdk';
+import { relay, ipc, storage, keys, type NostrEvent } from '@napplet/sdk';
 
 // Subscribe to kind 1 notes
 const sub = relay.subscribe(
@@ -53,9 +53,20 @@ const ipcSub = ipc.on('bot:response', (payload) => {
 await storage.setItem('theme', 'dark');
 const theme = await storage.getItem('theme'); // 'dark'
 
+// Register keyboard action
+const result = await keys.registerAction({
+  id: 'editor.save', label: 'Save', defaultKey: 'Ctrl+S',
+});
+
+// Listen for bound key locally
+const keySub = keys.onAction('editor.save', () => {
+  console.log('Save triggered!');
+});
+
 // Clean up
 sub.close();
 ipcSub.close();
+keySub.close();
 ```
 
 ## API Reference
@@ -92,6 +103,16 @@ Sandboxed key-value storage. Mirrors `window.napplet.storage`. 512 KB quota per 
 | `setItem(key, value)` | `Promise<void>` | Store a key-value pair |
 | `removeItem(key)` | `Promise<void>` | Remove a stored key |
 | `keys()` | `Promise<string[]>` | List all stored keys |
+
+### `keys`
+
+Keyboard forwarding and action keybindings. Mirrors `window.napplet.keys`.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `registerAction(action)` | `Promise<{ actionId, binding? }>` | Declare a named action the shell can bind to a key |
+| `unregisterAction(actionId)` | `void` | Remove a previously registered action |
+| `onAction(actionId, callback)` | `{ close(): void }` | Register a local handler for a bound key (zero-latency, not a wire message) |
 
 ### `shell`
 
@@ -148,6 +169,8 @@ import type {
   SignerNubMessage,
   StorageNubMessage,
   IfcNubMessage,
+  KeysNubMessage,
+  Action,
 } from '@napplet/sdk';
 ```
 
@@ -175,6 +198,7 @@ handlers in shell implementations or protocol-aware code.
 | `SignerNubMessage` | `@napplet/nub-signer` | Discriminated union of all signer domain messages |
 | `StorageNubMessage` | `@napplet/nub-storage` | Discriminated union of all storage domain messages |
 | `IfcNubMessage` | `@napplet/nub-ifc` | Discriminated union of all IFC domain messages |
+| `KeysNubMessage` | `@napplet/nub-keys` | Discriminated union of all keys domain messages |
 
 Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
@@ -184,8 +208,8 @@ Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage
 Each NUB domain has a string constant re-exported from its package:
 
 ```ts
-import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN } from '@napplet/sdk';
-// Values: 'relay', 'signer', 'storage', 'ifc'
+import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'signer', 'storage', 'ifc', 'theme', 'keys'
 ```
 
 These constants are re-exported from the individual NUB packages. Use them with the shell capability query
@@ -228,8 +252,8 @@ This protects against importing `@napplet/sdk` without the side-effect shim impo
 **Typical usage:** Import both -- shim for runtime, SDK for developer API:
 
 ```ts
-import '@napplet/shim';                              // required: installs window.napplet
-import { relay, ipc, storage } from '@napplet/sdk';  // optional: typed API
+import '@napplet/shim';                                      // required: installs window.napplet
+import { relay, ipc, storage, keys } from '@napplet/sdk';  // optional: typed API
 ```
 
 If you are writing a vanilla napplet with no build step, use `window.napplet.*` directly after importing the shim -- the SDK is not required.
