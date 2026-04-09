@@ -22,6 +22,7 @@
 - ✅ **v0.18.0 Spec Conformance Audit** — Phases 83-86 (shipped 2026-04-09) — [Archive](milestones/v0.18.0-ROADMAP.md)
 - ✅ **v0.19.0 Spec Gap Drops** — Phase 87 (shipped 2026-04-09) — [Archive](milestones/v0.19.0-ROADMAP.md)
 - ✅ **v0.20.0 Keys NUB** — Phases 88-92 (shipped 2026-04-09) — [Archive](milestones/v0.20.0-ROADMAP.md)
+- ✅ **v0.21.0 NUB Modularization** — Phases 93-95 (shipped 2026-04-09) — [Archive](milestones/v0.21.0-ROADMAP.md)
 
 ## Phases
 
@@ -239,52 +240,91 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### v0.21.0 NUB Modularization (In Progress)
+<details>
+<summary>v0.21.0 NUB Modularization (Phases 93-95) — SHIPPED 2026-04-09</summary>
 
-**Milestone Goal:** Move ALL domain-specific logic from shim and SDK into NUB packages. Shim and SDK become thin plugin hosts.
+- [x] **Phase 93: NUB Package Refactor** - Move domain logic into all 5 NUB packages (shim installers + SDK helpers)
+- [x] **Phase 94: Shim + SDK Thin Hosts** - Refactor shim/SDK to import from NUB packages, add named exports for cherry-picking
+- [x] **Phase 95: Verification** - Build clean, API surface identical before and after
 
-- [ ] **Phase 93: NUB Package Refactor** - Move domain logic into all 5 NUB packages (shim installers + SDK helpers)
-- [ ] **Phase 94: Shim + SDK Thin Hosts** - Refactor shim/SDK to import from NUB packages, add named exports for cherry-picking
-- [ ] **Phase 95: Verification** - Build clean, API surface identical before and after
+</details>
+
+### v0.22.0 Media NUB + Kill Services (In Progress)
+
+**Milestone Goal:** Remove the dead `svc:` namespace, draft the NUB-MEDIA spec, implement @napplet/nub-media, and integrate media into core/shim/SDK.
+
+- [ ] **Phase 96: Kill Services** - Remove svc: prefix, drop AUDIO_* TOPICS superseded by media NUB
+- [ ] **Phase 97: NUB-MEDIA Spec** - Draft NUB-MEDIA spec in nubs repo, PR to napplet/nubs
+- [ ] **Phase 98: NUB Media Package** - @napplet/nub-media with types, shim installer, SDK wrappers
+- [ ] **Phase 99: Core + Shim Integration** - Add 'media' to NubDomain, NappletGlobal, and shim entry point
+- [ ] **Phase 100: Documentation** - READMEs for nub-media, NIP-5D domain table update, core/shim/SDK docs
 
 ## Phase Details
 
-### Phase 93: NUB Package Refactor
-**Goal**: Each NUB package owns its domain logic — shim installer + SDK helpers alongside typed messages
-**Depends on**: Nothing (first phase of v0.21.0)
-**Requirements**: NUB-01, NUB-02, NUB-03, NUB-04, NUB-05, NUB-06, NUB-07
+### Phase 96: Kill Services
+**Goal**: The `svc:` capability namespace and deferred AUDIO_* topics are fully removed -- everything is a NUB
+**Depends on**: Nothing (first phase of v0.22.0)
+**Requirements**: SVC-01, SVC-02, SVC-03
 **Success Criteria** (what must be TRUE):
-  1. Each of 5 NUB packages exports an `install*Shim()` function
-  2. Each of 5 NUB packages exports SDK helper functions wrapping `window.napplet.{domain}.*`
-  3. relay-shim.ts logic in nub-relay, state-shim.ts logic in nub-storage, keys-shim.ts logic in nub-keys
-  4. Signer logic in nub-signer, IFC logic in nub-ifc
-  5. `pnpm build` succeeds for all NUB packages
+  1. `NamespacedCapability` type in envelope.ts no longer contains `svc:` prefix or template literal
+  2. No occurrence of `svc:` in NIP-5D.md, any README, or any JSDoc comment across the repo
+  3. The 4 AUDIO_* entries are gone from core/topics.ts (or topics.ts is deleted if empty)
+  4. `pnpm build && pnpm type-check` passes clean
+**Plans**: TBD
 
-### Phase 94: Shim + SDK Thin Hosts
-**Goal**: Shim and SDK contain zero domain-specific logic — thin orchestrators importing from NUB packages
-**Depends on**: Phase 93
-**Requirements**: SHIM-01, SHIM-02, SHIM-03, SHIM-04, SDK-01, SDK-02, SDK-03
+### Phase 97: NUB-MEDIA Spec
+**Goal**: NUB-MEDIA spec exists as a PR in the napplet/nubs repo, following NUB-KEYS pattern
+**Depends on**: Phase 96 (svc: removal clarifies that media is a NUB, not a service)
+**Requirements**: SPEC-01
 **Success Criteria** (what must be TRUE):
-  1. `import '@napplet/shim'` installs all NUB shims (unchanged DX)
-  2. Named exports: `import { installRelayShim, installKeysShim } from '@napplet/shim'`
-  3. Shim source contains zero domain logic; relay-shim.ts, state-shim.ts, keys-shim.ts deleted
-  4. Default SDK import provides all NUB helpers (unchanged DX)
-  5. Named exports per NUB domain from SDK
-  6. SDK source contains zero domain logic — re-exports only
+  1. A NUB-MEDIA.md file exists in ~/Develop/nubs/ following the structure of existing NUB specs
+  2. Spec covers session lifecycle (create/update/destroy), multiple sessions, dynamic capabilities
+  3. Spec covers dual volume model (napplet volume x shell volume), shell control list, and media commands
+  4. Spec covers full metadata schema (title, artist, album, artwork URL/blossom, duration, mediaType -- all optional)
+  5. A PR is opened against napplet/nubs (same pattern as napplet/nubs#9 for NUB-KEYS)
+**Plans**: TBD
 
-### Phase 95: Verification
-**Goal**: Entire monorepo builds clean, public API surface identical
-**Depends on**: Phase 93, Phase 94
-**Requirements**: VER-01, VER-02
+### Phase 98: NUB Media Package
+**Goal**: @napplet/nub-media package exists with typed messages, shim installer, and SDK wrappers
+**Depends on**: Phase 97 (types derive from the spec)
+**Requirements**: NUB-01, NUB-02
 **Success Criteria** (what must be TRUE):
-  1. `pnpm build && pnpm type-check` passes clean across all 10 packages
-  2. Shim public API identical or strict superset of pre-refactor
-  3. SDK public API identical or strict superset of pre-refactor
+  1. `packages/nubs/media/` exists with types.ts defining all message interfaces (media.session.create, media.session.create.result, media.session.update, media.session.destroy, media.state, media.capabilities, media.command, media.controls)
+  2. shim.ts exports `installMediaShim()` with session management, state reporting, and command handling
+  3. sdk.ts exports convenience wrappers for session lifecycle and state queries
+  4. Package builds clean with tsup and exports via barrel index.ts
+**Plans**: TBD
+
+### Phase 99: Core + Shim Integration
+**Goal**: The media NUB is wired into the monorepo -- core recognizes the domain, shim installs it
+**Depends on**: Phase 98 (nub-media package must exist)
+**Requirements**: CORE-01, CORE-02, SHIM-01
+**Success Criteria** (what must be TRUE):
+  1. `'media'` is in the `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
+  2. `NappletGlobal` type in types.ts includes a `media` namespace matching the SDK surface
+  3. `import '@napplet/shim'` calls `installMediaShim()` and `window.napplet.media.*` is available
+  4. `pnpm build && pnpm type-check` passes clean across all packages
+**Plans**: TBD
+
+### Phase 100: Documentation
+**Goal**: All documentation reflects the new media NUB and the removed svc: namespace
+**Depends on**: Phase 96, Phase 98, Phase 99 (needs final API shape)
+**Requirements**: DOC-01, DOC-02, DOC-03
+**Success Criteria** (what must be TRUE):
+  1. @napplet/nub-media has a README with full message reference table and metadata schema
+  2. NIP-5D Known NUBs domain table includes `media` row; all `svc:` examples and service discovery text are gone
+  3. Core, shim, and SDK READMEs reference the media NUB and no longer mention `svc:` prefix
+**Plans**: TBD
 
 ## Progress
 
+**Execution Order:**
+Phases execute in numeric order: 96 -> 97 -> 98 -> 99 -> 100
+
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 93. NUB Package Refactor | 0/0 | Not started | - |
-| 94. Shim + SDK Thin Hosts | 0/0 | Not started | - |
-| 95. Verification | 0/0 | Not started | - |
+| 96. Kill Services | 0/0 | Not started | - |
+| 97. NUB-MEDIA Spec | 0/0 | Not started | - |
+| 98. NUB Media Package | 0/0 | Not started | - |
+| 99. Core + Shim Integration | 0/0 | Not started | - |
+| 100. Documentation | 0/0 | Not started | - |

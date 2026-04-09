@@ -60,24 +60,24 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SVC-01 | — | Pending |
-| SVC-02 | — | Pending |
-| SVC-03 | — | Pending |
-| SPEC-01 | — | Pending |
-| NUB-01 | — | Pending |
-| NUB-02 | — | Pending |
-| CORE-01 | — | Pending |
-| CORE-02 | — | Pending |
-| SHIM-01 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
+| SVC-01 | Phase 96 | Pending |
+| SVC-02 | Phase 96 | Pending |
+| SVC-03 | Phase 96 | Pending |
+| SPEC-01 | Phase 97 | Pending |
+| NUB-01 | Phase 98 | Pending |
+| NUB-02 | Phase 98 | Pending |
+| CORE-01 | Phase 99 | Pending |
+| CORE-02 | Phase 99 | Pending |
+| SHIM-01 | Phase 99 | Pending |
+| DOC-01 | Phase 100 | Pending |
+| DOC-02 | Phase 100 | Pending |
+| DOC-03 | Phase 100 | Pending |
 
 **Coverage:**
 - v0.22.0 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after initial definition*
+*Last updated: 2026-04-09 after roadmap creation*
