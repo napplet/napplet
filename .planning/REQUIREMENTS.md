@@ -9,8 +9,8 @@ Implement the Keys NUB (napplet/nubs#9) -- bidirectional keyboard protocol with 
 
 ### NUB Type Package
 
-- [ ] **NUB-01**: Create `@napplet/nub-keys` package with typed message definitions per NUB-KEYS spec (keys.forward, keys.registerAction, keys.registerAction.result, keys.unregisterAction, keys.bindings, keys.action)
-- [ ] **NUB-02**: Package follows existing NUB pattern (tsup, ESM-only, barrel export, DOMAIN constant)
+- [x] **NUB-01**: Create `@napplet/nub-keys` package with typed message definitions per NUB-KEYS spec (keys.forward, keys.registerAction, keys.registerAction.result, keys.unregisterAction, keys.bindings, keys.action)
+- [x] **NUB-02**: Package follows existing NUB pattern (tsup, ESM-only, barrel export, DOMAIN constant)
 
 ### Core Integration
 
@@ -60,8 +60,8 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NUB-01 | Phase 88 | Pending |
-| NUB-02 | Phase 88 | Pending |
+| NUB-01 | Phase 88 | Complete |
+| NUB-02 | Phase 88 | Complete |
 | CORE-01 | Phase 89 | Pending |
 | CORE-02 | Phase 89 | Pending |
 | SHIM-01 | Phase 90 | Pending |
