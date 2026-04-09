@@ -234,7 +234,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 88: NUB Type Package** - Create @napplet/nub-keys with typed message definitions per NUB-KEYS spec (completed 2026-04-09)
 - [x] **Phase 89: Core Integration** - Add 'keys' to NubDomain union and NappletGlobal type (completed 2026-04-09)
 - [x] **Phase 90: Shim Implementation** - Replace keyboard-shim.ts with NUB-KEYS smart forwarding and action API (completed 2026-04-09)
-- [ ] **Phase 91: SDK Wrappers** - Add keys namespace to SDK with registerAction() convenience and NUB type re-exports
+- [x] **Phase 91: SDK Wrappers** - Add keys namespace to SDK with registerAction() convenience and NUB type re-exports (completed 2026-04-09)
 - [ ] **Phase 92: Documentation** - README for nub-keys, NIP-5D domain table update, core/shim/SDK README updates
 
 ## Phase Details
@@ -288,7 +288,7 @@ Plans:
   3. All `@napplet/nub-keys` message types and the `DOMAIN` constant are re-exported from `@napplet/sdk`
 **Plans**: 1 plan
 Plans:
-- [ ] 91-01-PLAN.md — Verify SDK keys wrappers and nub-keys re-exports
+- [x] 91-01-PLAN.md — Verify SDK keys wrappers and nub-keys re-exports
 
 ### Phase 92: Documentation
 **Goal**: Developers can learn how to use the keys NUB from package READMEs and NIP-5D
@@ -312,5 +312,5 @@ Plans:
 | 88. NUB Type Package | 1/1 | Complete   | 2026-04-09 |
 | 89. Core Integration | 1/1 | Complete    | 2026-04-09 |
 | 90. Shim Implementation | 1/1 | Complete    | 2026-04-09 |
-| 91. SDK Wrappers | 0/? | Not started | - |
+| 91. SDK Wrappers | 1/1 | Complete | 2026-04-09 |
 | 92. Documentation | 0/? | Not started | - |

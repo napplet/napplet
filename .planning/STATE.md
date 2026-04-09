@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.20.0
 milestone_name: Keys NUB
-status: verifying
-stopped_at: Completed 90-01-PLAN.md
-last_updated: "2026-04-09T11:05:58.097Z"
+status: executing
+stopped_at: Completed 91-01-PLAN.md
+last_updated: "2026-04-09T11:12:18Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 100
+  completed_phases: 4
+  total_plans: 4
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-09)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 88 -- NUB Type Package
+**Current focus:** Phase 91 -- SDK Wrappers
 
 ## Current Position
 
 Phase: 91 of 5 (sdk wrappers)
-Plan: Not started
-Status: Phase complete — ready for verification
+Plan: 1 of 1 complete
+Status: Phase 91 complete -- ready for Phase 92 (Documentation)
 Last activity: 2026-04-09
 
-Progress: [██████████] 100%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [██████████] 100%
 *Updated after each plan completion*
 | Phase 89 P01 | 1min | 2 tasks | 2 files |
 | Phase 90 P01 | 2min | 1 tasks | 0 files |
+| Phase 91 P01 | 1min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - v0.20.0: @napplet/nub-keys follows exact pattern of existing NUB packages (theme as template)
 - [Phase 89]: Inline structural types used for keys namespace in NappletGlobal (core cannot depend on NUB packages)
 - [Phase 90]: Verification-only plan -- cross-phase code validated against all acceptance criteria without changes
+- [Phase 91]: Added keys.register() convenience to SDK -- combines registerAction + onAction + cleanup handle
 
 ### Blockers/Concerns
 
@@ -77,6 +79,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:03:30.912Z
-Stopped at: Completed 90-01-PLAN.md
-Resume: `/gsd:plan-phase 89` to plan Core Integration
+Last session: 2026-04-09T11:12:18Z
+Stopped at: Completed 91-01-PLAN.md
+Resume: `/gsd:execute-phase 92` to execute Documentation phase

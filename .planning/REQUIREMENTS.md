@@ -26,9 +26,9 @@ Implement the Keys NUB (napplet/nubs#9) -- bidirectional keyboard protocol with 
 
 ### SDK
 
-- [ ] **SDK-01**: Add `keys` namespace to SDK wrapping `window.napplet.keys`
-- [ ] **SDK-02**: Convenience `registerAction()` that auto-wires `onAction()` listener + suppress handling
-- [ ] **SDK-03**: Re-export all `@napplet/nub-keys` message types
+- [x] **SDK-01**: Add `keys` namespace to SDK wrapping `window.napplet.keys`
+- [x] **SDK-02**: Convenience `registerAction()` that auto-wires `onAction()` listener + suppress handling
+- [x] **SDK-03**: Re-export all `@napplet/nub-keys` message types
 
 ### Documentation
 
@@ -68,9 +68,9 @@ Deferred to future milestones.
 | SHIM-02 | Phase 90 | Complete |
 | SHIM-03 | Phase 90 | Complete |
 | SHIM-04 | Phase 90 | Complete |
-| SDK-01 | Phase 91 | Pending |
-| SDK-02 | Phase 91 | Pending |
-| SDK-03 | Phase 91 | Pending |
+| SDK-01 | Phase 91 | Complete |
+| SDK-02 | Phase 91 | Complete |
+| SDK-03 | Phase 91 | Complete |
 | DOC-01 | Phase 92 | Pending |
 | DOC-02 | Phase 92 | Pending |
 | DOC-03 | Phase 92 | Pending |
