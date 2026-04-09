@@ -1,5 +1,16 @@
 # Milestones
 
+## v0.18.0 Spec Conformance Audit (Shipped: 2026-04-09)
+
+**Phases completed:** 4 phases, 4 plans, 10 tasks
+
+**Key accomplishments:**
+
+- Deleted 5 dead code items across core and shim: handshake types, uncalled function, dead re-export file, and leaked internal Maps
+- Removed stale services.has() API, added missing theme NUB domain, and fixed D-02/D-03 decision ID artifacts across 5 files
+
+---
+
 ## v0.17.0 Capability Cleanup (Shipped: 2026-04-08)
 
 **Phases completed:** 3 phases, 3 plans, 2 tasks

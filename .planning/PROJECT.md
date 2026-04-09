@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.18.0 Spec Conformance Audit
+
+Audited entire codebase against NIP-5D and NUB specs. Removed dead code (handshake types, unused functions, dead re-exports). Created exhaustive spec gap inventory (SPEC-GAPS.md) documenting every unspecced artifact. Fixed stale documentation across 5 files. Captured drop/defer/amend decisions for all gaps: 7 items to drop in v0.19.0, 5 deferred, 1 for spec amendment (keyboard forwarding). Corrected inventory: IFC channels and nostrdb are spec-backed via draft NUB PRs. 4 phases, 4 plans shipped 2026-04-09. See [archive](milestones/v0.18.0-ROADMAP.md).
+
 ## Shipped: v0.17.0 Capability Cleanup
 
 Namespaced `shell.supports()` with `nub:`/`perm:`/`svc:` prefixes replacing flat `NubDomain | string`. Deleted `legacy.ts`, `discovery-shim.ts`, `ServiceDescriptor`/`ServiceInfo` types, `window.napplet.services` API, and `napplet-napp-type` backward compat. All READMEs updated. 3 phases, 3 plans shipped 2026-04-08. See [archive](milestones/v0.17.0-ROADMAP.md).
@@ -161,17 +165,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Dead service discovery code removed (discovery-shim, ServiceDescriptor, legacy.ts, services API) — v0.17.0 Phase 81 (DEAD-01..07, COMPAT-01..02)
 - ✓ READMEs updated for cleaned-up API surface — v0.17.0 Phase 82 (DOC-01..04)
 
+- ✓ Dead code removed (RegisterPayload, IdentityPayload, getNappletType, shim/types.ts, leaked exports) — v0.18.0 Phase 83 (DEAD-01..05)
+- ✓ Spec gap inventory created (SPEC-GAPS.md) with 10 entries across 8 GAP IDs — v0.18.0 Phase 84 (GAP-01..09)
+- ✓ Stale documentation fixed (services.has→shell.supports, theme NUB in tables, D-02/D-03 removed) — v0.18.0 Phase 85 (DOC-01..05)
+- ✓ Drop/defer/amend decisions captured for all spec gaps — v0.18.0 Phase 86 (DECIDE-01)
+
 ### Active
 
-## Current Milestone: v0.18.0 Spec Conformance Audit
-
-**Goal:** Audit the entire codebase against NIP-5D and NUB specs — remove all dead code, and surface every functionality not covered by the spec so the spec author can decide: drop it or amend the spec.
-
-**Target features:**
-- Exhaustive dead code removal (code with no callers, no exports, no purpose)
-- Spec gap inventory — every function, type, constant, and behavior not covered by a spec section
-- Decision log — for each gap: drop from code, or flag for spec amendment
-- No backwards compatibility shims, deprecated aliases, or legacy paths retained
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -188,7 +189,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.18.0 in progress (Spec Conformance Audit). Phase 83 (Dead Code Removal) and Phase 84 (Spec Gap Inventory) complete. SPEC-GAPS.md catalogs all unspecified code with recommendation categories. 9 packages (4 core + 5 NUB). Protocol version 4.0.0. 17 milestones shipped.
+- **Current state**: v0.18.0 shipped (Spec Conformance Audit). Dead code removed, spec gaps documented with decisions. 9 packages (4 core + 5 NUB). 18 milestones shipped. 7 code drops queued for v0.19.0 (Capability, superseded/config/relay TOPICS, SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS, PROTOCOL_VERSION).
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -277,4 +278,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-08 after Phase 84 completion*
+*Last updated: 2026-04-09 after v0.18.0 milestone*
