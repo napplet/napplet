@@ -1,13 +1,13 @@
 /**
  * @napplet/nub-relay -- Relay NUB module.
  *
- * Exports typed message definitions for the relay domain and registers
- * the 'relay' domain with the core dispatch infrastructure on import.
+ * Exports typed message definitions for the relay domain, shim installer,
+ * SDK helpers, and registers the 'relay' domain with core dispatch on import.
  *
  * @example
  * ```ts
  * import type { RelaySubscribeMessage, RelayNubMessage } from '@napplet/nub-relay';
- * import { DOMAIN } from '@napplet/nub-relay';
+ * import { DOMAIN, installRelayShim, relaySubscribe } from '@napplet/nub-relay';
  * ```
  *
  * @packageDocumentation
@@ -32,6 +32,14 @@ export type {
   RelayInboundMessage,
   RelayNubMessage,
 } from './types.js';
+
+// ─── Shim Exports ─────────────────────────────────────────────────────────
+
+export { installRelayShim, subscribe, publish, query } from './shim.js';
+
+// ─── SDK Exports ──────────────────────────────────────────────────────────
+
+export { relaySubscribe, relayPublish, relayQuery } from './sdk.js';
 
 // ─── Domain Registration ───────────────────────────────────────────────────
 

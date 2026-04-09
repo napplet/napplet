@@ -1,13 +1,13 @@
 /**
  * @napplet/nub-keys -- Keys NUB module.
  *
- * Exports typed message definitions for the keys domain and registers
- * the 'keys' domain with the core dispatch infrastructure on import.
+ * Exports typed message definitions for the keys domain, shim installer,
+ * SDK helpers, and registers the 'keys' domain with core dispatch on import.
  *
  * @example
  * ```ts
  * import type { KeysForwardMessage, KeysNubMessage, Action } from '@napplet/nub-keys';
- * import { DOMAIN } from '@napplet/nub-keys';
+ * import { DOMAIN, installKeysShim, keysRegisterAction } from '@napplet/nub-keys';
  * ```
  *
  * @packageDocumentation
@@ -32,6 +32,25 @@ export type {
   KeysResultMessage,
   KeysNubMessage,
 } from './types.js';
+
+// ─── Shim Exports ─────────────────────────────────────────────────────────
+
+export {
+  installKeysShim,
+  handleKeysMessage,
+  registerAction,
+  unregisterAction,
+  onAction,
+} from './shim.js';
+
+// ─── SDK Exports ──────────────────────────────────────────────────────────
+
+export {
+  keysRegisterAction,
+  keysUnregisterAction,
+  keysOnAction,
+  keysRegister,
+} from './sdk.js';
 
 // ─── Domain Registration ───────────────────────────────────────────────────
 
