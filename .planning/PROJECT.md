@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.19.0 Spec Gap Drops
+
+Executed all 7 "drop" verdicts from the v0.18.0 spec conformance audit. Deleted `Capability` type, `ALL_CAPABILITIES`, 13 TOPICS entries (superseded/config/relay), `SHELL_BRIDGE_URI`, `REPLAY_WINDOW_SECONDS`, `PROTOCOL_VERSION`, and `constants.ts` entirely. `@napplet/core` now exports only spec-backed artifacts. 1 phase, 1 plan shipped 2026-04-09. See [archive](milestones/v0.19.0-ROADMAP.md).
+
 ## Shipped: v0.18.0 Spec Conformance Audit
 
 Audited entire codebase against NIP-5D and NUB specs. Removed dead code (handshake types, unused functions, dead re-exports). Created exhaustive spec gap inventory (SPEC-GAPS.md) documenting every unspecced artifact. Fixed stale documentation across 5 files. Captured drop/defer/amend decisions for all gaps: 7 items to drop in v0.19.0, 5 deferred, 1 for spec amendment (keyboard forwarding). Corrected inventory: IFC channels and nostrdb are spec-backed via draft NUB PRs. 4 phases, 4 plans shipped 2026-04-09. See [archive](milestones/v0.18.0-ROADMAP.md).
@@ -170,17 +174,11 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Stale documentation fixed (services.has→shell.supports, theme NUB in tables, D-02/D-03 removed) — v0.18.0 Phase 85 (DOC-01..05)
 - ✓ Drop/defer/amend decisions captured for all spec gaps — v0.18.0 Phase 86 (DECIDE-01)
 
+- ✓ All 7 drop-verdict artifacts deleted from @napplet/core — v0.19.0 Phase 87 (DROP-01..09)
+
 ### Active
 
-## Current Milestone: v0.19.0 Spec Gap Drops
-
-**Goal:** Execute all 7 "drop" verdicts from SPEC-GAPS.md — remove every piece of unspecced code identified in the v0.18.0 audit.
-
-**Target features:**
-- Delete Capability type + ALL_CAPABILITIES from core
-- Delete 13 superseded/config/relay TOPICS from core
-- Delete SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS, PROTOCOL_VERSION from core
-- Update tests and verify build
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -197,7 +195,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.19.0 in progress (Spec Gap Drops). Executing 7 code drops from v0.18.0 audit. 9 packages (4 core + 5 NUB). 18 milestones shipped.
+- **Current state**: v0.19.0 shipped (Spec Gap Drops). All unspecced artifacts removed from core. 9 packages (4 core + 5 NUB). 19 milestones shipped. SPEC-GAPS.md deferred items remain: 5 topic groups + nostrdb audit.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -286,4 +284,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.19.0 milestone start*
+*Last updated: 2026-04-09 after v0.19.0 milestone*

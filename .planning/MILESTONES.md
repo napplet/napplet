@@ -1,5 +1,15 @@
 # Milestones
 
+## v0.19.0 Spec Gap Drops (Shipped: 2026-04-09)
+
+**Phases completed:** 1 phases, 1 plans, 3 tasks
+
+**Key accomplishments:**
+
+- Deleted 7 unspecced artifacts from @napplet/core: Capability type, ALL_CAPABILITIES, 13 dropped TOPICS, 3 dead constants, and constants.ts file
+
+---
+
 ## v0.18.0 Spec Conformance Audit (Shipped: 2026-04-09)
 
 **Phases completed:** 4 phases, 4 plans, 10 tasks
