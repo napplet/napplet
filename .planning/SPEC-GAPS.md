@@ -2,7 +2,32 @@
 
 **Created:** 2026-04-08
 **Phase:** 84 (Spec Gap Inventory)
-**Purpose:** Catalog every piece of code in the napplet SDK not covered by NIP-5D or any NUB spec. Each entry includes location, purpose, evidence of no spec backing, and a recommendation category. This document is the input for Phase 86 (Decision Gate).
+**Purpose:** Catalog every piece of code in the napplet SDK not covered by NIP-5D or any NUB spec. Each entry includes location, purpose, evidence of no spec backing, and a recommendation category.
+
+## Decision Summary (Phase 86)
+
+**Decided:** 2026-04-09
+
+| Verdict | Count | Items |
+|---------|-------|-------|
+| **drop** | 7 | GAP-01, GAP-02b, GAP-02c-config, GAP-02c-relay, GAP-03, GAP-04, GAP-05 |
+| **defer** | 5 | GAP-02a, GAP-02c-keybinds, GAP-02c-wm, GAP-02c-audio, GAP-06 |
+| **amend-spec** | 1 | GAP-07 |
+| **removed (spec-backed)** | 1 | GAP-09 (IFC NUB draft) |
+
+### Action Items
+
+| Action | What | Next Milestone |
+|--------|------|----------------|
+| Delete code | `Capability` type + `ALL_CAPABILITIES` from core/types.ts | v0.19.0 |
+| Delete code | 7 superseded TOPICS (AUTH + STATE_*) from core/topics.ts | v0.19.0 |
+| Delete code | 3 config TOPICS (shell:config-*) from core/topics.ts | v0.19.0 |
+| Delete code | 3 scoped relay TOPICS (shell:relay-scoped-*) from core/topics.ts | v0.19.0 |
+| Delete code | `SHELL_BRIDGE_URI` from core/constants.ts | v0.19.0 |
+| Delete code | `REPLAY_WINDOW_SECONDS` from core/constants.ts | v0.19.0 |
+| Delete code | `PROTOCOL_VERSION` from core/constants.ts | v0.19.0 |
+| Audit conformance | window.nostrdb proxy vs napplet/nubs#4 NUB spec | Future |
+| Amend NIP-5D | Add keyboard forwarding to spec or create keyboard NUB | Future |
 
 ## Categories
 
@@ -26,7 +51,7 @@
 | GAP-05 | `PROTOCOL_VERSION` | core/src/constants.ts:19 | unknown | Version string not defined in NIP-5D |
 | GAP-06 | `window.nostrdb` proxy | shim/src/nipdb-shim.ts:1-224 | future-nub | Parallel NIP-DB local cache protocol |
 | GAP-07 | `keyboard.forward` shim | shim/src/keyboard-shim.ts:1-91 | unknown | Hotkey forwarding protocol |
-| GAP-09 | IFC channel types | nubs/ifc/src/types.ts:106-207 | future-nub | 9 channel message types, defined but unimplemented |
+| ~~GAP-09~~ | ~~IFC channel types~~ | ~~nubs/ifc/src/types.ts:106-207~~ | ~~removed~~ | ~~Spec-backed: IFC NUB draft in napplet/nubs~~ |
 
 ---
 
@@ -84,6 +109,10 @@ ACL enforcement is a shell implementation detail. The strings `relay:read`, `sig
 - `cache:read`/`cache:write` capabilities relate to GAP-06 (nostrdb proxy)
 - `state:read`/`state:write` capabilities use old "state" naming, while the NUB uses "storage"
 
+### Decision
+
+**Verdict: drop** — Remove `Capability` type and `ALL_CAPABILITIES` constant from `@napplet/core`. ACL strings are a shell implementation detail.
+
 ---
 
 ## GAP-02: TOPICS Constant
@@ -120,6 +149,8 @@ CHAT_OPEN_DM: 'chat:open-dm',
 
 **Reasoning:** These topics represent real user-facing interactions that multiple napplets would want to trigger. They deserve formalization as either IFC topic conventions or a new NUB.
 
+**Decision: defer** — Keep these 5 topic constants. Will become NUB messages via upcoming PR.
+
 ### GAP-02b: Superseded Topics
 
 **Category:** `superseded`
@@ -151,6 +182,8 @@ STATE_RESPONSE: 'napplet:state-response',
 **Evidence:** The `STATE_*` topics were the pre-v4 mechanism for napplet storage, using kind 29003 IPC events with `t` tags. The `storage.*` NUB messages (`storage.get`, `storage.set`, `storage.remove`, `storage.keys`) replaced them entirely. The shim's `state-shim.ts` now uses `storage.*` envelope messages directly (confirmed by reading the file -- it imports `StorageGetMessage`, `StorageSetMessage`, etc. from `@napplet/nub-storage`). `AUTH_IDENTITY_CHANGED` referenced NIP-42 AUTH which was removed in v0.15.0 (Phase 70).
 
 **Reasoning:** These topics served a purpose that is now fully covered by NUB message types. They are dead protocol surface that should be removed.
+
+**Decision: drop** — Remove all 7 superseded topics from `TOPICS` constant.
 
 ### GAP-02c: Unknown Topics
 
@@ -211,6 +244,13 @@ AUDIO_MUTED: 'napplet:audio-muted',
 
 Each needs an explicit decision from the spec author.
 
+**Decisions (per sub-group):**
+- **config (3):** **drop** — Shell config is shell-specific, remove `SHELL_CONFIG_*` topics
+- **keybinds (6):** **defer** — Keep `KEYBINDS_*` topics, might become a NUB
+- **wm (1):** **defer** — Keep `WM_FOCUSED_WINDOW_CHANGED`, might become a NUB
+- **scoped relay (3):** **drop** — Relay NUB covers scoped relay via `relay` field, remove `RELAY_SCOPED_*` topics
+- **audio (4):** **defer** — Keep `AUDIO_*` topics, might become an audio NUB
+
 ---
 
 ## GAP-03: SHELL_BRIDGE_URI Constant
@@ -247,6 +287,10 @@ NIP-5D does not define any URI constants. The JSDoc explicitly references "NIP-4
 ### Reasoning
 
 This constant served the AUTH handshake that was removed. With AUTH gone, there is no protocol reason for a pseudo-relay URI. The constant is dead protocol surface.
+
+### Decision
+
+**Verdict: drop** — Remove `SHELL_BRIDGE_URI` from `@napplet/core`. AUTH is gone, no protocol use.
 
 ### Cross-references
 
@@ -289,6 +333,10 @@ NIP-5D mentions nothing about replay detection, replay windows, or event age val
 
 Replay protection policy belongs in the shell's security implementation, not in the SDK's core package. Different shells may choose different replay windows (or none at all). Exporting this from `@napplet/core` implies it is protocol-level, but it is an implementation parameter.
 
+### Decision
+
+**Verdict: drop** — Remove `REPLAY_WINDOW_SECONDS` from `@napplet/core`. Shell defines its own replay policy.
+
 ---
 
 ## GAP-05: PROTOCOL_VERSION Constant
@@ -325,6 +373,10 @@ NIP-5D does not define a version constant. Nostr NIPs follow the convention of b
 ### Reasoning
 
 This sits in an ambiguous position. On one hand, protocol versioning is useful for debugging and compatibility. On the other hand, NIP-5D is versionless by Nostr convention, and there is no version negotiation mechanism. The spec author needs to decide: either add version negotiation to NIP-5D (making this constant protocol-level) or remove it (making it shell-only metadata).
+
+### Decision
+
+**Verdict: drop** — Remove `PROTOCOL_VERSION` from `@napplet/core`. NIP-5D is versionless per Nostr convention.
 
 ---
 
@@ -399,6 +451,10 @@ NIP-DB (local event cache) access is a meaningful capability for napplets -- bei
 - GAP-01 `cache:read`/`cache:write` capabilities in the ACL type relate to this proxy
 - The relay NUB provides relay-based queries; nostrdb provides local cache queries -- complementary
 
+### Decision
+
+**Verdict: defer + audit** — Keep code. NUB spec exists as draft PR (napplet/nubs#4). Add future milestone item to audit conformance between shim implementation and NUB spec.
+
 ---
 
 ## GAP-07: Keyboard Forwarding Shim
@@ -470,11 +526,17 @@ The spec author needs to decide whether keyboard forwarding belongs in the proto
 - GAP-01 `hotkey:forward` capability in the ACL type gates this functionality
 - GAP-02c `keybinds:*` topics (6 topics) relate to keybind management, which is the shell-side counterpart
 
+### Decision
+
+**Verdict: amend-spec** — Keep code. Add keyboard forwarding to NIP-5D or create a keyboard NUB spec.
+
 ---
 
-## GAP-09: IFC Channel Types (Unimplemented)
+## ~~GAP-09: IFC Channel Types~~ (REMOVED — Spec-Backed)
 
-**Category:** `future-nub`
+**Category:** ~~`future-nub`~~ → **removed from inventory**
+
+> **Correction:** The IFC NUB is a draft spec in napplet/nubs. Channel types are part of that draft spec. These are spec-backed, not a gap. Removed from inventory during Phase 86 Decision Gate.
 
 ### What it is
 
