@@ -13,11 +13,8 @@
  * ```ts
  * import { TOPICS } from '@napplet/core';
  *
- * // Subscribe to auth identity changes
- * shim.subscribe([{ kinds: [29003], '#t': [TOPICS.AUTH_IDENTITY_CHANGED] }]);
- *
- * // Use topic constant for state operations
- * shim.publish({ kind: 29003, tags: [['t', TOPICS.STATE_GET]], content: '{}' });
+ * // Open a profile view via IPC-PEER
+ * shim.publish({ kind: 29003, tags: [['t', TOPICS.PROFILE_OPEN]], content: '{}' });
  * ```
  *
  * ## Topic Prefix Conventions
@@ -34,17 +31,6 @@
  * `wm:*`, `keybinds:*`, `chat:*`, `audio:*`.
  */
 export const TOPICS = {
-  // ─── Auth and Identity ──────────────────────────────────────────────────
-  AUTH_IDENTITY_CHANGED: 'auth:identity-changed',
-
-  // ─── State Operations ──────────────────────────────────────────────────
-  STATE_GET: 'shell:state-get',
-  STATE_SET: 'shell:state-set',
-  STATE_REMOVE: 'shell:state-remove',
-  STATE_CLEAR: 'shell:state-clear',
-  STATE_KEYS: 'shell:state-keys',
-  STATE_RESPONSE: 'napplet:state-response',
-
   // ─── Stream and Content ─────────────────────────────────────────────────
   STREAM_CHANNEL_SWITCH: 'stream:channel-switch',
   STREAM_CURRENT_CONTEXT_GET: 'stream:current-context-get',
@@ -52,11 +38,6 @@ export const TOPICS = {
 
   // ─── Profile ────────────────────────────────────────────────────────────
   PROFILE_OPEN: 'profile:open',
-
-  // ─── Shell Config ───────────────────────────────────────────────────────
-  SHELL_CONFIG_GET: 'shell:config-get',
-  SHELL_CONFIG_UPDATE: 'shell:config-update',
-  SHELL_CONFIG_CURRENT: 'shell:config-current',
 
   // ─── Keybinds ───────────────────────────────────────────────────────────
   KEYBINDS_GET: 'keybinds:get-all',
@@ -68,11 +49,6 @@ export const TOPICS = {
 
   // ─── Window Manager ─────────────────────────────────────────────────────
   WM_FOCUSED_WINDOW_CHANGED: 'wm:focused-window-changed',
-
-  // ─── Relay Scoping ──────────────────────────────────────────────────────
-  RELAY_SCOPED_CONNECT: 'shell:relay-scoped-connect',
-  RELAY_SCOPED_CLOSE: 'shell:relay-scoped-close',
-  RELAY_SCOPED_PUBLISH: 'shell:relay-scoped-publish',
 
   // ─── Chat ───────────────────────────────────────────────────────────────
   CHAT_OPEN_DM: 'chat:open-dm',

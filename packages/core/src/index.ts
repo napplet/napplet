@@ -10,12 +10,11 @@
  * @example
  * ```ts
  * import {
- *   type NostrEvent, type NostrFilter, type Capability,
+ *   type NostrEvent, type NostrFilter,
  *   type NappletMessage, type NubDomain, type ShellSupports,
  *   type NubHandler, type NubDispatch,
- *   NUB_DOMAINS, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
+ *   NUB_DOMAINS, TOPICS,
  *   createDispatch, registerNub, dispatch, getRegisteredDomains,
- *   ALL_CAPABILITIES, TOPICS,
  * } from '@napplet/core';
  * ```
  *
@@ -37,20 +36,10 @@ export { createDispatch, registerNub, dispatch, getRegisteredDomains } from './d
 export type {
   NostrEvent,
   NostrFilter,
-  Capability,
   Subscription,
   EventTemplate,
   NappletGlobal,
 } from './types.js';
-export { ALL_CAPABILITIES } from './types.js';
-
-// ─── Protocol Constants ─────────────────────────────────────────────────────
-
-export {
-  PROTOCOL_VERSION,
-  SHELL_BRIDGE_URI,
-  REPLAY_WINDOW_SECONDS,
-} from './constants.js';
 
 // ─── Topic Constants ────────────────────────────────────────────────────────
 
