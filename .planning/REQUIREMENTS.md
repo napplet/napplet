@@ -9,15 +9,15 @@ Execute all "drop" verdicts from the v0.18.0 spec conformance audit (SPEC-GAPS.m
 
 ### Code Drops
 
-- [ ] **DROP-01**: Delete `Capability` type and `ALL_CAPABILITIES` constant from core/types.ts and core/index.ts
-- [ ] **DROP-02**: Delete 7 superseded TOPICS (AUTH_IDENTITY_CHANGED, STATE_GET, STATE_SET, STATE_REMOVE, STATE_CLEAR, STATE_KEYS, STATE_RESPONSE) from core/topics.ts
-- [ ] **DROP-03**: Delete 3 config TOPICS (SHELL_CONFIG_GET, SHELL_CONFIG_UPDATE, SHELL_CONFIG_CURRENT) from core/topics.ts
-- [ ] **DROP-04**: Delete 3 scoped relay TOPICS (RELAY_SCOPED_CONNECT, RELAY_SCOPED_CLOSE, RELAY_SCOPED_PUBLISH) from core/topics.ts
-- [ ] **DROP-05**: Delete `SHELL_BRIDGE_URI` from core/constants.ts and core/index.ts
-- [ ] **DROP-06**: Delete `REPLAY_WINDOW_SECONDS` from core/constants.ts and core/index.ts
-- [ ] **DROP-07**: Delete `PROTOCOL_VERSION` from core/constants.ts and core/index.ts
-- [ ] **DROP-08**: Update core/index.test.ts — remove tests for deleted exports
-- [ ] **DROP-09**: Verify `pnpm build && pnpm type-check` passes clean after all deletions
+- [x] **DROP-01**: Delete `Capability` type and `ALL_CAPABILITIES` constant from core/types.ts and core/index.ts
+- [x] **DROP-02**: Delete 7 superseded TOPICS (AUTH_IDENTITY_CHANGED, STATE_GET, STATE_SET, STATE_REMOVE, STATE_CLEAR, STATE_KEYS, STATE_RESPONSE) from core/topics.ts
+- [x] **DROP-03**: Delete 3 config TOPICS (SHELL_CONFIG_GET, SHELL_CONFIG_UPDATE, SHELL_CONFIG_CURRENT) from core/topics.ts
+- [x] **DROP-04**: Delete 3 scoped relay TOPICS (RELAY_SCOPED_CONNECT, RELAY_SCOPED_CLOSE, RELAY_SCOPED_PUBLISH) from core/topics.ts
+- [x] **DROP-05**: Delete `SHELL_BRIDGE_URI` from core/constants.ts and core/index.ts
+- [x] **DROP-06**: Delete `REPLAY_WINDOW_SECONDS` from core/constants.ts and core/index.ts
+- [x] **DROP-07**: Delete `PROTOCOL_VERSION` from core/constants.ts and core/index.ts
+- [x] **DROP-08**: Update core/index.test.ts — remove tests for deleted exports
+- [x] **DROP-09**: Verify `pnpm build && pnpm type-check` passes clean after all deletions
 
 ## Future Requirements
 
@@ -41,15 +41,15 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DROP-01 | Phase 87 | Pending |
-| DROP-02 | Phase 87 | Pending |
-| DROP-03 | Phase 87 | Pending |
-| DROP-04 | Phase 87 | Pending |
-| DROP-05 | Phase 87 | Pending |
-| DROP-06 | Phase 87 | Pending |
-| DROP-07 | Phase 87 | Pending |
-| DROP-08 | Phase 87 | Pending |
-| DROP-09 | Phase 87 | Pending |
+| DROP-01 | Phase 87 | Complete |
+| DROP-02 | Phase 87 | Complete |
+| DROP-03 | Phase 87 | Complete |
+| DROP-04 | Phase 87 | Complete |
+| DROP-05 | Phase 87 | Complete |
+| DROP-06 | Phase 87 | Complete |
+| DROP-07 | Phase 87 | Complete |
+| DROP-08 | Phase 87 | Complete |
+| DROP-09 | Phase 87 | Complete |
 
 **Coverage:**
 - v0.19.0 requirements: 9 total

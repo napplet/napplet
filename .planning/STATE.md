@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.19.0
 milestone_name: Spec Gap Drops
-status: ready-to-plan
-stopped_at: null
-last_updated: "2026-04-09"
-last_activity: 2026-04-09
+status: completed
+stopped_at: Completed 87-01-PLAN.md
+last_updated: "2026-04-09T09:03:00.097Z"
+last_activity: 2026-04-09 -- Completed 87-01 spec gap code drops
 progress:
   total_phases: 1
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 100
 ---
 
 # Project State
@@ -26,25 +26,25 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 ## Current Position
 
 Phase: 1 of 1 (Spec Gap Code Drops)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-04-09 -- Roadmap created for v0.19.0
+Plan: 1 of 1 in current phase (COMPLETE)
+Status: Phase complete
+Last activity: 2026-04-09 -- Completed 87-01 spec gap code drops
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: --
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 3 min
+- Total execution time: 3 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 87-spec-gap-code-drops | 1 | 3 min | 3 min |
 
 *Updated after each plan completion*
 
@@ -57,6 +57,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - v0.18.0: 7 code items marked for drop (Capability, TOPICS superseded/config/relay, SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS, PROTOCOL_VERSION)
 - v0.18.0: 5 items deferred (future NUB topics, keybinds, wm, audio, nostrdb)
 - v0.18.0: keyboard.forward marked for spec amendment
+- [Phase 87]: Deleted constants.ts entirely rather than leaving empty file -- all 3 exports dropped
 
 ### Blockers/Concerns
 
@@ -65,6 +66,6 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09
-Stopped at: Roadmap created for v0.19.0 Spec Gap Drops
-Resume: `/gsd:plan-phase 87`
+Last session: 2026-04-09T09:03:00.094Z
+Stopped at: Completed 87-01-PLAN.md
+Resume: Phase 87 complete. Ready for v0.19.0 changeset/publish.

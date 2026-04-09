@@ -223,7 +223,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Execute all 7 "drop" verdicts from SPEC-GAPS.md -- remove every piece of unspecced code identified in the v0.18.0 audit. After this milestone, @napplet/core exports only spec-backed artifacts.
 
-- [ ] **Phase 87: Spec Gap Code Drops** - Delete all unspecced types, constants, and topics from @napplet/core and verify clean build
+- [x] **Phase 87: Spec Gap Code Drops** - Delete all unspecced types, constants, and topics from @napplet/core and verify clean build (completed 2026-04-09)
 
 ## Phase Details
 
@@ -237,10 +237,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `SHELL_BRIDGE_URI`, `REPLAY_WINDOW_SECONDS`, and `PROTOCOL_VERSION` do not exist in core/constants.ts or core/index.ts exports
   4. core/index.test.ts contains no tests referencing any deleted export
   5. `pnpm build && pnpm type-check` passes with zero errors
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 87-01-PLAN.md — Delete all unspecced types, constants, and topics; verify clean build
+- [x] 87-01-PLAN.md — Delete all unspecced types, constants, and topics; verify clean build
 
 ## Progress
 
@@ -249,4 +249,4 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 87. Spec Gap Code Drops | 0/1 | In progress | - |
+| 87. Spec Gap Code Drops | 1/1 | Complete   | 2026-04-09 |
