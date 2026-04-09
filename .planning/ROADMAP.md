@@ -300,7 +300,7 @@ Plans:
   3. Core, shim, and SDK READMEs mention the keys NUB with usage examples for action registration and smart forwarding
 **Plans**: 1 plan
 Plans:
-- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
+- [ ] 92-01-PLAN.md — Verify and complete keys NUB documentation
 
 ## Progress
 
