@@ -35,7 +35,6 @@ describe('@napplet/core exports', () => {
     it('NamespacedCapability accepts bare NUB domain shorthand', () => {
       // Compile check: bare NUB domain strings are valid (per D-02)
       const _relay: NamespacedCapability = 'relay';
-      const _signer: NamespacedCapability = 'signer';
       const _storage: NamespacedCapability = 'storage';
       const _ifc: NamespacedCapability = 'ifc';
       const _theme: NamespacedCapability = 'theme';
@@ -46,7 +45,6 @@ describe('@napplet/core exports', () => {
     it('NamespacedCapability accepts nub: prefixed domains', () => {
       // Compile check: explicit NUB prefix
       const _nubRelay: NamespacedCapability = 'nub:relay';
-      const _nubSigner: NamespacedCapability = 'nub:signer';
       const _nubStorage: NamespacedCapability = 'nub:storage';
       const _nubIfc: NamespacedCapability = 'nub:ifc';
       const _nubTheme: NamespacedCapability = 'nub:theme';

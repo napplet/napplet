@@ -19,7 +19,7 @@
 /**
  * Base interface for all JSON envelope messages exchanged between
  * napplet and shell. The `type` field is a string discriminant
- * in `domain.action` format (e.g., `"relay.subscribe"`, `"signer.sign"`).
+ * in `domain.action` format (e.g., `"relay.subscribe"`, `"storage.get"`).
  *
  * Concrete message types extend this interface with domain-specific payload fields.
  *
@@ -35,20 +35,19 @@
  * ```
  */
 export interface NappletMessage {
-  /** Message type discriminant in "domain.action" format (e.g., "relay.subscribe", "signer.sign") */
+  /** Message type discriminant in "domain.action" format (e.g., "relay.subscribe", "storage.get") */
   type: string;
 }
 
 // ─── NUB Domain Types ──────────────────────────────────────────────────────
 
 /**
- * String literal union of the eight NUB (Napplet Unified Blueprint) domains.
+ * String literal union of the seven NUB (Napplet Unified Blueprint) domains.
  * Each domain corresponds to a capability namespace that a shell may support.
  *
  * | Domain    | Scope                                     |
  * |-----------|-------------------------------------------|
  * | `relay`   | NIP-01 relay proxy (subscribe, publish)   |
- * | `signer`  | NIP-07/NIP-44 signing delegation          |
  * | `storage` | Scoped key-value storage proxy            |
  * | `ifc`     | Inter-frame communication (IPC peer bus)  |
  * | `theme`   | Theme tokens and appearance settings      |
@@ -62,7 +61,7 @@ export interface NappletMessage {
  * const isValid = NUB_DOMAINS.includes(domain); // true
  * ```
  */
-export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
+export type NubDomain = 'relay' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
 
 /**
  * Runtime-accessible constant array of all NUB domain names.
@@ -75,7 +74,7 @@ export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys
  * }
  * ```
  */
-export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'] as const;
+export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'] as const;
 
 // ─── Namespaced Capability Type ───────────────────────────────────────────
 
@@ -87,7 +86,7 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 
  * | Prefix  | Example             | Meaning                        |
  * |---------|---------------------|--------------------------------|
  * | `nub:`  | `'nub:relay'`       | Shell implements the relay NUB |
- * | `perm:` | `'perm:sign'`       | Shell grants signing permission|
+ * | `perm:` | `'perm:popups'`     | Shell grants popup permission  |
  * | *(bare)*| `'relay'`           | Shorthand for `'nub:relay'`    |
  *
  * Bare strings are valid only for NUB domains.
@@ -95,7 +94,7 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 
  *
  * @example
  * ```ts
- * const cap: NamespacedCapability = 'nub:signer';
+ * const cap: NamespacedCapability = 'nub:relay';
  * const bare: NamespacedCapability = 'relay'; // shorthand OK
  * const perm: NamespacedCapability = 'perm:popups';
  * ```
@@ -116,10 +115,9 @@ export type NamespacedCapability =
  * ```ts
  * // NUB domain queries (bare shorthand or prefixed):
  * shell.supports('relay');       // shorthand for 'nub:relay'
- * shell.supports('nub:signer'); // explicit NUB prefix
+ * shell.supports('nub:storage'); // explicit NUB prefix
  *
  * // Permission queries:
- * shell.supports('perm:sign');   // signing permission
  * shell.supports('perm:popups'); // popup permission
  * ```
  */
@@ -137,15 +135,15 @@ export interface ShellSupports {
  * @example
  * ```ts
  * // In a napplet iframe:
- * if (window.napplet.shell.supports('nub:signer')) {
+ * if (window.napplet.shell.supports('nub:relay')) {
  *   const signed = await window.napplet.relay.publish(template);
  * }
  *
  * // Bare NUB domain shorthand also works:
- * if (window.napplet.shell.supports('signer')) { ... }
+ * if (window.napplet.shell.supports('relay')) { ... }
  *
  * // Permission queries:
- * window.napplet.shell.supports('perm:sign');
+ * window.napplet.shell.supports('perm:popups');
  * ```
  */
 export interface NappletGlobalShell extends ShellSupports {}

@@ -559,28 +559,6 @@ export type {
   RelayNubMessage,
 } from '@napplet/nub-relay';
 
-// Signer NUB
-export type {
-  SignerMessage,
-  SignerGetPublicKeyMessage,
-  SignerSignEventMessage,
-  SignerGetRelaysMessage,
-  SignerNip04EncryptMessage,
-  SignerNip04DecryptMessage,
-  SignerNip44EncryptMessage,
-  SignerNip44DecryptMessage,
-  SignerGetPublicKeyResultMessage,
-  SignerSignEventResultMessage,
-  SignerGetRelaysResultMessage,
-  SignerNip04EncryptResultMessage,
-  SignerNip04DecryptResultMessage,
-  SignerNip44EncryptResultMessage,
-  SignerNip44DecryptResultMessage,
-  SignerRequestMessage,
-  SignerResultMessage,
-  SignerNubMessage,
-} from '@napplet/nub-signer';
-
 // Storage NUB
 export type {
   StorageMessage,
@@ -699,7 +677,6 @@ export type {
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
-export { DOMAIN as SIGNER_DOMAIN, DESTRUCTIVE_KINDS } from '@napplet/nub-signer';
 export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
 export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
 export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
@@ -711,7 +688,6 @@ export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub-notify';
 // Allow consumers to cherry-pick shim installers per domain.
 
 export { installRelayShim } from '@napplet/nub-relay';
-export { installSignerShim } from '@napplet/nub-signer';
 export { installStorageShim } from '@napplet/nub-storage';
 export { installIfcShim } from '@napplet/nub-ifc';
 export { installKeysShim } from '@napplet/nub-keys';
@@ -722,7 +698,6 @@ export { installNotifyShim } from '@napplet/nub-notify';
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
 
 export { relaySubscribe, relayPublish, relayQuery } from '@napplet/nub-relay';
-export { signerGetPublicKey, signerSignEvent, signerGetRelays, signerNip04, signerNip44 } from '@napplet/nub-signer';
 export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub-storage';
 export { ifcEmit, ifcOn } from '@napplet/nub-ifc';
 export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub-keys';

@@ -22,7 +22,6 @@
   "dependencies": {
     "@napplet/core": "workspace:*",
     "@napplet/nub-relay": "workspace:*",
-    "@napplet/nub-signer": "workspace:*",
     "@napplet/nub-storage": "workspace:*",
     "@napplet/nub-ifc": "workspace:*",
     "@napplet/nub-theme": "workspace:*",

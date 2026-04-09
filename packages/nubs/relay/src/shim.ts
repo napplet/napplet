@@ -6,6 +6,7 @@ import type {
   RelaySubscribeMessage,
   RelayCloseMessage,
   RelayPublishMessage,
+  RelayPublishResultMessage,
   RelayQueryMessage,
   RelayEventMessage,
   RelayEoseMessage,
@@ -92,11 +93,11 @@ export function subscribe(
 
 
 /**
- * Sign and publish a Nostr event through the shell.
+ * Publish a Nostr event through the shell.
  *
- * The event template is signed via `window.nostr.signEvent()` (NIP-07 proxy),
- * then posted to the parent shell as a `relay.publish` envelope message
- * for relay broadcast.
+ * The event template is sent to the shell via a `relay.publish` envelope
+ * message. The shell signs the event and broadcasts it to relays.
+ * Napplets never have direct access to signing keys.
  *
  * @param template  Unsigned event template (kind, content, tags, created_at)
  * @param options   Optional: `{ relay: true }` to publish via the scoped relay instead of the shared pool
@@ -112,25 +113,39 @@ export function subscribe(
  * });
  * ```
  */
-export async function publish(
+export function publish(
   template: EventTemplate,
-  options?: { relay?: boolean },
+  _options?: { relay?: boolean },
 ): Promise<NostrEvent> {
-  const w = window as Window & { nostr?: { signEvent(e: EventTemplate): Promise<NostrEvent> } };
-  if (!w.nostr?.signEvent) {
-    throw new Error('window.nostr is not available');
-  }
+  const publishId = crypto.randomUUID();
 
-  const signedEvent = await w.nostr.signEvent(template) as unknown as NostrEvent;
+  return new Promise((resolve, reject) => {
+    function handleMessage(msgEvent: MessageEvent): void {
+      if (msgEvent.source !== window.parent) return;
+      const msg = msgEvent.data;
+      if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
+      if (msg.type !== 'relay.publish.result') return;
 
-  const publishMsg: RelayPublishMessage = {
-    type: 'relay.publish',
-    id: crypto.randomUUID(),
-    event: signedEvent,
-  };
-  window.parent.postMessage(publishMsg, '*');
+      const result = msg as RelayPublishResultMessage;
+      if (result.id !== publishId) return;
 
-  return signedEvent;
+      window.removeEventListener('message', handleMessage);
+      if (result.error) {
+        reject(new Error(result.error));
+      } else {
+        resolve(result.event as unknown as NostrEvent);
+      }
+    }
+
+    window.addEventListener('message', handleMessage);
+
+    const publishMsg: RelayPublishMessage = {
+      type: 'relay.publish',
+      id: publishId,
+      event: template as unknown as NostrEvent,
+    };
+    window.parent.postMessage(publishMsg, '*');
+  });
 }
 
 /**

@@ -151,6 +151,7 @@ export interface RelayClosedMessage extends RelayMessage {
 
 /**
  * Result of a relay.publish request.
+ * The shell signs the event template and returns the full signed event.
  */
 export interface RelayPublishResultMessage extends RelayMessage {
   type: 'relay.publish.result';
@@ -158,6 +159,8 @@ export interface RelayPublishResultMessage extends RelayMessage {
   id: string;
   /** Whether the publish succeeded. */
   ok: boolean;
+  /** The signed event returned by the shell. */
+  event?: NostrEvent;
   /** The event ID if publish succeeded. */
   eventId?: string;
   /** Error message if publish failed. */

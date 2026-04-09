@@ -66,7 +66,7 @@ export interface Subscription {
 
 /**
  * Unsigned event template passed to relay.publish().
- * The shell signs it via the NIP-07 proxy before broadcasting.
+ * The shell signs it before broadcasting.
  *
  * @example
  * ```ts
@@ -407,11 +407,11 @@ export interface NappletGlobal {
    * @example
    * ```ts
    * // NUB domain (bare shorthand or prefixed):
-   * if (window.napplet.shell.supports('signer')) { ... }
-   * if (window.napplet.shell.supports('nub:signer')) { ... }
+   * if (window.napplet.shell.supports('relay')) { ... }
+   * if (window.napplet.shell.supports('nub:relay')) { ... }
    *
    * // Permission:
-   * if (window.napplet.shell.supports('perm:sign')) { ... }
+   * if (window.napplet.shell.supports('perm:popups')) { ... }
    * ```
    */
   shell: NappletGlobalShell;
