@@ -172,7 +172,15 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.19.0 Spec Gap Drops
+
+**Goal:** Execute all 7 "drop" verdicts from SPEC-GAPS.md — remove every piece of unspecced code identified in the v0.18.0 audit.
+
+**Target features:**
+- Delete Capability type + ALL_CAPABILITIES from core
+- Delete 13 superseded/config/relay TOPICS from core
+- Delete SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS, PROTOCOL_VERSION from core
+- Update tests and verify build
 
 ### Out of Scope
 
@@ -189,7 +197,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.18.0 shipped (Spec Conformance Audit). Dead code removed, spec gaps documented with decisions. 9 packages (4 core + 5 NUB). 18 milestones shipped. 7 code drops queued for v0.19.0 (Capability, superseded/config/relay TOPICS, SHELL_BRIDGE_URI, REPLAY_WINDOW_SECONDS, PROTOCOL_VERSION).
+- **Current state**: v0.19.0 in progress (Spec Gap Drops). Executing 7 code drops from v0.18.0 audit. 9 packages (4 core + 5 NUB). 18 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -278,4 +286,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.18.0 milestone*
+*Last updated: 2026-04-09 after v0.19.0 milestone start*
