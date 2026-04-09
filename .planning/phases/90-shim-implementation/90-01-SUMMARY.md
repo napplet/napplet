@@ -107,6 +107,13 @@ None - no external service configuration required.
 - SDK needs to add keys namespace wrapping window.napplet.keys
 - SDK needs to re-export @napplet/nub-keys message types
 
+## Self-Check: PASSED
+
+- All verified files exist on disk
+- keyboard-shim.ts confirmed deleted
+- SUMMARY.md created at expected path
+- Commit `13e58ba` recorded
+
 ---
 *Phase: 90-shim-implementation*
 *Completed: 2026-04-09*
