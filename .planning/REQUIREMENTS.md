@@ -54,28 +54,28 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NUB-01 | — | Pending |
-| NUB-02 | — | Pending |
-| NUB-03 | — | Pending |
-| NUB-04 | — | Pending |
-| NUB-05 | — | Pending |
-| NUB-06 | — | Pending |
-| NUB-07 | — | Pending |
-| SHIM-01 | — | Pending |
-| SHIM-02 | — | Pending |
-| SHIM-03 | — | Pending |
-| SHIM-04 | — | Pending |
-| SDK-01 | — | Pending |
-| SDK-02 | — | Pending |
-| SDK-03 | — | Pending |
-| VER-01 | — | Pending |
-| VER-02 | — | Pending |
+| NUB-01 | Phase 93 | Pending |
+| NUB-02 | Phase 93 | Pending |
+| NUB-03 | Phase 93 | Pending |
+| NUB-04 | Phase 93 | Pending |
+| NUB-05 | Phase 93 | Pending |
+| NUB-06 | Phase 93 | Pending |
+| NUB-07 | Phase 93 | Pending |
+| SHIM-01 | Phase 94 | Pending |
+| SHIM-02 | Phase 94 | Pending |
+| SHIM-03 | Phase 94 | Pending |
+| SHIM-04 | Phase 94 | Pending |
+| SDK-01 | Phase 94 | Pending |
+| SDK-02 | Phase 94 | Pending |
+| SDK-03 | Phase 94 | Pending |
+| VER-01 | Phase 95 | Pending |
+| VER-02 | Phase 95 | Pending |
 
 **Coverage:**
 - v0.21.0 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after initial definition*
+*Last updated: 2026-04-09 after roadmap creation*
