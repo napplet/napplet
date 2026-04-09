@@ -98,22 +98,6 @@ NUB specs MUST:
 - Document expected shell behavior for each message
 - Be independently implementable — a shell MAY support any subset of NUBs
 
-
-## Security Rationale: Cleartext-Only Napplets
-
-Napplets produce cleartext events only. Shells MUST NOT sign or broadcast events containing ciphertext received from a napplet. Shells MUST NOT provide signing keys, `window.nostr` (NIP-07), or any encryption/decryption primitives to napplet iframes.
-
-**The threat:** A napplet with access to encryption can hide data from the shell. A malicious napplet could exfiltrate user data by encrypting it and publishing it to relays as ciphertext the shell cannot inspect.
-
-**The enforcement point is the shell, not the napplet.** A sandboxed napplet can bundle its own crypto — the protocol cannot prevent that. What the protocol can enforce is that the shell rejects anything it cannot inspect:
-
-- **Signing:** Napplets submit unsigned cleartext event templates via `relay.publish`. The shell inspects the content, signs it, and broadcasts. The shell MUST reject events that are already signed.
-- **Encryption:** Napplets submit plaintext via `relay.publishEncrypted` with a recipient and encryption method. The shell inspects the plaintext, encrypts it, signs it, and broadcasts. The napplet never produces ciphertext.
-- **Decryption:** The shell decrypts incoming encrypted events before delivering them to the napplet via `relay.event`. Napplets always receive cleartext.
-- **Identity:** Napplets query read-only user information via the `identity` NUB (public key, profile, follows, etc.) without any write or signing capability.
-
-Shells MAY additionally detect and reject events whose content appears to contain ciphertext or encoded binary data, as an extra layer of defense against napplets that attempt to bypass the cleartext requirement.
-
 ## Security Considerations
 
 Napplets are untrusted code. The shell is trusted. The browser enforces iframe sandbox boundaries. `MessageEvent.source` provides unforgeable sender identity.
@@ -124,14 +108,12 @@ Napplets are untrusted code. The shell is trusted. The browser enforces iframe s
 3. Identity binding: the shell maps `MessageEvent.source` to napplet identity at iframe creation. The browser's `MessageEvent.source` is unforgeable within the same browsing context.
 4. Aggregate hash verification against [NIP-5A](5A.md) manifests; mismatch MAY result in napplet rejection.
 5. Unrecognized message types are silently ignored, preventing capability probing.
+6. Napplets produce cleartext only. Shells MUST NOT sign or broadcast events containing ciphertext received from a napplet. Shells MUST NOT provide `window.nostr` (NIP-07) or any signing/encryption primitives.
 
-Storage isolation, signing safety, relay access control, and ACL enforcement are defined by their respective NUB specs.
+Storage isolation, relay access control, and ACL enforcement are defined by their respective NUB specs.
 
 **Non-Guarantees:** The protocol does NOT protect against a compromised browser, a malicious shell, side-channel attacks, or social engineering.
 
 ## References
 
 - [NIP-5A](5A.md) -- Napplet manifest format and aggregate hash
-- [NUB-IDENTITY](https://github.com/napplet/nubs/blob/main/NUB-IDENTITY.md) -- Read-only user identity queries
-- [NUB-KEYS](https://github.com/napplet/nubs/blob/main/NUB-KEYS.md) -- Keyboard forwarding and action keybindings
-- [NUB-MEDIA](https://github.com/napplet/nubs/blob/main/NUB-MEDIA.md) -- Media session control and playback
