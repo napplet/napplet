@@ -311,6 +311,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 88. NUB Type Package | 1/1 | Complete   | 2026-04-09 |
 | 89. Core Integration | 1/1 | Complete    | 2026-04-09 |
-| 90. Shim Implementation | 1/1 | Complete   | 2026-04-09 |
+| 90. Shim Implementation | 1/1 | Complete    | 2026-04-09 |
 | 91. SDK Wrappers | 0/? | Not started | - |
 | 92. Documentation | 0/? | Not started | - |
