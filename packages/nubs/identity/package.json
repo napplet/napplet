@@ -1,7 +1,7 @@
 {
-  "name": "@napplet/sdk",
+  "name": "@napplet/nub-identity",
   "version": "0.2.0",
-  "description": "Typed named exports wrapping window.napplet for bundler-consuming napplet developers",
+  "description": "NUB-IDENTITY message types and shim methods for read-only user identity queries",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,15 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*",
-    "@napplet/nub-relay": "workspace:*",
-    "@napplet/nub-identity": "workspace:*",
-    "@napplet/nub-storage": "workspace:*",
-    "@napplet/nub-ifc": "workspace:*",
-    "@napplet/nub-theme": "workspace:*",
-    "@napplet/nub-keys": "workspace:*",
-    "@napplet/nub-media": "workspace:*",
-    "@napplet/nub-notify": "workspace:*"
+    "@napplet/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
@@ -42,13 +34,12 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sandwichfarm/napplet.git",
-    "directory": "packages/sdk"
+    "directory": "packages/nubs/identity"
   },
   "keywords": [
     "nostr",
     "napplet",
-    "sdk",
-    "iframe",
-    "nip-01"
+    "nub",
+    "identity"
   ]
 }

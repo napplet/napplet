@@ -526,6 +526,117 @@ export const keys = {
   },
 };
 
+// ─── Identity namespace ───────────────────────────────────────────────────
+
+/**
+ * Read-only user identity queries: public key, profile, follows, relays,
+ * lists, zaps, mutes, blocked, badges.
+ *
+ * @example
+ * ```ts
+ * import { identity } from '@napplet/sdk';
+ *
+ * const pubkey = await identity.getPublicKey();
+ * const profile = await identity.getProfile();
+ * const follows = await identity.getFollows();
+ * ```
+ */
+export const identity = {
+  /**
+   * Get the user's hex-encoded public key. Always succeeds.
+   * @returns Hex-encoded public key string
+   */
+  getPublicKey(): Promise<string> {
+    return requireNapplet().identity.getPublicKey();
+  },
+
+  /**
+   * Get the user's relay list (NIP-65).
+   * @returns Record mapping relay URLs to read/write permissions
+   */
+  getRelays(): Promise<Record<string, { read: boolean; write: boolean }>> {
+    return requireNapplet().identity.getRelays();
+  },
+
+  /**
+   * Get the user's profile metadata (kind 0).
+   * @returns Profile data, or null if not found
+   */
+  getProfile(): Promise<{
+    name?: string;
+    displayName?: string;
+    about?: string;
+    picture?: string;
+    banner?: string;
+    nip05?: string;
+    lud16?: string;
+    website?: string;
+  } | null> {
+    return requireNapplet().identity.getProfile();
+  },
+
+  /**
+   * Get the user's follow list (kind 3 contact list).
+   * @returns Array of hex-encoded public keys
+   */
+  getFollows(): Promise<string[]> {
+    return requireNapplet().identity.getFollows();
+  },
+
+  /**
+   * Get entries from a user's categorized list.
+   * @param listType  List category (e.g., "bookmarks", "interests", "pins")
+   * @returns Array of list entry values
+   */
+  getList(listType: string): Promise<string[]> {
+    return requireNapplet().identity.getList(listType);
+  },
+
+  /**
+   * Get zap receipts sent to the user.
+   * @returns Array of zap receipt objects
+   */
+  getZaps(): Promise<{
+    eventId: string;
+    sender: string;
+    amount: number;
+    content?: string;
+  }[]> {
+    return requireNapplet().identity.getZaps();
+  },
+
+  /**
+   * Get the user's mute list (kind 10000).
+   * @returns Array of hex-encoded muted public keys
+   */
+  getMutes(): Promise<string[]> {
+    return requireNapplet().identity.getMutes();
+  },
+
+  /**
+   * Get the user's block list.
+   * @returns Array of hex-encoded blocked public keys
+   */
+  getBlocked(): Promise<string[]> {
+    return requireNapplet().identity.getBlocked();
+  },
+
+  /**
+   * Get badges awarded to the user (NIP-58).
+   * @returns Array of badge objects
+   */
+  getBadges(): Promise<{
+    id: string;
+    name?: string;
+    description?: string;
+    image?: string;
+    thumbs?: string[];
+    awardedBy: string;
+  }[]> {
+    return requireNapplet().identity.getBadges();
+  },
+};
+
 // ─── Type re-exports from @napplet/core ─────────────────────────────────────
 
 export type { NostrEvent } from '@napplet/core';
@@ -558,6 +669,36 @@ export type {
   RelayInboundMessage,
   RelayNubMessage,
 } from '@napplet/nub-relay';
+
+// Identity NUB
+export type {
+  ProfileData,
+  ZapReceipt,
+  Badge,
+  RelayPermission as IdentityRelayPermission,
+  IdentityMessage,
+  IdentityGetPublicKeyMessage,
+  IdentityGetRelaysMessage,
+  IdentityGetProfileMessage,
+  IdentityGetFollowsMessage,
+  IdentityGetListMessage,
+  IdentityGetZapsMessage,
+  IdentityGetMutesMessage,
+  IdentityGetBlockedMessage,
+  IdentityGetBadgesMessage,
+  IdentityGetPublicKeyResultMessage,
+  IdentityGetRelaysResultMessage,
+  IdentityGetProfileResultMessage,
+  IdentityGetFollowsResultMessage,
+  IdentityGetListResultMessage,
+  IdentityGetZapsResultMessage,
+  IdentityGetMutesResultMessage,
+  IdentityGetBlockedResultMessage,
+  IdentityGetBadgesResultMessage,
+  IdentityRequestMessage,
+  IdentityResultMessage,
+  IdentityNubMessage,
+} from '@napplet/nub-identity';
 
 // Storage NUB
 export type {
@@ -677,6 +818,7 @@ export type {
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
+export { DOMAIN as IDENTITY_DOMAIN } from '@napplet/nub-identity';
 export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
 export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
 export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
@@ -688,6 +830,7 @@ export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub-notify';
 // Allow consumers to cherry-pick shim installers per domain.
 
 export { installRelayShim } from '@napplet/nub-relay';
+export { installIdentityShim } from '@napplet/nub-identity';
 export { installStorageShim } from '@napplet/nub-storage';
 export { installIfcShim } from '@napplet/nub-ifc';
 export { installKeysShim } from '@napplet/nub-keys';
@@ -698,6 +841,7 @@ export { installNotifyShim } from '@napplet/nub-notify';
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
 
 export { relaySubscribe, relayPublish, relayQuery } from '@napplet/nub-relay';
+export { identityGetPublicKey, identityGetRelays, identityGetProfile, identityGetFollows, identityGetList, identityGetZaps, identityGetMutes, identityGetBlocked, identityGetBadges } from '@napplet/nub-identity';
 export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub-storage';
 export { ifcEmit, ifcOn } from '@napplet/nub-ifc';
 export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub-keys';

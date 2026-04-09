@@ -401,6 +401,65 @@ export interface NappletGlobal {
     onControls(callback: (controls: ('toasts' | 'badges' | 'actions' | 'channels' | 'system')[]) => void): Subscription;
   };
   /**
+   * Read-only user identity queries: public key, profile, follows, relays,
+   * lists, zaps, mutes, blocked, badges. All queries are strictly read-only --
+   * no signing, encryption, or decryption.
+   *
+   * @example
+   * ```ts
+   * // Get the user's public key:
+   * const pubkey = await window.napplet.identity.getPublicKey();
+   *
+   * // Get profile metadata:
+   * const profile = await window.napplet.identity.getProfile();
+   * if (profile) console.log(profile.name);
+   *
+   * // Get follow list:
+   * const follows = await window.napplet.identity.getFollows();
+   * ```
+   */
+  identity: {
+    /** Get the user's hex-encoded public key. Always succeeds. */
+    getPublicKey(): Promise<string>;
+    /** Get the user's relay list (NIP-65). */
+    getRelays(): Promise<Record<string, { read: boolean; write: boolean }>>;
+    /** Get the user's profile metadata (kind 0). Returns null if not found. */
+    getProfile(): Promise<{
+      name?: string;
+      displayName?: string;
+      about?: string;
+      picture?: string;
+      banner?: string;
+      nip05?: string;
+      lud16?: string;
+      website?: string;
+    } | null>;
+    /** Get the user's follow list (kind 3 contact list). */
+    getFollows(): Promise<string[]>;
+    /** Get entries from a user's categorized list. */
+    getList(listType: string): Promise<string[]>;
+    /** Get zap receipts sent to the user. */
+    getZaps(): Promise<{
+      eventId: string;
+      sender: string;
+      amount: number;
+      content?: string;
+    }[]>;
+    /** Get the user's mute list (kind 10000). */
+    getMutes(): Promise<string[]>;
+    /** Get the user's block list. */
+    getBlocked(): Promise<string[]>;
+    /** Get badges awarded to the user (NIP-58). */
+    getBadges(): Promise<{
+      id: string;
+      name?: string;
+      description?: string;
+      image?: string;
+      thumbs?: string[];
+      awardedBy: string;
+    }[]>;
+  };
+  /**
    * Shell capability queries. Check whether the shell supports a NUB
    * or permission.
    *

@@ -22,6 +22,19 @@ import {
 import { installNostrDb } from './nipdb-shim.js';
 import { installStorageShim, nappletStorage } from '@napplet/nub-storage';
 import { subscribe, publish, query } from '@napplet/nub-relay';
+import {
+  installIdentityShim,
+  handleIdentityMessage,
+  getPublicKey,
+  getRelays,
+  getProfile,
+  getFollows,
+  getList,
+  getZaps,
+  getMutes,
+  getBlocked,
+  getBadges,
+} from '@napplet/nub-identity';
 import { installIfcShim, emit, on, handleIfcEvent } from '@napplet/nub-ifc';
 import type { NappletGlobal } from '@napplet/core';
 import type { IfcEventMessage } from '@napplet/nub-ifc';
@@ -63,6 +76,12 @@ function handleEnvelopeMessage(event: MessageEvent): void {
   // Route notify.* messages to notify shim
   if (type.startsWith('notify.')) {
     handleNotifyMessage(msg as { type: string; [key: string]: unknown });
+    return;
+  }
+
+  // Route identity.* result messages to identity shim
+  if (type.startsWith('identity.') && type.endsWith('.result')) {
+    handleIdentityMessage(msg as { type: string; [key: string]: unknown });
     return;
   }
 
@@ -121,6 +140,17 @@ installIfcShim();
     onDismissed: notifyOnDismissed,
     onControls: notifyOnControls,
   },
+  identity: {
+    getPublicKey,
+    getRelays,
+    getProfile,
+    getFollows,
+    getList,
+    getZaps,
+    getMutes,
+    getBlocked,
+    getBadges,
+  },
   shell: {
     supports(_capability: string): boolean {
       // TODO: Shell populates supported capabilities at iframe creation
@@ -148,3 +178,6 @@ installNotifyShim();
 
 // Install napplet-side storage proxy
 installStorageShim();
+
+// Install identity shim (read-only user identity queries)
+installIdentityShim();

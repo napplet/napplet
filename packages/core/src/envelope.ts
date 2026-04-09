@@ -42,18 +42,19 @@ export interface NappletMessage {
 // ─── NUB Domain Types ──────────────────────────────────────────────────────
 
 /**
- * String literal union of the seven NUB (Napplet Unified Blueprint) domains.
+ * String literal union of the eight NUB (Napplet Unified Blueprint) domains.
  * Each domain corresponds to a capability namespace that a shell may support.
  *
- * | Domain    | Scope                                     |
- * |-----------|-------------------------------------------|
- * | `relay`   | NIP-01 relay proxy (subscribe, publish)   |
- * | `storage` | Scoped key-value storage proxy            |
- * | `ifc`     | Inter-frame communication (IPC peer bus)  |
- * | `theme`   | Theme tokens and appearance settings      |
- * | `keys`    | Keyboard forwarding and action keybindings|
- * | `media`   | Media session control and playback        |
- * | `notify`  | Shell-rendered notifications              |
+ * | Domain     | Scope                                     |
+ * |------------|-------------------------------------------|
+ * | `relay`    | NIP-01 relay proxy (subscribe, publish)   |
+ * | `identity` | Read-only user identity queries           |
+ * | `storage`  | Scoped key-value storage proxy            |
+ * | `ifc`      | Inter-frame communication (IPC peer bus)  |
+ * | `theme`    | Theme tokens and appearance settings      |
+ * | `keys`     | Keyboard forwarding and action keybindings|
+ * | `media`    | Media session control and playback        |
+ * | `notify`   | Shell-rendered notifications              |
  *
  * @example
  * ```ts
@@ -61,7 +62,7 @@ export interface NappletMessage {
  * const isValid = NUB_DOMAINS.includes(domain); // true
  * ```
  */
-export type NubDomain = 'relay' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
+export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
 
 /**
  * Runtime-accessible constant array of all NUB domain names.
@@ -74,7 +75,7 @@ export type NubDomain = 'relay' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media'
  * }
  * ```
  */
-export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'] as const;
+export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'] as const;
 
 // ─── Namespaced Capability Type ───────────────────────────────────────────
 
