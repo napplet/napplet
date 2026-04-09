@@ -3,59 +3,83 @@
 **Defined:** 2026-04-09
 **Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## v0.19.0 Requirements
+## v0.20.0 Requirements
 
-Execute all "drop" verdicts from the v0.18.0 spec conformance audit (SPEC-GAPS.md).
+Implement the Keys NUB (napplet/nubs#9) — bidirectional keyboard protocol with action registration, shell-delegated keybindings, and smart forwarding.
 
-### Code Drops
+### NUB Type Package
 
-- [x] **DROP-01**: Delete `Capability` type and `ALL_CAPABILITIES` constant from core/types.ts and core/index.ts
-- [x] **DROP-02**: Delete 7 superseded TOPICS (AUTH_IDENTITY_CHANGED, STATE_GET, STATE_SET, STATE_REMOVE, STATE_CLEAR, STATE_KEYS, STATE_RESPONSE) from core/topics.ts
-- [x] **DROP-03**: Delete 3 config TOPICS (SHELL_CONFIG_GET, SHELL_CONFIG_UPDATE, SHELL_CONFIG_CURRENT) from core/topics.ts
-- [x] **DROP-04**: Delete 3 scoped relay TOPICS (RELAY_SCOPED_CONNECT, RELAY_SCOPED_CLOSE, RELAY_SCOPED_PUBLISH) from core/topics.ts
-- [x] **DROP-05**: Delete `SHELL_BRIDGE_URI` from core/constants.ts and core/index.ts
-- [x] **DROP-06**: Delete `REPLAY_WINDOW_SECONDS` from core/constants.ts and core/index.ts
-- [x] **DROP-07**: Delete `PROTOCOL_VERSION` from core/constants.ts and core/index.ts
-- [x] **DROP-08**: Update core/index.test.ts — remove tests for deleted exports
-- [x] **DROP-09**: Verify `pnpm build && pnpm type-check` passes clean after all deletions
+- [ ] **NUB-01**: Create `@napplet/nub-keys` package with typed message definitions per NUB-KEYS spec (keys.forward, keys.registerAction, keys.registerAction.result, keys.unregisterAction, keys.bindings, keys.action)
+- [ ] **NUB-02**: Package follows existing NUB pattern (tsup, ESM-only, barrel export, DOMAIN constant)
+
+### Core Integration
+
+- [ ] **CORE-01**: Add `'keys'` to `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
+- [ ] **CORE-02**: Add `keys` namespace to `NappletGlobal` type in types.ts (registerAction, unregisterAction, onAction)
+
+### Shim Implementation
+
+- [ ] **SHIM-01**: Delete `keyboard-shim.ts`, create `keys-shim.ts` implementing NUB-KEYS smart forwarding
+- [ ] **SHIM-02**: Maintain local suppress list from `keys.bindings` messages; suppress bound keys, forward unbound
+- [ ] **SHIM-03**: Safety guards: skip `isComposing`, skip bare modifiers, never suppress Tab/Shift+Tab
+- [ ] **SHIM-04**: Install `window.napplet.keys` with `registerAction()`, `unregisterAction()`, `onAction()`
+
+### SDK
+
+- [ ] **SDK-01**: Add `keys` namespace to SDK wrapping `window.napplet.keys`
+- [ ] **SDK-02**: Convenience `registerAction()` that auto-wires `onAction()` listener + suppress handling
+- [ ] **SDK-03**: Re-export all `@napplet/nub-keys` message types
+
+### Documentation
+
+- [ ] **DOC-01**: `@napplet/nub-keys` README with message reference
+- [ ] **DOC-02**: Update NIP-5D NUB domain table to include `keys`
+- [ ] **DOC-03**: Update core, shim, and SDK READMEs for keys NUB
 
 ## Future Requirements
 
 Deferred to future milestones.
 
-### v0.20.0 Keys NUB
+### Keyboard Extensions
 
-- **KEYS-01**: Keys NUB protocol — bidirectional keybinding protocol (napplet registers actions, shell binds keys, napplet suppresses forwarding for bound keys)
-- **KEYS-02**: SDK convenience — auto-listener setup, forward suppression, handler binding for shell-delegated keybinds
+- **KEY-EXT-01**: Capture mode (keybinds:capture-start/end) — let napplet enter a mode where all keystrokes are captured for rebinding UI
+- **KEY-EXT-02**: Action categories/groups for shell keybinding UI
+- **KEY-EXT-03**: `event.repeat` opt-in per action (e.g., arrow key repeat for scroll)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Deferred TOPICS (keybinds, audio, wm, future NUB) | Kept per v0.18.0 decision — not dropped |
-| nostrdb proxy conformance audit | Deferred to future milestone |
-| NIP-5D spec amendment for keyboard | Deferred to v0.20.0 keys NUB |
+| Shell-side keybinding management UI | Shell implementation concern, not SDK |
+| Deferred TOPICS (audio, wm, future NUB) | Not part of keys NUB |
+| nostrdb proxy conformance audit | Separate milestone |
 | npm publish | Blocked on human npm auth (PUB-04) |
+| Capture mode (keybinds:capture-start/end) | Deferred to future extension |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DROP-01 | Phase 87 | Complete |
-| DROP-02 | Phase 87 | Complete |
-| DROP-03 | Phase 87 | Complete |
-| DROP-04 | Phase 87 | Complete |
-| DROP-05 | Phase 87 | Complete |
-| DROP-06 | Phase 87 | Complete |
-| DROP-07 | Phase 87 | Complete |
-| DROP-08 | Phase 87 | Complete |
-| DROP-09 | Phase 87 | Complete |
+| NUB-01 | — | Pending |
+| NUB-02 | — | Pending |
+| CORE-01 | — | Pending |
+| CORE-02 | — | Pending |
+| SHIM-01 | — | Pending |
+| SHIM-02 | — | Pending |
+| SHIM-03 | — | Pending |
+| SHIM-04 | — | Pending |
+| SDK-01 | — | Pending |
+| SDK-02 | — | Pending |
+| SDK-03 | — | Pending |
+| DOC-01 | — | Pending |
+| DOC-02 | — | Pending |
+| DOC-03 | — | Pending |
 
 **Coverage:**
-- v0.19.0 requirements: 9 total
-- Mapped to phases: 9
-- Unmapped: 0
+- v0.20.0 requirements: 14 total
+- Mapped to phases: 0
+- Unmapped: 14 ⚠️
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after roadmap creation*
+*Last updated: 2026-04-09 after initial definition*
