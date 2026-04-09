@@ -44,21 +44,21 @@ Draft NUB-NOTIFY spec, implement @napplet/nub-notify.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPEC-01 | — | Pending |
-| NUB-01 | — | Pending |
-| NUB-02 | — | Pending |
-| CORE-01 | — | Pending |
-| CORE-02 | — | Pending |
-| SHIM-01 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
+| SPEC-01 | Phase 101 | Pending |
+| NUB-01 | Phase 102 | Pending |
+| NUB-02 | Phase 102 | Pending |
+| CORE-01 | Phase 103 | Pending |
+| CORE-02 | Phase 103 | Pending |
+| SHIM-01 | Phase 103 | Pending |
+| DOC-01 | Phase 104 | Pending |
+| DOC-02 | Phase 104 | Pending |
+| DOC-03 | Phase 104 | Pending |
 
 **Coverage:**
 - v0.23.0 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9
+- Mapped to phases: 9
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after initial definition*
+*Last updated: 2026-04-09 after roadmap creation*

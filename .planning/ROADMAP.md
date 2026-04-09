@@ -23,6 +23,7 @@
 - ✅ **v0.19.0 Spec Gap Drops** — Phase 87 (shipped 2026-04-09) — [Archive](milestones/v0.19.0-ROADMAP.md)
 - ✅ **v0.20.0 Keys NUB** — Phases 88-92 (shipped 2026-04-09) — [Archive](milestones/v0.20.0-ROADMAP.md)
 - ✅ **v0.21.0 NUB Modularization** — Phases 93-95 (shipped 2026-04-09) — [Archive](milestones/v0.21.0-ROADMAP.md)
+- ✅ **v0.22.0 Media NUB + Kill Services** — Phases 96-100 (shipped 2026-04-09) — [Archive](milestones/v0.22.0-ROADMAP.md)
 
 ## Phases
 
@@ -249,82 +250,80 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### v0.22.0 Media NUB + Kill Services (In Progress)
+<details>
+<summary>v0.22.0 Media NUB + Kill Services (Phases 96-100) — SHIPPED 2026-04-09</summary>
 
-**Milestone Goal:** Remove the dead `svc:` namespace, draft the NUB-MEDIA spec, implement @napplet/nub-media, and integrate media into core/shim/SDK.
+- [x] **Phase 96: Kill Services** - Remove svc: prefix, drop AUDIO_* TOPICS superseded by media NUB
+- [x] **Phase 97: NUB-MEDIA Spec** - Draft NUB-MEDIA spec in nubs repo, PR to napplet/nubs
+- [x] **Phase 98: NUB Media Package** - @napplet/nub-media with types, shim installer, SDK wrappers
+- [x] **Phase 99: Core + Shim Integration** - Add 'media' to NubDomain, NappletGlobal, and shim entry point
+- [x] **Phase 100: Documentation** - READMEs for nub-media, NIP-5D domain table update, core/shim/SDK docs
 
-- [ ] **Phase 96: Kill Services** - Remove svc: prefix, drop AUDIO_* TOPICS superseded by media NUB
-- [ ] **Phase 97: NUB-MEDIA Spec** - Draft NUB-MEDIA spec in nubs repo, PR to napplet/nubs
-- [ ] **Phase 98: NUB Media Package** - @napplet/nub-media with types, shim installer, SDK wrappers
-- [ ] **Phase 99: Core + Shim Integration** - Add 'media' to NubDomain, NappletGlobal, and shim entry point
-- [ ] **Phase 100: Documentation** - READMEs for nub-media, NIP-5D domain table update, core/shim/SDK docs
+</details>
+
+### v0.23.0 Notify NUB (In Progress)
+
+**Milestone Goal:** Draft NUB-NOTIFY spec, implement @napplet/nub-notify (8th NUB, 12th package), and integrate notify into core/shim/SDK with full documentation.
+
+- [ ] **Phase 101: NUB-NOTIFY Spec** - Draft NUB-NOTIFY spec in nubs repo, PR to napplet/nubs
+- [ ] **Phase 102: NUB Notify Package** - @napplet/nub-notify with types, shim installer, SDK wrappers
+- [ ] **Phase 103: Core + Shim Integration** - Add 'notify' to NubDomain, NappletGlobal, and shim entry point
+- [ ] **Phase 104: Documentation** - READMEs for nub-notify, NIP-5D domain table update, core/shim/SDK docs
 
 ## Phase Details
 
-### Phase 96: Kill Services
-**Goal**: The `svc:` capability namespace and deferred AUDIO_* topics are fully removed -- everything is a NUB
-**Depends on**: Nothing (first phase of v0.22.0)
-**Requirements**: SVC-01, SVC-02, SVC-03
-**Success Criteria** (what must be TRUE):
-  1. `NamespacedCapability` type in envelope.ts no longer contains `svc:` prefix or template literal
-  2. No occurrence of `svc:` in NIP-5D.md, any README, or any JSDoc comment across the repo
-  3. The 4 AUDIO_* entries are gone from core/topics.ts (or topics.ts is deleted if empty)
-  4. `pnpm build && pnpm type-check` passes clean
-**Plans**: TBD
-
-### Phase 97: NUB-MEDIA Spec
-**Goal**: NUB-MEDIA spec exists as a PR in the napplet/nubs repo, following NUB-KEYS pattern
-**Depends on**: Phase 96 (svc: removal clarifies that media is a NUB, not a service)
+### Phase 101: NUB-NOTIFY Spec
+**Goal**: NUB-NOTIFY spec exists as a PR in the napplet/nubs repo, covering the full notification protocol
+**Depends on**: Nothing (first phase of v0.23.0)
 **Requirements**: SPEC-01
 **Success Criteria** (what must be TRUE):
-  1. A NUB-MEDIA.md file exists in ~/Develop/nubs/ following the structure of existing NUB specs
-  2. Spec covers session lifecycle (create/update/destroy), multiple sessions, dynamic capabilities
-  3. Spec covers dual volume model (napplet volume x shell volume), shell control list, and media commands
-  4. Spec covers full metadata schema (title, artist, album, artwork URL/blossom, duration, mediaType -- all optional)
-  5. A PR is opened against napplet/nubs (same pattern as napplet/nubs#9 for NUB-KEYS)
+  1. A NUB-NOTIFY.md file exists in ~/Develop/nubs/ following the structure of existing NUB specs (NUB-KEYS, NUB-MEDIA)
+  2. Spec covers notification send/dismiss lifecycle, permission request/grant flow, and action handling
+  3. Spec covers channels (grouping/categorization), badges (unread counts), priority levels (low/normal/high/urgent), and shell controls
+  4. Spec contains zero references to private repos, internal tooling, or non-public identifiers
+  5. A PR is opened against napplet/nubs (same pattern as napplet/nubs#10 for NUB-MEDIA)
 **Plans**: TBD
 
-### Phase 98: NUB Media Package
-**Goal**: @napplet/nub-media package exists with typed messages, shim installer, and SDK wrappers
-**Depends on**: Phase 97 (types derive from the spec)
+### Phase 102: NUB Notify Package
+**Goal**: @napplet/nub-notify package exists with typed messages, shim installer, and SDK wrappers per the modular NUB pattern
+**Depends on**: Phase 101 (types derive from the spec)
 **Requirements**: NUB-01, NUB-02
 **Success Criteria** (what must be TRUE):
-  1. `packages/nubs/media/` exists with types.ts defining all message interfaces (media.session.create, media.session.create.result, media.session.update, media.session.destroy, media.state, media.capabilities, media.command, media.controls)
-  2. shim.ts exports `installMediaShim()` with session management, state reporting, and command handling
-  3. sdk.ts exports convenience wrappers for session lifecycle and state queries
+  1. `packages/nubs/notify/` exists with types.ts defining all message interfaces (notify.send, notify.send.result, notify.dismiss, notify.badge, notify.channel.register, notify.permission.request, notify.permission.result, notify.action, notify.clicked, notify.dismissed, notify.controls)
+  2. shim.ts exports `installNotifyShim()` with notification send/dismiss handling, permission flow, channel registration, and action callbacks
+  3. sdk.ts exports convenience wrappers for sending notifications, requesting permissions, registering channels, and handling actions
   4. Package builds clean with tsup and exports via barrel index.ts
 **Plans**: TBD
 
-### Phase 99: Core + Shim Integration
-**Goal**: The media NUB is wired into the monorepo -- core recognizes the domain, shim installs it
-**Depends on**: Phase 98 (nub-media package must exist)
+### Phase 103: Core + Shim Integration
+**Goal**: The notify NUB is wired into the monorepo -- core recognizes the domain, shim installs it
+**Depends on**: Phase 102 (nub-notify package must exist)
 **Requirements**: CORE-01, CORE-02, SHIM-01
 **Success Criteria** (what must be TRUE):
-  1. `'media'` is in the `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
-  2. `NappletGlobal` type in types.ts includes a `media` namespace matching the SDK surface
-  3. `import '@napplet/shim'` calls `installMediaShim()` and `window.napplet.media.*` is available
+  1. `'notify'` is in the `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
+  2. `NappletGlobal` type in types.ts includes a `notify` namespace matching the SDK surface
+  3. `import '@napplet/shim'` calls `installNotifyShim()` and `window.napplet.notify.*` is available
   4. `pnpm build && pnpm type-check` passes clean across all packages
 **Plans**: TBD
 
-### Phase 100: Documentation
-**Goal**: All documentation reflects the new media NUB and the removed svc: namespace
-**Depends on**: Phase 96, Phase 98, Phase 99 (needs final API shape)
+### Phase 104: Documentation
+**Goal**: All documentation reflects the new notify NUB across the monorepo and NIP-5D
+**Depends on**: Phase 102, Phase 103 (needs final API shape)
 **Requirements**: DOC-01, DOC-02, DOC-03
 **Success Criteria** (what must be TRUE):
-  1. @napplet/nub-media has a README with full message reference table and metadata schema
-  2. NIP-5D Known NUBs domain table includes `media` row; all `svc:` examples and service discovery text are gone
-  3. Core, shim, and SDK READMEs reference the media NUB and no longer mention `svc:` prefix
+  1. @napplet/nub-notify has a README with full message reference table covering all notify.* message types
+  2. NIP-5D Known NUBs domain table includes `notify` row with domain prefix and description
+  3. Core, shim, and SDK READMEs reference the notify NUB in their package listings and domain tables
 **Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 96 -> 97 -> 98 -> 99 -> 100
+Phases execute in numeric order: 101 -> 102 -> 103 -> 104
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 96. Kill Services | 0/0 | Not started | - |
-| 97. NUB-MEDIA Spec | 0/0 | Not started | - |
-| 98. NUB Media Package | 0/0 | Not started | - |
-| 99. Core + Shim Integration | 0/0 | Not started | - |
-| 100. Documentation | 0/0 | Not started | - |
+| 101. NUB-NOTIFY Spec | 0/0 | Not started | - |
+| 102. NUB Notify Package | 0/0 | Not started | - |
+| 103. Core + Shim Integration | 0/0 | Not started | - |
+| 104. Documentation | 0/0 | Not started | - |
