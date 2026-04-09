@@ -1,5 +1,15 @@
 # Milestones
 
+## v0.24.0 Identity NUB + Kill NIP-07 (Shipped: 2026-04-09)
+
+**Phases completed:** 6 phases, 0 plans, 0 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 ## v0.23.0 Notify NUB (Shipped: 2026-04-09)
 
 **Phases completed:** 4 phases, 0 plans, 0 tasks

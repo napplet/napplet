@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.24.0
 milestone_name: Identity NUB + Kill NIP-07
-status: ready-to-plan
-stopped_at: null
-last_updated: "2026-04-09"
+status: planning
+stopped_at: Roadmap created for v0.24.0 (6 phases, 16 requirements mapped)
+last_updated: "2026-04-09T15:10:00.616Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 6
@@ -28,13 +28,14 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 Phase: 105 (Kill NIP-07 + Signer) -- first of 6 phases
 Plan: None yet -- ready to plan
 Status: Ready to plan
-Last activity: 2026-04-09 -- Roadmap created for v0.24.0
+Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: --
 - Total execution time: 0 hours

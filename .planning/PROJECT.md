@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.24.0 Identity NUB + Kill NIP-07
+
+Removed `window.nostr` (NIP-07) from napplets — napplets can no longer sign or encrypt. Deleted `@napplet/nub-signer` entirely. Created `@napplet/nub-identity` (read-only user queries: getPublicKey, getRelays, getProfile, getFollows, getList, getZaps, getMutes, getBlocked, getBadges). Added `relay.publishEncrypted` for shell-mediated crypto (NIP-44 default). Shell auto-decrypts incoming encrypted events. NIP-5D updated with security rationale. NUB-IDENTITY spec: napplet/nubs#12. 6 phases shipped 2026-04-09. See [archive](milestones/v0.24.0-ROADMAP.md).
+
 ## Shipped: v0.23.0 Notify NUB
 
 NUB-NOTIFY spec (napplet/nubs#11) for shell-rendered notifications. `@napplet/nub-notify` (8th NUB, 12th package) with 11 message types covering send/dismiss, permissions, actions, channels, badges, priority levels, and shell capability detection. Types + shim + SDK per modular pattern. Core/shim/SDK integrated. All docs updated. 4 phases shipped 2026-04-09. See [archive](milestones/v0.23.0-ROADMAP.md).
@@ -213,20 +217,16 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ 'notify' in NubDomain + NappletGlobal + shim/SDK integration — v0.23.0 Phase 103 (CORE-01..02, SHIM-01)
 - ✓ All docs updated for notify NUB — v0.23.0 Phase 104 (DOC-01..03)
 
+- ✓ window.nostr removed, nub-signer deleted — v0.24.0 Phase 105 (KILL-01..04)
+- ✓ NUB-IDENTITY spec → napplet/nubs#12 — v0.24.0 Phase 106 (SPEC-01)
+- ✓ @napplet/nub-identity package (9 query types + shim + SDK) — v0.24.0 Phase 107 (NUB-01..02)
+- ✓ relay.publishEncrypted added, NUB-RELAY updated — v0.24.0 Phase 108 (RELAY-01..03)
+- ✓ 'identity' in NubDomain + core/shim/SDK integration — v0.24.0 Phase 109 (CORE-01..02, SHIM-01)
+- ✓ NIP-5D updated (no NIP-07, security rationale), all READMEs — v0.24.0 Phase 110 (DOC-01..03)
+
 ### Active
 
-## Current Milestone: v0.24.0 Identity NUB + Kill NIP-07
-
-**Goal:** Remove window.nostr from napplets. Replace signer NUB with identity NUB (read-only user info + convenience queries). Add relay.publishEncrypted for shell-mediated crypto. Shell decrypts incoming events.
-
-**Target features:**
-- Remove window.nostr + signer NUB entirely
-- NUB-IDENTITY spec → napplet/nubs PR
-- @napplet/nub-identity package (getPublicKey, getRelays, getProfile, getFollows, getList, getZaps, getMutes, getBlocked, getBadges)
-- relay.publishEncrypted (cleartext + recipient + method, NIP-44 default)
-- Shell auto-decrypts incoming encrypted events
-- Update NIP-5D: remove NIP-07 requirement, add security rationale
-- Delete @napplet/nub-signer package
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -243,7 +243,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.24.0 in progress (Identity NUB + Kill NIP-07). Replacing signer NUB with identity NUB, removing window.nostr. 12 packages → will lose nub-signer, gain nub-identity (net same). 23 milestones shipped.
+- **Current state**: v0.24.0 shipped (Identity NUB + Kill NIP-07). 12 packages (4 core + 8 NUB: relay, storage, ifc, theme, keys, media, notify, identity). No window.nostr. Shell-mediated crypto. 24 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -332,4 +332,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.24.0 milestone start*
+*Last updated: 2026-04-09 after v0.24.0 milestone*
