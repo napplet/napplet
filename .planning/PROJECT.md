@@ -188,7 +188,16 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.21.0 NUB Modularization
+
+**Goal:** Move ALL domain-specific logic from shim and SDK into the NUB packages. Shim and SDK become plugin hosts that NUBs register into.
+
+**Target features:**
+- Each NUB package exports: types + shim installer + SDK helpers
+- Shim provides registerNubShim() hook — NUBs register their window.napplet.* API and message handlers
+- SDK provides registration pattern for NUB convenience wrappers
+- Move ~824 lines of domain logic out of shim into NUB packages
+- After: adding/removing a NUB requires zero source edits to shim or SDK
 
 ### Out of Scope
 
@@ -205,7 +214,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.20.0 shipped (Keys NUB). 10 packages (4 core + 6 NUB). 20 milestones shipped. Bidirectional keyboard protocol with smart forwarding.
+- **Current state**: v0.21.0 in progress (NUB Modularization). Moving domain logic from shim/SDK into NUB packages. 10 packages (4 core + 6 NUB). 20 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -294,4 +303,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.20.0 milestone*
+*Last updated: 2026-04-09 after v0.21.0 milestone start*
