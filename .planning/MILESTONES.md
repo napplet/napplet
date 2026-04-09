@@ -1,5 +1,15 @@
 # Milestones
 
+## v0.22.0 Media NUB + Kill Services (Shipped: 2026-04-09)
+
+**Phases completed:** 5 phases, 0 plans, 0 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 ## v0.21.0 NUB Modularization (Shipped: 2026-04-09)
 
 **Phases completed:** 3 phases, 0 plans, 0 tasks

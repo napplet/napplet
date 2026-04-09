@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.22.0
 milestone_name: Media NUB + Kill Services
-status: ready-to-plan
-stopped_at: null
-last_updated: "2026-04-09"
+status: planning
+stopped_at: Roadmap created for v0.22.0 -- 5 phases (96-100), 12 requirements mapped
+last_updated: "2026-04-09T12:41:02.961Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 5
@@ -28,13 +28,14 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 Phase: 96 of 100 (Kill Services)
 Plan: --
 Status: Ready to plan
-Last activity: 2026-04-09 -- Roadmap created for v0.22.0
+Last activity: 2026-04-09
 
 Progress: [..........] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: --
 - Total execution time: --

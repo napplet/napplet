@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.22.0 Media NUB + Kill Services
+
+Killed the `svc:` capability namespace — everything is a NUB. Dropped 4 deferred AUDIO_* TOPICS. Drafted NUB-MEDIA spec (napplet/nubs#10) for media session delegation: explicit sessions, multiple per napplet, dynamic capabilities, dual volume, shell control list, full metadata with blossom hash artwork. Created `@napplet/nub-media` (7th NUB, 11th package) with types + shim + SDK per modular pattern. Core/shim/SDK integrated. All docs updated. 5 phases shipped 2026-04-09. See [archive](milestones/v0.22.0-ROADMAP.md).
+
 ## Shipped: v0.21.0 NUB Modularization
 
 Moved ALL domain-specific logic from `@napplet/shim` and `@napplet/sdk` into the 5 NUB packages. Each NUB now exports `shim.ts` (installer + message handlers) and `sdk.ts` (convenience wrappers) alongside its type definitions. Shim went from 19KB to 5.75KB — now a thin host that imports NUB installers. Old domain files (`relay-shim.ts`, `state-shim.ts`, `keys-shim.ts`) deleted. DX unchanged: `import '@napplet/shim'` installs all NUBs; named exports allow cherry-picking. 3 phases shipped 2026-04-09. See [archive](milestones/v0.21.0-ROADMAP.md).
@@ -194,20 +198,15 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ Shim/SDK refactored to thin hosts importing from NUB packages — v0.21.0 Phase 94 (SHIM-01..04, SDK-01..03)
 - ✓ Build clean, API surface identical — v0.21.0 Phase 95 (VER-01..02)
 
+- ✓ svc: namespace removed from NamespacedCapability + all docs — v0.22.0 Phase 96 (SVC-01..03)
+- ✓ NUB-MEDIA spec drafted → napplet/nubs#10 — v0.22.0 Phase 97 (SPEC-01)
+- ✓ @napplet/nub-media package (types + shim + SDK) — v0.22.0 Phase 98 (NUB-01..02)
+- ✓ 'media' in NubDomain + NappletGlobal + shim integration — v0.22.0 Phase 99 (CORE-01..02, SHIM-01)
+- ✓ All docs updated for media NUB and svc: removal — v0.22.0 Phase 100 (DOC-01..03)
+
 ### Active
 
-## Current Milestone: v0.22.0 Media NUB + Kill Services
-
-**Goal:** Draft NUB-MEDIA spec (media session delegation), implement @napplet/nub-media, remove svc: namespace — everything is a NUB.
-
-**Target features:**
-- Remove svc: prefix from NamespacedCapability
-- Drop deferred AUDIO_* TOPICS
-- NUB-MEDIA spec → napplet/nubs PR
-- @napplet/nub-media package (types + shim + SDK)
-- Media sessions: create/update/destroy, multiple per napplet, full metadata
-- Dynamic capabilities, dual volume, shell control list
-- Core integration ('media' in NubDomain)
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -224,7 +223,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.22.0 in progress (Media NUB + Kill Services). 10 packages (4 core + 6 NUB) → will become 11 with @napplet/nub-media. 21 milestones shipped.
+- **Current state**: v0.22.0 shipped (Media NUB + Kill Services). 11 packages (4 core + 7 NUB). 22 milestones shipped. svc: namespace removed, media NUB live.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -313,4 +312,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.22.0 milestone start*
+*Last updated: 2026-04-09 after v0.22.0 milestone*
