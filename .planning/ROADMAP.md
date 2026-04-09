@@ -233,7 +233,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 88: NUB Type Package** - Create @napplet/nub-keys with typed message definitions per NUB-KEYS spec (completed 2026-04-09)
 - [x] **Phase 89: Core Integration** - Add 'keys' to NubDomain union and NappletGlobal type (completed 2026-04-09)
-- [ ] **Phase 90: Shim Implementation** - Replace keyboard-shim.ts with NUB-KEYS smart forwarding and action API
+- [x] **Phase 90: Shim Implementation** - Replace keyboard-shim.ts with NUB-KEYS smart forwarding and action API (completed 2026-04-09)
 - [ ] **Phase 91: SDK Wrappers** - Add keys namespace to SDK with registerAction() convenience and NUB type re-exports
 - [ ] **Phase 92: Documentation** - README for nub-keys, NIP-5D domain table update, core/shim/SDK README updates
 
@@ -276,7 +276,7 @@ Plans:
   5. Unbound keydown events (not in suppress list, not in a text input) produce a `keys.forward` postMessage to the parent
 **Plans**: 1 plan
 Plans:
-- [ ] 90-01-PLAN.md — Verify keys-shim implementation against NUB-KEYS acceptance criteria
+- [x] 90-01-PLAN.md — Verify keys-shim implementation against NUB-KEYS acceptance criteria
 
 ### Phase 91: SDK Wrappers
 **Goal**: Bundler consumers can import typed keys functions and all NUB message types from @napplet/sdk
@@ -311,6 +311,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 88. NUB Type Package | 1/1 | Complete   | 2026-04-09 |
 | 89. Core Integration | 1/1 | Complete    | 2026-04-09 |
-| 90. Shim Implementation | 0/? | Not started | - |
+| 90. Shim Implementation | 1/1 | Complete   | 2026-04-09 |
 | 91. SDK Wrappers | 0/? | Not started | - |
 | 92. Documentation | 0/? | Not started | - |

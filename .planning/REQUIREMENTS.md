@@ -19,10 +19,10 @@ Implement the Keys NUB (napplet/nubs#9) -- bidirectional keyboard protocol with 
 
 ### Shim Implementation
 
-- [ ] **SHIM-01**: Delete `keyboard-shim.ts`, create `keys-shim.ts` implementing NUB-KEYS smart forwarding
-- [ ] **SHIM-02**: Maintain local suppress list from `keys.bindings` messages; suppress bound keys, forward unbound
-- [ ] **SHIM-03**: Safety guards: skip `isComposing`, skip bare modifiers, never suppress Tab/Shift+Tab
-- [ ] **SHIM-04**: Install `window.napplet.keys` with `registerAction()`, `unregisterAction()`, `onAction()`
+- [x] **SHIM-01**: Delete `keyboard-shim.ts`, create `keys-shim.ts` implementing NUB-KEYS smart forwarding
+- [x] **SHIM-02**: Maintain local suppress list from `keys.bindings` messages; suppress bound keys, forward unbound
+- [x] **SHIM-03**: Safety guards: skip `isComposing`, skip bare modifiers, never suppress Tab/Shift+Tab
+- [x] **SHIM-04**: Install `window.napplet.keys` with `registerAction()`, `unregisterAction()`, `onAction()`
 
 ### SDK
 
@@ -64,10 +64,10 @@ Deferred to future milestones.
 | NUB-02 | Phase 88 | Complete |
 | CORE-01 | Phase 89 | Complete |
 | CORE-02 | Phase 89 | Complete |
-| SHIM-01 | Phase 90 | Pending |
-| SHIM-02 | Phase 90 | Pending |
-| SHIM-03 | Phase 90 | Pending |
-| SHIM-04 | Phase 90 | Pending |
+| SHIM-01 | Phase 90 | Complete |
+| SHIM-02 | Phase 90 | Complete |
+| SHIM-03 | Phase 90 | Complete |
+| SHIM-04 | Phase 90 | Complete |
 | SDK-01 | Phase 91 | Pending |
 | SDK-02 | Phase 91 | Pending |
 | SDK-03 | Phase 91 | Pending |
