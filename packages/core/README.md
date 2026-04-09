@@ -57,14 +57,14 @@ interface RelaySubscribe extends NappletMessage {
 }
 ```
 
-The `type` field domain prefix (`relay`, `signer`, `storage`, `ifc`, `theme`, `keys`, `media`) routes messages to the correct NUB handler via `dispatch()`.
+The `type` field domain prefix (`relay`, `signer`, `storage`, `ifc`, `theme`, `keys`, `media`, `notify`) routes messages to the correct NUB handler via `dispatch()`.
 
 #### `NubDomain`
 
-String literal union of the seven NUB capability domains.
+String literal union of the eight NUB capability domains.
 
 ```ts
-type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media';
+type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
 ```
 
 | Domain    | Scope                                    |
@@ -76,13 +76,14 @@ type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'me
 | `theme`   | Theme tokens and appearance settings      |
 | `keys`    | Keyboard forwarding and action keybindings|
 | `media`   | Media session control and playback        |
+| `notify`  | Shell-rendered notifications              |
 
 #### `NUB_DOMAINS`
 
 Runtime constant array of all NUB domain strings. Useful for iteration and validation.
 
 ```ts
-const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media'];
+const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'];
 
 for (const domain of NUB_DOMAINS) {
   console.log(`Checking support for: ${domain}`);
@@ -331,7 +332,7 @@ import type {
 | Type | Description |
 |------|-------------|
 | `NappletMessage` | Base interface for all JSON envelope messages |
-| `NubDomain` | Union of the seven NUB domain strings |
+| `NubDomain` | Union of the eight NUB domain strings |
 | `NamespacedCapability` | Union of `NubDomain \| nub:* \| perm:*` for `supports()` |
 | `ShellSupports` | Interface with `supports()` capability query method |
 | `NappletGlobalShell` | Type for `window.napplet.shell` (extends `ShellSupports`) |
@@ -348,7 +349,7 @@ import type {
 `@napplet/core` is consumed by all packages in the napplet ecosystem for envelope types and NUB dispatch.
 
 - **In this repo:** `@napplet/shim`, `@napplet/sdk`, and `@napplet/vite-plugin` import `NappletMessage`, `NubDomain`, `ShellSupports`, and all shared protocol types from `@napplet/core`.
-- **NUB packages** (`@napplet/nub-relay`, `@napplet/nub-signer`, `@napplet/nub-storage`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`): extend `NappletMessage` for their domain-specific message types and call `registerNub` at import time.
+- **NUB packages** (`@napplet/nub-relay`, `@napplet/nub-signer`, `@napplet/nub-storage`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify`): extend `NappletMessage` for their domain-specific message types and call `registerNub` at import time.
 
 ## Protocol Reference
 

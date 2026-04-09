@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, `media`, and `shell` sub-objects
+3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, `media`, `notify`, and `shell` sub-objects
 4. The shim also installs `window.nostr` (NIP-07 compatible) for transparent signer proxy access
 
 ### Installation
@@ -76,6 +76,19 @@ const mediaSub = window.napplet.media.onCommand(sessionId, (action, value) => {
   if (action === 'pause') player.pause();
 });
 
+// Send a notification
+const { notificationId } = await window.napplet.notify.send({
+  title: 'New message', body: 'Alice: hey!', priority: 'normal',
+});
+
+// Set badge count
+window.napplet.notify.badge(3);
+
+// Listen for notification interactions
+const notifySub = window.napplet.notify.onAction((notifId, actionId) => {
+  if (actionId === 'reply') openReply(notifId);
+});
+
 // Check shell capability support (namespaced)
 if (window.napplet.shell.supports('nub:signer')) {
   const pubkey = await window.nostr.getPublicKey();
@@ -86,6 +99,7 @@ sub.close();
 ipcSub.close();
 keySub.close();
 mediaSub.close();
+notifySub.close();
 ```
 
 ## Wire Format
@@ -128,6 +142,12 @@ Messages sent via `window.parent.postMessage(msg, '*')`:
 { type: 'media.session.destroy', sessionId: string }
 { type: 'media.state', sessionId: string, status: string, position?: number, duration?: number, volume?: number }
 { type: 'media.capabilities', sessionId: string, actions: string[] }
+
+{ type: 'notify.send', id: string, title: string, body?: string, icon?: string, actions?: object[], channel?: string, priority?: string }
+{ type: 'notify.dismiss', notificationId: string }
+{ type: 'notify.badge', count: number }
+{ type: 'notify.channel.register', channelId: string, label: string, description?: string, defaultPriority?: string }
+{ type: 'notify.permission.request', id: string, channel?: string }
 ```
 
 ### Inbound (shell → napplet)
@@ -162,6 +182,13 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'media.session.create.result', id: string, sessionId: string, error?: string }
 { type: 'media.command', sessionId: string, action: string, value?: number }
 { type: 'media.controls', controls: string[] }
+
+{ type: 'notify.send.result', id: string, notificationId?: string, error?: string }
+{ type: 'notify.permission.result', id: string, granted: boolean }
+{ type: 'notify.action', notificationId: string, actionId: string }
+{ type: 'notify.clicked', notificationId: string }
+{ type: 'notify.dismissed', notificationId: string, reason?: string }
+{ type: 'notify.controls', controls: string[] }
 ```
 
 All request/response pairs are correlated by the `id` field. Signer request timeouts after 30 seconds.
@@ -200,6 +227,17 @@ window.napplet = {
     reportCapabilities(sessionId, actions): void;
     onCommand(sessionId, callback): { close(): void };
     onControls(sessionId, callback): { close(): void };
+  },
+  notify: {
+    send(notification): Promise<{ notificationId: string }>;
+    dismiss(notificationId): void;
+    badge(count): void;
+    registerChannel(channel): void;
+    requestPermission(channel?): Promise<{ granted: boolean }>;
+    onAction(callback): { close(): void };
+    onClicked(callback): { close(): void };
+    onDismissed(callback): { close(): void };
+    onControls(callback): { close(): void };
   },
   shell: {
     supports(capability: NamespacedCapability): boolean;
@@ -269,6 +307,22 @@ Media session control. Create sessions, report playback state and metadata, decl
 | `onCommand(sessionId, callback)` | `{ close(): void }` | Listen for shell media commands (play, pause, seek, volume, etc.). |
 | `onControls(sessionId, callback)` | `{ close(): void }` | Listen for the shell's supported control list. |
 
+### `window.napplet.notify`
+
+Shell-rendered notifications. Send notifications, set badge counts, register channels, request permission, and listen for user interaction.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `send(notification)` | `Promise<{ notificationId }>` | Send a notification to the shell. |
+| `dismiss(notificationId)` | `void` | Dismiss a notification. Fire-and-forget. |
+| `badge(count)` | `void` | Set badge count (0 to clear). Fire-and-forget. |
+| `registerChannel(channel)` | `void` | Register a notification channel. Fire-and-forget. |
+| `requestPermission(channel?)` | `Promise<{ granted }>` | Request permission to send notifications. |
+| `onAction(callback)` | `{ close(): void }` | Listen for action button clicks. |
+| `onClicked(callback)` | `{ close(): void }` | Listen for notification body clicks. |
+| `onDismissed(callback)` | `{ close(): void }` | Listen for dismissals (user/timeout/replaced). |
+| `onControls(callback)` | `{ close(): void }` | Listen for shell's notification capabilities. |
+
 ### `window.napplet.shell`
 
 Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain or permission.
@@ -292,7 +346,7 @@ Importing `@napplet/shim` activates a global Window type augmentation:
 // This side-effect import gives TypeScript full autocompletion for window.napplet.*
 import '@napplet/shim';
 
-// TypeScript knows about window.napplet.relay, .ipc, .storage, .keys, .shell
+// TypeScript knows about window.napplet.relay, .ipc, .storage, .keys, .media, .notify, .shell
 window.napplet.relay.subscribe({ kinds: [1] }, (event) => {
   // event is typed as NostrEvent
 });
@@ -310,7 +364,7 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 |---|---|---|
 | **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
-| **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media` (types only) | `@napplet/core` (types only) |
+| **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify` (types only) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
 | **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, plus types |
 

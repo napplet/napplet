@@ -26,7 +26,7 @@ npm install @napplet/sdk @napplet/shim
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys, media, type NostrEvent } from '@napplet/sdk';
+import { relay, ipc, storage, keys, media, notify, type NostrEvent } from '@napplet/sdk';
 
 // Subscribe to kind 1 notes
 const sub = relay.subscribe(
@@ -68,6 +68,12 @@ const { sessionId } = await media.createSession({
   title: 'My Song', artist: 'The Artist',
 });
 media.reportState(sessionId, { status: 'playing', position: 42.5, duration: 240 });
+
+// Send a notification
+const { notificationId } = await notify.send({
+  title: 'Task complete', body: 'Build succeeded', priority: 'normal',
+});
+notify.badge(1);
 
 // Clean up
 sub.close();
@@ -123,6 +129,22 @@ Media session control. Mirrors `window.napplet.media`.
 | `reportCapabilities(sessionId, actions)` | `void` | Declare supported media actions |
 | `onCommand(sessionId, callback)` | `{ close(): void }` | Listen for shell media commands |
 | `onControls(sessionId, callback)` | `{ close(): void }` | Listen for the shell's supported control list |
+
+### `notify`
+
+Shell-rendered notifications. Mirrors `window.napplet.notify`.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `send(notification)` | `Promise<{ notificationId }>` | Send a notification to the shell |
+| `dismiss(notificationId)` | `void` | Dismiss a notification |
+| `badge(count)` | `void` | Set badge count (0 to clear) |
+| `registerChannel(channel)` | `void` | Register a notification channel |
+| `requestPermission(channel?)` | `Promise<{ granted }>` | Request permission to send notifications |
+| `onAction(callback)` | `{ close(): void }` | Listen for action button clicks |
+| `onClicked(callback)` | `{ close(): void }` | Listen for notification body clicks |
+| `onDismissed(callback)` | `{ close(): void }` | Listen for dismissals |
+| `onControls(callback)` | `{ close(): void }` | Listen for shell's notification capabilities |
 
 ### `keys`
 
@@ -219,6 +241,7 @@ handlers in shell implementations or protocol-aware code.
 | `IfcNubMessage` | `@napplet/nub-ifc` | Discriminated union of all IFC domain messages |
 | `KeysNubMessage` | `@napplet/nub-keys` | Discriminated union of all keys domain messages |
 | `MediaNubMessage` | `@napplet/nub-media` | Discriminated union of all media domain messages |
+| `NotifyNubMessage` | `@napplet/nub-notify` | Discriminated union of all notify domain messages |
 
 Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
@@ -228,8 +251,8 @@ Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage
 Each NUB domain has a string constant re-exported from its package:
 
 ```ts
-import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN } from '@napplet/sdk';
-// Values: 'relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media'
+import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'
 ```
 
 These constants are re-exported from the individual NUB packages. Use them with the shell capability query
@@ -268,8 +291,8 @@ This protects against importing `@napplet/sdk` without the side-effect shim impo
 **Typical usage:** Import both -- shim for runtime, SDK for developer API:
 
 ```ts
-import '@napplet/shim';                                      // required: installs window.napplet
-import { relay, ipc, storage, keys, media } from '@napplet/sdk';  // optional: typed API
+import '@napplet/shim';                                                  // required: installs window.napplet
+import { relay, ipc, storage, keys, media, notify } from '@napplet/sdk';  // optional: typed API
 ```
 
 If you are writing a vanilla napplet with no build step, use `window.napplet.*` directly after importing the shim -- the SDK is not required.

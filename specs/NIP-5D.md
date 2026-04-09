@@ -111,6 +111,7 @@ The following NUB specs are defined for this protocol:
 | `theme`   | NUB-THEME   | Theme tokens and appearance settings     |
 | `keys`    | NUB-KEYS    | Keyboard forwarding and action keybindings |
 | `media`   | NUB-MEDIA   | Media session control and playback       |
+| `notify`  | NUB-NOTIFY  | Shell-rendered notifications              |
 
 Shells MAY support any subset of these NUBs. New NUBs may be proposed independently of this NIP.
 

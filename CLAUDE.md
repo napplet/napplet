@@ -15,6 +15,7 @@ This is the **napplet** monorepo — npm packages for the napplet protocol. Napp
 - `packages/nubs/storage` — **@napplet/nub-storage** — Storage NUB message types
 - `packages/nubs/ifc` — **@napplet/nub-ifc** — IFC NUB message types
 - `packages/nubs/theme` — **@napplet/nub-theme** — Theme NUB message types
+- `packages/nubs/notify` — **@napplet/nub-notify** — Notify NUB message types
 
 ## Tech Stack
 
@@ -83,7 +84,7 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 - pnpm 10.8.0 workspaces
 - changesets 2.30.0 for versioning/publishing
 - nostr-tools 2.23.3 (direct dependency for vite-plugin only)
-- 9 packages at v0.2.0 (4 core + 5 NUB modules)
+- 13 packages at v0.2.0 (4 core + 9 NUB modules)
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
