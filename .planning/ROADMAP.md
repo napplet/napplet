@@ -238,3 +238,53 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 92: Documentation** - README for nub-keys, NIP-5D domain table update, core/shim/SDK README updates (completed 2026-04-09)
 
 </details>
+
+### v0.21.0 NUB Modularization (In Progress)
+
+**Milestone Goal:** Move ALL domain-specific logic from shim and SDK into NUB packages. Shim and SDK become thin plugin hosts.
+
+- [ ] **Phase 93: NUB Package Refactor** - Move domain logic into all 5 NUB packages (shim installers + SDK helpers)
+- [ ] **Phase 94: Shim + SDK Thin Hosts** - Refactor shim/SDK to import from NUB packages, add named exports for cherry-picking
+- [ ] **Phase 95: Verification** - Build clean, API surface identical before and after
+
+## Phase Details
+
+### Phase 93: NUB Package Refactor
+**Goal**: Each NUB package owns its domain logic — shim installer + SDK helpers alongside typed messages
+**Depends on**: Nothing (first phase of v0.21.0)
+**Requirements**: NUB-01, NUB-02, NUB-03, NUB-04, NUB-05, NUB-06, NUB-07
+**Success Criteria** (what must be TRUE):
+  1. Each of 5 NUB packages exports an `install*Shim()` function
+  2. Each of 5 NUB packages exports SDK helper functions wrapping `window.napplet.{domain}.*`
+  3. relay-shim.ts logic in nub-relay, state-shim.ts logic in nub-storage, keys-shim.ts logic in nub-keys
+  4. Signer logic in nub-signer, IFC logic in nub-ifc
+  5. `pnpm build` succeeds for all NUB packages
+
+### Phase 94: Shim + SDK Thin Hosts
+**Goal**: Shim and SDK contain zero domain-specific logic — thin orchestrators importing from NUB packages
+**Depends on**: Phase 93
+**Requirements**: SHIM-01, SHIM-02, SHIM-03, SHIM-04, SDK-01, SDK-02, SDK-03
+**Success Criteria** (what must be TRUE):
+  1. `import '@napplet/shim'` installs all NUB shims (unchanged DX)
+  2. Named exports: `import { installRelayShim, installKeysShim } from '@napplet/shim'`
+  3. Shim source contains zero domain logic; relay-shim.ts, state-shim.ts, keys-shim.ts deleted
+  4. Default SDK import provides all NUB helpers (unchanged DX)
+  5. Named exports per NUB domain from SDK
+  6. SDK source contains zero domain logic — re-exports only
+
+### Phase 95: Verification
+**Goal**: Entire monorepo builds clean, public API surface identical
+**Depends on**: Phase 93, Phase 94
+**Requirements**: VER-01, VER-02
+**Success Criteria** (what must be TRUE):
+  1. `pnpm build && pnpm type-check` passes clean across all 10 packages
+  2. Shim public API identical or strict superset of pre-refactor
+  3. SDK public API identical or strict superset of pre-refactor
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 93. NUB Package Refactor | 0/0 | Not started | - |
+| 94. Shim + SDK Thin Hosts | 0/0 | Not started | - |
+| 95. Verification | 0/0 | Not started | - |
