@@ -1,5 +1,16 @@
 # Milestones
 
+## v0.20.0 Keys NUB (Shipped: 2026-04-09)
+
+**Phases completed:** 5 phases, 2 plans, 4 tasks
+
+**Key accomplishments:**
+
+- @napplet/nub-keys package with 6 typed message interfaces for keyboard forwarding and action keybindings per NUB-KEYS spec
+- Added 'keys' as sixth NUB domain in envelope.ts and keys namespace with 3 methods to NappletGlobal in types.ts
+
+---
+
 ## v0.19.0 Spec Gap Drops (Shipped: 2026-04-09)
 
 **Phases completed:** 1 phases, 1 plans, 3 tasks

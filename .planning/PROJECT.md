@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.20.0 Keys NUB
+
+New `@napplet/nub-keys` package (6th NUB, 10th package) implementing the NUB-KEYS spec (napplet/nubs#9). Bidirectional keyboard protocol: napplet registers named actions, shell binds keys and pushes binding updates, shim suppresses bound keys locally and triggers actions with zero latency. Replaced one-way `keyboard-shim.ts` with full `keys-shim.ts` smart forwarding. SDK convenience wrappers. All READMEs and NIP-5D updated. 5 phases, 2 plans shipped 2026-04-09. See [archive](milestones/v0.20.0-ROADMAP.md).
+
 ## Shipped: v0.19.0 Spec Gap Drops
 
 Executed all 7 "drop" verdicts from the v0.18.0 spec conformance audit. Deleted `Capability` type, `ALL_CAPABILITIES`, 13 TOPICS entries (superseded/config/relay), `SHELL_BRIDGE_URI`, `REPLAY_WINDOW_SECONDS`, `PROTOCOL_VERSION`, and `constants.ts` entirely. `@napplet/core` now exports only spec-backed artifacts. 1 phase, 1 plan shipped 2026-04-09. See [archive](milestones/v0.19.0-ROADMAP.md).
@@ -176,18 +180,15 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 - ✓ All 7 drop-verdict artifacts deleted from @napplet/core — v0.19.0 Phase 87 (DROP-01..09)
 
+- ✓ @napplet/nub-keys package with 6 typed message definitions — v0.20.0 Phase 88 (NUB-01, NUB-02)
+- ✓ 'keys' in NubDomain + NappletGlobal.keys namespace — v0.20.0 Phase 89 (CORE-01, CORE-02)
+- ✓ Smart forwarding shim with suppress list, safety guards, action registration — v0.20.0 Phase 90 (SHIM-01..04)
+- ✓ SDK keys namespace + convenience registerAction() + type re-exports — v0.20.0 Phase 91 (SDK-01..03)
+- ✓ nub-keys README, NIP-5D keys row, core/shim/SDK README updates — v0.20.0 Phase 92 (DOC-01..03)
+
 ### Active
 
-## Current Milestone: v0.20.0 Keys NUB
-
-**Goal:** Create a keys NUB that formalizes keyboard interaction between napplet and shell — action registration, shell-delegated keybindings, and smart forwarding. SDK provides convenience wrappers.
-
-**Target features:**
-- Keys NUB message types (@napplet/nub-keys package)
-- Smart forwarding: suppress bound keys, forward unbound
-- Shim integration: replace keyboard-shim.ts with NUB-backed implementation
-- SDK convenience: registerAction() auto-wiring
-- NIP-5D updated to reference keys NUB
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -204,7 +205,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.20.0 in progress (Keys NUB). Creating bidirectional keyboard protocol. 9 packages (4 core + 5 NUB) → will become 10 with @napplet/nub-keys. 19 milestones shipped.
+- **Current state**: v0.20.0 shipped (Keys NUB). 10 packages (4 core + 6 NUB). 20 milestones shipped. Bidirectional keyboard protocol with smart forwarding.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -293,4 +294,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.20.0 milestone start*
+*Last updated: 2026-04-09 after v0.20.0 milestone*
