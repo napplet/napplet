@@ -276,7 +276,7 @@ Plans:
   5. Unbound keydown events (not in suppress list, not in a text input) produce a `keys.forward` postMessage to the parent
 **Plans**: 1 plan
 Plans:
-- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
+- [ ] 90-01-PLAN.md — Verify keys-shim implementation against NUB-KEYS acceptance criteria
 
 ### Phase 91: SDK Wrappers
 **Goal**: Bundler consumers can import typed keys functions and all NUB message types from @napplet/sdk
