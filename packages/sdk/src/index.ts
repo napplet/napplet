@@ -1,7 +1,7 @@
 /**
- * @napplet/sdk — Typed named exports wrapping window.napplet.
+ * @napplet/sdk -- Typed named exports wrapping window.napplet.
  *
- * Provides `relay`, `ipc`, and `storage` objects that delegate
+ * Provides `relay`, `ipc`, `storage`, and `keys` objects that delegate
  * to `window.napplet.*` at call time. Developers using a bundler can import
  * individual namespaces without depending on the shim's side-effect install:
  *
@@ -10,7 +10,13 @@
  * ```
  *
  * The shim must still be imported somewhere in the application to install
- * the `window.napplet` global. The SDK only wraps it — it does not install it.
+ * the `window.napplet` global. The SDK only wraps it -- it does not install it.
+ *
+ * Domain-specific SDK helpers are also available directly from NUB packages:
+ * ```ts
+ * import { relaySubscribe } from '@napplet/nub-relay';
+ * import { storageGetItem } from '@napplet/nub-storage';
+ * ```
  *
  * @packageDocumentation
  */
@@ -26,7 +32,7 @@ import type {
 // ─── Global type augmentation ────────────────────────────────────────────────
 // Provides window.napplet autocompletion for TypeScript consumers who import
 // only the SDK (not the shim). Both shim and SDK reference NappletGlobal from
-// @napplet/core — no duplication.
+// @napplet/core -- no duplication.
 
 declare global {
   interface Window {
@@ -39,7 +45,7 @@ declare global {
 /**
  * Retrieve the `window.napplet` global, throwing a clear error if it is absent.
  *
- * Every SDK method calls this at invocation time — not at module load time —
+ * Every SDK method calls this at invocation time -- not at module load time --
  * so the shim can be imported in any order relative to the SDK.
  */
 function requireNapplet(): NappletGlobal {
@@ -430,3 +436,21 @@ export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
 export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
 export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
 export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub-keys';
+
+// ─── NUB Shim Installer Re-exports ─────────────────────────────────────────
+// Allow consumers to cherry-pick shim installers per domain.
+
+export { installRelayShim } from '@napplet/nub-relay';
+export { installSignerShim } from '@napplet/nub-signer';
+export { installStorageShim } from '@napplet/nub-storage';
+export { installIfcShim } from '@napplet/nub-ifc';
+export { installKeysShim } from '@napplet/nub-keys';
+
+// ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
+// Allow consumers to use domain-specific SDK functions from @napplet/sdk.
+
+export { relaySubscribe, relayPublish, relayQuery } from '@napplet/nub-relay';
+export { signerGetPublicKey, signerSignEvent, signerGetRelays, signerNip04, signerNip44 } from '@napplet/nub-signer';
+export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub-storage';
+export { ifcEmit, ifcOn } from '@napplet/nub-ifc';
+export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub-keys';
