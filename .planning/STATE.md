@@ -4,7 +4,7 @@ milestone: v0.20.0
 milestone_name: Keys NUB
 status: verifying
 stopped_at: Completed 89-01-PLAN.md
-last_updated: "2026-04-09T10:52:11.830Z"
+last_updated: "2026-04-09T10:54:27.397Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 5
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 
 ## Current Position
 
-Phase: 88 (1 of 5 in v0.20.0) -- NUB Type Package
-Plan: 01 of 1 -- COMPLETE
+Phase: 90 of 5 (shim implementation)
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-09
 
