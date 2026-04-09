@@ -288,7 +288,7 @@ Plans:
   3. All `@napplet/nub-keys` message types and the `DOMAIN` constant are re-exported from `@napplet/sdk`
 **Plans**: 1 plan
 Plans:
-- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
+- [ ] 91-01-PLAN.md — Verify SDK keys wrappers and nub-keys re-exports
 
 ### Phase 92: Documentation
 **Goal**: Developers can learn how to use the keys NUB from package READMEs and NIP-5D
