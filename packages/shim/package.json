@@ -26,7 +26,8 @@
     "@napplet/nub-storage": "workspace:*",
     "@napplet/nub-ifc": "workspace:*",
     "@napplet/nub-keys": "workspace:*",
-    "@napplet/nub-media": "workspace:*"
+    "@napplet/nub-media": "workspace:*",
+    "@napplet/nub-notify": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

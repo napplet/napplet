@@ -42,7 +42,7 @@ export interface NappletMessage {
 // ─── NUB Domain Types ──────────────────────────────────────────────────────
 
 /**
- * String literal union of the seven NUB (Napplet Unified Blueprint) domains.
+ * String literal union of the eight NUB (Napplet Unified Blueprint) domains.
  * Each domain corresponds to a capability namespace that a shell may support.
  *
  * | Domain    | Scope                                     |
@@ -54,6 +54,7 @@ export interface NappletMessage {
  * | `theme`   | Theme tokens and appearance settings      |
  * | `keys`    | Keyboard forwarding and action keybindings|
  * | `media`   | Media session control and playback        |
+ * | `notify`  | Shell-rendered notifications              |
  *
  * @example
  * ```ts
@@ -61,7 +62,7 @@ export interface NappletMessage {
  * const isValid = NUB_DOMAINS.includes(domain); // true
  * ```
  */
-export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media';
+export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
 
 /**
  * Runtime-accessible constant array of all NUB domain names.
@@ -74,7 +75,7 @@ export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys
  * }
  * ```
  */
-export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media'] as const;
+export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'] as const;
 
 // ─── Namespaced Capability Type ───────────────────────────────────────────
 

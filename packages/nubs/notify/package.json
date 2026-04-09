@@ -1,7 +1,7 @@
 {
-  "name": "@napplet/sdk",
+  "name": "@napplet/nub-notify",
   "version": "0.2.0",
-  "description": "Typed named exports wrapping window.napplet for bundler-consuming napplet developers",
+  "description": "NUB-NOTIFY message types for shell-rendered notifications",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,15 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*",
-    "@napplet/nub-relay": "workspace:*",
-    "@napplet/nub-signer": "workspace:*",
-    "@napplet/nub-storage": "workspace:*",
-    "@napplet/nub-ifc": "workspace:*",
-    "@napplet/nub-theme": "workspace:*",
-    "@napplet/nub-keys": "workspace:*",
-    "@napplet/nub-media": "workspace:*",
-    "@napplet/nub-notify": "workspace:*"
+    "@napplet/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
@@ -41,14 +33,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sandwichfarm/napplet.git",
-    "directory": "packages/sdk"
+    "url": "git+https://github.com/napplet/napplet.git",
+    "directory": "packages/nubs/notify"
   },
   "keywords": [
     "nostr",
     "napplet",
-    "sdk",
-    "iframe",
-    "nip-01"
+    "nub",
+    "notify",
+    "notifications"
   ]
 }

@@ -316,6 +316,91 @@ export interface NappletGlobal {
     onControls(sessionId: string, callback: (controls: ('play' | 'pause' | 'stop' | 'next' | 'prev' | 'seek' | 'volume')[]) => void): Subscription;
   };
   /**
+   * Shell-rendered notifications: send notifications, set badge counts,
+   * register channels, request permission, listen for user interaction.
+   *
+   * @example
+   * ```ts
+   * // Send a notification:
+   * const { notificationId } = await window.napplet.notify.send({
+   *   title: 'New message', body: 'Alice: hey!', priority: 'normal',
+   * });
+   *
+   * // Set badge count:
+   * window.napplet.notify.badge(3);
+   *
+   * // Listen for action clicks:
+   * window.napplet.notify.onAction((notificationId, actionId) => {
+   *   if (actionId === 'reply') openReply(notificationId);
+   * });
+   * ```
+   */
+  notify: {
+    /**
+     * Send a notification to the shell.
+     * @param notification  Notification payload (title required)
+     * @returns The shell-assigned notificationId
+     */
+    send(notification: {
+      title: string;
+      body?: string;
+      icon?: string;
+      actions?: { id: string; label: string }[];
+      channel?: string;
+      priority?: 'low' | 'normal' | 'high' | 'urgent';
+    }): Promise<{ notificationId: string }>;
+    /**
+     * Dismiss a notification by ID. Fire-and-forget.
+     * @param notificationId  The notification to dismiss
+     */
+    dismiss(notificationId: string): void;
+    /**
+     * Set the badge count for this napplet. Pass 0 to clear.
+     * @param count  Badge count
+     */
+    badge(count: number): void;
+    /**
+     * Register a notification channel for per-category user control.
+     * @param channel  Channel definition
+     */
+    registerChannel(channel: {
+      channelId: string;
+      label: string;
+      description?: string;
+      defaultPriority?: 'low' | 'normal' | 'high' | 'urgent';
+    }): void;
+    /**
+     * Request permission to send notifications.
+     * @param channel  Optional channel to request permission for
+     * @returns Whether permission was granted
+     */
+    requestPermission(channel?: string): Promise<{ granted: boolean }>;
+    /**
+     * Listen for action button clicks on notifications.
+     * @param callback  Called with (notificationId, actionId)
+     * @returns A Subscription with `close()` to stop listening
+     */
+    onAction(callback: (notificationId: string, actionId: string) => void): Subscription;
+    /**
+     * Listen for notification body clicks.
+     * @param callback  Called with (notificationId)
+     * @returns A Subscription with `close()` to stop listening
+     */
+    onClicked(callback: (notificationId: string) => void): Subscription;
+    /**
+     * Listen for notification dismissals.
+     * @param callback  Called with (notificationId, reason?)
+     * @returns A Subscription with `close()` to stop listening
+     */
+    onDismissed(callback: (notificationId: string, reason?: string) => void): Subscription;
+    /**
+     * Listen for the shell's notification capability list.
+     * @param callback  Called with supported controls
+     * @returns A Subscription with `close()` to stop listening
+     */
+    onControls(callback: (controls: ('toasts' | 'badges' | 'actions' | 'channels' | 'system')[]) => void): Subscription;
+  };
+  /**
    * Shell capability queries. Check whether the shell supports a NUB
    * or permission.
    *

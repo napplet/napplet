@@ -317,6 +317,123 @@ export const media = {
   },
 };
 
+// ─── Notify namespace ──────────────────────────────────────────────────────
+
+/**
+ * Shell-rendered notifications: send notifications, set badge counts,
+ * register channels, request permission, listen for user interaction.
+ *
+ * @example
+ * ```ts
+ * import { notify } from '@napplet/sdk';
+ *
+ * const { notificationId } = await notify.send({
+ *   title: 'New message', body: 'Alice: hey!',
+ * });
+ *
+ * notify.badge(3);
+ * ```
+ */
+export const notify = {
+  /**
+   * Send a notification to the shell.
+   * @param notification  Notification payload (title required)
+   * @returns The shell-assigned notificationId
+   */
+  send(notification: {
+    title: string;
+    body?: string;
+    icon?: string;
+    actions?: { id: string; label: string }[];
+    channel?: string;
+    priority?: 'low' | 'normal' | 'high' | 'urgent';
+  }): Promise<{ notificationId: string }> {
+    return requireNapplet().notify.send(notification);
+  },
+
+  /**
+   * Dismiss a notification by ID.
+   * @param notificationId  The notification to dismiss
+   */
+  dismiss(notificationId: string): void {
+    requireNapplet().notify.dismiss(notificationId);
+  },
+
+  /**
+   * Set the badge count for this napplet. Pass 0 to clear.
+   * @param count  Badge count
+   */
+  badge(count: number): void {
+    requireNapplet().notify.badge(count);
+  },
+
+  /**
+   * Register a notification channel.
+   * @param channel  Channel definition
+   */
+  registerChannel(channel: {
+    channelId: string;
+    label: string;
+    description?: string;
+    defaultPriority?: 'low' | 'normal' | 'high' | 'urgent';
+  }): void {
+    requireNapplet().notify.registerChannel(channel);
+  },
+
+  /**
+   * Request permission to send notifications.
+   * @param channel  Optional channel to request permission for
+   * @returns Whether permission was granted
+   */
+  requestPermission(channel?: string): Promise<{ granted: boolean }> {
+    return requireNapplet().notify.requestPermission(channel);
+  },
+
+  /**
+   * Listen for action button clicks on notifications.
+   * @param callback  Called with (notificationId, actionId)
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onAction(
+    callback: (notificationId: string, actionId: string) => void,
+  ): Subscription {
+    return requireNapplet().notify.onAction(callback);
+  },
+
+  /**
+   * Listen for notification body clicks.
+   * @param callback  Called with (notificationId)
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onClicked(
+    callback: (notificationId: string) => void,
+  ): Subscription {
+    return requireNapplet().notify.onClicked(callback);
+  },
+
+  /**
+   * Listen for notification dismissals.
+   * @param callback  Called with (notificationId, reason?)
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onDismissed(
+    callback: (notificationId: string, reason?: string) => void,
+  ): Subscription {
+    return requireNapplet().notify.onDismissed(callback);
+  },
+
+  /**
+   * Listen for the shell's notification capability list.
+   * @param callback  Called with supported controls
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onControls(
+    callback: (controls: ('toasts' | 'badges' | 'actions' | 'channels' | 'system')[]) => void,
+  ): Subscription {
+    return requireNapplet().notify.onControls(callback);
+  },
+};
+
 // ─── Keys namespace ────────────────────────────────────────────────────────
 
 /**
@@ -556,6 +673,29 @@ export type {
   MediaNubMessage,
 } from '@napplet/nub-media';
 
+// Notify NUB
+export type {
+  NotificationPriority,
+  NotificationAction,
+  NotificationChannel,
+  NotifyControl,
+  NotifyMessage,
+  NotifySendMessage,
+  NotifySendResultMessage,
+  NotifyDismissMessage,
+  NotifyBadgeMessage,
+  NotifyChannelRegisterMessage,
+  NotifyPermissionRequestMessage,
+  NotifyPermissionResultMessage,
+  NotifyActionMessage,
+  NotifyClickedMessage,
+  NotifyDismissedMessage,
+  NotifyControlsMessage,
+  NotifyRequestMessage,
+  NotifyResultMessage,
+  NotifyNubMessage,
+} from '@napplet/nub-notify';
+
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
@@ -565,6 +705,7 @@ export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
 export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
 export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub-keys';
 export { DOMAIN as MEDIA_DOMAIN } from '@napplet/nub-media';
+export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub-notify';
 
 // ─── NUB Shim Installer Re-exports ─────────────────────────────────────────
 // Allow consumers to cherry-pick shim installers per domain.
@@ -575,6 +716,7 @@ export { installStorageShim } from '@napplet/nub-storage';
 export { installIfcShim } from '@napplet/nub-ifc';
 export { installKeysShim } from '@napplet/nub-keys';
 export { installMediaShim } from '@napplet/nub-media';
+export { installNotifyShim } from '@napplet/nub-notify';
 
 // ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
@@ -585,3 +727,4 @@ export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '
 export { ifcEmit, ifcOn } from '@napplet/nub-ifc';
 export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub-keys';
 export { mediaCreateSession, mediaUpdateSession, mediaDestroySession, mediaReportState, mediaReportCapabilities, mediaOnCommand, mediaOnControls } from '@napplet/nub-media';
+export { notifySend, notifyDismiss, notifyBadge, notifyRegisterChannel, notifyRequestPermission, notifyOnAction, notifyOnClicked, notifyOnDismissed, notifyOnControls } from '@napplet/nub-notify';

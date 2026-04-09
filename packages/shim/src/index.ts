@@ -6,6 +6,19 @@
 
 import { installKeysShim, handleKeysMessage, registerAction, unregisterAction, onAction } from '@napplet/nub-keys';
 import { installMediaShim, handleMediaMessage, createSession, updateSession, destroySession, reportState, reportCapabilities, onCommand, onControls } from '@napplet/nub-media';
+import {
+  installNotifyShim,
+  handleNotifyMessage,
+  send as notifySend,
+  dismiss as notifyDismiss,
+  badge as notifyBadge,
+  registerChannel as notifyRegisterChannel,
+  requestPermission as notifyRequestPermission,
+  onAction as notifyOnAction,
+  onClicked as notifyOnClicked,
+  onDismissed as notifyOnDismissed,
+  onControls as notifyOnControls,
+} from '@napplet/nub-notify';
 import { installNostrDb } from './nipdb-shim.js';
 import { installStorageShim, nappletStorage } from '@napplet/nub-storage';
 import { subscribe, publish, query } from '@napplet/nub-relay';
@@ -51,6 +64,12 @@ function handleEnvelopeMessage(event: MessageEvent): void {
   // Route media.* messages to media shim
   if (type.startsWith('media.')) {
     handleMediaMessage(msg as { type: string; [key: string]: unknown });
+    return;
+  }
+
+  // Route notify.* messages to notify shim
+  if (type.startsWith('notify.')) {
+    handleNotifyMessage(msg as { type: string; [key: string]: unknown });
     return;
   }
 
@@ -101,6 +120,17 @@ installIfcShim();
     onCommand,
     onControls,
   },
+  notify: {
+    send: notifySend,
+    dismiss: notifyDismiss,
+    badge: notifyBadge,
+    registerChannel: notifyRegisterChannel,
+    requestPermission: notifyRequestPermission,
+    onAction: notifyOnAction,
+    onClicked: notifyOnClicked,
+    onDismissed: notifyOnDismissed,
+    onControls: notifyOnControls,
+  },
   shell: {
     supports(_capability: string): boolean {
       // TODO: Shell populates supported capabilities at iframe creation
@@ -122,6 +152,9 @@ installKeysShim();
 
 // Install media shim (session management + command handlers)
 installMediaShim();
+
+// Install notify shim (notification sending + interaction handlers)
+installNotifyShim();
 
 // Install napplet-side storage proxy
 installStorageShim();
