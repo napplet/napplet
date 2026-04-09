@@ -8,6 +8,10 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Shipped: v0.23.0 Notify NUB
+
+NUB-NOTIFY spec (napplet/nubs#11) for shell-rendered notifications. `@napplet/nub-notify` (8th NUB, 12th package) with 11 message types covering send/dismiss, permissions, actions, channels, badges, priority levels, and shell capability detection. Types + shim + SDK per modular pattern. Core/shim/SDK integrated. All docs updated. 4 phases shipped 2026-04-09. See [archive](milestones/v0.23.0-ROADMAP.md).
+
 ## Shipped: v0.22.0 Media NUB + Kill Services
 
 Killed the `svc:` capability namespace — everything is a NUB. Dropped 4 deferred AUDIO_* TOPICS. Drafted NUB-MEDIA spec (napplet/nubs#10) for media session delegation: explicit sessions, multiple per napplet, dynamic capabilities, dual volume, shell control list, full metadata with blossom hash artwork. Created `@napplet/nub-media` (7th NUB, 11th package) with types + shim + SDK per modular pattern. Core/shim/SDK integrated. All docs updated. 5 phases shipped 2026-04-09. See [archive](milestones/v0.22.0-ROADMAP.md).
@@ -204,18 +208,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ 'media' in NubDomain + NappletGlobal + shim integration — v0.22.0 Phase 99 (CORE-01..02, SHIM-01)
 - ✓ All docs updated for media NUB and svc: removal — v0.22.0 Phase 100 (DOC-01..03)
 
+- ✓ NUB-NOTIFY spec drafted → napplet/nubs#11 — v0.23.0 Phase 101 (SPEC-01)
+- ✓ @napplet/nub-notify package (types + shim + SDK, 11 message types) — v0.23.0 Phase 102 (NUB-01..02)
+- ✓ 'notify' in NubDomain + NappletGlobal + shim/SDK integration — v0.23.0 Phase 103 (CORE-01..02, SHIM-01)
+- ✓ All docs updated for notify NUB — v0.23.0 Phase 104 (DOC-01..03)
+
 ### Active
 
-## Current Milestone: v0.23.0 Notify NUB
-
-**Goal:** Draft NUB-NOTIFY spec, implement @napplet/nub-notify — shell-rendered notifications with permissions, actions, channels, badges, and shell capability detection.
-
-**Target features:**
-- NUB-NOTIFY spec → napplet/nubs PR
-- @napplet/nub-notify package (types + shim + SDK)
-- Notifications: send, dismiss, actions, channels, badges, permissions
-- Shell capability list (napplet adapts UI)
-- Core integration ('notify' in NubDomain)
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -232,7 +232,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.23.0 in progress (Notify NUB). 11 packages (4 core + 7 NUB) → will become 12 with @napplet/nub-notify. 22 milestones shipped.
+- **Current state**: v0.23.0 shipped (Notify NUB). 12 packages (4 core + 8 NUB). 23 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -321,4 +321,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.23.0 milestone start*
+*Last updated: 2026-04-09 after v0.23.0 milestone*

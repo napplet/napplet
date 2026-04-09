@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.23.0
 milestone_name: Notify NUB
-status: ready-to-plan
-stopped_at: null
-last_updated: "2026-04-09"
+status: planning
+stopped_at: Roadmap created for v0.23.0 Notify NUB
+last_updated: "2026-04-09T13:42:15.155Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 4
@@ -28,13 +28,14 @@ See: .planning/PROJECT.md (updated 2026-04-09)
 Phase: 101 of 104 (NUB-NOTIFY Spec)
 Plan: --
 Status: Ready to plan
-Last activity: 2026-04-09 -- Roadmap created for v0.23.0
+Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: --
 - Total execution time: 0 hours
