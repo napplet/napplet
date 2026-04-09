@@ -3,81 +3,62 @@
 **Defined:** 2026-04-09
 **Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## v0.22.0 Requirements
+## v0.23.0 Requirements
 
-Draft NUB-MEDIA spec, implement @napplet/nub-media, remove svc: namespace.
+Draft NUB-NOTIFY spec, implement @napplet/nub-notify.
 
-### Kill Services Concept
+### NUB-NOTIFY Spec
 
-- [ ] **SVC-01**: Remove `svc:` prefix from `NamespacedCapability` type in envelope.ts
-- [ ] **SVC-02**: Remove all `svc:` references from NIP-5D.md, READMEs, JSDoc
-- [ ] **SVC-03**: Drop 4 deferred AUDIO_* TOPICS from core/topics.ts (superseded by media NUB)
-
-### NUB-MEDIA Spec
-
-- [ ] **SPEC-01**: Draft NUB-MEDIA spec following NUB-KEYS pattern — PR to napplet/nubs. Covers: explicit session lifecycle (create/update/destroy), multiple sessions per napplet, dynamic capabilities, dual volume, shell control list, full metadata (title, artist, album, artwork URL/blossom, duration, mediaType — all optional)
+- [ ] **SPEC-01**: Draft NUB-NOTIFY spec in nubs repo → PR to napplet/nubs. No private refs. Covers: send/dismiss, permissions, actions, channels, badges, shell controls, priority levels.
 
 ### NUB Type Package
 
-- [ ] **NUB-01**: Create `@napplet/nub-media` package with typed message definitions (media.session.create, media.session.create.result, media.session.update, media.session.destroy, media.state, media.capabilities, media.command, media.controls)
-- [ ] **NUB-02**: Package includes shim.ts (installMediaShim, session management, state reporting, command handling) and sdk.ts (convenience wrappers) per v0.21.0 modular pattern
+- [ ] **NUB-01**: Create `@napplet/nub-notify` package with typed message definitions (notify.send, notify.send.result, notify.dismiss, notify.badge, notify.channel.register, notify.permission.request, notify.permission.result, notify.action, notify.clicked, notify.dismissed, notify.controls)
+- [ ] **NUB-02**: Package includes shim.ts (installNotifyShim, notification handling) and sdk.ts (convenience wrappers) per modular pattern
 
 ### Core Integration
 
-- [ ] **CORE-01**: Add `'media'` to `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
-- [ ] **CORE-02**: Add `media` namespace to `NappletGlobal` type in types.ts
+- [ ] **CORE-01**: Add `'notify'` to `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
+- [ ] **CORE-02**: Add `notify` namespace to `NappletGlobal` type in types.ts
 
 ### Shim Integration
 
-- [ ] **SHIM-01**: Import and call `installMediaShim()` from `@napplet/nub-media` in shim entry point + add named export
+- [ ] **SHIM-01**: Import and call `installNotifyShim()` from `@napplet/nub-notify` in shim entry point + named export
 
 ### Documentation
 
-- [ ] **DOC-01**: `@napplet/nub-media` README with full message reference and metadata schema
-- [ ] **DOC-02**: Update NIP-5D domain table (add media, remove svc: examples and service discovery text)
-- [ ] **DOC-03**: Update core/shim/SDK READMEs for media NUB and removed svc: prefix
-
-## Future Requirements
-
-Deferred to future milestones.
-
-### Media Extensions
-
-- **MEDIA-EXT-01**: Waveform/visualization data streaming
-- **MEDIA-EXT-02**: Lyrics/subtitle sync protocol
-- **MEDIA-EXT-03**: Crossfade/gapless playback coordination between napplets
+- [ ] **DOC-01**: `@napplet/nub-notify` README with message reference
+- [ ] **DOC-02**: Update NIP-5D domain table (add notify)
+- [ ] **DOC-03**: Update core/shim/SDK READMEs for notify NUB
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Shell-side media UI implementation | Shell concern, not SDK |
-| Audio/video encoding/decoding | Browser handles this, not the protocol |
-| DRM/content protection | Out of scope for v1 |
+| Shell notification UI implementation | Shell concern |
+| Push notifications / service workers | Browser-level, not protocol |
+| Notification sounds | Shell decides presentation |
 | npm publish | Blocked on human npm auth (PUB-04) |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SVC-01 | Phase 96 | Pending |
-| SVC-02 | Phase 96 | Pending |
-| SVC-03 | Phase 96 | Pending |
-| SPEC-01 | Phase 97 | Pending |
-| NUB-01 | Phase 98 | Pending |
-| NUB-02 | Phase 98 | Pending |
-| CORE-01 | Phase 99 | Pending |
-| CORE-02 | Phase 99 | Pending |
-| SHIM-01 | Phase 99 | Pending |
-| DOC-01 | Phase 100 | Pending |
-| DOC-02 | Phase 100 | Pending |
-| DOC-03 | Phase 100 | Pending |
+| SPEC-01 | — | Pending |
+| NUB-01 | — | Pending |
+| NUB-02 | — | Pending |
+| CORE-01 | — | Pending |
+| CORE-02 | — | Pending |
+| SHIM-01 | — | Pending |
+| DOC-01 | — | Pending |
+| DOC-02 | — | Pending |
+| DOC-03 | — | Pending |
 
 **Coverage:**
-- v0.22.0 requirements: 12 total
-- Mapped to phases: 12
-- Unmapped: 0
+- v0.23.0 requirements: 9 total
+- Mapped to phases: 0
+- Unmapped: 9
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after roadmap creation*
+*Last updated: 2026-04-09 after initial definition*
