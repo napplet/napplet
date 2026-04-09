@@ -100,6 +100,21 @@ NUB specs MUST:
 - Document expected shell behavior for each message
 - Be independently implementable — a shell MAY support any subset of NUBs
 
+## Known NUBs
+
+The following NUB specs are defined for this protocol:
+
+| Domain    | Spec     | Scope                                    |
+|-----------|----------|------------------------------------------|
+| `relay`   | NUB-RELAY   | Relay proxy (subscribe, publish, query)  |
+| `signer`  | NUB-SIGNER  | Signing delegation (NIP-07 surface)      |
+| `storage` | NUB-STORAGE | Scoped key-value storage proxy           |
+| `ifc`     | NUB-IFC     | Inter-frame communication                |
+| `theme`   | NUB-THEME   | Theme tokens and appearance settings     |
+| `keys`    | NUB-KEYS    | Keyboard forwarding and action keybindings |
+
+Shells MAY support any subset of these NUBs. New NUBs may be proposed independently of this NIP.
+
 ## Security Considerations
 
 Napplets are untrusted code. The shell is trusted. The browser enforces iframe sandbox boundaries. `MessageEvent.source` provides unforgeable sender identity.
@@ -119,3 +134,4 @@ Storage isolation, signing safety, relay access control, and ACL enforcement are
 
 - [NIP-07](07.md) -- `window.nostr` signer capability
 - [NIP-5A](5A.md) -- Napplet manifest format and aggregate hash
+- [NUB-KEYS](https://github.com/napplet/nubs/blob/main/NUB-KEYS.md) -- Keyboard forwarding and action keybindings
