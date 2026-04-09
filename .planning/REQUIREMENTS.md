@@ -41,21 +41,21 @@ Deferred to future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DROP-01 | — | Pending |
-| DROP-02 | — | Pending |
-| DROP-03 | — | Pending |
-| DROP-04 | — | Pending |
-| DROP-05 | — | Pending |
-| DROP-06 | — | Pending |
-| DROP-07 | — | Pending |
-| DROP-08 | — | Pending |
-| DROP-09 | — | Pending |
+| DROP-01 | Phase 87 | Pending |
+| DROP-02 | Phase 87 | Pending |
+| DROP-03 | Phase 87 | Pending |
+| DROP-04 | Phase 87 | Pending |
+| DROP-05 | Phase 87 | Pending |
+| DROP-06 | Phase 87 | Pending |
+| DROP-07 | Phase 87 | Pending |
+| DROP-08 | Phase 87 | Pending |
+| DROP-09 | Phase 87 | Pending |
 
 **Coverage:**
 - v0.19.0 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9 ⚠️
+- Mapped to phases: 9
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after initial definition*
+*Last updated: 2026-04-09 after roadmap creation*

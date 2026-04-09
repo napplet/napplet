@@ -19,6 +19,7 @@
 - ✅ **v0.15.0 Protocol Simplification** — Phases 70-73 (shipped 2026-04-07) — [Archive](milestones/v0.15.0-ROADMAP.md)
 - ✅ **v0.16.0 Wire Format & NUB Architecture** — Phases 74-79 (shipped 2026-04-07) — [Archive](milestones/v0.16.0-ROADMAP.md)
 - ✅ **v0.17.0 Capability Cleanup** — Phases 80-82 (shipped 2026-04-08) — [Archive](milestones/v0.17.0-ROADMAP.md)
+- ✅ **v0.18.0 Spec Conformance Audit** — Phases 83-86 (shipped 2026-04-09) — [Archive](milestones/v0.18.0-ROADMAP.md)
 
 ## Phases
 
@@ -208,72 +209,41 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### v0.18.0 Spec Conformance Audit (In Progress)
-
-**Milestone Goal:** Audit the entire codebase against NIP-5D and NUB specs -- remove all dead code, document every spec gap, fix stale documentation, and present a decision inventory for the spec author.
+<details>
+<summary>v0.18.0 Spec Conformance Audit (Phases 83-86) — SHIPPED 2026-04-09</summary>
 
 - [x] **Phase 83: Dead Code Removal** - Delete unreachable types, uncalled functions, and dead files across core and shim (completed 2026-04-08)
 - [x] **Phase 84: Spec Gap Inventory** - Document every function, type, constant, and behavior not covered by NIP-5D or any NUB spec (completed 2026-04-08)
 - [x] **Phase 85: Stale Documentation Fixes** - Fix incorrect references in READMEs, JSDoc, and NIP-5D (completed 2026-04-08)
-- [ ] **Phase 86: Decision Gate** - Present the complete gap inventory for drop-or-amend decisions
+- [x] **Phase 86: Decision Gate** - Present the complete gap inventory for drop-or-amend decisions (completed 2026-04-09)
+
+</details>
+
+### v0.19.0 Spec Gap Drops (In Progress)
+
+**Milestone Goal:** Execute all 7 "drop" verdicts from SPEC-GAPS.md -- remove every piece of unspecced code identified in the v0.18.0 audit. After this milestone, @napplet/core exports only spec-backed artifacts.
+
+- [ ] **Phase 87: Spec Gap Code Drops** - Delete all unspecced types, constants, and topics from @napplet/core and verify clean build
 
 ## Phase Details
 
-### Phase 83: Dead Code Removal
-**Goal**: Every unreachable type, uncalled function, and dead file is deleted from the codebase
-**Depends on**: Nothing (first phase of v0.18.0)
-**Requirements**: DEAD-01, DEAD-02, DEAD-03, DEAD-04, DEAD-05
+### Phase 87: Spec Gap Code Drops
+**Goal**: @napplet/core exports only artifacts backed by NIP-5D or a NUB spec -- all 7 drop-verdict items from the v0.18.0 audit are deleted
+**Depends on**: Nothing (first phase of v0.19.0; builds on v0.18.0 Phase 86 decisions)
+**Requirements**: DROP-01, DROP-02, DROP-03, DROP-04, DROP-05, DROP-06, DROP-07, DROP-08, DROP-09
 **Success Criteria** (what must be TRUE):
-  1. `RegisterPayload` and `IdentityPayload` types do not exist in core/types.ts or core/index.ts exports
-  2. `getNappletType()` function does not exist in shim/index.ts
-  3. `shim/types.ts` file does not exist (dead re-export file deleted)
-  4. `nipdbSubscribeHandlers` and `nipdbSubscribeCancellers` are not exported from nipdb-shim.ts (private internals only)
-  5. `pnpm build && pnpm type-check` passes with zero errors after all deletions
-**Plans**: 83-01
-
-### Phase 84: Spec Gap Inventory
-**Goal**: Every piece of code not covered by NIP-5D or a NUB spec is documented with location, purpose, and a recommendation category
-**Depends on**: Phase 83
-**Requirements**: GAP-01, GAP-02, GAP-03, GAP-04, GAP-05, GAP-06, GAP-07, GAP-09
-**Success Criteria** (what must be TRUE):
-  1. A gap inventory document exists listing every unspecified type, constant, function, and behavior with file location, description, and recommendation category (future NUB, unknown, superseded, shell-only)
-  2. `Capability` type, `ALL_CAPABILITIES` constant, `TOPICS`, `SHELL_BRIDGE_URI`, `REPLAY_WINDOW_SECONDS`, and `PROTOCOL_VERSION` each have a documented entry
-  3. `window.nostrdb` proxy (nipdb-shim.ts) and `keyboard.forward` shim (keyboard-shim.ts) are documented as unspecified parallel protocols
-  4. IFC channel types (ifc.channel.* messages) are documented as defined-but-unimplemented
-  5. Each gap entry includes one of: future NUB, unknown, superseded, or shell-only as its recommendation category
-**Plans**: 84-01
-
-### Phase 85: Stale Documentation Fixes
-**Goal**: Every README, JSDoc block, and NIP-5D reference accurately reflects the current codebase
-**Depends on**: Phase 83
-**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04, DOC-05
-**Success Criteria** (what must be TRUE):
-  1. SDK README does not reference a "services" namespace
-  2. vite-plugin README does not reference `window.napplet.services.has()` and uses `shell.supports('svc:...')` instead
-  3. core README NubDomain table lists all 5 domains (relay, signer, storage, ifc, theme)
-  4. core envelope.ts JSDoc NubDomain table lists all 5 domains and does not reference nonexistent D-02/D-03 decision IDs
-  5. NIP-5D.md does not reference `window.napplet.services.has()` and uses `shell.supports()` instead
-**Plans**: 85-01
-
-### Phase 86: Decision Gate
-**Goal**: The spec author has a complete, actionable gap inventory and makes drop-or-amend decisions for every item
-**Depends on**: Phase 84, Phase 85
-**Requirements**: DECIDE-01
-**Success Criteria** (what must be TRUE):
-  1. The full gap inventory from Phase 84 is presented to the user in a reviewable format
-  2. Every gap item has a recorded decision: drop from code, amend spec, defer, or keep as shell-only
-**Plans**: 1 plan
-Plans:
-- [ ] 86-01-PLAN.md — Present gap inventory and capture drop-or-amend decisions� Present gap inventory and capture drop-or-amend decisions
+  1. `Capability` type and `ALL_CAPABILITIES` constant do not exist in core/types.ts or core/index.ts exports
+  2. The 13 dropped TOPICS (7 superseded AUTH/STATE, 3 config, 3 scoped relay) do not exist in core/topics.ts
+  3. `SHELL_BRIDGE_URI`, `REPLAY_WINDOW_SECONDS`, and `PROTOCOL_VERSION` do not exist in core/constants.ts or core/index.ts exports
+  4. core/index.test.ts contains no tests referencing any deleted export
+  5. `pnpm build && pnpm type-check` passes with zero errors
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-83 -> 84 -> 85 -> 86 (Phases 84 and 85 can run in parallel; Phase 86 depends on both)
+87
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 83. Dead Code Removal | 1/1 | Complete    | 2026-04-08 |
-| 84. Spec Gap Inventory | 1/1 | Complete    | 2026-04-08 |
-| 85. Stale Documentation Fixes | 1/1 | Complete   | 2026-04-08 |
-| 86. Decision Gate | 0/1 | Planned | - |
+| 87. Spec Gap Code Drops | 0/? | Not started | - |
