@@ -260,7 +260,9 @@ Plans:
   1. `NubDomain` union in envelope.ts includes `'keys'` and `NUB_DOMAINS` array contains `'keys'`
   2. `NappletGlobal` type in types.ts includes a `keys` namespace with `registerAction`, `unregisterAction`, and `onAction` method signatures
   3. `pnpm build && pnpm type-check` passes with zero errors across all packages
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
 
 ### Phase 90: Shim Implementation
 **Goal**: Napplets get smart keyboard forwarding and action registration out of the box by importing the shim
@@ -272,7 +274,9 @@ Plans:
   3. Keydown events during IME composition (`isComposing`), bare modifier keys, and Tab/Shift+Tab are never forwarded or suppressed
   4. `window.napplet.keys` exposes `registerAction()`, `unregisterAction()`, and `onAction()` matching the NUB-KEYS API surface
   5. Unbound keydown events (not in suppress list, not in a text input) produce a `keys.forward` postMessage to the parent
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
 
 ### Phase 91: SDK Wrappers
 **Goal**: Bundler consumers can import typed keys functions and all NUB message types from @napplet/sdk
@@ -282,7 +286,9 @@ Plans:
   1. `import { keys } from '@napplet/sdk'` provides `registerAction()`, `unregisterAction()`, and `onAction()` wrapping window.napplet.keys
   2. `registerAction()` convenience auto-wires an `onAction()` listener and returns a cleanup handle
   3. All `@napplet/nub-keys` message types and the `DOMAIN` constant are re-exported from `@napplet/sdk`
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
 
 ### Phase 92: Documentation
 **Goal**: Developers can learn how to use the keys NUB from package READMEs and NIP-5D
@@ -292,7 +298,9 @@ Plans:
   1. `@napplet/nub-keys` has a README.md with wire protocol message reference table matching NUB-KEYS spec
   2. NIP-5D NUB domain table includes a `keys` row referencing NUB-KEYS
   3. Core, shim, and SDK READMEs mention the keys NUB with usage examples for action registration and smart forwarding
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 89-01-PLAN.md — Add keys to NubDomain and NappletGlobal
 
 ## Progress
 
