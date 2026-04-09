@@ -3,62 +3,79 @@
 **Defined:** 2026-04-09
 **Core Value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## v0.23.0 Requirements
+## v0.24.0 Requirements
 
-Draft NUB-NOTIFY spec, implement @napplet/nub-notify.
+Remove NIP-07 from napplets. Replace signer NUB with identity NUB. Add shell-mediated crypto to relay NUB.
 
-### NUB-NOTIFY Spec
+### Kill NIP-07 + Signer
 
-- [ ] **SPEC-01**: Draft NUB-NOTIFY spec in nubs repo → PR to napplet/nubs. No private refs. Covers: send/dismiss, permissions, actions, channels, badges, shell controls, priority levels.
+- [ ] **KILL-01**: Remove `window.nostr` installation from shim (NIP-07 proxy gone)
+- [ ] **KILL-02**: Delete `@napplet/nub-signer` package entirely
+- [ ] **KILL-03**: Remove 'signer' from NubDomain union, NUB_DOMAINS, NappletGlobal
+- [ ] **KILL-04**: Remove signer imports/routing from shim and SDK
 
-### NUB Type Package
+### NUB-IDENTITY Spec
 
-- [ ] **NUB-01**: Create `@napplet/nub-notify` package with typed message definitions (notify.send, notify.send.result, notify.dismiss, notify.badge, notify.channel.register, notify.permission.request, notify.permission.result, notify.action, notify.clicked, notify.dismissed, notify.controls)
-- [ ] **NUB-02**: Package includes shim.ts (installNotifyShim, notification handling) and sdk.ts (convenience wrappers) per modular pattern
+- [ ] **SPEC-01**: Draft NUB-IDENTITY spec in nubs repo → PR to napplet/nubs. No private refs. Covers: getPublicKey, getRelays, getProfile, getFollows, getList(type), getZaps, getMutes, getBlocked, getBadges.
 
-### Core Integration
+### NUB Identity Package
 
-- [ ] **CORE-01**: Add `'notify'` to `NubDomain` union and `NUB_DOMAINS` array in envelope.ts
-- [ ] **CORE-02**: Add `notify` namespace to `NappletGlobal` type in types.ts
+- [ ] **NUB-01**: Create `@napplet/nub-identity` package with typed message definitions for all identity queries
+- [ ] **NUB-02**: Package includes shim.ts (installIdentityShim) and sdk.ts (convenience wrappers) per modular pattern
 
-### Shim Integration
+### Relay NUB Update
 
-- [ ] **SHIM-01**: Import and call `installNotifyShim()` from `@napplet/nub-notify` in shim entry point + named export
+- [ ] **RELAY-01**: Add `relay.publishEncrypted` message type to `@napplet/nub-relay` (cleartext + recipient + encryption method, NIP-44 default)
+- [ ] **RELAY-02**: Update NUB-RELAY spec in nubs repo with publishEncrypted + shell-decrypts-incoming semantics
+- [ ] **RELAY-03**: Update relay shim to handle publishEncrypted and auto-decrypted incoming events
 
-### Documentation
+### Core + Shim Integration
 
-- [ ] **DOC-01**: `@napplet/nub-notify` README with message reference
-- [ ] **DOC-02**: Update NIP-5D domain table (add notify)
-- [ ] **DOC-03**: Update core/shim/SDK READMEs for notify NUB
+- [ ] **CORE-01**: Replace 'signer' with 'identity' in NubDomain union and NUB_DOMAINS
+- [ ] **CORE-02**: Replace signer namespace with identity namespace in NappletGlobal
+- [ ] **SHIM-01**: Import installIdentityShim, remove installSignerShim
+
+### NIP-5D + Documentation
+
+- [ ] **DOC-01**: Update NIP-5D: remove "Shells MUST provide NIP-07 window.nostr", add security rationale, update domain table
+- [ ] **DOC-02**: `@napplet/nub-identity` README
+- [ ] **DOC-03**: Update core/shim/SDK READMEs (signer→identity, no window.nostr)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Shell notification UI implementation | Shell concern |
-| Push notifications / service workers | Browser-level, not protocol |
-| Notification sounds | Shell decides presentation |
+| Shell crypto implementation details | Shell concern |
+| NIP-04 deprecation timeline | External to this protocol |
+| Kind-based auto-encryption (Option A) | Too complex, explicit publishEncrypted chosen |
 | npm publish | Blocked on human npm auth (PUB-04) |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPEC-01 | Phase 101 | Pending |
-| NUB-01 | Phase 102 | Pending |
-| NUB-02 | Phase 102 | Pending |
-| CORE-01 | Phase 103 | Pending |
-| CORE-02 | Phase 103 | Pending |
-| SHIM-01 | Phase 103 | Pending |
-| DOC-01 | Phase 104 | Pending |
-| DOC-02 | Phase 104 | Pending |
-| DOC-03 | Phase 104 | Pending |
+| KILL-01 | — | Pending |
+| KILL-02 | — | Pending |
+| KILL-03 | — | Pending |
+| KILL-04 | — | Pending |
+| SPEC-01 | — | Pending |
+| NUB-01 | — | Pending |
+| NUB-02 | — | Pending |
+| RELAY-01 | — | Pending |
+| RELAY-02 | — | Pending |
+| RELAY-03 | — | Pending |
+| CORE-01 | — | Pending |
+| CORE-02 | — | Pending |
+| SHIM-01 | — | Pending |
+| DOC-01 | — | Pending |
+| DOC-02 | — | Pending |
+| DOC-03 | — | Pending |
 
 **Coverage:**
-- v0.23.0 requirements: 9 total
-- Mapped to phases: 9
-- Unmapped: 0
+- v0.24.0 requirements: 16 total
+- Mapped to phases: 0
+- Unmapped: 16
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after roadmap creation*
+*Last updated: 2026-04-09 after initial definition*

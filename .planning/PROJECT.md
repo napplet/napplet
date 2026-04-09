@@ -215,7 +215,18 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+## Current Milestone: v0.24.0 Identity NUB + Kill NIP-07
+
+**Goal:** Remove window.nostr from napplets. Replace signer NUB with identity NUB (read-only user info + convenience queries). Add relay.publishEncrypted for shell-mediated crypto. Shell decrypts incoming events.
+
+**Target features:**
+- Remove window.nostr + signer NUB entirely
+- NUB-IDENTITY spec → napplet/nubs PR
+- @napplet/nub-identity package (getPublicKey, getRelays, getProfile, getFollows, getList, getZaps, getMutes, getBlocked, getBadges)
+- relay.publishEncrypted (cleartext + recipient + method, NIP-44 default)
+- Shell auto-decrypts incoming encrypted events
+- Update NIP-5D: remove NIP-07 requirement, add security rationale
+- Delete @napplet/nub-signer package
 
 ### Out of Scope
 
@@ -232,7 +243,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.23.0 shipped (Notify NUB). 12 packages (4 core + 8 NUB). 23 milestones shipped.
+- **Current state**: v0.24.0 in progress (Identity NUB + Kill NIP-07). Replacing signer NUB with identity NUB, removing window.nostr. 12 packages → will lose nub-signer, gain nub-identity (net same). 23 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -321,4 +332,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.23.0 milestone*
+*Last updated: 2026-04-09 after v0.24.0 milestone start*
