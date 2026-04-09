@@ -115,21 +115,20 @@ The following NUB specs are defined for this protocol:
 
 Shells MAY support any subset of these NUBs. New NUBs may be proposed independently of this NIP.
 
-## Security Rationale: No Direct Crypto Access
+## Security Rationale: Cleartext-Only Napplets
 
-Napplets MUST NOT have direct access to signing keys, encryption, or decryption operations. This is a deliberate security boundary, not a limitation.
+Napplets produce cleartext events only. Shells MUST NOT sign or broadcast events containing ciphertext received from a napplet. Shells MUST NOT provide signing keys, `window.nostr` (NIP-07), or any encryption/decryption primitives to napplet iframes.
 
-**The threat:** A malicious napplet with NIP-07 access (`window.nostr`) can call `signEvent()` and `nip44.encrypt()` to:
-1. Sign arbitrary events on behalf of the user (identity theft).
-2. Encrypt exfiltrated user data and publish it to relays as ciphertext the shell cannot inspect.
+**The threat:** A napplet with access to encryption can hide data from the shell. A malicious napplet could exfiltrate user data by encrypting it and publishing it to relays as ciphertext the shell cannot inspect.
 
-**The solution:** All cryptographic operations are mediated by the shell:
-- **Signing:** Napplets submit unsigned event templates via `relay.publish`. The shell signs the event, allowing it to inspect content and enforce policies before broadcasting.
-- **Encryption:** Napplets submit plaintext via `relay.publishEncrypted`. The shell encrypts the content, signs the event, and broadcasts it. The shell can inspect plaintext content before encryption.
-- **Decryption:** The shell decrypts incoming encrypted events before delivering them to the napplet. Napplets receive plaintext and never see ciphertext.
+**The enforcement point is the shell, not the napplet.** A sandboxed napplet can bundle its own crypto — the protocol cannot prevent that. What the protocol can enforce is that the shell rejects anything it cannot inspect:
+
+- **Signing:** Napplets submit unsigned cleartext event templates via `relay.publish`. The shell inspects the content, signs it, and broadcasts. The shell MUST reject events that are already signed.
+- **Encryption:** Napplets submit plaintext via `relay.publishEncrypted` with a recipient and encryption method. The shell inspects the plaintext, encrypts it, signs it, and broadcasts. The napplet never produces ciphertext.
+- **Decryption:** The shell decrypts incoming encrypted events before delivering them to the napplet via `relay.event`. Napplets always receive cleartext.
 - **Identity:** Napplets query read-only user information via the `identity` NUB (public key, profile, follows, etc.) without any write or signing capability.
 
-This design ensures the shell maintains a complete audit trail of all signed and encrypted content, and can enforce content policies at the signing boundary.
+Shells MAY additionally detect and reject events whose content appears to contain ciphertext or encoded binary data, as an extra layer of defense against napplets that attempt to bypass the cleartext requirement.
 
 ## Security Considerations
 
