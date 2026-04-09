@@ -46,52 +46,6 @@ export interface NostrFilter {
   [key: `#${string}`]: string[] | undefined;
 }
 
-// ─── Capability Types ────────────────────────────────────────────────────────
-
-/**
- * A capability string that can be granted to or revoked from a napplet.
- * Used by the ACL system to control what operations a napplet can perform.
- *
- * Note: The @napplet/acl package uses bitfield constants (CAP_*) for fast
- * checks. This string union is the human-readable protocol-level representation.
- *
- * @example
- * ```ts
- * const cap: Capability = 'relay:write';
- * ```
- */
-export type Capability =
-  | 'relay:read'
-  | 'relay:write'
-  | 'cache:read'
-  | 'cache:write'
-  | 'hotkey:forward'
-  | 'sign:event'
-  | 'sign:nip04'
-  | 'sign:nip44'
-  | 'state:read'
-  | 'state:write';
-
-/**
- * All available capabilities in the napplet protocol.
- * @example
- * ```ts
- * for (const cap of ALL_CAPABILITIES) { acl.grant(identity, cap); }
- * ```
- */
-export const ALL_CAPABILITIES: readonly Capability[] = [
-  'relay:read',
-  'relay:write',
-  'cache:read',
-  'cache:write',
-  'hotkey:forward',
-  'sign:event',
-  'sign:nip04',
-  'sign:nip44',
-  'state:read',
-  'state:write',
-] as const;
-
 // ─── Shim API Types ──────────────────────────────────────────────────────────
 
 /**
