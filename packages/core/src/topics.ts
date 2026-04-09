@@ -53,11 +53,6 @@ export const TOPICS = {
   // ─── Chat ───────────────────────────────────────────────────────────────
   CHAT_OPEN_DM: 'chat:open-dm',
 
-  // ─── Audio ──────────────────────────────────────────────────────────────
-  AUDIO_REGISTER: 'shell:audio-register',
-  AUDIO_UNREGISTER: 'shell:audio-unregister',
-  AUDIO_STATE_CHANGED: 'shell:audio-state-changed',
-  AUDIO_MUTED: 'napplet:audio-muted',
 } as const;
 
 /** Key type for the TOPICS constant object. */

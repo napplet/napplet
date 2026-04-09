@@ -147,8 +147,8 @@ The host shell reads `<meta name="napplet-requires">` during napplet initializat
 ```ts
 import '@napplet/shim';
 
-if (!window.napplet.shell.supports('svc:audio')) {
-  console.warn('Audio service not available — some features disabled');
+if (!window.napplet.shell.supports('media')) {
+  console.warn('Media NUB not available — some features disabled');
 }
 ```
 

@@ -15,9 +15,8 @@ describe('@napplet/core exports', () => {
       expect(topicValues.length).toBeGreaterThan(0);
     });
 
-    it('includes audio topics', () => {
-      expect(TOPICS.AUDIO_REGISTER).toBe('shell:audio-register');
-      expect(TOPICS.AUDIO_UNREGISTER).toBe('shell:audio-unregister');
+    it('includes stream topics', () => {
+      expect(TOPICS.STREAM_CHANNEL_SWITCH).toBe('stream:channel-switch');
     });
   });
 
@@ -60,20 +59,12 @@ describe('@napplet/core exports', () => {
       expect(true).toBe(true);
     });
 
-    it('NamespacedCapability accepts svc: prefixed strings', () => {
-      // Compile check: service prefix (per D-03)
-      const _svcAudio: NamespacedCapability = 'svc:audio';
-      const _svcNotifications: NamespacedCapability = 'svc:notifications';
-      expect(true).toBe(true);
-    });
-
     it('ShellSupports.supports() accepts NamespacedCapability', () => {
       // Compile check: the interface method accepts all forms
       const shell: ShellSupports = { supports: () => false };
       expect(shell.supports('relay')).toBe(false);
       expect(shell.supports('nub:relay')).toBe(false);
       expect(shell.supports('perm:sign')).toBe(false);
-      expect(shell.supports('svc:audio')).toBe(false);
     });
   });
 });

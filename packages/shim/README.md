@@ -222,7 +222,7 @@ Smart forwarding rules:
 
 ### `window.napplet.shell`
 
-Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain, permission, or service.
+Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain or permission.
 
 ```ts
 // NUB domains (bare shorthand or nub: prefix)
@@ -231,9 +231,6 @@ window.napplet.shell.supports('nub:signer');  // explicit prefix
 
 // Permissions
 window.napplet.shell.supports('perm:popups');
-
-// Services
-window.napplet.shell.supports('svc:audio');
 ```
 
 Currently returns `false` until the shell populates it at iframe creation time. Use as a feature gate before calling APIs that depend on a specific capability.

@@ -241,9 +241,6 @@ export interface NappletGlobal {
    *
    * // Permission:
    * if (window.napplet.shell.supports('perm:sign')) { ... }
-   *
-   * // Service:
-   * if (window.napplet.shell.supports('svc:audio')) { ... }
    * ```
    */
   shell: NappletGlobalShell;

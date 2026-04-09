@@ -331,7 +331,7 @@ import type {
 |------|-------------|
 | `NappletMessage` | Base interface for all JSON envelope messages |
 | `NubDomain` | Union of the six NUB domain strings |
-| `NamespacedCapability` | Union of `NubDomain \| nub:* \| perm:* \| svc:*` for `supports()` |
+| `NamespacedCapability` | Union of `NubDomain \| nub:* \| perm:*` for `supports()` |
 | `ShellSupports` | Interface with `supports()` capability query method |
 | `NappletGlobalShell` | Type for `window.napplet.shell` (extends `ShellSupports`) |
 | `NubHandler` | Callback type for NUB domain handlers |

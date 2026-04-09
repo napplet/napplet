@@ -75,7 +75,6 @@ Napplets query capability support at runtime:
 
     window.napplet.shell.supports('foo')           // NUB capability — boolean
     window.napplet.shell.supports('perm:popups')   // permission — boolean
-    window.napplet.shell.supports('svc:audio')     // service — boolean
 
 Shells MUST implement `window.napplet.shell.supports()`. The argument is a namespaced capability string:
 
@@ -84,7 +83,6 @@ Shells MUST implement `window.napplet.shell.supports()`. The argument is a names
 | *(bare)* | `'relay'`          | Shorthand for `'nub:relay'`     |
 | `nub:`   | `'nub:signer'`     | Shell implements the signer NUB |
 | `perm:`  | `'perm:popups'`    | Shell grants popup permission   |
-| `svc:`   | `'svc:audio'`      | Shell provides audio service    |
 
 Napplets MUST gracefully degrade when a capability is absent.
 

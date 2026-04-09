@@ -80,38 +80,35 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 
 /**
  * Namespaced capability string for {@link ShellSupports.supports}.
  *
- * Accepts three prefix namespaces plus bare NUB domain shorthand:
+ * Accepts two prefix namespaces plus bare NUB domain shorthand:
  *
  * | Prefix  | Example             | Meaning                        |
  * |---------|---------------------|--------------------------------|
  * | `nub:`  | `'nub:relay'`       | Shell implements the relay NUB |
  * | `perm:` | `'perm:sign'`       | Shell grants signing permission|
- * | `svc:`  | `'svc:audio'`       | Shell provides audio service   |
  * | *(bare)*| `'relay'`           | Shorthand for `'nub:relay'`    |
  *
  * Bare strings are valid only for NUB domains.
- * Permissions and services MUST use their prefix.
+ * Permissions MUST use the `perm:` prefix.
  *
  * @example
  * ```ts
  * const cap: NamespacedCapability = 'nub:signer';
  * const bare: NamespacedCapability = 'relay'; // shorthand OK
  * const perm: NamespacedCapability = 'perm:popups';
- * const svc: NamespacedCapability = 'svc:audio';
  * ```
  */
 export type NamespacedCapability =
   | NubDomain
   | `nub:${NubDomain}`
-  | `perm:${string}`
-  | `svc:${string}`;
+  | `perm:${string}`;
 
 // ─── Shell Capability Query ────────────────────────────────────────────────
 
 /**
  * Interface for the shell capability query API.
- * Allows napplets to check whether the shell supports a NUB domain,
- * a permission, or a service at runtime.
+ * Allows napplets to check whether the shell supports a NUB domain
+ * or a permission at runtime.
  *
  * @example
  * ```ts
@@ -122,14 +119,10 @@ export type NamespacedCapability =
  * // Permission queries:
  * shell.supports('perm:sign');   // signing permission
  * shell.supports('perm:popups'); // popup permission
- *
- * // Service queries:
- * shell.supports('svc:audio');         // audio service
- * shell.supports('svc:notifications'); // notification service
  * ```
  */
 export interface ShellSupports {
-  /** Check whether the shell supports a NUB capability, permission, or service. */
+  /** Check whether the shell supports a NUB capability or permission. */
   supports(capability: NamespacedCapability): boolean;
 }
 
@@ -149,9 +142,8 @@ export interface ShellSupports {
  * // Bare NUB domain shorthand also works:
  * if (window.napplet.shell.supports('signer')) { ... }
  *
- * // Permission and service queries:
+ * // Permission queries:
  * window.napplet.shell.supports('perm:sign');
- * window.napplet.shell.supports('svc:audio');
  * ```
  */
 export interface NappletGlobalShell extends ShellSupports {}

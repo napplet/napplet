@@ -122,7 +122,7 @@ Namespaced capability query. Access via `window.napplet.shell.supports()` after 
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `supports(capability)` | `boolean` | Check shell support for a NUB (`nub:relay`), permission (`perm:popups`), or service (`svc:audio`). Bare NUB names also accepted (`relay`). |
+| `supports(capability)` | `boolean` | Check shell support for a NUB (`nub:relay`) or permission (`perm:popups`). Bare NUB names also accepted (`relay`). |
 
 **Example:**
 
@@ -133,9 +133,8 @@ import '@napplet/shim';
 if (window.napplet.shell.supports('relay')) { /* ... */ }
 if (window.napplet.shell.supports('nub:signer')) { /* ... */ }
 
-// Permissions and services
+// Permissions
 if (window.napplet.shell.supports('perm:popups')) { /* ... */ }
-if (window.napplet.shell.supports('svc:audio')) { /* ... */ }
 ```
 
 ### Namespace Import
@@ -184,7 +183,7 @@ import type {
 | `EventTemplate` | Unsigned event for `relay.publish()` |
 | `NappletMessage` | Base JSON envelope type for all protocol messages |
 | `NubDomain` | String literal union of NUB domain names |
-| `NamespacedCapability` | Union of `NubDomain \| nub:* \| perm:* \| svc:*` for `supports()` |
+| `NamespacedCapability` | Union of `NubDomain \| nub:* \| perm:*` for `supports()` |
 | `ShellSupports` | Interface for the shell capability query API |
 
 ### NUB Message Types
@@ -222,10 +221,6 @@ if (window.napplet.shell.supports('nub:relay')) {
 
 if (window.napplet.shell.supports('nub:signer')) {
   // signer delegation is available
-}
-
-if (window.napplet.shell.supports('svc:audio')) {
-  // audio service is available
 }
 ```
 
