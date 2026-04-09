@@ -237,7 +237,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `SHELL_BRIDGE_URI`, `REPLAY_WINDOW_SECONDS`, and `PROTOCOL_VERSION` do not exist in core/constants.ts or core/index.ts exports
   4. core/index.test.ts contains no tests referencing any deleted export
   5. `pnpm build && pnpm type-check` passes with zero errors
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 87-01-PLAN.md — Delete all unspecced types, constants, and topics; verify clean build
 
 ## Progress
 
@@ -246,4 +249,4 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 87. Spec Gap Code Drops | 0/? | Not started | - |
+| 87. Spec Gap Code Drops | 0/1 | In progress | - |
