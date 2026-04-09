@@ -1,7 +1,7 @@
 /**
  * @napplet/core -- NUB registration and message dispatch infrastructure.
  *
- * Provides a NUB-agnostic mechanism for NUB modules (relay, signer, storage, ifc)
+ * Provides a NUB-agnostic mechanism for NUB modules (relay, identity, storage, ifc)
  * to register their domain string and a message handler function. Inbound messages
  * are dispatched to the correct NUB handler based on the domain prefix extracted
  * from `message.type` (the part before the first `.`).
@@ -21,7 +21,7 @@
  *
  * // Dispatch routes by domain prefix:
  * dispatch({ type: 'relay.subscribe' }); // => true, calls relay handler
- * dispatch({ type: 'signer.sign' });     // => false, no signer handler
+ * dispatch({ type: 'identity.getPublicKey' }); // => false, no identity handler
  * ```
  *
  * @packageDocumentation
@@ -84,13 +84,13 @@ export function createDispatch(): NubDispatch {
   /**
    * Register a handler for the given NUB domain.
    *
-   * @param domain - The domain string (e.g., `'relay'`, `'signer'`).
+   * @param domain - The domain string (e.g., `'relay'`, `'identity'`).
    * @param handler - Callback invoked for messages in this domain.
    * @throws {Error} If the domain is already registered.
    *
    * @example
    * ```ts
-   * registerNub('signer', (msg) => { /* handle signer.* messages *\/ });
+   * registerNub('identity', (msg) => { /* handle identity.* messages *\/ });
    * ```
    */
   function registerNub(domain: string, handler: NubHandler): void {
@@ -136,7 +136,7 @@ export function createDispatch(): NubDispatch {
    *
    * @example
    * ```ts
-   * getRegisteredDomains(); // ['relay', 'signer']
+   * getRegisteredDomains(); // ['relay', 'identity']
    * ```
    */
   function getRegisteredDomains(): string[] {
@@ -153,7 +153,7 @@ const _default = createDispatch();
 /**
  * Register a handler for the given NUB domain on the default registry.
  *
- * @param domain - The domain string (e.g., `'relay'`, `'signer'`).
+ * @param domain - The domain string (e.g., `'relay'`, `'identity'`).
  * @param handler - Callback invoked for messages in this domain.
  * @throws {Error} If the domain is already registered.
  *
@@ -187,7 +187,7 @@ export const dispatch: NubDispatch['dispatch'] = _default.dispatch;
  * @example
  * ```ts
  * import { getRegisteredDomains } from '@napplet/core';
- * getRegisteredDomains(); // ['relay', 'signer']
+ * getRegisteredDomains(); // ['relay', 'identity']
  * ```
  */
 export const getRegisteredDomains: NubDispatch['getRegisteredDomains'] = _default.getRegisteredDomains;

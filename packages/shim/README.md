@@ -12,8 +12,8 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, `media`, `notify`, and `shell` sub-objects
-4. The shim also installs `window.nostr` (NIP-07 compatible) for transparent signer proxy access
+3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, `media`, `notify`, `identity`, and `shell` sub-objects
+4. No `window.nostr` is installed -- signing and encryption are mediated by the shell via `relay.publish()` and `relay.publishEncrypted()`
 
 ### Installation
 
@@ -24,7 +24,7 @@ npm install @napplet/shim
 ## Quick Start
 
 ```ts
-// Side-effect import -- installs window.napplet and window.nostr
+// Side-effect import -- installs window.napplet (no window.nostr)
 import '@napplet/shim';
 
 // Subscribe to kind 1 notes
@@ -34,7 +34,7 @@ const sub = window.napplet.relay.subscribe(
   () => console.log('End of stored events'),
 );
 
-// Publish a signed note (signed via shell's signer proxy)
+// Publish a note (shell signs it)
 const signed = await window.napplet.relay.publish({
   kind: 1,
   content: 'Hello from my napplet!',
@@ -89,10 +89,9 @@ const notifySub = window.napplet.notify.onAction((notifId, actionId) => {
   if (actionId === 'reply') openReply(notifId);
 });
 
-// Check shell capability support (namespaced)
-if (window.napplet.shell.supports('nub:signer')) {
-  const pubkey = await window.nostr.getPublicKey();
-}
+// Get user identity (read-only)
+const pubkey = await window.napplet.identity.getPublicKey();
+const profile = await window.napplet.identity.getProfile();
 
 // Clean up
 sub.close();
@@ -113,16 +112,19 @@ Messages sent via `window.parent.postMessage(msg, '*')`:
 ```ts
 { type: 'relay.subscribe', id: string, subId: string, filters: NostrFilter[] }
 { type: 'relay.publish', id: string, event: EventTemplate }
+{ type: 'relay.publishEncrypted', id: string, event: EventTemplate, recipient: string, encryption?: 'nip44' | 'nip04' }
 { type: 'relay.query', id: string, filters: NostrFilter[] }
 { type: 'relay.unsubscribe', subId: string }
 
-{ type: 'signer.getPublicKey', id: string }
-{ type: 'signer.signEvent', id: string, event: EventTemplate }
-{ type: 'signer.getRelays', id: string }
-{ type: 'signer.nip04.encrypt', id: string, pubkey: string, plaintext: string }
-{ type: 'signer.nip04.decrypt', id: string, pubkey: string, ciphertext: string }
-{ type: 'signer.nip44.encrypt', id: string, pubkey: string, plaintext: string }
-{ type: 'signer.nip44.decrypt', id: string, pubkey: string, ciphertext: string }
+{ type: 'identity.getPublicKey', id: string }
+{ type: 'identity.getRelays', id: string }
+{ type: 'identity.getProfile', id: string }
+{ type: 'identity.getFollows', id: string }
+{ type: 'identity.getList', id: string, listType: string }
+{ type: 'identity.getZaps', id: string }
+{ type: 'identity.getMutes', id: string }
+{ type: 'identity.getBlocked', id: string }
+{ type: 'identity.getBadges', id: string }
 
 { type: 'ifc.emit', topic: string, payload?: unknown }
 { type: 'ifc.subscribe', id: string, topic: string }
@@ -157,16 +159,19 @@ Messages received via `window.addEventListener('message', ...)`:
 ```ts
 { type: 'relay.event', subId: string, event: NostrEvent }
 { type: 'relay.eose', subId: string }
-{ type: 'relay.publish.result', id: string, event?: NostrEvent, error?: string }
+{ type: 'relay.publish.result', id: string, ok: boolean, event?: NostrEvent, error?: string }
+{ type: 'relay.publishEncrypted.result', id: string, ok: boolean, event?: NostrEvent, error?: string }
 { type: 'relay.query.result', id: string, events: NostrEvent[], error?: string }
 
-{ type: 'signer.getPublicKey.result', id: string, pubkey?: string, error?: string }
-{ type: 'signer.signEvent.result', id: string, event?: NostrEvent, error?: string }
-{ type: 'signer.getRelays.result', id: string, relays?: Record<string, object>, error?: string }
-{ type: 'signer.nip04.encrypt.result', id: string, ciphertext?: string, error?: string }
-{ type: 'signer.nip44.encrypt.result', id: string, ciphertext?: string, error?: string }
-{ type: 'signer.nip04.decrypt.result', id: string, plaintext?: string, error?: string }
-{ type: 'signer.nip44.decrypt.result', id: string, plaintext?: string, error?: string }
+{ type: 'identity.getPublicKey.result', id: string, pubkey: string }
+{ type: 'identity.getRelays.result', id: string, relays: Record<string, { read: boolean, write: boolean }>, error?: string }
+{ type: 'identity.getProfile.result', id: string, profile: object | null, error?: string }
+{ type: 'identity.getFollows.result', id: string, pubkeys: string[], error?: string }
+{ type: 'identity.getList.result', id: string, entries: string[], error?: string }
+{ type: 'identity.getZaps.result', id: string, zaps: object[], error?: string }
+{ type: 'identity.getMutes.result', id: string, pubkeys: string[], error?: string }
+{ type: 'identity.getBlocked.result', id: string, pubkeys: string[], error?: string }
+{ type: 'identity.getBadges.result', id: string, badges: object[], error?: string }
 
 { type: 'ifc.event', topic: string, payload?: unknown, sender: string }
 
@@ -191,7 +196,7 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'notify.controls', controls: string[] }
 ```
 
-All request/response pairs are correlated by the `id` field. Signer request timeouts after 30 seconds.
+All request/response pairs are correlated by the `id` field. Identity request timeouts after 30 seconds.
 
 ## `window.napplet` Shape
 
@@ -202,6 +207,7 @@ window.napplet = {
   relay: {
     subscribe(filters, onEvent, onEose, options?): Subscription;
     publish(template, options?): Promise<NostrEvent>;
+    publishEncrypted(template, recipient, encryption?): Promise<NostrEvent>;
     query(filters): Promise<NostrEvent[]>;
   },
   ipc: {
@@ -239,6 +245,17 @@ window.napplet = {
     onDismissed(callback): { close(): void };
     onControls(callback): { close(): void };
   },
+  identity: {
+    getPublicKey(): Promise<string>;
+    getRelays(): Promise<Record<string, { read: boolean; write: boolean }>>;
+    getProfile(): Promise<object | null>;
+    getFollows(): Promise<string[]>;
+    getList(listType): Promise<string[]>;
+    getZaps(): Promise<object[]>;
+    getMutes(): Promise<string[]>;
+    getBlocked(): Promise<string[]>;
+    getBadges(): Promise<object[]>;
+  },
   shell: {
     supports(capability: NamespacedCapability): boolean;
   },
@@ -252,7 +269,8 @@ Relay operations through the shell's relay pool via JSON envelope (relay.subscri
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `subscribe(filters, onEvent, onEose, options?)` | `Subscription` | Open a relay subscription via JSON envelope. `options.relay` and `options.group` for NIP-29 scoped relays. |
-| `publish(template, options?)` | `Promise<NostrEvent>` | Sign and broadcast a Nostr event via the shell's signer proxy. |
+| `publish(template, options?)` | `Promise<NostrEvent>` | Send an event template to the shell for signing and broadcast. |
+| `publishEncrypted(template, recipient, encryption?)` | `Promise<NostrEvent>` | Send an event template to the shell for encryption, signing, and broadcast. NIP-44 default. |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: sends a relay.query envelope, resolves when results arrive. |
 
 ### `window.napplet.ipc`
@@ -329,8 +347,8 @@ Namespaced capability query. `supports()` checks whether the shell declared supp
 
 ```ts
 // NUB domains (bare shorthand or nub: prefix)
-window.napplet.shell.supports('relay');       // bare shorthand
-window.napplet.shell.supports('nub:signer');  // explicit prefix
+window.napplet.shell.supports('relay');         // bare shorthand
+window.napplet.shell.supports('nub:identity');  // explicit prefix
 
 // Permissions
 window.napplet.shell.supports('perm:popups');
@@ -346,12 +364,12 @@ Importing `@napplet/shim` activates a global Window type augmentation:
 // This side-effect import gives TypeScript full autocompletion for window.napplet.*
 import '@napplet/shim';
 
-// TypeScript knows about window.napplet.relay, .ipc, .storage, .keys, .media, .notify, .shell
+// TypeScript knows about window.napplet.relay, .ipc, .storage, .keys, .media, .notify, .identity, .shell
 window.napplet.relay.subscribe({ kinds: [1] }, (event) => {
   // event is typed as NostrEvent
 });
 
-window.napplet.shell.supports('signer'); // typed as (capability: string) => boolean
+window.napplet.shell.supports('identity'); // typed as (capability: string) => boolean
 ```
 
 The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `Window` by the shim's type declarations.
@@ -364,15 +382,15 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 |---|---|---|
 | **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
-| **Dependencies** | `@napplet/nub-signer`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify` (types only) | `@napplet/core` (types only) |
+| **Dependencies** | `@napplet/nub-relay`, `@napplet/nub-identity`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify` | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
-| **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, plus types |
+| **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, `identity`, plus types |
 
 **Typical usage:** Import both -- shim for window installation, SDK for typed API access:
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys } from '@napplet/sdk';
+import { relay, ipc, storage, keys, identity } from '@napplet/sdk';
 ```
 
 ## Protocol Reference

@@ -90,7 +90,8 @@ Relay operations through the shell's relay pool. Mirrors `window.napplet.relay`.
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `subscribe(filters, onEvent, onEose, options?)` | `Subscription` | Open a live relay subscription through the shell's relay pool |
-| `publish(template, options?)` | `Promise<NostrEvent>` | Sign and broadcast via the shell's signer proxy |
+| `publish(template, options?)` | `Promise<NostrEvent>` | Send event template to the shell for signing and broadcast |
+| `publishEncrypted(template, recipient, encryption?)` | `Promise<NostrEvent>` | Send event template for encryption, signing, and broadcast |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: subscribe, collect until EOSE, resolve |
 
 ### `ipc`
@@ -173,7 +174,7 @@ import '@napplet/shim';
 
 // NUB domains (bare shorthand or nub: prefix)
 if (window.napplet.shell.supports('relay')) { /* ... */ }
-if (window.napplet.shell.supports('nub:signer')) { /* ... */ }
+if (window.napplet.shell.supports('nub:identity')) { /* ... */ }
 
 // Permissions
 if (window.napplet.shell.supports('perm:popups')) { /* ... */ }
@@ -207,7 +208,7 @@ import type {
   ShellSupports,
   // NUB message types (re-exported from NUB packages)
   RelayNubMessage,
-  SignerNubMessage,
+  IdentityNubMessage,
   StorageNubMessage,
   IfcNubMessage,
   KeysNubMessage,
@@ -236,14 +237,14 @@ handlers in shell implementations or protocol-aware code.
 | Type | NUB Package | Description |
 |------|-------------|-------------|
 | `RelayNubMessage` | `@napplet/nub-relay` | Discriminated union of all relay domain messages |
-| `SignerNubMessage` | `@napplet/nub-signer` | Discriminated union of all signer domain messages |
+| `IdentityNubMessage` | `@napplet/nub-identity` | Discriminated union of all identity domain messages |
 | `StorageNubMessage` | `@napplet/nub-storage` | Discriminated union of all storage domain messages |
 | `IfcNubMessage` | `@napplet/nub-ifc` | Discriminated union of all IFC domain messages |
 | `KeysNubMessage` | `@napplet/nub-keys` | Discriminated union of all keys domain messages |
 | `MediaNubMessage` | `@napplet/nub-media` | Discriminated union of all media domain messages |
 | `NotifyNubMessage` | `@napplet/nub-notify` | Discriminated union of all notify domain messages |
 
-Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage`) are also re-exported from
+Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
 
 ## NUB Domain Constants
@@ -251,8 +252,8 @@ Individual message types (e.g., `RelaySubscribeMessage`, `SignerSignEventMessage
 Each NUB domain has a string constant re-exported from its package:
 
 ```ts
-import { RELAY_DOMAIN, SIGNER_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN } from '@napplet/sdk';
-// Values: 'relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'
+import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'
 ```
 
 These constants are re-exported from the individual NUB packages. Use them with the shell capability query
@@ -263,8 +264,8 @@ if (window.napplet.shell.supports('nub:relay')) {
   // relay operations are available
 }
 
-if (window.napplet.shell.supports('nub:signer')) {
-  // signer delegation is available
+if (window.napplet.shell.supports('nub:identity')) {
+  // identity queries are available
 }
 ```
 

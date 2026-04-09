@@ -57,21 +57,21 @@ interface RelaySubscribe extends NappletMessage {
 }
 ```
 
-The `type` field domain prefix (`relay`, `signer`, `storage`, `ifc`, `theme`, `keys`, `media`, `notify`) routes messages to the correct NUB handler via `dispatch()`.
+The `type` field domain prefix (`relay`, `identity`, `storage`, `ifc`, `theme`, `keys`, `media`, `notify`) routes messages to the correct NUB handler via `dispatch()`.
 
 #### `NubDomain`
 
 String literal union of the eight NUB capability domains.
 
 ```ts
-type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
+type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
 ```
 
 | Domain    | Scope                                    |
 |-----------|------------------------------------------|
-| `relay`   | Relay proxy (subscribe, publish, query)   |
-| `signer`  | Signing delegation (NIP-07 surface)       |
-| `storage` | Scoped key-value storage proxy            |
+| `relay`    | Relay proxy (subscribe, publish, query)   |
+| `identity` | Read-only user identity queries           |
+| `storage`  | Scoped key-value storage proxy            |
 | `ifc`     | Inter-frame communication (dispatch + channel) |
 | `theme`   | Theme tokens and appearance settings      |
 | `keys`    | Keyboard forwarding and action keybindings|
@@ -83,7 +83,7 @@ type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys' | 'me
 Runtime constant array of all NUB domain strings. Useful for iteration and validation.
 
 ```ts
-const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'signer', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'];
+const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'];
 
 for (const domain of NUB_DOMAINS) {
   console.log(`Checking support for: ${domain}`);
@@ -180,7 +180,7 @@ const getRegisteredDomains: () => string[];
 ```ts
 import { getRegisteredDomains } from '@napplet/core';
 
-getRegisteredDomains(); // ['relay', 'signer', 'storage']
+getRegisteredDomains(); // ['relay', 'identity', 'storage']
 ```
 
 #### `NubHandler`
@@ -211,7 +211,7 @@ Types shared by all napplet packages for Nostr event structures and the capabili
 
 #### `NostrEvent`
 
-Standard Nostr event structure (used by relay NUB and signer NUB).
+Standard Nostr event structure (used by relay NUB and identity NUB).
 
 ```ts
 interface NostrEvent {
@@ -349,7 +349,7 @@ import type {
 `@napplet/core` is consumed by all packages in the napplet ecosystem for envelope types and NUB dispatch.
 
 - **In this repo:** `@napplet/shim`, `@napplet/sdk`, and `@napplet/vite-plugin` import `NappletMessage`, `NubDomain`, `ShellSupports`, and all shared protocol types from `@napplet/core`.
-- **NUB packages** (`@napplet/nub-relay`, `@napplet/nub-signer`, `@napplet/nub-storage`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify`): extend `NappletMessage` for their domain-specific message types and call `registerNub` at import time.
+- **NUB packages** (`@napplet/nub-relay`, `@napplet/nub-identity`, `@napplet/nub-storage`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify`): extend `NappletMessage` for their domain-specific message types and call `registerNub` at import time.
 
 ## Protocol Reference
 

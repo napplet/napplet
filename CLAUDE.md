@@ -7,11 +7,11 @@ This is the **napplet** monorepo — npm packages for the napplet protocol. Napp
 ## Packages
 
 - `packages/core` — **@napplet/core** — JSON envelope types, NUB dispatch, protocol constants
-- `packages/shim` — **@napplet/shim** — Side-effect window installer (window.napplet + window.nostr)
+- `packages/shim` — **@napplet/shim** — Side-effect window installer (window.napplet)
 - `packages/sdk` — **@napplet/sdk** — Named exports wrapping window.napplet for bundler consumers
 - `packages/vite-plugin` — **@napplet/vite-plugin** — NIP-5A manifest generation at build time
 - `packages/nubs/relay` — **@napplet/nub-relay** — Relay NUB message types
-- `packages/nubs/signer` — **@napplet/nub-signer** — Signer NUB message types
+- `packages/nubs/identity` — **@napplet/nub-identity** — Identity NUB message types (read-only user queries)
 - `packages/nubs/storage` — **@napplet/nub-storage** — Storage NUB message types
 - `packages/nubs/ifc` — **@napplet/nub-ifc** — IFC NUB message types
 - `packages/nubs/theme` — **@napplet/nub-theme** — Theme NUB message types
@@ -29,7 +29,7 @@ This is the **napplet** monorepo — npm packages for the napplet protocol. Napp
 ## Key Concepts
 
 - **JSON Envelope**: All messages use `{ type: "domain.action", ...payload }` format via postMessage. NIP-5D defines the envelope; NUB specs define message types per domain.
-- **NUBs**: Napplet Unified Blueprints — modular interface specs (relay, signer, storage, ifc, theme). Each NUB owns a message domain. Shells implement the NUBs they support.
+- **NUBs**: Napplet Unified Blueprints — modular interface specs (relay, identity, storage, ifc, theme, keys, media, notify). Each NUB owns a message domain. Shells implement the NUBs they support.
 - **Identity**: Shell identifies napplets via unforgeable `MessageEvent.source` at iframe creation. No handshake needed.
 - **ACL**: Capabilities keyed on `(dTag, aggregateHash)`. Controls signing, storage, relay access.
 - **Storage scoping**: Keys scoped by `dTag:aggregateHash` so different napplet types and versions have isolated storage.
@@ -173,7 +173,7 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 - Framework-agnostic (no Svelte, React, Vue dependencies)
 - JSON envelope wire format: `{ type: "domain.action", ...payload }` via postMessage
 - Identity via unforgeable `MessageEvent.source` at iframe creation — no handshake
-- Modular NUB architecture: each NUB owns a message domain (relay, signer, storage, ifc, theme)
+- Modular NUB architecture: each NUB owns a message domain (relay, identity, storage, ifc, theme, keys, media, notify)
 - Core dispatch: `registerNub(domain, handler)` routes messages by domain prefix
 - ACL keyed on `(dTag, aggregateHash)` for per-napplet capability enforcement
 - Storage scoped by `dTag:aggregateHash` — cross-napplet isolation enforced by shell

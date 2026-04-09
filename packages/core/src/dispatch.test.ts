@@ -77,7 +77,7 @@ describe('dispatch()', () => {
   it('returns false when no handler is registered for the domain', () => {
     const d = createDispatch();
 
-    const result = d.dispatch({ type: 'signer.sign' });
+    const result = d.dispatch({ type: 'identity.getPublicKey' });
     expect(result).toBe(false);
   });
 
@@ -100,18 +100,18 @@ describe('dispatch()', () => {
   it('dispatches to the correct handler among multiple domains', () => {
     const d = createDispatch();
     const relayCalls: NappletMessage[] = [];
-    const signerCalls: NappletMessage[] = [];
+    const identityCalls: NappletMessage[] = [];
 
     d.registerNub('relay', (msg) => relayCalls.push(msg));
-    d.registerNub('signer', (msg) => signerCalls.push(msg));
+    d.registerNub('identity', (msg) => identityCalls.push(msg));
 
     d.dispatch({ type: 'relay.subscribe' });
-    d.dispatch({ type: 'signer.sign' });
+    d.dispatch({ type: 'identity.getPublicKey' });
     d.dispatch({ type: 'relay.publish' });
 
     expect(relayCalls.length).toBe(2);
-    expect(signerCalls.length).toBe(1);
-    expect(signerCalls[0]!.type).toBe('signer.sign');
+    expect(identityCalls.length).toBe(1);
+    expect(identityCalls[0]!.type).toBe('identity.getPublicKey');
   });
 });
 
@@ -126,12 +126,12 @@ describe('getRegisteredDomains()', () => {
   it('returns array of registered domain strings', () => {
     const d = createDispatch();
     d.registerNub('relay', () => {});
-    d.registerNub('signer', () => {});
+    d.registerNub('identity', () => {});
 
     const domains = d.getRegisteredDomains();
     expect(domains.length).toBe(2);
     expect(domains).toContain('relay');
-    expect(domains).toContain('signer');
+    expect(domains).toContain('identity');
   });
 });
 

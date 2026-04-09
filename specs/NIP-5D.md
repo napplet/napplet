@@ -30,11 +30,11 @@ Napplet iframes MUST use this sandbox attribute:
 
     sandbox="allow-scripts"
 
-The `allow-same-origin` token MUST NOT be present. Shells MAY add additional sandbox tokens (`allow-forms`, `allow-modals`, `allow-downloads`, `allow-popups`) based on shell policy. Napplets have no access to `localStorage`, `sessionStorage`, `IndexedDB`, direct WebSocket connections, or `window.nostr`. All storage, signing, and relay access is proxied through the shell.
+The `allow-same-origin` token MUST NOT be present. Shells MAY add additional sandbox tokens (`allow-forms`, `allow-modals`, `allow-downloads`, `allow-popups`) based on shell policy. Napplets have no access to `localStorage`, `sessionStorage`, `IndexedDB`, direct WebSocket connections, or signing keys. All storage, signing, encryption, and relay access is proxied through the shell.
 
 The shell identifies senders via `MessageEvent.source` (unforgeable Window reference). Messages from unknown sources (iframes not created by the shell) MUST be silently dropped.
 
-Shells MUST provide a [NIP-07](07.md) `window.nostr` implementation to each napplet iframe.
+Shells MUST NOT provide `window.nostr` (NIP-07) to napplet iframes. Signing and encryption are security-critical operations that MUST be mediated by the shell. See the Security Rationale section below.
 
 ## Wire Format
 
@@ -81,7 +81,7 @@ Shells MUST implement `window.napplet.shell.supports()`. The argument is a names
 | Prefix   | Example            | Meaning                         |
 |----------|--------------------|---------------------------------|
 | *(bare)* | `'relay'`          | Shorthand for `'nub:relay'`     |
-| `nub:`   | `'nub:signer'`     | Shell implements the signer NUB |
+| `nub:`   | `'nub:identity'`   | Shell implements the identity NUB |
 | `perm:`  | `'perm:popups'`    | Shell grants popup permission   |
 
 Napplets MUST gracefully degrade when a capability is absent.
@@ -102,18 +102,34 @@ NUB specs MUST:
 
 The following NUB specs are defined for this protocol:
 
-| Domain    | Spec     | Scope                                    |
-|-----------|----------|------------------------------------------|
-| `relay`   | NUB-RELAY   | Relay proxy (subscribe, publish, query)  |
-| `signer`  | NUB-SIGNER  | Signing delegation (NIP-07 surface)      |
-| `storage` | NUB-STORAGE | Scoped key-value storage proxy           |
-| `ifc`     | NUB-IFC     | Inter-frame communication                |
-| `theme`   | NUB-THEME   | Theme tokens and appearance settings     |
-| `keys`    | NUB-KEYS    | Keyboard forwarding and action keybindings |
-| `media`   | NUB-MEDIA   | Media session control and playback       |
-| `notify`  | NUB-NOTIFY  | Shell-rendered notifications              |
+| Domain     | Spec         | Scope                                       |
+|------------|--------------|---------------------------------------------|
+| `relay`    | NUB-RELAY    | Relay proxy (subscribe, publish, query)     |
+| `identity` | NUB-IDENTITY | Read-only user identity queries             |
+| `storage`  | NUB-STORAGE  | Scoped key-value storage proxy              |
+| `ifc`      | NUB-IFC      | Inter-frame communication                   |
+| `theme`    | NUB-THEME    | Theme tokens and appearance settings        |
+| `keys`     | NUB-KEYS     | Keyboard forwarding and action keybindings  |
+| `media`    | NUB-MEDIA    | Media session control and playback          |
+| `notify`   | NUB-NOTIFY   | Shell-rendered notifications                |
 
 Shells MAY support any subset of these NUBs. New NUBs may be proposed independently of this NIP.
+
+## Security Rationale: No Direct Crypto Access
+
+Napplets MUST NOT have direct access to signing keys, encryption, or decryption operations. This is a deliberate security boundary, not a limitation.
+
+**The threat:** A malicious napplet with NIP-07 access (`window.nostr`) can call `signEvent()` and `nip44.encrypt()` to:
+1. Sign arbitrary events on behalf of the user (identity theft).
+2. Encrypt exfiltrated user data and publish it to relays as ciphertext the shell cannot inspect.
+
+**The solution:** All cryptographic operations are mediated by the shell:
+- **Signing:** Napplets submit unsigned event templates via `relay.publish`. The shell signs the event, allowing it to inspect content and enforce policies before broadcasting.
+- **Encryption:** Napplets submit plaintext via `relay.publishEncrypted`. The shell encrypts the content, signs the event, and broadcasts it. The shell can inspect plaintext content before encryption.
+- **Decryption:** The shell decrypts incoming encrypted events before delivering them to the napplet. Napplets receive plaintext and never see ciphertext.
+- **Identity:** Napplets query read-only user information via the `identity` NUB (public key, profile, follows, etc.) without any write or signing capability.
+
+This design ensures the shell maintains a complete audit trail of all signed and encrypted content, and can enforce content policies at the signing boundary.
 
 ## Security Considerations
 
@@ -132,7 +148,7 @@ Storage isolation, signing safety, relay access control, and ACL enforcement are
 
 ## References
 
-- [NIP-07](07.md) -- `window.nostr` signer capability
 - [NIP-5A](5A.md) -- Napplet manifest format and aggregate hash
+- [NUB-IDENTITY](https://github.com/napplet/nubs/blob/main/NUB-IDENTITY.md) -- Read-only user identity queries
 - [NUB-KEYS](https://github.com/napplet/nubs/blob/main/NUB-KEYS.md) -- Keyboard forwarding and action keybindings
 - [NUB-MEDIA](https://github.com/napplet/nubs/blob/main/NUB-MEDIA.md) -- Media session control and playback
