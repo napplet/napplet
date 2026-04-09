@@ -1,188 +1,274 @@
-# Technology Stack
+# Technology Stack: Keys NUB
 
-**Project:** NIP-5C "Nostr Web Applets" Specification
-**Researched:** 2026-04-05
-
-## Critical Finding: NIP-5C Number Is Claimed
-
-**NIP-5C is already claimed by fiatjaf's "Scrolls" (WASM programs) PR#2281**, opened 2026-03-22. If the project insists on using "5C", it will conflict with an existing open PR by the most influential Nostr developer. Available alternatives in the 5x range: **5D, 5E, 5F**.
-
-However: whether this matters depends on whether the project wants to fight for the number or take the next one. PR#2281 is open, not merged. The milestone description says "NIP-5C" -- **the user should decide** whether to keep that number or switch. This research flags the conflict and proceeds with the assumption that the number choice is a decision for the roadmap, not a blocker for research.
-
-**Confidence: HIGH** -- verified directly against nostr-protocol/nips repo open PRs.
+**Project:** napplet v0.20.0 -- Keys NUB (bidirectional keyboard protocol)
+**Researched:** 2026-04-09
 
 ## Recommended Stack
 
-This milestone is primarily a specification writing exercise, not a code-heavy implementation. The "stack" here is the set of standards, formats, and tools used to write and submit the NIP.
-
-### Specification Format
+### New Package: @napplet/nub-keys
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| Markdown | CommonMark | NIP document format | All NIPs in nostr-protocol/nips are plain markdown files |
-| RFC 2119 keywords | BCP 14 | MUST/SHOULD/MAY semantics | NIP convention for requirement levels (used in NIP-42, NIP-46, etc.) |
-| JSON | RFC 8259 | Wire format examples | NIP-01 events are JSON; all examples in JSON |
+| TypeScript | 5.9.3 | Type definitions for keys NUB messages | Match existing monorepo version exactly. Keys NUB is a type package like nub-theme. |
+| tsup | 8.5.0 | ESM-only build | Identical config to all 5 existing NUB packages. Copy `tsup.config.ts` verbatim from nub-theme. |
+| @napplet/core | workspace:* | Base `NappletMessage` type, `registerNub` | Same dependency pattern as every NUB package. Keys messages extend `NappletMessage`. |
 
-### NIP File Header Format (Verified)
+### No New Dependencies
 
-Every NIP follows this exact setext-heading format:
+**Zero new npm packages required.** The keys NUB needs:
 
-```markdown
-NIP-XX
-======
+1. **Type definitions** -- pure TypeScript interfaces (zero runtime code)
+2. **Key combo string parsing** -- a ~30-line function, not a library
+3. **Key combo string normalization** -- a ~20-line function, not a library
+4. **Modifier extraction** -- trivial destructuring from KeyboardEvent properties
 
-Title of the NIP
------------------
+Every keyboard shortcut library (hotkeys-js, mousetrap, keymaster, Keypress, KeyboardJS) is designed for the wrong problem -- they bind DOM listeners and manage state. The napplet protocol only needs to **describe** key combos in a serializable string format and let the shell handle actual binding. Adding any keyboard library would violate the zero-framework-deps constraint and add runtime weight to what is fundamentally a type+serialization package.
 
-`draft` `optional`
+### Shim Changes (packages/shim)
 
-[Body content...]
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| No new deps | -- | keyboard-shim.ts rewrite | Current shim is 91 lines. New version will be similar size but use keys.* envelope types instead of local `KeyboardForwardMessage` interface. |
+
+### SDK Changes (packages/sdk)
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| No new deps | -- | `keys` namespace + `registerAction()` convenience | SDK wraps `window.napplet.keys.*` like it wraps `relay`, `ipc`, `storage`. Pure delegation, no new runtime deps. |
+
+### Core Changes (packages/core)
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| No new deps | -- | Add `'keys'` to `NubDomain` union, `NUB_DOMAINS` array | One-line type change + one array element. `NappletGlobal` gets a `keys` property. |
+
+## Key Technical Decisions
+
+### 1. Use `key` (not `code`) as the Primary Identifier
+
+**Decision:** Key combo strings use `KeyboardEvent.key` values, normalized to lowercase for alpha keys. `KeyboardEvent.code` is forwarded as metadata but is NOT used for matching.
+
+**Why:** The keys NUB is a command/action protocol, not a game input protocol.
+
+- `key` represents "what the user intended to type" -- correct for shortcuts like Ctrl+S (save), Ctrl+Z (undo)
+- `code` represents "which physical button was pressed" -- correct for WASD game controls, which are not the target use case
+- International layout users expect Ctrl+Z to work on their Z key, wherever it is physically
+- VS Code uses `key` for keybinding matching (except on macOS/Linux where it dispatches on `code` for specific edge cases)
+
+**Caveat (must document):** Shift modifies `key` values inconsistently across layouts. German Shift+2 = `"` not `@`. The safe subset is: A-Z letters, 0-9 digits, F1-F12, Arrow keys, Enter, Tab, Escape, Space, Backspace, Delete, Home, End, PageUp, PageDown. This is sufficient for shell WM shortcuts. Napplets that need exotic combos can use the raw `code` field in the forwarded message.
+
+**Confidence:** HIGH -- based on W3C spec (Proposed Recommendation 2024), MDN documentation, and analysis of VS Code's keybinding architecture.
+
+### 2. Canonical Key Combo String Format
+
+**Decision:** Use `Modifier+Modifier+Key` format with canonical modifier ordering.
+
+**Format:** `[Ctrl+][Alt+][Shift+][Meta+]Key`
+
+Examples:
+- `Ctrl+s` -- save
+- `Ctrl+Shift+p` -- command palette
+- `Alt+1` -- switch to tab 1
+- `F5` -- refresh/run
+- `Escape` -- close/cancel
+
+**Normalization rules (implement in nub-keys, ~20 lines):**
+1. Modifiers sorted: Ctrl before Alt before Shift before Meta (alphabetical)
+2. Alpha keys lowercased: `s` not `S` (Shift is explicit modifier)
+3. `Control` normalized to `Ctrl` (KeyboardEvent.key returns `Control`)
+4. `Meta` stays `Meta` (not `Cmd` or `Win` -- platform-neutral)
+5. Bare modifier keys excluded (Control alone is not a combo)
+
+**Why this format:**
+- Human-readable in JSON payloads and debug output
+- Deterministic -- same combo always produces same string regardless of press order
+- Matches developer mental model (VS Code, browser DevTools, Hyprland all use `Mod+Key`)
+- Trivial to parse: `combo.split('+')` gives ordered parts
+
+**Why NOT use existing libraries:**
+- `hotkeys-js` uses its own format with `command`, `option` aliases -- platform-specific
+- `mousetrap` uses `mod` as a meta-modifier -- ambiguous
+- `keyboard-shortcut-string` npm package does normalization but adds a dependency for ~15 lines of logic
+- Our format is wire protocol -- it must be stable and owned by the spec, not an npm package's whims
+
+**Confidence:** HIGH -- this is the overwhelmingly standard format across tools.
+
+### 3. Action-Keybinding Separation (VS Code Model)
+
+**Decision:** Napplets register **actions** (string identifiers + metadata). The **shell** binds keys to actions. Napplets do NOT choose their own keybindings.
+
+**Why:**
+- Multiple napplets share a single keyboard -- conflicts are inevitable if napplets pick keys
+- Shell is the keybinding authority (like a WM), napplet is the command provider (like an app)
+- Matches tiling WM architecture: apps declare actions, WM assigns keys
+- Enables user customization at the shell level without napplet changes
+- Avoids the Figma problem where plugins fight over keyboard focus
+
+**Data model:**
+```typescript
+// Napplet registers actions:
+{ type: 'keys.register', actions: [
+  { id: 'save', label: 'Save Document', defaultKey?: 'Ctrl+s' },
+  { id: 'undo', label: 'Undo', defaultKey?: 'Ctrl+z' },
+]}
+
+// Shell assigns bindings and notifies:
+{ type: 'keys.bind', bindings: [
+  { action: 'save', combo: 'Ctrl+s' },
+  { action: 'undo', combo: 'Ctrl+z' },
+]}
+
+// Shell invokes action on keypress:
+{ type: 'keys.action', action: 'save' }
 ```
 
-Status badge options: `draft`, `optional`, `mandatory`, `relay`. **No YAML frontmatter. No author fields. No date fields.**
+The `defaultKey` field is a **hint** -- the shell may honor it, remap it, or ignore it. This preserves shell authority while giving napplets a way to suggest ergonomic defaults.
 
-### Referenced Standards
+**Confidence:** HIGH -- this is the proven pattern from VS Code, Sublime Text, Zed, and every tiling WM.
 
-| Standard | Version/ID | Purpose | How Referenced |
-|----------|-----------|---------|----------------|
-| NIP-01 | Current (merged) | Event format, filter matching, relay verbs | "as defined in NIP-01" |
-| NIP-5A | Current (merged 2026-03-25) | Manifest format, aggregate hash, requires tags | "as defined in NIP-5A" |
-| NIP-07 | Current (merged) | window.nostr interface | "per NIP-07" |
-| NIP-42 | Current (merged) | AUTH event kind 22242 | "per NIP-42 with additional tags" |
-| NIP-44 | Current (merged) | Encryption methods | "per NIP-44" |
+### 4. Smart Forwarding as a Mode, Not a Library
 
-### Implementation Tools (for channel protocol phase)
+**Decision:** The shim's keyboard forwarding behavior (currently: forward everything that isn't text input) becomes a shell-controlled mode negotiated via keys NUB messages. No forwarding library needed.
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| TypeScript | 5.9 | Channel protocol implementation in @napplet packages | Existing codebase language |
-| Vitest | 4.x | Channel protocol tests | Existing test framework |
-| Playwright | Current | E2E tests for channel behavior | Existing e2e framework |
+**Three states for any key combo in a focused napplet:**
+1. **Shell-bound** -- shell intercepts, napplet never sees it (WM hotkeys like Alt+Tab)
+2. **Action-bound** -- shell intercepts, sends `keys.action` to napplet (registered actions)
+3. **Unbound/passthrough** -- napplet handles natively (typing, game input, napplet-internal shortcuts)
 
-### Submission Tools
+**The forwarding shim does NOT need to know the binding table.** Instead:
+- Shim forwards ALL non-text-input keystrokes as `keys.forward` (same as today)
+- Shell checks its binding table and either handles or lets the napplet keep it
+- If shell claims a key, it sends `keys.suppress` to tell the napplet to preventDefault future occurrences
+- Shell can update suppression list via `keys.config` push message
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| gh CLI | Latest | Create PR to nostr-protocol/nips | Standard GitHub workflow |
-| git | Latest | Version control | Fork + PR workflow |
+This inverts the current one-way model (napplet pushes keys to shell) into a bidirectional negotiation (napplet pushes, shell responds with config), without requiring the napplet to pre-know the binding table.
 
-## NIP-5A Content Summary (Source of Truth)
+**Why NOT push the full binding table to the napplet:**
+- Leaks shell configuration into the sandbox (information principle)
+- Napplet would need its own binding-match logic (complexity)
+- Shell-side changes would require re-syncing (consistency burden)
+- Current forward-everything model already works for the happy path
 
-NIP-5A was **merged 2026-03-25** (PR#1538). Defines:
+**Confidence:** MEDIUM -- the suppress-list approach is sound architecturally but the exact message flow needs protocol design validation. The fallback is the simpler model where forwarding stays one-way and shell just handles everything server-side.
 
-- **Kind 15128**: Root site manifest (replaceable, no d tag, one per pubkey)
-- **Kind 35128**: Named site manifest (addressable, d tag = site identifier)
-- **Kind 34128**: Legacy/deprecated individual file events
-- `path` tags: `["path", "/absolute/path", "sha256hash"]`
-- `server` tags: Blossom server hints
-- `title`, `description`, `source` tags: Optional metadata
-- Host server resolution: npub subdomain for root sites, pubkeyB36+dTag for named sites
-- Path resolution via path tags, file resolution via Blossom/BUD-03
+### 5. Text Input Detection Stays in the Shim
 
-**PR#2287** (open, by hzrd149) extends NIP-5A with:
-- `x` tag: `["x", "<sha256-hex>", "aggregate"]` for site aggregate hash
-- **Kind 5128**: Manifest snapshot (regular event, captures version state)
-- Aggregate hash computation algorithm (sort path lines, SHA-256)
-- Copied sites with `a`/`A` lineage tags
-- Snapshot addressing: `h<aggregateB36>.nsite-host.com`
+**Decision:** The `isTextInput()` function from the current keyboard-shim.ts stays. No external library for form field detection.
 
-## Kind Number Allocations
+**Why:**
+- The function is 16 lines, handles all standard cases (input, textarea, select, contentEditable)
+- No DOM library can do this more correctly
+- The napplet knows its own DOM better than any heuristic
 
-**The entire 29000-29999 range is unregistered in the official NIP kind number table.** Nearest registered kinds: 28934-28936 (NIP-43 Relay Access) and 30000+ (addressable events).
+**Confidence:** HIGH -- the existing implementation is correct and complete.
 
-Current protocol usage:
+### 6. Forward Both `key` AND `code` in Wire Messages
 
-| Kind | Name | Purpose |
-|------|------|---------|
-| 29000 | REGISTRATION | Napplet registration event |
-| 29001 | SIGNER_REQUEST | NIP-07 proxy request |
-| 29002 | SIGNER_RESPONSE | NIP-07 proxy response |
-| 29003 | IPC_PEER | Inter-pane communication |
-| 29004 | HOTKEY_FORWARD | Keyboard event forwarding |
-| 29005 | METADATA | Napplet state metadata |
-| 29006 | NIPDB_REQUEST | Event database request |
-| 29007 | NIPDB_RESPONSE | Event database response |
-| 29010 | SERVICE_DISCOVERY | Service capability query/response |
+**Decision:** The `keys.forward` message carries both `key` and `code` from the KeyboardEvent, but combo matching uses only `key`.
 
-**These are postMessage bus kinds, never published to relays.** The NIP should make this explicit. They are not "nostr event kinds" in the relay sense -- they are message types on the iframe-to-shell postMessage channel that borrow NIP-01 wire format. This distinction matters for NIP acceptance and whether they belong in the README.md Event Kinds table (they probably should not).
+**Why:**
+- Shell may need `code` for game-oriented napplets or accessibility tools
+- Cost is one extra string field per message -- negligible
+- Matches the current `keyboard-shim.ts` which already sends both
+- Future NUB versions could add a `matchMode: 'key' | 'code'` field if needed
 
-## Related NIPs and Open PRs
-
-| NIP | Status | Relevance |
-|-----|--------|-----------|
-| NIP-01 | Merged | Wire format we borrow (EVENT/REQ/CLOSE/AUTH/OK/EOSE/CLOSED/NOTICE/COUNT) |
-| NIP-07 | Merged | `window.nostr` signer interface -- napplets get this proxied |
-| NIP-42 | Merged | AUTH challenge-response -- our handshake adapts this pattern |
-| NIP-44 | Merged | Encrypted payloads -- relevant for signer proxy NIP-44 operations |
-| NIP-5A | Merged | Static websites / nsites -- our base layer for napplet hosting |
-| NIP-5B (PR#2282) | Open draft | "Embeddable Nostr Web Apps" -- app listing kind 37348, app store discovery. Author: arthurfranca. |
-| NIP-5C (PR#2281) | Open draft | "Scrolls" (WASM programs) -- kind 1227. Author: fiatjaf. **BLOCKS "5C" filename.** |
-| NIP-89 | Merged | Application handlers -- "Open with" feature, related but different goal |
-| PR#2287 | Open | NIP-5A aggregate hash extension -- we depend on this for version identity. Author: hzrd149. |
-| NIP-CF (PR#2277) | Closed | "Combine Forces" convergence attempt by dskvr. Closed when NIP-5A merged. |
-| NIP-C4 (PR#2274) | Closed | "Nostr Apps" by arthurfranca. Replaced by NIP-5B. |
-
-### Political Landscape
-
-The NIP-5A/5B/5C discussion has active participants with opinions:
-- **hzrd149**: NIP-5A author, aggregate hash PR author. Focused on static website hosting.
-- **arthurfranca**: NIP-5B author (app store listings). Views "nostr apps" as NIP-5A sites with NIP-07 support.
-- **fiatjaf**: NIP-5C author (WASM scrolls). Most influential nostr developer.
-- **dskvr**: NIP-CF author, napplet project author. Previously proposed convergence approach.
-
-The napplet protocol is **orthogonal** to these existing proposals:
-- NIP-5A = how files are hosted and served
-- NIP-5B = how apps are discovered and listed
-- NIP-5C (Scrolls) = how WASM programs run
-- **Our NIP = how sandboxed web apps communicate with their host shell**
-
-This orthogonality is actually advantageous for acceptance -- it doesn't compete with any existing proposal.
-
-## PR Submission Process (Verified)
-
-1. **Fork** `nostr-protocol/nips` on GitHub (default branch: `master`)
-2. **Create branch** with new NIP file + README.md update
-3. **Add NIP file**: `5C.md` (or chosen number)
-4. **Update README.md**: Add to NIP list; optionally add kind numbers to Event Kinds table
-5. **Open PR** with brief description
-6. **Iterate on feedback** -- informal process, community + maintainer review
-
-**Acceptance criteria** (from README.md):
-1. Fully implemented in at least two clients and one relay -- when applicable
-2. Should make sense
-3. Optional and backwards-compatible
-4. No more than one way of doing the same thing
-
-**For our case**: "Two clients" = napplet SDK + hyprgate reference implementation. "One relay" = not applicable (postMessage, not WebSocket). Submit as `draft` `optional`.
-
-**No PR template, CONTRIBUTING.md, or formal process** exists beyond README.md criteria.
+**Confidence:** HIGH -- backward compatible with current wire format, low cost.
 
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Spec format | Markdown (plain) | reStructuredText, AsciiDoc | NIPs are all markdown -- no choice here |
-| Requirement keywords | RFC 2119 (informal) | Formal IETF-style with BCP 14 header | Nostr NIPs use RFC 2119 words informally (NIP-07 says "must define" lowercase), but the more complex NIPs like NIP-42 capitalize them. Follow NIP-42 style |
-| Examples | JSON in fenced code blocks | TypeScript type definitions | NIPs show wire format (JSON), not language-specific types |
-| Diagrams | ASCII/text sequence diagrams | Mermaid, SVG | NIPs use text-only format; mermaid is not rendered in raw markdown on GitHub |
-| Kind number registration | Document as postMessage-only bus kinds | Register 29xxx in NIP kind table | These never appear on relays -- registering them may misrepresent their scope |
-| NIP number | 5C (match milestone name) or 5D (next available) | Arbitrary hex | 5x family groups "web content" NIPs together |
+| Key combo parsing | Inline ~30-line function | hotkeys-js (4KB, 0 deps) | Adds external dependency for trivial logic. Wire format must be owned by spec, not library. |
+| Key combo parsing | Inline ~30-line function | mousetrap (4.5KB, 0 deps) | Uses `mod` pseudo-modifier. Platform-specific API. Designed to bind DOM listeners, not serialize combos. |
+| Key identifier | `KeyboardEvent.key` | `KeyboardEvent.code` | `code` is physical-position-based, wrong for command shortcuts. International layout users would get wrong bindings. |
+| Key identifier | `KeyboardEvent.key` | Both `key` and `code` as dual match | Over-engineering. Forward both in the wire message for shell flexibility, but only match on `key`. |
+| Action model | Napplet registers actions, shell binds keys | Napplet binds its own keys | Multi-napplet conflict. Shell loses authority. User can't customize. |
+| Forwarding | Forward all + shell suppress-list | Push binding table to napplet | Leaks shell config. Napplet needs match logic. Sync burden. |
+| Forwarding | Forward all + shell suppress-list | Napplet-side filtering before forward | Same problems as pushing binding table. Napplet must understand shell state. |
+| Package location | `packages/nubs/keys/` | Add to existing nub-ifc or core | NUBs are separate packages by design. Keys is its own domain. Core stays zero-logic. |
+| Normalize utility | In nub-keys package | In @napplet/core | Core is types+dispatch only. Normalize is domain-specific to keys. |
+| Normalize utility | In nub-keys package | Separate @napplet/keys-util package | Over-packaging. Two functions do not warrant a separate package. |
 
-## No Installation Needed
+## Package Structure
 
-This milestone requires no new dependencies. The specification is a markdown file. The channel protocol implementation uses the existing monorepo toolchain (TypeScript, tsup, turborepo, vitest, playwright).
+The new package follows the **exact** pattern of existing NUB packages:
+
+```
+packages/nubs/keys/
+  package.json          # @napplet/nub-keys, depends on @napplet/core workspace:*
+  tsconfig.json         # extends ../../../tsconfig.json
+  tsup.config.ts        # identical to nub-theme
+  src/
+    index.ts            # barrel export + registerNub('keys', ...)
+    types.ts            # message type definitions + DOMAIN constant
+    normalize.ts        # normalizeCombo() and parseCombo() utilities
+```
+
+**Why `normalize.ts` in nub-keys (not core or shim):**
+- Both napplet-side (shim/SDK) and shell-side code need to produce and parse combo strings
+- nub-keys is the natural home -- it owns the keys domain wire format
+- Core stays zero-logic (types + dispatch only)
+- Shim imports from nub-keys like it imports from nub-signer, nub-ifc
+
+## Wire Message Inventory (Expected)
+
+Based on existing NUB patterns (theme has 3 messages, ifc has 14, signer has 14):
+
+| Message | Direction | Purpose | Has `id`? |
+|---------|-----------|---------|-----------|
+| `keys.register` | Napplet -> Shell | Register available actions | Yes |
+| `keys.register.result` | Shell -> Napplet | Confirm registration, return assigned bindings | Yes |
+| `keys.unregister` | Napplet -> Shell | Remove actions | No (fire-and-forget) |
+| `keys.forward` | Napplet -> Shell | Forward a keystroke (replaces current keyboard.forward) | No (fire-and-forget) |
+| `keys.action` | Shell -> Napplet | Invoke a registered action | No (fire-and-forget) |
+| `keys.bind` | Shell -> Napplet | Push binding updates (shell changed keybinds) | No (push) |
+| `keys.config` | Shell -> Napplet | Push forwarding configuration (suppress list) | No (push) |
+
+**~7 message types.** Comparable to storage (10) and theme (3). Much simpler than ifc (14) or signer (14).
+
+## Integration Points
+
+### Shim Integration
+- `keyboard-shim.ts` rewritten to use `keys.forward` message type from nub-keys
+- Adds `keys.action` listener in `handleEnvelopeMessage()` central router
+- Adds `keys.config` listener to update local suppress list
+- `isTextInput()` and `isModifierOnly()` stay as internal helpers
+- New: `window.napplet.keys.registerAction()` and `window.napplet.keys.onAction()` installed
+
+### SDK Integration
+- New `keys` namespace in SDK (`export const keys = { ... }`)
+- `registerAction(id, label, opts?)` -- convenience wrapper
+- `onAction(actionId, callback)` -- subscribe to shell-invoked actions
+- Type re-exports from @napplet/nub-keys
+
+### Core Integration
+- `NubDomain` union: add `'keys'`
+- `NUB_DOMAINS` array: add `'keys'`
+- `NappletGlobal`: add `keys` property to interface
+
+### NIP-5D Update
+- Reference keys NUB in the NUB domain table
+- No spec text changes beyond the reference (NUBs are separate specs)
+
+## Installation
+
+```bash
+# No new external dependencies. Only workspace changes:
+# 1. Create packages/nubs/keys/ with package.json
+# 2. Add @napplet/nub-keys dependency to shim and sdk
+
+pnpm install  # resolves workspace links
+pnpm build    # builds all including new nub-keys
+```
 
 ## Sources
 
-- nostr-protocol/nips repo: https://github.com/nostr-protocol/nips (verified 2026-04-05)
-- NIP-5A merged spec: https://github.com/nostr-protocol/nips/blob/master/5A.md
-- NIP-5A aggregate hash PR: https://github.com/nostr-protocol/nips/pull/2287
-- NIP-5B (Embeddable Nostr Web Apps): https://github.com/nostr-protocol/nips/pull/2282
-- NIP-5C (Scrolls, WASM): https://github.com/nostr-protocol/nips/pull/2281
-- NIP-C4 (closed, replaced by 5B): https://github.com/nostr-protocol/nips/pull/2274
-- NIP-CF (closed, convergence attempt): https://github.com/nostr-protocol/nips/pull/2277
-- NIP-07: https://github.com/nostr-protocol/nips/blob/master/07.md
-- NIP-42: https://github.com/nostr-protocol/nips/blob/master/42.md
-- NIP kind table: README.md Event Kinds section in nostr-protocol/nips
-- RFC 2119: https://datatracker.ietf.org/doc/html/rfc2119
-- Existing SPEC.md (1520 lines) -- source material to distill
+- [KeyboardEvent.code -- MDN](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code) -- HIGH confidence, official W3C standard
+- [KeyboardEvent.key -- MDN](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) -- HIGH confidence, official W3C standard
+- [UI Events KeyboardEvent code Values -- W3C Proposed Recommendation 2024](https://www.w3.org/TR/uievents-code/) -- HIGH confidence
+- [UI Events KeyboardEvent key Values -- W3C Proposed Recommendation 2024](https://www.w3.org/TR/uievents-key/) -- HIGH confidence
+- [All JavaScript Keyboard Shortcut Libraries Are Broken -- Jack Duvall](https://blog.duvallj.pw/posts/2025-01-10-all-javascript-keyboard-shortcut-libraries-are-broken.html) -- MEDIUM confidence, well-argued analysis of key vs code pitfalls
+- [VS Code Keybindings Architecture -- DeepWiki](https://deepwiki.com/microsoft/vscode-docs/6.4-keybindings-and-commands) -- MEDIUM confidence, describes action/keybinding separation pattern
+- [VS Code Keybindings Documentation](https://code.visualstudio.com/docs/configure/keybindings) -- HIGH confidence, official docs
+- [Figma Plugin postMessage API](https://www.figma.com/plugin-docs/api/properties/figma-ui-postmessage/) -- MEDIUM confidence, analogous sandbox architecture
+- Existing codebase: `packages/shim/src/keyboard-shim.ts`, `packages/core/src/dispatch.ts`, `packages/nubs/theme/src/types.ts`, `packages/nubs/ifc/src/types.ts` -- HIGH confidence, primary source

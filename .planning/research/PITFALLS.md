@@ -1,232 +1,305 @@
-# Domain Pitfalls: Writing and Submitting NIP-5C
+# Domain Pitfalls: Adding a Keys NUB to Sandboxed Iframes
 
-**Domain:** NIP specification authorship for Nostr Web Applets (iframe sandbox + postMessage protocol)
-**Researched:** 2026-04-05
-**Overall confidence:** HIGH (findings grounded in actual NIP repository review history, PR comment threads, and maintainer feedback patterns)
+**Domain:** Keyboard delegation protocol for sandboxed iframe apps (napplet <-> shell)
+**Researched:** 2026-04-09
+**Overall confidence:** HIGH (findings grounded in browser specifications, real-world iframe keyboard projects, existing codebase analysis, and documented browser bugs)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause NIP rejection, extended review cycles, or community opposition.
+Mistakes that cause rewrites, security vulnerabilities, or broken UX across browsers.
 
-### Pitfall 1: Overspecification -- Specifying Runtime Internals in the NIP
+### Pitfall 1: Key vs Code Confusion -- Matching on the Wrong Property
 
-**What goes wrong:** The NIP defines internal implementation details (ACL engine, service registry, session management, storage proxy internals) instead of the observable wire protocol between napplet and shell. The NIP becomes a 40+ page implementation manual rather than a terse protocol specification.
+**What goes wrong:** The protocol uses `KeyboardEvent.key` for shortcut matching, which varies by keyboard layout and locale. A user on an AZERTY keyboard pressing the physical Q key produces `key: "a"`, not `key: "q"`. Shortcuts like "Ctrl+Q" break on non-QWERTY layouts because the key that physically occupies the Q position generates a different character.
 
-**Why it happens:** The SPEC.md in this repo is 41KB+ and covers everything from ACL bitfields to audit event routing. The temptation is to submit something close to it. But NIPs document what may be implemented, not how.
+Conversely, using only `KeyboardEvent.code` (which is layout-independent and always returns `"KeyQ"` for the physical Q position) breaks character-based shortcuts. A user expects "Ctrl+/" to work regardless of physical key position, but `code` returns the physical scan code, not the character.
 
-**Consequences:** fiatjaf has explicitly stated (PR #220, #880, #883) that NIPs should be "terse" and readable. A NIP that is "too long and complex" where "it's hard to read and come away with a coherent sense of the whole" will stall in review. NIP-5A itself took ~5 months to merge (#1538) and only succeeded by stripping prescriptive requirements.
+**Why it happens:** The existing `keyboard-shim.ts` sends both `key` and `code`, but the protocol does not define which one the shell should use for matching. VSCode spent years on this exact problem (issue #17521) migrating from `keyCode` to `code`+`key` because no single property works for all shortcut types.
 
-**Prevention:**
-- NIP-5C scope: only the observable napplet<->shell postMessage wire format and `window.*` API contracts
-- ACL, service registry, session management, storage engine = implementation concerns, NOT in the NIP
-- Use fiatjaf's suggested framing from NIP-5B review: "This NIP describes a method for [thing]. These are purely client-side apps made of web assets (HTML, CSS, JS) that can be loaded dynamically from inside higher-order apps."
-- Target: under 500 lines of markdown, ideally under 300
-
-**Detection:** If the NIP references internal data structures, class names, or module organization, it is overspecified. If a different shell implementation would need to change the spec to work, it is overspecified.
-
-**Confidence:** HIGH -- directly observed in NIP-5A review history and fiatjaf's inline comments on NIP-5B (#2282).
-
-### Pitfall 2: Defining What a "Nostr App" Is
-
-**What goes wrong:** The NIP attempts to draw a definitional line between "static website" and "nostr app" based on NIP-07 support, creating a prescriptive classification that the community rejects.
-
-**Why it happens:** It feels natural to say "if an nsite supports NIP-07, it is a nostr web app." But as dskvr argued in the NIP-5B thread (#2282): "There is no way to enforce this behavior. There are many reasons why an nsite would have NIP-07 and not want to be a napp." And from the NIP-C4 discussion: "A blog can have a comments section driven by nostr, doesn't make it an app."
-
-**Consequences:** dskvr filed CHANGES_REQUESTED on NIP-5B specifically for this. fiatjaf's own suggestion was to reframe as "embeddable web apps" that are "loaded dynamically from inside higher-order apps" -- focusing on the embedding relationship rather than a definitional taxonomy. Any NIP that says "if X then Y is a napp" will be challenged.
+**Consequences:** International users (AZERTY, Dvorak, QWERTZ, CJK layouts) find shortcuts broken. Actions bound by the shell fail to trigger when the user presses what they believe is the correct key. This is a silent failure -- no error, just dead shortcuts.
 
 **Prevention:**
-- Do NOT define what makes something a "nostr app" or "napplet"
-- Instead: define the shell-napplet communication protocol. A napplet is any iframe that speaks this protocol to a shell. Period.
-- The NIP describes the wire format and capability discovery, not a classification system
-- Use the NIP-5B lesson: the embedding relationship (loaded inside a higher-order app) is the defining characteristic, not NIP-07 support or any other feature
+- The keys NUB MUST send both `key` and `code` in every forward message
+- The protocol MUST document that shells use `code` for positional shortcuts (WASD gaming, arrow-like navigation) and `key` for character shortcuts (Ctrl+/, Ctrl+S)
+- Action registration SHOULD specify whether the binding is positional or character-based
+- Consider a `match` field in the action registration: `match: 'code'` or `match: 'key'` (default `'code'` for modifier combos, `'key'` for character input)
 
-**Detection:** If the NIP has a sentence like "A napplet is defined as..." followed by capability requirements beyond "speaks the postMessage protocol defined herein," it is drawing dangerous definitional lines.
+**Detection:** Test with at least two non-QWERTY layouts. If any registered action fails to fire on a Dvorak or AZERTY keyboard, the matching logic is wrong.
 
-**Confidence:** HIGH -- directly observed in NIP-5B (#2282) and NIP-C4 (#2274) review threads.
+**Phase:** Must be addressed in the NUB type design phase (message type definitions). Cannot be deferred.
 
-### Pitfall 3: Competing with NIP-5B and NIP-C4 Without Differentiation
+**Confidence:** HIGH -- VSCode issue #17521 documents this in detail. MDN explicitly warns: "it is impossible to use the value of `code` to determine what the name of the key is to users if they're not using an anticipated keyboard layout."
 
-**What goes wrong:** NIP-5C is submitted and reviewers immediately ask "how is this different from NIP-5B (#2282) or NIP-C4 (#2274)?" and the discussion devolves into territorial NIPs-vs-NIPs debate rather than technical review.
+### Pitfall 2: postMessage Flooding from Key Repeat
 
-**Why it happens:** There are already three related proposals in the ecosystem:
-- **NIP-C4** (#2274, arthurfranca, closed): "Nostr Apps (aka napps or nsites v3)" -- app bundle format + app store listing
-- **NIP-CF** (#2277, dskvr, closed): "Combine Forces" -- napps as metadata layer on top of NIP-5A
-- **NIP-5B** (#2282, arthurfranca, open): "Embeddable Nostr Web Apps" -- lightweight app listing for NIP-5A nsites
-- **Smart Widgets** (#2025, YakiHonne): interactive components embedded in events
+**What goes wrong:** Holding a key down fires `keydown` events at the OS repeat rate (typically 30-60 Hz). The current `keyboard-shim.ts` forwards every single one to the parent via `postMessage`. This creates 30-60 postMessage calls per second per held key, potentially saturating the message channel and starving other NUB messages (relay events, signer responses, storage operations).
 
-The NIP-5B thread already descended into multi-front discussion across three PRs simultaneously.
+**Why it happens:** The current shim has no awareness of `KeyboardEvent.repeat`. It treats every keydown identically. The `repeat` property is `true` for held-key events, but the shim does not check it.
 
-**Consequences:** Review energy is spent on jurisdictional questions rather than protocol review. The NIP stalls while competing proposals negotiate territory.
-
-**Prevention:**
-- NIP-5C must clearly differentiate: it defines the *communication protocol* between shell and embedded app, NOT the app listing/discovery format (that is NIP-5B/NIP-89's domain)
-- Explicitly reference NIP-5B for "how apps are advertised" and NIP-5A for "how app files are stored"
-- NIP-5C fills the gap neither NIP-5A nor NIP-5B covers: what happens *after* the iframe is loaded? How does the embedded app talk to the host?
-- Frame it as complementary: NIP-5A = file storage, NIP-5B = discovery/listing, NIP-5C = runtime communication protocol
-- Proactively engage arthurfranca and hzrd149 before submitting
-
-**Detection:** If anyone asks "why can't NIP-5B just add a section for this?" and there is no clear answer, the differentiation has failed.
-
-**Confidence:** HIGH -- the NIP-C4/NIP-CF/NIP-5B territorial conflict is documented in real PR threads from March 2026.
-
-### Pitfall 4: Using Ephemeral Kind Numbers for Persistent Semantics
-
-**What goes wrong:** The NIP uses kind numbers 29001-29010 (in the 20000-29999 ephemeral range per NIP-01) for events that carry persistent semantic weight -- signer requests/responses, service discovery, IPC messages.
-
-**Why it happens:** The kind numbers were chosen during implementation without considering NIP-01's range semantics. Kinds 20000-29999 are explicitly "ephemeral events" that are "not expected to be stored by relays." This is fine for the actual use case (postMessage events never touch relays), but reviewers familiar with NIP-01 will flag the apparent mismatch.
-
-**Consequences:** A reviewer says "why are you using ephemeral kinds for what look like protocol commands?" and the discussion gets sidetracked into kind range philosophy. Or worse: a relay implementation that sees these events on the wire (unlikely but possible) would discard them.
+**Consequences:**
+- Shell message handler gets flooded with keyboard messages during key-hold
+- Other NUB messages (relay events, signer results) are delayed because the browser's message queue is saturated
+- On low-end devices, the shell's `message` event handler becomes the performance bottleneck
+- In the worst case, a malicious napplet could intentionally dispatch synthetic KeyboardEvent repeat events to DoS the shell's message processing
 
 **Prevention:**
-- These events never touch relay WebSockets -- they exist only in the postMessage channel between iframe and host. The NIP must make this crystal clear upfront.
-- Consider whether the NIP even needs to specify kind numbers at all. The postMessage wire format could use string-based verbs (it already uses NIP-01 verb format: EVENT, REQ, CLOSE, AUTH). The kind numbers are an internal implementation detail of the event payloads.
-- If kind numbers are specified, explicitly note they are transport-layer identifiers for the postMessage channel, not relay-destined events.
-- Alternative: use regular kind range (1000-9999) or addressable range (30000-39999) if events might ever need relay persistence. Or define a custom "napplet protocol kind" concept that is explicitly not a relay kind.
+- Forward messages MUST include the `repeat` boolean from `KeyboardEvent.repeat`
+- The shim SHOULD throttle repeat events (e.g., max 10/sec for forwarded repeats)
+- The shell SHOULD implement its own rate limiting per-napplet on `keys.forward` messages
+- Consider making repeat forwarding opt-in: the default behavior forwards only the first keydown (repeat: false), and the shell explicitly requests repeat events for specific actions that need them (e.g., arrow key scrolling)
 
-**Detection:** If a reviewer says "ephemeral events are not stored by relays, so why do you use this range?" and the answer requires a paragraph of explanation, the NIP is not clear enough.
+**Detection:** Hold a key for 3 seconds and count postMessage calls. If you see > 100 messages, there is no throttling. Profile the shell's message handler CPU usage during key-hold.
 
-**Confidence:** HIGH -- NIP-01 kind range semantics are well-established and will be reviewed against.
+**Phase:** Must be addressed in the shim integration phase. The NUB type should include `repeat` in the message shape. The shim must implement throttling.
+
+**Confidence:** HIGH -- MDN documents that keydown fires repeatedly. The current shim provably forwards all repeats (no `event.repeat` check in the code).
+
+### Pitfall 3: Race Between Focus, Forward, and Shell Action Dispatch
+
+**What goes wrong:** The napplet forwards a keydown via postMessage. The shell receives it and dispatches the bound action (e.g., "focus next pane"). That action changes which napplet has focus. Meanwhile, the napplet is still processing the same keystroke locally (it has not been `preventDefault()`-ed because the forward decision is async). The keystroke triggers both the shell action AND a local napplet behavior.
+
+This is the fundamental race condition of bidirectional keyboard delegation: the napplet and shell both see the same keystroke, and the decision about who "owns" it cannot be synchronous because postMessage is inherently asynchronous.
+
+**Why it happens:** `postMessage` is async. The napplet cannot wait for the shell to confirm "I handled this, suppress it" before the browser's default keydown processing completes. By the time the shell responds, the napplet has already let the event propagate.
+
+**Consequences:** Double-action: a workspace-switch hotkey both switches the workspace AND types a character into the napplet's input. Or: pressing Escape to close a shell overlay also triggers the napplet's own Escape handler. Users experience "ghost" keystrokes in the napplet after shell actions.
+
+**Prevention:**
+- The keys NUB MUST define a "bound keys" list that the napplet receives at registration time or when bindings change
+- The shim MUST `preventDefault()` + `stopPropagation()` keystrokes that match bound keys BEFORE forwarding -- the napplet decides locally and synchronously, no round-trip needed
+- The shell sends `keys.bindings` messages to the napplet listing which key combinations the shell claims
+- The napplet's shim maintains a local Set of bound combos and suppresses them on capture-phase keydown
+- When bindings change (user rebinds a key), the shell sends an updated `keys.bindings` message
+- This is the "smart forwarding" pattern: forward unbound keys as informational, suppress-and-forward bound keys as actions
+
+**Detection:** Register a shell action on Ctrl+K. Type Ctrl+K in a napplet with a text input focused. If both the shell action fires AND a character/behavior occurs in the napplet, the race exists.
+
+**Phase:** This is the core architectural decision. Must be resolved in the NUB protocol design phase before any implementation.
+
+**Confidence:** HIGH -- this is a well-known problem in JupyterLab (#5719), Mozilla Horizon (#51), and any iframe-based IDE. The async nature of postMessage makes synchronous coordination impossible without pre-distributed binding lists.
+
+### Pitfall 4: IME Composition Interference
+
+**What goes wrong:** CJK (Chinese, Japanese, Korean) input method editors generate `keydown` events with `keyCode: 229` and `isComposing: true` during composition. The shim forwards these to the shell as regular keystrokes. The shell interprets partial IME composition as hotkey triggers, breaking text input for CJK users.
+
+**Why it happens:** The existing `keyboard-shim.ts` checks `isTextInput(event.target)` to skip forwarding when the user is typing in an input. But IME composition can occur on any element (contentEditable divs, custom elements, canvas-based editors). The `isTextInput()` check misses non-standard text entry surfaces. Even worse: some IME workflows produce events where `isComposing` transitions from `false` to `true` after the `keydown` fires but before `compositionstart` fires, creating a timing gap.
+
+**Consequences:** CJK users cannot type in any napplet that uses contentEditable or custom input elements. Partial composition keystrokes trigger shell hotkeys mid-typing. This is not a niche concern -- CJK users represent a significant portion of the Nostr community.
+
+**Prevention:**
+- The shim MUST check `event.isComposing === true` and skip forwarding entirely during composition
+- ALSO check `event.keyCode === 229` as a fallback (Firefox 65+ fires keydown during composition but older behavior varies)
+- The forward message SHOULD include an `isComposing` boolean so the shell can make its own decision
+- The `isTextInput()` check must be expanded to include `contentEditable` elements on ancestor nodes (the current implementation checks the target element but not parents)
+- Consider adding `compositionstart`/`compositionend` listeners that set a module-level flag, since `isComposing` can be `false` at the edge of composition boundaries
+
+**Detection:** Enable a CJK IME, start composing in a contentEditable div inside a napplet. If any shell action fires during composition, the filter is broken.
+
+**Phase:** Must be addressed in the shim integration phase. The NUB type should include `composing: boolean` in the message shape.
+
+**Confidence:** HIGH -- MDN explicitly documents the `isComposing`/`keyCode: 229` pattern. Firefox/Chrome behavior is verified in the MDN keydown event docs.
 
 ---
 
 ## Moderate Pitfalls
 
-### Pitfall 5: postMessage Origin Wildcard (`*`) Without Adequate Security Analysis
+### Pitfall 5: Napplet-Initiated Focus Stealing via Keyboard Protocol
 
-**What goes wrong:** The NIP specifies `window.parent.postMessage(message, '*')` for all communication, and security-focused reviewers flag this as a vulnerability without understanding the full threat model.
+**What goes wrong:** A malicious napplet uses the keys NUB to register many actions, then sends fabricated `keys.forward` messages to trick the shell into believing the user pressed focus-changing key combinations. The shell shifts focus to the malicious napplet, which then captures subsequent real keystrokes.
 
-**Why it happens:** The `'*'` target origin is required because sandboxed iframes without `allow-same-origin` have opaque ("null") origins. You cannot target a specific origin -- `'*'` is the only option. But security reviewers will see `'*'` and immediately think "wildcard origin = insecure."
+**Why it happens:** The shell trusts `keys.forward` messages from any napplet. If the shell does not validate that a forwarded key event corresponds to an actual user keystroke (it cannot -- there is no way to cryptographically prove a keystroke happened), a malicious napplet can forge keyboard messages.
 
-**Consequences:** Extended review cycle while the security model is explained and debated. Real-world postMessage vulnerabilities (CVE-2024-49038 in Copilot Studio, CVSS 9.3; Azure XSS via embedded iframes) make reviewers justifiably cautious.
-
-**Prevention:**
-- The NIP MUST include a Security Considerations section that addresses this head-on
-- Explain that `allow-same-origin` is deliberately excluded, creating an opaque origin
-- Document that sender authentication uses `MessageEvent.source` (the window object reference), NOT `event.origin`
-- Document that `MessageEvent.source` verification is necessary but not sufficient -- the AUTH handshake with cryptographic challenge-response provides the actual identity verification
-- Reference the iframe sandbox policy explicitly: `allow-scripts allow-forms allow-popups allow-modals allow-downloads` (no `allow-same-origin`)
-- Document the threat model: what can a malicious iframe do? What can a malicious parent do? What mitigations exist?
-- Note that `allow-scripts` + `allow-same-origin` together allow sandbox escape (the iframe can remove its own sandbox attribute) -- this is why `allow-same-origin` is excluded
-
-**Detection:** If the Security Considerations section does not explicitly address `'*'` origin, `MessageEvent.source` validation, and why `allow-same-origin` is excluded, it is incomplete.
-
-**Confidence:** HIGH -- postMessage security is a well-documented attack surface with multiple recent CVEs.
-
-### Pitfall 6: Mandating Too Many Capabilities
-
-**What goes wrong:** The NIP requires shells to implement relay proxy, IPC, channels, storage, NIP-07 signer, AND nostrdb support. This makes shell implementation so complex that no one besides this project will implement it.
-
-**Why it happens:** The project has built all of these capabilities and wants them standardized. But the NIP review criteria state: "NIPs should be optional and backwards-compatible. Care must be taken such that clients and relays that choose to not implement them do not stop working."
-
-**Consequences:** fiatjaf's consistent feedback is that NIPs should not "introduce unnecessary complexity." A NIP that requires implementing 6+ subsystems to be conformant will be criticized as too complex. The "two implementations" requirement becomes impossible to meet if the bar is too high.
+**Consequences:** Keystroke hijacking: a malicious napplet silently captures passwords, seed phrases, or other sensitive input by stealing focus. This is documented as a real attack vector (W3C WebAppSec issue #273, Imperva keyboard shortcut exploitation research).
 
 **Prevention:**
-- Structure as MUST/MAY layers:
-  - MUST: AUTH handshake, service/feature discovery (`window.napplet.services`)
-  - MAY: relay proxy, IPC, channels, storage, NIP-07 signer, nostrdb
-- Each MAY capability should be independently implementable and discoverable
-- A minimal conformant shell implements only AUTH + discovery. Everything else is optional.
-- This mirrors the project's own architecture: `window.napplet.services.has('relay')` lets napplets discover what is available
-- The NIP already plans this (per PROJECT.md) -- ensure it is front and center, not buried
+- The shell MUST NOT change focus based solely on napplet-forwarded keyboard events
+- Focus management must be a shell-initiated operation, not something napplets can trigger via keyboard messages
+- Shell actions that change focus (workspace switch, pane navigation) should be bound to shell-level key listeners, NOT to forwarded napplet messages
+- The keys NUB forward messages are informational for the shell's hotkey system; they MUST NOT be the sole trigger for security-sensitive operations (focus change, signer requests, ACL modifications)
+- Rate-limit `keys.forward` messages per napplet (e.g., max 20/sec). A napplet sending 100+ keyboard messages per second is either buggy or malicious
 
-**Detection:** If a reader cannot identify the minimal conformant implementation within 2 minutes of reading, the MUST/MAY layering is not clear enough.
+**Detection:** Create a test napplet that sends 50 fabricated `keys.forward` messages per second. If the shell's behavior changes (focus shifts, actions fire), the trust boundary is too permissive.
 
-**Confidence:** HIGH -- NIP review criteria explicitly require optionality.
+**Phase:** Must be addressed in the security model design. Add to the NUB spec's security considerations section.
 
-### Pitfall 7: No Working Implementations at Submission Time
+**Confidence:** HIGH -- focus stealing via iframe is a documented attack vector (Mozilla bug #604289, W3C WebAppSec #273/543).
 
-**What goes wrong:** The NIP is submitted as a theoretical specification without pointing to working implementations. It languishes in review because no one can verify the protocol works.
+### Pitfall 6: Unidirectional Protocol -- Shell Cannot Send Keys to Napplet
 
-**Why it happens:** The project has a full implementation (8 packages, 193 tests, interactive demo), but the NIP PR does not reference it. Reviewers treat it as theoretical.
+**What goes wrong:** The protocol only supports napplet -> shell key forwarding. The shell has no way to inject synthetic keyboard events into a napplet. This means shell-level features that need to send keystrokes to the focused napplet (global search focus with Ctrl+K, "type ahead" from command palette) are impossible.
 
-**Consequences:** NIPs need "two blessings" and are expected to be "fully implemented in at least two clients and one relay when applicable." A NIP with zero referenced implementations gets lower priority.
+**Why it happens:** The current `keyboard-shim.ts` is purely unidirectional: napplet captures keydown, forwards to parent. There is no message listener for shell-to-napplet key injection. This made sense for the simple "forward hotkeys" use case, but a full keys NUB needs bidirectional flow.
 
-**Prevention:**
-- Reference the napplet SDK as Implementation A (link to repo, test suite, demo)
-- Reference hyprgate as the shell host that uses these packages
-- If possible, get arthurfranca's 44billion.net platform to be Implementation B (it already embeds nsites with NIP-07 proxy)
-- Include an "Implementations" section at the bottom of the NIP listing known implementations
-- The demo playground at the project root is a strong selling point -- link it
+**Consequences:** The shell cannot implement features like:
+- "Focus search box" (shell presses Ctrl+K, napplet should focus its search input)
+- "Insert text" from command palette or voice input
+- "Undo/Redo" delegation where the shell manages the undo stack
 
-**Detection:** If the NIP does not have an "Implementations" section, add one.
-
-**Confidence:** HIGH -- NIP merge criteria explicitly mention implementation requirements.
-
-### Pitfall 8: Not Engaging Stakeholders Before Submission
-
-**What goes wrong:** The NIP PR appears without prior discussion, and the key players (fiatjaf, hzrd149, arthurfranca) discover it for the first time in the PR. Their feedback triggers major rewrites.
-
-**Why it happens:** The author wants to submit a polished spec. But the NIP ecosystem is social-consensus-driven, not formal-review-driven.
-
-**Consequences:** NIP-5A took 5 months partly because design discussions happened in the PR rather than before it. NIP-C4 and NIP-CF fragmented discussion across three fronts.
+Without shell-to-napplet key delivery, the protocol is an incomplete keyboard abstraction.
 
 **Prevention:**
-- Before submitting the PR: share the draft spec with hzrd149 (NIP-5A author), arthurfranca (NIP-5B/NIP-C4 author), and fiatjaf (gatekeeper) via nostr DM or GitHub issue
-- Frame it as: "NIP-5C defines the runtime communication protocol for embedded apps. NIP-5A handles file storage, NIP-5B handles discovery. This fills the gap for what happens after the iframe loads."
-- Get at least one "this makes sense as a separate NIP" before submitting
-- Consider publishing as a GitHub issue first (per Issue #545 NIP proposal process) before the full PR
+- The keys NUB MUST define shell -> napplet message types for key injection
+- At minimum: `keys.inject` (shell sends a key event the napplet should process) and `keys.focus` (shell requests the napplet focus a specific action target)
+- The napplet shim must listen for `keys.inject` and dispatch a synthetic `KeyboardEvent` on the document
+- Synthetic events must be clearly distinguishable from real user events (`event.isTrusted` will be `false` -- this is fine and expected)
+- Shell-to-napplet key injection SHOULD be gated by the napplet's registered action list: the shell can only inject keys the napplet has registered handlers for
 
-**Detection:** If the PR description does not mention prior discussion or reference known stakeholders' input, pre-engagement did not happen.
+**Detection:** If the NUB spec has no shell -> napplet message types, it is incomplete. Check: can the shell trigger any keyboard-driven behavior in the napplet without the user physically pressing a key?
 
-**Confidence:** MEDIUM -- based on observed patterns in NIP-5A/5B/C4/CF threads, but pre-engagement practices vary.
+**Phase:** Must be designed in the NUB type definition phase. Adding it later is a breaking protocol change.
+
+**Confidence:** MEDIUM -- the current use case is forward-only, but the NUB is described as "bidirectional" in PROJECT.md requirements.
+
+### Pitfall 7: Stale Binding List After Dynamic Napplet Changes
+
+**What goes wrong:** The shell sends a binding list at napplet load time. The napplet's shim caches it and uses it for local suppress-or-forward decisions. Later, the user changes keybindings in the shell's settings, or a different napplet is loaded that claims conflicting bindings. The original napplet's cached binding list is now stale. Keystrokes that should be forwarded are suppressed (or vice versa).
+
+**Why it happens:** The binding list is treated as static. No update mechanism exists. The shell's keybinding state can change at any time (user settings, napplet lifecycle, shell plugin changes), but the napplet does not learn about these changes.
+
+**Consequences:** After a keybinding change, users experience phantom behavior: keys they expect to be handled by the shell are consumed by the napplet, or keys they expect the napplet to handle are swallowed by the shell's outdated claims.
+
+**Prevention:**
+- The keys NUB MUST define a `keys.bindings` message type for the shell to push updated binding lists at any time
+- The shim MUST replace its cached binding set atomically when a new `keys.bindings` message arrives
+- The shell MUST send `keys.bindings` on: initial load, user keybinding change, and when another napplet's registration changes the binding landscape
+- The binding list should include a version or sequence number so the napplet can detect missed updates
+- On binding update, the shim should NOT tear down and reinstall the keydown listener -- just swap the suppression set
+
+**Detection:** Register a binding, change it in the shell settings, then press the old binding in the napplet. If the old behavior persists, the update mechanism is broken.
+
+**Phase:** Must be designed in the NUB protocol phase and implemented in the shim integration phase.
+
+**Confidence:** HIGH -- any publish-subscribe system with cached state has stale cache problems. The KEYBINDS_* topics in the existing codebase (6 topic constants for get/update/reset) prove this was already anticipated.
+
+### Pitfall 8: Tab Key and Focus Trap Accessibility Violation
+
+**What goes wrong:** The keys NUB captures Tab key events and forwards them to the shell for workspace navigation, trapping keyboard-only users inside the napplet. Users who rely on Tab for navigation (screen reader users, keyboard-only users) cannot tab out of the napplet.
+
+**Why it happens:** Tab is a natural candidate for shell hotkeys (next pane, next workspace). But Tab is also a fundamental accessibility navigation key. WCAG 2.1.2 (No Keyboard Trap, Level A) requires that users can tab into and out of every component.
+
+**Consequences:** The app fails WCAG Level A compliance. Keyboard-only users are trapped. Screen reader users cannot navigate. This is a legal liability in some jurisdictions (ADA, EN 301 549).
+
+**Prevention:**
+- The keys NUB MUST NOT suppress bare Tab or Shift+Tab -- these are reserved for accessibility navigation
+- Only modified Tab (Ctrl+Tab, Alt+Tab) may be claimed by the shell
+- The NUB spec should include a "reserved keys" section listing keys that MUST NOT be suppressed: Tab, Shift+Tab, Escape (for focus escape)
+- The shim should have a hardcoded allowlist of keys that are never forwarded regardless of shell bindings
+- Consider also reserving: F1 (help), F5 (refresh), F11 (fullscreen), F12 (devtools) -- these are browser-reserved
+
+**Detection:** Tab into a napplet, then try to Tab out. If focus stays in the napplet, the Tab key is being captured. Run an accessibility audit (axe, Lighthouse) on a page with napplet iframes.
+
+**Phase:** Must be defined in the NUB spec phase. The reserved keys list is a protocol-level concern.
+
+**Confidence:** HIGH -- WCAG 2.1.2 is a Level A requirement. iframe focus trapping is a known accessibility failure pattern.
+
+### Pitfall 9: Browser-Reserved Shortcuts Cannot Be Overridden
+
+**What goes wrong:** The shell tries to bind Ctrl+T (new tab), Ctrl+W (close tab), Ctrl+N (new window), Ctrl+L (address bar), Ctrl+P (print), or Ctrl+S (save). These are browser-reserved and cannot be intercepted by JavaScript. The shell's binding list claims these keys, the napplet suppresses them locally, but the browser handles them before any JavaScript runs. The user experiences: key does nothing in the napplet (suppressed), AND nothing in the shell (browser stole it).
+
+**Why it happens:** Browser-level keyboard shortcuts take priority over all JavaScript event handlers. `preventDefault()` does not work for most browser shortcuts. This is by design -- browsers must maintain control for user safety. Web applications cannot override OS-level shortcuts either (Alt+F4, Cmd+Q, Ctrl+Alt+Del).
+
+**Consequences:** Dead keys: the binding exists in the protocol but never fires. Users see the shortcut listed in the shell's keybinding UI but it never works. Worse: the napplet suppressed the key, so the normal browser behavior (which the user might want) is also blocked in some browsers.
+
+**Prevention:**
+- The NUB spec MUST document a list of browser-reserved shortcuts that MUST NOT appear in binding lists
+- The shell SHOULD validate binding lists and warn when a reserved shortcut is configured
+- The napplet shim SHOULD NOT suppress keys that are known browser-reserved (the suppression has no effect but wastes cycles)
+- Minimum reserved list: Ctrl+T, Ctrl+W, Ctrl+N, Ctrl+L, Ctrl+P, Ctrl+S, Ctrl+H, Ctrl+J, Ctrl+D, F5, F11, F12, Alt+F4, Ctrl+Shift+I, Ctrl+Shift+J
+- Note: the exact list varies by browser and OS. The NUB should define a minimum reserved set and allow shells to extend it.
+
+**Detection:** Bind Ctrl+T to a shell action. Press Ctrl+T in a napplet. If a new browser tab opens instead of the shell action, the key is browser-reserved and should not be in the binding list.
+
+**Phase:** Must be documented in the NUB spec. The reserved list should be a constant exported from the nub-keys package.
+
+**Confidence:** HIGH -- browser shortcut reservation is well-documented (Mozilla bug #380637, Chrome commands API docs).
 
 ---
 
 ## Minor Pitfalls
 
-### Pitfall 9: Wrong NIP Format or Style
+### Pitfall 10: Missing keyup Causes Stuck Modifier State
 
-**What goes wrong:** The NIP uses a format or style inconsistent with other NIPs, causing friction.
+**What goes wrong:** The shim only forwards `keydown` events (as the current implementation does). The user presses Ctrl+K (keydown for Ctrl, keydown for K, both forwarded). Then the user releases Ctrl while a different napplet has focus (or while the mouse is in the parent frame). The shell never receives the Ctrl keyup. The shell's internal modifier state thinks Ctrl is still held, and subsequent keypresses are incorrectly interpreted as Ctrl+X combinations.
 
-**Prevention:**
-- Use the exact format of NIP-5A as a template (it is the direct parent spec)
-- Title format: `NIP-5C` with subtitle on next line
-- Status tags: `` `draft` `optional` ``
-- Use RFC 2119 keywords: MUST, SHOULD, MAY (not "must", "should", "may")
-- Keep the markdown clean -- no complex HTML, no diagrams (use ASCII art if needed)
-- Event structures shown as JSON code blocks with clear field descriptions
-- Tags shown in array format: `["tag", "value1", "value2"]`
-- Reference other NIPs as `[NIP-XX](XX.md)` (relative links)
-
-**Confidence:** HIGH -- NIP format is consistent and observable.
-
-### Pitfall 10: Conflating Channels with Existing NIP Patterns
-
-**What goes wrong:** The new "channels" concept (authenticated persistent point-to-point connections between napplets) is confused with NIP-28 (Public Chat Channels) or NIP-29 (Relay-based Groups), which use the word "channel" differently.
+**Why it happens:** Focus can shift between keydown and keyup. MDN explicitly documents: "the event target can change between keydown and keyup events." If the user clicks outside the napplet between pressing and releasing a key, the keyup fires in a different context.
 
 **Prevention:**
-- Use a distinct term if possible. "Pipes" or "links" or "connections" instead of "channels"
-- If "channels" is used, the NIP must clearly state it refers to postMessage-based point-to-point connections between iframes, NOT relay channels
-- Never use kind numbers that overlap with NIP-28/NIP-29 (40-42 for NIP-28, 9000-9022 for NIP-29, 39000-39003 for NIP-29 metadata)
+- The keys NUB should support both `keys.forward` (keydown) and `keys.release` (keyup) message types
+- At minimum, the shim MUST forward keyup events for modifier keys (Ctrl, Alt, Shift, Meta)
+- The shell MUST implement a "modifier reset" on focus change: when a napplet gains or loses focus, assume all modifiers are released
+- The shell SHOULD also listen for `blur` events on the iframe and reset modifier state
 
-**Confidence:** MEDIUM -- terminology collision is a common source of confusion in NIP reviews.
+**Detection:** Press and hold Ctrl in a napplet. Click outside the napplet (into the shell UI). Release Ctrl. Then click back into the napplet and press a regular key. If the shell interprets it as Ctrl+key, the modifier state is stuck.
 
-### Pitfall 11: Forgetting to Update the README Kind Table
+**Phase:** Should be addressed in the NUB type definition phase. Adding keyup support later is additive but changes the expected message flow.
 
-**What goes wrong:** The NIP PR adds a new `.md` file but does not update the `README.md` kind table or NIP index. The PR sits in review waiting for this trivial fix.
+**Confidence:** MEDIUM -- modifier sticking is a known issue in keyboard shortcut libraries (mousetrap #128, react-hotkeys #177).
 
-**Prevention:**
-- The NIP PR must include changes to `README.md` adding:
-  - NIP-5C to the NIP index list
-  - Any new kind numbers to the Event Kinds table
-  - Any new message types to the relevant tables
-- Look at PR #2286 ("Add NIP-5A and nsite kinds to README") as an example -- NIP-5A itself needed a separate follow-up PR just for the README
+### Pitfall 11: Duplicate Installation of Keyboard Shim
 
-**Confidence:** HIGH -- PR #2286 was merged 2026-03-25 specifically to fix this for NIP-5A.
+**What goes wrong:** The shim is installed multiple times (hot module reload, SPA navigation, dynamic import). Each installation adds another capture-phase keydown listener. Every keystroke is forwarded N times, once per installation.
 
-### Pitfall 12: Specifying window.nostr Proxy Behavior
+**Why it happens:** The current `keyboard-shim.ts` has a guard (`if (installed && activeCleanup) return activeCleanup`), but if the module is re-evaluated (as happens with some bundlers during HMR), the `installed` flag resets and a new listener is added alongside the old one.
 
-**What goes wrong:** The NIP defines how shells should proxy `window.nostr` (NIP-07) into sandboxed iframes, potentially conflicting with or duplicating NIP-07 itself.
+**Consequences:** Shell receives duplicate `keys.forward` messages. Actions fire multiple times. Throttling logic is defeated because each shim instance throttles independently.
 
 **Prevention:**
-- NIP-5C should say: "Shells MAY provide a `window.nostr` object inside the napplet iframe that proxies signing requests to the shell's signer." Full stop.
-- Do NOT redefine the NIP-07 interface. Reference NIP-07 and say shells provide a conformant implementation.
-- The internal proxy mechanism (postMessage-based signer request/response) is an implementation detail, not protocol.
-- The old kind 29001/29002 signer request/response flow is being replaced by standard `window.nostr` per PROJECT.md -- the NIP should reflect this final design.
+- Use a global sentinel on `window` rather than a module-level variable: `if (window.__napplet_keyboard_installed) return`
+- The cleanup function should be stored on `window` so any shim instance can find and clean up a previous installation
+- Alternatively: use `{ once: false, capture: true }` with a named function and `removeEventListener` before `addEventListener` to ensure only one listener exists
+- The NUB's shim integration should check for existing installation via the global sentinel
 
-**Confidence:** MEDIUM -- NIP-07 is well-established and reviewers will push back on anything that redefines it.
+**Detection:** Import the keyboard shim twice. Press a key. Count postMessage calls. If more than one message per keydown, there is duplicate installation.
+
+**Phase:** Should be addressed in the shim integration phase.
+
+**Confidence:** HIGH -- the existing code's module-level guard is insufficient for HMR scenarios. This is a known pattern in side-effect modules.
+
+### Pitfall 12: Action Registration Collision Between Napplets
+
+**What goes wrong:** Two napplets register actions that claim the same key combination. Napplet A registers `Ctrl+Enter` for "send message." Napplet B registers `Ctrl+Enter` for "execute code." The shell must decide which napplet's action wins when the user presses Ctrl+Enter.
+
+**Why it happens:** The keys NUB allows napplets to register actions with preferred key bindings. Without a conflict resolution strategy, the shell has no principled way to break ties.
+
+**Consequences:** Unpredictable behavior: sometimes napplet A's action fires, sometimes napplet B's. Or: the focused napplet always wins, which is intuitive but means the other napplet's action is unreachable. Or: the shell's binding list becomes contradictory.
+
+**Prevention:**
+- The NUB spec should define conflict resolution rules:
+  1. The **focused napplet** has priority for its registered bindings
+  2. Shell-level (global) bindings always override napplet bindings
+  3. Unfocused napplets' bindings are dormant (not suppressed, not forwarded)
+- The `keys.bindings` message sent to each napplet should only include bindings relevant to that napplet (its own registrations + global shell bindings), not other napplets' bindings
+- The shell maintains a per-napplet binding registry. Only the focused napplet's bindings are active at any time.
+- Action registration should use semantic action names (e.g., `"send-message"`) not key combinations. The shell maps actions to keys. The napplet suggests a default binding but the shell has final authority.
+
+**Detection:** Load two napplets that both register the same key combination. Focus one, press the key. Focus the other, press the key. If the wrong action fires, or both fire, the conflict resolution is broken.
+
+**Phase:** Must be designed in the NUB protocol phase. Conflict resolution is a protocol-level concern.
+
+**Confidence:** MEDIUM -- the project already has 6 KEYBINDS_* topic constants suggesting this problem domain was encountered during reference shell development.
+
+### Pitfall 13: Safari iOS Virtual Keyboard Viewport Shift
+
+**What goes wrong:** When a napplet contains an input field and the iOS virtual keyboard opens, Safari shifts the viewport upward, causing the napplet iframe to be partially or fully hidden behind the keyboard. The napplet's own layout does not know the keyboard is open because `visualViewport.resize` events do not propagate into sandboxed iframes.
+
+**Why it happens:** iOS Safari handles virtual keyboard viewport adjustment at the browser level, outside the napplet's sandbox. The napplet cannot query `window.visualViewport` (returns the iframe's viewport, not the screen viewport). The shell cannot communicate the virtual keyboard height to the napplet because there is no protocol message for it.
+
+**Consequences:** Mobile users cannot see what they are typing. The napplet's input field scrolls behind the virtual keyboard. This is a well-documented Safari iframe bug (Apple Developer Forums thread #28656, multiple WebKit bugs).
+
+**Prevention:**
+- This is primarily a shell layout concern, not a keys NUB concern
+- However, the keys NUB could include a `keys.virtualKeyboard` message type for the shell to notify the napplet of virtual keyboard state (open/closed, height)
+- The napplet could adjust its layout based on this information
+- For v1, document this as a known limitation and recommend shells handle it via CSS (`env(safe-area-inset-bottom)`, dynamic iframe resizing)
+- Do NOT try to solve this in the keyboard shim -- it requires shell-level viewport management
+
+**Detection:** Open a napplet with a text input on iOS Safari. Tap the input. If the input is obscured by the virtual keyboard and the napplet does not adjust, the pitfall is present.
+
+**Phase:** Out of scope for v0.20.0. Document as a known limitation. May be addressed in a future NUB extension or theme NUB integration.
+
+**Confidence:** MEDIUM -- documented in Apple Developer Forums and WebKit bugs, but the impact on sandboxed iframes specifically (no `allow-same-origin`) needs verification.
 
 ---
 
@@ -234,48 +307,96 @@ The NIP-5B thread already descended into multi-front discussion across three PRs
 
 | Phase Topic | Likely Pitfall | Mitigation |
 |-------------|---------------|------------|
-| Channel protocol design | Overspecification of channel lifecycle | Define only open/close/send verbs. Internal state machine is implementation detail. |
-| NIP-5C spec writing | Runtime internals leaking into spec | Hard rule: if it is not observable on the postMessage wire, it does not belong in the NIP. |
-| NIP-5C spec writing | Defining "what is a napp" | Avoid. A napplet is anything that speaks this protocol. |
-| NIP-5C spec writing | Too many MUST requirements | Minimize MUSTs to AUTH + discovery. Everything else is MAY. |
-| NIP submission | Territorial conflict with NIP-5B | Pre-engage arthurfranca and hzrd149. Frame NIP-5C as complementary. |
-| NIP submission | No referenced implementations | List napplet SDK + hyprgate in Implementations section. |
-| NIP submission | Missing README.md updates | Include README changes in the same PR. |
-| Kind number allocation | Ephemeral range semantics | Consider whether kinds need to be specified at all, or declare them as postMessage-channel-only identifiers. |
-| Security review | postMessage `*` origin | Proactive Security Considerations section. Address wildcard origin, sandbox flags, AUTH cryptographic verification. |
-| Community reception | "app platform on nostr" skepticism | Frame as minimal communication protocol, not an app platform. Let the protocol speak for itself. |
+| NUB type definitions (nub-keys package) | Key vs code confusion (P1) | Send both `key` and `code`. Define `match` field for action registration. |
+| NUB type definitions (nub-keys package) | Missing shell->napplet direction (P6) | Design bidirectional from day one. Include `keys.inject`, `keys.bindings`, `keys.focus`. |
+| NUB type definitions (nub-keys package) | Missing keyup support (P10) | Include `keys.release` message type for modifier tracking. |
+| NUB type definitions (nub-keys package) | Action collision (P12) | Define focused-napplet-wins conflict resolution. Actions use semantic names. |
+| Shim integration | postMessage flooding (P2) | Check `event.repeat`. Throttle repeated key forwards. |
+| Shim integration | Forward/suppress race (P3) | Pre-distribute binding list. Suppress locally and synchronously before forwarding. |
+| Shim integration | IME interference (P4) | Check `isComposing` and `keyCode === 229`. Track composition state with start/end listeners. |
+| Shim integration | Duplicate installation (P11) | Use `window.__napplet_keyboard_installed` sentinel instead of module-level flag. |
+| Shim integration | Binding cache staleness (P7) | Listen for `keys.bindings` updates. Replace set atomically. |
+| Security model | Focus stealing (P5) | Shell must not change focus based solely on forwarded keys. Rate limit per-napplet. |
+| Security model | Browser-reserved shortcuts (P9) | Document and export reserved key list. Shell validates bindings. |
+| NUB spec writing | Tab/accessibility trap (P8) | Define reserved keys list in spec. Hardcode Tab/Shift+Tab exemption. |
+| SDK convenience wrappers | Missing bindings context | SDK `registerAction()` must receive initial bindings list before the first keydown. |
+| NIP-5D amendment | Overspecification | Reference keys NUB by domain name only. Do not inline message types. |
+| Testing | Cross-browser coverage | Test IME on Firefox 65+ and Chrome. Test key/code on Dvorak/AZERTY. Test Tab trapping with screen reader. |
 
 ---
 
-## NIP Rejection Pattern Summary
+## Pitfall Dependency Map
 
-Based on analysis of the nostr-protocol/nips repository (PRs #1538, #2274, #2277, #2282, #2025, Issue #545):
+Some pitfalls compound each other:
 
-| Pattern | Frequency | Example |
-|---------|-----------|---------|
-| Overspecification / too complex | Very common | fiatjaf on multiple PRs: "too long and complex" |
-| Duplicates existing NIP | Common | NIP-CF vs NIP-C4 vs NIP-5A territory disputes |
-| Prescriptive definitions | Common | NIP-5B: "if nsite has NIP-07, it is a napp" -- rejected by dskvr |
-| No working implementation | Common | Smart Widgets (#2025) -- 8 months open with no merge |
-| Mandatory complexity | Moderate | NIPs adding requirements that break optionality |
-| Missing README updates | Minor but frequent | NIP-5A needed follow-up PR #2286 |
-| Wrong format/style | Minor | Inconsistent with established NIP markdown conventions |
+```
+P1 (key/code) + P3 (race) = Wrong key suppressed, wrong action fires
+P2 (flooding) + P5 (focus steal) = DoS + keystroke hijack combined attack
+P3 (race) + P7 (stale bindings) = Suppress decisions based on outdated binding list
+P4 (IME) + P3 (race) = IME keystroke forwarded, shell action fires mid-composition
+P8 (Tab trap) + P6 (no inject) = Cannot programmatically un-trap user
+P10 (no keyup) + P3 (race) = Modifier stuck after focus shift during key chord
+```
+
+The P1+P3 and P3+P7 chains are the most likely to occur together and produce confusing behavior that is hard to debug.
+
+---
+
+## Risk Assessment Summary
+
+| Pitfall | Severity | Likelihood | Phase Impact |
+|---------|----------|------------|--------------|
+| P1: Key vs Code | Critical | HIGH (any non-QWERTY user) | NUB types |
+| P2: Repeat Flooding | Critical | HIGH (any held key) | Shim |
+| P3: Forward/Suppress Race | Critical | HIGH (architectural) | NUB protocol + Shim |
+| P4: IME Composition | Critical | HIGH (CJK users) | Shim |
+| P5: Focus Stealing | Moderate | MEDIUM (malicious napplet) | Security model |
+| P6: No Shell->Napplet | Moderate | HIGH (missing capability) | NUB types |
+| P7: Stale Bindings | Moderate | HIGH (any binding change) | NUB protocol + Shim |
+| P8: Tab/A11y Trap | Moderate | HIGH (any keyboard user) | NUB spec |
+| P9: Browser-Reserved | Moderate | MEDIUM (misconfigured shell) | NUB spec |
+| P10: Stuck Modifiers | Minor | MEDIUM (focus shift during chord) | NUB types |
+| P11: Duplicate Install | Minor | MEDIUM (HMR/dev) | Shim |
+| P12: Action Collision | Minor | MEDIUM (multi-napplet shell) | NUB protocol |
+| P13: iOS Virtual KB | Minor | LOW (mobile, Safari-specific) | Future/docs |
 
 ---
 
 ## Sources
 
-- [NIP-5A PR #1538](https://github.com/nostr-protocol/nips/pull/1538) -- 5-month review history, format reference
-- [NIP-C4 PR #2274](https://github.com/nostr-protocol/nips/pull/2274) -- "Nostr Apps" proposal and territorial discussion
-- [NIP-CF PR #2277](https://github.com/nostr-protocol/nips/pull/2277) -- "Combine Forces" interoperability proposal
-- [NIP-5B PR #2282](https://github.com/nostr-protocol/nips/pull/2282) -- "Embeddable Nostr Web Apps", fiatjaf review comments
-- [Smart Widgets PR #2025](https://github.com/nostr-protocol/nips/pull/2025) -- interactive components proposal, stalled
-- [NIP Proposal Process Issue #545](https://github.com/nostr-protocol/nips/issues/545) -- proposed submission workflow
-- [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) -- kind number range semantics
-- [NIP-89](https://nips.nostr.com/89) -- Recommended Application Handlers (existing app discovery)
-- [NIP README](https://github.com/nostr-protocol/nips/blob/master/README.md) -- kind number registry (29001-29010 confirmed unclaimed)
-- [PostMessage Vulnerabilities (Medium)](https://medium.com/@instatunnel/postmessage-vulnerabilities-when-cross-window-communication-goes-wrong-4c82a5e8da63) -- attack patterns
-- [PostMessage + Sandbox Escape (InfoSec Write-ups)](https://infosecwriteups.com/postmessage-misconfiguration-ai-prompt-injection-sandbox-escape-xss-data-exfiltration-d1d29821a2de) -- CVE-2024-49038 analysis
-- [iframe Sandbox Security (Mozilla Discourse)](https://discourse.mozilla.org/t/can-someone-explain-the-issue-behind-the-rule-sandboxed-iframes-with-attributes-allow-scripts-and-allow-same-origin-are-not-allowed-for-security-reasons/110651) -- allow-scripts + allow-same-origin escape
-- [Microsoft PostMessage Security (MSRC Blog)](https://www.microsoft.com/en-us/msrc/blog/2025/08/postmessaged-and-compromised) -- postMessage vulnerability patterns
-- [2026 iframe Security Risks (Qrvey)](https://qrvey.com/blog/iframe-security/) -- comprehensive iframe security guide
+### Browser Documentation
+- [MDN: KeyboardEvent.code](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code) -- layout-independent key identification
+- [MDN: KeyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) -- layout-dependent character value
+- [MDN: KeyboardEvent.repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) -- key repeat detection
+- [MDN: Element keydown event](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event) -- IME composition handling, browser quirks
+- [MDN: Window.postMessage](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) -- cross-origin messaging
+- [Chrome: KeyboardEvent keys and codes](https://developer.chrome.com/blog/keyboardevent-keys-codes) -- key vs code explained
+
+### Real-World iframe Keyboard Problems
+- [VSCode: Move keybinding dispatch off keyCode (#17521)](https://github.com/microsoft/vscode/issues/17521) -- key/code migration in large codebase
+- [JupyterLab: Focus selectors in keyboard shortcuts block shortcuts when iframe has focus (#5719)](https://github.com/jupyterlab/jupyterlab/issues/5719) -- synthetic focus events and iframe
+- [Mozilla Horizon: Cannot listen for keyboard shortcuts when iframe has focus (#51)](https://github.com/MozillaReality/horizon/issues/51) -- fundamental iframe keyboard capture problem
+- [WebKit Bug 17670: Key events may improperly propagate from iframe to parent frame](https://bugs.webkit.org/show_bug.cgi?id=17670) -- browser-level propagation bug
+
+### Security Research
+- [W3C WebAppSec: Prevent programmatic focus in iframe (#273)](https://github.com/w3c/webappsec-permissions-policy/issues/273) -- focus-without-user-activation policy
+- [Mozilla: Content can steal focus (#604289)](https://bugzilla.mozilla.org/show_bug.cgi?id=604289) -- focus stealing attack
+- [Imperva: Hacking Microsoft and Wix with Keyboard Shortcuts](https://www.imperva.com/blog/hacking-microsoft-and-wix-with-keyboard-shortcuts/) -- keyboard shortcut exploitation via iframe
+- [MSRC: PostMessaged and Compromised](https://www.microsoft.com/en-us/msrc/blog/2025/08/postmessaged-and-compromised) -- postMessage vulnerability patterns
+
+### Accessibility
+- [WCAG 2.1.2: No Keyboard Trap](https://wcag.dock.codes/documentation/wcag212/) -- Level A requirement for focus escape
+- [WebAIM: Keyboard Accessibility](https://webaim.org/techniques/keyboard/) -- keyboard navigation best practices
+
+### Browser Shortcut Conflicts
+- [Mozilla Bug 380637: Web pages overriding browser shortcuts](https://bugzilla.mozilla.org/show_bug.cgi?id=380637) -- browser shortcut reservation
+- [xjavascript: Cross-Browser Safe Keyboard Shortcuts](https://www.xjavascript.com/blog/available-keyboard-shortcuts-for-web-applications/) -- available shortcut space
+
+### iOS/Safari
+- [Apple Developer Forums: Input focus issue inside iframe](https://developer.apple.com/forums/thread/28656) -- virtual keyboard viewport shift
+- [WebKit Bug 158629: Focus event in iframe causes incorrect scroll](https://bugs.webkit.org/show_bug.cgi?id=158629) -- Safari focus behavior
+
+### Existing Codebase
+- `packages/shim/src/keyboard-shim.ts` -- current unidirectional forward-only implementation
+- `packages/core/src/topics.ts` -- 6 KEYBINDS_* topic constants showing prior art
+- `.planning/SPEC-GAPS.md` -- GAP-07 decision: amend spec for keyboard forwarding

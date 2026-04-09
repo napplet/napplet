@@ -1,540 +1,409 @@
-# Architecture Research: NIP-5C Specification Structure and Capability Negotiation
+# Architecture Patterns: Keys NUB Integration
 
-**Domain:** Protocol specification design -- NIP structure, capability negotiation, normative vs informative separation
-**Researched:** 2026-04-05
-**Confidence:** HIGH (based on analysis of 6 real-world protocol specs + existing codebase + NIP conventions)
+**Domain:** Napplet Protocol SDK -- Keys NUB
+**Researched:** 2026-04-09
+**Confidence:** HIGH (all conclusions derived from direct codebase analysis, no external sources needed)
 
-## The Core Question
+## Recommended Architecture
 
-How should NIP-5C be structured to cleanly separate the napplet-to-shell protocol standard from runtime implementation details? And how should optional capability negotiation work?
+The keys NUB replaces the ad-hoc `keyboard.forward` message in `keyboard-shim.ts` with a proper NUB domain following the established pattern of relay, signer, storage, ifc, and theme. The integration touches four layers: NUB type package, core envelope types, shim installation, and SDK re-exports.
 
-## Prior Art: How Other Specs Handle This
-
-### 1. Existing Nostr NIPs
-
-NIPs are terse. The typical NIP is 500-2000 words. Even complex ones like NIP-46 (Nostr Connect) fit in roughly 2000 words with clear sections: Rationale, Terminology, Overview, wire format, examples, appendix.
-
-**Key NIP conventions observed:**
-
-| Convention | Source | Implication for NIP-5C |
-|-----------|--------|------------------------|
-| `draft` `optional` status tags | Every NIP | NIP-5C uses these |
-| Imperative language, not RFC 2119 | NIP-07 ("must define") | NIPs use MUST/SHOULD/MAY but informally -- NIP-42 uses them 11 times total |
-| Short, self-contained | NIP-42 (~1200 words) | NIP-5C needs to be dramatically shorter than the 1520-line SPEC.md |
-| Reference other NIPs by number only | NIP-5A, NIP-46 | "as defined in NIP-01" -- never reproduce their content |
-| One JSON example per concept | NIP-42, NIP-46 | Minimal examples, not exhaustive |
-| No implementation guidance sections | All NIPs | "Implementation Notes" is not a NIP section -- it's SDK documentation |
-
-**NIP-11 (Relay Information Document)** is the closest Nostr precedent for capability advertisement. It defines a JSON document with `supported_nips` array and optional `limitation` objects. All fields are optional. Clients MUST ignore unknown fields. This is Nostr's pattern: advertise capabilities as a flat list, let consumers feature-detect.
-
-**NIP-91 (Extension Negotiation, PR #1671)** proposed a `PN-OFFER`/`PN-REQUEST`/`PN-OK` flow for relay-client capability negotiation. Community pushback centered on "too structured/interactive for nostr" (Staab). The PR was contentious precisely because it added a negotiation round-trip. Lesson: Nostr community prefers declarative advertisement over interactive negotiation.
-
-### 2. Language Server Protocol (LSP)
-
-LSP uses **bidirectional capability exchange during initialization**:
-
-1. Client sends `initialize` with `ClientCapabilities` object
-2. Server responds with `ServerCapabilities` object
-3. Client sends `initialized` notification
-4. Both sides only use negotiated capabilities
-
-Capabilities are nested objects. Missing property = feature absent. The client checks `server.capabilities.completionProvider` before requesting completions.
-
-**Key insight:** LSP separates a small mandatory baseline (text document sync) from a large optional surface. Version 2.x features are mandatory; version 3.x features are truly optional. This layered approach prevents "must implement everything" while guaranteeing interoperability on the core.
-
-### 3. Model Context Protocol (MCP)
-
-MCP follows LSP's pattern closely:
-
-1. Client sends `initialize` with `capabilities: { roots, sampling, elicitation, ... }`
-2. Server responds with `capabilities: { prompts, resources, tools, logging, ... }`
-3. Client sends `initialized` notification
-
-Capabilities are **empty objects** (`{}`) when present, possibly with sub-capabilities like `{ listChanged: true }`. The key insight: presence of the key means support; absence means no support. No version negotiation per-capability -- just present/absent.
-
-**Design principle from MCP:** "All implementations MUST support the base protocol and lifecycle management. Other components MAY be implemented based on the specific needs of the application."
-
-### 4. WebExtensions (Browser Extensions)
-
-WebExtensions uses a **manifest-declared** model:
-
-- `permissions`: Required at install time -- extension won't work without these
-- `optional_permissions`: Requested at runtime when needed
-- `host_permissions`: URL pattern access
-
-This is the closest analogy to the napplet model:
-- The NIP-5A manifest `requires` tags = `permissions`
-- Services discovered at runtime = `optional_permissions`
-- The shell's service registry = the browser's permission system
-
-### 5. W3C Permissions API
-
-The web platform uses **feature detection + runtime query**:
-
-```js
-if (navigator.permissions) {
-  const result = await navigator.permissions.query({ name: 'camera' });
-  if (result.state === 'granted') { /* use camera */ }
-}
-```
-
-Pattern: check if API exists, then query specific permission state. Graceful degradation is the norm.
-
-### 6. WebRTC SDP Offer/Answer
-
-WebRTC uses **offer/answer negotiation**: one side proposes capabilities (codecs, transport), the other accepts or counters. This is heavyweight and designed for media negotiation -- overkill for napplet-shell communication where the shell is authoritative (not a peer).
-
-## Synthesis: The Right Pattern for NIP-5C
-
-The napplet-shell relationship is **asymmetric**: the shell is authoritative, the napplet is sandboxed. This rules out peer negotiation (WebRTC SDP, NIP-91 PN-OFFER). The shell declares what it supports; the napplet adapts.
-
-The right pattern combines:
-
-1. **NIP-11 style capability advertisement** -- shell declares available features
-2. **WebExtensions-style manifest declaration** -- napplet declares what it needs
-3. **W3C-style feature detection** -- napplet probes at runtime and degrades gracefully
-4. **LSP/MCP-style layered requirements** -- small mandatory core, large optional surface
-
-### Recommended Capability Negotiation Model
+### High-Level Integration Map
 
 ```
-Phase 1: Shell advertises (passive, no round-trip)
-  Shell has a set of capabilities. Napplet discovers them post-AUTH.
-
-Phase 2: Napplet declares requirements (manifest, build-time)
-  NIP-5A manifest contains ["requires", "service-name"] tags.
-  Shell checks requirements during AUTH. Mismatch = warning or rejection.
-
-Phase 3: Napplet probes at runtime (active, per-feature)
-  window.napplet.services.has('audio') → true/false
-  Napplet adapts UI based on available capabilities.
+@napplet/nub-keys (NEW)        -- typed message definitions
+       |
+@napplet/core                  -- NubDomain union gains 'keys', NUB_DOMAINS gains entry
+       |
+@napplet/shim                  -- keyboard-shim.ts replaced by keys-shim.ts;
+       |                          index.ts wires window.napplet.keys namespace
+       |
+@napplet/sdk                   -- re-exports keys NUB types + KEYS_DOMAIN constant;
+                                  adds keys namespace wrapper
 ```
 
-No interactive negotiation round-trip. The shell's AUTH OK response implicitly confirms the environment. The napplet uses feature detection.
+### Component Boundaries
 
-## Recommended NIP-5C Document Structure
-
-### Structure Rationale
-
-The current SPEC.md is 1520 lines (~41KB). A NIP should be 2000-4000 words maximum. The SPEC.md contains:
-
-| Content | Lines | Belongs in NIP? |
-|---------|-------|-----------------|
-| Transport layer (postMessage, sandbox) | ~100 | YES -- normative |
-| AUTH handshake (REGISTER/IDENTITY/AUTH) | ~200 | YES -- normative |
-| NIP-01 message routing (REQ/EVENT/CLOSE) | ~150 | YES -- normative, but mostly "follows NIP-01" |
-| Signer proxy (kinds 29001/29002) | ~80 | NO -- optional service, reference spec |
-| Storage proxy | ~100 | NO -- optional service, reference spec |
-| Audio management | ~60 | NO -- optional service, reference spec |
-| Relay management | ~50 | NO -- optional service, reference spec |
-| Window creation, shell commands | ~100 | NO -- implementation-specific |
-| Cache proxy (NIPDB) | ~30 | NO -- optional service, reference spec |
-| Hotkey forwarding | ~30 | NO -- optional service, reference spec |
-| Service discovery | ~100 | YES -- normative (the mechanism) |
-| Protocol layers | ~30 | YES -- informative overview |
-| ACL capabilities | ~120 | PARTIAL -- capability strings normative, enforcement strategy informative |
-| Security model | ~80 | YES -- normative |
-| Kind numbers | ~60 | YES -- normative |
-| Minimal implementation | ~80 | YES -- informative examples |
-| Implementation notes | ~30 | NO -- SDK documentation |
-
-### Proposed NIP-5C Sections
-
-```
-NIP-5C
-======
-
-Nostr Web Applets
------------------
-
-`draft` `optional`
-
-This NIP defines a protocol for sandboxed web applications ("napplets") running in
-iframes to communicate with a hosting application ("shell") via postMessage, using
-the NIP-01 wire format. Extends NIP-5A.
-
-## Terminology
-  - Shell, Napplet, dTag, aggregate hash, composite key, delegated key
-  - (~100 words, table format)
-
-## 1. Transport
-  - postMessage delivery mechanism
-  - Sandbox policy (allow-scripts, NO allow-same-origin)
-  - Sender identification via MessageEvent.source
-  - Message format: NIP-01 JSON arrays
-  - (~200 words)
-
-## 2. Wire Format
-  - Table: napplet-to-shell verbs (REGISTER, EVENT, REQ, CLOSE, AUTH, COUNT)
-  - Table: shell-to-napplet verbs (IDENTITY, EVENT, OK, EOSE, CLOSED, AUTH, NOTICE, COUNT)
-  - One example per direction
-  - (~300 words)
-
-## 3. Authentication
-  - REGISTER → IDENTITY → AUTH flow
-  - Key derivation: HMAC-SHA256(shellSecret, dTag + aggregateHash)
-  - AUTH event structure (kind 22242)
-  - Verification requirements
-  - Post-AUTH hybrid model (Window reference identity)
-  - Pre-AUTH message queueing
-  - (~500 words -- this is the core of the protocol)
-
-## 4. Relay Proxy
-  - Shell acts as NIP-01 relay: REQ/EVENT/CLOSE/EOSE/OK/COUNT
-  - Filter matching per NIP-01
-  - Replay protection
-  - Event delivery rules
-  - (~300 words)
-
-## 5. Capabilities
-  - 5.1 MUST capabilities (transport, wire format, AUTH)
-  - 5.2 MAY capabilities (discoverable, optional)
-  - 5.3 Capability advertisement (service discovery mechanism)
-  - 5.4 Napplet requirement declaration (NIP-5A requires tags)
-  - 5.5 Feature detection pattern (window.napplet.services.has)
-  - 5.6 Graceful degradation (MUST adapt or announce incompatibility)
-  - (~400 words)
-
-## 6. Standard Capabilities
-
-  ### 6.1 NIP-07 Signer Proxy (window.nostr)
-  - Shell MAY provide window.nostr via postMessage proxy
-  - Methods: getPublicKey, signEvent, nip04.*, nip44.*
-  - Destructive kind safety floor
-  - (~200 words)
-
-  ### 6.2 Napplet State Storage (window.napplet.storage)
-  - Shell MAY provide scoped key-value storage
-  - Scoping: dTag:aggregateHash:key
-  - Quota enforcement
-  - (~150 words)
-
-  ### 6.3 IPC Pub/Sub (window.napplet.ipc)
-  - Shell MAY provide inter-napplet messaging
-  - Kind 29003 topic-based routing
-  - Sender exclusion on IPC messages
-  - (~100 words)
-
-  ### 6.4 Channels (window.napplet.channels) [NEW]
-  - Shell MAY provide authenticated point-to-point connections
-  - Channel lifecycle: open → AUTH → data → close
-  - Broadcast as channel operation
-  - (~200 words)
-
-  ### 6.5 Event Database (window.nostrdb)
-  - Shell MAY provide a local event cache
-  - Query interface
-  - (~100 words)
-
-## 7. Napplet API Surface
-  - Table: MUST interfaces (window.napplet.services)
-  - Table: MAY interfaces and their discovery names
-  - (~150 words)
-
-## 8. Security Considerations
-  - Threat model (napplet untrusted, shell trusted)
-  - Iframe sandbox guarantees
-  - Delegated key confinement
-  - Window reference identity after AUTH
-  - (~200 words)
-
-## 9. Event Kinds
-  - Table of kinds used by this NIP
-  - References to NIP-5A for manifest kinds
-  - (~100 words)
-
-## Appendix A: Minimal Napplet Example
-  - (~30 lines of JS)
-
-## Appendix B: Minimal Shell Example
-  - (~30 lines of JS)
-```
-
-**Estimated total: ~2800 words.** Fits NIP conventions.
-
-## Key Structural Decisions
-
-### Decision 1: Section 5 (Capabilities) Is the Innovation
-
-Most of the NIP is "we use NIP-01 over postMessage" which is straightforward. The novel contribution is the capability negotiation model. Section 5 deserves the most careful treatment.
-
-**Recommended MUST/SHOULD/MAY allocation for capabilities:**
-
-| Requirement Level | What It Covers |
-|-------------------|----------------|
-| MUST | postMessage transport, NIP-01 wire format, AUTH handshake, service discovery mechanism |
-| MUST | Napplets MUST discover capabilities before using them |
-| MUST | Napplets MUST degrade gracefully when a capability is absent |
-| SHOULD | Shells SHOULD provide a relay proxy (most shells will, but a minimal shell could be offline-only) |
-| SHOULD | Napplets SHOULD declare requirements via NIP-5A `requires` tags |
-| MAY | All standard capabilities in Section 6 (signer, storage, IPC, channels, nostrdb) |
-| MAY | Custom/non-standard capabilities following the same discovery pattern |
-
-### Decision 2: NIP-5A Manifest Is the Declaration Mechanism
-
-The `requires` tags in the NIP-5A manifest (kind 35128) are the build-time declaration. NIP-5C should reference this mechanism, not redefine it.
-
-```
-NIP-5C references NIP-5A for:
-  - Manifest event structure (kind 35128)
-  - Aggregate hash computation
-  - Build integrity verification
-  - requires tags for capability declaration
-
-NIP-5C defines:
-  - How the shell reads requires tags during AUTH
-  - How the shell advertises capabilities (kind 29010 events)
-  - How the napplet discovers capabilities at runtime
-  - What happens when requirements are unmet
-```
-
-### Decision 3: Runtime Internals Are Explicitly Excluded
-
-The NIP defines the **contract** (what goes over the wire), not the **implementation** (how the shell processes it).
-
-| In the NIP (normative) | Out of the NIP (informative/runtime) |
-|-------------------------|--------------------------------------|
-| Wire format for all verbs | How the shell stores ACL entries internally |
-| AUTH challenge-response flow | SessionRegistry, NappKeyRegistry data structures |
-| Capability advertisement mechanism | ServiceHandler/ServiceRegistry implementation |
-| Storage scoping key format | How the shell persists storage (localStorage, IndexedDB, etc.) |
-| Replay protection requirements | Ring buffer size, eviction strategy |
-| Security threat model | RuntimeAdapter/ShellAdapter hook interfaces |
-| Ephemeral bus kind numbers | Internal dispatch routing, topic-prefix matching |
-
-### Decision 4: `window.napplet` Namespace Is Normative
-
-The NIP should define the napplet-facing API namespace as a standard:
-
-```
-window.napplet.relay      -- NIP-01 relay operations (SHOULD)
-window.napplet.ipc        -- Inter-napplet pub/sub (MAY)
-window.napplet.channels   -- Point-to-point channels (MAY)
-window.napplet.services   -- Service discovery (MUST)
-window.napplet.storage    -- Scoped state storage (MAY)
-window.nostr              -- NIP-07 signer proxy (MAY)
-window.nostrdb            -- Event database (MAY)
-```
-
-This is analogous to NIP-07 defining `window.nostr`. The namespace is the standard; implementations provide it.
-
-### Decision 5: Capability Discovery Uses Existing Service Discovery
-
-The kind 29010 service discovery mechanism (already in SPEC.md Section 11) becomes the normative capability advertisement mechanism in NIP-5C. Each optional capability registers as a service.
-
-```json
-["REQ", "cap-discovery", {"kinds": [29010]}]
-
-["EVENT", "cap-discovery", {
-  "kind": 29010,
-  "tags": [["s", "relay"], ["v", "1.0.0"]],
-  ...
-}]
-["EVENT", "cap-discovery", {
-  "kind": 29010,
-  "tags": [["s", "signer"], ["v", "1.0.0"]],
-  ...
-}]
-["EVENT", "cap-discovery", {
-  "kind": 29010,
-  "tags": [["s", "storage"], ["v", "1.0.0"]],
-  ...
-}]
-["EOSE", "cap-discovery"]
-```
-
-This is the NIP-11 pattern (flat list of supported features) adapted to the postMessage context.
-
-## Component Boundaries
-
-| Component | Responsibility | Defined Where |
-|-----------|---------------|---------------|
-| NIP-5C | Wire protocol contract, capability model, security requirements | nostr-protocol/nips PR |
-| NIP-5A | Manifest format, aggregate hash, `requires` tags | Existing NIP (referenced) |
-| NIP-01 | Event format, filter matching, subscription verbs | Existing NIP (referenced) |
-| NIP-42 | AUTH event structure (kind 22242) | Existing NIP (referenced) |
-| NIP-07 | `window.nostr` interface | Existing NIP (referenced) |
-| SPEC.md (renamed) | Runtime implementation reference, internal architecture | napplet repo (not a NIP) |
-| @napplet/core | Protocol constants, types, shared code | napplet repo (reference implementation) |
-| @napplet/runtime | Protocol engine, message routing, ACL enforcement | napplet repo (reference implementation) |
-| @napplet/shell | Browser-specific adapter | napplet repo (reference implementation) |
+| Component | Responsibility | Communicates With |
+|-----------|---------------|-------------------|
+| `@napplet/nub-keys` | Typed message interfaces, DOMAIN constant, discriminated unions | `@napplet/core` (extends NappletMessage) |
+| `@napplet/core` envelope.ts | NubDomain type union, NUB_DOMAINS array | All consumers of NubDomain |
+| `@napplet/core` types.ts | NappletGlobal.keys namespace type | Shim (implements), SDK (wraps) |
+| `@napplet/shim` keys-shim.ts | Capture-phase keydown listener, keys.* message sender, action registry, shell response handler | Shell via postMessage |
+| `@napplet/shim` index.ts | Wires window.napplet.keys, calls installKeysShim() | keys-shim.ts |
+| `@napplet/sdk` index.ts | Re-exports keys types, keys namespace wrapper | `@napplet/nub-keys`, window.napplet.keys |
 
 ### Data Flow
 
+**Outbound (Napplet -> Shell):**
+
 ```
-Build time:
-  Napplet dev → vite-plugin → NIP-5A manifest (kind 35128)
-                              with requires tags + aggregate hash
+1. Napplet registers actions:
+   window.napplet.keys.registerAction({ id: 'save', label: 'Save', binding: { key: 's', ctrl: true } })
+   OR: import { keys } from '@napplet/sdk'; keys.registerAction(...)
 
-Connection time:
-  Napplet iframe loads
-    ↓
-  REGISTER (dTag, claimedHash)
-    ↓
-  Shell derives keypair, sends IDENTITY
-    ↓
-  Shell sends AUTH challenge
-    ↓
-  Napplet signs with delegated key, sends AUTH response
-    ↓
-  Shell verifies, checks requires vs registry
-    ↓
-  AUTH OK (or rejection)
+2. keys-shim.ts stores action in local registry AND sends to shell:
+   { type: 'keys.register', id: <uuid>, actions: [{ id: 'save', label: 'Save', binding: ... }] }
 
-Post-AUTH:
-  Napplet → REQ kind 29010 → Shell
-  Shell → EVENT per registered capability → EOSE → Napplet
-  Napplet adapts UI based on discovered capabilities
-  Napplet uses capabilities via window.napplet.* / window.nostr / window.nostrdb
+3. Shell registers bindings, replies:
+   { type: 'keys.register.result', id: <uuid> }
+
+4. User presses key in iframe:
+   a. Capture-phase keydown listener fires in keys-shim.ts
+   b. Check local action registry for matching binding
+   c. If bound: preventDefault(), call local callback, send to shell:
+      { type: 'keys.action', actionId: 'save' }
+   d. If unbound AND not in text input AND not modifier-only:
+      forward to shell for WM hotkeys:
+      { type: 'keys.forward', key, code, ctrl, alt, shift, meta }
+   e. If unbound AND in text input: do nothing (let napplet handle typing)
 ```
 
-## Patterns to Follow
+**Inbound (Shell -> Napplet):**
 
-### Pattern 1: Layered Requirements (from LSP/MCP)
-
-**What:** Define a small mandatory core and a large optional surface. Every implementation speaks the same base language; extensions are discoverable.
-
-**Why for NIP-5C:** The protocol has exactly one MUST-implement interaction (AUTH handshake over postMessage with NIP-01 format). Everything else -- relay proxy, signer, storage, IPC, channels -- is an optional capability that shells may or may not provide.
-
-**Structure:**
 ```
-Layer 0 (MUST): postMessage transport + NIP-01 wire format
-Layer 1 (MUST): AUTH handshake (REGISTER → IDENTITY → AUTH)
-Layer 2 (MUST): Service discovery (kind 29010 REQ/EVENT/EOSE)
-Layer 3 (MAY):  All standard capabilities (relay, signer, storage, ipc, channels, nostrdb)
+1. Shell triggers a napplet action via its own keybinding or UI:
+   { type: 'keys.trigger', actionId: 'save' }
+   -> keys-shim.ts dispatches to registered action callback
+
+2. Shell pushes binding overrides (shell-preferred bindings):
+   { type: 'keys.bindings', actions: [{ id: 'save', binding: { key: 's', ctrl: true, shift: true } }] }
+   -> keys-shim.ts updates local binding registry
 ```
 
-### Pattern 2: Declarative Advertisement, Not Interactive Negotiation (from NIP-11/NIP-91 lessons)
+## New Components
 
-**What:** The shell declares what it supports; the napplet probes and adapts. No negotiation round-trip.
+### 1. `packages/nubs/keys/` -- @napplet/nub-keys (NEW PACKAGE)
 
-**Why for NIP-5C:** The Nostr community rejected NIP-91's interactive negotiation as "too structured." The shell is authoritative -- it doesn't negotiate, it announces. The napplet's only choice is to use what's available or display an incompatibility message.
+Follows the exact scaffold of @napplet/nub-theme (simplest existing NUB):
 
-**Example:**
 ```
-// Napplet probes available capabilities after AUTH
-const services = await window.napplet.services.list();
-const hasRelay = services.some(s => s.name === 'relay');
-const hasSigner = services.some(s => s.name === 'signer');
+packages/nubs/keys/
+  package.json          -- @napplet/nub-keys, deps: @napplet/core
+  tsconfig.json         -- extends ../../../tsconfig.json
+  tsup.config.ts        -- entry: src/index.ts, format: esm, dts: true
+  src/
+    types.ts            -- message interfaces, DOMAIN constant, unions
+    index.ts            -- barrel re-exports + domain registration with core dispatch
+```
 
-if (!hasRelay) {
-  showMessage('This napplet requires relay access. Your shell does not provide it.');
+**Message types to define in `types.ts`:**
+
+| Message | Direction | Has `id` | Purpose |
+|---------|-----------|----------|---------|
+| `keys.register` | Napplet -> Shell | Yes | Register action bindings |
+| `keys.register.result` | Shell -> Napplet | Yes | Confirm registration |
+| `keys.unregister` | Napplet -> Shell | No | Remove actions by ID |
+| `keys.forward` | Napplet -> Shell | No | Forward unbound keystroke (replaces keyboard.forward) |
+| `keys.action` | Napplet -> Shell | No | Napplet-side bound key triggered |
+| `keys.trigger` | Shell -> Napplet | No | Shell invokes napplet action |
+| `keys.bindings` | Shell -> Napplet | No | Shell pushes binding overrides |
+
+7 message types total (comparable to theme's 3, relay's 9, signer's 14).
+
+**Payload types to define:**
+
+```typescript
+/** A key combination (e.g., Ctrl+S, Alt+1). */
+export interface KeyBinding {
+  key: string;        // KeyboardEvent.key value
+  code?: string;      // KeyboardEvent.code value (optional, for physical key matching)
+  ctrl?: boolean;
+  alt?: boolean;
+  shift?: boolean;
+  meta?: boolean;
+}
+
+/** An action that a napplet registers with the shell. */
+export interface KeyAction {
+  /** Unique action identifier (e.g., 'save', 'undo', 'format-bold'). */
+  id: string;
+  /** Human-readable label for keybinding UI. */
+  label: string;
+  /** Requested key binding (shell may override). */
+  binding?: KeyBinding;
 }
 ```
 
-### Pattern 3: Build-Time Declaration + Runtime Discovery (from WebExtensions)
+### 2. Modified: `packages/core/src/envelope.ts`
 
-**What:** The napplet manifest declares what the napplet needs (build-time). The shell checks declarations during AUTH (install-time equivalent). The napplet probes at runtime for anything undeclared.
+Two changes:
 
-**Why for NIP-5C:** This separates the "what do you need?" question (answered by the developer at build time) from the "what do you have?" question (answered by the shell at runtime). The manifest `requires` tags are the WebExtensions `permissions` key. Runtime service discovery is the `optional_permissions` query.
+```typescript
+// NubDomain: add 'keys' to the union
+export type NubDomain = 'relay' | 'signer' | 'storage' | 'ifc' | 'theme' | 'keys';
 
-### Pattern 4: Terse Normative Text With Reference Implementation Pointer (from NIP conventions)
+// NUB_DOMAINS: add 'keys' to the array
+export const NUB_DOMAINS: readonly NubDomain[] = [
+  'relay', 'signer', 'storage', 'ifc', 'theme', 'keys',
+] as const;
+```
 
-**What:** The NIP is the wire protocol contract. All implementation guidance, architecture details, and SDK documentation lives in the repo.
+This is the **only change to @napplet/core's envelope module**. The NamespacedCapability type auto-derives from NubDomain, so `'nub:keys'` and bare `'keys'` become valid automatically.
 
-**Why for NIP-5C:** The current SPEC.md is 41KB. A NIP should be 5-10KB. Cut everything that describes _how_ the runtime works internally. Keep only what a second implementor needs to build a compatible shell or napplet from scratch.
+### 3. Modified: `packages/core/src/types.ts`
 
-**Test:** For each SPEC.md section, ask: "Would a second implementor need this to be interoperable?" If no, it's implementation documentation, not protocol specification.
+Add `keys` namespace to `NappletGlobal`. The key design question: where do `KeyAction` and `KeyBinding` types live?
+
+**Decision: Define them in `@napplet/nub-keys` only.** Core's NappletGlobal.keys uses inline structural types to avoid a dependency on the NUB package:
+
+```typescript
+export interface NappletGlobal {
+  relay: { ... };
+  ipc: { ... };
+  storage: { ... };
+  shell: NappletGlobalShell;
+  keys: {
+    registerAction(action: {
+      id: string;
+      label: string;
+      binding?: { key: string; code?: string; ctrl?: boolean; alt?: boolean; shift?: boolean; meta?: boolean };
+    }): Promise<void>;
+    registerActions(actions: Array<{
+      id: string;
+      label: string;
+      binding?: { key: string; code?: string; ctrl?: boolean; alt?: boolean; shift?: boolean; meta?: boolean };
+    }>): Promise<void>;
+    unregisterAction(actionId: string): void;
+    onAction(actionId: string, callback: () => void): { close(): void };
+  };
+}
+```
+
+This preserves core's zero-dependency-on-NUBs invariant. The NUB package defines the canonical `KeyAction` and `KeyBinding` types; the core types structurally match but do not import them.
+
+### 4. NEW: `packages/shim/src/keys-shim.ts`
+
+Replaces `keyboard-shim.ts`. Retains `isTextInput()` and `isModifierOnly()` helpers. New responsibilities:
+
+1. **Action registry**: `Map<string, { binding?: KeyBinding; callback?: () => void }>` for locally registered actions
+2. **Smart keydown handler**: Check if keystroke matches any registered action binding. If yes: preventDefault, call callback, send `keys.action`. If no and not text input: send `keys.forward`.
+3. **Inbound message handler**: Listen for `keys.trigger` (dispatch to callback) and `keys.bindings` (update local registry)
+4. **Registration API**: `registerAction()`, `registerActions()`, `unregisterAction()`, `onAction()`
+5. **Pending request tracking**: `Map<string, PendingRequest>` for `keys.register` -> `keys.register.result` correlation
+
+Exports:
+- `installKeysShim(): () => void` -- install keydown listener + inbound message listener
+- `_nappletKeys` -- the namespace object for wiring into window.napplet.keys
+
+Following the state-shim.ts pattern: installKeysShim adds its own `window.addEventListener('message', ...)` for inbound keys messages.
+
+### 5. Modified: `packages/shim/src/index.ts`
+
+Replace import:
+```typescript
+// OLD:
+import { installKeyboardShim } from './keyboard-shim.js';
+// NEW:
+import { installKeysShim, _nappletKeys } from './keys-shim.js';
+```
+
+Wire window.napplet.keys in the global installation block:
+```typescript
+keys: {
+  registerAction: _nappletKeys.registerAction.bind(_nappletKeys),
+  registerActions: _nappletKeys.registerActions.bind(_nappletKeys),
+  unregisterAction: _nappletKeys.unregisterAction.bind(_nappletKeys),
+  onAction: _nappletKeys.onAction.bind(_nappletKeys),
+},
+```
+
+Replace initialization call:
+```typescript
+// OLD:
+installKeyboardShim();
+// NEW:
+installKeysShim();
+```
+
+### 6. Modified: `packages/shim/package.json`
+
+Add dependency:
+```json
+"@napplet/nub-keys": "workspace:*"
+```
+
+### 7. Modified: `packages/sdk/src/index.ts`
+
+Add keys namespace wrapper:
+```typescript
+export const keys = {
+  registerAction(action: KeyAction): Promise<void> {
+    return requireNapplet().keys.registerAction(action);
+  },
+  registerActions(actions: KeyAction[]): Promise<void> {
+    return requireNapplet().keys.registerActions(actions);
+  },
+  unregisterAction(actionId: string): void {
+    requireNapplet().keys.unregisterAction(actionId);
+  },
+  onAction(actionId: string, callback: () => void): Subscription {
+    return requireNapplet().keys.onAction(actionId, callback);
+  },
+};
+```
+
+Add type re-exports (following existing NUB re-export pattern):
+```typescript
+// Keys NUB
+export type {
+  KeyBinding,
+  KeyAction,
+  KeysMessage,
+  KeysRegisterMessage,
+  KeysRegisterResultMessage,
+  KeysUnregisterMessage,
+  KeysForwardMessage,
+  KeysActionMessage,
+  KeysTriggerMessage,
+  KeysBindingsMessage,
+  KeysOutboundMessage,
+  KeysInboundMessage,
+  KeysNubMessage,
+} from '@napplet/nub-keys';
+
+export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub-keys';
+```
+
+### 8. Modified: `packages/sdk/package.json`
+
+Add dependency:
+```json
+"@napplet/nub-keys": "workspace:*"
+```
+
+## Integration Changeset Summary
+
+### New Files (6)
+
+| File | Purpose |
+|------|---------|
+| `packages/nubs/keys/package.json` | Package manifest |
+| `packages/nubs/keys/tsconfig.json` | TypeScript config (extends root) |
+| `packages/nubs/keys/tsup.config.ts` | Build config (ESM, dts, sourcemap) |
+| `packages/nubs/keys/src/types.ts` | Message interfaces, DOMAIN, KeyBinding, KeyAction, unions |
+| `packages/nubs/keys/src/index.ts` | Barrel exports + domain registration |
+| `packages/shim/src/keys-shim.ts` | Keys shim implementation |
+
+### Modified Files (7)
+
+| File | Change |
+|------|--------|
+| `packages/core/src/envelope.ts` | Add `'keys'` to NubDomain union and NUB_DOMAINS array |
+| `packages/core/src/types.ts` | Add `keys` namespace to NappletGlobal interface |
+| `packages/core/src/index.ts` | Re-export any new types if needed (may be a no-op) |
+| `packages/shim/src/index.ts` | Import keys-shim, wire window.napplet.keys, replace installKeyboardShim |
+| `packages/shim/package.json` | Add `@napplet/nub-keys` dependency |
+| `packages/sdk/src/index.ts` | Add keys namespace wrapper + type re-exports + KEYS_DOMAIN |
+| `packages/sdk/package.json` | Add `@napplet/nub-keys` dependency |
+
+### Deleted Files (1)
+
+| File | Reason |
+|------|--------|
+| `packages/shim/src/keyboard-shim.ts` | Replaced by keys-shim.ts using proper NUB message types |
+
+### Workspace Config (no change needed)
+
+`pnpm-workspace.yaml` already includes `packages/nubs/*`, so `packages/nubs/keys` is automatically discovered.
+
+## Patterns to Follow
+
+### Pattern 1: NUB Type Package Skeleton
+**What:** Every NUB package follows: types.ts (DOMAIN const + message interfaces) -> index.ts (re-exports + registerNub call).
+**When:** Creating @napplet/nub-keys.
+**Evidence:** All 5 existing NUB packages follow this exact pattern.
+
+### Pattern 2: Request/Result Correlation
+**What:** Messages requiring a response include a correlation `id: string` field (generated via `crypto.randomUUID()`). The responder echoes the same `id`. Fire-and-forget messages have no `id`.
+**When:** `keys.register` needs confirmation (has `id`). `keys.forward` and `keys.action` are fire-and-forget (no `id`).
+**Evidence:** Signer (all 7 request types have `id`), storage (all 4 request types have `id`), relay (`subscribe`, `close`, `publish`, `query` have `id`).
+
+### Pattern 3: Discriminated Unions (Outbound/Inbound/All)
+**What:** Every NUB defines three union types: `*OutboundMessage` (napplet->shell), `*InboundMessage` (shell->napplet), `*NubMessage` (all).
+**When:** Always. The relay, signer, storage, and ifc NUBs all define this triple.
+**Evidence:** `RelayOutboundMessage | RelayInboundMessage = RelayNubMessage`, etc.
+
+### Pattern 4: Shim Install + Namespace Export
+**What:** Shim files export an `install*()` function for the message listener and a `_namespace` object for wiring into `window.napplet.*`.
+**When:** keys-shim.ts follows the state-shim.ts pattern.
+**Evidence:** `state-shim.ts` exports `installStateShim()` + `_nappletStorage`. `nipdb-shim.ts` exports `installNostrDb()`.
+
+### Pattern 5: SDK Lazy Delegation via requireNapplet()
+**What:** SDK namespace methods call `requireNapplet()` at invocation time, not at module load time. This allows shim and SDK to be imported in any order.
+**When:** The `keys` namespace in SDK must follow this pattern.
+**Evidence:** Every SDK namespace method (`relay.subscribe`, `ipc.emit`, `storage.getItem`) calls `requireNapplet()` first.
+
+### Pattern 6: Base Message Interface With Type Narrowing
+**What:** Each NUB defines a base interface `extends NappletMessage` with `type: \`domain.${string}\``, then concrete messages narrow to literal types.
+**When:** KeysMessage should extend NappletMessage with `type: \`keys.${string}\``.
+**Evidence:** `ThemeMessage { type: \`theme.${string}\` }`, `SignerMessage { type: \`signer.${string}\` }`, etc.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Including ACL Enforcement Details in the NIP
+### Anti-Pattern 1: Circular Dependency Between Core and NUB Packages
+**What:** Importing `KeyAction` from `@napplet/nub-keys` into `@napplet/core`.
+**Why bad:** Core has zero dependencies on NUB packages. NUB packages depend on core. Reversing this creates a cycle that breaks the build.
+**Instead:** Use inline structural types in NappletGlobal or define a minimal type in core. The NUB package can export a richer `KeyAction` that structurally extends the core type.
 
-**What goes wrong:** Specifying how ACL is stored (`localStorage` key format), how capabilities are checked (bitfield operations), or how consent prompts work.
+### Anti-Pattern 2: Non-NUB Domain Prefix
+**What:** The current `keyboard.forward` uses `keyboard` as a domain prefix, but `keyboard` is not in NubDomain.
+**Why bad:** Messages with unregistered domains are silently dropped by `dispatch()`. The `keyboard.forward` bypasses the dispatch system entirely via raw postMessage.
+**Instead:** Use `keys` as the domain. All messages route through standard NUB dispatch.
 
-**Why it's wrong:** Different shells will have different ACL storage, different consent UIs, different enforcement strategies. The NIP should say "the shell MUST enforce access control for signing operations" not "the shell MUST store ACL entries as `[compositeKey, entry]` tuples in localStorage under `napplet:acl`."
+### Anti-Pattern 3: Overloading keyboard-shim.ts
+**What:** Adding NUB features to the existing keyboard-shim.ts file.
+**Why bad:** The file uses a local `KeyboardForwardMessage` type outside the NUB system. It cannot be incrementally upgraded because the message type string changes from `keyboard.forward` to `keys.forward`.
+**Instead:** Delete keyboard-shim.ts entirely. Create keys-shim.ts from scratch using NUB types from `@napplet/nub-keys`.
 
-**What to specify instead:** The _observable behavior_ -- "a napplet MUST receive an error response when it attempts an operation for which it lacks the required capability" -- not the implementation mechanism.
+### Anti-Pattern 4: Defining KeyAction in @napplet/core
+**What:** Adding `KeyAction`, `KeyBinding` interfaces to core's types.ts.
+**Why tempting:** NappletGlobal lives in core, so putting the param types there seems natural.
+**Why bad:** Core is the minimal shared foundation. Adding domain-specific types (action registrations, key bindings) to core bloats it and sets a precedent. The relay NUB doesn't put `NostrFilter` in core (it was already there for historical reasons). New domain-specific types belong in their NUB package.
+**Instead:** NappletGlobal uses inline structural types. @napplet/nub-keys exports the canonical `KeyAction` and `KeyBinding` types.
 
-**Exception:** The ACL persistence format is currently LOCKED in SPEC.md Section 13.8. This is over-specified for a NIP. Two different shell implementations should NOT need to share ACL storage. Move this to the runtime reference.
+## Build Order (Dependency-Constrained)
 
-### Anti-Pattern 2: Defining Implementation-Specific Hooks
+Turborepo's `dependsOn: ["^build"]` handles this automatically, but the logical phases for development are:
 
-**What goes wrong:** Including `ShellAdapter`, `RuntimeAdapter`, `RelayPoolHooks`, `AuthHooks` etc. in the NIP.
+### Phase 1: NUB Type Package (@napplet/nub-keys)
+Create package scaffold + all message types. Leaf dependency on `@napplet/core` only. Can be built and type-checked independently.
 
-**Why it's wrong:** These are dependency injection interfaces for the @napplet/runtime package. They are an implementation choice, not a protocol requirement. A shell written in Rust, Go, or Python wouldn't use these TypeScript interfaces.
+**Rationale:** Types are the contract. Everything else imports from here.
 
-### Anti-Pattern 3: Over-Specifying Ephemeral Kind Numbers
+### Phase 2: Core Envelope Update (@napplet/core)
+Add `'keys'` to NubDomain and NUB_DOMAINS. Add NappletGlobal.keys type to types.ts.
 
-**What goes wrong:** Declaring specific kind numbers (29001, 29002, 29003, etc.) as THE kind numbers that all implementations must use.
+**Rationale:** Must happen before shim/SDK can reference the keys domain or window.napplet.keys type. Small, surgical change -- 2 lines in envelope.ts, ~15 lines in types.ts.
 
-**Why SPEC.md already acknowledges this:** Section 3.8 says "These kind numbers are implementation-specific. Other shell implementations MAY use different ephemeral kind ranges."
+### Phase 3: Shim Implementation (@napplet/shim)
+Delete keyboard-shim.ts, create keys-shim.ts, update index.ts wiring, add dependency.
 
-**What to do instead:** Define the _protocol patterns_ (request-response with correlation IDs, topic-prefixed routing) and note the reference implementation's kind numbers as one valid assignment. Or define them normatively if interoperability between different shell implementations and shared napplets matters (which it does -- a napplet built for one shell should work on another).
+**Rationale:** The shim is the real runtime implementation. Depends on phases 1-2 for types. This is the largest phase by code volume.
 
-**Recommendation:** Define the kind numbers normatively. A napplet that sends kind 29001 for signer requests needs to work on any conforming shell. This is the whole point of standardization.
+### Phase 4: SDK Re-exports (@napplet/sdk)
+Add keys namespace wrapper, type re-exports, KEYS_DOMAIN constant, add dependency.
 
-### Anti-Pattern 4: Reproducing NIP-01 or NIP-42 Content
+**Rationale:** SDK is a thin wrapper. Depends on phase 2 for NappletGlobal.keys type, phase 1 for re-export types. Small phase.
 
-**What goes wrong:** Re-explaining how NIP-01 filters work, how subscriptions work, or how NIP-42 AUTH events are structured.
+### Phase 5: Documentation + NIP-5D Update
+Update READMEs, NIP-5D reference to keys NUB.
 
-**Why it's wrong:** NIP conventions say "reference, don't reproduce." A reader implementing NIP-5C is expected to have read NIP-01.
-
-**What to specify instead:** Only the NIP-5C-specific additions to NIP-01/NIP-42 behavior. For example: "The shell acts as a NIP-01 relay over postMessage. AUTH uses kind 22242 per NIP-42 with the following additional tags: [type], [version], [aggregateHash]."
+**Rationale:** Always last -- documents what was built.
 
 ## Scalability Considerations
 
-| Concern | Single napplet | 10 napplets | 100 napplets |
-|---------|---------------|-------------|--------------|
-| Service discovery | One REQ, N EVENTs, EOSE | Same per napplet, cached | Same, cached |
-| AUTH handshake | ~4 messages | ~40 messages | ~400 messages |
-| Pre-AUTH queueing | 50 msg cap | 50 per napplet | 50 per napplet |
-| Window reference tracking | 1 Map entry | 10 Map entries | 100 Map entries |
-| Kind 29010 events | N services * 1 napplet | N * 10 | N * 100 -- still small |
-
-The capability model scales linearly. No combinatorial explosion. The service discovery response is the same regardless of how many capabilities exist -- just more EVENT messages before EOSE.
-
-## What the NIP Should NOT Contain (Move to Runtime Reference)
-
-1. **ACL persistence format** (Section 13.8) -- implementation detail
-2. **Ring buffer sizing and eviction** -- implementation detail
-3. **Topic-prefix routing internals** -- implementation detail (the topics themselves are normative)
-4. **Hook/adapter interfaces** -- TypeScript-specific DI pattern
-5. **Storage migration logic** (legacy format fallback) -- version-specific implementation
-6. **Audio management details** -- service-specific, not core protocol
-7. **Relay management details** -- service-specific
-8. **Window creation details** -- shell-specific UX
-9. **Keybinds protocol** -- application-specific
-10. **DM send protocol** -- application-specific
-
-## What the NIP MUST Contain
-
-1. **Transport definition** -- postMessage, sandbox policy, sender identification
-2. **Wire format** -- verb tables, message structure
-3. **AUTH handshake** -- REGISTER/IDENTITY/AUTH flow, key derivation, verification
-4. **Relay proxy contract** -- "shell acts as NIP-01 relay" with additions
-5. **Capability model** -- MUST/MAY split, discovery mechanism, requirement declaration
-6. **Standard capability definitions** -- each MAY capability's wire format
-7. **Napplet API namespace** -- `window.napplet.*` standard
-8. **Security model** -- threat model, guarantees, non-guarantees
-9. **Event kinds** -- normative kind number assignments
-10. **Minimal examples** -- napplet and shell
+| Concern | Current (6 NUBs) | At 10 NUBs | At 20+ NUBs |
+|---------|-------------------|------------|-------------|
+| NubDomain union size | 6 literals, manageable | Fine | Consider auto-generation from NUB packages |
+| Shim message listeners | Per-shim listeners (5 active) | Fine | Consider centralizing into single dispatcher |
+| SDK re-exports | ~80 types in one file | ~120 types | Split into per-domain re-export files |
+| Build time | Fast (<10s total) | Fine | Turborepo caching handles it |
 
 ## Sources
 
-### Protocol Specifications Analyzed
-
-- [NIP-01: Basic Protocol Flow](https://github.com/nostr-protocol/nips/blob/master/01.md) -- NIP format conventions, event kinds, filter matching
-- [NIP-07: window.nostr Capability](https://github.com/nostr-protocol/nips/blob/master/07.md) -- NIP defining a browser-side interface
-- [NIP-11: Relay Information Document](https://github.com/nostr-protocol/nips/blob/master/11.md) -- Capability advertisement pattern (supported_nips array)
-- [NIP-42: Authentication](https://github.com/nostr-protocol/nips/blob/master/42.md) -- MUST/SHOULD/MAY usage in NIPs (~1200 words)
-- [NIP-46: Nostr Connect](https://github.com/nostr-protocol/nips/blob/master/46.md) -- Complex NIP structure with required/optional methods
-- [NIP-5A: Nostr Sites](https://github.com/nostr-protocol/nips/blob/master/5A.md) -- Manifest format, referenced by NIP-5C
-- [NIP-91 PR #1671: Extension Negotiation](https://github.com/nostr-protocol/nips/pull/1671) -- Community rejection of interactive negotiation
-
-### Web Standards Analyzed
-
-- [RFC 2119: Key Words for Requirement Levels](https://datatracker.ietf.org/doc/html/rfc2119) -- MUST/SHOULD/MAY semantics
-- [W3C Permissions API](https://www.w3.org/TR/permissions/) -- Runtime capability query pattern
-- [WebExtensions manifest.json permissions](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions) -- Build-time declaration + runtime request pattern
-- [Language Server Protocol 3.17](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/) -- Bidirectional capability exchange during initialization
-- [Model Context Protocol 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) -- Capability objects with presence/absence semantics, layered requirements
-
-### Implementation References
-
-- IMAP ENABLE Extension (RFC 5161) -- Client declares which extensions to activate
-- WebRTC SDP Offer/Answer -- Heavyweight peer negotiation (anti-pattern for asymmetric relationships)
-
----
-*Architecture research for: v0.12.0 NIP-5C Specification Structure*
-*Researched: 2026-04-05*
+- Direct source code analysis of all 5 existing NUB packages (relay, signer, storage, ifc, theme)
+- Direct source code analysis of 4 shim implementations (relay-shim, state-shim, keyboard-shim, nipdb-shim)
+- Core dispatch infrastructure (dispatch.ts, envelope.ts, types.ts)
+- SDK re-export patterns (sdk/src/index.ts)
+- Package dependency graph (shim/package.json, sdk/package.json, pnpm-workspace.yaml, turbo.json)
