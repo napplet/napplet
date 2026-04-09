@@ -248,7 +248,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. All 6 message types from NUB-KEYS spec are exported as TypeScript interfaces extending NappletMessage: `KeysForwardMessage`, `KeysRegisterActionMessage`, `KeysRegisterActionResultMessage`, `KeysUnregisterActionMessage`, `KeysBindingsMessage`, `KeysActionMessage`
   3. Package exports a `DOMAIN` constant with value `'keys'` and a discriminated union type covering all keys messages
   4. `pnpm build` succeeds with @napplet/nub-keys producing a clean ESM bundle
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 88-01-PLAN.md — Create package scaffold, types, and barrel export
 
 ### Phase 89: Core Integration
 **Goal**: The core envelope infrastructure recognizes 'keys' as a first-class NUB domain
@@ -299,7 +301,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 88. NUB Type Package | 0/? | Not started | - |
+| 88. NUB Type Package | 0/1 | Planning complete | - |
 | 89. Core Integration | 0/? | Not started | - |
 | 90. Shim Implementation | 0/? | Not started | - |
 | 91. SDK Wrappers | 0/? | Not started | - |
