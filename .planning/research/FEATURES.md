@@ -1,220 +1,374 @@
-# Feature Landscape: Keys NUB
+# Feature Landscape: NUB-CONFIG
 
-**Domain:** Keyboard/keybinding delegation protocol for sandboxed iframes
-**Researched:** 2026-04-09
-**Confidence:** HIGH (existing codebase + well-understood domain patterns)
+**Domain:** Declarative per-extension configuration in sandboxed/hosted extension ecosystems
+**Researched:** 2026-04-17
+**Confidence:** HIGH (5 precedent ecosystems with first-party docs; consistent cross-ecosystem patterns)
+
+## Precedent Survey
+
+Five ecosystems were examined. Each has a different stance on "who owns the UI" and "who owns the schema," which directly informs what NUB-CONFIG can borrow, skip, or reject.
+
+| Ecosystem | Schema declared where | UI owner | Schema format | Secrets model | Deep-link to settings | Change notifications |
+|-----------|----------------------|----------|---------------|---------------|-----------------------|----------------------|
+| **VSCode** | `contributes.configuration` in `package.json` | Host (Settings editor) | JSON Schema subset (no `$ref`) | Separate `SecretStorage` API (OS keychain) | `workbench.action.openSettings` with `@ext:publisher.name` filter | `workspace.onDidChangeConfiguration` live events |
+| **Chrome MV3 `options_ui`** | n/a — HTML page | Extension (extension-rendered) | n/a — freeform HTML | Extension's own problem | `chrome.runtime.openOptionsPage()` | `chrome.storage.onChanged` live events |
+| **Chrome MV3 `managed_schema`** | `storage.managed_schema` → JSON file | Admin/policy (no end-user UI) | JSON Schema (object, `properties`, `$ref`, `additionalProperties`) | N/A (admin-supplied) | N/A | `chrome.storage.onChanged` |
+| **Raycast** | `preferences[]` in `package.json` | Host (Preferences editor) | Bespoke type enum (`textfield`, `password`, `checkbox`, `dropdown`, `appPicker`, `file`, `directory`) | `password` type → system Keychain on macOS | `openExtensionPreferences()` / `openCommandPreferences()` | **Snapshot only** — `getPreferenceValues()` at command launch |
+| **Figma** | `parameters[]` (quick-action args only) | Extension for settings; Host for quick-action args | Bespoke (`name`, `key`, `description`, `optional`, `allowFreeform`, `data`) | Extension's own problem | None documented | N/A (no persistent settings mechanism) |
+| **JetBrains** | `ConfigurableEP` extension point in `plugin.xml` | Host (Settings dialog) | Code-backed (plugin constructs UI component) | Plugin's own problem (`PasswordSafe` API separate) | `ShowSettingsUtil.showSettingsDialog(project, Configurable.class)` | Plugin implements `Configurable.apply()` |
+
+**Only VSCode and Chrome's `managed_schema` use JSON Schema as the wire contract.** Raycast uses a bespoke type enum; Figma has no declarative settings UI at all; JetBrains is code-first. This matches our decision to use JSON Schema — it's the most cross-ecosystem-portable choice and the two precedents that use it agree on structure.
+
+**Raycast is the closest structural match to NUB-CONFIG** (host-rendered UI, declarative-from-manifest, sandboxed extensions, `openExtensionPreferences` deep-link), but with a bespoke type enum instead of JSON Schema. We get the best of both: JSON Schema's ecosystem + Raycast's sandbox-host-UI-owns pattern.
+
+**Figma is the counter-example.** It deliberately has no settings mechanism; plugins render their own UI if needed. This confirms that "just let the napplet render a config iframe" is a coherent design choice — but it's the one we're explicitly rejecting because the whole point of NUB-CONFIG is consistency across napplets (users find settings in one place).
+
+## Consensus Across Ecosystems
+
+Fields that appear in every ecosystem that declares schemas (VSCode, Raycast, Chrome `managed_schema`). These are the irreducible core of "declarative config":
+
+| Field | VSCode | Raycast | Chrome `managed_schema` | Verdict |
+|-------|:------:|:-------:|:----------------------:|---------|
+| **type** (string/number/boolean/object/array) | ✓ | ✓ (via `type` enum) | ✓ | **Table stake** |
+| **default** | ✓ | ✓ | ✓ (via `description` convention) | **Table stake** |
+| **title / name / label** | ✓ | ✓ (`title`) | ✓ (`title`) | **Table stake** |
+| **description** | ✓ | ✓ | ✓ | **Table stake** |
+| **enum / dropdown options** | ✓ | ✓ (`dropdown.data`) | ✓ | **Table stake** |
+| **required** | implicit (default means optional) | ✓ | ✓ | **Table stake** |
+
+Fields that appear in two-of-three:
+
+| Field | VSCode | Raycast | Chrome | Verdict |
+|-------|:------:|:-------:|:------:|---------|
+| **min / max** (numeric bounds) | ✓ (`minimum`/`maximum`) | — | ✓ | Differentiator |
+| **minLength / maxLength / pattern** | ✓ | — | ✓ | Differentiator |
+| **format** (email, uri, date-time) | ✓ | — | ✓ | Differentiator |
+| **order** (display ordering) | ✓ (`order`) | ✓ (array order) | — | Differentiator (and trivial to implement) |
+| **deprecation message** | ✓ (`deprecationMessage`) | — | — | Differentiator (VSCode-specific, but highly valued per search results) |
+| **placeholder** | — | ✓ | — | Idiosyncratic |
+| **markdownDescription** | ✓ | — | — | Idiosyncratic |
+| **platform-specific defaults** | — | ✓ (`{ macOS: ..., Windows: ... }`) | — | Idiosyncratic (not our problem — napplets are web) |
+
+Sources: [VSCode contribution-points](https://code.visualstudio.com/api/references/contribution-points) · [Raycast manifest preferences](https://developers.raycast.com/information/manifest#preferences) · [Chrome managed_schema manifest](https://developer.chrome.com/docs/extensions/reference/manifest/storage)
 
 ## Table Stakes
 
-Features users expect. Missing = protocol feels incomplete or broken.
+Features users expect. Missing = NUB-CONFIG feels incomplete or broken.
 
 | Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Forward unbound keystrokes to shell | Shell hotkeys (workspace switch, command palette) are dead when iframe has focus. This is the entire reason the keyboard-shim.ts exists. Without it the shell feels broken. | Low | Already implemented as `keyboard.forward`. Becomes `keys.forward`. |
-| Suppress bound keys from forwarding | If a napplet registers Ctrl+S for "save draft", that keystroke must NOT also trigger the shell's Ctrl+S handler. Dual-fire is the #1 complaint in iframe keyboard delegation. | Med | Shell maintains a per-napplet bound-key set. Shim checks before forwarding. |
-| Action registration by napplet | Napplet declares named actions with suggested default bindings. Shell owns the actual binding. This is how VS Code extensions, Chrome extensions, Zed, and Electron all work. | Med | `keys.registerAction` message. Shell ACKs with actual binding (may differ from suggestion). |
-| Text input suppression | Forwarding keystrokes while the user is typing in an `<input>` or `<textarea>` is catastrophic -- shell interprets typing as hotkeys. | Low | Already implemented in keyboard-shim.ts via `isTextInput()`. Carry forward. |
-| Modifier-only suppression | Bare Ctrl/Alt/Shift/Meta presses without a companion key are noise. No shell hotkey system triggers on a lone modifier. | Low | Already implemented via `isModifierOnly()`. Carry forward. |
-| Shell notifies napplet of focus state | Napplet needs to know when it gains/loses focus to manage local keyboard listeners. Without this, napplets keep processing keys when backgrounded. | Low | `keys.focused` / `keys.blurred` push messages from shell. Maps to existing `wm:focused-window-changed` topic. |
-| Cleanup on napplet unload | When a napplet iframe is destroyed, its registered actions and bound keys must be cleaned up. Leaked registrations cause ghost shortcuts. | Low | Shell handles this via existing MessageEvent.source identity tracking. |
+|---------|--------------|:----------:|-------|
+| **Declare schema in NIP-5A manifest** | Already decided. VSCode `package.json`, Raycast `package.json`, Chrome `managed_schema` all declare config at build time. Manifest-declared is the authoritative path. | LOW | vite-plugin injects schema into manifest JSON at build. |
+| **Runtime schema declaration (escape hatch)** | Already decided. Napplets built without the vite-plugin (or hand-rolled) need a runtime call. No precedent has this — they're all manifest-only — but sandboxed iframe apps need the escape hatch because "run the napplet author's build tooling" is not always possible. | LOW | `config.registerSchema({ schema })` — shell validates and merges. |
+| **Core JSON Schema types: `string`, `number`, `boolean`, `object`, `array`** | Every schema-driven ecosystem supports all five. `integer` is treated as a special `number`. | LOW | JSON Schema draft-07 natively. Shell must validate each type before delivery (spec MUST). |
+| **`default` per property** | Every ecosystem. Without defaults, napplets ship in broken state until user visits settings. Shell MUST apply declared defaults (already a locked decision). | LOW | Pure JSON Schema. Shell fills in missing keys with declared defaults. |
+| **`title` + `description`** | Every ecosystem. Title is the UI label; description is the hover/tooltip. Without these, the settings UI is unlabeled squares. | LOW | Standard JSON Schema keywords. |
+| **`enum` with labels for dropdowns** | Every ecosystem. Users don't type `"foo-bar-baz"` — they pick from a list. `enum: ["a", "b"]` + `enumDescriptions: ["Option A", "Option B"]` is the VSCode convention. | LOW | JSON Schema `enum` + VSCode-style `enumDescriptions`. Optional: `enumItemLabels` for display-distinct-from-description. |
+| **Shell validates values BEFORE delivering to napplet** | Already a locked MUST. Every precedent does this — VSCode rejects settings that fail schema, Chrome excludes non-conforming policy values, Raycast won't deliver until required fields are filled. Napplet should never receive an unvalidated value. | MED | Shell runs schema validator (ajv or similar) on each value before `config.values` push. |
+| **Defaults applied by shell** | Already a locked MUST. Napplet receives fully-populated config object — missing keys filled from `default`, user overrides merged on top. | LOW | Standard defaulting semantics. |
+| **Storage scoped by (dTag, aggregateHash)** | Already a locked MUST. Matches NUB-STORAGE scoping. Different napplet types and versions have isolated config. | LOW | Shell concern; existing scoping infrastructure. |
+| **Shell is sole writer; napplet reads only** | Already a locked decision. Raycast, VSCode, JetBrains all enforce this — extension code cannot directly write to settings; only the user via the Settings UI. Napplets cannot mutate config over the wire. | LOW | Wire surface has no `config.set` message. Only `config.get`, `config.subscribe`, `config.openSettings`. |
+| **`config.get()` — initial snapshot** | Raycast's `getPreferenceValues()` pattern. Sometimes napplets need a one-shot read (e.g., during a compute, not as a live subscription). | LOW | Correlation-ID request/result. Returns validated, defaulted config object. |
+| **`config.subscribe()` — live updates (snapshot + push)** | Already a locked decision. VSCode's `onDidChangeConfiguration`, Chrome's `storage.onChanged`. Without live updates, a user changing a setting requires a napplet reload, which is ugly in a sandboxed iframe. | MED | Subscription on napplet side; shell pushes `config.values` on any change. |
+| **`config.values` — shell→napplet push envelope** | The push half of subscribe-live. Shell delivers full validated config object (not diffs) on any change. | LOW | One message type. Matches theme NUB inverse-push pattern. |
+| **`config.openSettings({ section? })` — deep-link** | Raycast (`openExtensionPreferences`), Chrome (`chrome.runtime.openOptionsPage`), VSCode (`workbench.action.openSettings @ext:id`), JetBrains (`showSettingsDialog`). **Every schema-driven precedent has this.** Napplet can say "you need to configure X" and take the user to the right place. | LOW | One wire message. Shell opens its own settings UI, optionally focused on a named section. |
+| **`shell.supports('config')` capability probe** | All NUBs. Napplet checks before depending on config. Shells without NUB-CONFIG must signal absence, so napplet can fall back to built-in defaults. | LOW | Existing `shell.supports()` infra. |
 
 ## Differentiators
 
-Features that set the keys NUB apart from ad-hoc keyboard forwarding. Not expected, but high value.
+Features that set NUB-CONFIG apart from ad-hoc per-napplet settings. Not expected, but high value. Candidates for MAY/SHOULD (potentialities) in the spec.
 
 | Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Action descriptors with human labels | Actions carry `label` and optional `description` so the shell can render a command palette or keybinding settings UI showing napplet-contributed actions. | Low | Mirrors VS Code `contributes.keybindings` with `command` + `title`. Zero runtime cost. |
-| Shell-assigned bindings (suggested vs actual) | Napplet suggests `Ctrl+S`, shell may remap to `Ctrl+Shift+S` to avoid conflict. Napplet receives the actual binding in the registration ACK. This is how Chrome extensions and VS Code both handle it. | Med | `keys.registerAction.result` returns `{ binding: 'Ctrl+Shift+S' }`. Napplet can display the correct shortcut in UI. |
-| Binding conflict notification | Shell tells napplet when its suggested binding conflicts with a shell-level or other-napplet binding. Napplet can adapt its UI or suggest an alternative. | Low | `keys.registerAction.result` with `conflict: true` and `binding` showing what the shell actually assigned. |
-| Keystroke capture mode | Napplet requests "send me ALL keystrokes for N seconds" for custom keybinding configuration UIs. Shell temporarily suspends its own hotkey processing for that napplet. | Med | `keys.capture.start` / `keys.capture.end` + `keys.capture.key` push events. Maps directly to existing `keybinds:capture-start` / `keybinds:capture-end` topics. |
-| Action triggered notification (shell -> napplet) | When user presses a bound key, shell dispatches `keys.action` to the napplet with the action name. Napplet does not need to listen for raw keystrokes at all for its registered actions. | Med | This is the core value: napplet declares intent, shell handles dispatch. Eliminates napplet-side keyboard listeners for registered shortcuts. |
-| Batch registration | Register multiple actions in a single message to avoid message-per-action overhead during init. | Low | `keys.registerActions` (plural) with array payload. Single ACK. |
-| Context-scoped actions | Action is active only in certain napplet states (e.g., "editor focused", "modal open"). Napplet updates its context, shell only dispatches matching actions. | High | Mirrors VS Code's `when` clause. Adds significant complexity. Better as a future extension. |
+|---------|-------------------|:----------:|-------|
+| **`x-napplet-secret: true` property marker** | Password-type preferences in Raycast map to system Keychain on macOS. VSCode has a completely separate `SecretStorage` API (OS keychain — macOS Keychain, Windows Credential Manager, Linux Keyring). **We cannot use OS keychain from a web shell** — browsers don't have that access — but we CAN: (a) mark the field as secret in the UI (password input, never echoed), (b) keep the value out of `config.values` pushes unless the napplet explicitly requests it via a correlated `config.getSecret(key)` call, (c) redact from logs. Already a locked potentiality. | MED | JSON Schema extension (already decided). Shell decides storage strength; spec mandates UI masking + log redaction minimum. See "Secret Strength Gradient" section below. |
+| **`x-napplet-section: "name"` for grouping** | VSCode has implicit sectioning via dotted setting keys (`editor.fontSize` → "Editor" group). Raycast just renders flat. For napplets with many settings, grouping is UX-critical. Already a locked potentiality. | LOW | Extension that the shell uses to render section headers. Napplet references the same section name in `openSettings({ section })`. |
+| **`x-napplet-order: N` for explicit ordering** | VSCode has `order`. Array-declaration order is ambiguous once schemas are merged/split. Already a locked potentiality. | LOW | Trivial. |
+| **`$version` field for migration signaling** | VSCode has no migration API — best practice is "read old setting, migrate, `deprecationMessage` the old one". Migration is hard and bespoke everywhere. Our locked decision is: napplet declares `$version` in schema; shell resolves migration entirely (reads old values, transforms, writes new, napplet never sees the old shape). Already a locked potentiality. | MED | Wire surface exposes `$version` in the schema; migration UX is shell-resolved. Shell's problem — spec only defines the signal. |
+| **`format` keyword (email, uri, date-time, regex)** | VSCode supports. Chrome `managed_schema` supports. JSON Schema draft-07 native. Lets the shell render richer inputs (date picker vs text, email field with @-validation). Shell MAY render richer inputs; MUST at least accept standard JSON Schema validation. | MED | Shell renders best-effort UI; validation is on shell. |
+| **`minimum`/`maximum`/`minLength`/`maxLength`/`pattern`** | Standard JSON Schema. Shell MUST enforce these before delivery (same validation pass as type check). | LOW | Trivial — validator handles it. |
+| **`deprecationMessage` on properties** | VSCode has this. Community search results flag it as "your friend" for migration. Not strictly needed for v1 since `$version` handles shape migrations, but useful for soft-deprecating options the napplet author wants to phase out. | LOW | Add as a SHOULD in spec — shells SHOULD display the deprecation message next to the field. |
+| **`markdownDescription` (vs plain `description`)** | VSCode has both. Lets schemas embed links to docs, code snippets. Shell MAY render markdown; MUST fall back to plain text. | LOW | Idiosyncratic to VSCode but cheap to support. |
+| **Per-section titles (not just keys)** | `x-napplet-section: "advanced"` is just a key; UX wants "Advanced Settings". One approach: `x-napplet-section: { id: "advanced", title: "Advanced Settings" }`. Alternative: derive the title from the first property in the section, or let the shell generate titles from the ID. | LOW | Spec decision. Simplest: section is a bare string ID; shell title-cases or napplet supplies full object. |
+| **Batch schema registration (one message)** | Already covered by the single manifest or single `registerSchema` call — not N individual calls. Whole-schema replace semantics. | LOW | No separate message needed; the register call IS the batch. |
+| **`config.get(key)` — single-key read** | Some precedents (Raycast) return the whole object. VSCode lets you `get('editor.fontSize')` for a single value. For napplets, fetching the whole config and picking one key is cheap (configs are small), so single-key read is convenience, not necessity. | LOW | Spec could require either "return whole object" or allow "return key or whole object"; recommend whole-object for simplicity. |
+| **Context/when-clause visibility (conditional fields)** | VSCode `menus` have `when` clauses; **VSCode `configuration` entries do NOT.** Idea: field A is visible only when field B has a certain value. None of the precedents support this for configuration. Too complex for v1. | HIGH | Defer — none of the precedents we studied actually support this for config. |
+
+## Secret Strength Gradient
+
+NUB-CONFIG lives in a web shell (browser), not a native app. This limits our secret-handling options compared to Raycast/VSCode. Strength tiers, from weakest to strongest, that a shell implementation could offer:
+
+| Tier | Mechanism | Strength | Feasibility in web shell |
+|------|-----------|----------|------------------------|
+| **0: Just-masked** | UI renders `<input type="password">`; value still in normal shell storage. Not echoed in settings UI after entry. | Weakest | Trivially feasible. **Spec floor — MUST.** |
+| **1: Kept out of logs** | Shell's debug/inspect views redact secret fields. Napplet never sees the secret in bulk `config.values` pushes — must request via `config.getSecret(key)` (correlated, one-off). | Weak+ | Feasible. **Spec SHOULD.** |
+| **2: Encrypted at rest** | Shell encrypts the value in localStorage/IndexedDB with a user-derived key (passphrase, WebAuthn, etc.). | Medium | Feasible but requires shell-level key management. **Spec MAY.** |
+| **3: OS-keychain-backed** | Value lives in macOS Keychain / Windows Credential Manager / Linux Keyring. Web shells cannot access these directly. | Strong | **Not feasible for browser-only shells.** A native host shell (Electron, Tauri, Rust binary) could offer this; a pure-web shell cannot. **Spec MAY for shells that can.** |
+
+**Recommendation for v1:** Spec mandates Tier 0 (masked UI) as floor. Recommends Tier 1 (redacted logs, napplet must opt in to receiving secret via getSecret). Tiers 2 and 3 are shell-implementation choices. `x-napplet-secret: true` is the signal; strength is shell-decided.
+
+Sources: [Raycast security](https://developers.raycast.com/information/security) · [VSCode SecretStorage](https://vscode-api.js.org/interfaces/vscode.SecretStorage.html) · [How to use SecretStorage in VSCode extensions](https://dev.to/kompotkot/how-to-use-secretstorage-in-your-vscode-extensions-2hco)
 
 ## Anti-Features
 
 Features to explicitly NOT build. Tempting but wrong for this protocol.
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Napplet-side keybinding resolution | Napplet should NOT resolve which action a keystroke maps to. That is the shell's job. If napplets resolve bindings locally, shells cannot remap, and conflicts are invisible. | Napplet registers named actions. Shell resolves keystrokes to actions and dispatches `keys.action`. |
-| Synthetic KeyboardEvent injection | Shells should NOT inject fake KeyboardEvent objects into the napplet iframe. This is a sandbox violation pattern (requires allow-same-origin), fragile across browsers, and creates untrusted events that scripts may reject. | Use typed envelope messages (`keys.action`, `keys.forward`). Never synthesize DOM events across the iframe boundary. |
-| Global hotkey registration | Napplets should NOT register OS-level global shortcuts (like Electron's `globalShortcut`). Napplets are web content in a sandbox -- they have no business claiming system-wide keyboard real estate. | All bindings are scoped to the shell. Shell decides if any napplet shortcuts become global. |
-| Full keymap management by napplet | Napplets should NOT be able to read, list, or modify the shell's full keymap. That is a shell configuration concern. Exposing it creates a privacy/security surface. | Napplet can only register its own actions and receive its own bindings. No shell keymap introspection. |
-| Raw `keyCode`/`which` in wire format | Deprecated APIs. `keyCode` and `which` are inconsistent across browsers and keyboard layouts. The existing shim correctly uses `key` and `code`. | Use `key` (logical key) + `code` (physical key) from KeyboardEvent. Both are current standard. |
-| `keyup`/`keypress` forwarding | Only `keydown` matters for hotkey dispatch. `keyup` adds message volume with no value. `keypress` is deprecated. | Forward `keydown` only. If a future NUB needs `keyup` (e.g., for games), that is a separate "input" NUB, not keys. |
-| Automatic `preventDefault()` in napplet | The shim should NOT call `preventDefault()` on forwarded keystrokes. The napplet may still need the default behavior (e.g., Ctrl+C for copy). Only the shell decides if a key is consumed. | Forward the keystroke, let the shell decide. If the shell consumes it, the napplet's default behavior is irrelevant (it happened in a different frame). |
-| Per-napplet keybinding persistence | The keys NUB should NOT persist keybinding customizations. That is shell state. If the user remaps a napplet's Ctrl+S to Ctrl+Shift+S, the shell stores that mapping, not the napplet. | Shell owns persistence. Napplet re-registers actions on every load. Shell applies its stored overrides. |
-| KEYBINDS_GET / KEYBINDS_ALL / KEYBINDS_UPDATE / KEYBINDS_RESET | These 4 legacy TOPICS expose shell keymap CRUD to napplets. This is the wrong trust direction -- napplets register actions, they do not manage the shell's keymap. | Drop or supersede these topics. Napplets register actions; shells manage bindings. The `keys.registerAction.result` message tells the napplet its actual binding. |
+| Anti-Feature | Why Requested | Why Problematic | Alternative |
+|--------------|---------------|-----------------|-------------|
+| **Napplet-rendered settings iframe** | Figma's model — plugins own their settings UI. "Flexible", "each napplet can theme/brand/layout however they want." | Violates the entire value proposition of NUB-CONFIG: users have ONE place to find settings, with consistent UX. Also puts the settings UI behind the same sandboxed iframe that napplets draw in, meaning secrets flow to the napplet. Spec becomes pointless — there's no wire contract to validate. | Shell renders the UI from the schema. Napplet calls `openSettings` to deep-link. |
+| **Napplet-writable config (`config.set`)** | "It's annoying to tell users to open settings for a simple change." | Already a locked decision (shell is sole writer). If napplets can write, the schema becomes advisory, not enforced. Napplets can bypass validation, trigger storage quota attacks, write secrets into non-secret fields. | Napplet calls `config.openSettings({ section })`. User makes the change. Napplet receives update via `config.values` push. |
+| **`$ref` / `definitions` (schema references)** | "JSON Schema supports it." Some big schemas reuse types. | Chrome `managed_schema` allows it, but VSCode explicitly bans it: "configuration schemas must be self-contained." Spec complexity explodes — $ref resolution, cycle detection, cross-schema references. Every shell implementation needs a full JSON Schema $ref resolver. | Napplet inlines types. Schemas are small (dozens of fields, not hundreds). |
+| **Full JSON Schema draft 2020-12 support** | "We should support the latest spec." | Features like `if`/`then`/`else`, `unevaluatedProperties`, `dependentSchemas`, `$dynamicRef` add enormous validator complexity and UI-generation complexity. No precedent uses them for extension config. | Draft-07 subset. Specifically call out what IS supported (types, default, enum, format, min/max, minLength/maxLength, pattern, `$version`, `x-napplet-*`); everything else is best-effort or ignored. |
+| **Arbitrary nested `object` / `array` depth** | "Users might want structured config." | UI generation for deeply-nested schemas is a research problem (how do you render `array<object<array<object>>>`?). VSCode gives up and shows JSON for complex types. Raycast doesn't allow nesting at all. | Spec allows top-level primitives + one level of `object` or `array`. Shell MAY render deep nesting but MUST render JSON fallback. |
+| **Napplet-specified UI widget hints (`ui:widget: "color-picker"`)** | react-jsonschema-form pattern. "I want my color field to render as a color picker, not a text input." | Turns the spec into a UI framework. Shell implementations then have to support (or ignore) every widget name napplets ship. Becomes an ecosystem liability. | Use JSON Schema `format: "color"` (draft-07 doesn't have it, but we can add as a SHOULD convention). Shell picks the widget. Napplets don't dictate UI. |
+| **Live two-way binding between napplet and settings UI** | "I want to see my typing in the settings UI reflected live in the napplet." | This already happens via `config.values` push after commit. Streaming uncommitted keystrokes creates validation flicker (shell would push invalid intermediate states) and storage churn. | Shell commits on blur / enter / debounce; pushes `config.values` once per commit. |
+| **Napplet-defined validation functions (JS code in schema)** | "JSON Schema can't express my custom validation." | Executing napplet-supplied validation code ON THE SHELL is a sandbox violation (shell is trusted; napplet is not). Executing on the napplet means shell can't validate before delivery. Breaks the sole-writer model. | Napplet describes validation with JSON Schema primitives. If truly impossible, napplet validates its own inputs and presents an error in the settings UI via `openSettings` + its own logic — out of scope for v1. |
+| **Config inheritance / layering (user > workspace > machine)** | VSCode has this (application/machine/window/resource/language scopes). Useful for "workspace-specific napplet config." | No "workspace" concept in Nostr-sandboxed iframes. Our scope is `(dTag, aggregateHash)` — per napplet instance. Adding layering now designs for a multi-dimensional space we don't have. | Single scope per napplet. If layering is ever needed, add a `scope` potentiality later. |
+| **OS-keychain as MUST for secret fields** | "Secrets should be encrypted at rest in hardened storage." | Unimplementable in browser-only shells. Would block web-shell conformance. | Tiered strength: Tier 0 (masked) MUST, Tier 1 (redacted) SHOULD, Tier 2/3 MAY. See Secret Strength Gradient. |
+| **Migration-as-napplet-code (shell invokes napplet's migrate fn)** | "Napplet knows best how to migrate its own data." | Shell would have to invoke napplet code, wait for response, then commit. Slow, fragile, creates a trust-inversion (shell depends on napplet behavior). Already decided: migration is shell-resolved from `$version` signal. | `$version` in schema + shell-defined migration hooks. Napplet never sees old-shape values. |
 
 ## Feature Dependencies
 
 ```
-Text input suppression ─────────────────────────────┐
-Modifier-only suppression ──────────────────────────┤
-                                                    v
-Forward unbound keystrokes (keys.forward) ──> Smart forwarding
-                                                    ^
-Suppress bound keys ────────────────────────────────┘
-                                                    |
-                                                    | (requires knowing what is bound)
-                                                    v
-Action registration (keys.registerAction) ──> Shell bound-key set
-        |                                           |
-        v                                           v
-Action triggered (keys.action) <──── Shell keystroke resolution
-        |
-        v
-Shell-assigned bindings (result.binding) ──> Napplet UI shortcut display
+Schema declaration (manifest OR runtime register)
+    │
+    ├──> Shell-side validator (must type-check, range-check, pattern-check)
+    │       │
+    │       └──> Validation-before-delivery (MUST guarantee)
+    │               │
+    │               ├──> config.get — one-shot request
+    │               │
+    │               └──> config.subscribe + config.values — live push
+    │
+    ├──> x-napplet-secret marker
+    │       │
+    │       └──> Secret strength tiers (requires schema to know WHICH fields are secret)
+    │               │
+    │               └──> Optional: config.getSecret(key) correlated read
+    │                       (gated by: shell chose not to include secrets in config.values)
+    │
+    ├──> x-napplet-section / x-napplet-order
+    │       │
+    │       └──> config.openSettings({ section }) — deep-link uses section IDs
+    │
+    ├──> $version in schema
+    │       │
+    │       └──> Shell-resolved migration (napplet never sees old values)
+    │
+    └──> Defaults applied (MUST guarantee)
+            │
+            └──> Napplet always receives a fully-populated validated config
 
-Focus notification (keys.focused/blurred) ──> (independent, no deps)
+shell.supports('config') ──> (independent; gate for napplet opt-in)
 
-Capture mode (keys.capture.*) ──> (depends on action registration for "what to rebind")
+Vite-plugin schema injection ──> (depends on: schema in napplet source)
+    │
+    └──> NIP-5A manifest has `config` field
+            │
+            └──> Shell reads from manifest at napplet load (authoritative)
+
+Runtime config.registerSchema ──> (escape hatch; replaces or augments manifest schema)
 ```
 
-## Message Type Inventory
+### Dependency Notes
 
-Based on existing NUB patterns (domain.action envelope format), the keys NUB needs:
+- **Secret marker → secret strength:** `x-napplet-secret: true` is useless without at least Tier 0 UI masking. Shell must know which fields are secret to redact them, mask the input, and (optionally) exclude them from `config.values` pushes.
+- **Section marker → openSettings deep-link:** Without `x-napplet-section`, `openSettings({ section })` has nothing to scroll/focus to. If we ship section support, we ship deep-link section support.
+- **Validation → delivery:** The MUST-guarantee that napplet receives validated values is impossible without a schema validator running on the shell before the `config.values` push. This is the biggest implementation cost on the shell side.
+- **$version → migration:** The signal has no teeth without shell-side migration logic. Spec says "napplet never sees old-shape values"; if shell doesn't implement migration, a version bump would deliver broken values. Shell MAY keep old values in storage; MUST NOT push un-migrated values to napplet.
+- **Vite-plugin is not required:** Runtime `config.registerSchema` is the escape hatch. But manifest-declared is faster (schema known at napplet load, not after first message) and is the intended primary path.
 
-### Napplet -> Shell
+## MVP Definition
 
-| Message Type | Purpose | Has Correlation ID |
-|-------------|---------|-------------------|
-| `keys.registerAction` | Register a named action with suggested binding | Yes |
-| `keys.registerActions` | Batch register multiple actions | Yes |
-| `keys.unregisterAction` | Remove a registered action | No |
-| `keys.forward` | Forward an unbound keystroke to the shell | No |
-| `keys.capture.start` | Request capture mode (all keys forwarded) | Yes |
-| `keys.capture.end` | End capture mode | No |
+### Launch With (v1) — spec + package + integration
 
-### Shell -> Napplet
+**Schema wire contract:**
+- [ ] JSON Schema draft-07 (subset)
+- [ ] Types: `string`, `number` (incl. integer), `boolean`, `object` (top-level only), `array` (of primitives)
+- [ ] Keywords: `default`, `title`, `description`, `enum`, `enumDescriptions`
+- [ ] Constraints: `minimum`, `maximum`, `minLength`, `maxLength`, `pattern`
+- [ ] `$version: number` for migration signaling (shell-resolved)
+- [ ] Extensions: `x-napplet-secret`, `x-napplet-section`, `x-napplet-order`
 
-| Message Type | Purpose | Has Correlation ID |
-|-------------|---------|-------------------|
-| `keys.registerAction.result` | ACK with actual binding, conflict flag | Yes |
-| `keys.registerActions.result` | Batch ACK | Yes |
-| `keys.action` | Shell dispatches a bound action to the napplet | No |
-| `keys.capture.start.result` | ACK/NACK capture mode | Yes |
-| `keys.capture.key` | Keystroke during capture mode | No |
-| `keys.focused` | Napplet gained focus | No |
-| `keys.blurred` | Napplet lost focus | No |
+**Wire messages (6 total):**
+- [ ] `config.registerSchema` (napplet → shell, runtime escape hatch) — correlation ID, ACKs with validated-schema result
+- [ ] `config.get` (napplet → shell) — correlation ID, returns current validated+defaulted config
+- [ ] `config.subscribe` (napplet → shell) — no correlation ID, starts the push stream
+- [ ] `config.unsubscribe` (napplet → shell) — no correlation ID, stops the push stream
+- [ ] `config.values` (shell → napplet) — push of full config object on change or after subscribe
+- [ ] `config.openSettings` (napplet → shell) — optional `section` payload
 
-### Wire Format Details
+**Shell guarantees (MUST):**
+- [ ] Values validate before any `config.values` delivery
+- [ ] Declared defaults applied to missing keys
+- [ ] Storage scoped by `(dTag, aggregateHash)`
+- [ ] Napplet cannot mutate config over the wire (no `config.set` message exists)
+- [ ] Tier 0 secret handling: fields with `x-napplet-secret: true` rendered with masked UI
 
-**keys.forward** (evolved from current `keyboard.forward`):
-```typescript
-{
-  type: 'keys.forward';
-  key: string;     // KeyboardEvent.key (logical key value)
-  code: string;    // KeyboardEvent.code (physical key position)
-  ctrl: boolean;
-  alt: boolean;
-  shift: boolean;
-  meta: boolean;
-}
-```
+**Shell SHOULDs:**
+- [ ] Tier 1 secret handling: redact secret-marked fields from logs/debug surfaces
+- [ ] Display `deprecationMessage` next to fields when present
+- [ ] Group fields by `x-napplet-section`
+- [ ] Sort within sections by `x-napplet-order`
+- [ ] `openSettings({ section })` scrolls/focuses to the named section
 
-**keys.registerAction**:
-```typescript
-{
-  type: 'keys.registerAction';
-  id: string;           // correlation ID
-  action: string;       // action name, e.g. 'save-draft'
-  label: string;        // human-readable, e.g. 'Save Draft'
-  binding?: string;     // suggested binding, e.g. 'Ctrl+S'
-  description?: string; // optional longer description
-}
-```
+**Shell MAYs:**
+- [ ] Tier 2 or Tier 3 secret handling
+- [ ] `markdownDescription` rendered as markdown
+- [ ] `format` hints (email, uri, date-time) rendered as richer input widgets
+- [ ] Nested `object` beyond one level (fall back to JSON input)
+- [ ] Store values using NUB-STORAGE internally (implementation detail)
 
-**keys.action** (shell dispatches to napplet):
-```typescript
-{
-  type: 'keys.action';
-  action: string;  // the registered action name
-}
-```
+**Package surface (`@napplet/nub-config`):**
+- [ ] Types: message interfaces, schema types, `NappletConfigSchema`, `ConfigValues`
+- [ ] Shim installer: `installConfigShim()` — handles `config.values` pushes, manages subscribers
+- [ ] SDK: `config.get()`, `config.subscribe(cb)`, `config.openSettings({ section? })`, `config.registerSchema(schema)`
+- [ ] Vite-plugin extension: reads schema from a conventional location (e.g., `config.schema.json` in napplet root, or `napplet.config.ts` export), injects into NIP-5A manifest
 
-## MVP Recommendation
+**Core/shim/SDK integration:**
+- [ ] `'config'` added to `NubDomain` union + `NUB_DOMAINS` array
+- [ ] `window.napplet.config` namespace on `NappletGlobal`
+- [ ] `shell.supports('config')` / `shell.supports('nub:config')` probing works
 
-Prioritize (Phase 1 -- table stakes):
-1. **keys.forward** -- rename from keyboard.forward, same logic
-2. **keys.registerAction** + **keys.registerAction.result** -- core bidirectional contract
-3. **keys.action** -- shell dispatches bound actions to napplet
-4. **Smart forwarding** -- suppress registered bindings from keys.forward
-5. **keys.focused / keys.blurred** -- focus state notifications
+**Docs:**
+- [ ] `nub-config` README
+- [ ] NIP-5D "Known NUBs" table row
+- [ ] Core/shim/SDK README updates
+- [ ] napplet/nubs#13 draft spec
 
-Defer:
-- **Capture mode** (keys.capture.*): Real value, but no current consumer. Add when a napplet needs a keybinding configuration UI.
-- **Batch registration** (keys.registerActions): Convenience, not correctness. Add when init performance matters.
-- **Context-scoped actions**: High complexity (VS Code's when-clause is thousands of lines). Only add if a real napplet needs conditional shortcuts.
-- **keys.unregisterAction**: Rare use case. Shell already cleans up on iframe destroy. Add if napplets need dynamic action sets.
+### Add After Validation (v1.x)
 
-## Relationship to Existing Code
+Features that make v1 better but aren't required for the protocol to function.
 
-### Replaces
+- [ ] **`config.getSecret(key)` one-off correlated read** — trigger: a real napplet needs to retrieve an API key without having it pushed on every `config.values` cycle. Design is straightforward once Tier 1 exists.
+- [ ] **Richer `format` support** — trigger: the first napplet that wants a date picker or color picker.
+- [ ] **Markdown description rendering** — trigger: a napplet author asks for links in descriptions.
+- [ ] **Configuration change diffs** (push only changed keys instead of full object) — trigger: configs grow large enough that full-object pushes are wasteful. Not a concern at v1 scale.
+- [ ] **Per-command / per-instance config layering** (if multi-instance napplets emerge) — trigger: a napplet type that spawns multiple instances with per-instance settings.
+- [ ] **`examples` keyword** (from JSON Schema) — trigger: authors want to show example values without making them defaults.
 
-| Existing | Replacement | Notes |
-|----------|-------------|-------|
-| `keyboard.forward` message type | `keys.forward` | Same payload, new domain prefix |
-| `installKeyboardShim()` in shim | Keys NUB shim integration | Shim installs keys NUB listener, not standalone keyboard-shim |
-| `keyboard-shim.ts` file | Keys NUB shim code (inline or separate file) | `isTextInput()` and `isModifierOnly()` logic preserved |
-| `hotkey:forward` ACL capability (deleted in v0.19.0) | Shell-side keys NUB ACL | Shell decides per-napplet keyboard policy |
+### Future Consideration (v2+)
 
-### Supersedes (TOPICS to drop or supersede)
+Features that require protocol changes or ecosystem maturity.
 
-| Topic | Keys NUB Replacement |
-|-------|---------------------|
-| `keybinds:get-all` | No replacement. Napplets do not introspect the shell keymap. |
-| `keybinds:all` | No replacement. |
-| `keybinds:update` | `keys.registerAction` (napplet registers, shell decides binding) |
-| `keybinds:reset` | No replacement. Shell manages its own keymap lifecycle. |
-| `keybinds:capture-start` | `keys.capture.start` (deferred) |
-| `keybinds:capture-end` | `keys.capture.end` (deferred) |
+- [ ] **Encrypted-at-rest secrets (Tier 2)** — requires key management story in the shell (passphrase prompt, WebAuthn?). Non-trivial. Defer until a real use case.
+- [ ] **Native-shell OS-keychain secrets (Tier 3)** — only for shells that can reach system keychains. Not web.
+- [ ] **Schema conditional visibility (`when`-style clauses)** — no precedent supports it for config. Revisit if a napplet author makes a strong case.
+- [ ] **Multi-scope layering** (user/workspace/machine) — only if multi-tenancy or workspaces become a thing.
+- [ ] **Napplet-to-napplet config sharing** — explicitly out of scope; cross-napplet isolation is a security property.
+- [ ] **Schema import / $ref resolution** — explicit anti-feature at v1.
 
-### Integrates With
+## Feature Prioritization Matrix
 
-| Existing Infrastructure | How Keys NUB Uses It |
-|------------------------|---------------------|
-| `NappletMessage` base type | All keys.* messages extend it |
-| `NubDomain` union | Add `'keys'` to the union |
-| `NUB_DOMAINS` array | Add `'keys'` to the array |
-| `shell.supports('keys')` / `shell.supports('nub:keys')` | Napplet checks before registering actions |
-| `handleEnvelopeMessage()` in shim | Route `keys.action`, `keys.focused`, `keys.blurred` to local handlers |
-| `MessageEvent.source` identity | Shell tracks which napplet registered which actions |
+| Feature | User Value | Implementation Cost | Priority |
+|---------|:----------:|:-------------------:|:--------:|
+| JSON Schema draft-07 subset | HIGH | LOW | **P1** |
+| `default` + defaults applied | HIGH | LOW | **P1** |
+| `title`, `description`, `enum`, `enumDescriptions` | HIGH | LOW | **P1** |
+| `minimum`/`maximum`/`minLength`/`maxLength`/`pattern` validation | HIGH | LOW | **P1** |
+| Shell validates before delivery | HIGH | MED | **P1** |
+| `config.get` + `config.subscribe` + `config.values` + `config.unsubscribe` | HIGH | MED | **P1** |
+| `config.openSettings({ section? })` | HIGH | LOW | **P1** |
+| `config.registerSchema` (runtime) | MED | LOW | **P1** |
+| `x-napplet-secret` + Tier 0 masking | HIGH | LOW | **P1** |
+| `x-napplet-section` + `x-napplet-order` | MED | LOW | **P1** |
+| `$version` potentiality (spec signal only) | MED | LOW | **P1** |
+| Vite-plugin schema injection | HIGH | MED | **P1** |
+| `deprecationMessage` rendering | LOW | LOW | **P2** |
+| Tier 1 secret (log redaction + `config.getSecret`) | MED | MED | **P2** |
+| `markdownDescription` | LOW | LOW | **P2** |
+| `format: "email"/"uri"/"date-time"` richer widgets | MED | MED | **P2** |
+| Tier 2+ secrets | MED | HIGH | **P3** |
+| Change diffs instead of full pushes | LOW | MED | **P3** |
+| `when`-clause conditional visibility | LOW | HIGH | **P3** |
+| Cross-napplet shared config | LOW | HIGH | **Out** |
+| Napplet-writable config (`config.set`) | "HIGH" | — | **Anti-feature** |
+| `$ref` / `definitions` | LOW | HIGH | **Anti-feature** |
 
-## Edge Cases
+**Priority key:**
+- **P1** — Must have for v1 launch (spec + package + integration)
+- **P2** — Should have, add in v1.x
+- **P3** — Future consideration
+- **Out / Anti-feature** — Explicitly not building
 
-### Keyboard Layout Sensitivity
-- Use `key` for display (shows what user typed) and `code` for matching (physical position is layout-stable)
-- Bindings should be stored as `code`-based internally but displayed as `key`-based to the user
-- macOS Option key modifies `key` values (e.g., Option+C = c-cedilla). The `code` remains 'KeyC'. Forward both.
-- Confidence: HIGH -- this is well-documented in the KeyboardEvent spec and the "all JS keyboard libraries are broken" analysis
+## Competitor Feature Analysis
 
-### Timing and Race Conditions
-- Napplet registers action AFTER shell has already forwarded that key. Solution: shell re-evaluates forwarding rules on registration change.
-- Napplet iframe loads and immediately receives keystrokes before shim is installed. Solution: shim installs in capture phase on document (already does this).
-- Two napplets register conflicting bindings. Solution: shell resolves conflicts, each napplet gets its own `registerAction.result` with the actual binding.
+How NUB-CONFIG compares to its closest precedents:
 
-### Focus Edge Cases
-- User clicks directly into napplet text input -- forward nothing until they leave the input
-- User Alt-Tabs away from browser entirely -- no keyboard events fire, no edge case
-- Napplet opens a `<dialog>` or modal -- `isTextInput()` check still applies per-element
-- contentEditable elements -- already handled by existing `isContentEditable` check
+| Feature | VSCode | Raycast | Chrome `managed_schema` | Figma | **NUB-CONFIG v1** |
+|---------|:------:|:-------:|:----------------------:|:-----:|:--------------------:|
+| Declarative manifest schema | ✓ | ✓ | ✓ | — | **✓** |
+| Runtime register (escape hatch) | — | — | — | — | **✓** (unique — necessary for hand-rolled napplets) |
+| Host-rendered settings UI | ✓ | ✓ | (admin-only) | — | **✓** |
+| JSON Schema format | ✓ (subset) | bespoke | ✓ | — | **✓ (draft-07 subset)** |
+| Live change events | ✓ | snapshot | ✓ | — | **✓ (subscribe-live, locked decision)** |
+| Deep-link to settings | ✓ (`@ext:id`) | ✓ (`openExtensionPreferences`) | — | — | **✓ (`openSettings({ section })`)** |
+| Secret handling | separate `SecretStorage` API | `password` type + Keychain | — | — | **`x-napplet-secret` marker, tiered strength** |
+| Migration mechanism | deprecationMessage (manual) | — | — | — | **`$version` signal, shell-resolved** |
+| Section grouping | implicit (dotted keys) | — | — | — | **`x-napplet-section`** |
+| Host-enforced validation before delivery | ✓ | ✓ | ✓ | — | **✓ (MUST)** |
+| Cross-instance layering | ✓ (application/machine/window/resource) | — | — | — | **— (single scope per napplet)** |
 
-### Security Considerations
-- Napplet could register thousands of actions to exhaust shell memory. Shell should cap registrations per napplet (e.g., 100 actions).
-- Napplet could register every possible key combination to suppress all forwarding (DoS against shell hotkeys). Shell should have a reserved/protected binding set that cannot be suppressed.
-- Capture mode is powerful -- shell should require explicit user consent or limit duration.
+**Summary of differentiation:**
+
+1. **Runtime `registerSchema` escape hatch** is unique to NUB-CONFIG — no precedent has it because none of them allow running an extension without their build tooling. Napplets can be hand-rolled; we need the escape hatch.
+2. **Shell-resolved migration** (not extension code, not shell-invokes-extension-code) is cleaner than VSCode's "extension handles it manually" and cleaner than what would otherwise require trusting napplet code. Napplet never sees old-shape values.
+3. **Tiered secret strength with explicit gradient** is more honest than "we have password fields" — we call out what web shells can and cannot do.
+4. **Structural purity: napplet is strictly read-only** is more strict than any precedent. VSCode extensions can write via `configuration.update()`; Raycast cannot (matching us). Our write-free design is the strongest version.
+
+## Edge Cases and Open Questions
+
+### Edge cases (resolved or resolvable in spec)
+
+- **Schema declared in manifest AND at runtime:** Manifest is authoritative; runtime `registerSchema` replaces it entirely (or: shell rejects the runtime call with "schema already declared in manifest"). Spec should pick one. Recommend: runtime register REPLACES manifest schema (latest wins), with a shell warning.
+- **Schema changes while napplet is subscribed:** Trigger a fresh `config.values` push with the new-shape validated object. Napplet's subscribe callback fires with new shape.
+- **Napplet subscribes before registering schema:** Shell defers the push until a schema is available; or returns an empty config object. Recommend: deferred push (matches other NUBs' lazy-init patterns).
+- **Secret field receives a value that fails validation:** Shell rejects the user's input in the settings UI (never persisted, never pushed). The napplet never sees invalid values — this is what validation-before-delivery guarantees.
+- **Storage quota exceeded while saving config:** Shell concern (same as NUB-STORAGE). Shell returns an error to the user at the settings UI level; napplet's existing values continue to push. Spec doesn't need to cover this.
+- **User clears the napplet's config:** Shell reverts all keys to their declared defaults and pushes a new `config.values`. Defaults-applied guarantee handles it.
+
+### Open questions for the requirements phase to resolve
+
+- **Does `config.openSettings` require a section to be declared in the schema, or is the napplet free to request any string?** Trade-off: strict (shell knows all sections from schema, napplet can only reference declared ones) vs. loose (napplet can request any section, shell interprets best-effort). Recommend strict — reduces runtime surprise.
+- **Does the shell push `config.values` on `subscribe` even if nothing has changed, or only on change?** VSCode's `onDidChangeConfiguration` fires only on change; napplet gets initial via `get`. Raycast gives you the snapshot at command launch. Our locked decision says "initial snapshot + push updates" — so `subscribe` MUST include an immediate initial push. Confirm this in requirements.
+- **Does `$version` migration run on every load, or only on version bump?** Version bump is sufficient — shell tracks the last-seen `$version` per `(dTag, aggregateHash)`; if it differs, run migration; otherwise skip. Requirements should lock this.
+- **Do we expose a `config.unregisterSchema` for hot-reload scenarios?** Probably yes for dev ergonomics with vite-plugin HMR. Low cost; add to P1.
+- **How does vite-plugin discover the schema in napplet source?** Options: (a) convention — `config.schema.json` at napplet root, (b) export from `napplet.config.ts`, (c) inline in `vite.config.ts` under the napplet plugin's `nip5aManifest({ configSchema })` option. Recommend (c) — consistent with existing `requires` injection pattern; schema is authored alongside other manifest metadata.
 
 ## Sources
 
-- [VS Code Keybindings](https://code.visualstudio.com/docs/getstarted/keybindings) -- action registration, when-clause contexts, conflict resolution
-- [VS Code Contribution Points](https://code.visualstudio.com/api/references/contribution-points) -- extension manifest keybinding declaration pattern
-- [Chrome Extension Commands API](https://developer.chrome.com/docs/extensions/reference/api/commands) -- manifest declaration, suggested_key, conflict handling
-- [Zed Key Bindings](https://zed.dev/docs/key-bindings) -- context-aware action map, hierarchical priority, conflict resolution
-- [Electron Keyboard Shortcuts](https://www.electronjs.org/docs/latest/tutorial/keyboard-shortcuts) -- webview keyboard trapping, before-input-event interception
-- [Figma Plugin Architecture](https://developers.figma.com/docs/plugins/how-plugins-run/) -- sandbox keyboard limitations, iframe/main thread separation
-- [All JS Keyboard Libraries Are Broken](https://blog.duvallj.pw/posts/2025-01-10-all-javascript-keyboard-shortcut-libraries-are-broken.html) -- key vs code vs keyCode, deprecated APIs, layout pitfalls
-- [Wayland Keyboard Grab Protocol](https://wayland.app/protocols/xwayland-keyboard-grab-unstable-v1) -- compositor-level keyboard grab patterns
-- Existing codebase: `keyboard-shim.ts`, `SPEC-GAPS.md` GAP-07, `topics.ts` KEYBINDS_* entries
+**VSCode:**
+- [VSCode contribution points: configuration](https://code.visualstudio.com/api/references/contribution-points) — schema fields, scopes, unsupported `$ref`
+- [VS Code API reference](https://code.visualstudio.com/api/references/vscode-api) — `workspace.getConfiguration`, `onDidChangeConfiguration`
+- [VSCode deep-link to settings (DevHack)](https://www.eliostruyf.com/devhack-open-vscode-extension-settings-code/) — `workbench.action.openSettings` with `@ext:id`
+- [VSCode discussion: migrating settings](https://github.com/microsoft/vscode-discussions/discussions/862) — no built-in migration, `deprecationMessage` pattern
+- [VSCode SecretStorage API](https://vscode-api.js.org/interfaces/vscode.SecretStorage.html) — separate from `configuration`, OS-keychain backed
+- [How to use SecretStorage in VSCode extensions](https://dev.to/kompotkot/how-to-use-secretstorage-in-your-vscode-extensions-2hco) — implementation detail, platform keychain mapping
+
+**Chrome/Chromium MV3:**
+- [Chrome Extension Storage API](https://developer.chrome.com/docs/extensions/reference/api/storage) — `storage.managed`, `storage.onChanged`
+- [Chrome `managed_schema` manifest reference](https://developer.chrome.com/docs/extensions/reference/manifest/storage) — JSON Schema subset (object top-level, properties, items, `$ref`, types)
+- [Chrome options page guide](https://developer.chrome.com/docs/extensions/develop/ui/options-page) — HTML-owned by extension, `options_ui.page`/`open_in_tab`, `storage.sync` persistence pattern
+
+**Raycast:**
+- [Raycast manifest: preferences](https://developers.raycast.com/information/manifest#preferences) — types (textfield, password, checkbox, dropdown, appPicker, file, directory), per-extension + per-command scope
+- [Raycast Preferences API](https://developers.raycast.com/api-reference/preferences) — `getPreferenceValues()` snapshot-at-launch, `openExtensionPreferences`, `openCommandPreferences`
+- [Raycast security overview](https://developers.raycast.com/information/security) — local encrypted DB + Keychain integration for passwords
+
+**Figma:**
+- [Figma plugin manifest](https://developers.figma.com/docs/plugins/manifest/) — `parameters[]` for quick-action args, no declarative settings UI
+
+**JetBrains (comparison):**
+- [IntelliJ Platform: Settings Guide](https://plugins.jetbrains.com/docs/intellij/settings-guide.html) — `ConfigurableEP`, host-rendered dialog, plugin-constructed UI component
+
+**JSON Schema form UIs (for understanding what's possible):**
+- [react-jsonschema-form widgets](https://rjsf-team.github.io/react-jsonschema-form/docs/usage/widgets/) — `uiSchema` + `ui:widget` pattern (an anti-pattern for NUB-CONFIG)
+- [react-jsonschema-form customization](https://rjsf-team.github.io/react-jsonschema-form/docs/advanced-customization/custom-widgets-fields/) — registered widgets, options merge
+
+**Existing codebase:**
+- `.planning/PROJECT.md` — locked v0.25.0 decisions
+- `.planning/STATE.md` — decision log (JSON Schema draft-07+, manifest+runtime registration, `$version`, x-napplet-* extensions, subscribe-live, shell-sole-writer)
+- `packages/nubs/theme/` — inverse-push pattern precedent (shell → napplet values delivery)
+- `packages/nubs/storage/` — `(dTag, aggregateHash)` scoping precedent
+
+---
+*Feature research for: NUB-CONFIG (v0.25.0 milestone)*
+*Researched: 2026-04-17*
