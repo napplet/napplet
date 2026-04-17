@@ -72,10 +72,10 @@ Surgical edits to existing packages, following the v0.22-v0.24 integration patte
 
 - [x] **DOC-01**: `@napplet/nub-config` README — package purpose, install, window.napplet.config API surface, example schema, SDK usage
 - [ ] **DOC-02**: NIP-5D "Known NUBs" table updated with a `config` row referencing napplet/nubs#13 (by NUB-CONFIG number only — no `@napplet/*` reference)
-- [ ] **DOC-03**: `@napplet/core` README lists `'config'` as a registered NubDomain
-- [ ] **DOC-04**: `@napplet/shim` README documents `window.napplet.config` namespace
-- [ ] **DOC-05**: `@napplet/sdk` README documents `config` SDK exports and `FromSchema` type inference pattern
-- [ ] **DOC-06**: `@napplet/vite-plugin` README documents `configSchema` option, convention-file discovery, and `napplet.config.ts` export path
+- [x] **DOC-03**: `@napplet/core` README lists `'config'` as a registered NubDomain
+- [x] **DOC-04**: `@napplet/shim` README documents `window.napplet.config` namespace
+- [x] **DOC-05**: `@napplet/sdk` README documents `config` SDK exports and `FromSchema` type inference pattern
+- [x] **DOC-06**: `@napplet/vite-plugin` README documents `configSchema` option, convention-file discovery, and `napplet.config.ts` export path
 
 ---
 
@@ -155,7 +155,7 @@ Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirement
 | CAP-01   | 115   | Complete |
 | DOC-01   | 116   | Complete |
 | DOC-02   | 116   | Pending |
-| DOC-03   | 116   | Pending |
-| DOC-04   | 116   | Pending |
-| DOC-05   | 116   | Pending |
-| DOC-06   | 116   | Pending |
+| DOC-03   | 116   | Complete |
+| DOC-04   | 116   | Complete |
+| DOC-05   | 116   | Complete |
+| DOC-06   | 116   | Complete |

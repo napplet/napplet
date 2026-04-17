@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
-stopped_at: Completed 116-01-PLAN.md — @napplet/nub-config README (248 lines, DOC-01). Parallel execution; 116-02 and 116-03 still pending.
-last_updated: "2026-04-17T14:11:27.506Z"
+stopped_at: "Completed 116-02-PLAN.md -- 4-README config NUB docs sweep (core/shim/sdk/vite-plugin). DOC-03..06 satisfied. config now visible as 9th NubDomain across all napplet-repo READMEs with full parity to identity/notify/media. 4 atomic commits (--no-verify for parallel execution): f6f1146, c587e9e, 6e7ef33, 8427b16. Cross-file sanity passes (no 'eight NUB' in READMEs; all 4 mention config; notify/identity regression-free)."
+last_updated: "2026-04-17T14:16:31.755Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
   percent: 100
 ---
 
@@ -64,6 +64,7 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 | Phase 114 P03 | 2min | 1 tasks | 1 files |
 | Phase 115 P01 | 4m17s | 4 tasks | 6 files |
 | Phase 116 P01 | 1m29s | 1 tasks | 1 files |
+| Phase 116 P02 | 5m44s | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,9 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 - [Phase 115]: 115-01: Pattern established — placeholder-then-overwrite for window.napplet installer-owned accessors. Object literal populates 5 methods + schema: null; installConfigShim() reassigns entire napplet.config property with its api (Object.defineProperty schema getter). Both sides satisfy NappletGlobal.config type (readonly schema: X | null accepts both null literal and getter), method refs are identical, only functional delta is the getter (desired). Template for future NUB integrations that need readonly accessors on window.napplet.*.
 - [Phase 115]: 115-01: Pattern — bare-prefix vs .result-suffix domain routing. config.* uses type.startsWith('config.') (not '&& endsWith(\".result\")') because handleConfigMessage dispatches three shell→napplet types: registerSchema.result (correlated ack), values (dual-use — correlated or push), schemaError (uncorrelated push). Identity's .result-suffix pattern works because identity is strict request/response; NUBs with push streams or uncorrelated pushes need bare prefix.
 - [Phase 116]: 116-01: Wrote packages/nubs/config/README.md (248 lines). Followed @napplet/nub-notify template (5+3 wire-msg tables). Domain Registration section explicitly diverges from notify/media -- barrel is side-effect-free; shim is central dispatcher. SDK Helpers shows @napplet/sdk config namespace usage (phase-115 shape, not bare sdk.*). FromSchema opt-in documented with explicit fallback-to-ConfigValues callout. All 31 acceptance greps PASS in first shot. Commit 36d23d2. DOC-01 satisfied.
+- [Phase 116]: [Phase 116]: 116-02: Landed 4-README config NUB docs sweep (core/shim/sdk/vite-plugin). DOC-03..06 satisfied. core README adds 'config' in 5 enumeration points (domain prefix prose, NubDomain type union, description table, NUB_DOMAINS runtime array, Integration Note NUB list) + Types table count update ('eight' -> 'nine'). shim README adds Quick Start config example (get/subscribe/openSettings with cleanup), 5 outbound + 3 inbound wire format lines, config: {...} in window.napplet shape object, dedicated '### window.napplet.config' subsection with 6-row method table, @napplet/nub-config in Shim vs SDK deps row. sdk README adds config to Quick Start imports+body, '### config' subsection, '### FromSchema type inference (NUB-CONFIG)' subsection with json-schema-to-ts opt-in install note, napplet.config.subscribe Namespace Import line, ConfigNubMessage message-types row, CONFIG_DOMAIN constants import+values comment, supports('nub:config') example. vite-plugin README adds 3 build-time bullets (meta injection, config manifest tag, aggregateHash via config:schema), full '#### configSchema (optional)' section with accepted-forms table + 3-path discovery precedence (inline / config.schema.json / napplet.config.ts|js|mjs) + 3 worked examples, '#### Build-Time Guards' catalogue (invalid-schema / pattern-not-allowed[CVE-2025-69873] / ref-not-allowed / secret-with-default + tree-walk keywords), Nip5aManifestOptions interface with configSchema?: JSONSchema7 | string + JSDoc, NUB-CONFIG spec link in Protocol Reference. 4 atomic commits f6f1146/c587e9e/6e7ef33/8427b16 with --no-verify (parallel executor).
+- [Phase 116]: [Phase 116]: 116-02: Pattern -- optional-peer type-inference documentation. FromSchema<typeof schema> opt-in via json-schema-to-ts peerDep documented in sdk README with explicit --save-dev install command. Reusable template for any future NUB that ships an opt-in type-inference peer; keeps the default path zero-cost (Record<string, unknown>) while surfacing typed-callback upgrade path to authors who want it.
+- [Phase 116]: [Phase 116]: 116-02: Deviation -- removed per-token backticks on shim README How-It-Works bullet 3 ('relay, ipc, storage, keys, media, notify, identity, config, and shell' -- bare tokens) to satisfy plan's explicit verification grep (grep -q 'identity, config, and shell'). Plan action instruction also specified bare-token form; trade-off is mild stylistic inconsistency on one bullet vs. reliable acceptance. Backtick-per-token convention preserved everywhere else in shim README.
 
 ### Blockers/Concerns
 
@@ -135,6 +139,6 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 
 ## Session Continuity
 
-Last session: 2026-04-17T14:11:27.503Z
-Stopped at: Completed 116-01-PLAN.md — @napplet/nub-config README (248 lines, DOC-01). Parallel execution; 116-02 and 116-03 still pending.
+Last session: 2026-04-17T14:16:04.492Z
+Stopped at: Completed 116-02-PLAN.md -- 4-README config NUB docs sweep (core/shim/sdk/vite-plugin). DOC-03..06 satisfied. config now visible as 9th NubDomain across all napplet-repo READMEs with full parity to identity/notify/media. 4 atomic commits (--no-verify for parallel execution): f6f1146, c587e9e, 6e7ef33, 8427b16. Cross-file sanity passes (no 'eight NUB' in READMEs; all 4 mention config; notify/identity regression-free).
 Resume: `/gsd:execute-phase 116` (Documentation — nub-config README + NIP-5D Known NUBs + package READMEs — DOC-01..06)
