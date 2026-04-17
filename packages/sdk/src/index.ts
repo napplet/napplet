@@ -652,6 +652,92 @@ export const identity = {
   },
 };
 
+// ─── Config namespace ──────────────────────────────────────────────────────
+
+/**
+ * Per-napplet declarative configuration (NUB-CONFIG): register a schema,
+ * read current values, subscribe to live updates, deep-link into the
+ * shell-owned settings UI, and listen for schema errors.
+ *
+ * @example
+ * ```ts
+ * import { config } from '@napplet/sdk';
+ *
+ * await config.registerSchema({
+ *   type: 'object',
+ *   properties: { theme: { type: 'string', enum: ['light', 'dark'], default: 'dark' } },
+ * });
+ *
+ * const sub = config.subscribe((values) => { applyTheme(values.theme); });
+ *
+ * config.openSettings({ section: 'appearance' });
+ * ```
+ */
+export const config = {
+  /**
+   * Snapshot current validated + defaulted config values.
+   * @returns A one-shot ConfigValues object.
+   */
+  get(): Promise<Record<string, unknown>> {
+    return requireNapplet().config.get();
+  },
+
+  /**
+   * Subscribe to live configuration updates.
+   * First delivery is an immediate snapshot; subsequent deliveries fire on change.
+   * @param callback  Invoked with the full ConfigValues on every change.
+   * @returns A Subscription with close() to stop listening.
+   */
+  subscribe(
+    callback: (values: Record<string, unknown>) => void,
+  ): Subscription {
+    return requireNapplet().config.subscribe(callback);
+  },
+
+  /**
+   * Request the shell open its settings UI for this napplet.
+   * @param options  Optional { section } to deep-link by x-napplet-section name.
+   */
+  openSettings(options?: { section?: string }): void {
+    requireNapplet().config.openSettings(options);
+  },
+
+  /**
+   * Register a napplet configuration schema at runtime (escape hatch;
+   * prefer manifest-declared via @napplet/vite-plugin's configSchema option).
+   * @param schema   JSON Schema (draft-07+) describing the config surface.
+   * @param version  Optional `$version` migration hint.
+   */
+  registerSchema(
+    schema: Record<string, unknown>,
+    version?: number,
+  ): Promise<void> {
+    return requireNapplet().config.registerSchema(schema, version);
+  },
+
+  /**
+   * Listen for schema-registration errors pushed by the shell
+   * (manifest parse failure, no-schema on subscribe-before-schema, etc.).
+   * @param callback  Invoked with { code, error } on every push.
+   * @returns A plain teardown function that detaches the listener.
+   */
+  onSchemaError(
+    callback: (err: { code: string; error: string }) => void,
+  ): () => void {
+    return requireNapplet().config.onSchemaError(callback);
+  },
+
+  /**
+   * Current schema snapshot (readonly). Populated from the
+   * `<meta name="napplet-config-schema">` manifest tag at shim install,
+   * updated on successful registerSchema responses.
+   * @returns The registered schema, or null if none.
+   */
+  get schema(): Record<string, unknown> | null {
+    return requireNapplet().config.schema;
+  },
+};
+
 // ─── Type re-exports from @napplet/core ─────────────────────────────────────
 
 export type { NostrEvent } from '@napplet/core';
@@ -832,6 +918,27 @@ export type {
   NotifyNubMessage,
 } from '@napplet/nub-notify';
 
+// Config NUB
+export type {
+  NappletConfigSchema,
+  ConfigSchema,
+  ConfigValues,
+  ConfigSchemaErrorCode,
+  NappletConfigSchemaExtensions,
+  ConfigMessage,
+  ConfigRegisterSchemaMessage,
+  ConfigGetMessage,
+  ConfigSubscribeMessage,
+  ConfigUnsubscribeMessage,
+  ConfigOpenSettingsMessage,
+  ConfigRegisterSchemaResultMessage,
+  ConfigValuesMessage,
+  ConfigSchemaErrorMessage,
+  ConfigRequestMessage,
+  ConfigResultMessage,
+  ConfigNubMessage,
+} from '@napplet/nub-config';
+
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
@@ -842,6 +949,7 @@ export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
 export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub-keys';
 export { DOMAIN as MEDIA_DOMAIN } from '@napplet/nub-media';
 export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub-notify';
+export { DOMAIN as CONFIG_DOMAIN } from '@napplet/nub-config';
 
 // ─── NUB Shim Installer Re-exports ─────────────────────────────────────────
 // Allow consumers to cherry-pick shim installers per domain.
@@ -853,6 +961,7 @@ export { installIfcShim } from '@napplet/nub-ifc';
 export { installKeysShim } from '@napplet/nub-keys';
 export { installMediaShim } from '@napplet/nub-media';
 export { installNotifyShim } from '@napplet/nub-notify';
+export { installConfigShim } from '@napplet/nub-config';
 
 // ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
