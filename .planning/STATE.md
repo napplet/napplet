@@ -4,7 +4,7 @@ milestone: v0.25.0
 milestone_name: Config NUB
 status: verifying
 stopped_at: Completed 113-02-PLAN.md — @napplet/nub-config sdk.ts + full barrel landed; package + monorepo type-check green (22/22). Phase 113 complete (NUB-03 + NUB-04 satisfied). Ready for phase 114 (Vite-Plugin Extension) or phase 115 (Core/Shim/SDK Integration).
-last_updated: "2026-04-17T11:45:47.509Z"
+last_updated: "2026-04-17T13:12:54.669Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 113
-Plan: 2 of 2
+Phase: 114
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-17
 
