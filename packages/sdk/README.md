@@ -26,7 +26,7 @@ npm install @napplet/sdk @napplet/shim
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys, media, notify, type NostrEvent } from '@napplet/sdk';
+import { relay, ipc, storage, keys, media, notify, config, type NostrEvent } from '@napplet/sdk';
 
 // Subscribe to kind 1 notes
 const sub = relay.subscribe(
@@ -75,10 +75,23 @@ const { notificationId } = await notify.send({
 });
 notify.badge(1);
 
+// Read per-napplet config (shell-validated + defaulted)
+const values = await config.get();
+console.log('Current theme:', values.theme);
+
+// Subscribe to live config updates
+const configSub = config.subscribe((v) => {
+  applyTheme(v.theme);
+});
+
+// Deep-link settings UI
+config.openSettings({ section: 'appearance' });
+
 // Clean up
 sub.close();
 ipcSub.close();
 keySub.close();
+configSub.close();
 ```
 
 ## API Reference
@@ -147,6 +160,49 @@ Shell-rendered notifications. Mirrors `window.napplet.notify`.
 | `onDismissed(callback)` | `{ close(): void }` | Listen for dismissals |
 | `onControls(callback)` | `{ close(): void }` | Listen for shell's notification capabilities |
 
+### `config`
+
+Per-napplet declarative configuration (NUB-CONFIG). Mirrors `window.napplet.config`.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `get()` | `Promise<Record<string, unknown>>` | One-shot snapshot of validated + defaulted config values |
+| `subscribe(callback)` | `{ close(): void }` | Live push stream (initial snapshot + updates on change) |
+| `openSettings(options?)` | `void` | Open shell's settings UI, optionally deep-linked to `x-napplet-section` |
+| `registerSchema(schema, version?)` | `Promise<void>` | Runtime schema registration (escape hatch; prefer vite-plugin configSchema) |
+| `onSchemaError(callback)` | `() => void` | Listen for `config.schemaError` pushes (returns plain teardown fn) |
+| `schema` (accessor) | `Record<string, unknown> \| null` | Readonly current schema |
+
+### FromSchema type inference (NUB-CONFIG)
+
+`json-schema-to-ts` is declared as an optional `peerDependency` of `@napplet/nub-config`. Install it in your napplet to get `FromSchema<typeof schema>` typing for your `config.subscribe` callback -- the `values` parameter is inferred directly from your schema (enums, required fields, defaults all flow through). Authors who skip `json-schema-to-ts` pay no install cost and `config.subscribe` still works with the default `Record<string, unknown>` typing.
+
+```ts
+import '@napplet/shim';
+import { config } from '@napplet/sdk';
+import type { FromSchema } from 'json-schema-to-ts';
+
+const schema = {
+  type: 'object',
+  properties: {
+    theme: { type: 'string', enum: ['light', 'dark'], default: 'dark' },
+  },
+  required: ['theme'],
+} as const;
+
+type MyConfig = FromSchema<typeof schema>;
+
+const sub = config.subscribe((values: MyConfig) => {
+  // values.theme is typed 'light' | 'dark'
+});
+```
+
+Install the peer when you want typed callbacks:
+
+```bash
+npm install --save-dev json-schema-to-ts
+```
+
 ### `keys`
 
 Keyboard forwarding and action keybindings. Mirrors `window.napplet.keys`.
@@ -189,6 +245,7 @@ import * as napplet from '@napplet/sdk';
 
 napplet.relay.subscribe({ kinds: [1] }, (e) => console.log(e));
 napplet.storage.setItem('key', 'value');
+napplet.config.subscribe((v) => console.log(v));
 ```
 
 ## Types
@@ -243,6 +300,7 @@ handlers in shell implementations or protocol-aware code.
 | `KeysNubMessage` | `@napplet/nub-keys` | Discriminated union of all keys domain messages |
 | `MediaNubMessage` | `@napplet/nub-media` | Discriminated union of all media domain messages |
 | `NotifyNubMessage` | `@napplet/nub-notify` | Discriminated union of all notify domain messages |
+| `ConfigNubMessage` | `@napplet/nub-config` | Discriminated union of all config domain messages |
 
 Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
@@ -252,8 +310,8 @@ Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMe
 Each NUB domain has a string constant re-exported from its package:
 
 ```ts
-import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN } from '@napplet/sdk';
-// Values: 'relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'
+import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN, CONFIG_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config'
 ```
 
 These constants are re-exported from the individual NUB packages. Use them with the shell capability query
@@ -266,6 +324,10 @@ if (window.napplet.shell.supports('nub:relay')) {
 
 if (window.napplet.shell.supports('nub:identity')) {
   // identity queries are available
+}
+
+if (window.napplet.shell.supports('nub:config')) {
+  // NUB-CONFIG is available -- schema registration and subscribe()
 }
 ```
 
