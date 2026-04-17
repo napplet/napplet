@@ -469,6 +469,83 @@ export interface NappletGlobal {
     }[]>;
   };
   /**
+   * Per-napplet declarative configuration (NUB-CONFIG).
+   *
+   * Napplet declares a JSON Schema (typically at build time via
+   * @napplet/vite-plugin's `configSchema` option, or at runtime via
+   * `registerSchema`); shell renders the settings UI, validates values,
+   * persists them scoped by `(dTag, aggregateHash)`, and delivers live
+   * values via initial snapshot + push. Shell is the sole writer.
+   *
+   * @example
+   * ```ts
+   * // Register a schema at runtime (escape hatch; prefer manifest-declared):
+   * await window.napplet.config.registerSchema({
+   *   type: 'object',
+   *   properties: { theme: { type: 'string', enum: ['light', 'dark'], default: 'dark' } },
+   * });
+   *
+   * // Subscribe to live values (first delivery is an immediate snapshot):
+   * const sub = window.napplet.config.subscribe((values) => {
+   *   applyTheme(values.theme as string);
+   * });
+   *
+   * // Deep-link into shell-owned settings UI:
+   * window.napplet.config.openSettings({ section: 'appearance' });
+   * ```
+   */
+  config: {
+    /**
+     * Register a napplet configuration schema at runtime (runtime escape hatch).
+     * Prefer manifest-declared via @napplet/vite-plugin's `configSchema` option.
+     * Correlated via UUID; resolves on positive ACK, rejects with
+     * `Error(code + ': ' + reason)` on shell rejection.
+     * @param schema   JSON Schema (draft-07+) describing the config surface.
+     * @param version  Optional `$version` migration hint.
+     */
+    registerSchema(
+      schema: Record<string, unknown>,
+      version?: number,
+    ): Promise<void>;
+    /**
+     * Snapshot current validated + defaulted config values.
+     * Correlated via UUID; resolves on the matching `config.values` response.
+     */
+    get(): Promise<Record<string, unknown>>;
+    /**
+     * Subscribe to live configuration updates. First delivery is an immediate
+     * snapshot; subsequent deliveries fire whenever the shell commits a change.
+     * Ref-counted: wire-level subscribe/unsubscribe only on 0->1 / 1->0
+     * local-subscriber transitions.
+     * @param callback  Invoked with the current config values on each push.
+     * @returns A Subscription with `close()` to detach.
+     */
+    subscribe(callback: (values: Record<string, unknown>) => void): Subscription;
+    /**
+     * Request the shell open its settings UI for this napplet.
+     * Fire-and-forget. The optional `section` deep-links to a named section
+     * declared via the `x-napplet-section` extension somewhere in the schema.
+     * @param options.section  Optional section name to deep-link to.
+     */
+    openSettings(options?: { section?: string }): void;
+    /**
+     * Listen for schema-registration errors pushed by the shell (manifest
+     * parse failure, `no-schema`, etc.). Uncorrelated fan-out.
+     * @param callback  Invoked with `{ code, error }` on each error push.
+     * @returns A plain teardown function that detaches the listener.
+     */
+    onSchemaError(
+      callback: (err: { code: string; error: string }) => void,
+    ): () => void;
+    /**
+     * Readonly accessor for the currently-registered JSON Schema.
+     * Populated synchronously from the `<meta name="napplet-config-schema">`
+     * manifest tag at install time, then updated on successful
+     * `registerSchema` responses. `null` until a schema is registered.
+     */
+    readonly schema: Record<string, unknown> | null;
+  };
+  /**
    * Shell capability queries. Check whether the shell supports a NUB
    * or permission.
    *
