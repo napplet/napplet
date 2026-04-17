@@ -55,6 +55,7 @@ export interface NappletMessage {
  * | `keys`     | Keyboard forwarding and action keybindings|
  * | `media`    | Media session control and playback        |
  * | `notify`   | Shell-rendered notifications              |
+ * | `config`   | Per-napplet declarative configuration     |
  *
  * @example
  * ```ts
@@ -62,7 +63,7 @@ export interface NappletMessage {
  * const isValid = NUB_DOMAINS.includes(domain); // true
  * ```
  */
-export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify';
+export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify' | 'config';
 
 /**
  * Runtime-accessible constant array of all NUB domain names.
@@ -75,7 +76,7 @@ export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'ke
  * }
  * ```
  */
-export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify'] as const;
+export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config'] as const;
 
 // ─── Namespaced Capability Type ───────────────────────────────────────────
 
