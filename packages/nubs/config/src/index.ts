@@ -1,26 +1,26 @@
 /**
- * @napplet/nub-config -- NUB-CONFIG message types and configuration type
- * aliases for the JSON envelope wire protocol.
+ * @napplet/nub-config -- NUB-CONFIG message types, shim installer, and SDK
+ * helpers for per-napplet declarative configuration.
  *
  * Per-napplet declarative configuration: napplet declares a JSON Schema
- * (typically at build time via @napplet/vite-plugin manifest tag, or at
- * runtime via config.registerSchema); shell renders settings UI, validates,
+ * (typically at build time via @napplet/vite-plugin's configSchema option,
+ * or at runtime via registerSchema); shell renders settings UI, validates,
  * persists values scoped by (dTag, aggregateHash), and delivers live values
  * via snapshot + push. Shell is the sole writer.
  *
- * This package currently exports types only. Shim + SDK helpers are added
- * in a subsequent phase. Domain registration with @napplet/core dispatch
- * happens at core/shim/SDK integration time.
- *
  * @example
  * ```ts
- * import type {
- *   NappletConfigSchema,
- *   ConfigValues,
- *   ConfigValuesMessage,
- *   ConfigNubMessage,
- * } from '@napplet/nub-config';
- * import { DOMAIN } from '@napplet/nub-config';
+ * // Cherry-picked import:
+ * import { installConfigShim, subscribe, registerSchema, DOMAIN } from '@napplet/nub-config';
+ *
+ * installConfigShim();
+ *
+ * await registerSchema({
+ *   type: 'object',
+ *   properties: { theme: { type: 'string', default: 'dark' } },
+ * });
+ *
+ * const sub = subscribe((values) => { applyTheme(values.theme); });
  * ```
  *
  * @packageDocumentation
@@ -55,3 +55,20 @@ export type {
   ConfigResultMessage,
   ConfigNubMessage,
 } from './types.js';
+
+// ─── Shim Exports ─────────────────────────────────────────────────────────
+
+export {
+  installConfigShim,
+  handleConfigMessage,
+} from './shim.js';
+
+// ─── SDK Exports ──────────────────────────────────────────────────────────
+
+export {
+  get,
+  subscribe,
+  openSettings,
+  registerSchema,
+  onSchemaError,
+} from './sdk.js';
