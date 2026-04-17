@@ -166,6 +166,170 @@ async function discoverConfigSchema(
 }
 
 /**
+ * Structural guard for napplet config schemas at build time.
+ *
+ * NOT a full JSON Schema validator. Only checks the four rejection rules that
+ * MUST fail the build early — full Core Subset enforcement lives in the shell
+ * at `config.registerSchema` time. See NUB-CONFIG Schema Contract / Exclusions.
+ *
+ * Rejection rules:
+ * 1. Root MUST be `{ type: "object", ... }`. Anything else -> 'invalid-schema'.
+ * 2. `pattern` keyword anywhere in the tree -> 'pattern-not-allowed' (ReDoS,
+ *    CVE-2025-69873 class).
+ * 3. `$ref` whose value does not start with `#/` anywhere in the tree ->
+ *    'ref-not-allowed' (external reference ban; same-document refs are still
+ *    forbidden by the spec but are caught by the shell-side Core Subset
+ *    enforcer at registerSchema time).
+ * 4. Any property node where both `x-napplet-secret: true` and the `default`
+ *    key are present -> 'secret-with-default'.
+ *
+ * Collects every violation; returns them all in one pass so the build log
+ * surfaces every problem at once.
+ *
+ * @param schema - the unvalidated schema loaded from options / config.schema.json / napplet.config.*
+ * @returns `{ ok: true }` on pass, `{ ok: false, errors }` on failure (errors is
+ *          a string array with one entry per distinct violation discovered).
+ */
+function validateConfigSchema(
+  schema: unknown,
+): { ok: true } | { ok: false; errors: string[] } {
+  const errors: string[] = [];
+
+  // Rule 1: root shape
+  if (
+    schema === null ||
+    typeof schema !== 'object' ||
+    Array.isArray(schema) ||
+    (schema as Record<string, unknown>).type !== 'object'
+  ) {
+    const got =
+      schema === null
+        ? 'null'
+        : Array.isArray(schema)
+          ? 'array'
+          : typeof schema === 'object'
+            ? `type=${JSON.stringify((schema as Record<string, unknown>).type)}`
+            : typeof schema;
+    errors.push(
+      `invalid-schema: schema root must be { type: "object", ... } (got ${got})`,
+    );
+    // Do not recurse when root is malformed — nothing meaningful to walk.
+    return { ok: false, errors };
+  }
+
+  // Rules 2-4: recursive walk
+  walk(schema as Record<string, unknown>, '$', errors);
+
+  return errors.length === 0 ? { ok: true } : { ok: false, errors };
+}
+
+/**
+ * Internal: recursively walks a schema node, accumulating rule violations.
+ *
+ * Recurses into every JSON-Schema child-carrying keyword we care about so the
+ * four build-time rejection rules apply at any depth. JSON Schema combinators
+ * (`oneOf` / `anyOf` / `allOf` / `not`) and reference containers (`definitions`
+ * / `$defs`) are walked — shell-side Core Subset enforcement rejects them
+ * outright at `registerSchema` time, but the build-time guard stays narrower
+ * and still surfaces nested `pattern` / `$ref` / `secret-with-default`
+ * violations through them.
+ *
+ * @param node   - arbitrary schema sub-tree (may be object, array, or primitive)
+ * @param path   - dot-joined JSON-Pointer-ish location used in error messages
+ * @param errors - mutable accumulator to which violations are pushed
+ */
+function walk(node: unknown, path: string, errors: string[]): void {
+  if (node === null || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    for (let i = 0; i < node.length; i++) {
+      walk(node[i], `${path}[${i}]`, errors);
+    }
+    return;
+  }
+
+  const obj = node as Record<string, unknown>;
+
+  // Rule 2: pattern keyword forbidden anywhere.
+  if ('pattern' in obj) {
+    errors.push(
+      `pattern-not-allowed: \`pattern\` keyword found at ${path} — the Core Subset excludes \`pattern\` due to ReDoS risk (CVE-2025-69873 class). Use \`enum\`, \`minLength\`, or \`maxLength\` for constrained strings.`,
+    );
+  }
+
+  // Rule 3: external $ref forbidden.
+  if ('$ref' in obj) {
+    const ref = obj.$ref;
+    if (typeof ref !== 'string' || !ref.startsWith('#/')) {
+      errors.push(
+        `ref-not-allowed: \`$ref\` at ${path} must start with \`#/\` (got ${JSON.stringify(ref)}). External $ref is forbidden per NUB-CONFIG Security Considerations.`,
+      );
+    }
+  }
+
+  // Rule 4: x-napplet-secret:true + default coexistence forbidden.
+  if (obj['x-napplet-secret'] === true && 'default' in obj) {
+    errors.push(
+      `secret-with-default: property at ${path} declares both \`x-napplet-secret: true\` and a \`default\` value. A secret with a hardcoded default is not a secret.`,
+    );
+  }
+
+  // Recurse into child schemas. JSON Schema child-carrying keys we care about:
+  //   properties          — map of name -> schema
+  //   items               — schema OR array of schemas (tuple form, walked too)
+  //   additionalProperties — schema or boolean (schema form walked)
+  //   patternProperties   — map (child schemas walked; a `pattern` inside any
+  //                         child is still caught by rule 2)
+  //   oneOf / anyOf / allOf — arrays of schemas (walked)
+  //   not                 — schema (walked)
+  //   definitions / $defs — maps of name -> schema (walked)
+  if (
+    typeof obj.properties === 'object' &&
+    obj.properties !== null &&
+    !Array.isArray(obj.properties)
+  ) {
+    for (const [key, child] of Object.entries(obj.properties as Record<string, unknown>)) {
+      walk(child, `${path}.properties.${key}`, errors);
+    }
+  }
+  if ('items' in obj) {
+    walk(obj.items, `${path}.items`, errors);
+  }
+  if ('additionalProperties' in obj && typeof obj.additionalProperties === 'object') {
+    walk(obj.additionalProperties, `${path}.additionalProperties`, errors);
+  }
+  if (
+    typeof obj.patternProperties === 'object' &&
+    obj.patternProperties !== null &&
+    !Array.isArray(obj.patternProperties)
+  ) {
+    for (const [key, child] of Object.entries(
+      obj.patternProperties as Record<string, unknown>,
+    )) {
+      walk(child, `${path}.patternProperties.${key}`, errors);
+    }
+  }
+  for (const combiner of ['oneOf', 'anyOf', 'allOf'] as const) {
+    if (Array.isArray(obj[combiner])) {
+      (obj[combiner] as unknown[]).forEach((child, i) =>
+        walk(child, `${path}.${combiner}[${i}]`, errors),
+      );
+    }
+  }
+  if ('not' in obj) walk(obj.not, `${path}.not`, errors);
+  for (const defs of ['definitions', '$defs'] as const) {
+    if (
+      typeof obj[defs] === 'object' &&
+      obj[defs] !== null &&
+      !Array.isArray(obj[defs])
+    ) {
+      for (const [key, child] of Object.entries(obj[defs] as Record<string, unknown>)) {
+        walk(child, `${path}.${defs}.${key}`, errors);
+      }
+    }
+  }
+}
+
+/**
  * Vite plugin for NIP-5A manifest generation.
  *
  * Computes per-file SHA-256 hashes, an aggregate hash, and optionally signs
@@ -191,8 +355,20 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       resolvedSchema = result.schema;
       resolvedSchemaSource = result.source;
       if (resolvedSchema !== null) {
+        // Structural guard: four NUB-CONFIG rejection rules must pass before
+        // any downstream consumer (manifest tag in closeBundle, meta injection
+        // in transformIndexHtml) sees the schema. Malformed schemas abort the
+        // build — they MUST NOT silently propagate to the shell as runtime
+        // `config.schemaError` pushes when the error is structurally
+        // detectable at build time.
+        const validation = validateConfigSchema(resolvedSchema);
+        if (!validation.ok) {
+          const header = `[nip5a-manifest] configSchema validation failed (source: ${resolvedSchemaSource ?? 'unknown'})`;
+          const body = validation.errors.map((e) => `  - ${e}`).join('\n');
+          throw new Error(`${header}\n${body}`);
+        }
         console.log(
-          `[nip5a-manifest] ${options.nappletType}: config schema discovered via ${resolvedSchemaSource}`,
+          `[nip5a-manifest] ${options.nappletType}: config schema discovered via ${resolvedSchemaSource} — validated`,
         );
       }
     },
