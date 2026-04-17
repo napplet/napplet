@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
-status: executing
+status: completed
 stopped_at: "Completed 112-02-PLAN.md — Phase 112 complete: @napplet/nub-config full type surface landed (8 wire messages, 3 discriminated unions, DOMAIN in types.ts, full barrel); build + type-check green. Ready for Phase 113 (shim + SDK)."
-last_updated: "2026-04-17T11:26:05.533Z"
+last_updated: "2026-04-17T11:29:51.391Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 113 (next — NUB Config Shim + SDK)
-Plan: 01 (not started)
+Phase: 113
+Plan: Not started
 Status: Phase 112 complete — @napplet/nub-config has its full type surface landed (types.ts + barrel); build + type-check green across monorepo. Ready for Phase 113.
 Last activity: 2026-04-17
 
