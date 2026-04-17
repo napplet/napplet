@@ -22,6 +22,9 @@ At **build time** (with `VITE_DEV_PRIVKEY_HEX` set), the plugin:
 3. Creates a kind 35128 manifest event and signs it
 4. Writes `.nip5a-manifest.json` to `dist/`
 5. Updates the meta tag in `dist/index.html` with the computed hash
+6. Injects `<meta name="napplet-config-schema">` into `dist/index.html` if a `configSchema` is declared or discovered
+7. Embeds the schema as a `['config', ...]` tag on the kind 35128 manifest
+8. Includes the schema bytes in `aggregateHash` via a synthetic `config:schema` path prefix
 
 The build-time manifest is for verifying the hash computation workflow locally, not for deploying to relays.
 
@@ -81,6 +84,103 @@ An array of service names this napplet requires from its host shell (e.g., `['au
 - Adds `['requires', 'service-name']` tags to the kind 35128 manifest event
 
 If the shell does not support all required capabilities, the napplet can detect this at runtime via `window.napplet.shell.supports()` or the shell can show a compatibility warning.
+
+#### configSchema (optional)
+
+**Type:** `JSONSchema7 | string | undefined`
+
+Declares a JSON Schema (draft-07+) describing the napplet's per-napplet configuration surface (NUB-CONFIG). At build time, the plugin:
+
+- Validates the schema against the NUB-CONFIG Core Subset (see Build-Time Guards below)
+- Embeds the schema as a `['config', JSON.stringify(schema)]` tag on the kind 35128 manifest event
+- Includes the schema bytes in `aggregateHash` via a synthetic `config:schema` path prefix (any schema edit bumps the hash)
+- Injects `<meta name="napplet-config-schema" content="{json}">` into `dist/index.html` so the napplet's shim can read it synchronously at install time
+
+**Accepted forms:**
+
+| Value | Behaviour |
+|-------|-----------|
+| `JSONSchema7` object | Used directly |
+| `string` (path) | Resolved relative to the Vite project root; read + parsed as JSON |
+| `undefined` (omitted) | Falls through to convention-file discovery |
+
+**Discovery precedence** (when `configSchema` is not provided):
+
+1. `options.configSchema` (inline object or path string) -- highest priority
+2. `config.schema.json` at the project root -- convention file
+3. `napplet.config.ts` / `napplet.config.js` / `napplet.config.mjs` at the project root, exporting a `configSchema` named export (or on the default export) -- dynamic import fallback
+
+If none of the three paths resolve a schema, manifest/meta emission for the config tag is skipped silently -- build produces bytes identical to a pre-phase-114 napplet.
+
+**Example (inline):**
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { nip5aManifest } from '@napplet/vite-plugin';
+
+export default defineConfig({
+  plugins: [
+    nip5aManifest({
+      nappletType: 'my-napp',
+      configSchema: {
+        type: 'object',
+        properties: {
+          theme: { type: 'string', enum: ['light', 'dark'], default: 'dark' },
+          pollIntervalSeconds: { type: 'integer', minimum: 10, maximum: 3600, default: 60 },
+        },
+        required: ['theme'],
+      },
+    }),
+  ],
+});
+```
+
+**Example (convention file):**
+
+```json
+// config.schema.json (at project root)
+{
+  "type": "object",
+  "properties": {
+    "theme": { "type": "string", "enum": ["light", "dark"], "default": "dark" }
+  },
+  "required": ["theme"]
+}
+```
+
+```ts
+// vite.config.ts -- no configSchema option; picked up from config.schema.json
+nip5aManifest({ nappletType: 'my-napp' });
+```
+
+**Example (napplet.config.ts fallback):**
+
+```ts
+// napplet.config.ts (at project root)
+import type { JSONSchema7 } from 'json-schema';
+
+export const configSchema: JSONSchema7 = {
+  type: 'object',
+  properties: {
+    theme: { type: 'string', enum: ['light', 'dark'], default: 'dark' },
+  },
+  required: ['theme'],
+};
+```
+
+#### Build-Time Guards
+
+The plugin validates the resolved schema against the NUB-CONFIG Core Subset at `configResolved` and throws a multi-line error (aborting the Vite build) on any of these rule violations:
+
+| Error code | Trigger |
+|------------|---------|
+| `invalid-schema` | Root is not `{ type: "object", ... }` |
+| `pattern-not-allowed` | Schema uses `pattern` anywhere in the tree (ReDoS risk per CVE-2025-69873) |
+| `ref-not-allowed` | Schema uses `$ref` in any form |
+| `secret-with-default` | A property marked `x-napplet-secret: true` also declares a `default` |
+
+The walk recurses into `properties`, `items`, `additionalProperties`, `patternProperties`, `oneOf`, `anyOf`, `allOf`, `not`, `definitions`, and `$defs` -- the guard is wide even though the Core Subset is narrow.
 
 ### Environment Variables
 
@@ -200,11 +300,19 @@ interface Nip5aManifestOptions {
   nappletType: string;
   /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
   requires?: string[];
+  /**
+   * JSON Schema (draft-07+) describing the napplet's config surface (NUB-CONFIG).
+   * May be an inline object or a path string (resolved relative to the Vite
+   * project root). Falls through to `config.schema.json` then `napplet.config.*`
+   * discovery when omitted.
+   */
+  configSchema?: JSONSchema7 | string;
 }
 ```
 
 ## Protocol Reference
 
+- [NUB-CONFIG spec (PR #13)](https://github.com/napplet/nubs/pull/13) -- per-napplet declarative configuration
 - [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
 - [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md) -- Nsite specification
 - [Aggregate Hash PR](https://github.com/nostr-protocol/nips/pull/2287) -- NIP-5A aggregate hash extension (not yet merged)
