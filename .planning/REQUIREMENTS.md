@@ -39,12 +39,12 @@ Six wire messages; full JSON envelope `{ type: "config.action", ...payload }` pe
 
 9th NUB package, 13th @napplet package overall. Follows the modular NUB pattern (types + shim + sdk).
 
-- [ ] **NUB-01**: `@napplet/nub-config` scaffolded with package.json, tsup.config.ts, tsconfig.json matching the @napplet/nub-identity template
+- [x] **NUB-01**: `@napplet/nub-config` scaffolded with package.json, tsup.config.ts, tsconfig.json matching the @napplet/nub-identity template
 - [ ] **NUB-02**: `src/types.ts` — message interface definitions for all 6 wire messages, `NappletConfigSchema` type (JSON Schema alias), `ConfigValues` type, plus potentiality types for `x-napplet-*` extensions
 - [ ] **NUB-03**: `src/shim.ts` — `installConfigShim()` mounts `window.napplet.config`, manages subscribers (fan-out Set with ref-counted subscribe/unsubscribe), reads manifest-declared schema from `<meta name="napplet-config-schema">` at install, handles `config.values` push routing
 - [ ] **NUB-04**: `src/sdk.ts` — named exports `get()`, `subscribe(cb)`, `openSettings({ section? })`, `registerSchema(schema, version?)` as convenience wrappers around `window.napplet.config`
 - [ ] **NUB-05**: `src/index.ts` barrel exports all types, shim installer, and SDK helpers
-- [ ] **NUB-06**: `@types/json-schema@^7.0.15` as devDependency (for type alias only); `json-schema-to-ts@^3.1.1` as optional peerDependency (opt-in `FromSchema<typeof schema>` inference); no runtime deps beyond `@napplet/core`
+- [x] **NUB-06**: `@types/json-schema@^7.0.15` as devDependency (for type alias only); `json-schema-to-ts@^3.1.1` as optional peerDependency (opt-in `FromSchema<typeof schema>` inference); no runtime deps beyond `@napplet/core`
 
 ### Vite-Plugin Extension
 
@@ -129,10 +129,10 @@ Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirement
 | SPEC-06  | 111   | Complete |
 | SPEC-07  | 111   | Complete |
 | SPEC-08  | 111   | Complete |
-| NUB-01   | 112   | Pending |
+| NUB-01   | 112   | Complete |
 | NUB-02   | 112   | Pending |
 | NUB-05   | 112   | Pending |
-| NUB-06   | 112   | Pending |
+| NUB-06   | 112   | Complete |
 | NUB-03   | 113   | Pending |
 | NUB-04   | 113   | Pending |
 | VITE-01  | 114   | Pending |

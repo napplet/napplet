@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
-status: verifying
-stopped_at: "Completed 111-04-PLAN.md — Phase 111 NUB-CONFIG Spec complete, PR #13 opened at napplet/nubs"
-last_updated: "2026-04-17T11:08:06.234Z"
+status: executing
+stopped_at: "Completed 112-01-PLAN.md — @napplet/nub-config package scaffold + stub barrel (Phase 112 plan 1/2)"
+last_updated: "2026-04-17T11:17:08Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
   percent: 17
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 111 — NUB-CONFIG Spec
+**Current focus:** Phase 112 — NUB Config Package Scaffold
 
 ## Current Position
 
 Phase: 112
-Plan: Not started
-Status: Phase complete — ready for verification
+Plan: 02 (next — types.ts + full barrel)
+Status: In progress — plan 01 complete (package scaffolded, DOMAIN stub exported, build green)
 Last activity: 2026-04-17
 
 Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
@@ -47,15 +47,16 @@ Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: --
-- Total execution time: 0 hours
+- Total plans completed: 5 (Phase 111: 4, Phase 112: 1)
+- Average duration: ~3 min
+- Total execution time: ~14 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 111   | 4     | 12min | 3min     |
+| 112   | 1/2   | 2min  | 2min     |
 
 ## Accumulated Context
 
@@ -63,6 +64,7 @@ Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
 | Phase 111 P02 | 2 min | 1 tasks | 1 files |
 | Phase 111 P03 | 3min | 2 tasks | 1 files |
 | Phase 111 P04 | 3min | 4 tasks | 2 files |
+| Phase 112 P01 | 2min | 2 tasks | 4 files |
 
 ### Decisions
 
@@ -85,6 +87,9 @@ Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
 - [Phase 111]: Retained unknown-section as non-normative error-code row; shells SHOULD silently ignore per Shell Guarantees, but code reserved for future telemetry paths
 - [Phase 111]: PR number confirmed as #13 — matches roadmap sequential reservation (NUB-MEDIA #10, NUB-NOTIFY #11, NUB-IDENTITY #12). No README link amendment required.
 - [Phase 111]: Human-gated push + PR pattern upheld: agent stopped at Task 3, presented verbatim instructions, awaited resume signal. Agent never autonomously ran git push or gh pr create.
+- [Phase 112]: 112-01: Scaffolded `@napplet/nub-config` package (13th monorepo package, 9th NUB) mirroring `@napplet/nub-identity` template exactly — package.json + tsconfig.json + tsup.config.ts + stub src/index.ts. Declares `@napplet/core` as only runtime dep, `@types/json-schema@^7.0.15` as devDep, `json-schema-to-ts@^3.1.1` as optional peerDep (flagged `peerDependenciesMeta.optional: true`). Build + type-check green. Commits d2ea20a (chore) + cba9fdf (feat).
+- [Phase 112]: `json-schema-to-ts` declared as optional peerDependency (not devDep) so authors who don't want `FromSchema<typeof schema>` inference skip the ~1.5MB transitive install; consumers omitting it get no pnpm warnings thanks to the `optional: true` meta flag.
+- [Phase 112]: `DOMAIN = 'config' as const` temporarily lives in `src/index.ts` rather than `src/types.ts` — plan 02 moves it to types.ts alongside the full 6-message type surface to match the identity NUB pattern (`packages/nubs/identity/src/types.ts` line 19 convention).
 
 ### Blockers/Concerns
 
@@ -93,6 +98,6 @@ Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
 
 ## Session Continuity
 
-Last session: 2026-04-17T11:03:37.048Z
-Stopped at: Completed 111-04-PLAN.md — Phase 111 NUB-CONFIG Spec complete, PR #13 opened at napplet/nubs
-Resume: `/gsd:plan-phase 111`
+Last session: 2026-04-17T11:17:08Z
+Stopped at: Completed 112-01-PLAN.md — @napplet/nub-config package scaffold + stub barrel (Phase 112 plan 1/2)
+Resume: `/gsd:execute-phase 112` (plan 02 — src/types.ts + full barrel)

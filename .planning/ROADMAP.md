@@ -325,8 +325,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `src/index.ts` barrel re-exports all type definitions and the `DOMAIN` constant (`'config' as const`).
   4. `@types/json-schema@^7.0.15` is declared as devDependency (for JSON Schema type alias only); `json-schema-to-ts@^3.1.1` is declared as optional peerDependency for opt-in `FromSchema<typeof schema>` inference; no runtime dependencies beyond `@napplet/core`.
   5. `pnpm --filter @napplet/nub-config build && pnpm --filter @napplet/nub-config type-check` passes clean.
-**Plans:** 0/2 plans complete
-- [ ] 112-01-PLAN.md — Scaffold packages/nubs/config/ directory + package.json (with JSON Schema deps) + tsconfig + tsup.config + stub barrel
+**Plans:** 1/2 plans complete
+- [x] 112-01-PLAN.md — Scaffold packages/nubs/config/ directory + package.json (with JSON Schema deps) + tsconfig + tsup.config + stub barrel (completed 2026-04-17)
 - [ ] 112-02-PLAN.md — Write src/types.ts (all 8 wire messages + schema/values/extension types + DOMAIN) + full barrel + build/type-check gate
 
 ### Phase 113: NUB Config Shim + SDK
@@ -386,7 +386,7 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 111. NUB-CONFIG Spec | 4/4 | Complete    | 2026-04-17 |
-| 112. NUB Config Package Scaffold | 0/0 | Not started | - |
+| 112. NUB Config Package Scaffold | 1/2 | In progress | - |
 | 113. NUB Config Shim + SDK | 0/0 | Not started | - |
 | 114. Vite-Plugin Extension | 0/0 | Not started | - |
 | 115. Core / Shim / SDK Integration + Wire | 0/0 | Not started | - |
