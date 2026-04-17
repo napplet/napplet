@@ -4,7 +4,7 @@ milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
 stopped_at: "Completed 115-01-PLAN.md — 'config' landed as 9th NubDomain across @napplet/core/shim/sdk. Core: envelope.ts + types.ts (NappletGlobal.config inline namespace, zero @napplet/nub-config dep). Shim: package.json dep, installConfigShim + handleConfigMessage routing, config: {...} in window.napplet literal with schema:null placeholder + post-literal installConfigShim() overwrite for the Object.defineProperty schema getter. SDK: package.json dep, explicit config namespace wrapper (5 methods + readonly schema getter), 17 Config NUB type re-exports, CONFIG_DOMAIN + installConfigShim re-exports. Full monorepo build + type-check green (13/13). CAP-01 verified via standalone NamespacedCapability type-check. Phase 115 COMPLETE (WIRE-01..06 + CORE-01..02 + SHIM-01 + SDK-01 + CAP-01 all satisfied). Ready for phase 116 (Documentation)."
-last_updated: "2026-04-17T13:53:50.514Z"
+last_updated: "2026-04-17T13:55:20.037Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6

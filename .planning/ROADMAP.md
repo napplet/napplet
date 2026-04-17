@@ -395,5 +395,5 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 | 112. NUB Config Package Scaffold | 2/2 | Complete    | 2026-04-17 |
 | 113. NUB Config Shim + SDK | 2/2 | Complete    | 2026-04-17 |
 | 114. Vite-Plugin Extension | 3/3 | Complete    | 2026-04-17 |
-| 115. Core / Shim / SDK Integration + Wire | 1/1 | Complete   | 2026-04-17 |
+| 115. Core / Shim / SDK Integration + Wire | 1/1 | Complete    | 2026-04-17 |
 | 116. Documentation | 0/0 | Not started | - |
