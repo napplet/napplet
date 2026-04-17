@@ -382,8 +382,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   4. `packages/shim/README.md` documents the `window.napplet.config` namespace.
   5. `packages/sdk/README.md` documents the `config` SDK exports and the `FromSchema` type-inference pattern.
   6. `packages/vite-plugin/README.md` documents the `configSchema` option, the `config.schema.json` convention-file path, and the `napplet.config.ts` export path.
-**Plans:** 3 plans
-- [ ] 116-01-PLAN.md — @napplet/nub-config package README (DOC-01)
+**Plans:** 1/3 plans executed
+- [x] 116-01-PLAN.md — @napplet/nub-config package README (DOC-01)
 - [ ] 116-02-PLAN.md — core/shim/sdk/vite-plugin README updates (DOC-03..06)
 - [ ] 116-03-PLAN.md — public nubs repo registry row verify + push handoff (DOC-02, human-gated)
 
@@ -399,4 +399,4 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 | 113. NUB Config Shim + SDK | 2/2 | Complete    | 2026-04-17 |
 | 114. Vite-Plugin Extension | 3/3 | Complete    | 2026-04-17 |
 | 115. Core / Shim / SDK Integration + Wire | 1/1 | Complete    | 2026-04-17 |
-| 116. Documentation | 0/0 | Not started | - |
+| 116. Documentation | 1/3 | In Progress|  |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
-stopped_at: "Completed 115-01-PLAN.md — 'config' landed as 9th NubDomain across @napplet/core/shim/sdk. Core: envelope.ts + types.ts (NappletGlobal.config inline namespace, zero @napplet/nub-config dep). Shim: package.json dep, installConfigShim + handleConfigMessage routing, config: {...} in window.napplet literal with schema:null placeholder + post-literal installConfigShim() overwrite for the Object.defineProperty schema getter. SDK: package.json dep, explicit config namespace wrapper (5 methods + readonly schema getter), 17 Config NUB type re-exports, CONFIG_DOMAIN + installConfigShim re-exports. Full monorepo build + type-check green (13/13). CAP-01 verified via standalone NamespacedCapability type-check. Phase 115 COMPLETE (WIRE-01..06 + CORE-01..02 + SHIM-01 + SDK-01 + CAP-01 all satisfied). Ready for phase 116 (Documentation)."
-last_updated: "2026-04-17T13:55:20.037Z"
+stopped_at: Completed 116-01-PLAN.md — @napplet/nub-config README (248 lines, DOC-01). Parallel execution; 116-02 and 116-03 still pending.
+last_updated: "2026-04-17T14:11:27.506Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
   percent: 100
 ---
 
@@ -63,6 +63,7 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 | Phase 114 P02 | 2min | 1 tasks | 1 files |
 | Phase 114 P03 | 2min | 1 tasks | 1 files |
 | Phase 115 P01 | 4m17s | 4 tasks | 6 files |
+| Phase 116 P01 | 1m29s | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,7 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 - [Phase 115]: 115-01: Landed @napplet/nub-config integration across core/shim/sdk. Added 'config' as 9th NubDomain + NUB_DOMAINS entry (envelope.ts), NappletGlobal.config inline namespace with 5 methods + readonly schema accessor using Record<string, unknown> to keep @napplet/core decoupled from @napplet/nub-config (types.ts). Shim imports installConfigShim + handleConfigMessage + 5 aliases, adds bare-prefix config.* routing branch (not .result-suffix like identity — config.values and config.schemaError are non-.result pushes), populates config:{...schema:null} in window.napplet literal, calls installConfigShim() at end to overwrite with shim-managed api (Object.defineProperty schema getter). SDK adds explicit config namespace wrapper (matches identity/media/notify precedent — not export * as config), 17 Config NUB type re-exports, CONFIG_DOMAIN + installConfigShim. Full monorepo pnpm build + type-check exit 0 (13/13 packages). CAP-01 verified via standalone type-check — nub:unknown rejected, config / nub:config / perm:* accepted. 4 atomic commits (1e1489a, 9688a6b, 26d8d2f, de89150).
 - [Phase 115]: 115-01: Pattern established — placeholder-then-overwrite for window.napplet installer-owned accessors. Object literal populates 5 methods + schema: null; installConfigShim() reassigns entire napplet.config property with its api (Object.defineProperty schema getter). Both sides satisfy NappletGlobal.config type (readonly schema: X | null accepts both null literal and getter), method refs are identical, only functional delta is the getter (desired). Template for future NUB integrations that need readonly accessors on window.napplet.*.
 - [Phase 115]: 115-01: Pattern — bare-prefix vs .result-suffix domain routing. config.* uses type.startsWith('config.') (not '&& endsWith(\".result\")') because handleConfigMessage dispatches three shell→napplet types: registerSchema.result (correlated ack), values (dual-use — correlated or push), schemaError (uncorrelated push). Identity's .result-suffix pattern works because identity is strict request/response; NUBs with push streams or uncorrelated pushes need bare prefix.
+- [Phase 116]: 116-01: Wrote packages/nubs/config/README.md (248 lines). Followed @napplet/nub-notify template (5+3 wire-msg tables). Domain Registration section explicitly diverges from notify/media -- barrel is side-effect-free; shim is central dispatcher. SDK Helpers shows @napplet/sdk config namespace usage (phase-115 shape, not bare sdk.*). FromSchema opt-in documented with explicit fallback-to-ConfigValues callout. All 31 acceptance greps PASS in first shot. Commit 36d23d2. DOC-01 satisfied.
 
 ### Blockers/Concerns
 
@@ -133,6 +135,6 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 
 ## Session Continuity
 
-Last session: 2026-04-17T13:53:50.511Z
-Stopped at: Completed 115-01-PLAN.md — 'config' landed as 9th NubDomain across @napplet/core/shim/sdk. Core: envelope.ts + types.ts (NappletGlobal.config inline namespace, zero @napplet/nub-config dep). Shim: package.json dep, installConfigShim + handleConfigMessage routing, config: {...} in window.napplet literal with schema:null placeholder + post-literal installConfigShim() overwrite for the Object.defineProperty schema getter. SDK: package.json dep, explicit config namespace wrapper (5 methods + readonly schema getter), 17 Config NUB type re-exports, CONFIG_DOMAIN + installConfigShim re-exports. Full monorepo build + type-check green (13/13). CAP-01 verified via standalone NamespacedCapability type-check. Phase 115 COMPLETE (WIRE-01..06 + CORE-01..02 + SHIM-01 + SDK-01 + CAP-01 all satisfied). Ready for phase 116 (Documentation).
+Last session: 2026-04-17T14:11:27.503Z
+Stopped at: Completed 116-01-PLAN.md — @napplet/nub-config README (248 lines, DOC-01). Parallel execution; 116-02 and 116-03 still pending.
 Resume: `/gsd:execute-phase 116` (Documentation — nub-config README + NIP-5D Known NUBs + package READMEs — DOC-01..06)
