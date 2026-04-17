@@ -8,6 +8,26 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
+## Current Milestone: v0.25.0 Config NUB
+
+**Goal:** Design and ship NUB-CONFIG — per-napplet declarative configuration. Napplet declares a JSON Schema; shell renders the settings UI, validates and persists values in a napplet-scoped config store, and delivers live values to the napplet.
+
+**Target features:**
+- NUB-CONFIG spec drafted as napplet/nubs#13 (JSON Schema wire contract, `$version` potentiality, `x-napplet-secret`/`x-napplet-section`/`x-napplet-order` extensions, MUST/SHOULD/MAY guarantees)
+- `@napplet/nub-config` package (9th NUB, 13th package) — types + shim installer + SDK wrappers per modular pattern
+- Wire surface: `config.registerSchema`, `config.get`, `config.subscribe`, `config.values` (shell→napplet push), `config.openSettings({ section? })`
+- Vite-plugin extension injects schema into NIP-5A manifest at build time (authoritative path); runtime `config.registerSchema` is the escape hatch
+- Core/shim/SDK integration: `'config'` in `NubDomain`, `window.napplet.config` namespace on `NappletGlobal`
+- Spec guarantees: shell MUST validate values before delivery, MUST apply declared defaults, MUST scope storage by `(dTag, aggregateHash)`, napplet MUST NOT mutate config directly over the wire
+- All docs updated (NIP-5D Known NUBs table, nub-config README, core/shim/SDK READMEs)
+
+**Key context:**
+- Extends the v0.19.0-dropped `shell:config-*` topics, **inverted** — per-napplet schema-driven (not global shell config)
+- Storage is separate from NUB-STORAGE at the spec surface; shell implementations MAY back NUB-CONFIG with NUB-STORAGE internally (shell concern, not spec concern)
+- `$version` is a potentiality; migration UX is entirely shell-resolved; napplet never sees old values
+- Napplet never mutates config — shell UI is the sole writer; napplet only reads, subscribes, and requests-to-open-settings
+- Value access is subscribe-live — napplet gets initial snapshot + push updates on change, no polling
+
 ## Shipped: v0.24.0 Identity NUB + Kill NIP-07
 
 Removed `window.nostr` (NIP-07) from napplets — napplets can no longer sign or encrypt. Deleted `@napplet/nub-signer` entirely. Created `@napplet/nub-identity` (read-only user queries: getPublicKey, getRelays, getProfile, getFollows, getList, getZaps, getMutes, getBlocked, getBadges). Added `relay.publishEncrypted` for shell-mediated crypto (NIP-44 default). Shell auto-decrypts incoming encrypted events. NIP-5D updated with security rationale. NUB-IDENTITY spec: napplet/nubs#12. 6 phases shipped 2026-04-09. See [archive](milestones/v0.24.0-ROADMAP.md).
@@ -226,7 +246,12 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+- v0.25.0 NUB-CONFIG spec drafted with JSON Schema wire contract, `$version` potentiality, and `x-napplet-*` extensions
+- v0.25.0 `@napplet/nub-config` package with types + shim installer + SDK wrappers
+- v0.25.0 Wire messages: `config.registerSchema`, `config.get`, `config.subscribe`, `config.values`, `config.openSettings`
+- v0.25.0 Vite-plugin injects config schema into NIP-5A manifest at build time
+- v0.25.0 Core/shim/SDK integrated; `window.napplet.config` namespace
+- v0.25.0 Shell-sole-writer, validation-before-delivery, defaults-applied, hash-scoped storage guarantees enforced by the reference shim contract
 
 ### Out of Scope
 
@@ -332,4 +357,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-09 after v0.24.0 milestone*
+*Last updated: 2026-04-17 — v0.25.0 Config NUB milestone started*
