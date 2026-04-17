@@ -28,12 +28,12 @@ Public NIP-style document drafted in the napplet/nubs repository (PR #13). No `@
 
 Six wire messages; full JSON envelope `{ type: "config.action", ...payload }` per NIP-5D.
 
-- [ ] **WIRE-01**: `config.registerSchema` (napplet → shell) — runtime escape hatch; includes schema and optional `version`. Shell validates the schema itself and ACKs with a correlated result message (schema ok / schema rejected with reason)
-- [ ] **WIRE-02**: `config.get` (napplet → shell) — correlation-ID request; returns current validated+defaulted config object in a correlated `config.values` response
-- [ ] **WIRE-03**: `config.subscribe` (napplet → shell) — starts the live push stream. Shell MUST emit an immediate initial `config.values` push on subscription (snapshot delivery)
-- [ ] **WIRE-04**: `config.unsubscribe` (napplet → shell) — stops the live push stream. Reference shim tracks local subscriber count and only sends `config.unsubscribe` when the last local subscriber detaches
-- [ ] **WIRE-05**: `config.values` (shell → napplet) — dual-use message: correlated response to `config.get`, and push delivery on subscription. Always carries full validated config object (no diffs)
-- [ ] **WIRE-06**: `config.openSettings` (napplet → shell) — optional `section` payload. Shell opens its own settings UI, optionally deep-linking to the named section. Section MUST be declared via `x-napplet-section` somewhere in the schema (strict scope)
+- [x] **WIRE-01**: `config.registerSchema` (napplet → shell) — runtime escape hatch; includes schema and optional `version`. Shell validates the schema itself and ACKs with a correlated result message (schema ok / schema rejected with reason)
+- [x] **WIRE-02**: `config.get` (napplet → shell) — correlation-ID request; returns current validated+defaulted config object in a correlated `config.values` response
+- [x] **WIRE-03**: `config.subscribe` (napplet → shell) — starts the live push stream. Shell MUST emit an immediate initial `config.values` push on subscription (snapshot delivery)
+- [x] **WIRE-04**: `config.unsubscribe` (napplet → shell) — stops the live push stream. Reference shim tracks local subscriber count and only sends `config.unsubscribe` when the last local subscriber detaches
+- [x] **WIRE-05**: `config.values` (shell → napplet) — dual-use message: correlated response to `config.get`, and push delivery on subscription. Always carries full validated config object (no diffs)
+- [x] **WIRE-06**: `config.openSettings` (napplet → shell) — optional `section` payload. Shell opens its own settings UI, optionally deep-linking to the named section. Section MUST be declared via `x-napplet-section` somewhere in the schema (strict scope)
 
 ### @napplet/nub-config Package
 
@@ -62,11 +62,11 @@ Multiple schema-source paths supported; schema becomes part of the NIP-5A manife
 
 Surgical edits to existing packages, following the v0.22-v0.24 integration pattern.
 
-- [ ] **CORE-01**: `'config'` added to `NubDomain` union and `NUB_DOMAINS` array in `packages/core/src/envelope.ts`
-- [ ] **CORE-02**: `config` namespace added to `NappletGlobal` in `packages/core/src/types.ts` with `get()`, `subscribe()`, `openSettings()`, `registerSchema()`, and readonly `schema` accessor
-- [ ] **SHIM-01**: `@napplet/shim` imports `installConfigShim` from `@napplet/nub-config/shim` and mounts at shim-install time
-- [ ] **SDK-01**: `@napplet/sdk` re-exports `config` convenience wrappers from `@napplet/nub-config/sdk` and all message types
-- [ ] **CAP-01**: `shell.supports('config')` and `shell.supports('nub:config')` probes work per the existing NamespacedCapability convention
+- [x] **CORE-01**: `'config'` added to `NubDomain` union and `NUB_DOMAINS` array in `packages/core/src/envelope.ts`
+- [x] **CORE-02**: `config` namespace added to `NappletGlobal` in `packages/core/src/types.ts` with `get()`, `subscribe()`, `openSettings()`, `registerSchema()`, and readonly `schema` accessor
+- [x] **SHIM-01**: `@napplet/shim` imports `installConfigShim` from `@napplet/nub-config/shim` and mounts at shim-install time
+- [x] **SDK-01**: `@napplet/sdk` re-exports `config` convenience wrappers from `@napplet/nub-config/sdk` and all message types
+- [x] **CAP-01**: `shell.supports('config')` and `shell.supports('nub:config')` probes work per the existing NamespacedCapability convention
 
 ### Documentation
 
@@ -142,17 +142,17 @@ Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirement
 | VITE-05  | 114   | Complete |
 | VITE-06  | 114   | Complete |
 | VITE-07  | 114   | Complete |
-| WIRE-01  | 115   | Pending |
-| WIRE-02  | 115   | Pending |
-| WIRE-03  | 115   | Pending |
-| WIRE-04  | 115   | Pending |
-| WIRE-05  | 115   | Pending |
-| WIRE-06  | 115   | Pending |
-| CORE-01  | 115   | Pending |
-| CORE-02  | 115   | Pending |
-| SHIM-01  | 115   | Pending |
-| SDK-01   | 115   | Pending |
-| CAP-01   | 115   | Pending |
+| WIRE-01  | 115   | Complete |
+| WIRE-02  | 115   | Complete |
+| WIRE-03  | 115   | Complete |
+| WIRE-04  | 115   | Complete |
+| WIRE-05  | 115   | Complete |
+| WIRE-06  | 115   | Complete |
+| CORE-01  | 115   | Complete |
+| CORE-02  | 115   | Complete |
+| SHIM-01  | 115   | Complete |
+| SDK-01   | 115   | Complete |
+| CAP-01   | 115   | Complete |
 | DOC-01   | 116   | Pending |
 | DOC-02   | 116   | Pending |
 | DOC-03   | 116   | Pending |

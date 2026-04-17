@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
-stopped_at: "Completed 114-03-PLAN.md — emitted ['config', JSON.stringify(schema)] kind 35128 manifest tag, synthetic config:schema aggregateHash contribution (filtered out of x-tag projection), and napplet-config-schema meta injection via transformIndexHtml on @napplet/vite-plugin. All three emissions null-guarded for backward compat. Build + monorepo type-check green. Phase 114 COMPLETE (VITE-01..07 all satisfied). Ready for phase 115 (core/shim/SDK integration + wire)."
-last_updated: "2026-04-17T13:40:21.575Z"
+stopped_at: "Completed 115-01-PLAN.md — 'config' landed as 9th NubDomain across @napplet/core/shim/sdk. Core: envelope.ts + types.ts (NappletGlobal.config inline namespace, zero @napplet/nub-config dep). Shim: package.json dep, installConfigShim + handleConfigMessage routing, config: {...} in window.napplet literal with schema:null placeholder + post-literal installConfigShim() overwrite for the Object.defineProperty schema getter. SDK: package.json dep, explicit config namespace wrapper (5 methods + readonly schema getter), 17 Config NUB type re-exports, CONFIG_DOMAIN + installConfigShim re-exports. Full monorepo build + type-check green (13/13). CAP-01 verified via standalone NamespacedCapability type-check. Phase 115 COMPLETE (WIRE-01..06 + CORE-01..02 + SHIM-01 + SDK-01 + CAP-01 all satisfied). Ready for phase 116 (Documentation)."
+last_updated: "2026-04-17T13:53:50.514Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 12
+  completed_plans: 12
   percent: 100
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 115 — Core / Shim / SDK Integration + Wire
+**Current focus:** Phase 116 — Documentation
 
 ## Current Position
 
-Phase: 115
+Phase: 116
 Plan: Not started
-Status: Ready — Phase 114 complete (VITE-01..07 all satisfied), Phase 115 next
+Status: Ready — Phase 115 complete (WIRE-01..06, CORE-01..02, SHIM-01, SDK-01, CAP-01 all satisfied), Phase 116 next
 Last activity: 2026-04-17
 
-Progress: [██████████] 100% (4/6 phases complete, 11/11 plans complete within executed phases)
+Progress: [██████████] 100% (5/6 phases complete, 12/12 plans complete within executed phases)
 
 **Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
@@ -62,6 +62,7 @@ Progress: [██████████] 100% (4/6 phases complete, 11/11 plan
 | Phase 114 P01 | 3min | 2 tasks | 4 files |
 | Phase 114 P02 | 2min | 1 tasks | 1 files |
 | Phase 114 P03 | 2min | 1 tasks | 1 files |
+| Phase 115 P01 | 4m17s | 4 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,9 @@ Progress: [██████████] 100% (4/6 phases complete, 11/11 plan
 - [Phase 114]: 114-03: Pattern — null-guarded-emission triad. Single closure-var 'resolvedSchema' checked at three independent emission sites (meta tag, synthetic xTags entry, manifest config tag). Three 'if (resolvedSchema !== null)' guards, one backward-compat invariant. Chosen over a single early-exit flag because the three emission points are structurally independent (transformIndexHtml and closeBundle are separate hooks that may fire in isolation during partial builds / dev cycles).
 - [Phase 114]: 114-03: Meta tag content is raw JSON.stringify output — Vite's IndexHtmlTransformResult HtmlTagDescriptor pipeline HTML-escapes attribute values at render time. Pre-escaping would double-escape on render and break the shim's JSON.parse(getAttribute('content')). Verified via smoke: payload with literal < > & and nested " chars round-tripped intact through the descriptor layer.
 - [Phase 114]: Phase 114 COMPLETE — VITE-01..07 satisfied. 114-01 (3 requirements), 114-02 (1 requirement), 114-03 (3 requirements). Three waves, three commits, three summaries. @napplet/vite-plugin now accepts configSchema option, discovers schemas via 3-path precedence (inline / config.schema.json / napplet.config.*), structurally validates against 4 Core Subset rules at configResolved (build abort on fail), emits config manifest tag + config:schema aggregateHash contribution + napplet-config-schema meta injection. All DTS-surface additions cleanly: configSchema?: JSONSchema7 | string on Nip5aManifestOptions. Phase 115 (core/shim/SDK integration + wire) next.
+- [Phase 115]: 115-01: Landed @napplet/nub-config integration across core/shim/sdk. Added 'config' as 9th NubDomain + NUB_DOMAINS entry (envelope.ts), NappletGlobal.config inline namespace with 5 methods + readonly schema accessor using Record<string, unknown> to keep @napplet/core decoupled from @napplet/nub-config (types.ts). Shim imports installConfigShim + handleConfigMessage + 5 aliases, adds bare-prefix config.* routing branch (not .result-suffix like identity — config.values and config.schemaError are non-.result pushes), populates config:{...schema:null} in window.napplet literal, calls installConfigShim() at end to overwrite with shim-managed api (Object.defineProperty schema getter). SDK adds explicit config namespace wrapper (matches identity/media/notify precedent — not export * as config), 17 Config NUB type re-exports, CONFIG_DOMAIN + installConfigShim. Full monorepo pnpm build + type-check exit 0 (13/13 packages). CAP-01 verified via standalone type-check — nub:unknown rejected, config / nub:config / perm:* accepted. 4 atomic commits (1e1489a, 9688a6b, 26d8d2f, de89150).
+- [Phase 115]: 115-01: Pattern established — placeholder-then-overwrite for window.napplet installer-owned accessors. Object literal populates 5 methods + schema: null; installConfigShim() reassigns entire napplet.config property with its api (Object.defineProperty schema getter). Both sides satisfy NappletGlobal.config type (readonly schema: X | null accepts both null literal and getter), method refs are identical, only functional delta is the getter (desired). Template for future NUB integrations that need readonly accessors on window.napplet.*.
+- [Phase 115]: 115-01: Pattern — bare-prefix vs .result-suffix domain routing. config.* uses type.startsWith('config.') (not '&& endsWith(\".result\")') because handleConfigMessage dispatches three shell→napplet types: registerSchema.result (correlated ack), values (dual-use — correlated or push), schemaError (uncorrelated push). Identity's .result-suffix pattern works because identity is strict request/response; NUBs with push streams or uncorrelated pushes need bare prefix.
 
 ### Blockers/Concerns
 
@@ -129,6 +133,6 @@ Progress: [██████████] 100% (4/6 phases complete, 11/11 plan
 
 ## Session Continuity
 
-Last session: 2026-04-17T13:38:24.060Z
-Stopped at: Completed 114-03-PLAN.md — emitted ['config', JSON.stringify(schema)] kind 35128 manifest tag, synthetic config:schema aggregateHash contribution (filtered out of x-tag projection), and napplet-config-schema meta injection via transformIndexHtml on @napplet/vite-plugin. All three emissions null-guarded for backward compat. Build + monorepo type-check green. Phase 114 COMPLETE (VITE-01..07 all satisfied). Ready for phase 115 (core/shim/SDK integration + wire).
-Resume: `/gsd:execute-phase 113` (NUB Config Shim + SDK — phase 112 complete)
+Last session: 2026-04-17T13:53:50.511Z
+Stopped at: Completed 115-01-PLAN.md — 'config' landed as 9th NubDomain across @napplet/core/shim/sdk. Core: envelope.ts + types.ts (NappletGlobal.config inline namespace, zero @napplet/nub-config dep). Shim: package.json dep, installConfigShim + handleConfigMessage routing, config: {...} in window.napplet literal with schema:null placeholder + post-literal installConfigShim() overwrite for the Object.defineProperty schema getter. SDK: package.json dep, explicit config namespace wrapper (5 methods + readonly schema getter), 17 Config NUB type re-exports, CONFIG_DOMAIN + installConfigShim re-exports. Full monorepo build + type-check green (13/13). CAP-01 verified via standalone NamespacedCapability type-check. Phase 115 COMPLETE (WIRE-01..06 + CORE-01..02 + SHIM-01 + SDK-01 + CAP-01 all satisfied). Ready for phase 116 (Documentation).
+Resume: `/gsd:execute-phase 116` (Documentation — nub-config README + NIP-5D Known NUBs + package READMEs — DOC-01..06)
