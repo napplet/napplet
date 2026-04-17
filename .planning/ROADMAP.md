@@ -382,7 +382,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   4. `packages/shim/README.md` documents the `window.napplet.config` namespace.
   5. `packages/sdk/README.md` documents the `config` SDK exports and the `FromSchema` type-inference pattern.
   6. `packages/vite-plugin/README.md` documents the `configSchema` option, the `config.schema.json` convention-file path, and the `napplet.config.ts` export path.
-**Plans**: TBD
+**Plans:** 3 plans
+- [ ] 116-01-PLAN.md — @napplet/nub-config package README (DOC-01)
+- [ ] 116-02-PLAN.md — core/shim/sdk/vite-plugin README updates (DOC-03..06)
+- [ ] 116-03-PLAN.md — public nubs repo registry row verify + push handoff (DOC-02, human-gated)
 
 ## Progress
 
