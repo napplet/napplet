@@ -17,12 +17,12 @@ Public NIP-style document drafted in the napplet/nubs repository (PR #13). No `@
 
 - [x] **SPEC-01**: Draft NUB-CONFIG spec as napplet/nubs#13 with wire contract, Core Subset, security considerations, and NIP-5D parent reference
 - [x] **SPEC-02**: Core Subset locked — types (`string`, `number`, `integer`, `boolean`, `object` top-level, `array` of primitives); keywords (`default`, `title`, `description`, `enum`, `enumDescriptions`); constraints (`minimum`, `maximum`, `minLength`, `maxLength`); extensions (`x-napplet-secret`, `x-napplet-section`, `x-napplet-order`, `deprecationMessage`, `markdownDescription`); `$version` potentiality. `pattern` is explicitly NOT in v1 Core Subset (ReDoS risk per CVE-2025-69873)
-- [ ] **SPEC-03**: Shell MUSTs enumerated — validate values before delivery, apply declared defaults, scope storage by `(dTag, aggregateHash)`, be sole writer, render Tier 0 secret masking for `x-napplet-secret: true` fields
-- [ ] **SPEC-04**: Shell SHOULDs enumerated — group by `x-napplet-section`, sort within section by `x-napplet-order`, display `deprecationMessage` next to affected fields, render `markdownDescription` as markdown (falling back to plain text)
-- [ ] **SPEC-05**: Shell MAYs enumerated — Tier 2+ secret handling (encrypted at rest, OS keychain), richer `format` widget rendering, nested-object rendering beyond one level (JSON fallback acceptable), back NUB-CONFIG storage with NUB-STORAGE internally
-- [ ] **SPEC-06**: Anti-features explicitly rejected in spec — no `config.set` wire message (napplet cannot mutate config), no `$ref`/`definitions` (schemas are self-contained), no `pattern` in Core Subset, no napplet-rendered settings iframe, no napplet-supplied validation code
-- [ ] **SPEC-07**: Security considerations section — source-identity scope binding, cleartext-secrets-over-postMessage limitation acknowledged, `additionalProperties: false` override for NUB-CONFIG top level, external `$ref` forbidden
-- [ ] **SPEC-08**: Error envelopes catalogued — malformed schema at registerSchema time, undeclared section in openSettings, subscribe-before-schema
+- [x] **SPEC-03**: Shell MUSTs enumerated — validate values before delivery, apply declared defaults, scope storage by `(dTag, aggregateHash)`, be sole writer, render Tier 0 secret masking for `x-napplet-secret: true` fields
+- [x] **SPEC-04**: Shell SHOULDs enumerated — group by `x-napplet-section`, sort within section by `x-napplet-order`, display `deprecationMessage` next to affected fields, render `markdownDescription` as markdown (falling back to plain text)
+- [x] **SPEC-05**: Shell MAYs enumerated — Tier 2+ secret handling (encrypted at rest, OS keychain), richer `format` widget rendering, nested-object rendering beyond one level (JSON fallback acceptable), back NUB-CONFIG storage with NUB-STORAGE internally
+- [x] **SPEC-06**: Anti-features explicitly rejected in spec — no `config.set` wire message (napplet cannot mutate config), no `$ref`/`definitions` (schemas are self-contained), no `pattern` in Core Subset, no napplet-rendered settings iframe, no napplet-supplied validation code
+- [x] **SPEC-07**: Security considerations section — source-identity scope binding, cleartext-secrets-over-postMessage limitation acknowledged, `additionalProperties: false` override for NUB-CONFIG top level, external `$ref` forbidden
+- [x] **SPEC-08**: Error envelopes catalogued — malformed schema at registerSchema time, undeclared section in openSettings, subscribe-before-schema
 
 ### Wire Surface
 
@@ -123,12 +123,12 @@ Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirement
 |----------|-------|---------|
 | SPEC-01  | 111   | Complete |
 | SPEC-02  | 111   | Complete |
-| SPEC-03  | 111   | Pending |
-| SPEC-04  | 111   | Pending |
-| SPEC-05  | 111   | Pending |
-| SPEC-06  | 111   | Pending |
-| SPEC-07  | 111   | Pending |
-| SPEC-08  | 111   | Pending |
+| SPEC-03  | 111   | Complete |
+| SPEC-04  | 111   | Complete |
+| SPEC-05  | 111   | Complete |
+| SPEC-06  | 111   | Complete |
+| SPEC-07  | 111   | Complete |
+| SPEC-08  | 111   | Complete |
 | NUB-01   | 112   | Pending |
 | NUB-02   | 112   | Pending |
 | NUB-05   | 112   | Pending |

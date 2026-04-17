@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: executing
-stopped_at: Completed 111-02 -- Schema Contract section added to NUB-CONFIG.md on nub-config branch (commit 4a480d7); ready for 111-03 guarantees-and-antifeatures
-last_updated: "2026-04-17T10:50:18.836Z"
+stopped_at: Completed 111-03-PLAN.md
+last_updated: "2026-04-17T10:55:57.415Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 111 (NUB-CONFIG Spec) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-17
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 
 | Phase 111 P01 | 4min | 2 tasks | 1 files |
 | Phase 111 P02 | 2 min | 1 tasks | 1 files |
+| Phase 111 P03 | 3min | 2 tasks | 1 files |
 
 ### Decisions
 
@@ -79,6 +80,8 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 - PRINCIPLE: NUBs define protocol surface + potentialities; implementation UX is a shell concern
 - [Phase 111]: 111-01: Scaffolded NUB-CONFIG.md on public nubs repo nub-config branch — header, API surface (NappletConfig + ConfigSchema/ConfigValues/ConfigSchemaError/Subscription), wire protocol table (9 message types), 8 envelope examples. Zero @napplet/ refs. Single scaffold commit 29baaac.
 - [Phase 111]: 111-02: Locked NUB-CONFIG Core Subset -- types/keywords/constraints, additionalProperties:false override, deterministic default-resolution rule, x-napplet-* extensions table, $version potentiality, pattern excluded citing CVE-2025-69873, $ref forbidden in all forms, depth limit 4, secret-with-default prohibition.
+- [Phase 111]: Lowercased napplet-rendered/napplet-supplied in Anti-Features to match plan verification greps; prose reads naturally either way
+- [Phase 111]: Retained unknown-section as non-normative error-code row; shells SHOULD silently ignore per Shell Guarantees, but code reserved for future telemetry paths
 
 ### Blockers/Concerns
 
@@ -87,6 +90,6 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 
 ## Session Continuity
 
-Last session: 2026-04-17T10:50:18.833Z
-Stopped at: Completed 111-02 -- Schema Contract section added to NUB-CONFIG.md on nub-config branch (commit 4a480d7); ready for 111-03 guarantees-and-antifeatures
+Last session: 2026-04-17T10:55:57.412Z
+Stopped at: Completed 111-03-PLAN.md
 Resume: `/gsd:plan-phase 111`
