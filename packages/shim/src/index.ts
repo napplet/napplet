@@ -36,6 +36,15 @@ import {
   getBadges,
 } from '@napplet/nub-identity';
 import { installIfcShim, emit, on, handleIfcEvent } from '@napplet/nub-ifc';
+import {
+  installConfigShim,
+  handleConfigMessage,
+  registerSchema as configRegisterSchema,
+  get as configGet,
+  subscribe as configSubscribe,
+  openSettings as configOpenSettings,
+  onSchemaError as configOnSchemaError,
+} from '@napplet/nub-config';
 import type { NappletGlobal } from '@napplet/core';
 import type { IfcEventMessage } from '@napplet/nub-ifc';
 
@@ -82,6 +91,13 @@ function handleEnvelopeMessage(event: MessageEvent): void {
   // Route identity.* result messages to identity shim
   if (type.startsWith('identity.') && type.endsWith('.result')) {
     handleIdentityMessage(msg as { type: string; [key: string]: unknown });
+    return;
+  }
+
+  // Route config.* messages to config shim
+  //   (handles config.registerSchema.result, config.values, and config.schemaError internally)
+  if (type.startsWith('config.')) {
+    handleConfigMessage(msg as { type: string; [key: string]: unknown });
     return;
   }
 
@@ -152,6 +168,14 @@ installIfcShim();
     getBlocked,
     getBadges,
   },
+  config: {
+    registerSchema: configRegisterSchema,
+    get: configGet,
+    subscribe: configSubscribe,
+    openSettings: configOpenSettings,
+    onSchemaError: configOnSchemaError,
+    schema: null,
+  },
   shell: {
     supports(_capability: string): boolean {
       // TODO: Shell populates supported capabilities at iframe creation
@@ -182,3 +206,6 @@ installStorageShim();
 
 // Install identity shim (read-only user identity queries)
 installIdentityShim();
+
+// Install config shim (manifest-meta schema read + window.napplet.config mount with readonly `schema` getter)
+installConfigShim();

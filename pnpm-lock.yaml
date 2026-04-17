@@ -201,6 +201,9 @@ importers:
       '@napplet/core':
         specifier: workspace:*
         version: link:../core
+      '@napplet/nub-config':
+        specifier: workspace:*
+        version: link:../nubs/config
       '@napplet/nub-identity':
         specifier: workspace:*
         version: link:../nubs/identity
