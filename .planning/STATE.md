@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
-status: planning
-stopped_at: "Roadmap created — awaiting Phase 111 planning"
-last_updated: "2026-04-17T00:00:00.000Z"
+status: executing
+stopped_at: Completed 111-01 — NUB-CONFIG scaffold on nub-config branch (commit 29baaac); ready for 111-02 schema contract
+last_updated: "2026-04-17T10:45:11.711Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.25.0 Config NUB -- Phase 111 (NUB-CONFIG Spec) ready to plan
+**Current focus:** Phase 111 — NUB-CONFIG Spec
 
 ## Current Position
 
-Phase: 111 — NUB-CONFIG Spec (first of 6)
-Plan: —
-Status: Roadmap complete; ready to plan Phase 111
-Last activity: 2026-04-17 — ROADMAP.md written for v0.25.0 (phases 111-116)
+Phase: 111 (NUB-CONFIG Spec) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-04-17
 
 Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 
@@ -59,6 +59,8 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 
 ## Accumulated Context
 
+| Phase 111 P01 | 4min | 2 tasks | 1 files |
+
 ### Decisions
 
 - v0.25.0: NUB-CONFIG is per-napplet schema-driven config (inverts the dropped v0.19.0 shell:config-* topics)
@@ -74,6 +76,7 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 - v0.25.0: Phase 111 is drafted in the PUBLIC napplet/nubs repo — no `@napplet/*` references allowed in spec
 - v0.25.0: Phases 112-116 are in this (private) repo, matching the v0.22/v0.23/v0.24 spec-first-then-SDK pattern exactly
 - PRINCIPLE: NUBs define protocol surface + potentialities; implementation UX is a shell concern
+- [Phase 111]: 111-01: Scaffolded NUB-CONFIG.md on public nubs repo nub-config branch — header, API surface (NappletConfig + ConfigSchema/ConfigValues/ConfigSchemaError/Subscription), wire protocol table (9 message types), 8 envelope examples. Zero @napplet/ refs. Single scaffold commit 29baaac.
 
 ### Blockers/Concerns
 
@@ -82,6 +85,6 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 
 ## Session Continuity
 
-Last session: 2026-04-17
-Stopped at: Roadmap created — awaiting Phase 111 planning
+Last session: 2026-04-17T10:45:11.708Z
+Stopped at: Completed 111-01 — NUB-CONFIG scaffold on nub-config branch (commit 29baaac); ready for 111-02 schema contract
 Resume: `/gsd:plan-phase 111`

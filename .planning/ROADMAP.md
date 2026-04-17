@@ -309,8 +309,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   4. Anti-features section explicitly rejects: `config.set` wire message, `$ref`/`definitions`, `pattern` in Core Subset, napplet-rendered settings iframe, napplet-supplied validation code.
   5. Six wire messages (`config.registerSchema`, `config.get`, `config.subscribe`, `config.unsubscribe`, `config.values`, `config.openSettings`) are specified with direction, payload shape, and correlation semantics; error envelopes catalogue malformed-schema, undeclared-section, and subscribe-before-schema cases.
   6. A PR is opened against napplet/nubs as issue/PR #13 following the pattern of NUB-IDENTITY (#12), NUB-NOTIFY (#11), NUB-MEDIA (#10).
-**Plans:** 4 plans
-- [ ] 111-01-PLAN.md — Branch setup + NUB-CONFIG.md scaffold (header, description, API surface, wire protocol)
+**Plans:** 1/4 plans executed
+- [x] 111-01-PLAN.md — Branch setup + NUB-CONFIG.md scaffold (header, description, API surface, wire protocol)
 - [ ] 111-02-PLAN.md — Schema Contract section (Core Subset, extensions, $version, pattern exclusion with CVE-2025-69873)
 - [ ] 111-03-PLAN.md — Shell Guarantees (MUST/SHOULD/MAY) + Anti-Features + Security Considerations + Error Envelopes
 - [ ] 111-04-PLAN.md — Registry update + final @napplet/ audit + PR handoff checkpoint
@@ -383,7 +383,7 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 111. NUB-CONFIG Spec | 0/4 | Planned | - |
+| 111. NUB-CONFIG Spec | 1/4 | In Progress|  |
 | 112. NUB Config Package Scaffold | 0/0 | Not started | - |
 | 113. NUB Config Shim + SDK | 0/0 | Not started | - |
 | 114. Vite-Plugin Extension | 0/0 | Not started | - |
