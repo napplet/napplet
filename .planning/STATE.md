@@ -4,7 +4,7 @@ milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
 stopped_at: "Completed 114-03-PLAN.md — emitted ['config', JSON.stringify(schema)] kind 35128 manifest tag, synthetic config:schema aggregateHash contribution (filtered out of x-tag projection), and napplet-config-schema meta injection via transformIndexHtml on @napplet/vite-plugin. All three emissions null-guarded for backward compat. Build + monorepo type-check green. Phase 114 COMPLETE (VITE-01..07 all satisfied). Ready for phase 115 (core/shim/SDK integration + wire)."
-last_updated: "2026-04-17T13:39:09.645Z"
+last_updated: "2026-04-17T13:40:21.575Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 115
-Plan: 01
+Plan: Not started
 Status: Ready — Phase 114 complete (VITE-01..07 all satisfied), Phase 115 next
 Last activity: 2026-04-17
 
