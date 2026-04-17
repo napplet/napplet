@@ -1,5 +1,27 @@
 # Milestones
 
+## v0.25.0 Config NUB (Shipped: 2026-04-17)
+
+**Phases completed:** 6 phases, 15 plans, 32 tasks
+
+**Key accomplishments:**
+
+- NUB-CONFIG.md skeleton drafted on nub-config branch of public napplet/nubs repo — setext header, API surface (NappletConfig interface + ConfigSchema/ConfigValues/ConfigSchemaError types), and full wire protocol (9 message types, 8 envelope examples)
+- NUB-CONFIG.md completed in body: RFC-2119 conformance tables (MUST/SHOULD/MAY), explicit anti-feature rejection catalogue, four-subsection security section, and nine-code error-envelope vocabulary -- spec is structurally complete pending plan 111-04 publication
+- NUB-CONFIG spec published to napplet/nubs#13 — README registry row added, zero @napplet/ leakage confirmed across all 5 branch commits, PR opened by human as gated shared-state action
+- Scaffolded `@napplet/nub-config` — 13th package, 9th NUB — mirroring the identity NUB template exactly, plus JSON Schema dep edges (`@types/json-schema` devDep + optional `json-schema-to-ts` peerDep) so plan 02 can land `src/types.ts` against a resolved, buildable package.
+- Landed the full `packages/nubs/config/src/types.ts` — 321 LOC containing all 8 NUB-CONFIG wire messages, schema/values/extension types, the ConfigSchemaErrorCode 8-literal union, the relocated DOMAIN constant, and 3 discriminated unions — plus the full barrel re-exporting 15 type symbols. Package build + type-check green; full monorepo type-check green across all 13 packages. Package surface is now ready for Phase 113's shim+SDK code.
+- Full @napplet/nub-config napplet-side machinery: manifest-meta schema read, ref-counted subscriber fan-out, correlation-ID request tracking, and window.napplet.config mount — 371 LOC single-file implementation.
+- Five bare-name SDK wrappers (get, subscribe, openSettings, registerSchema, onSchemaError) over a shared requireNapplet() guard, plus full-surface barrel re-exporting types + shim + SDK; @napplet/nub-config now ships a complete NUB implementation ready for phase-115 central-shim wiring.
+- Added `configSchema?: JSONSchema7 | string` to @napplet/vite-plugin with strict 4-step discovery (inline object → inline path → config.schema.json → napplet.config.{ts,js,mjs}) populating `resolvedSchema` closure state for downstream guards and emission in 114-02/03.
+- Added a pure, zero-dependency recursive structural guard to `@napplet/vite-plugin` that rejects NUB-CONFIG schemas violating any of the four build-time-detectable rules (root-shape, external `$ref`, `pattern` keyword, `x-napplet-secret`+`default` coexistence) before the manifest is emitted, wired via `configResolved` so malformed schemas fail the Vite build with a single multi-line diagnostic naming every violation at once.
+- Emitted `['config', JSON.stringify(schema)]` on the kind 35128 NIP-5A manifest, fed schema bytes into `aggregateHash` via a synthetic `config:schema` xTags entry (filtered out of the `['x', ...]` projection), and injected `<meta name="napplet-config-schema" content="{JSON}">` into built index.html head — all three emissions null-guarded so napplets without a declared schema produce byte-identical manifest + HTML to pre-phase-114 behavior. Phase 114 complete.
+- Wrote 248-line package README for @napplet/nub-config covering install, manifest-driven vs runtime schema declaration, the window.napplet.config API surface, SDK namespace usage, and FromSchema type inference via the json-schema-to-ts optional peerDependency.
+- Documented NUB-CONFIG as the 9th NUB across the four napplet-repo package READMEs (core / shim / sdk / vite-plugin) -- every config-related public surface now has visible docs parity with identity/notify/media.
+- PR OPENED: napplet/nubs#13
+
+---
+
 ## v0.24.0 Identity NUB + Kill NIP-07 (Shipped: 2026-04-09)
 
 **Phases completed:** 6 phases, 0 plans, 0 tasks

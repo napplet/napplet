@@ -4,7 +4,7 @@ milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
 stopped_at: "Completed 116-03-PLAN.md -- public nubs registry row verify + push handoff. DOC-02 satisfied. NUB-CONFIG row verified (cc88056, 6/6 greps pass). PR #13 open at napplet/nubs. Phase 116 complete -- all 15 plans across 6 phases complete. v0.25.0 Config NUB milestone complete."
-last_updated: "2026-04-17T14:25:49.609Z"
+last_updated: "2026-04-17T14:27:04.395Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6

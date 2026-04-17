@@ -8,25 +8,9 @@ A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run i
 
 Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-## Current Milestone: v0.25.0 Config NUB
+## Shipped: v0.25.0 Config NUB
 
-**Goal:** Design and ship NUB-CONFIG — per-napplet declarative configuration. Napplet declares a JSON Schema; shell renders the settings UI, validates and persists values in a napplet-scoped config store, and delivers live values to the napplet.
-
-**Target features:**
-- NUB-CONFIG spec drafted as napplet/nubs#13 (JSON Schema wire contract, `$version` potentiality, `x-napplet-secret`/`x-napplet-section`/`x-napplet-order` extensions, MUST/SHOULD/MAY guarantees)
-- `@napplet/nub-config` package (9th NUB, 13th package) — types + shim installer + SDK wrappers per modular pattern
-- Wire surface: `config.registerSchema`, `config.get`, `config.subscribe`, `config.values` (shell→napplet push), `config.openSettings({ section? })`
-- Vite-plugin extension injects schema into NIP-5A manifest at build time (authoritative path); runtime `config.registerSchema` is the escape hatch
-- Core/shim/SDK integration: `'config'` in `NubDomain`, `window.napplet.config` namespace on `NappletGlobal`
-- Spec guarantees: shell MUST validate values before delivery, MUST apply declared defaults, MUST scope storage by `(dTag, aggregateHash)`, napplet MUST NOT mutate config directly over the wire
-- All docs updated (NIP-5D Known NUBs table, nub-config README, core/shim/SDK READMEs)
-
-**Key context:**
-- Extends the v0.19.0-dropped `shell:config-*` topics, **inverted** — per-napplet schema-driven (not global shell config)
-- Storage is separate from NUB-STORAGE at the spec surface; shell implementations MAY back NUB-CONFIG with NUB-STORAGE internally (shell concern, not spec concern)
-- `$version` is a potentiality; migration UX is entirely shell-resolved; napplet never sees old values
-- Napplet never mutates config — shell UI is the sole writer; napplet only reads, subscribes, and requests-to-open-settings
-- Value access is subscribe-live — napplet gets initial snapshot + push updates on change, no polling
+NUB-CONFIG spec (napplet/nubs#13) for per-napplet declarative configuration. `@napplet/nub-config` (9th NUB, 13th package) with 8 wire message types (registerSchema, get, subscribe, unsubscribe, openSettings, values, registerSchema.result, schemaError). JSON Schema draft-07 Core Subset (`pattern` excluded per CVE-2025-69873). Shell is sole writer; subscribe-live value delivery with ref-counted subscribers. Vite-plugin extension: `configSchema` option with 3-path discovery (inline / config.schema.json / napplet.config.ts), `['config', ...]` manifest tag, `config:schema` synthetic aggregateHash prefix, `<meta name="napplet-config-schema">` injection, build-time structural guards. `x-napplet-secret`/`-section`/`-order` + `deprecationMessage` + `markdownDescription` as potentialities. FromSchema type inference via json-schema-to-ts optional peer. All docs updated. 6 phases shipped 2026-04-17. See [archive](milestones/v0.25.0-ROADMAP.md).
 
 ## Shipped: v0.24.0 Identity NUB + Kill NIP-07
 
@@ -244,14 +228,16 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ 'identity' in NubDomain + core/shim/SDK integration — v0.24.0 Phase 109 (CORE-01..02, SHIM-01)
 - ✓ NIP-5D updated (no NIP-07, security rationale), all READMEs — v0.24.0 Phase 110 (DOC-01..03)
 
+- ✓ NUB-CONFIG spec drafted and published as napplet/nubs#13 — v0.25.0 Phase 111 (SPEC-01..08)
+- ✓ @napplet/nub-config package scaffolded (types + barrel, JSON Schema dep edges) — v0.25.0 Phase 112 (NUB-01, NUB-02, NUB-05, NUB-06)
+- ✓ @napplet/nub-config shim + SDK (installConfigShim, ref-counted subscribers, 5 SDK wrappers, meta-tag schema read) — v0.25.0 Phase 113 (NUB-03, NUB-04)
+- ✓ @napplet/vite-plugin configSchema option with 3-path discovery, manifest tag, aggregateHash participation, meta injection, build-time structural guards — v0.25.0 Phase 114 (VITE-01..07)
+- ✓ 'config' in NubDomain + NappletGlobal.config + shim mount/routing + SDK re-exports + shell.supports('config') — v0.25.0 Phase 115 (WIRE-01..06, CORE-01..02, SHIM-01, SDK-01, CAP-01)
+- ✓ @napplet/nub-config README + NIP-5D Known NUBs row + 4 package READMEs (core/shim/sdk/vite-plugin) — v0.25.0 Phase 116 (DOC-01..06)
+
 ### Active
 
-- v0.25.0 NUB-CONFIG spec drafted with JSON Schema wire contract, `$version` potentiality, and `x-napplet-*` extensions
-- v0.25.0 `@napplet/nub-config` package with types + shim installer + SDK wrappers
-- v0.25.0 Wire messages: `config.registerSchema`, `config.get`, `config.subscribe`, `config.values`, `config.openSettings`
-- v0.25.0 Vite-plugin injects config schema into NIP-5A manifest at build time
-- v0.25.0 Core/shim/SDK integrated; `window.napplet.config` namespace
-- v0.25.0 Shell-sole-writer, validation-before-delivery, defaults-applied, hash-scoped storage guarantees enforced by the reference shim contract
+(No active milestone — ready for `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -268,7 +254,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.24.0 shipped (Identity NUB + Kill NIP-07). 12 packages (4 core + 8 NUB: relay, storage, ifc, theme, keys, media, notify, identity). No window.nostr. Shell-mediated crypto. 24 milestones shipped.
+- **Current state**: v0.25.0 shipped (Config NUB). 13 packages (4 core + 9 NUB: relay, storage, ifc, theme, keys, media, notify, identity, config). Per-napplet declarative JSON Schema config with shell-rendered UI, shell-sole-writer persistence, and live subscribe delivery. 25 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -357,4 +343,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-17 — v0.25.0 Config NUB milestone started*
+*Last updated: 2026-04-17 — v0.25.0 Config NUB milestone complete*
