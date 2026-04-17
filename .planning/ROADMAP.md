@@ -289,7 +289,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Design and ship NUB-CONFIG — per-napplet declarative configuration. Napplet declares a JSON Schema; shell renders the settings UI, validates and persists values in a napplet-scoped config store, and delivers live values back to the napplet via snapshot + push.
 
-- [ ] **Phase 111: NUB-CONFIG Spec** - Draft NUB-CONFIG spec in the public nubs repo (PR #13) with Core Subset, MUSTs/SHOULDs/MAYs, anti-features, and wire surface
+- [x] **Phase 111: NUB-CONFIG Spec** - Draft NUB-CONFIG spec in the public nubs repo (PR #13) with Core Subset, MUSTs/SHOULDs/MAYs, anti-features, and wire surface (completed 2026-04-17)
 - [ ] **Phase 112: NUB Config Package Scaffold** - @napplet/nub-config types + tsup/tsconfig/package.json + barrel export
 - [ ] **Phase 113: NUB Config Shim + SDK** - Shim installer with subscriber fan-out and manifest-meta schema read; SDK convenience wrappers
 - [ ] **Phase 114: Vite-Plugin Extension** - configSchema option, convention-file/napplet.config.ts discovery, manifest tag injection, aggregateHash participation, meta-tag injection, build-time guards
@@ -309,11 +309,11 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   4. Anti-features section explicitly rejects: `config.set` wire message, `$ref`/`definitions`, `pattern` in Core Subset, napplet-rendered settings iframe, napplet-supplied validation code.
   5. Six wire messages (`config.registerSchema`, `config.get`, `config.subscribe`, `config.unsubscribe`, `config.values`, `config.openSettings`) are specified with direction, payload shape, and correlation semantics; error envelopes catalogue malformed-schema, undeclared-section, and subscribe-before-schema cases.
   6. A PR is opened against napplet/nubs as issue/PR #13 following the pattern of NUB-IDENTITY (#12), NUB-NOTIFY (#11), NUB-MEDIA (#10).
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 - [x] 111-01-PLAN.md — Branch setup + NUB-CONFIG.md scaffold (header, description, API surface, wire protocol)
 - [x] 111-02-PLAN.md — Schema Contract section (Core Subset, extensions, $version, pattern exclusion with CVE-2025-69873)
 - [x] 111-03-PLAN.md — Shell Guarantees (MUST/SHOULD/MAY) + Anti-Features + Security Considerations + Error Envelopes
-- [ ] 111-04-PLAN.md — Registry update + final @napplet/ audit + PR handoff checkpoint
+- [x] 111-04-PLAN.md — Registry update + final @napplet/ audit + PR handoff checkpoint
 
 ### Phase 112: NUB Config Package Scaffold
 **Goal**: The `@napplet/nub-config` package exists with typed message interfaces, schema/values type aliases, discriminated unions, `DOMAIN` constant, and a barrel export — matching the `@napplet/nub-identity` template exactly.
@@ -383,7 +383,7 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 111. NUB-CONFIG Spec | 3/4 | In Progress|  |
+| 111. NUB-CONFIG Spec | 4/4 | Complete   | 2026-04-17 |
 | 112. NUB Config Package Scaffold | 0/0 | Not started | - |
 | 113. NUB Config Shim + SDK | 0/0 | Not started | - |
 | 114. Vite-Plugin Extension | 0/0 | Not started | - |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
-status: executing
-stopped_at: Completed 111-03-PLAN.md
-last_updated: "2026-04-17T10:55:57.415Z"
+status: verifying
+stopped_at: "Completed 111-04-PLAN.md — Phase 111 NUB-CONFIG Spec complete, PR #13 opened at napplet/nubs"
+last_updated: "2026-04-17T11:03:37.051Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 Phase: 111 (NUB-CONFIG Spec) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-17
 
-Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
+Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
 
 **Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 | Phase 111 P01 | 4min | 2 tasks | 1 files |
 | Phase 111 P02 | 2 min | 1 tasks | 1 files |
 | Phase 111 P03 | 3min | 2 tasks | 1 files |
+| Phase 111 P04 | 3min | 4 tasks | 2 files |
 
 ### Decisions
 
@@ -82,6 +83,8 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 - [Phase 111]: 111-02: Locked NUB-CONFIG Core Subset -- types/keywords/constraints, additionalProperties:false override, deterministic default-resolution rule, x-napplet-* extensions table, $version potentiality, pattern excluded citing CVE-2025-69873, $ref forbidden in all forms, depth limit 4, secret-with-default prohibition.
 - [Phase 111]: Lowercased napplet-rendered/napplet-supplied in Anti-Features to match plan verification greps; prose reads naturally either way
 - [Phase 111]: Retained unknown-section as non-normative error-code row; shells SHOULD silently ignore per Shell Guarantees, but code reserved for future telemetry paths
+- [Phase 111]: PR number confirmed as #13 — matches roadmap sequential reservation (NUB-MEDIA #10, NUB-NOTIFY #11, NUB-IDENTITY #12). No README link amendment required.
+- [Phase 111]: Human-gated push + PR pattern upheld: agent stopped at Task 3, presented verbatim instructions, awaited resume signal. Agent never autonomously ran git push or gh pr create.
 
 ### Blockers/Concerns
 
@@ -90,6 +93,6 @@ Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 
 ## Session Continuity
 
-Last session: 2026-04-17T10:55:57.412Z
-Stopped at: Completed 111-03-PLAN.md
+Last session: 2026-04-17T11:03:37.048Z
+Stopped at: Completed 111-04-PLAN.md — Phase 111 NUB-CONFIG Spec complete, PR #13 opened at napplet/nubs
 Resume: `/gsd:plan-phase 111`
