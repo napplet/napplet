@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with `relay`, `ipc`, `storage`, `keys`, `media`, `notify`, `identity`, and `shell` sub-objects
+3. Once registered, `window.napplet` is populated with relay, ipc, storage, keys, media, notify, identity, config, and shell sub-objects
 4. No `window.nostr` is installed -- signing and encryption are mediated by the shell via `relay.publish()` and `relay.publishEncrypted()`
 
 ### Installation
@@ -93,12 +93,22 @@ const notifySub = window.napplet.notify.onAction((notifId, actionId) => {
 const pubkey = await window.napplet.identity.getPublicKey();
 const profile = await window.napplet.identity.getProfile();
 
+// Read per-napplet config (validated + defaulted by the shell)
+const config = await window.napplet.config.get();
+// Subscribe to live config updates
+const configSub = window.napplet.config.subscribe((values) => {
+  applyTheme(values.theme);
+});
+// Deep-link the shell's settings UI to a named section
+window.napplet.config.openSettings({ section: 'appearance' });
+
 // Clean up
 sub.close();
 ipcSub.close();
 keySub.close();
 mediaSub.close();
 notifySub.close();
+configSub.close();
 ```
 
 ## Wire Format
@@ -150,6 +160,12 @@ Messages sent via `window.parent.postMessage(msg, '*')`:
 { type: 'notify.badge', count: number }
 { type: 'notify.channel.register', channelId: string, label: string, description?: string, defaultPriority?: string }
 { type: 'notify.permission.request', id: string, channel?: string }
+
+{ type: 'config.registerSchema', id: string, schema: object, version?: number }
+{ type: 'config.get', id: string }
+{ type: 'config.subscribe' }
+{ type: 'config.unsubscribe' }
+{ type: 'config.openSettings', section?: string }
 ```
 
 ### Inbound (shell → napplet)
@@ -194,6 +210,10 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'notify.clicked', notificationId: string }
 { type: 'notify.dismissed', notificationId: string, reason?: string }
 { type: 'notify.controls', controls: string[] }
+
+{ type: 'config.registerSchema.result', id: string, ok: boolean, code?: string, error?: string }
+{ type: 'config.values', id?: string, values: object }
+{ type: 'config.schemaError', code: string, error: string }
 ```
 
 All request/response pairs are correlated by the `id` field. Identity request timeouts after 30 seconds.
@@ -255,6 +275,14 @@ window.napplet = {
     getMutes(): Promise<string[]>;
     getBlocked(): Promise<string[]>;
     getBadges(): Promise<object[]>;
+  },
+  config: {
+    registerSchema(schema, version?): Promise<void>;
+    get(): Promise<Record<string, unknown>>;
+    subscribe(callback): { close(): void };
+    openSettings(options?): void;
+    onSchemaError(callback): () => void;
+    readonly schema: Record<string, unknown> | null;
   },
   shell: {
     supports(capability: NamespacedCapability): boolean;
@@ -341,6 +369,19 @@ Shell-rendered notifications. Send notifications, set badge counts, register cha
 | `onDismissed(callback)` | `{ close(): void }` | Listen for dismissals (user/timeout/replaced). |
 | `onControls(callback)` | `{ close(): void }` | Listen for shell's notification capabilities. |
 
+### `window.napplet.config`
+
+Per-napplet declarative configuration (NUB-CONFIG). The shell is the sole writer; napplets subscribe to live values, request snapshots, register runtime schemas, and deep-link the shell's settings UI.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `registerSchema(schema, version?)` | `Promise<void>` | Register a schema at runtime (escape hatch -- prefer manifest-driven via @napplet/vite-plugin). |
+| `get()` | `Promise<Record<string, unknown>>` | One-shot snapshot of validated + defaulted values. |
+| `subscribe(callback)` | `{ close(): void }` | Live push stream; wire-level subscribe emitted on 0->1 local-subscriber transition. |
+| `openSettings(options?)` | `void` | Ask the shell to open its settings UI, optionally deep-linked to an `x-napplet-section` name. |
+| `onSchemaError(callback)` | `() => void` | Listen for uncorrelated `config.schemaError` pushes (returns a plain teardown fn). |
+| `schema` (accessor) | `Record<string, unknown> \| null` | Readonly current schema snapshot (manifest-declared or last-accepted runtime registration). |
+
 ### `window.napplet.shell`
 
 Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain or permission.
@@ -382,7 +423,7 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 |---|---|---|
 | **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
-| **Dependencies** | `@napplet/nub-relay`, `@napplet/nub-identity`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify` | `@napplet/core` (types only) |
+| **Dependencies** | `@napplet/nub-relay`, `@napplet/nub-identity`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify`, `@napplet/nub-config` | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
 | **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, `identity`, plus types |
 
