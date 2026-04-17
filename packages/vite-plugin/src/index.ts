@@ -406,6 +406,26 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         });
       }
 
+      // NUB-CONFIG schema injection — read synchronously by
+      // @napplet/nub-config's installConfigShim() at iframe load time via
+      // document.querySelector('meta[name="napplet-config-schema"]'). Vite
+      // HTML-escapes attribute content automatically, so schemas containing
+      // quotes, angle brackets, or ampersands do not break HTML parsing; the
+      // shim's getAttribute('content') call yields back the original
+      // JSON.stringify output verbatim. Guarded on `resolvedSchema !== null`
+      // so napplets without a declared config surface emit no meta tag,
+      // preserving byte-identical backward compat with pre-phase-114 HTML.
+      if (resolvedSchema !== null) {
+        tags.push({
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-config-schema',
+            content: JSON.stringify(resolvedSchema),
+          },
+          injectTo: 'head' as const,
+        });
+      }
+
       return tags;
     },
 
@@ -433,11 +453,43 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         xTags.push([hash, relativePath]);
       }
 
-      // Compute aggregate hash
+      // NUB-CONFIG: include the config schema bytes in aggregateHash via a
+      // synthetic path. The colon in 'config:schema' ensures no collision with
+      // any real file path (dist/-relative paths use platform separators, not
+      // colons). Any schema change flips the schema-bytes sha and therefore
+      // flips aggregateHash — which in turn re-scopes the napplet's storage
+      // per NIP-5D (dTag, aggregateHash) keying. Schemas thus implicitly
+      // version their own storage without requiring `$version` cooperation.
+      // The synthetic entry is excluded from the manifest's ['x', ...] tag
+      // projection below so only real files surface as x-tags.
+      if (resolvedSchema !== null) {
+        const schemaHash = crypto.createHash('sha256').update(JSON.stringify(resolvedSchema)).digest('hex');
+        xTags.push([schemaHash, 'config:schema']);
+      }
+
+      // Compute aggregate hash (includes synthetic config:schema entry when
+      // a schema is declared)
       const aggregateHash = computeAggregateHash(xTags);
 
       // Build requires tags from plugin options
       const requiresTags = (options.requires ?? []).map((name) => ['requires', name]);
+
+      // Filter the synthetic config:schema entry out of the ['x', ...] tag
+      // projection — the schema participates in aggregateHash but is NOT a
+      // real dist/ file, so emitting it as an x-tag would leak a misleading
+      // file-hash record. The schema is instead surfaced via its dedicated
+      // ['config', ...] tag below.
+      const manifestXTags = xTags
+        .filter(([, p]) => p !== 'config:schema')
+        .map(([hash, p]) => ['x', hash, p]);
+
+      // NUB-CONFIG: dedicated ['config', JSON.stringify(schema)] manifest tag.
+      // Placed between x-tags and requires-tags per phase 114 context
+      // decisions block. Only emitted when a schema is declared — napplets
+      // without a config surface produce a manifest byte-identical to the
+      // pre-phase-114 shape.
+      const configTags: string[][] =
+        resolvedSchema !== null ? [['config', JSON.stringify(resolvedSchema)]] : [];
 
       // Build kind 35128 manifest event (unsigned template)
       const manifest = {
@@ -445,7 +497,8 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['d', options.nappletType],
-          ...xTags.map(([hash, p]) => ['x', hash, p]),
+          ...manifestXTags,
+          ...configTags,
           ...requiresTags,
         ],
         content: '',
