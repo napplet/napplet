@@ -41,7 +41,7 @@ Six wire messages; full JSON envelope `{ type: "config.action", ...payload }` pe
 
 - [x] **NUB-01**: `@napplet/nub-config` scaffolded with package.json, tsup.config.ts, tsconfig.json matching the @napplet/nub-identity template
 - [x] **NUB-02**: `src/types.ts` — message interface definitions for all 6 wire messages, `NappletConfigSchema` type (JSON Schema alias), `ConfigValues` type, plus potentiality types for `x-napplet-*` extensions
-- [ ] **NUB-03**: `src/shim.ts` — `installConfigShim()` mounts `window.napplet.config`, manages subscribers (fan-out Set with ref-counted subscribe/unsubscribe), reads manifest-declared schema from `<meta name="napplet-config-schema">` at install, handles `config.values` push routing
+- [x] **NUB-03**: `src/shim.ts` — `installConfigShim()` mounts `window.napplet.config`, manages subscribers (fan-out Set with ref-counted subscribe/unsubscribe), reads manifest-declared schema from `<meta name="napplet-config-schema">` at install, handles `config.values` push routing
 - [ ] **NUB-04**: `src/sdk.ts` — named exports `get()`, `subscribe(cb)`, `openSettings({ section? })`, `registerSchema(schema, version?)` as convenience wrappers around `window.napplet.config`
 - [x] **NUB-05**: `src/index.ts` barrel exports all types, shim installer, and SDK helpers
 - [x] **NUB-06**: `@types/json-schema@^7.0.15` as devDependency (for type alias only); `json-schema-to-ts@^3.1.1` as optional peerDependency (opt-in `FromSchema<typeof schema>` inference); no runtime deps beyond `@napplet/core`
@@ -133,7 +133,7 @@ Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirement
 | NUB-02   | 112   | Complete |
 | NUB-05   | 112   | Complete |
 | NUB-06   | 112   | Complete |
-| NUB-03   | 113   | Pending |
+| NUB-03   | 113   | Complete |
 | NUB-04   | 113   | Pending |
 | VITE-01  | 114   | Pending |
 | VITE-02  | 114   | Pending |

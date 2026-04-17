@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
-stopped_at: "Completed 112-02-PLAN.md — Phase 112 complete: @napplet/nub-config full type surface landed (8 wire messages, 3 discriminated unions, DOMAIN in types.ts, full barrel); build + type-check green. Ready for Phase 113 (shim + SDK)."
-last_updated: "2026-04-17T11:29:51.391Z"
+stopped_at: Completed 113-01-PLAN.md — @napplet/nub-config shim.ts landed (371 LOC); type-check green. Plan 113-02 (barrel + SDK) ready.
+last_updated: "2026-04-17T11:40:53.192Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
-  percent: 33
+  total_plans: 8
+  completed_plans: 7
+  percent: 88
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 113
-Plan: Not started
-Status: Phase 112 complete — @napplet/nub-config has its full type surface landed (types.ts + barrel); build + type-check green across monorepo. Ready for Phase 113.
+Plan: 2 of 2
+Status: Phase 113 Plan 01 complete — @napplet/nub-config src/shim.ts landed (371 LOC: installConfigShim + handleConfigMessage + manifest-meta schema read + ref-counted subscribers + correlation-id Maps + onSchemaError fan-out). Type-check green. Plan 113-02 (barrel expansion + SDK wrappers) ready.
 Last activity: 2026-04-17
 
-Progress: [███░░░░░░░] 33% (2/6 phases complete)
+Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans complete)
 
 **Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
@@ -57,6 +57,7 @@ Progress: [███░░░░░░░] 33% (2/6 phases complete)
 |-------|-------|---------|----------|
 | 111   | 4     | 12min   | 3min     |
 | 112   | 2/2   | 4.5min  | 2.25min  |
+| Phase 113 P01 | 10min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,9 @@ Progress: [███░░░░░░░] 33% (2/6 phases complete)
 - [Phase 112]: 112-02: Landed full @napplet/nub-config src/types.ts (321 LOC, 8 wire-message interfaces + 3 discriminated unions + ConfigSchemaErrorCode 8-literal union + NappletConfigSchemaExtensions potentiality + DOMAIN relocated to types.ts per identity convention) + full barrel (15 type symbols + DOMAIN). Build + type-check green, full monorepo type-check green (22/22). Commits 1c23853 (feat) + 149c735 (feat).
 - [Phase 112]: 112-02: Followed merged NUB-CONFIG.md spec over ARCHITECTURE.md research draft — correlation field is `id` (not `requestId`). Research floated requestId; merged spec locked id to match nub-identity convention across NUBs.
 - [Phase 112]: 112-02: ConfigSchemaErrorCode union omits `unknown-section` (8 literals, not 9). Spec explicitly marks unknown-section as non-normative and says shells MUST NOT surface it as a wire error, so no place in TS union.
+- [Phase 113]: 113-01: Shipped packages/nubs/config/src/shim.ts (371 LOC). installConfigShim() idempotent; reads <meta name='napplet-config-schema'> synchronously at install; mounts window.napplet.config with registerSchema/get/subscribe/openSettings/onSchemaError + readonly schema accessor (defineProperty configurable:false). handleConfigMessage() routes config.registerSchema.result / config.values (dual-use) / config.schemaError. Ref-counted subscriber Set (wire subscribe on 0->1, unsubscribe on 1->0). Correlation-ID Maps for get + registerSchema (30s timeout). Late subscribers receive cached lastValues via queueMicrotask. Commit 5b8b96a. Type-check green.
+- [Phase 113]: 113-01: registerSchema typed Promise<void> (not void) — plan must-haves override the spec's API sketch; positive-ACK wire behavior is spec-consistent. onSchemaError returns plain () => void teardown (not Subscription) — followed plan action step 8 explicit instruction. These two divergences flagged for harmonization in 113-02 SDK wrappers or phase 115 integration.
+- [Phase 113]: 113-01: Pattern established — ref-counted wire subscription (local Set<cb>; emit wire subscribe on 0->1; unsubscribe on 1->0) + dual-use message router branch (lookupPending via id presence, else fan-out) + last-snapshot cache for late-subscriber microtask delivery. Template for future push-stream NUBs.
 
 ### Blockers/Concerns
 
@@ -102,6 +106,6 @@ Progress: [███░░░░░░░] 33% (2/6 phases complete)
 
 ## Session Continuity
 
-Last session: 2026-04-17T11:26:05.530Z
-Stopped at: Completed 112-02-PLAN.md — Phase 112 complete: @napplet/nub-config full type surface landed (8 wire messages, 3 discriminated unions, DOMAIN in types.ts, full barrel); build + type-check green. Ready for Phase 113 (shim + SDK).
+Last session: 2026-04-17T11:40:36.450Z
+Stopped at: Completed 113-01-PLAN.md — @napplet/nub-config shim.ts landed (371 LOC); type-check green. Plan 113-02 (barrel + SDK) ready.
 Resume: `/gsd:execute-phase 113` (NUB Config Shim + SDK — phase 112 complete)

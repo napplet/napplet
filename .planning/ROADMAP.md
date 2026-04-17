@@ -339,8 +339,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `src/sdk.ts` exports named convenience wrappers — `get()`, `subscribe(cb)`, `openSettings({ section? })`, `registerSchema(schema, version?)`, `onSchemaError(cb)` — each delegating to `window.napplet.config` via the shared `requireNapplet()` pattern.
   4. `src/index.ts` barrel re-exports the shim installer, SDK helpers, types, and `DOMAIN` constant so consumers can cherry-pick (`import { installConfigShim } from '@napplet/nub-config'`).
   5. `pnpm --filter @napplet/nub-config build && pnpm --filter @napplet/nub-config type-check` passes clean.
-**Plans:** 2 plans
-- [ ] 113-01-PLAN.md — Implement src/shim.ts (installConfigShim + handleConfigMessage + ref-counted subscribers + manifest-meta schema read + correlation-ID tracking for get/registerSchema + onSchemaError fan-out)
+**Plans:** 1/2 plans executed
+- [x] 113-01-PLAN.md — Implement src/shim.ts (installConfigShim + handleConfigMessage + ref-counted subscribers + manifest-meta schema read + correlation-ID tracking for get/registerSchema + onSchemaError fan-out)
 - [ ] 113-02-PLAN.md — Write src/sdk.ts (5 bare-name wrappers + requireNapplet guard) + expand src/index.ts barrel + package build/type-check + monorepo type-check gate
 
 ### Phase 114: Vite-Plugin Extension
@@ -389,7 +389,7 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 |-------|----------------|--------|-----------|
 | 111. NUB-CONFIG Spec | 4/4 | Complete    | 2026-04-17 |
 | 112. NUB Config Package Scaffold | 2/2 | Complete    | 2026-04-17 |
-| 113. NUB Config Shim + SDK | 0/2 | Not started | - |
+| 113. NUB Config Shim + SDK | 1/2 | In Progress|  |
 | 114. Vite-Plugin Extension | 0/0 | Not started | - |
 | 115. Core / Shim / SDK Integration + Wire | 0/0 | Not started | - |
 | 116. Documentation | 0/0 | Not started | - |
