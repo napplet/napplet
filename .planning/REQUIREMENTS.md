@@ -56,7 +56,7 @@ Multiple schema-source paths supported; schema becomes part of the NIP-5A manife
 - [ ] **VITE-04**: Schema is embedded as a `['config', JSON.stringify(schema)]` tag on the kind 35128 NIP-5A manifest event
 - [ ] **VITE-05**: Schema bytes included in `aggregateHash` computation via a synthetic `config:schema` path prefix — any schema change bumps `aggregateHash`
 - [ ] **VITE-06**: `<meta name="napplet-config-schema">` injected into `index.html` head at build time for synchronous shim-side read
-- [ ] **VITE-07**: Build-time structural guard — schema MUST be a root object with `type: "object"`; external `$ref` forbidden; presence of `pattern` triggers build error; `x-napplet-secret: true` combined with `default: ...` triggers build error
+- [x] **VITE-07**: Build-time structural guard — schema MUST be a root object with `type: "object"`; external `$ref` forbidden; presence of `pattern` triggers build error; `x-napplet-secret: true` combined with `default: ...` triggers build error
 
 ### Core / Shim / SDK Integration
 
@@ -141,7 +141,7 @@ Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirement
 | VITE-04  | 114   | Pending |
 | VITE-05  | 114   | Pending |
 | VITE-06  | 114   | Pending |
-| VITE-07  | 114   | Pending |
+| VITE-07  | 114   | Complete |
 | WIRE-01  | 115   | Pending |
 | WIRE-02  | 115   | Pending |
 | WIRE-03  | 115   | Pending |

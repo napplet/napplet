@@ -353,9 +353,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. The vite-plugin writes `<meta name="napplet-config-schema" content="{escaped JSON}">` into the built `index.html` head so shim-side schema read is synchronous at napplet startup.
   4. Build-time structural guards fire: schema MUST be a root object with `type: "object"`; external `$ref` triggers build error; presence of `pattern` triggers build error; `x-napplet-secret: true` combined with `default: ...` triggers build error.
   5. `pnpm --filter @napplet/vite-plugin build && pnpm --filter @napplet/vite-plugin type-check` passes clean; a fixture napplet with inline `configSchema` produces a manifest whose `['config', …]` tag round-trips through `JSON.parse` to the original schema.
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 - [x] 114-01-PLAN.md — configSchema option + 3-path discovery (inline / config.schema.json / napplet.config.*) + configResolved hook (VITE-01..03)
-- [ ] 114-02-PLAN.md — validateConfigSchema structural guard (root-type, pattern, external $ref, secret-with-default) + configResolved integration (VITE-07)
+- [x] 114-02-PLAN.md — validateConfigSchema structural guard (root-type, pattern, external $ref, secret-with-default) + configResolved integration (VITE-07)
 - [ ] 114-03-PLAN.md — manifest [config, ...] tag + config:schema synthetic aggregateHash path + <meta name=napplet-config-schema> injection + monorepo type-check gate (VITE-04..06)
 
 ### Phase 115: Core / Shim / SDK Integration + Wire
@@ -393,6 +393,6 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 | 111. NUB-CONFIG Spec | 4/4 | Complete    | 2026-04-17 |
 | 112. NUB Config Package Scaffold | 2/2 | Complete    | 2026-04-17 |
 | 113. NUB Config Shim + SDK | 2/2 | Complete    | 2026-04-17 |
-| 114. Vite-Plugin Extension | 1/3 | In Progress|  |
+| 114. Vite-Plugin Extension | 2/3 | In Progress|  |
 | 115. Core / Shim / SDK Integration + Wire | 0/0 | Not started | - |
 | 116. Documentation | 0/0 | Not started | - |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: executing
-stopped_at: Completed 114-01-PLAN.md — configSchema option + 3-path discovery landed on @napplet/vite-plugin. resolvedSchema closure var ready for 114-02 (guards) and 114-03 (manifest tag + meta + aggregateHash). Build + monorepo type-check green. Ready for 114-02.
-last_updated: "2026-04-17T13:26:51.453Z"
+stopped_at: Completed 114-02-PLAN.md — validateConfigSchema structural guard (4 NUB-CONFIG rules, hand-rolled recursive walker) integrated into configResolved on @napplet/vite-plugin. Malformed schemas abort the Vite build with a multi-line error before transformIndexHtml/closeBundle run. Backward compat preserved. Build + monorepo type-check green. Ready for 114-03 (manifest tag + meta + aggregateHash emission).
+last_updated: "2026-04-17T13:32:36.327Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 11
-  completed_plans: 9
-  percent: 82
+  completed_plans: 10
+  percent: 91
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 114
-Plan: 02
-Status: In progress — plan 01 complete, 02 next
+Plan: 03
+Status: In progress — plans 01 + 02 complete, 03 next
 Last activity: 2026-04-17
 
-Progress: [████████░░] 82% (3/6 phases complete, 9/11 plans complete)
+Progress: [█████████░] 91% (3/6 phases complete, 10/11 plans complete)
 
 **Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
@@ -60,6 +60,7 @@ Progress: [████████░░] 82% (3/6 phases complete, 9/11 plans 
 | Phase 113 P01 | 10min | 1 tasks | 1 files |
 | Phase 113 P02 | 2min | 3 tasks | 2 files |
 | Phase 114 P01 | 3min | 2 tasks | 4 files |
+| Phase 114 P02 | 2min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,11 @@ Progress: [████████░░] 82% (3/6 phases complete, 9/11 plans 
 - [Phase 114]: 114-01: JSONSchema7 imported directly from 'json-schema' module, NOT re-exported from @napplet/nub-config. vite-plugin is build-time infrastructure; nub-config is runtime. Keeping type relationship structural avoids circular layering; both packages pin @types/json-schema@^7.0.15 for identical type definitions.
 - [Phase 114]: 114-01: napplet.config.* precedence fixed as ts -> js -> mjs. .ts branch present for forward compat (Node 22 --experimental-strip-types) but .js/.mjs is documented path today. No tsx/esbuild shell-out to keep zero runtime deps. mod.configSchema ?? mod.default?.configSchema dual shape supports both named-export and default-export authoring.
 - [Phase 114]: 114-01: Discovery runs in async configResolved, not config / buildStart. configResolved(config).root is canonical project root, downstream transformIndexHtml / closeBundle fire after so resolvedSchema is guaranteed populated by the time 114-03 emission hooks read it. Pattern template: closure-variable hand-off between sibling plans within a phase.
+- [Phase 114]: 114-02: Landed validateConfigSchema(schema) pure zero-dep recursive structural guard (~31 LOC + ~89 LOC walk helper) in @napplet/vite-plugin. Enforces 4 NUB-CONFIG Core Subset rules at build time with literal spec error codes (invalid-schema / pattern-not-allowed / ref-not-allowed / secret-with-default). Walk recurses into properties/items/additionalProperties/patternProperties/oneOf/anyOf/allOf/not/definitions/$defs and threads a dot-joined path for locatable error messages. configResolved throws a multi-line Error on ok:false BEFORE transformIndexHtml/closeBundle run, aborting the Vite build. Backward compat preserved: null schema skips validation. Commit 3789578.
+- [Phase 114]: 114-02: Error codes embedded as string PREFIXES (e.g. 'pattern-not-allowed: <detail at $.properties.foo>') not structured objects -- machine-greppable spec codes + human context in single strings, keeps validator return type minimal (errors: string[]) for direct .join() at configResolved integration site.
+- [Phase 114]: 114-02: walk() recurses into spec-EXCLUDED features (oneOf/anyOf/allOf/not/definitions/$defs) too -- layered defense. Build-time guard enforces narrow 4-rule surface WIDE across every sub-tree; shell-side Core Subset enforcer at config.registerSchema time rejects the combinators outright. Two guards, different granularities, matching error vocabulary.
+- [Phase 114]: 114-02: Root-shape failure short-circuits the walk -- a schema whose root is not { type: 'object', ... } returns immediately with one invalid-schema error. Prevents spurious walks through malformed sub-trees; keeps error surface predictable (1 rejection for shape-wrong, up to 3+ for contents-wrong).
+- [Phase 114]: 114-02: validateConfigSchema intentionally NOT exported -- tsup drops it from dist/index.d.ts. Public API surface unchanged from 114-01 (just nip5aManifest + Nip5aManifestOptions). The contract exposed to plan 114-03 is BEHAVIORAL (configResolved either throws or leaves a structurally-valid resolvedSchema in closure), not a named function. Preserves 114-01's closure-variable hand-off pattern.
 
 ### Blockers/Concerns
 
@@ -116,6 +122,6 @@ Progress: [████████░░] 82% (3/6 phases complete, 9/11 plans 
 
 ## Session Continuity
 
-Last session: 2026-04-17T13:26:51.449Z
-Stopped at: Completed 114-01-PLAN.md — configSchema option + 3-path discovery landed on @napplet/vite-plugin. resolvedSchema closure var ready for 114-02 (guards) and 114-03 (manifest tag + meta + aggregateHash). Build + monorepo type-check green. Ready for 114-02.
+Last session: 2026-04-17T13:32:36.323Z
+Stopped at: Completed 114-02-PLAN.md — validateConfigSchema structural guard (4 NUB-CONFIG rules, hand-rolled recursive walker) integrated into configResolved on @napplet/vite-plugin. Malformed schemas abort the Vite build with a multi-line error before transformIndexHtml/closeBundle run. Backward compat preserved. Build + monorepo type-check green. Ready for 114-03 (manifest tag + meta + aggregateHash emission).
 Resume: `/gsd:execute-phase 113` (NUB Config Shim + SDK — phase 112 complete)
