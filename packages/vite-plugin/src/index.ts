@@ -12,6 +12,7 @@
  */
 
 import type { Plugin, IndexHtmlTransformResult } from 'vite';
+import type { JSONSchema7 } from 'json-schema';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -22,6 +23,28 @@ export interface Nip5aManifestOptions {
   nappletType: string;
   /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
   requires?: string[];
+  /**
+   * Napplet config schema (NUB-CONFIG). Either an inline JSON Schema (draft-07+)
+   * object describing the napplet's settings surface, or a string path (relative
+   * to the Vite project root) pointing to a JSON file to load.
+   *
+   * When omitted, the plugin falls back to (in order):
+   * 1. `config.schema.json` at the Vite project root (convention file).
+   * 2. `napplet.config.ts` / `.js` / `.mjs` exporting a `configSchema` named export.
+   *
+   * If no schema is found via any of these paths, the plugin emits NO config
+   * tag on the NIP-5A manifest and NO `<meta name="napplet-config-schema">` tag
+   * in index.html — fully backward compatible with napplets that declare no
+   * config surface.
+   *
+   * Schemas are structurally validated at build time against the NUB-CONFIG
+   * Core Subset; root must be `{ type: "object" }`; external `$ref` is forbidden;
+   * `pattern` is forbidden (CVE-2025-69873 class / ReDoS); `x-napplet-secret: true`
+   * combined with `default` is forbidden. Violating schemas fail the build.
+   *
+   * @see NUB-CONFIG spec (napplet/nubs#13)
+   */
+  configSchema?: JSONSchema7 | string;
 }
 
 /** Walk a directory recursively and return all file paths (relative to root). */
@@ -54,6 +77,95 @@ function computeAggregateHash(xTags: Array<[string, string]>): string {
 }
 
 /**
+ * Three-path schema discovery. Returns the resolved schema + source name, or
+ * null/null when no schema is declared anywhere.
+ *
+ * Precedence (each step is strict — later steps run only when the earlier
+ * step yielded no schema):
+ *   1. `options.configSchema` is an object -> use it directly (source: 'inline option').
+ *   2. `options.configSchema` is a string -> resolve relative to `root`, read+parse as JSON (source: 'inline option: <path>').
+ *   3. `config.schema.json` exists at `root` -> read+parse as JSON (source: 'config.schema.json').
+ *   4. `napplet.config.ts` / `.js` / `.mjs` exists at `root` -> dynamic import, read `configSchema` named export (source: 'napplet.config.<ext>').
+ *   5. None -> return { schema: null, source: null }.
+ *
+ * Parse / import / missing-export failures throw with an explanatory message.
+ * The "file does not exist" case is NOT an error — it advances to the next path.
+ *
+ * @param options - Nip5aManifestOptions (reads `configSchema` only).
+ * @param root - Absolute Vite project root (from `configResolved(config).root`).
+ * @returns Object with resolved schema (or null) and source name (or null).
+ * @throws Error with `[nip5a-manifest]` prefix when a present-but-unreadable
+ *         path is encountered (JSON parse failure, import failure, missing export).
+ */
+async function discoverConfigSchema(
+  options: Nip5aManifestOptions,
+  root: string,
+): Promise<{ schema: JSONSchema7 | null; source: string | null }> {
+  // Step 1 + 2: inline option
+  if (options.configSchema !== undefined) {
+    if (typeof options.configSchema === 'object') {
+      return { schema: options.configSchema, source: 'inline option' };
+    }
+    if (typeof options.configSchema === 'string') {
+      const p = path.isAbsolute(options.configSchema)
+        ? options.configSchema
+        : path.resolve(root, options.configSchema);
+      if (!fs.existsSync(p)) {
+        throw new Error(
+          `[nip5a-manifest] configSchema path does not exist: ${p}`,
+        );
+      }
+      try {
+        const raw = fs.readFileSync(p, 'utf-8');
+        return { schema: JSON.parse(raw) as JSONSchema7, source: `inline option: ${p}` };
+      } catch (err) {
+        throw new Error(
+          `[nip5a-manifest] failed to parse configSchema file ${p}: ${(err as Error).message}`,
+        );
+      }
+    }
+  }
+
+  // Step 3: convention file
+  const conventionPath = path.resolve(root, 'config.schema.json');
+  if (fs.existsSync(conventionPath)) {
+    try {
+      const raw = fs.readFileSync(conventionPath, 'utf-8');
+      return { schema: JSON.parse(raw) as JSONSchema7, source: 'config.schema.json' };
+    } catch (err) {
+      throw new Error(
+        `[nip5a-manifest] failed to parse config.schema.json at ${conventionPath}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  // Step 4: napplet.config.* dynamic import (ts -> js -> mjs precedence)
+  for (const ext of ['ts', 'js', 'mjs'] as const) {
+    const cfgPath = path.resolve(root, `napplet.config.${ext}`);
+    if (!fs.existsSync(cfgPath)) continue;
+    try {
+      // Convert to file:// URL for ESM dynamic import on Windows + Linux
+      const url = new URL(`file://${cfgPath}`).href;
+      const mod = await import(url);
+      const schema = (mod.configSchema ?? mod.default?.configSchema) as JSONSchema7 | undefined;
+      if (schema === undefined) {
+        throw new Error(
+          `[nip5a-manifest] napplet.config.${ext} at ${cfgPath} does not export \`configSchema\` (neither as a named export nor on the default export)`,
+        );
+      }
+      return { schema, source: `napplet.config.${ext}` };
+    } catch (err) {
+      throw new Error(
+        `[nip5a-manifest] failed to load napplet.config.${ext} at ${cfgPath}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  // Step 5: nothing found — silent, backward compatible
+  return { schema: null, source: null };
+}
+
+/**
  * Vite plugin for NIP-5A manifest generation.
  *
  * Computes per-file SHA-256 hashes, an aggregate hash, and optionally signs
@@ -65,12 +177,24 @@ function computeAggregateHash(xTags: Array<[string, string]>): string {
  */
 export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
   let outDir = 'dist';
+  let projectRoot: string = process.cwd();
+  let resolvedSchema: JSONSchema7 | null = null;
+  let resolvedSchemaSource: string | null = null;
 
   return {
     name: 'vite-plugin-nip5a-manifest',
 
-    configResolved(config) {
+    async configResolved(config) {
       outDir = config.build?.outDir ?? 'dist';
+      projectRoot = config.root;
+      const result = await discoverConfigSchema(options, projectRoot);
+      resolvedSchema = result.schema;
+      resolvedSchemaSource = result.source;
+      if (resolvedSchema !== null) {
+        console.log(
+          `[nip5a-manifest] ${options.nappletType}: config schema discovered via ${resolvedSchemaSource}`,
+        );
+      }
     },
 
     transformIndexHtml(): IndexHtmlTransformResult {
