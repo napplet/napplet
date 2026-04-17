@@ -16,7 +16,7 @@
 Public NIP-style document drafted in the napplet/nubs repository (PR #13). No `@napplet/*` references; spec is implementation-agnostic.
 
 - [x] **SPEC-01**: Draft NUB-CONFIG spec as napplet/nubs#13 with wire contract, Core Subset, security considerations, and NIP-5D parent reference
-- [ ] **SPEC-02**: Core Subset locked — types (`string`, `number`, `integer`, `boolean`, `object` top-level, `array` of primitives); keywords (`default`, `title`, `description`, `enum`, `enumDescriptions`); constraints (`minimum`, `maximum`, `minLength`, `maxLength`); extensions (`x-napplet-secret`, `x-napplet-section`, `x-napplet-order`, `deprecationMessage`, `markdownDescription`); `$version` potentiality. `pattern` is explicitly NOT in v1 Core Subset (ReDoS risk per CVE-2025-69873)
+- [x] **SPEC-02**: Core Subset locked — types (`string`, `number`, `integer`, `boolean`, `object` top-level, `array` of primitives); keywords (`default`, `title`, `description`, `enum`, `enumDescriptions`); constraints (`minimum`, `maximum`, `minLength`, `maxLength`); extensions (`x-napplet-secret`, `x-napplet-section`, `x-napplet-order`, `deprecationMessage`, `markdownDescription`); `$version` potentiality. `pattern` is explicitly NOT in v1 Core Subset (ReDoS risk per CVE-2025-69873)
 - [ ] **SPEC-03**: Shell MUSTs enumerated — validate values before delivery, apply declared defaults, scope storage by `(dTag, aggregateHash)`, be sole writer, render Tier 0 secret masking for `x-napplet-secret: true` fields
 - [ ] **SPEC-04**: Shell SHOULDs enumerated — group by `x-napplet-section`, sort within section by `x-napplet-order`, display `deprecationMessage` next to affected fields, render `markdownDescription` as markdown (falling back to plain text)
 - [ ] **SPEC-05**: Shell MAYs enumerated — Tier 2+ secret handling (encrypted at rest, OS keychain), richer `format` widget rendering, nested-object rendering beyond one level (JSON fallback acceptable), back NUB-CONFIG storage with NUB-STORAGE internally
@@ -122,7 +122,7 @@ Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirement
 | REQ-ID   | Phase | Status  |
 |----------|-------|---------|
 | SPEC-01  | 111   | Complete |
-| SPEC-02  | 111   | Pending |
+| SPEC-02  | 111   | Complete |
 | SPEC-03  | 111   | Pending |
 | SPEC-04  | 111   | Pending |
 | SPEC-05  | 111   | Pending |
