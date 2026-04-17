@@ -368,7 +368,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `@napplet/sdk` adds `@napplet/nub-config` as a workspace dep, re-exports `config` convenience wrappers, all nub-config message types, `CONFIG_DOMAIN`, and `installConfigShim` — so `import { config, CONFIG_DOMAIN } from '@napplet/sdk'` resolves.
   4. All six wire messages round-trip end-to-end in a test: `config.get` returns correlated `config.values`; `config.subscribe` triggers an immediate initial `config.values` push plus subsequent pushes on change; `config.unsubscribe` stops pushes; `config.openSettings({ section })` reaches the shell; `config.registerSchema` with malformed input surfaces `config.schemaError` on `onSchemaError` listeners.
   5. `shell.supports('config')` and `shell.supports('nub:config')` both resolve per the existing `NamespacedCapability` convention; `pnpm build && pnpm type-check` passes clean across all 13 packages.
-**Plans**: TBD
+**Plans:** 1 plan
+- [ ] 115-01-PLAN.md — Add 'config' to NubDomain + NappletGlobal.config inline namespace + shim mount/routing + SDK re-exports + monorepo build gate
 
 ### Phase 116: Documentation
 **Goal**: All repository documentation reflects the addition of NUB-CONFIG — package README, public NIP-5D Known NUBs reference, and four existing package READMEs (core, shim, SDK, vite-plugin).
@@ -394,5 +395,5 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 | 112. NUB Config Package Scaffold | 2/2 | Complete    | 2026-04-17 |
 | 113. NUB Config Shim + SDK | 2/2 | Complete    | 2026-04-17 |
 | 114. Vite-Plugin Extension | 3/3 | Complete    | 2026-04-17 |
-| 115. Core / Shim / SDK Integration + Wire | 0/0 | Not started | - |
+| 115. Core / Shim / SDK Integration + Wire | 0/1 | In progress | - |
 | 116. Documentation | 0/0 | Not started | - |
