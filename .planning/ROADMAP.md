@@ -25,6 +25,7 @@
 - ✅ **v0.21.0 NUB Modularization** — Phases 93-95 (shipped 2026-04-09) — [Archive](milestones/v0.21.0-ROADMAP.md)
 - ✅ **v0.22.0 Media NUB + Kill Services** — Phases 96-100 (shipped 2026-04-09) — [Archive](milestones/v0.22.0-ROADMAP.md)
 - ✅ **v0.23.0 Notify NUB** — Phases 101-104 (shipped 2026-04-09) — [Archive](milestones/v0.23.0-ROADMAP.md)
+- ✅ **v0.24.0 Identity NUB + Kill NIP-07** — Phases 105-110 (shipped 2026-04-09) — [Archive](milestones/v0.24.0-ROADMAP.md)
 
 ## Phases
 
@@ -272,95 +273,115 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
-### v0.24.0 Identity NUB + Kill NIP-07 (In Progress)
+<details>
+<summary>v0.24.0 Identity NUB + Kill NIP-07 (Phases 105-110) — SHIPPED 2026-04-09</summary>
 
-**Milestone Goal:** Remove NIP-07 window.nostr proxy and signer NUB entirely. Replace with read-only identity NUB. Add shell-mediated encrypted publishing to relay NUB. Napplets never touch crypto primitives.
+- [x] **Phase 105: Kill NIP-07 + Signer** - Remove window.nostr, delete nub-signer, strip signer from core/shim/SDK
+- [x] **Phase 106: NUB-IDENTITY Spec** - Draft NUB-IDENTITY spec in nubs repo, PR to napplet/nubs
+- [x] **Phase 107: NUB Identity Package** - @napplet/nub-identity with types, shim installer, SDK wrappers
+- [x] **Phase 108: Relay NUB Update** - Add publishEncrypted + shell-decrypts-incoming to relay NUB
+- [x] **Phase 109: Core + Shim Integration** - Replace signer with identity in core/shim dispatch
+- [x] **Phase 110: Documentation** - NIP-5D security rationale, nub-identity README, core/shim/SDK docs
 
-- [ ] **Phase 105: Kill NIP-07 + Signer** - Remove window.nostr, delete nub-signer, strip signer from core/shim/SDK
-- [ ] **Phase 106: NUB-IDENTITY Spec** - Draft NUB-IDENTITY spec in nubs repo, PR to napplet/nubs
-- [ ] **Phase 107: NUB Identity Package** - @napplet/nub-identity with types, shim installer, SDK wrappers
-- [ ] **Phase 108: Relay NUB Update** - Add publishEncrypted + shell-decrypts-incoming to relay NUB
-- [ ] **Phase 109: Core + Shim Integration** - Replace signer with identity in core/shim dispatch
-- [ ] **Phase 110: Documentation** - NIP-5D security rationale, nub-identity README, core/shim/SDK docs
+</details>
+
+### v0.25.0 Config NUB (In Progress)
+
+**Milestone Goal:** Design and ship NUB-CONFIG — per-napplet declarative configuration. Napplet declares a JSON Schema; shell renders the settings UI, validates and persists values in a napplet-scoped config store, and delivers live values back to the napplet via snapshot + push.
+
+- [ ] **Phase 111: NUB-CONFIG Spec** - Draft NUB-CONFIG spec in the public nubs repo (PR #13) with Core Subset, MUSTs/SHOULDs/MAYs, anti-features, and wire surface
+- [ ] **Phase 112: NUB Config Package Scaffold** - @napplet/nub-config types + tsup/tsconfig/package.json + barrel export
+- [ ] **Phase 113: NUB Config Shim + SDK** - Shim installer with subscriber fan-out and manifest-meta schema read; SDK convenience wrappers
+- [ ] **Phase 114: Vite-Plugin Extension** - configSchema option, convention-file/napplet.config.ts discovery, manifest tag injection, aggregateHash participation, meta-tag injection, build-time guards
+- [ ] **Phase 115: Core / Shim / SDK Integration + Wire** - 'config' in NubDomain, NappletGlobal.config namespace, shim mount, SDK re-exports, capability probing, wire surface tests
+- [ ] **Phase 116: Documentation** - nub-config README, NIP-5D Known NUBs row, core/shim/SDK/vite-plugin README updates
 
 ## Phase Details
 
-### Phase 105: Kill NIP-07 + Signer
-**Goal**: The signer NUB and NIP-07 window.nostr proxy are completely removed -- napplets have zero access to signing or encryption primitives
-**Depends on**: Nothing (first phase of v0.24.0 -- clean break before building new)
-**Requirements**: KILL-01, KILL-02, KILL-03, KILL-04
+### Phase 111: NUB-CONFIG Spec
+**Goal**: A public NUB-CONFIG specification exists in the napplet/nubs repo defining the JSON-Schema-driven configuration wire contract, MUST/SHOULD/MAY guarantees, anti-features, and error envelopes — with zero references to private packages.
+**Depends on**: Nothing (first phase of v0.25.0 — spec must be locked before implementation)
+**Requirements**: SPEC-01, SPEC-02, SPEC-03, SPEC-04, SPEC-05, SPEC-06, SPEC-07, SPEC-08
 **Success Criteria** (what must be TRUE):
-  1. `window.nostr` is no longer installed by `import '@napplet/shim'` -- accessing it returns undefined
-  2. `packages/nubs/signer/` directory does not exist and `@napplet/nub-signer` is removed from pnpm workspace
-  3. `'signer'` does not appear in the `NubDomain` union, `NUB_DOMAINS` array, or `NappletGlobal` type in core
-  4. No signer imports or routing remain in shim entry point or SDK barrel exports
-  5. `pnpm build && pnpm type-check` passes clean across all packages
+  1. A `NUB-CONFIG.md` spec document exists in the napplet/nubs PUBLIC repo following the structure of existing NUB specs (NUB-IDENTITY, NUB-NOTIFY, NUB-MEDIA); spec contains zero `@napplet/*` references.
+  2. Core Subset is enumerated: supported JSON Schema types, keywords, constraints, and `x-napplet-*` extensions are listed; `$version` is specified as a potentiality; `pattern` is explicitly excluded from v1 Core Subset with ReDoS rationale (CVE-2025-69873).
+  3. Shell MUST / SHOULD / MAY tables are enumerated: MUST (validate before delivery, apply defaults, scope storage by `(dTag, aggregateHash)`, be sole writer, mask `x-napplet-secret` Tier 0); SHOULD (section grouping, ordering, deprecation, markdownDescription); MAY (Tier 2+ secrets, richer formats, nested objects, NUB-STORAGE backing).
+  4. Anti-features section explicitly rejects: `config.set` wire message, `$ref`/`definitions`, `pattern` in Core Subset, napplet-rendered settings iframe, napplet-supplied validation code.
+  5. Six wire messages (`config.registerSchema`, `config.get`, `config.subscribe`, `config.unsubscribe`, `config.values`, `config.openSettings`) are specified with direction, payload shape, and correlation semantics; error envelopes catalogue malformed-schema, undeclared-section, and subscribe-before-schema cases.
+  6. A PR is opened against napplet/nubs as issue/PR #13 following the pattern of NUB-IDENTITY (#12), NUB-NOTIFY (#11), NUB-MEDIA (#10).
 **Plans**: TBD
 
-### Phase 106: NUB-IDENTITY Spec
-**Goal**: A public NUB-IDENTITY spec exists in the nubs repo defining the read-only identity query protocol
-**Depends on**: Phase 105 (signer must be gone so spec can reference identity as its replacement)
-**Requirements**: SPEC-01
+### Phase 112: NUB Config Package Scaffold
+**Goal**: The `@napplet/nub-config` package exists with typed message interfaces, schema/values type aliases, discriminated unions, `DOMAIN` constant, and a barrel export — matching the `@napplet/nub-identity` template exactly.
+**Depends on**: Phase 111 (types derive from the spec)
+**Requirements**: NUB-01, NUB-02, NUB-05, NUB-06
 **Success Criteria** (what must be TRUE):
-  1. A NUB-IDENTITY.md file exists in ~/Develop/nubs/ following the structure of existing NUB specs
-  2. Spec covers all identity queries: getPublicKey, getRelays, getProfile, getFollows, getList(type), getZaps, getMutes, getBlocked, getBadges
-  3. Spec contains zero references to private repos, internal tooling, or signing/encryption (read-only by design)
-  4. A PR is opened against napplet/nubs (same pattern as previous NUB spec PRs)
+  1. `packages/nubs/config/` directory exists with `package.json`, `tsconfig.json`, `tsup.config.ts` matching the `@napplet/nub-identity` template (ESM-only, dts + sourcemap, `@napplet/core` workspace dep).
+  2. `src/types.ts` defines message interfaces for all six wire messages (`ConfigRegisterSchemaMessage`, `ConfigGetMessage`, `ConfigSubscribeMessage`, `ConfigUnsubscribeMessage`, `ConfigValuesMessage`, `ConfigOpenSettingsMessage`), plus `NappletConfigSchema`/`ConfigValues` type aliases and potentiality types for the `x-napplet-*` extensions.
+  3. `src/index.ts` barrel re-exports all type definitions and the `DOMAIN` constant (`'config' as const`).
+  4. `@types/json-schema@^7.0.15` is declared as devDependency (for JSON Schema type alias only); `json-schema-to-ts@^3.1.1` is declared as optional peerDependency for opt-in `FromSchema<typeof schema>` inference; no runtime dependencies beyond `@napplet/core`.
+  5. `pnpm --filter @napplet/nub-config build && pnpm --filter @napplet/nub-config type-check` passes clean.
 **Plans**: TBD
 
-### Phase 107: NUB Identity Package
-**Goal**: @napplet/nub-identity package exists with typed messages, shim installer, and SDK wrappers per the modular NUB pattern
-**Depends on**: Phase 106 (types derive from the spec)
-**Requirements**: NUB-01, NUB-02
+### Phase 113: NUB Config Shim + SDK
+**Goal**: The `@napplet/nub-config` package exports `shim.ts` (installer + message handlers + subscriber ref-counting + manifest-meta schema read) and `sdk.ts` (named convenience wrappers), completing the modular NUB pattern.
+**Depends on**: Phase 112 (shim + SDK import the types)
+**Requirements**: NUB-03, NUB-04
 **Success Criteria** (what must be TRUE):
-  1. `packages/nubs/identity/` exists with types.ts defining message interfaces for all identity queries (identity.getPublicKey, identity.getRelays, identity.getProfile, identity.getFollows, identity.getList, identity.getZaps, identity.getMutes, identity.getBlocked, identity.getBadges) and their result types
-  2. shim.ts exports `installIdentityShim()` with request/response handling for all identity queries
-  3. sdk.ts exports convenience wrappers (getPublicKey(), getRelays(), getProfile(), etc.) per modular pattern
-  4. Package builds clean with tsup and exports via barrel index.ts
+  1. `src/shim.ts` exports `installConfigShim()` which mounts `window.napplet.config` with `registerSchema`, `get`, `subscribe`, `unsubscribe`, `openSettings`, `onSchemaError`, and a readonly `schema` accessor.
+  2. The shim reads a `<meta name="napplet-config-schema">` tag at install time (if present) to populate the local schema cache synchronously, and maintains a ref-counted subscriber `Set` that sends `config.subscribe` only on first subscriber and `config.unsubscribe` only on last detach.
+  3. `src/sdk.ts` exports named convenience wrappers — `get()`, `subscribe(cb)`, `openSettings({ section? })`, `registerSchema(schema, version?)`, `onSchemaError(cb)` — each delegating to `window.napplet.config` via the shared `requireNapplet()` pattern.
+  4. `src/index.ts` barrel re-exports the shim installer, SDK helpers, types, and `DOMAIN` constant so consumers can cherry-pick (`import { installConfigShim } from '@napplet/nub-config'`).
+  5. `pnpm --filter @napplet/nub-config build && pnpm --filter @napplet/nub-config type-check` passes clean.
 **Plans**: TBD
 
-### Phase 108: Relay NUB Update
-**Goal**: The relay NUB supports shell-mediated encrypted publishing and auto-decryption of incoming events
-**Depends on**: Phase 105 (signer removal motivates why crypto goes through relay NUB)
-**Requirements**: RELAY-01, RELAY-02, RELAY-03
+### Phase 114: Vite-Plugin Extension
+**Goal**: `@napplet/vite-plugin` accepts a `configSchema` option (with convention-file and `napplet.config.ts` discovery fallbacks), embeds the schema into the kind 35128 NIP-5A manifest as a `['config', …]` tag, includes the schema bytes in `aggregateHash` via a synthetic path prefix, injects a `<meta name="napplet-config-schema">` tag into `index.html`, and rejects malformed schemas at build time.
+**Depends on**: Phase 111 (schema shape) and Phase 112 (type alias)
+**Requirements**: VITE-01, VITE-02, VITE-03, VITE-04, VITE-05, VITE-06, VITE-07
 **Success Criteria** (what must be TRUE):
-  1. `relay.publishEncrypted` message type exists in @napplet/nub-relay with cleartext, recipient pubkey, and encryption method (NIP-44 default) fields
-  2. NUB-RELAY spec in ~/Develop/nubs/ is updated with publishEncrypted semantics and shell-decrypts-incoming behavior
-  3. Relay shim handles relay.publishEncrypted requests and auto-decrypted incoming event delivery
-  4. `pnpm build && pnpm type-check` passes clean
+  1. `Nip5aManifestOptions.configSchema?: JSONSchema7 | string` accepts an inline schema object or a file-path string; convention-file discovery reads `config.schema.json` at the project root when the option is absent; `napplet.config.ts`/`.js` exporting a `configSchema` is discovered when neither the option nor the convention file is present.
+  2. The generated NIP-5A manifest (kind 35128 event) carries a single `['config', JSON.stringify(schema)]` tag; schema bytes participate in `aggregateHash` via a synthetic `config:schema` path prefix line so any schema change bumps the hash.
+  3. The vite-plugin writes `<meta name="napplet-config-schema" content="{escaped JSON}">` into the built `index.html` head so shim-side schema read is synchronous at napplet startup.
+  4. Build-time structural guards fire: schema MUST be a root object with `type: "object"`; external `$ref` triggers build error; presence of `pattern` triggers build error; `x-napplet-secret: true` combined with `default: ...` triggers build error.
+  5. `pnpm --filter @napplet/vite-plugin build && pnpm --filter @napplet/vite-plugin type-check` passes clean; a fixture napplet with inline `configSchema` produces a manifest whose `['config', …]` tag round-trips through `JSON.parse` to the original schema.
 **Plans**: TBD
 
-### Phase 109: Core + Shim Integration
-**Goal**: The identity NUB is wired into the monorepo -- core recognizes the domain, shim installs it, signer references are fully replaced
-**Depends on**: Phase 107 (nub-identity package must exist)
-**Requirements**: CORE-01, CORE-02, SHIM-01
+### Phase 115: Core / Shim / SDK Integration + Wire
+**Goal**: `'config'` is a first-class NUB domain throughout the monorepo — registered in core, routed by shim, re-exported by SDK, probeable via `shell.supports()` — and the full wire surface round-trips cleanly.
+**Depends on**: Phase 113 (package must export shim + SDK) and Phase 114 (for meta-tag integration at startup)
+**Requirements**: WIRE-01, WIRE-02, WIRE-03, WIRE-04, WIRE-05, WIRE-06, CORE-01, CORE-02, SHIM-01, SDK-01, CAP-01
 **Success Criteria** (what must be TRUE):
-  1. `'identity'` is in the `NubDomain` union and `NUB_DOMAINS` array in envelope.ts (replacing 'signer')
-  2. `NappletGlobal` type in types.ts includes an `identity` namespace matching the SDK surface (no `signer` namespace)
-  3. `import '@napplet/shim'` calls `installIdentityShim()` and `window.napplet.identity.*` is available
-  4. `pnpm build && pnpm type-check` passes clean across all packages
+  1. `'config'` appears in the `NubDomain` union and `NUB_DOMAINS` readonly array in `packages/core/src/envelope.ts`; `NappletGlobal` in `packages/core/src/types.ts` declares a `config` namespace with `registerSchema()`, `get()`, `subscribe()`, `unsubscribe()`, `openSettings()`, `onSchemaError()`, and a readonly `schema` accessor (inline structural types — core does not import from `@napplet/nub-config`).
+  2. `@napplet/shim` adds `@napplet/nub-config` as a workspace dep, imports `installConfigShim` + `handleConfigMessage`, mounts `window.napplet.config` at install time, and adds a `config.*` routing branch in the central envelope dispatcher.
+  3. `@napplet/sdk` adds `@napplet/nub-config` as a workspace dep, re-exports `config` convenience wrappers, all nub-config message types, `CONFIG_DOMAIN`, and `installConfigShim` — so `import { config, CONFIG_DOMAIN } from '@napplet/sdk'` resolves.
+  4. All six wire messages round-trip end-to-end in a test: `config.get` returns correlated `config.values`; `config.subscribe` triggers an immediate initial `config.values` push plus subsequent pushes on change; `config.unsubscribe` stops pushes; `config.openSettings({ section })` reaches the shell; `config.registerSchema` with malformed input surfaces `config.schemaError` on `onSchemaError` listeners.
+  5. `shell.supports('config')` and `shell.supports('nub:config')` both resolve per the existing `NamespacedCapability` convention; `pnpm build && pnpm type-check` passes clean across all 13 packages.
 **Plans**: TBD
 
-### Phase 110: Documentation
-**Goal**: All documentation reflects the signer-to-identity transition, NIP-07 removal rationale, and encrypted relay publishing
-**Depends on**: Phase 107, Phase 108, Phase 109 (needs final API shapes)
-**Requirements**: DOC-01, DOC-02, DOC-03
+### Phase 116: Documentation
+**Goal**: All repository documentation reflects the addition of NUB-CONFIG — package README, public NIP-5D Known NUBs reference, and four existing package READMEs (core, shim, SDK, vite-plugin).
+**Depends on**: Phase 115 (final API shape locked)
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04, DOC-05, DOC-06
 **Success Criteria** (what must be TRUE):
-  1. NIP-5D no longer says "Shells MUST provide NIP-07 window.nostr" -- replaced with security rationale explaining why napplets have no crypto access, and domain table updated (signer removed, identity added)
-  2. @napplet/nub-identity has a README with full message reference table covering all identity.* message types
-  3. Core, shim, and SDK READMEs reference identity NUB instead of signer, document window.nostr removal, and note relay.publishEncrypted
+  1. `packages/nubs/config/README.md` documents package purpose, install, the `window.napplet.config` API surface, a minimal example schema, SDK usage, and (optional) `FromSchema` type inference via `json-schema-to-ts`.
+  2. The NIP-5D "Known NUBs" table in the public napplet/nubs repo gains a `config` row referencing NUB-CONFIG by spec number only (no `@napplet/*` package references — public repo rule).
+  3. `packages/core/README.md` lists `'config'` in the registered NubDomain table.
+  4. `packages/shim/README.md` documents the `window.napplet.config` namespace.
+  5. `packages/sdk/README.md` documents the `config` SDK exports and the `FromSchema` type-inference pattern.
+  6. `packages/vite-plugin/README.md` documents the `configSchema` option, the `config.schema.json` convention-file path, and the `napplet.config.ts` export path.
 **Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 105 -> 106 -> 107 -> 108 (can parallel 107) -> 109 -> 110
+Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 105. Kill NIP-07 + Signer | 0/0 | Not started | - |
-| 106. NUB-IDENTITY Spec | 0/0 | Not started | - |
-| 107. NUB Identity Package | 0/0 | Not started | - |
-| 108. Relay NUB Update | 0/0 | Not started | - |
-| 109. Core + Shim Integration | 0/0 | Not started | - |
-| 110. Documentation | 0/0 | Not started | - |
+| 111. NUB-CONFIG Spec | 0/0 | Not started | - |
+| 112. NUB Config Package Scaffold | 0/0 | Not started | - |
+| 113. NUB Config Shim + SDK | 0/0 | Not started | - |
+| 114. Vite-Plugin Extension | 0/0 | Not started | - |
+| 115. Core / Shim / SDK Integration + Wire | 0/0 | Not started | - |
+| 116. Documentation | 0/0 | Not started | - |

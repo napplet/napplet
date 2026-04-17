@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: planning
-stopped_at: Milestone v0.25.0 started — defining requirements
+stopped_at: "Roadmap created — awaiting Phase 111 planning"
 last_updated: "2026-04-17T00:00:00.000Z"
 last_activity: 2026-04-17
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,16 +21,27 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** v0.25.0 Config NUB -- defining requirements
+**Current focus:** v0.25.0 Config NUB -- Phase 111 (NUB-CONFIG Spec) ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 111 — NUB-CONFIG Spec (first of 6)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-17 — Milestone v0.25.0 started
+Status: Roadmap complete; ready to plan Phase 111
+Last activity: 2026-04-17 — ROADMAP.md written for v0.25.0 (phases 111-116)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
+
+**Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
+
+| # | Phase | Scope |
+|---|-------|-------|
+| 111 | NUB-CONFIG Spec | Public napplet/nubs#13 draft — SPEC-01..08 |
+| 112 | NUB Config Package Scaffold | Types + tsup/tsconfig/package.json + barrel — NUB-01, NUB-02, NUB-05, NUB-06 |
+| 113 | NUB Config Shim + SDK | Installer + ref-counted subscribers + SDK wrappers — NUB-03, NUB-04 |
+| 114 | Vite-Plugin Extension | configSchema option, manifest tag, aggregateHash, meta injection, build guards — VITE-01..07 |
+| 115 | Core / Shim / SDK Integration + Wire | NubDomain, NappletGlobal, routing, SDK re-exports, capability probing — WIRE-01..06, CORE-01..02, SHIM-01, SDK-01, CAP-01 |
+| 116 | Documentation | nub-config README + NIP-5D Known NUBs + 4 package READMEs — DOC-01..06 |
 
 ## Performance Metrics
 
@@ -60,6 +71,8 @@ Progress: [░░░░░░░░░░] 0%
 - v0.25.0: Standardized JSON Schema extensions as potentialities: `x-napplet-secret`, `x-napplet-section`, `x-napplet-order`
 - v0.25.0: MUST-level guarantees: values validate, defaults apply, storage scoped by (dTag, aggregateHash), shell is sole writer
 - v0.25.0: UI surface = shell-chrome owns; napplet may call `config.openSettings({ section? })` to deep-link
+- v0.25.0: Phase 111 is drafted in the PUBLIC napplet/nubs repo — no `@napplet/*` references allowed in spec
+- v0.25.0: Phases 112-116 are in this (private) repo, matching the v0.22/v0.23/v0.24 spec-first-then-SDK pattern exactly
 - PRINCIPLE: NUBs define protocol surface + potentialities; implementation UX is a shell concern
 
 ### Blockers/Concerns
@@ -70,5 +83,5 @@ Progress: [░░░░░░░░░░] 0%
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Milestone v0.25.0 started — defining requirements
-Resume: continue /gsd:new-milestone workflow (requirements → roadmap)
+Stopped at: Roadmap created — awaiting Phase 111 planning
+Resume: `/gsd:plan-phase 111`

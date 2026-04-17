@@ -117,16 +117,45 @@ Not deferred — deliberately rejected as anti-features or outside NUB scope bou
 
 ## Traceability
 
-Filled in by the roadmap phase — each REQ-ID will map to exactly one phase.
+Each v1 REQ-ID maps to exactly one phase. Coverage is 100% across 38 requirements.
 
-| REQ-ID | Phase | Status |
-|--------|-------|--------|
-| SPEC-01..08 | — | Pending |
-| WIRE-01..06 | — | Pending |
-| NUB-01..06 | — | Pending |
-| VITE-01..07 | — | Pending |
-| CORE-01..02 | — | Pending |
-| SHIM-01 | — | Pending |
-| SDK-01 | — | Pending |
-| CAP-01 | — | Pending |
-| DOC-01..06 | — | Pending |
+| REQ-ID   | Phase | Status  |
+|----------|-------|---------|
+| SPEC-01  | 111   | Pending |
+| SPEC-02  | 111   | Pending |
+| SPEC-03  | 111   | Pending |
+| SPEC-04  | 111   | Pending |
+| SPEC-05  | 111   | Pending |
+| SPEC-06  | 111   | Pending |
+| SPEC-07  | 111   | Pending |
+| SPEC-08  | 111   | Pending |
+| NUB-01   | 112   | Pending |
+| NUB-02   | 112   | Pending |
+| NUB-05   | 112   | Pending |
+| NUB-06   | 112   | Pending |
+| NUB-03   | 113   | Pending |
+| NUB-04   | 113   | Pending |
+| VITE-01  | 114   | Pending |
+| VITE-02  | 114   | Pending |
+| VITE-03  | 114   | Pending |
+| VITE-04  | 114   | Pending |
+| VITE-05  | 114   | Pending |
+| VITE-06  | 114   | Pending |
+| VITE-07  | 114   | Pending |
+| WIRE-01  | 115   | Pending |
+| WIRE-02  | 115   | Pending |
+| WIRE-03  | 115   | Pending |
+| WIRE-04  | 115   | Pending |
+| WIRE-05  | 115   | Pending |
+| WIRE-06  | 115   | Pending |
+| CORE-01  | 115   | Pending |
+| CORE-02  | 115   | Pending |
+| SHIM-01  | 115   | Pending |
+| SDK-01   | 115   | Pending |
+| CAP-01   | 115   | Pending |
+| DOC-01   | 116   | Pending |
+| DOC-02   | 116   | Pending |
+| DOC-03   | 116   | Pending |
+| DOC-04   | 116   | Pending |
+| DOC-05   | 116   | Pending |
+| DOC-06   | 116   | Pending |
