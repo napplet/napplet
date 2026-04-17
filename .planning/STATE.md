@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
-status: executing
-stopped_at: Completed 114-02-PLAN.md — validateConfigSchema structural guard (4 NUB-CONFIG rules, hand-rolled recursive walker) integrated into configResolved on @napplet/vite-plugin. Malformed schemas abort the Vite build with a multi-line error before transformIndexHtml/closeBundle run. Backward compat preserved. Build + monorepo type-check green. Ready for 114-03 (manifest tag + meta + aggregateHash emission).
-last_updated: "2026-04-17T13:32:36.327Z"
+status: completed
+stopped_at: "Completed 114-03-PLAN.md — emitted ['config', JSON.stringify(schema)] kind 35128 manifest tag, synthetic config:schema aggregateHash contribution (filtered out of x-tag projection), and napplet-config-schema meta injection via transformIndexHtml on @napplet/vite-plugin. All three emissions null-guarded for backward compat. Build + monorepo type-check green. Phase 114 COMPLETE (VITE-01..07 all satisfied). Ready for phase 115 (core/shim/SDK integration + wire)."
+last_updated: "2026-04-17T13:39:09.645Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 10
-  percent: 91
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 114 — Vite-Plugin Extension
+**Current focus:** Phase 115 — Core / Shim / SDK Integration + Wire
 
 ## Current Position
 
-Phase: 114
-Plan: 03
-Status: In progress — plans 01 + 02 complete, 03 next
+Phase: 115
+Plan: 01
+Status: Ready — Phase 114 complete (VITE-01..07 all satisfied), Phase 115 next
 Last activity: 2026-04-17
 
-Progress: [█████████░] 91% (3/6 phases complete, 10/11 plans complete)
+Progress: [██████████] 100% (4/6 phases complete, 11/11 plans complete within executed phases)
 
 **Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
@@ -61,6 +61,7 @@ Progress: [█████████░] 91% (3/6 phases complete, 10/11 plans
 | Phase 113 P02 | 2min | 3 tasks | 2 files |
 | Phase 114 P01 | 3min | 2 tasks | 4 files |
 | Phase 114 P02 | 2min | 1 tasks | 1 files |
+| Phase 114 P03 | 2min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,12 @@ Progress: [█████████░] 91% (3/6 phases complete, 10/11 plans
 - [Phase 114]: 114-02: walk() recurses into spec-EXCLUDED features (oneOf/anyOf/allOf/not/definitions/$defs) too -- layered defense. Build-time guard enforces narrow 4-rule surface WIDE across every sub-tree; shell-side Core Subset enforcer at config.registerSchema time rejects the combinators outright. Two guards, different granularities, matching error vocabulary.
 - [Phase 114]: 114-02: Root-shape failure short-circuits the walk -- a schema whose root is not { type: 'object', ... } returns immediately with one invalid-schema error. Prevents spurious walks through malformed sub-trees; keeps error surface predictable (1 rejection for shape-wrong, up to 3+ for contents-wrong).
 - [Phase 114]: 114-02: validateConfigSchema intentionally NOT exported -- tsup drops it from dist/index.d.ts. Public API surface unchanged from 114-01 (just nip5aManifest + Nip5aManifestOptions). The contract exposed to plan 114-03 is BEHAVIORAL (configResolved either throws or leaves a structurally-valid resolvedSchema in closure), not a named function. Preserves 114-01's closure-variable hand-off pattern.
+- [Phase 114]: 114-03: Shipped dual-surface schema emission on @napplet/vite-plugin — ['config', JSON.stringify(schema)] tag on kind 35128 manifest (positioned d→x*→config→requires*), synthetic ['<sha256>','config:schema'] entry in xTags filtered out of ['x',...] projection so only real files surface as x-tags, and napplet-config-schema meta injected into built index.html head via transformIndexHtml. All three emissions null-guarded so no-schema napplets produce byte-identical manifest+HTML to pre-phase-114. Commit 5ff90f2.
+- [Phase 114]: 114-03: Chose Option A (filter-then-map xTags before x-tag projection) over Option B (side-variable schema hash + modified hasher signature). Option A keeps computeAggregateHash contract intact as pure Array<[hash,path]>→string fn; no helper changes; adds a one-line filter. Option B would have broken the hasher signature and duplicated sort-concat logic inline.
+- [Phase 114]: 114-03: Pattern — synthetic-path aggregateHash contribution. Virtual path 'config:schema' (colon is not a legal OS-relative path separator, so no collision risk with real dist/ files) pushed into xTags with the content hash; filtered out of the ['x',...] manifest tag projection. Template reusable for any future build-time input that SHOULD influence aggregateHash but isn't a physical file (e.g., NUB version pins, runtime environment markers, manifest-tag-set signatures).
+- [Phase 114]: 114-03: Pattern — null-guarded-emission triad. Single closure-var 'resolvedSchema' checked at three independent emission sites (meta tag, synthetic xTags entry, manifest config tag). Three 'if (resolvedSchema !== null)' guards, one backward-compat invariant. Chosen over a single early-exit flag because the three emission points are structurally independent (transformIndexHtml and closeBundle are separate hooks that may fire in isolation during partial builds / dev cycles).
+- [Phase 114]: 114-03: Meta tag content is raw JSON.stringify output — Vite's IndexHtmlTransformResult HtmlTagDescriptor pipeline HTML-escapes attribute values at render time. Pre-escaping would double-escape on render and break the shim's JSON.parse(getAttribute('content')). Verified via smoke: payload with literal < > & and nested " chars round-tripped intact through the descriptor layer.
+- [Phase 114]: Phase 114 COMPLETE — VITE-01..07 satisfied. 114-01 (3 requirements), 114-02 (1 requirement), 114-03 (3 requirements). Three waves, three commits, three summaries. @napplet/vite-plugin now accepts configSchema option, discovers schemas via 3-path precedence (inline / config.schema.json / napplet.config.*), structurally validates against 4 Core Subset rules at configResolved (build abort on fail), emits config manifest tag + config:schema aggregateHash contribution + napplet-config-schema meta injection. All DTS-surface additions cleanly: configSchema?: JSONSchema7 | string on Nip5aManifestOptions. Phase 115 (core/shim/SDK integration + wire) next.
 
 ### Blockers/Concerns
 
@@ -122,6 +129,6 @@ Progress: [█████████░] 91% (3/6 phases complete, 10/11 plans
 
 ## Session Continuity
 
-Last session: 2026-04-17T13:32:36.323Z
-Stopped at: Completed 114-02-PLAN.md — validateConfigSchema structural guard (4 NUB-CONFIG rules, hand-rolled recursive walker) integrated into configResolved on @napplet/vite-plugin. Malformed schemas abort the Vite build with a multi-line error before transformIndexHtml/closeBundle run. Backward compat preserved. Build + monorepo type-check green. Ready for 114-03 (manifest tag + meta + aggregateHash emission).
+Last session: 2026-04-17T13:38:24.060Z
+Stopped at: Completed 114-03-PLAN.md — emitted ['config', JSON.stringify(schema)] kind 35128 manifest tag, synthetic config:schema aggregateHash contribution (filtered out of x-tag projection), and napplet-config-schema meta injection via transformIndexHtml on @napplet/vite-plugin. All three emissions null-guarded for backward compat. Build + monorepo type-check green. Phase 114 COMPLETE (VITE-01..07 all satisfied). Ready for phase 115 (core/shim/SDK integration + wire).
 Resume: `/gsd:execute-phase 113` (NUB Config Shim + SDK — phase 112 complete)
