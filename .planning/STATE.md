@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
-stopped_at: "Completed 116-03-PLAN.md -- public nubs registry row verify + push handoff. DOC-02 satisfied. NUB-CONFIG row verified on nub-config branch (all 6 acceptance greps pass, zero @napplet/* leaks, commit cc88056). Branch pushed + PR #13 opened on napplet/nubs by user via human-action gate. Phase 116 complete -- all DOC-01..06 requirements satisfied."
-last_updated: "2026-04-17T14:23:15Z"
+stopped_at: "Completed 116-03-PLAN.md -- public nubs registry row verify + push handoff. DOC-02 satisfied. NUB-CONFIG row verified (cc88056, 6/6 greps pass). PR #13 open at napplet/nubs. Phase 116 complete -- all 15 plans across 6 phases complete. v0.25.0 Config NUB milestone complete."
+last_updated: "2026-04-17T14:25:49.609Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 116
-Plan: 03 (complete)
+Plan: Not started
 Status: Complete — Phase 116 complete, all DOC-01..06 satisfied. v0.25.0 Config NUB milestone complete.
 Last activity: 2026-04-17
 
