@@ -383,7 +383,7 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 111. NUB-CONFIG Spec | 4/4 | Complete   | 2026-04-17 |
+| 111. NUB-CONFIG Spec | 4/4 | Complete    | 2026-04-17 |
 | 112. NUB Config Package Scaffold | 0/0 | Not started | - |
 | 113. NUB Config Shim + SDK | 0/0 | Not started | - |
 | 114. Vite-Plugin Extension | 0/0 | Not started | - |

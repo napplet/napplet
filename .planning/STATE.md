@@ -4,14 +4,14 @@ milestone: v0.25.0
 milestone_name: Config NUB
 status: verifying
 stopped_at: "Completed 111-04-PLAN.md — Phase 111 NUB-CONFIG Spec complete, PR #13 opened at napplet/nubs"
-last_updated: "2026-04-17T11:03:37.051Z"
+last_updated: "2026-04-17T11:08:06.234Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 4
   completed_plans: 4
-  percent: 0
+  percent: 17
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 ## Current Position
 
-Phase: 111 (NUB-CONFIG Spec) — EXECUTING
-Plan: 4 of 4
+Phase: 112
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-17
 
