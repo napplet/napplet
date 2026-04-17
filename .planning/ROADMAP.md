@@ -294,7 +294,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 113: NUB Config Shim + SDK** - Shim installer with subscriber fan-out and manifest-meta schema read; SDK convenience wrappers (completed 2026-04-17)
 - [x] **Phase 114: Vite-Plugin Extension** - configSchema option, convention-file/napplet.config.ts discovery, manifest tag injection, aggregateHash participation, meta-tag injection, build-time guards (completed 2026-04-17)
 - [x] **Phase 115: Core / Shim / SDK Integration + Wire** - 'config' in NubDomain, NappletGlobal.config namespace, shim mount, SDK re-exports, capability probing, wire surface tests (completed 2026-04-17)
-- [ ] **Phase 116: Documentation** - nub-config README, NIP-5D Known NUBs row, core/shim/SDK/vite-plugin README updates
+- [x] **Phase 116: Documentation** - nub-config README, NIP-5D Known NUBs row, core/shim/SDK/vite-plugin README updates
 
 ## Phase Details
 
@@ -385,7 +385,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Plans:** 2/3 plans executed
 - [x] 116-01-PLAN.md — @napplet/nub-config package README (DOC-01)
 - [x] 116-02-PLAN.md — core/shim/sdk/vite-plugin README updates (DOC-03..06)
-- [ ] 116-03-PLAN.md — public nubs repo registry row verify + push handoff (DOC-02, human-gated)
+- [x] 116-03-PLAN.md — public nubs repo registry row verify + push handoff (DOC-02, human-gated)
 
 ## Progress
 
@@ -399,4 +399,4 @@ Phases execute in numeric order: 111 → 112 → 113 → 114 (can parallel 113) 
 | 113. NUB Config Shim + SDK | 2/2 | Complete    | 2026-04-17 |
 | 114. Vite-Plugin Extension | 3/3 | Complete    | 2026-04-17 |
 | 115. Core / Shim / SDK Integration + Wire | 1/1 | Complete    | 2026-04-17 |
-| 116. Documentation | 2/3 | In Progress|  |
+| 116. Documentation | 3/3 | Complete    | 2026-04-17 |

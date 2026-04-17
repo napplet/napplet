@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
 status: completed
-stopped_at: "Completed 116-02-PLAN.md -- 4-README config NUB docs sweep (core/shim/sdk/vite-plugin). DOC-03..06 satisfied. config now visible as 9th NubDomain across all napplet-repo READMEs with full parity to identity/notify/media. 4 atomic commits (--no-verify for parallel execution): f6f1146, c587e9e, 6e7ef33, 8427b16. Cross-file sanity passes (no 'eight NUB' in READMEs; all 4 mention config; notify/identity regression-free)."
-last_updated: "2026-04-17T14:16:31.755Z"
+stopped_at: "Completed 116-03-PLAN.md -- public nubs registry row verify + push handoff. DOC-02 satisfied. NUB-CONFIG row verified on nub-config branch (all 6 acceptance greps pass, zero @napplet/* leaks, commit cc88056). Branch pushed + PR #13 opened on napplet/nubs by user via human-action gate. Phase 116 complete -- all DOC-01..06 requirements satisfied."
+last_updated: "2026-04-17T14:23:15Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
   percent: 100
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 ## Current Position
 
 Phase: 116
-Plan: Not started
-Status: Ready — Phase 115 complete (WIRE-01..06, CORE-01..02, SHIM-01, SDK-01, CAP-01 all satisfied), Phase 116 next
+Plan: 03 (complete)
+Status: Complete — Phase 116 complete, all DOC-01..06 satisfied. v0.25.0 Config NUB milestone complete.
 Last activity: 2026-04-17
 
-Progress: [██████████] 100% (5/6 phases complete, 12/12 plans complete within executed phases)
+Progress: [██████████] 100% (6/6 phases complete, 15/15 plans complete)
 
 **Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
@@ -131,6 +131,7 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 - [Phase 116]: [Phase 116]: 116-02: Landed 4-README config NUB docs sweep (core/shim/sdk/vite-plugin). DOC-03..06 satisfied. core README adds 'config' in 5 enumeration points (domain prefix prose, NubDomain type union, description table, NUB_DOMAINS runtime array, Integration Note NUB list) + Types table count update ('eight' -> 'nine'). shim README adds Quick Start config example (get/subscribe/openSettings with cleanup), 5 outbound + 3 inbound wire format lines, config: {...} in window.napplet shape object, dedicated '### window.napplet.config' subsection with 6-row method table, @napplet/nub-config in Shim vs SDK deps row. sdk README adds config to Quick Start imports+body, '### config' subsection, '### FromSchema type inference (NUB-CONFIG)' subsection with json-schema-to-ts opt-in install note, napplet.config.subscribe Namespace Import line, ConfigNubMessage message-types row, CONFIG_DOMAIN constants import+values comment, supports('nub:config') example. vite-plugin README adds 3 build-time bullets (meta injection, config manifest tag, aggregateHash via config:schema), full '#### configSchema (optional)' section with accepted-forms table + 3-path discovery precedence (inline / config.schema.json / napplet.config.ts|js|mjs) + 3 worked examples, '#### Build-Time Guards' catalogue (invalid-schema / pattern-not-allowed[CVE-2025-69873] / ref-not-allowed / secret-with-default + tree-walk keywords), Nip5aManifestOptions interface with configSchema?: JSONSchema7 | string + JSDoc, NUB-CONFIG spec link in Protocol Reference. 4 atomic commits f6f1146/c587e9e/6e7ef33/8427b16 with --no-verify (parallel executor).
 - [Phase 116]: [Phase 116]: 116-02: Pattern -- optional-peer type-inference documentation. FromSchema<typeof schema> opt-in via json-schema-to-ts peerDep documented in sdk README with explicit --save-dev install command. Reusable template for any future NUB that ships an opt-in type-inference peer; keeps the default path zero-cost (Record<string, unknown>) while surfacing typed-callback upgrade path to authors who want it.
 - [Phase 116]: [Phase 116]: 116-02: Deviation -- removed per-token backticks on shim README How-It-Works bullet 3 ('relay, ipc, storage, keys, media, notify, identity, config, and shell' -- bare tokens) to satisfy plan's explicit verification grep (grep -q 'identity, config, and shell'). Plan action instruction also specified bare-token form; trade-off is mild stylistic inconsistency on one bullet vs. reliable acceptance. Backtick-per-token convention preserved everywhere else in shim README.
+- [Phase 116]: 116-03: DOC-02 satisfied -- NUB-CONFIG row verified in /home/sandwich/Develop/nubs/README.md on nub-config branch (cc88056, all 6 acceptance greps pass, zero @napplet/* leaks). PR #13 opened at napplet/nubs by user via human-action gate: "NUB-CONFIG: per-napplet declarative configuration". Sequential numbering confirmed (NUB-MEDIA #10, NUB-NOTIFY #11, NUB-IDENTITY #12, NUB-CONFIG #13). No link-amendment commit needed. Agent never ran git push or gh pr create autonomously -- human-gated pattern upheld.
 
 ### Blockers/Concerns
 
@@ -139,6 +140,6 @@ Progress: [██████████] 100% (5/6 phases complete, 12/12 plan
 
 ## Session Continuity
 
-Last session: 2026-04-17T14:16:04.492Z
-Stopped at: Completed 116-02-PLAN.md -- 4-README config NUB docs sweep (core/shim/sdk/vite-plugin). DOC-03..06 satisfied. config now visible as 9th NubDomain across all napplet-repo READMEs with full parity to identity/notify/media. 4 atomic commits (--no-verify for parallel execution): f6f1146, c587e9e, 6e7ef33, 8427b16. Cross-file sanity passes (no 'eight NUB' in READMEs; all 4 mention config; notify/identity regression-free).
-Resume: `/gsd:execute-phase 116` (Documentation — nub-config README + NIP-5D Known NUBs + package READMEs — DOC-01..06)
+Last session: 2026-04-17T14:23:15Z
+Stopped at: Completed 116-03-PLAN.md -- public nubs registry row verify + push handoff. DOC-02 satisfied. NUB-CONFIG row verified (cc88056, 6/6 greps pass). PR #13 open at napplet/nubs. Phase 116 complete -- all 15 plans across 6 phases complete. v0.25.0 Config NUB milestone complete.
+Resume: v0.25.0 milestone complete. Next milestone: v0.26.0 (run /gsd:plan-phase or /gsd:quick for any follow-up tasks).
