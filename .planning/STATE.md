@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
-status: completed
-stopped_at: Completed 113-01-PLAN.md — @napplet/nub-config shim.ts landed (371 LOC); type-check green. Plan 113-02 (barrel + SDK) ready.
-last_updated: "2026-04-17T11:40:53.192Z"
+status: verifying
+stopped_at: Completed 113-02-PLAN.md — @napplet/nub-config sdk.ts + full barrel landed; package + monorepo type-check green (22/22). Phase 113 complete (NUB-03 + NUB-04 satisfied). Ready for phase 114 (Vite-Plugin Extension) or phase 115 (Core/Shim/SDK Integration).
+last_updated: "2026-04-17T11:45:47.509Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 88
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 
 Phase: 113
 Plan: 2 of 2
-Status: Phase 113 Plan 01 complete — @napplet/nub-config src/shim.ts landed (371 LOC: installConfigShim + handleConfigMessage + manifest-meta schema read + ref-counted subscribers + correlation-id Maps + onSchemaError fan-out). Type-check green. Plan 113-02 (barrel expansion + SDK wrappers) ready.
+Status: Phase complete — ready for verification
 Last activity: 2026-04-17
 
 Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans complete)
@@ -58,6 +58,7 @@ Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans c
 | 111   | 4     | 12min   | 3min     |
 | 112   | 2/2   | 4.5min  | 2.25min  |
 | Phase 113 P01 | 10min | 1 tasks | 1 files |
+| Phase 113 P02 | 2min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,10 @@ Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans c
 - [Phase 113]: 113-01: Shipped packages/nubs/config/src/shim.ts (371 LOC). installConfigShim() idempotent; reads <meta name='napplet-config-schema'> synchronously at install; mounts window.napplet.config with registerSchema/get/subscribe/openSettings/onSchemaError + readonly schema accessor (defineProperty configurable:false). handleConfigMessage() routes config.registerSchema.result / config.values (dual-use) / config.schemaError. Ref-counted subscriber Set (wire subscribe on 0->1, unsubscribe on 1->0). Correlation-ID Maps for get + registerSchema (30s timeout). Late subscribers receive cached lastValues via queueMicrotask. Commit 5b8b96a. Type-check green.
 - [Phase 113]: 113-01: registerSchema typed Promise<void> (not void) — plan must-haves override the spec's API sketch; positive-ACK wire behavior is spec-consistent. onSchemaError returns plain () => void teardown (not Subscription) — followed plan action step 8 explicit instruction. These two divergences flagged for harmonization in 113-02 SDK wrappers or phase 115 integration.
 - [Phase 113]: 113-01: Pattern established — ref-counted wire subscription (local Set<cb>; emit wire subscribe on 0->1; unsubscribe on 1->0) + dual-use message router branch (lookupPending via id presence, else fan-out) + last-snapshot cache for late-subscriber microtask delivery. Template for future push-stream NUBs.
+- [Phase 113]: 113-02: Shipped @napplet/nub-config sdk.ts (157 LOC, 5 bare-name wrappers: get/subscribe/openSettings/registerSchema/onSchemaError over shared requireNapplet() guard with local ConfigNamespace struct type) + expanded barrel (DOMAIN + 15 types preserved + installConfigShim/handleConfigMessage + 5 SDK wrappers). Side-effect-free (no registerNub). Commits 79692cd + d3e98eb. Package build + monorepo type-check (22/22) green. NUB-04 satisfied.
+- [Phase 113]: 113-02: Bare names (get/subscribe/openSettings/registerSchema/onSchemaError) chosen per NUB-CONFIG spec + CONTEXT.md explicit instruction — precedent is nub-keys (bare: registerAction/onAction); nub-identity's prefix convention (identityGet*) deliberately not followed because config namespace will resolve collisions at @napplet/sdk aggregation tier in phase 115 via 'export * as config' pattern.
+- [Phase 113]: 113-02: Local structural ConfigNamespace type in sdk.ts (not extending @napplet/core's NappletGlobal) — decouples @napplet/nub-config from phase-115's NappletGlobal.config extension. Lets NUB packages ship full shim+SDK surface before core is updated. Pattern to follow for future NUB packages.
+- [Phase 113]: 113-02: Barrel is side-effect-free (no registerNub call) — deliberately diverges from nub-identity's index.ts pattern. Phase 115 wires config domain registration via explicit call from central @napplet/shim entry, preserving sideEffects:false in package.json for tree-shaking.
 
 ### Blockers/Concerns
 
@@ -106,6 +111,6 @@ Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans c
 
 ## Session Continuity
 
-Last session: 2026-04-17T11:40:36.450Z
-Stopped at: Completed 113-01-PLAN.md — @napplet/nub-config shim.ts landed (371 LOC); type-check green. Plan 113-02 (barrel + SDK) ready.
+Last session: 2026-04-17T11:45:47.506Z
+Stopped at: Completed 113-02-PLAN.md — @napplet/nub-config sdk.ts + full barrel landed; package + monorepo type-check green (22/22). Phase 113 complete (NUB-03 + NUB-04 satisfied). Ready for phase 114 (Vite-Plugin Extension) or phase 115 (Core/Shim/SDK Integration).
 Resume: `/gsd:execute-phase 113` (NUB Config Shim + SDK — phase 112 complete)
