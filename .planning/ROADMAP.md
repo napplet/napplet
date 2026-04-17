@@ -325,7 +325,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `src/index.ts` barrel re-exports all type definitions and the `DOMAIN` constant (`'config' as const`).
   4. `@types/json-schema@^7.0.15` is declared as devDependency (for JSON Schema type alias only); `json-schema-to-ts@^3.1.1` is declared as optional peerDependency for opt-in `FromSchema<typeof schema>` inference; no runtime dependencies beyond `@napplet/core`.
   5. `pnpm --filter @napplet/nub-config build && pnpm --filter @napplet/nub-config type-check` passes clean.
-**Plans**: TBD
+**Plans:** 0/2 plans complete
+- [ ] 112-01-PLAN.md — Scaffold packages/nubs/config/ directory + package.json (with JSON Schema deps) + tsconfig + tsup.config + stub barrel
+- [ ] 112-02-PLAN.md — Write src/types.ts (all 8 wire messages + schema/values/extension types + DOMAIN) + full barrel + build/type-check gate
 
 ### Phase 113: NUB Config Shim + SDK
 **Goal**: The `@napplet/nub-config` package exports `shim.ts` (installer + message handlers + subscriber ref-counting + manifest-meta schema read) and `sdk.ts` (named convenience wrappers), completing the modular NUB pattern.
