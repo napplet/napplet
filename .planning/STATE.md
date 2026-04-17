@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.25.0
 milestone_name: Config NUB
-status: verifying
-stopped_at: Completed 113-02-PLAN.md — @napplet/nub-config sdk.ts + full barrel landed; package + monorepo type-check green (22/22). Phase 113 complete (NUB-03 + NUB-04 satisfied). Ready for phase 114 (Vite-Plugin Extension) or phase 115 (Core/Shim/SDK Integration).
-last_updated: "2026-04-17T13:12:54.669Z"
+status: executing
+stopped_at: Completed 114-01-PLAN.md — configSchema option + 3-path discovery landed on @napplet/vite-plugin. resolvedSchema closure var ready for 114-02 (guards) and 114-03 (manifest tag + meta + aggregateHash). Build + monorepo type-check green. Ready for 114-02.
+last_updated: "2026-04-17T13:26:51.453Z"
 last_activity: 2026-04-17
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
-  percent: 88
+  total_plans: 11
+  completed_plans: 9
+  percent: 82
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-17)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol -- and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 112 — NUB Config Package Scaffold
+**Current focus:** Phase 114 — Vite-Plugin Extension
 
 ## Current Position
 
 Phase: 114
-Plan: Not started
-Status: Phase complete — ready for verification
+Plan: 02
+Status: In progress — plan 01 complete, 02 next
 Last activity: 2026-04-17
 
-Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans complete)
+Progress: [████████░░] 82% (3/6 phases complete, 9/11 plans complete)
 
 **Phase execution order:** 111 → 112 → 113 → 114 (can parallel 113) → 115 → 116
 
@@ -59,6 +59,7 @@ Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans c
 | 112   | 2/2   | 4.5min  | 2.25min  |
 | Phase 113 P01 | 10min | 1 tasks | 1 files |
 | Phase 113 P02 | 2min | 3 tasks | 2 files |
+| Phase 114 P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,10 @@ Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans c
 - [Phase 113]: 113-02: Bare names (get/subscribe/openSettings/registerSchema/onSchemaError) chosen per NUB-CONFIG spec + CONTEXT.md explicit instruction — precedent is nub-keys (bare: registerAction/onAction); nub-identity's prefix convention (identityGet*) deliberately not followed because config namespace will resolve collisions at @napplet/sdk aggregation tier in phase 115 via 'export * as config' pattern.
 - [Phase 113]: 113-02: Local structural ConfigNamespace type in sdk.ts (not extending @napplet/core's NappletGlobal) — decouples @napplet/nub-config from phase-115's NappletGlobal.config extension. Lets NUB packages ship full shim+SDK surface before core is updated. Pattern to follow for future NUB packages.
 - [Phase 113]: 113-02: Barrel is side-effect-free (no registerNub call) — deliberately diverges from nub-identity's index.ts pattern. Phase 115 wires config domain registration via explicit call from central @napplet/shim entry, preserving sideEffects:false in package.json for tree-shaking.
+- [Phase 114]: 114-01: Landed Nip5aManifestOptions.configSchema?: JSONSchema7 | string on @napplet/vite-plugin + discoverConfigSchema helper with strict 4-step precedence (inline object -> inline path -> config.schema.json -> napplet.config.{ts,js,mjs}). Async configResolved populates resolvedSchema + resolvedSchemaSource closure vars as sole contract for 114-02/03. @types/json-schema@^7.0.15 added as devDep (matches nub-config pin). Build + monorepo type-check green. Commits 3a7d820 (chore) + 2d0c364 (feat).
+- [Phase 114]: 114-01: JSONSchema7 imported directly from 'json-schema' module, NOT re-exported from @napplet/nub-config. vite-plugin is build-time infrastructure; nub-config is runtime. Keeping type relationship structural avoids circular layering; both packages pin @types/json-schema@^7.0.15 for identical type definitions.
+- [Phase 114]: 114-01: napplet.config.* precedence fixed as ts -> js -> mjs. .ts branch present for forward compat (Node 22 --experimental-strip-types) but .js/.mjs is documented path today. No tsx/esbuild shell-out to keep zero runtime deps. mod.configSchema ?? mod.default?.configSchema dual shape supports both named-export and default-export authoring.
+- [Phase 114]: 114-01: Discovery runs in async configResolved, not config / buildStart. configResolved(config).root is canonical project root, downstream transformIndexHtml / closeBundle fire after so resolvedSchema is guaranteed populated by the time 114-03 emission hooks read it. Pattern template: closure-variable hand-off between sibling plans within a phase.
 
 ### Blockers/Concerns
 
@@ -111,6 +116,6 @@ Progress: [█████████░] 88% (2/6 phases complete, 7/8 plans c
 
 ## Session Continuity
 
-Last session: 2026-04-17T11:45:47.506Z
-Stopped at: Completed 113-02-PLAN.md — @napplet/nub-config sdk.ts + full barrel landed; package + monorepo type-check green (22/22). Phase 113 complete (NUB-03 + NUB-04 satisfied). Ready for phase 114 (Vite-Plugin Extension) or phase 115 (Core/Shim/SDK Integration).
+Last session: 2026-04-17T13:26:51.449Z
+Stopped at: Completed 114-01-PLAN.md — configSchema option + 3-path discovery landed on @napplet/vite-plugin. resolvedSchema closure var ready for 114-02 (guards) and 114-03 (manifest tag + meta + aggregateHash). Build + monorepo type-check green. Ready for 114-02.
 Resume: `/gsd:execute-phase 113` (NUB Config Shim + SDK — phase 112 complete)
