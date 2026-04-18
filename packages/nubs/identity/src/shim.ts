@@ -50,6 +50,18 @@ let installed = false;
 export function handleIdentityMessage(msg: { type: string; [key: string]: unknown }): void {
   const type = msg.type;
 
+  // Handle .error message types — reject the pending promise.
+  // The runtime sends identity.*.error when the action fails (e.g., no signer configured).
+  // The central shim router now routes both .result AND .error types to this handler.
+  if (type.endsWith('.error')) {
+    const id = msg.id as string | undefined;
+    const error = msg.error as string | undefined;
+    if (id && error) {
+      rejectPending(id, new Error(error));
+    }
+    return;
+  }
+
   if (type === 'identity.getPublicKey.result') {
     const result = msg as unknown as IdentityGetPublicKeyResultMessage;
     resolvePending(result.id, result.pubkey);
@@ -87,6 +99,13 @@ function resolvePending(id: string, value: unknown): void {
   if (!pending) return;
   pendingRequests.delete(id);
   pending.resolve(value);
+}
+
+function rejectPending(id: string, reason: Error): void {
+  const pending = pendingRequests.get(id);
+  if (!pending) return;
+  pendingRequests.delete(id);
+  pending.reject(reason);
 }
 
 function resolveOrReject(id: string, value: unknown, error?: string): void {

@@ -126,14 +126,14 @@ export function publish(
       if (msgEvent.source !== window.parent) return;
       const msg = msgEvent.data;
       if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
-      if (msg.type !== 'relay.publish.result') return;
+      if (msg.type !== 'relay.publish.result' && msg.type !== 'relay.publish.error') return;
 
       const result = msg as RelayPublishResultMessage;
       if (result.id !== publishId) return;
 
       window.removeEventListener('message', handleMessage);
-      if (result.error) {
-        reject(new Error(result.error));
+      if (result.error || msg.type === 'relay.publish.error') {
+        reject(new Error(result.error || 'relay:write denied'));
       } else {
         resolve(result.event as unknown as NostrEvent);
       }

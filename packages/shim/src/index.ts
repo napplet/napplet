@@ -88,8 +88,8 @@ function handleEnvelopeMessage(event: MessageEvent): void {
     return;
   }
 
-  // Route identity.* result messages to identity shim
-  if (type.startsWith('identity.') && type.endsWith('.result')) {
+  // Route identity.* result and error messages to identity shim
+  if (type.startsWith('identity.') && (type.endsWith('.result') || type.endsWith('.error'))) {
     handleIdentityMessage(msg as { type: string; [key: string]: unknown });
     return;
   }
