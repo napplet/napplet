@@ -10,15 +10,15 @@ Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable
 ### Package Structure
 
 - [ ] **PKG-01**: New `@napplet/nub` package at `packages/nub/` with 9 domain subdirectories (relay, storage, ifc, keys, theme, media, notify, identity, config)
-- [ ] **PKG-02**: `@napplet/nub` declares `@napplet/core` as its sole runtime dep; preserves `json-schema-to-ts` as optional peerDep (for config domain's `FromSchema` inference)
-- [ ] **PKG-03**: `@napplet/nub` publishes with `sideEffects: false` so every subpath is tree-shakable
+- [x] **PKG-02**: `@napplet/nub` declares `@napplet/core` as its sole runtime dep; preserves `json-schema-to-ts` as optional peerDep (for config domain's `FromSchema` inference)
+- [x] **PKG-03**: `@napplet/nub` publishes with `sideEffects: false` so every subpath is tree-shakable
 
 ### Subpath Exports
 
-- [ ] **EXP-01**: Per-domain barrel subpath `@napplet/nub/<domain>` re-exports `{ types, shim, sdk }` for each of the 9 domains
-- [ ] **EXP-02**: Granular subpaths `@napplet/nub/<domain>/types`, `@napplet/nub/<domain>/shim`, `@napplet/nub/<domain>/sdk` are individually importable for each of the 9 domains (27 granular entry points total)
-- [ ] **EXP-03**: `package.json` `exports` field maps all 36 entry points (9 barrels + 27 granular) with `types` + `import` conditions
-- [ ] **EXP-04**: No root `@napplet/nub` import — consumers MUST use a domain subpath (prevents accidental whole-tree imports)
+- [x] **EXP-01**: Per-domain barrel subpath `@napplet/nub/<domain>` re-exports `{ types, shim, sdk }` for each of the 9 domains
+- [x] **EXP-02**: Granular subpaths `@napplet/nub/<domain>/types`, `@napplet/nub/<domain>/shim`, `@napplet/nub/<domain>/sdk` are individually importable for each of the 9 domains (27 granular entry points total)
+- [x] **EXP-03**: `package.json` `exports` field maps all 36 entry points (9 barrels + 27 granular) with `types` + `import` conditions
+- [x] **EXP-04**: No root `@napplet/nub` import — consumers MUST use a domain subpath (prevents accidental whole-tree imports)
 
 ### Build
 
@@ -81,12 +81,12 @@ Which phases cover which requirements. Populated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PKG-01      | 117   | Pending |
-| PKG-02      | 117   | Pending |
-| PKG-03      | 117   | Pending |
-| EXP-01      | 117   | Pending |
-| EXP-02      | 117   | Pending |
-| EXP-03      | 117   | Pending |
-| EXP-04      | 117   | Pending |
+| PKG-02      | 117   | Complete |
+| PKG-03      | 117   | Complete |
+| EXP-01      | 117   | Complete |
+| EXP-02      | 117   | Complete |
+| EXP-03      | 117   | Complete |
+| EXP-04      | 117   | Complete |
 | BUILD-01    | 117   | Pending |
 | BUILD-02    | 117   | Pending |
 | MIG-01      | 118   | Pending |
