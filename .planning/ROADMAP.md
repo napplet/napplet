@@ -330,7 +330,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. A bundler consumer doing `import { ifc } from '@napplet/sdk'` type-checks and runs; `import { ipc } from '@napplet/sdk'` fails at compile time.
   3. A reader scanning `packages/core/src/types.ts`, `topics.ts`, `envelope.ts`, and `packages/nub/src/ifc/sdk.ts` sees only IFC-PEER / "inter-frame" terminology in JSDoc and section headers — zero `IPC-PEER` or `.ipc` references survive.
   4. `pnpm --filter @napplet/core --filter @napplet/shim --filter @napplet/sdk --filter @napplet/nub build` and `type-check` exit 0 after the rename (localized gate; full monorepo verification is Phase 124).
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 122-01-PLAN.md — Rename ipc -> ifc across core types, shim installer, SDK export, and nub/ifc SDK helper; localized build + type-check gate
 
 ### Phase 123: Documentation Sweep
 **Goal**: Every non-archival doc a developer actually reads when onboarding to napplet — 4 READMEs, the `build-napplet` skill, and active `.planning/` — uses IFC terminology in prose and code samples, so the docs match the source shipped in Phase 122.
@@ -361,6 +362,6 @@ Phases execute in numeric order: 122 → 123 → 124
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 122. Source Rename | 0/TBD | Not started | - |
+| 122. Source Rename | 0/1 | Not started | - |
 | 123. Documentation Sweep | 0/TBD | Not started | - |
 | 124. Verification & Sign-Off | 0/TBD | Not started | - |
