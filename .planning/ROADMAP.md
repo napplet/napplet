@@ -315,7 +315,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Finish the IPC→IFC rename across first-party source, published READMEs, specs, and skills — zero `ipc`/`IPC`/`IPC-PEER`/"inter-pane" remaining outside historical archives. One hard break, no backward-compat alias.
 
-- [ ] **Phase 122: Source Rename** - Break `window.napplet.ipc` → `.ifc`, rename SDK `ipc` export → `ifc`, and sweep core + nub/ifc JSDoc to IFC-PEER / "inter-frame" phrasing
+- [x] **Phase 122: Source Rename** - Break `window.napplet.ipc` → `.ifc`, rename SDK `ipc` export → `ifc`, and sweep core + nub/ifc JSDoc to IFC-PEER / "inter-frame" phrasing (completed 2026-04-19)
 - [ ] **Phase 123: Documentation Sweep** - Purge `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" from root + 3 package READMEs, `skills/build-napplet/SKILL.md`, and active `.planning/` docs
 - [ ] **Phase 124: Verification & Sign-Off** - Monorepo build + type-check green under renamed surface; repo-wide zero-grep proves the cleanup holds
 
@@ -331,7 +331,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. A reader scanning `packages/core/src/types.ts`, `topics.ts`, `envelope.ts`, and `packages/nub/src/ifc/sdk.ts` sees only IFC-PEER / "inter-frame" terminology in JSDoc and section headers — zero `IPC-PEER` or `.ipc` references survive.
   4. `pnpm --filter @napplet/core --filter @napplet/shim --filter @napplet/sdk --filter @napplet/nub build` and `type-check` exit 0 after the rename (localized gate; full monorepo verification is Phase 124).
 **Plans**: 1 plan
-- [ ] 122-01-PLAN.md — Rename ipc -> ifc across core types, shim installer, SDK export, and nub/ifc SDK helper; localized build + type-check gate
+- [x] 122-01-PLAN.md — Rename ipc -> ifc across core types, shim installer, SDK export, and nub/ifc SDK helper; localized build + type-check gate
 
 ### Phase 123: Documentation Sweep
 **Goal**: Every non-archival doc a developer actually reads when onboarding to napplet — 4 READMEs, the `build-napplet` skill, and active `.planning/` — uses IFC terminology in prose and code samples, so the docs match the source shipped in Phase 122.
@@ -362,6 +362,6 @@ Phases execute in numeric order: 122 → 123 → 124
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 122. Source Rename | 0/1 | Not started | - |
+| 122. Source Rename | 1/1 | Complete   | 2026-04-19 |
 | 123. Documentation Sweep | 0/TBD | Not started | - |
 | 124. Verification & Sign-Off | 0/TBD | Not started | - |

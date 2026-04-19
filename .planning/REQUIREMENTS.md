@@ -10,12 +10,12 @@
 
 ### API Rename (breaking)
 
-- [ ] **API-01**: `window.napplet.ipc` namespace renamed to `window.napplet.ifc` across `packages/core/src/types.ts` (NappletGlobal shape) and `packages/shim/src/index.ts` (installer/routing). No backward-compat alias; `window.napplet.ipc` no longer resolves.
-- [ ] **API-02**: `@napplet/sdk` exports `ifc` (not `ipc`) as the named namespace export. `packages/sdk/src/index.ts` section header, JSDoc `@example` blocks, and the exported `const` identifier all renamed; any downstream type re-exports updated.
+- [x] **API-01**: `window.napplet.ipc` namespace renamed to `window.napplet.ifc` across `packages/core/src/types.ts` (NappletGlobal shape) and `packages/shim/src/index.ts` (installer/routing). No backward-compat alias; `window.napplet.ipc` no longer resolves.
+- [x] **API-02**: `@napplet/sdk` exports `ifc` (not `ipc`) as the named namespace export. `packages/sdk/src/index.ts` section header, JSDoc `@example` blocks, and the exported `const` identifier all renamed; any downstream type re-exports updated.
 
 ### Source Cleanup
 
-- [ ] **SRC-01**: `@napplet/core` JSDoc + section comments in `packages/core/src/types.ts`, `packages/core/src/topics.ts`, and `packages/core/src/envelope.ts` use IFC-PEER / "inter-frame" phrasing — zero IPC-PEER leakage. `packages/nub/src/ifc/sdk.ts` JSDoc references `window.napplet.ifc` (not `.ipc`).
+- [x] **SRC-01**: `@napplet/core` JSDoc + section comments in `packages/core/src/types.ts`, `packages/core/src/topics.ts`, and `packages/core/src/envelope.ts` use IFC-PEER / "inter-frame" phrasing — zero IPC-PEER leakage. `packages/nub/src/ifc/sdk.ts` JSDoc references `window.napplet.ifc` (not `.ipc`).
 
 ### Public Documentation
 
@@ -49,9 +49,9 @@ Every requirement maps to exactly one phase. Coverage: 8/8.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| API-01 | Phase 122 (Source Rename) | Pending |
-| API-02 | Phase 122 (Source Rename) | Pending |
-| SRC-01 | Phase 122 (Source Rename) | Pending |
+| API-01 | Phase 122 (Source Rename) | Complete |
+| API-02 | Phase 122 (Source Rename) | Complete |
+| SRC-01 | Phase 122 (Source Rename) | Complete |
 | DOC-01 | Phase 123 (Documentation Sweep) | Pending |
 | DOC-02 | Phase 123 (Documentation Sweep) | Pending |
 | PLAN-01 | Phase 123 (Documentation Sweep) | Pending |

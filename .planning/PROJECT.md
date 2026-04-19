@@ -259,15 +259,14 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-- [ ] **API-01**: `window.napplet.ipc` renamed to `window.napplet.ifc` across shim, core types, and every first-party caller — no backward-compat alias
-- [ ] **API-02**: `@napplet/sdk` exports `ifc` (not `ipc`) as the named namespace export
-- [ ] **CONST-01**: Every IPC-branded symbol in `@napplet/core` (identifiers, JSDoc, topic strings) renamed to the IFC equivalent
-- [ ] **DOC-01**: Root `README.md` + `packages/{core,shim,sdk}/README.md` updated — no `ipc` / `IPC-PEER` / "inter-pane" outside historical context
+- [ ] **API-01**: `window.napplet.ipc` renamed to `window.napplet.ifc` across `packages/core/src/types.ts` (NappletGlobal shape) and `packages/shim/src/index.ts` (installer), with no backward-compat alias
+- [ ] **API-02**: `@napplet/sdk` exports `ifc` (not `ipc`) as the named namespace export — update `packages/sdk/src/index.ts` section header, JSDoc, and the exported const name
+- [ ] **SRC-01**: `@napplet/core` JSDoc + section comments in `types.ts`, `topics.ts`, and `envelope.ts` use IFC-PEER / "inter-frame" phrasing (no IPC-PEER leakage); `packages/nub/src/ifc/sdk.ts` JSDoc references `window.napplet.ifc`
+- [ ] **DOC-01**: Root `README.md` + `packages/{core,shim,sdk}/README.md` updated — no `ipc` / `IPC-PEER` / "inter-pane" outside historical quote blocks
 - [ ] **DOC-02**: `skills/build-napplet/SKILL.md` updated — description line, inter-pane phrasing, and code samples aligned with IFC
-- [ ] **DOC-03**: `packages/nub/src/ifc/sdk.ts` JSDoc references `window.napplet.ifc` (not `.ipc`)
-- [ ] **PLAN-01**: Active planning docs (`PROJECT.md`, `STATE.md`, `ROADMAP.md`, `.planning/codebase/*.md`) reflect IFC terminology; archived milestone dirs intentionally left unchanged
+- [ ] **PLAN-01**: Active planning docs (`PROJECT.md`, `STATE.md`, `ROADMAP.md`, `.planning/codebase/*.md`, `.planning/research/*.md`, `.planning/SPEC-GAPS.md`) reflect IFC terminology; archived `.planning/milestones/` and `.planning/quick/` dirs intentionally left unchanged
 - [ ] **VER-01**: Monorepo `pnpm -r build` + `pnpm -r type-check` green across all 14 packages with IFC-renamed surface
-- [ ] **VER-02**: Repo-wide grep for `\bIPC\b` / `\bipc\b` / `IPC_PEER` / `IPC-PEER` / `inter-pane` returns zero matches outside `.planning/milestones/` and `.planning/quick/` archives
+- [ ] **VER-02**: Repo-wide grep for `\bIPC\b` / `\bipc\b` / `IPC-PEER` / `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/` docs (historical archives excluded)
 
 ### Future Requirements (deferred from v0.26.0)
 

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.27.0
 milestone_name: IFC Terminology Lock-In
-status: ready-to-plan
-stopped_at: Roadmap created (Phases 122-124)
-last_updated: "2026-04-19T00:00:00.000Z"
+status: verifying
+stopped_at: Completed 122-01-PLAN.md (Phase 122 Source Rename)
+last_updated: "2026-04-19T22:09:36.490Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 100
 ---
 
 # Project State
@@ -21,30 +21,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-19)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.27.0 IFC Terminology Lock-In — Phase 122 (Source Rename) ready to plan
+**Current focus:** Phase 122 — Source Rename
 
 ## Current Position
 
-Phase: 122 of 124 (Source Rename)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-04-19 — Roadmap created for v0.27.0 (Phases 122-124)
+Phase: 122 (Source Rename) — COMPLETE, ready for verification
+Plan: 1 of 1 complete
+Status: Phase complete — ready for verification
+Last activity: 2026-04-19 -- Completed 122-01-PLAN.md (Phase 122 Source Rename)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Phase Map
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 122 | Source Rename | API-01, API-02, SRC-01 | Not started |
+| 122 | Source Rename | API-01, API-02, SRC-01 | Complete (ready for verification) |
 | 123 | Documentation Sweep | DOC-01, DOC-02, PLAN-01 | Not started |
 | 124 | Verification & Sign-Off | VER-01, VER-02 | Not started |
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed (v0.27.0): 0
+
+- Total plans completed (v0.27.0): 1
 - Previous milestone (v0.26.0): 5 phases, 9 plans, ~2-3 min/plan average
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 122   | 01   | 3min     | 5     | 6     |
 
 *Updated after each plan completion.*
 
@@ -60,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 - v0.27.0: Hard break — no backward-compat alias on `window.napplet.ipc` (confirmed at milestone kickoff).
 - v0.27.0: Archived `.planning/milestones/` and `.planning/quick/` directories are left unchanged; they are historical record, not current docs.
 - v0.27.0: Historical "Shipped: vX.Y.Z" changelog lines in READMEs that mention `IPC_PEER` as a past decision are history, not current docs — they stay.
+- v0.27.0 Phase 122 Plan 01: Runtime API surface renamed ipc -> ifc across @napplet/core (NappletGlobal.ifc), @napplet/shim (installer key), @napplet/sdk (const ifc export), and @napplet/nub/ifc (requireIfc guard + Error string). Hard break, no alias. Localized build + type-check green across the 4 affected packages; zero IPC leakage across 6 in-scope source files.
 
 ### Pending Todos
 
@@ -78,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-19
-Stopped at: Created ROADMAP.md for v0.27.0 (Phases 122-124) with 100% requirement coverage
-Resume: Run `/gsd:plan-phase 122` to decompose Phase 122 (Source Rename) into plans. All 8 requirements mapped; traceability in REQUIREMENTS.md.
+Last session: 2026-04-19T22:09:36.487Z
+Stopped at: Completed 122-01-PLAN.md (Phase 122 Source Rename)
+Resume: Phase 122 complete — ready for verification. Next: `/gsd:verify-phase 122`, then `/gsd:plan-phase 123` for Documentation Sweep.
