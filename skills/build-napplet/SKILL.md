@@ -149,18 +149,19 @@ const encrypted = await window.nostr.nip44.encrypt(recipientPubkey, 'payload');
 const decrypted = await window.nostr.nip44.decrypt(senderPubkey, encrypted);
 ```
 
-## Step 8 — Inter-pane events (emit / on)
+## Step 8 — Inter-frame events (emit / on)
 
-Inter-pane events let napplets communicate with each other through the shell. `emit()` broadcasts to all subscribers; `on()` subscribes to a specific topic.
+Inter-frame events let napplets communicate with each other through the shell. `window.napplet.ifc.emit()` broadcasts to all topic subscribers; `window.napplet.ifc.on()` subscribes to a specific topic.
 
 ```ts
-import { emit, on } from '@napplet/shim';
+import '@napplet/shim';
+// or: import { ifc } from '@napplet/sdk';
 
 // Broadcast an event to all napplets subscribed to 'profile:open'
-emit('profile:open', [], JSON.stringify({ pubkey: '3bf0c63...' }));
+window.napplet.ifc.emit('profile:open', [], JSON.stringify({ pubkey: '3bf0c63...' }));
 
-// Subscribe to inter-pane events on a topic
-const sub = on('profile:open', (payload: unknown) => {
+// Subscribe to inter-frame events on a topic
+const sub = window.napplet.ifc.on('profile:open', (payload: unknown) => {
   const { pubkey } = payload as { pubkey: string };
   console.log('Profile open requested for:', pubkey);
 });
@@ -169,7 +170,7 @@ const sub = on('profile:open', (payload: unknown) => {
 sub.close();
 ```
 
-The `emit()` signature: `emit(topic: string, extraTags: string[][] = [], content: string = '')`.
+The `emit()` signature: `emit(topic: string, extraTags?: string[][], content?: string): void`.
 
 ## Step 9 — Service discovery
 
@@ -204,5 +205,5 @@ if (await hasServiceVersion('audio', '1.0.0')) {
 - `publish()` returns `Promise<NostrEvent>` — always `await` it. Errors surface as promise rejections (e.g., signer timeout, ACL denial).
 - `query()` resolves after EOSE — it is a one-shot snapshot, not a live stream. Use `subscribe()` for live updates.
 - `discoverServices()` results are session-cached. To refresh, the page must reload.
-- `emit()` does not return a value and does not confirm delivery. Use inter-pane `on()` subscriptions for acknowledgment patterns.
+- `window.napplet.ifc.emit()` does not return a value and does not confirm delivery. Use inter-frame `window.napplet.ifc.on()` subscriptions for acknowledgment patterns.
 - The `on()` callback receives `(payload: unknown, event: NostrEvent)` — always type-check `payload` before accessing properties.
