@@ -175,7 +175,7 @@ Per-napplet declarative configuration (NUB-CONFIG). Mirrors `window.napplet.conf
 
 ### FromSchema type inference (NUB-CONFIG)
 
-`json-schema-to-ts` is declared as an optional `peerDependency` of `@napplet/nub-config`. Install it in your napplet to get `FromSchema<typeof schema>` typing for your `config.subscribe` callback -- the `values` parameter is inferred directly from your schema (enums, required fields, defaults all flow through). Authors who skip `json-schema-to-ts` pay no install cost and `config.subscribe` still works with the default `Record<string, unknown>` typing.
+`json-schema-to-ts` is declared as an optional `peerDependency` of `@napplet/nub` (scoped to the `@napplet/nub/config` domain's `FromSchema` typing). Install it in your napplet to get `FromSchema<typeof schema>` typing for your `config.subscribe` callback -- the `values` parameter is inferred directly from your schema (enums, required fields, defaults all flow through). Authors who skip `json-schema-to-ts` pay no install cost and `config.subscribe` still works with the default `Record<string, unknown>` typing.
 
 ```ts
 import '@napplet/shim';
@@ -293,14 +293,14 @@ handlers in shell implementations or protocol-aware code.
 
 | Type | NUB Package | Description |
 |------|-------------|-------------|
-| `RelayNubMessage` | `@napplet/nub-relay` | Discriminated union of all relay domain messages |
-| `IdentityNubMessage` | `@napplet/nub-identity` | Discriminated union of all identity domain messages |
-| `StorageNubMessage` | `@napplet/nub-storage` | Discriminated union of all storage domain messages |
-| `IfcNubMessage` | `@napplet/nub-ifc` | Discriminated union of all IFC domain messages |
-| `KeysNubMessage` | `@napplet/nub-keys` | Discriminated union of all keys domain messages |
-| `MediaNubMessage` | `@napplet/nub-media` | Discriminated union of all media domain messages |
-| `NotifyNubMessage` | `@napplet/nub-notify` | Discriminated union of all notify domain messages |
-| `ConfigNubMessage` | `@napplet/nub-config` | Discriminated union of all config domain messages |
+| `RelayNubMessage` | `@napplet/nub/relay` | Discriminated union of all relay domain messages |
+| `IdentityNubMessage` | `@napplet/nub/identity` | Discriminated union of all identity domain messages |
+| `StorageNubMessage` | `@napplet/nub/storage` | Discriminated union of all storage domain messages |
+| `IfcNubMessage` | `@napplet/nub/ifc` | Discriminated union of all IFC domain messages |
+| `KeysNubMessage` | `@napplet/nub/keys` | Discriminated union of all keys domain messages |
+| `MediaNubMessage` | `@napplet/nub/media` | Discriminated union of all media domain messages |
+| `NotifyNubMessage` | `@napplet/nub/notify` | Discriminated union of all notify domain messages |
+| `ConfigNubMessage` | `@napplet/nub/config` | Discriminated union of all config domain messages |
 
 Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
