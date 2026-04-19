@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-17)
 Phase: 116
 Plan: Not started
 Status: Complete — Phase 116 complete, all DOC-01..06 satisfied. v0.25.0 Config NUB milestone complete.
-Last activity: 2026-04-17
+Last activity: 2026-04-19 - Completed quick task 260419-i6c: Republish napplet packages as 0.2.1 (committed, awaiting GHA publish)
 
 Progress: [██████████] 100% (6/6 phases complete, 15/15 plans complete)
 
@@ -137,6 +137,12 @@ Progress: [██████████] 100% (6/6 phases complete, 15/15 plan
 
 - CARRIED: npm publish blocked on human npm auth (PUB-04).
 - CARRIED: NIP number conflict with Scrolls PR#2281 (RES-01) -- unresolved.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260419-i6c | Republish napplet packages as 0.2.1 with resolved workspace:* deps | 2026-04-19 | ec677fb | [260419-i6c-republish-napplet-packages-as-0-2-1-with](./quick/260419-i6c-republish-napplet-packages-as-0-2-1-with/) |
 
 ## Session Continuity
 
