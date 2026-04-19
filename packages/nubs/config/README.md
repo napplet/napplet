@@ -1,3 +1,8 @@
+> ⚠️ **DEPRECATED** — This package is a re-export shim for backwards compatibility.
+> **Migrate to `@napplet/nub/config`** — all types, shim installers, and SDK
+> helpers are now exported from there. This package will be removed in a future
+> milestone.
+
 # @napplet/nub-config
 
 > TypeScript message types, shim, and SDK helpers for the config NUB domain (per-napplet declarative configuration, JSON Schema-driven).

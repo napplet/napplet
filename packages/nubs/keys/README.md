@@ -1,3 +1,8 @@
+> ⚠️ **DEPRECATED** — This package is a re-export shim for backwards compatibility.
+> **Migrate to `@napplet/nub/keys`** — all types, shim installers, and SDK
+> helpers are now exported from there. This package will be removed in a future
+> milestone.
+
 # @napplet/nub-keys
 
 > TypeScript message types for the keys NUB domain (keyboard forwarding and action keybindings).

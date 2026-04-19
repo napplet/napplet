@@ -1,3 +1,8 @@
+> ⚠️ **DEPRECATED** — This package is a re-export shim for backwards compatibility.
+> **Migrate to `@napplet/nub/notify`** — all types, shim installers, and SDK
+> helpers are now exported from there. This package will be removed in a future
+> milestone.
+
 # @napplet/nub-notify
 
 > TypeScript message types, shim, and SDK helpers for the notify NUB domain (shell-rendered notifications).
