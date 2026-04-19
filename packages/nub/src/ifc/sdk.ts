@@ -1,7 +1,7 @@
 /**
- * @napplet/nub-ifc -- SDK helpers wrapping window.napplet.ipc.
+ * @napplet/nub-ifc -- SDK helpers wrapping window.napplet.ifc.
  *
- * These convenience functions delegate to `window.napplet.ipc.*` at call time.
+ * These convenience functions delegate to `window.napplet.ifc.*` at call time.
  * The shim must be imported somewhere to install the global.
  */
 
@@ -9,18 +9,18 @@ import type { NappletGlobal, NostrEvent, Subscription } from '@napplet/core';
 
 // ─── Runtime guard ──────────────────────────────────────────────────────────
 
-function requireIpc(): NappletGlobal['ipc'] {
+function requireIfc(): NappletGlobal['ifc'] {
   const w = window as Window & { napplet?: NappletGlobal };
-  if (!w.napplet?.ipc) {
-    throw new Error('window.napplet.ipc not installed -- import @napplet/shim first');
+  if (!w.napplet?.ifc) {
+    throw new Error('window.napplet.ifc not installed -- import @napplet/shim first');
   }
-  return w.napplet.ipc;
+  return w.napplet.ifc;
 }
 
 // ─── SDK functions ──────────────────────────────────────────────────────────
 
 /**
- * Broadcast an IPC-PEER event to other napplets via the shell.
+ * Broadcast an IFC-PEER event to other napplets via the shell.
  *
  * @param topic      The 't' tag value (e.g., 'profile:open')
  * @param extraTags  Additional NIP-01 tags beyond the 't' tag (default: [])
@@ -34,11 +34,11 @@ function requireIpc(): NappletGlobal['ipc'] {
  * ```
  */
 export function ifcEmit(topic: string, extraTags?: string[][], content?: string): void {
-  requireIpc().emit(topic, extraTags, content);
+  requireIfc().emit(topic, extraTags, content);
 }
 
 /**
- * Subscribe to IPC-PEER events on a specific topic.
+ * Subscribe to IFC-PEER events on a specific topic.
  *
  * @param topic     The 't' tag value to listen for
  * @param callback  Called with `(payload, event)` for each matching event
@@ -58,5 +58,5 @@ export function ifcOn(
   topic: string,
   callback: (payload: unknown, event: NostrEvent) => void,
 ): Subscription {
-  return requireIpc().on(topic, callback);
+  return requireIfc().on(topic, callback);
 }
