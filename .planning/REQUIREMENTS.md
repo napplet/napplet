@@ -9,7 +9,7 @@ Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable
 
 ### Package Structure
 
-- [ ] **PKG-01**: New `@napplet/nub` package at `packages/nub/` with 9 domain subdirectories (relay, storage, ifc, keys, theme, media, notify, identity, config)
+- [x] **PKG-01**: New `@napplet/nub` package at `packages/nub/` with 9 domain subdirectories (relay, storage, ifc, keys, theme, media, notify, identity, config)
 - [x] **PKG-02**: `@napplet/nub` declares `@napplet/core` as its sole runtime dep; preserves `json-schema-to-ts` as optional peerDep (for config domain's `FromSchema` inference)
 - [x] **PKG-03**: `@napplet/nub` publishes with `sideEffects: false` so every subpath is tree-shakable
 
@@ -80,7 +80,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01      | 117   | Pending |
+| PKG-01      | 117   | Complete |
 | PKG-02      | 117   | Complete |
 | PKG-03      | 117   | Complete |
 | EXP-01      | 117   | Complete |
