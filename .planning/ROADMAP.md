@@ -306,7 +306,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 117: @napplet/nub Package Foundation** - Scaffold packages/nub/ with 9 domain subdirectories, exports map for all 36 entry points, tsup build, and sideEffects:false tree-shaking contract (completed 2026-04-19)
 - [x] **Phase 118: Deprecation Re-Export Shims** - Convert the 9 `@napplet/nub-<domain>` packages into 1-line re-export shims with @deprecated markers and banner READMEs (completed 2026-04-19)
 - [x] **Phase 119: Internal Consumer Migration** - Rewire @napplet/shim, @napplet/sdk, and in-repo demos/tests to import from `@napplet/nub/<domain>` paths (completed 2026-04-19)
-- [ ] **Phase 120: Documentation Update** - New @napplet/nub README, updated package READMEs, NIP-5D example imports, and skills/ directory examples point at new subpaths
+- [x] **Phase 120: Documentation Update** - New @napplet/nub README, updated package READMEs, NIP-5D example imports, and skills/ directory examples point at new subpaths (completed 2026-04-19)
 - [ ] **Phase 121: Verification & Sign-Off** - Full monorepo build + type-check green, tree-shaking smoke test proves per-domain isolation, deprecation shims import cleanly
 
 ## Phase Details
@@ -362,10 +362,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Root README plus `@napplet/core`, `@napplet/shim`, and `@napplet/sdk` READMEs reference `@napplet/nub/<domain>` in every NUB-related example; no remaining `@napplet/nub-<domain>` references except where explicitly calling out deprecation
   3. NIP-5D (wherever it shows example imports for NUB domains) uses `@napplet/nub/<domain>` paths
   4. Every file under `skills/` that contains a NUB-related example import uses `@napplet/nub/<domain>` paths
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
   - [x] 120-01-PLAN.md — Create packages/nub/README.md with install + 9-domain table + subpath patterns + tree-shaking contract + theme exception + migration table + optional peer dep + protocol reference + license (DOC-01)
   - [x] 120-02-PLAN.md — Update root README.md (table + dep graph, remove defunct nub-signer), packages/core/README.md line 353, packages/shim/README.md line 426, packages/sdk/README.md lines 178 + 296-303 (DOC-02)
-  - [ ] 120-03-PLAN.md — Verify specs/NIP-5D.md + skills/build-napplet/SKILL.md (grep + file-content sanity) + phase-level cross-file grep gate (DOC-03, DOC-04)
+  - [x] 120-03-PLAN.md — Verify specs/NIP-5D.md + skills/build-napplet/SKILL.md (grep + file-content sanity) + phase-level cross-file grep gate (DOC-03, DOC-04)
 
 ### Phase 121: Verification & Sign-Off
 **Goal**: The milestone's final gate — prove that the new package builds clean, the subpath tree-shaking contract holds in a real bundler, and the deprecated re-export shims still resolve and type-check for pinned consumers. This phase adds no new artifacts; it verifies the three truths that prior phases committed to.
@@ -387,5 +387,5 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 | 117. @napplet/nub Package Foundation | 3/3 | Complete    | 2026-04-19 |
 | 118. Deprecation Re-Export Shims | 3/3 | Complete    | 2026-04-19 |
 | 119. Internal Consumer Migration | 2/2 | Complete    | 2026-04-19 |
-| 120. Documentation Update | 2/3 | In Progress|  |
+| 120. Documentation Update | 3/3 | Complete   | 2026-04-19 |
 | 121. Verification & Sign-Off | 0/TBD | Not started | - |

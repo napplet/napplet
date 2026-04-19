@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.26.0
 milestone_name: Better Packages
-status: executing
-stopped_at: Completed 120-01-PLAN.md
-last_updated: "2026-04-19T14:36:27.515Z"
+status: verifying
+stopped_at: Completed 120-03-PLAN.md
+last_updated: "2026-04-19T14:38:10.975Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 100
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-04-19)
 
 Phase: 120 (Documentation Update) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-19
 
-Progress: [██████████] 100% (8/8 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 fully shipped — source + manifest + lockfile + emit)
+Progress: [██████████] 100% (11/11 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 fully shipped; Phase 120 fully shipped — DOC-01/02/03/04 closed via 3 parallel wave-1 plans)
 
 ## Accumulated Context
 
@@ -62,6 +62,7 @@ Progress: [██████████] 100% (8/8 plans complete: Phase 117 f
 - v0.26.0 (Phase 119-02): Dep-swap complete. `packages/shim/package.json` dependencies 10→2 (removed 8 legacy `@napplet/nub-<domain>` entries — relay, identity, storage, ifc, keys, media, notify, config); `packages/sdk/package.json` 11→2 (removed 9 — same 8 plus theme). Both end at `{@napplet/core: workspace:*, @napplet/nub: workspace:*}`. Non-dep fields byte-identical in both files. `pnpm-lock.yaml` refreshed — shim+sdk importer stanzas each reference `link:../core` + `link:../nub` only (0 legacy edges for those importers). `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages. `packages/shim/dist/index.js` emits 8 distinct `@napplet/nub/<domain>/shim` refs (1 each for keys/media/notify/storage/relay/identity/ifc/config) + 0 legacy. `packages/sdk/dist/index.js` emits all 9 `@napplet/nub/<domain>` barrels (relay/identity/storage/ifc/theme/keys/media/notify/config — theme barrel-only per Option A) + 0 legacy + 0 theme/shim + 0 theme/sdk. `packages/nub/` (canonical) and `packages/nubs/` (deprecated) source+metadata trees untouched (empty `git diff --stat`). Plan scope reduced vs as-written: the 119-01 Rule-3 auto-fix already added `@napplet/nub`, so this plan was pure deletion — "add" action documented as no-op. No deviations. No changeset (internal refactor; dist-level consumers are unaffected, Phase 118 deprecation changeset untouched). Task commit: 8f83e14 (chore). Phase 119 closes CONS-01, CONS-02, CONS-03 end-to-end (source Plan 01 + manifest/lockfile/emit Plan 02); Phase 120 (documentation migration) unblocked.
 - v0.26.0 (Phase 120-01): Canonical `packages/nub/README.md` created (160 lines) with all 11 required H2 sections (Install, Quick Start, 9 Domains, Subpath Patterns, Tree-Shaking Contract, Theme Exception, Migration, Optional Peer Dependency, Protocol Reference, License + H1 title). 9-domain subpath table uses em-dash U+2014 (14 occurrences; Theme Shim/SDK cells per types-only exception). Four concrete runnable import examples cover every subpath pattern: barrel (`@napplet/nub/relay`), types-only (`@napplet/nub/ifc/types`), shim-only (`@napplet/nub/storage/shim`), sdk-only (`@napplet/nub/notify/sdk`) plus an end-to-end relay example showing napplet-side `relaySubscribe` and shell-side `installRelayShim` together. 9-row migration table maps every deprecated `@napplet/nub-<domain>` → `@napplet/nub/<domain>` (barrel + granular). Relative `../../specs/NIP-5D.md` protocol reference. Optional `json-schema-to-ts@^3.1.1` peerDep documented with a `FromSchema` usage example. Task commit: 0033b4d (docs). DOC-01 closed.
 - v0.26.0 (Phase 120-02): 4 user-facing READMEs migrated off deprecated `@napplet/nub-<domain>` names to the consolidated `@napplet/nub` surface. Root README package table: 5 per-nub rows collapsed to single `[@napplet/nub](packages/nub)` row; 10-box dep graph redrawn to 5-box post-consolidation shape (`@napplet/shim + @napplet/sdk → @napplet/nub → @napplet/core`, with `@napplet/vite-plugin` as independent build-time leaf); all defunct `@napplet/nub-signer` references (removed in v0.24.0) purged. `packages/core/README.md` integration note (line 353) enumerates `@napplet/nub/<domain>` subpaths for the 8 `registerNub` domains with a parenthetical noting `@napplet/nub/theme` is types-only. `packages/shim/README.md` Shim-vs-SDK comparison table deps row (line 426) collapsed to single `@napplet/nub` entry with note about internal `/shim` subpath routing. `packages/sdk/README.md` line 178 peerDep note rewritten to cite `@napplet/nub` scoped to `@napplet/nub/config` domain; lines 296-303 type-to-package mapping table's 8 rows switched to `@napplet/nub/<domain>` barrel subpaths (column header "NUB Package" kept unchanged — values are subpaths of the same `@napplet/nub` package). Cross-file invariant: `grep -c "@napplet/nub-"` returns 0 across all 4 files. Zero deviations. Parallel-executor scope respected (companion agent owns `packages/nub/README.md` — untouched by this plan). Task commits: d29b9f2 (root), 80366cb (core), 6039111 (shim), 24a0289 (sdk). All with --no-verify per parallel-executor protocol. DOC-02 satisfied.
+- v0.26.0 (Phase 120-03): Verify-only plan confirmed DOC-03 + DOC-04 closed. `specs/NIP-5D.md` (118 lines, 6,997 bytes): 0 `@napplet/nub-` grep matches + full file-content read confirms zero deprecated references (spec uses `<nub-name>` placeholder and `foo.bar` example domain only). `skills/build-napplet/SKILL.md` (208 lines, 7,954 bytes): 0 grep matches + full read confirms all `pnpm add` / import blocks reference `@napplet/shim` + `@napplet/vite-plugin` only. Phase-wide acceptance grep across root README + 4 edited package READMEs + `packages/nub/README.md` + `packages/vite-plugin/README.md` + `specs/` + `skills/` returns 0 matches outside two intentional content zones: `packages/nubs/<domain>/` deprecation banners AND `packages/nub/README.md`'s `## Migration` section (lines 110–126; awk-scoped verification: 10 of 10 matches fall inside Migration, 0 leakage elsewhere). Rule 3 deviation documented: Task 3's verify grep command under-specified its exclusion list by omitting `packages/nub/README.md` despite Plan 01's CONTEXT.md non-negotiables requiring that migration table. Adjusted gate clean; zero file modifications; no per-task commits under happy path. Phase 120 functionally complete across DOC-01, DOC-02, DOC-03, DOC-04.
 
 ### Blockers/Concerns
 
@@ -85,9 +86,10 @@ Progress: [██████████] 100% (8/8 plans complete: Phase 117 f
 | Phase 119 P02 | 3 min | 2 tasks | 3 files |
 | Phase 120 P02 | 2min | 4 tasks | 4 files |
 | Phase 120 P01 | 2 min | 1 tasks | 1 files |
+| Phase 120 P03 | 3 min | 3 tasks | 1 files |
 
 ## Session Continuity
 
-Last session: 2026-04-19T14:36:27.513Z
-Stopped at: Completed 120-01-PLAN.md
-Resume: Phase 119 complete (Plan 01 + Plan 02 both shipped). CONS-01/02/03 closed end-to-end. Next: `/gsd:verify-work 119` to run phase verification, then `/gsd:plan-phase 120` to scope the documentation migration phase (NIP-5D and package READMEs to reference `@napplet/nub/<domain>` instead of the deprecated `@napplet/nub-<domain>` names).
+Last session: 2026-04-19T14:38:10.972Z
+Stopped at: Completed 120-03-PLAN.md
+Resume: Phase 120 complete (Plan 01 + Plan 02 + Plan 03 all shipped in parallel wave-1). DOC-01/02/03/04 closed end-to-end. Next: `/gsd:verify-work 120` to run phase verification, then advance to the next phase in the v0.26.0 milestone.
