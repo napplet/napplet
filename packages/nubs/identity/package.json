@@ -1,6 +1,6 @@
 {
   "name": "@napplet/nub-identity",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "NUB-IDENTITY message types and shim methods for read-only user identity queries",
   "type": "module",
   "main": "./dist/index.js",

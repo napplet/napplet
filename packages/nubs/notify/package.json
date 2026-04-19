@@ -1,6 +1,6 @@
 {
   "name": "@napplet/nub-notify",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "NUB-NOTIFY message types for shell-rendered notifications",
   "type": "module",
   "main": "./dist/index.js",

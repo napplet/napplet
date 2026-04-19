@@ -1,6 +1,6 @@
 {
   "name": "@napplet/nub-relay",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "NUB-RELAY message types and shim methods for relay proxy operations",
   "type": "module",
   "main": "./dist/index.js",
