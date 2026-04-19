@@ -1,55 +1,10 @@
 /**
- * @napplet/nub-storage -- Storage NUB module.
+ * @napplet/nub-storage — DEPRECATED re-export shim.
  *
- * Exports typed message definitions for the storage domain, shim installer,
- * SDK helpers, and registers the 'storage' domain with core dispatch on import.
- *
- * @example
- * ```ts
- * import type { StorageGetMessage, StorageNubMessage } from '@napplet/nub-storage';
- * import { DOMAIN, installStorageShim, storageGetItem } from '@napplet/nub-storage';
- * ```
+ * @deprecated Use `@napplet/nub/storage` instead. This package forwards to
+ * the new canonical location and will be removed in a future milestone.
  *
  * @packageDocumentation
  */
 
-export { DOMAIN } from './types.js';
-
-// ─── Type Exports ──────────────────────────────────────────────────────────
-
-export type {
-  StorageMessage,
-  StorageGetMessage,
-  StorageSetMessage,
-  StorageRemoveMessage,
-  StorageKeysMessage,
-  StorageGetResultMessage,
-  StorageSetResultMessage,
-  StorageRemoveResultMessage,
-  StorageKeysResultMessage,
-  StorageRequestMessage,
-  StorageResultMessage,
-  StorageNubMessage,
-} from './types.js';
-
-// ─── Shim Exports ─────────────────────────────────────────────────────────
-
-export { installStorageShim, nappletStorage } from './shim.js';
-
-// ─── SDK Exports ──────────────────────────────────────────────────────────
-
-export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from './sdk.js';
-
-// ─── Domain Registration ───────────────────────────────────────────────────
-
-import { registerNub } from '@napplet/core';
-import { DOMAIN } from './types.js';
-
-/**
- * Register the storage domain with the core dispatch singleton.
- * Handler is a no-op placeholder -- the shell/shim provide real handlers.
- * Registration ensures dispatch.getRegisteredDomains() includes 'storage'.
- */
-registerNub(DOMAIN, (_msg) => {
-  /* Shell or shim replaces this handler at runtime */
-});
+export * from '@napplet/nub/storage';

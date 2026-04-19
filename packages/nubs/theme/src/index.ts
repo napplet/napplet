@@ -1,46 +1,10 @@
 /**
- * @napplet/nub-theme -- Theme NUB module.
+ * @napplet/nub-theme — DEPRECATED re-export shim.
  *
- * Exports typed message definitions for the theme domain and registers
- * the 'theme' domain with the core dispatch infrastructure on import.
- *
- * @example
- * ```ts
- * import type { ThemeGetMessage, ThemeNubMessage, Theme } from '@napplet/nub-theme';
- * import { DOMAIN } from '@napplet/nub-theme';
- * ```
+ * @deprecated Use `@napplet/nub/theme` instead. This package forwards to
+ * the new canonical location and will be removed in a future milestone.
  *
  * @packageDocumentation
  */
 
-export { DOMAIN } from './types.js';
-
-// ─── Type Exports ──────────────────────────────────────────────────────────
-
-export type {
-  ThemeColors,
-  ThemeFont,
-  ThemeBackground,
-  Theme,
-  ThemeMessage,
-  ThemeGetMessage,
-  ThemeGetResultMessage,
-  ThemeChangedMessage,
-  ThemeRequestMessage,
-  ThemeResultMessage,
-  ThemeNubMessage,
-} from './types.js';
-
-// ─── Domain Registration ───────────────────────────────────────────────────
-
-import { registerNub } from '@napplet/core';
-import { DOMAIN } from './types.js';
-
-/**
- * Register the theme domain with the core dispatch singleton.
- * Handler is a no-op placeholder -- the shell/shim provide real handlers.
- * Registration ensures dispatch.getRegisteredDomains() includes 'theme'.
- */
-registerNub(DOMAIN, (_msg) => {
-  /* Shell or shim replaces this handler at runtime */
-});
+export * from '@napplet/nub/theme';

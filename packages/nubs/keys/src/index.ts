@@ -1,67 +1,10 @@
 /**
- * @napplet/nub-keys -- Keys NUB module.
+ * @napplet/nub-keys — DEPRECATED re-export shim.
  *
- * Exports typed message definitions for the keys domain, shim installer,
- * SDK helpers, and registers the 'keys' domain with core dispatch on import.
- *
- * @example
- * ```ts
- * import type { KeysForwardMessage, KeysNubMessage, Action } from '@napplet/nub-keys';
- * import { DOMAIN, installKeysShim, keysRegisterAction } from '@napplet/nub-keys';
- * ```
+ * @deprecated Use `@napplet/nub/keys` instead. This package forwards to
+ * the new canonical location and will be removed in a future milestone.
  *
  * @packageDocumentation
  */
 
-export { DOMAIN } from './types.js';
-
-// ─── Type Exports ──────────────────────────────────────────────────────────
-
-export type {
-  Action,
-  RegisterResult,
-  KeyBinding,
-  KeysMessage,
-  KeysForwardMessage,
-  KeysRegisterActionMessage,
-  KeysRegisterActionResultMessage,
-  KeysUnregisterActionMessage,
-  KeysBindingsMessage,
-  KeysActionMessage,
-  KeysRequestMessage,
-  KeysResultMessage,
-  KeysNubMessage,
-} from './types.js';
-
-// ─── Shim Exports ─────────────────────────────────────────────────────────
-
-export {
-  installKeysShim,
-  handleKeysMessage,
-  registerAction,
-  unregisterAction,
-  onAction,
-} from './shim.js';
-
-// ─── SDK Exports ──────────────────────────────────────────────────────────
-
-export {
-  keysRegisterAction,
-  keysUnregisterAction,
-  keysOnAction,
-  keysRegister,
-} from './sdk.js';
-
-// ─── Domain Registration ───────────────────────────────────────────────────
-
-import { registerNub } from '@napplet/core';
-import { DOMAIN } from './types.js';
-
-/**
- * Register the keys domain with the core dispatch singleton.
- * Handler is a no-op placeholder -- the shell/shim provide real handlers.
- * Registration ensures dispatch.getRegisteredDomains() includes 'keys'.
- */
-registerNub(DOMAIN, (_msg) => {
-  /* Shell or shim replaces this handler at runtime */
-});
+export * from '@napplet/nub/keys';
