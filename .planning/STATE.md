@@ -4,7 +4,7 @@ milestone: v0.26.0
 milestone_name: Better Packages
 status: verifying
 stopped_at: Completed 118-03-PLAN.md
-last_updated: "2026-04-19T13:53:18.940Z"
+last_updated: "2026-04-19T13:57:59.702Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-19)
 
 ## Current Position
 
-Phase: 118 (Deprecation Re-Export Shims) — EXECUTING
-Plan: 3 of 3
+Phase: 119
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-19
 
