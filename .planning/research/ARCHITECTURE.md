@@ -384,7 +384,7 @@ Add `config` namespace to `NappletGlobal` with inline structural types (no impor
 ```typescript
 export interface NappletGlobal {
   relay: { ... };
-  ipc:   { ... };
+  ifc:   { ... };
   storage: { ... };
   keys:  { ... };
   media: { ... };

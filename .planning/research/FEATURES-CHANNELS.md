@@ -129,7 +129,7 @@ In the napplet context, the `[AUTH CHECK]` phase is NOT a new handshake -- it is
 
 These are often conflated. In the napplet context they serve fundamentally different purposes.
 
-| Aspect | Pub/Sub (existing IPC, kind 29003) | Broadcast (new channel op) | Point-to-Point Channel |
+| Aspect | Pub/Sub (existing IFC, kind 29003) | Broadcast (new channel op) | Point-to-Point Channel |
 |--------|-------------------------------------|---------------------------|----------------------|
 | **Addressing** | Topic-based (`#t` tag filter matching) | All open channels (or named group) | Single identified peer |
 | **Auth** | Per-message (full NIP-01 event with sig) | Once (channel auth) | Once (channel auth) |
@@ -137,7 +137,7 @@ These are often conflated. In the napplet context they serve fundamentally diffe
 | **Latency** | Higher (serialize event, compute sig, dispatch by filter) | Lower (iterate channels, forward) | Lowest (direct send) |
 | **Coupling** | Loose -- sender does not know recipients | Medium -- sender knows a group exists | Tight -- both sides negotiated |
 | **Use case** | Infrequent coordination, notifications, unknown recipients | State sync, clock, config push | Data streams, commands, RPC-like |
-| **Status** | **Shipped** (kind 29003, `window.napplet.ipc.emit/on`) | **New** | **New** |
+| **Status** | **Shipped** (kind 29003, `window.napplet.ifc.emit/on`) | **New** | **New** |
 
 **The pub/sub system does NOT go away.** Channels complement it. Pub/sub is for loose coupling where the sender does not know or care about recipients. Channels are for tight coupling where both sides have negotiated a persistent connection.
 
