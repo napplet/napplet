@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.26.0
 milestone_name: Better Packages
-status: verifying
-stopped_at: Completed 117-03-PLAN.md
-last_updated: "2026-04-19T13:18:28.922Z"
+status: executing
+stopped_at: Completed 118-01-PLAN.md
+last_updated: "2026-04-19T13:41:25.090Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-19)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 117 — @napplet/nub Package Foundation
+**Current focus:** Phase 118 — Deprecation Re-Export Shims
 
 ## Current Position
 
-Phase: 118
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 118 (Deprecation Re-Export Shims) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-19
 
 Progress: [██████████] 100% (Phase 117 plans complete; milestone progress across 5 phases pending)
@@ -54,6 +54,8 @@ Progress: [██████████] 100% (Phase 117 plans complete; miles
 - v0.26.0 (Phase 117-02): Theme NUB is types-only today (index.ts + types.ts only). Total @napplet/nub exports = 34, not 36. Phantom `./theme/shim` and `./theme/sdk` entries removed from Plan 117-01's package.json + tsup.config.ts in the same commit as the 34-file source copy. Option A selected at checkpoint — matches upstream reality, preserves Phase 117 "no behavioral migration" boundary. Supersedes the earlier v0.26.0 "36 subpath exports" decision above.
 - v0.26.0 (Phase 117-02): registerNub asymmetry preserved — 8/9 domain barrels call `registerNub(DOMAIN, ...)` (identity, ifc, keys, media, notify, relay, storage, theme); config stays side-effect-free (integration happens in central shim per @napplet/nub-config pattern). Theme barrel registers normally.
 - v0.26.0 (Phase 117-03): @napplet/nub initial tsup build green — 68 primary emitted files (34 .js + 34 .d.ts) plus 25 shared `chunk-*.js` files from tsup code-splitting. Root `@napplet/nub` import fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` (EXP-04 runtime-verified from a real consumer context, not just by package.json inspection). All 9 `<domain>/types.js` emits are free of runtime `@napplet/core` imports (`import type` erased as expected). registerNub asymmetry preserved at runtime: 8 domains register (identity, ifc, keys, media, notify, relay, storage, theme), config does not. Theme/shim + theme/sdk correctly fail to resolve per Option A. Phase 117 is complete; ready for Phase 118 (deprecation re-export shims).
+- v0.26.0 (Phase 118-01): Deprecated nub-* package src/ trees reduced to single-file index.ts re-export shim (`export * from '@napplet/nub/<domain>'`); 24 stale types/shim/sdk files removed from 8 domains plus theme's sole types.ts; src/ .ts count 34 -> 9. `export *` semantics preserve types, runtime exports, AND the registerNub side effect via the canonical @napplet/nub/<domain> module. Build/type-check verification deferred to Plan 03; package.json + [DEPRECATED] description updates deferred to Plan 02.
+- v0.26.0 (Phase 118-01): Uniform deprecation banner applied to all 9 deprecated package READMEs — prepended above original content for the 4 that shipped a README previously (config, keys, media, notify); 5 new READMEs created with banner + migration snippet (identity, ifc, relay, storage, theme). Every banner names `@napplet/nub/<domain>` as the migration target and cites "a future milestone" as the removal window.
 
 ### Blockers/Concerns
 
@@ -66,8 +68,14 @@ Progress: [██████████] 100% (Phase 117 plans complete; miles
 |---|-------------|------|--------|-----------|
 | 260419-i6c | Republish napplet packages as 0.2.1 with resolved workspace:* deps | 2026-04-19 | ec677fb | [260419-i6c-republish-napplet-packages-as-0-2-1-with](./quick/260419-i6c-republish-napplet-packages-as-0-2-1-with/) |
 
+## Performance Metrics
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 118   | 01   | 2 min    | 2     | 22    |
+
 ## Session Continuity
 
-Last session: 2026-04-19T13:13:10.413Z
-Stopped at: Completed 117-03-PLAN.md
-Resume: Phase 117 complete. Next: `/gsd:verify-phase 117` (or advance to Phase 118 — Deprecation Re-Export Shims — once verification passes).
+Last session: 2026-04-19T13:41:25.087Z
+Stopped at: Completed 118-01-PLAN.md
+Resume: Phase 118 Plan 01 complete. Next: execute 118-02-PLAN.md (package.json runtime-dep swap, `[DEPRECATED]` description prefix for MIG-03, version bump). Plan 03 follows with monorepo-wide build + type-check verification.
