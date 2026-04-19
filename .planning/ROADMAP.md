@@ -316,7 +316,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Finish the IPC→IFC rename across first-party source, published READMEs, specs, and skills — zero `ipc`/`IPC`/`IPC-PEER`/"inter-pane" remaining outside historical archives. One hard break, no backward-compat alias.
 
 - [x] **Phase 122: Source Rename** - Break `window.napplet.ipc` → `.ifc`, rename SDK `ipc` export → `ifc`, and sweep core + nub/ifc JSDoc to IFC-PEER / "inter-frame" phrasing (completed 2026-04-19)
-- [ ] **Phase 123: Documentation Sweep** - Purge `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" from root + 3 package READMEs, `skills/build-napplet/SKILL.md`, and active `.planning/` docs
+- [x] **Phase 123: Documentation Sweep** - Purge `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" from root + 3 package READMEs, `skills/build-napplet/SKILL.md`, and active `.planning/` docs (completed 2026-04-19)
 - [ ] **Phase 124: Verification & Sign-Off** - Monorepo build + type-check green under renamed surface; repo-wide zero-grep proves the cleanup holds
 
 ## Phase Details
@@ -345,7 +345,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Plans**: 3 plans
 - [x] 123-01-PLAN.md — Sweep 4 package READMEs (root + core + shim + sdk) for IFC terminology (DOC-01)
 - [x] 123-02-PLAN.md — Sweep skills/build-napplet/SKILL.md frontmatter + Step 8 + pitfalls for IFC terminology (DOC-02)
-- [ ] 123-03-PLAN.md — Sweep active .planning/codebase/ + research/ for current-tense IFC terminology; preserve dated historical content (PLAN-01)
+- [x] 123-03-PLAN.md — Sweep active .planning/codebase/ + research/ for current-tense IFC terminology; preserve dated historical content (PLAN-01)
 
 ### Phase 124: Verification & Sign-Off
 **Goal**: The IFC rename is proven complete end-to-end — monorepo builds + type-checks green across all 14 packages, and a zero-match grep across the first-party surface (source, specs, skills, root README, active planning) confirms no IPC leakage remains.
@@ -366,5 +366,5 @@ Phases execute in numeric order: 122 → 123 → 124
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 122. Source Rename | 1/1 | Complete    | 2026-04-19 |
-| 123. Documentation Sweep | 2/3 | In Progress|  |
+| 123. Documentation Sweep | 3/3 | Complete   | 2026-04-19 |
 | 124. Verification & Sign-Off | 0/TBD | Not started | - |

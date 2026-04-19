@@ -24,7 +24,7 @@
 
 ### Active Planning Sweep
 
-- [ ] **PLAN-01**: Active planning docs — `PROJECT.md`, `STATE.md`, `ROADMAP.md`, `.planning/codebase/*.md`, `.planning/research/*.md`, `.planning/SPEC-GAPS.md` — reflect IFC terminology. Archived `.planning/milestones/` and `.planning/quick/` directories are intentionally left as historical record.
+- [x] **PLAN-01**: Active planning docs — `PROJECT.md`, `STATE.md`, `ROADMAP.md`, `.planning/codebase/*.md`, `.planning/research/*.md`, `.planning/SPEC-GAPS.md` — reflect IFC terminology. Archived `.planning/milestones/` and `.planning/quick/` directories are intentionally left as historical record.
 
 ### Verification
 
@@ -54,6 +54,6 @@ Every requirement maps to exactly one phase. Coverage: 8/8.
 | SRC-01 | Phase 122 (Source Rename) | Complete |
 | DOC-01 | Phase 123 (Documentation Sweep) | Complete |
 | DOC-02 | Phase 123 (Documentation Sweep) | Complete |
-| PLAN-01 | Phase 123 (Documentation Sweep) | Pending |
+| PLAN-01 | Phase 123 (Documentation Sweep) | Complete |
 | VER-01 | Phase 124 (Verification & Sign-Off) | Pending |
 | VER-02 | Phase 124 (Verification & Sign-Off) | Pending |
