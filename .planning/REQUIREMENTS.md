@@ -39,8 +39,8 @@ Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable
 
 ### Documentation
 
-- [ ] **DOC-01**: New `@napplet/nub` README covering install, 9-domain layout, subpath pattern (barrel vs granular), and tree-shaking contract
-- [ ] **DOC-02**: Root README, `@napplet/core` README, `@napplet/shim` README, `@napplet/sdk` README updated to reference `@napplet/nub/<domain>` paths
+- [x] **DOC-01**: New `@napplet/nub` README covering install, 9-domain layout, subpath pattern (barrel vs granular), and tree-shaking contract
+- [x] **DOC-02**: Root README, `@napplet/core` README, `@napplet/shim` README, `@napplet/sdk` README updated to reference `@napplet/nub/<domain>` paths
 - [ ] **DOC-03**: NIP-5D reference (where it shows example imports) updated to new paths
 - [ ] **DOC-04**: Skills directory (`skills/`) updated to reference `@napplet/nub/<domain>` in examples
 
@@ -95,8 +95,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | CONS-01     | 119   | Complete |
 | CONS-02     | 119   | Complete |
 | CONS-03     | 119   | Complete |
-| DOC-01      | 120   | Pending |
-| DOC-02      | 120   | Pending |
+| DOC-01      | 120   | Complete |
+| DOC-02      | 120   | Complete |
 | DOC-03      | 120   | Pending |
 | DOC-04      | 120   | Pending |
 | VER-01      | 121   | Pending |

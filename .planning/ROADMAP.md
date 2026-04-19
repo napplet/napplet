@@ -362,9 +362,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Root README plus `@napplet/core`, `@napplet/shim`, and `@napplet/sdk` READMEs reference `@napplet/nub/<domain>` in every NUB-related example; no remaining `@napplet/nub-<domain>` references except where explicitly calling out deprecation
   3. NIP-5D (wherever it shows example imports for NUB domains) uses `@napplet/nub/<domain>` paths
   4. Every file under `skills/` that contains a NUB-related example import uses `@napplet/nub/<domain>` paths
-**Plans:** 3 plans
-  - [ ] 120-01-PLAN.md — Create packages/nub/README.md with install + 9-domain table + subpath patterns + tree-shaking contract + theme exception + migration table + optional peer dep + protocol reference + license (DOC-01)
-  - [ ] 120-02-PLAN.md — Update root README.md (table + dep graph, remove defunct nub-signer), packages/core/README.md line 353, packages/shim/README.md line 426, packages/sdk/README.md lines 178 + 296-303 (DOC-02)
+**Plans:** 2/3 plans executed
+  - [x] 120-01-PLAN.md — Create packages/nub/README.md with install + 9-domain table + subpath patterns + tree-shaking contract + theme exception + migration table + optional peer dep + protocol reference + license (DOC-01)
+  - [x] 120-02-PLAN.md — Update root README.md (table + dep graph, remove defunct nub-signer), packages/core/README.md line 353, packages/shim/README.md line 426, packages/sdk/README.md lines 178 + 296-303 (DOC-02)
   - [ ] 120-03-PLAN.md — Verify specs/NIP-5D.md + skills/build-napplet/SKILL.md (grep + file-content sanity) + phase-level cross-file grep gate (DOC-03, DOC-04)
 
 ### Phase 121: Verification & Sign-Off
@@ -387,5 +387,5 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 | 117. @napplet/nub Package Foundation | 3/3 | Complete    | 2026-04-19 |
 | 118. Deprecation Re-Export Shims | 3/3 | Complete    | 2026-04-19 |
 | 119. Internal Consumer Migration | 2/2 | Complete    | 2026-04-19 |
-| 120. Documentation Update | 0/3 | Not started | - |
+| 120. Documentation Update | 2/3 | In Progress|  |
 | 121. Verification & Sign-Off | 0/TBD | Not started | - |
