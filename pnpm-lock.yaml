@@ -57,9 +57,9 @@ importers:
 
   packages/nubs/config:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
       json-schema-to-ts:
         specifier: ^3.1.1
         version: 3.1.1
@@ -76,9 +76,9 @@ importers:
 
   packages/nubs/identity:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -89,9 +89,9 @@ importers:
 
   packages/nubs/ifc:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -102,9 +102,9 @@ importers:
 
   packages/nubs/keys:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -115,9 +115,9 @@ importers:
 
   packages/nubs/media:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -128,9 +128,9 @@ importers:
 
   packages/nubs/notify:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -141,9 +141,9 @@ importers:
 
   packages/nubs/relay:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -154,9 +154,9 @@ importers:
 
   packages/nubs/storage:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -167,9 +167,9 @@ importers:
 
   packages/nubs/theme:
     dependencies:
-      '@napplet/core':
+      '@napplet/nub':
         specifier: workspace:*
-        version: link:../../core
+        version: link:../../nub
     devDependencies:
       tsup:
         specifier: ^8.5.0
