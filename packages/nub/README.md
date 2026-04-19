@@ -1,0 +1,160 @@
+# @napplet/nub
+
+> All 9 napplet NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config) as layered subpath exports.
+
+## Install
+
+```bash
+pnpm add @napplet/nub
+```
+
+`@napplet/nub` has no root export — consumers MUST import from a domain subpath. See [Subpath Patterns](#subpath-patterns) for the three available entry-point shapes per domain.
+
+## Quick Start
+
+```ts
+// Barrel — types + shim installer + sdk helper together
+import { installRelayShim, relaySubscribe, RelaySubscribeMessage } from '@napplet/nub/relay';
+```
+
+```ts
+// Granular — types only (zero runtime cost)
+import type { IfcEventMessage } from '@napplet/nub/ifc/types';
+```
+
+Shells that only need to mount a NUB import the shim subpath directly:
+
+```ts
+// Granular — shim installer only (no SDK helpers bundled)
+import { installStorageShim } from '@napplet/nub/storage/shim';
+```
+
+Napplet authors that want a typed wrapper over `window.napplet` without the installer pull from the SDK subpath:
+
+```ts
+// Granular — SDK helpers only (no shim installer bundled)
+import { notifySend } from '@napplet/nub/notify/sdk';
+```
+
+End-to-end: a napplet subscribes to a relay stream using the SDK helper, while the shell mounts the matching installer on the napplet window:
+
+```ts
+// In the napplet (runs inside the sandboxed iframe)
+import { relaySubscribe } from '@napplet/nub/relay/sdk';
+
+const sub = relaySubscribe(
+  [{ kinds: [1], limit: 20 }],
+  {
+    onEvent: (event) => console.log('note', event),
+    onEose: () => console.log('caught up'),
+  },
+);
+
+// Later, tear down the subscription
+sub.close();
+```
+
+```ts
+// In the shell (runs on the host page)
+import { installRelayShim } from '@napplet/nub/relay/shim';
+
+installRelayShim(nappletWindow, {
+  // shell-provided relay pool, ACL, etc.
+});
+```
+
+## 9 Domains
+
+Each domain is an independent subpath. Barrel imports bundle types + shim installer + SDK helpers; granular subpaths isolate each surface.
+
+| Domain | Barrel | Types | Shim | SDK | Purpose |
+|--------|--------|-------|------|-----|---------|
+| relay | `@napplet/nub/relay` | `@napplet/nub/relay/types` | `@napplet/nub/relay/shim` | `@napplet/nub/relay/sdk` | Nostr relay proxy (subscribe/publish/query) |
+| storage | `@napplet/nub/storage` | `@napplet/nub/storage/types` | `@napplet/nub/storage/shim` | `@napplet/nub/storage/sdk` | Scoped key-value storage |
+| ifc | `@napplet/nub/ifc` | `@napplet/nub/ifc/types` | `@napplet/nub/ifc/shim` | `@napplet/nub/ifc/sdk` | Inter-frame communication (topic pub/sub) |
+| keys | `@napplet/nub/keys` | `@napplet/nub/keys/types` | `@napplet/nub/keys/shim` | `@napplet/nub/keys/sdk` | Keyboard bindings + action registration |
+| theme | `@napplet/nub/theme` | `@napplet/nub/theme/types` | — | — | Read-only shell theme access (types-only today) |
+| media | `@napplet/nub/media` | `@napplet/nub/media/types` | `@napplet/nub/media/shim` | `@napplet/nub/media/sdk` | Media sessions + playback |
+| notify | `@napplet/nub/notify` | `@napplet/nub/notify/types` | `@napplet/nub/notify/shim` | `@napplet/nub/notify/sdk` | Shell-rendered notifications |
+| identity | `@napplet/nub/identity` | `@napplet/nub/identity/types` | `@napplet/nub/identity/shim` | `@napplet/nub/identity/sdk` | Read-only user queries (pubkey, metadata) |
+| config | `@napplet/nub/config` | `@napplet/nub/config/types` | `@napplet/nub/config/shim` | `@napplet/nub/config/sdk` | Declarative per-napplet config (schema-driven) |
+
+## Subpath Patterns
+
+Each domain exposes up to three patterns (four including the barrel). Pick the shape that matches what your code actually needs:
+
+- **Barrel** (`@napplet/nub/<domain>`): re-exports types + shim installer + SDK helpers together. Most ergonomic for consumers that want everything a domain offers.
+- **Types-only** (`@napplet/nub/<domain>/types`): pure TypeScript types, zero runtime code. Ideal for shells writing typed message handlers without shipping the shim installer.
+- **Shim** (`@napplet/nub/<domain>/shim`): installer + message handlers. For shell/host code mounting a NUB into the napplet window.
+- **SDK** (`@napplet/nub/<domain>/sdk`): named-function helpers (e.g., `relaySubscribe`, `storageGet`). For napplet consumer code that wants a typed wrapper over `window.napplet`.
+
+## Tree-Shaking Contract
+
+- `@napplet/nub` publishes with `sideEffects: false`
+- Every subpath in the `exports` map is a discrete entry point; a bundler importing only `@napplet/nub/relay/types` produces zero bytes from the other 8 domains
+- Verified end-to-end in Phase 121 with a minimal-consumer smoke test
+
+The `exports` map in `package.json` declares 34 entry points:
+
+- 9 domain barrels (`@napplet/nub/<domain>`)
+- 9 granular types entries (`@napplet/nub/<domain>/types`)
+- 8 granular shim entries (theme omitted — see [Theme Exception](#theme-exception))
+- 8 granular sdk entries (theme omitted — see [Theme Exception](#theme-exception))
+
+Each entry maps to its own pre-built `.js` + `.d.ts` pair under `dist/<domain>/<surface>.{js,d.ts}`. No root `.` key exists, and there is no top-level `main`/`module`/`types` field — attempting `import '@napplet/nub'` fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` by design.
+
+## Theme Exception
+
+Theme is types-only today — only `@napplet/nub/theme` (barrel, re-exports `./types`) and `@napplet/nub/theme/types` exist. There is no `@napplet/nub/theme/shim` or `@napplet/nub/theme/sdk` entry in the exports map. Shell-side theme handling stays in the host shell; this may change in a future milestone if a theme shim/sdk surface is added upstream.
+
+## Migration
+
+Every deprecated `@napplet/nub-<domain>` package is now a 1-line re-export shim of the corresponding `@napplet/nub/<domain>` subpath. Pinned consumers keep working; new code SHOULD use the new path.
+
+| Deprecated | Replacement |
+|---|---|
+| `@napplet/nub-relay` | `@napplet/nub/relay` (barrel) or `@napplet/nub/relay/{types,shim,sdk}` (granular) |
+| `@napplet/nub-storage` | `@napplet/nub/storage` (barrel) or `@napplet/nub/storage/{types,shim,sdk}` (granular) |
+| `@napplet/nub-ifc` | `@napplet/nub/ifc` (barrel) or `@napplet/nub/ifc/{types,shim,sdk}` (granular) |
+| `@napplet/nub-keys` | `@napplet/nub/keys` (barrel) or `@napplet/nub/keys/{types,shim,sdk}` (granular) |
+| `@napplet/nub-theme` | `@napplet/nub/theme` (barrel) or `@napplet/nub/theme/types` (types-only; see Theme Exception) |
+| `@napplet/nub-media` | `@napplet/nub/media` (barrel) or `@napplet/nub/media/{types,shim,sdk}` (granular) |
+| `@napplet/nub-notify` | `@napplet/nub/notify` (barrel) or `@napplet/nub/notify/{types,shim,sdk}` (granular) |
+| `@napplet/nub-identity` | `@napplet/nub/identity` (barrel) or `@napplet/nub/identity/{types,shim,sdk}` (granular) |
+| `@napplet/nub-config` | `@napplet/nub/config` (barrel) or `@napplet/nub/config/{types,shim,sdk}` (granular) |
+
+The 9 deprecated packages ship as re-export shims for one release cycle. Removal is tracked as REMOVE-01..03 in a future milestone.
+
+## Optional Peer Dependency
+
+`@napplet/nub` declares `json-schema-to-ts@^3.1.1` as an **optional** peer dependency (via `peerDependenciesMeta.json-schema-to-ts.optional: true`). Install it in your napplet if you want `FromSchema<typeof schema>` type inference for your `config.subscribe` callback — the `values` parameter is then inferred directly from your schema (enums, required fields, defaults all flow through). Authors who skip it pay no install cost and `config.subscribe` still works with the default `Record<string, unknown>` typing.
+
+```ts
+// With json-schema-to-ts installed — values is fully typed
+import { configSubscribe } from '@napplet/nub/config/sdk';
+import type { FromSchema } from 'json-schema-to-ts';
+
+const schema = {
+  type: 'object',
+  properties: {
+    relayUrl: { type: 'string', format: 'uri' },
+    maxResults: { type: 'integer', minimum: 1, default: 20 },
+  },
+  required: ['relayUrl'],
+} as const;
+
+configSubscribe<FromSchema<typeof schema>>((values) => {
+  // values.relayUrl: string
+  // values.maxResults: number | undefined
+});
+```
+
+## Protocol Reference
+
+- [NIP-5D](../../specs/NIP-5D.md) — Napplet-shell protocol specification (JSON envelope + NUB negotiation)
+
+## License
+
+MIT
+
+Repository: [github.com/sandwichfarm/napplet](https://github.com/sandwichfarm/napplet)
