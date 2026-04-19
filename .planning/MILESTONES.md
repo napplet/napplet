@@ -1,5 +1,26 @@
 # Milestones
 
+## v0.26.0 Better Packages (Shipped: 2026-04-19)
+
+**Phases completed:** 5 phases, 12 plans, 24 tasks
+
+**Key accomplishments:**
+
+- Scaffolded @napplet/nub package at packages/nub/ with a 36-entry subpath exports map (9 barrels + 27 granular), matching tsup entry object, and no root '.' export — zero source code, zero build yet.
+- 34 TypeScript source files copied byte-identical from packages/nubs/<domain>/src/ into packages/nub/src/<domain>/ across 9 domains; theme ships types-only so exports map + tsup config corrected from 36 → 34 entries in the same atomic commit.
+- `pnpm --filter @napplet/nub build` green; 34 ESM entries + 34 .d.ts files emitted (plus 25 shared chunks from tsup code-splitting); all 9 runtime-resolution invariants verified from a real consumer context — EXP-04 fires ERR_PACKAGE_PATH_NOT_EXPORTED, all subpath categories resolve, theme/shim + theme/sdk correctly fail, types-only emits are runtime-pure, and the 8-of-9 registerNub asymmetry is preserved exactly.
+- Source files (Task 1 — commit `2f9e626`):
+- Stamped [DEPRECATED] description + `@napplet/nub` runtime dep onto all 9 deprecated nub package.json files and recorded the 0.3.0 minor bump via a single changeset — Plan 01's re-export shims now resolve at build time.
+- Green `pnpm -r build` + `pnpm -r type-check` across the full 14-package monorepo with byte-level confirmation that all 9 deprecated @napplet/nub-<domain> packages emit dist/ that re-export from @napplet/nub, and runtime `Object.keys()` shape parity verified across all 9 domains — MIG-01 proven end-to-end from source to build emit to runtime surface.
+- Shim (positive, each = 1):
+- package.json manifest gates:
+- Added the first authoritative landing doc for `@napplet/nub` — documents the 9-domain subpath layout, tree-shaking contract, theme exception, and the full migration path from the 9 deprecated `@napplet/nub-<domain>` packages.
+- Four user-facing READMEs (root + core + shim + sdk) migrated off the deprecated `@napplet/nub-<domain>` names to the consolidated `@napplet/nub` package and its subpath surface, with the defunct `@napplet/nub-signer` references cleaned up in the process.
+- Evidence-backed closure of DOC-03/DOC-04 — specs/NIP-5D.md and skills/build-napplet/SKILL.md both confirmed clean by grep + file-content read; phase-wide acceptance grep returns zero matches outside intentional migration-guidance and deprecation-banner scopes
+- v0.26.0 Better Packages milestone acceptance gate passed: monorepo builds green across 14 packages, @napplet/nub/relay/types tree-shakes to a 39-byte bundle with zero registerNub and zero cross-domain refs, and all 9 deprecated @napplet/nub-<domain> shims type-round-trip cleanly.
+
+---
+
 ## v0.25.0 Config NUB (Shipped: 2026-04-17)
 
 **Phases completed:** 6 phases, 15 plans, 32 tasks

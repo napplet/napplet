@@ -1,16 +1,8 @@
 # Napplet Protocol SDK
 
-## Current Milestone: v0.26.0 Better Packages
+## Shipped: v0.26.0 Better Packages
 
-**Goal:** Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable `@napplet/nub` package with layered subpath exports, and ship deprecation shims so existing consumers keep working.
-
-**Target features:**
-- Single `@napplet/nub` package housing all 9 NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config)
-- Per-domain barrel subpath `@napplet/nub/<domain>` re-exporting `{ types, shim, sdk }`
-- Granular subpaths `@napplet/nub/<domain>/types`, `@napplet/nub/<domain>/shim`, `@napplet/nub/<domain>/sdk` — individually importable for maximum tree-shaking
-- Existing `@napplet/nub-*` packages become 1-line re-export shims, marked `@deprecated` for one release cycle
-- Zero changes to runtime behavior, wire protocol, or non-NUB packages (`@napplet/core`, `shim`, `sdk`, `vite-plugin`)
-- All READMEs, NIP-5D references, and skills updated to the new import paths
+Consolidated the 9 separate `@napplet/nub-<domain>` packages into a single tree-shakable `@napplet/nub` with 34 subpath entry points (9 barrel + 9 types + 8 shim + 8 sdk — theme is types-only). The 9 old packages became 1-line `export * from '@napplet/nub/<domain>'` re-export shims with `[DEPRECATED]` metadata + README banners (one-release deprecation cycle; removal deferred to a future milestone via `REMOVE-01..03`). `@napplet/shim` migrated to `/shim` granular subpaths; `@napplet/sdk` migrated to `/<domain>` barrels; 0 `@napplet/nub-` specifiers remain in first-party source. Root + 4 package READMEs rewritten; defunct `@napplet/nub-signer` references purged. Tree-shaking contract proven (39-byte bundle for types-only consumer, 0 `registerNub`, 0 cross-domain leakage). 5 phases, 12 plans shipped 2026-04-19. See [archive](milestones/v0.26.0-ROADMAP.md).
 
 ## What This Is
 
@@ -247,9 +239,21 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ 'config' in NubDomain + NappletGlobal.config + shim mount/routing + SDK re-exports + shell.supports('config') — v0.25.0 Phase 115 (WIRE-01..06, CORE-01..02, SHIM-01, SDK-01, CAP-01)
 - ✓ @napplet/nub-config README + NIP-5D Known NUBs row + 4 package READMEs (core/shim/sdk/vite-plugin) — v0.25.0 Phase 116 (DOC-01..06)
 
+- ✓ New `@napplet/nub` package with 34 subpath entry points (9 barrel + 9 types + 8 shim + 8 sdk), zero-dep (core-only), `sideEffects: false`, no root `.` export — v0.26.0 Phase 117 (PKG-01..03, EXP-01..04, BUILD-01..02)
+- ✓ 9 deprecated `@napplet/nub-<domain>` packages converted to 1-line re-export shims with `[DEPRECATED]` description + README banners + 0.3.0 changeset — v0.26.0 Phase 118 (MIG-01..03)
+- ✓ `@napplet/shim` + `@napplet/sdk` migrated off deprecated package names: shim uses `/shim` granular subpaths, sdk uses `/<domain>` barrels — v0.26.0 Phase 119 (CONS-01..03)
+- ✓ New `@napplet/nub` README + root + core + shim + sdk READMEs updated; defunct `@napplet/nub-signer` references purged; spec/skills sweep clean — v0.26.0 Phase 120 (DOC-01..04)
+- ✓ Monorepo build + type-check green across 14 packages; tree-shaking bundle = 39 bytes with 0 cross-domain leakage; 9 pinned-consumer type-check smokes green — v0.26.0 Phase 121 (VER-01..03)
+
 ### Active
 
-- v0.26.0 Better Packages — Consolidate 9 `@napplet/nub-*` packages into a single tree-shakable `@napplet/nub` with per-domain barrel + granular subpath exports; deprecate old packages as re-export shims
+(No active milestone — ready for `/gsd:new-milestone`)
+
+### Future Requirements (deferred from v0.26.0)
+
+- REMOVE-01: Delete the 9 deprecated `@napplet/nub-<domain>` packages from the repo
+- REMOVE-02: Remove the deprecated packages from the publish workflow and pnpm-workspace.yaml
+- REMOVE-03: Remove deprecation banners / `@deprecated` metadata references
 
 ### Out of Scope
 
@@ -266,8 +270,8 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.25.0 shipped (Config NUB). 13 packages (4 core + 9 NUB: relay, storage, ifc, theme, keys, media, notify, identity, config). Per-napplet declarative JSON Schema config with shell-rendered UI, shell-sole-writer persistence, and live subscribe delivery. 25 milestones shipped.
-- **Package architecture**: @napplet: core(0 deps) | shim(core) | sdk(core) | vite-plugin | nub-relay | nub-signer | nub-storage | nub-ifc. Shell runtime packages in a separate repo.
+- **Current state**: v0.26.0 shipped (Better Packages). 14 packages: 4 core SDK (core, shim, sdk, vite-plugin) + consolidated `@napplet/nub` with 34 subpath entry points + 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for removal in a future milestone). 26 milestones shipped.
+- **Package architecture**: @napplet: core(0 deps) | nub(core) | shim(core+nub) | sdk(core+nub) | vite-plugin. Deprecated `@napplet/nub-<domain>` (×9) re-export `@napplet/nub/<domain>` and are kept for one release cycle. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
 - **Demo architecture**: Full topology view with distinct shell, ACL, runtime, and service nodes. Inspector has 3 tabs (Node, Constants, Kinds) with contextual filtering.
@@ -355,4 +359,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-19 — v0.26.0 Better Packages milestone started*
+*Last updated: 2026-04-19 after v0.26.0 Better Packages milestone*
