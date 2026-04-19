@@ -354,9 +354,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Success Criteria** (what must be TRUE):
   1. `pnpm -r build` exits 0 across all 14 workspace packages with the IFC-renamed API surface.
   2. `pnpm -r type-check` exits 0 across all 14 workspace packages.
-  3. A repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/` docs — historical `.planning/milestones/` and `.planning/quick/` archives excluded.
-  4. Evidence for VER-01 + VER-02 (command output, grep transcript) is captured in the phase summary so the milestone acceptance gate is auditable.
-**Plans**: TBD
+  3. A repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/codebase/` (with documented INTEGRATIONS.md:168 INTER_PANE historical-constant exception per 123-03-NOTES.md). Self-describing planning docs (PROJECT/ROADMAP/REQUIREMENTS/STATE/research/SPEC-GAPS) are path-excluded per 123-03-NOTES.md Option (a) — they necessarily describe the rename work itself.
+  4. Evidence for VER-01 + VER-02 (command output, grep transcripts) is captured in the phase summary so the milestone acceptance gate is auditable.
+**Plans**: 1 plan
+- [ ] 124-01-PLAN.md — Run pnpm -r build + pnpm -r type-check + first-party-surface zero-grep (with INTEGRATIONS.md:168 exclusion + 123-03-NOTES.md Option (a) self-describing-doc path-exclusion); capture evidence transcripts + write VERIFICATION.md (VER-01, VER-02)
 
 ## Progress
 
@@ -367,4 +368,4 @@ Phases execute in numeric order: 122 → 123 → 124
 |-------|----------------|--------|-----------|
 | 122. Source Rename | 1/1 | Complete    | 2026-04-19 |
 | 123. Documentation Sweep | 3/3 | Complete    | 2026-04-19 |
-| 124. Verification & Sign-Off | 0/TBD | Not started | - |
+| 124. Verification & Sign-Off | 0/1 | Not started | - |
