@@ -28,8 +28,8 @@
 
 ### Verification
 
-- [ ] **VER-01**: `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages with the IFC-renamed API surface.
-- [ ] **VER-02**: Repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/` docs (historical archives excluded).
+- [x] **VER-01**: `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages with the IFC-renamed API surface.
+- [x] **VER-02**: Repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/` docs (historical archives excluded).
 
 ## Future Requirements (deferred)
 
@@ -55,5 +55,5 @@ Every requirement maps to exactly one phase. Coverage: 8/8.
 | DOC-01 | Phase 123 (Documentation Sweep) | Complete |
 | DOC-02 | Phase 123 (Documentation Sweep) | Complete |
 | PLAN-01 | Phase 123 (Documentation Sweep) | Complete |
-| VER-01 | Phase 124 (Verification & Sign-Off) | Pending |
-| VER-02 | Phase 124 (Verification & Sign-Off) | Pending |
+| VER-01 | Phase 124 (Verification & Sign-Off) | Complete |
+| VER-02 | Phase 124 (Verification & Sign-Off) | Complete |

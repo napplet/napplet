@@ -317,7 +317,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 122: Source Rename** - Break `window.napplet.ipc` → `.ifc`, rename SDK `ipc` export → `ifc`, and sweep core + nub/ifc JSDoc to IFC-PEER / "inter-frame" phrasing (completed 2026-04-19)
 - [x] **Phase 123: Documentation Sweep** - Purge `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" from root + 3 package READMEs, `skills/build-napplet/SKILL.md`, and active `.planning/` docs (completed 2026-04-19)
-- [ ] **Phase 124: Verification & Sign-Off** - Monorepo build + type-check green under renamed surface; repo-wide zero-grep proves the cleanup holds
+- [x] **Phase 124: Verification & Sign-Off** - Monorepo build + type-check green under renamed surface; repo-wide zero-grep proves the cleanup holds (completed 2026-04-19)
 
 ## Phase Details
 
@@ -357,7 +357,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. A repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/codebase/` (with documented INTEGRATIONS.md:168 INTER_PANE historical-constant exception per 123-03-NOTES.md). Self-describing planning docs (PROJECT/ROADMAP/REQUIREMENTS/STATE/research/SPEC-GAPS) are path-excluded per 123-03-NOTES.md Option (a) — they necessarily describe the rename work itself.
   4. Evidence for VER-01 + VER-02 (command output, grep transcripts) is captured in the phase summary so the milestone acceptance gate is auditable.
 **Plans**: 1 plan
-- [ ] 124-01-PLAN.md — Run pnpm -r build + pnpm -r type-check + first-party-surface zero-grep (with INTEGRATIONS.md:168 exclusion + 123-03-NOTES.md Option (a) self-describing-doc path-exclusion); capture evidence transcripts + write VERIFICATION.md (VER-01, VER-02)
+- [x] 124-01-PLAN.md — Run pnpm -r build + pnpm -r type-check + first-party-surface zero-grep (with INTEGRATIONS.md:168 exclusion + 123-03-NOTES.md Option (a) self-describing-doc path-exclusion); capture evidence transcripts + write VERIFICATION.md (VER-01, VER-02)
 
 ## Progress
 
@@ -368,4 +368,4 @@ Phases execute in numeric order: 122 → 123 → 124
 |-------|----------------|--------|-----------|
 | 122. Source Rename | 1/1 | Complete    | 2026-04-19 |
 | 123. Documentation Sweep | 3/3 | Complete    | 2026-04-19 |
-| 124. Verification & Sign-Off | 0/1 | Not started | - |
+| 124. Verification & Sign-Off | 1/1 | Complete   | 2026-04-19 |
