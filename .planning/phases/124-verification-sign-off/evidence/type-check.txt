@@ -1,0 +1,39 @@
+=== VER-01 Part 2: pnpm -r type-check ===
+Timestamp (UTC): 2026-04-19T23:18:14Z
+Command: pnpm -r type-check
+
+--- stdout+stderr ---
+Scope: 14 of 15 workspace projects
+packages/core type-check$ tsc --noEmit
+packages/vite-plugin type-check$ tsc --noEmit
+packages/core type-check: Done
+packages/vite-plugin type-check: Done
+packages/nub type-check$ tsc --noEmit
+packages/nub type-check: Done
+packages/nubs/config type-check$ tsc --noEmit
+packages/nubs/identity type-check$ tsc --noEmit
+packages/nubs/ifc type-check$ tsc --noEmit
+packages/nubs/keys type-check$ tsc --noEmit
+packages/nubs/identity type-check: Done
+packages/nubs/media type-check$ tsc --noEmit
+packages/nubs/keys type-check: Done
+packages/nubs/notify type-check$ tsc --noEmit
+packages/nubs/ifc type-check: Done
+packages/nubs/relay type-check$ tsc --noEmit
+packages/nubs/config type-check: Done
+packages/nubs/storage type-check$ tsc --noEmit
+packages/nubs/media type-check: Done
+packages/nubs/theme type-check$ tsc --noEmit
+packages/nubs/notify type-check: Done
+packages/sdk type-check$ tsc --noEmit
+packages/nubs/storage type-check: Done
+packages/shim type-check$ tsc --noEmit
+packages/nubs/relay type-check: Done
+packages/nubs/theme type-check: Done
+packages/sdk type-check: Done
+packages/shim type-check: Done
+
+--- end stdout+stderr ---
+
+EXIT_CODE: 0
+=== VER-01 Part 2 complete ===

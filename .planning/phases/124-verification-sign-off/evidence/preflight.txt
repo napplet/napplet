@@ -1,0 +1,49 @@
+=== Phase 124 Pre-flight Transcript ===
+Timestamp (UTC): 2026-04-19T23:17:34Z
+
+--- git status (must be clean apart from untracked evidence/ + in-progress VERIFICATION.md) ---
+ M .planning/STATE.md
+?? .planning/phases/124-verification-sign-off/evidence/
+
+--- current branch + HEAD sha ---
+main
+2d6163dd558dc3c6b2820e8da23b2239c41a96b5
+
+--- workspace package list (pnpm -r ls --depth -1) ---
+napplet /home/sandwich/Develop/napplet (PRIVATE)
+
+@napplet/core@0.2.1 /home/sandwich/Develop/napplet/packages/core
+
+@napplet/nub@0.2.1 /home/sandwich/Develop/napplet/packages/nub
+
+@napplet/nub-config@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/config
+
+@napplet/nub-identity@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/identity
+
+@napplet/nub-ifc@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/ifc
+
+@napplet/nub-keys@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/keys
+
+@napplet/nub-media@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/media
+
+@napplet/nub-notify@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/notify
+
+@napplet/nub-relay@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/relay
+
+@napplet/nub-storage@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/storage
+
+@napplet/nub-theme@0.2.1 /home/sandwich/Develop/napplet/packages/nubs/theme
+
+@napplet/sdk@0.2.1 /home/sandwich/Develop/napplet/packages/sdk
+
+@napplet/shim@0.2.1 /home/sandwich/Develop/napplet/packages/shim
+
+@napplet/vite-plugin@0.2.1 /home/sandwich/Develop/napplet/packages/vite-plugin
+
+--- workspace package count (excluding root) ---
+WORKSPACE_PACKAGE_COUNT: 14
+
+--- INTEGRATIONS.md line 168 sanity check (must still contain INTER_PANE) ---
+- 29003: INTER_PANE (napplet-to-napplet events)
+
+=== Pre-flight complete ===

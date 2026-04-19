@@ -1,0 +1,98 @@
+=== VER-02: IPC-token grep evidence ===
+Timestamp (UTC): 2026-04-19T23:20:33Z
+
+Tokens: \bIPC\b | \bipc\b | IPC-PEER | inter-pane
+
+Two greps captured below:
+  A. FIRST-PARTY SURFACE (the acceptance gate): packages/, specs/, skills/, README.md, .planning/codebase/
+     Exclusion: .planning/codebase/INTEGRATIONS.md line 168 (documented historical INTER_PANE wire-kind constant
+     per 123-03-NOTES.md line 60 + 123-VERIFICATION.md truth #6)
+  B. SELF-DESCRIBING PLANNING DOCS (transparency dump, NOT a gate): PROJECT/STATE/ROADMAP/REQUIREMENTS/SPEC-GAPS/research/
+     These docs literally describe the IPC->IFC rename work. Per 123-03-NOTES.md Option (a), they are
+     path-excluded from the acceptance gate and recorded here for full audit transparency.
+
+================================================================
+A. FIRST-PARTY SURFACE (acceptance gate)
+================================================================
+
+--- A.1 raw grep (pre-exclusion; shows any first-party-surface matches before the one documented exclusion) ---
+
+A_RAW_EXIT_CODE: 1
+
+NOTE: A_RAW_EXIT_CODE=1 (zero matches) is the correct PASS signal for VER-02 independent of exclusion.
+The documented INTEGRATIONS.md:168 INTER_PANE residual uses underscore/uppercase casing that the
+VER-02 regex tokens (\bIPC\b, \bipc\b, IPC-PEER, inter-pane hyphen-lowercase) do NOT match as words.
+The exclusion below is applied defensively per plan spec, but is semantically a no-op given the
+actual token set. Both stages exit 1 = zero matches = clean pass.
+
+--- A.2 in-scope grep (post-INTEGRATIONS.md:168-exclusion; acceptance gate — MUST be zero matches) ---
+
+IN_SCOPE_EXIT_CODE: 1
+
+================================================================
+B. SELF-DESCRIBING PLANNING DOCS (transparency dump — NOT a gate)
+================================================================
+
+Per 123-03-NOTES.md Option (a): these paths are expected to contain IPC-token matches
+because they describe the rename itself. Captured for audit transparency; not pass/fail.
+
+.planning/PROJECT.md:5:**Goal:** Finish the IPC→IFC rename across first-party source, published READMEs, specs, and skills — zero `ipc`/`IPC`/`IPC_PEER`/`IPC-PEER`/"inter-pane" remaining outside historical archives.
+.planning/PROJECT.md:8:- Rename `window.napplet.ipc` namespace → `window.napplet.ifc` (breaking API change, no backward-compat alias)
+.planning/PROJECT.md:9:- Rename `@napplet/sdk` `ipc` named export → `ifc`
+.planning/PROJECT.md:10:- Rename `IPC_PEER` constant (and any `ipc:*` topic constants) → IFC equivalents
+.planning/PROJECT.md:11:- Rewrite "IPC-PEER" / "inter-pane" / "inter-napplet" phrasing across root README, four package READMEs, core types/topics/envelope JSDoc, and `skills/build-napplet/SKILL.md`
+.planning/PROJECT.md:13:- Verify no stale IPC references leak into public specs or first-party source
+.planning/PROJECT.md:97:`@napplet/shim` is now a pure side-effect window installer (zero named exports). `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`). New `@napplet/sdk` package provides typed named exports for bundler consumers. All deprecated v0.7.0 symbols removed. 4 phases, 10 plans shipped 2026-04-02. See [archive](milestones/v0.8.0-ROADMAP.md).
+.planning/PROJECT.md:119:- ✓ 66 behavioral tests covering full protocol surface (AUTH, routing, replay, lifecycle, ACL, storage, signer, IPC) — v0.1.0
+.planning/PROJECT.md:164:- ✓ `window.napplet` is fully namespaced (`relay`, `ipc`, `services`, `storage`) — v0.8.0 Phase 41 (WIN-01, WIN-02, WIN-03, WIN-04)
+.planning/PROJECT.md:262:- [ ] **API-01**: `window.napplet.ipc` renamed to `window.napplet.ifc` across `packages/core/src/types.ts` (NappletGlobal shape) and `packages/shim/src/index.ts` (installer), with no backward-compat alias
+.planning/PROJECT.md:263:- [ ] **API-02**: `@napplet/sdk` exports `ifc` (not `ipc`) as the named namespace export — update `packages/sdk/src/index.ts` section header, JSDoc, and the exported const name
+.planning/PROJECT.md:264:- [ ] **SRC-01**: `@napplet/core` JSDoc + section comments in `types.ts`, `topics.ts`, and `envelope.ts` use IFC-PEER / "inter-frame" phrasing (no IPC-PEER leakage); `packages/nub/src/ifc/sdk.ts` JSDoc references `window.napplet.ifc`
+.planning/PROJECT.md:265:- [ ] **DOC-01**: Root `README.md` + `packages/{core,shim,sdk}/README.md` updated — no `ipc` / `IPC-PEER` / "inter-pane" outside historical quote blocks
+.planning/PROJECT.md:266:- [ ] **DOC-02**: `skills/build-napplet/SKILL.md` updated — description line, inter-pane phrasing, and code samples aligned with IFC
+.planning/PROJECT.md:269:- [ ] **VER-02**: Repo-wide grep for `\bIPC\b` / `\bipc\b` / `IPC-PEER` / `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/` docs (historical archives excluded)
+.planning/PROJECT.md:295:- **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
+.planning/PROJECT.md:298:- **Test coverage**: 122 Playwright e2e tests + 71 vitest unit/integration tests (~193 total). Coverage spans AUTH, routing, replay, lifecycle, ACL enforcement, storage, signer, inter-pane, core imports, runtime dispatch, service dispatch, service discovery, and compatibility.
+.planning/PROJECT.md:347:| NUB-IFC merges IPC + PIPES | dispatch (per-msg ACL) and channel (ACL at open) are modes, not separate specs | ✓ Good — one NUB, two patterns |
+.planning/STATE.md:67:- v0.27.0: The NUB domain is already named `ifc` (`@napplet/nub/ifc`, `shell.supports('nub:ifc')`, NUB-IFC spec). This milestone renames the remaining developer-facing surface — `window.napplet.ipc`, `@napplet/sdk` `ipc` export, JSDoc, READMEs, skill file, and active planning docs.
+.planning/STATE.md:68:- v0.27.0: Hard break — no backward-compat alias on `window.napplet.ipc` (confirmed at milestone kickoff).
+.planning/STATE.md:71:- v0.27.0 Phase 122 Plan 01: Runtime API surface renamed ipc -> ifc across @napplet/core (NappletGlobal.ifc), @napplet/shim (installer key), @napplet/sdk (const ifc export), and @napplet/nub/ifc (requireIfc guard + Error string). Hard break, no alias. Localized build + type-check green across the 4 affected packages; zero IPC leakage across 6 in-scope source files.
+.planning/STATE.md:74:- v0.27.0 Phase 123 Plan 03: Active .planning/ docs swept via 28 edits across 7 files — 18 codebase prose swaps (inter-pane → inter-frame), 2 TESTING.md transport-accuracy swaps (IPC → postMessage on lines 83/152), 1 research/ARCHITECTURE.md NappletGlobal code-fence swap (ipc: → ifc:), and 9 research/FEATURES-CHANNELS.md swaps (2 plan-specified + 7 Rule 2 deviation extension; IFC where describing existing napplet pub/sub, postMessage/iframe messaging where generic transport shorthand). Seven dated-historical files preserved byte-identical (PROJECT.md, STATE.md, ROADMAP.md, research/ONTOLOGY.md, research/SDK_NAMING_PATTERNS.md, research/SUMMARY.md, SPEC-GAPS.md) + INTEGRATIONS.md line 168 historical INTER_PANE constant. Phase 123 in-scope zero-grep across 11 files passes (exit 1). Phase 124 trade-off record written to 123-03-NOTES.md with Option (a) path-exclusion recommendation. PLAN-01 satisfied.
+.planning/ROADMAP.md:39:Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0.8.0 and is not part of the v0.9.0 roadmap.
+.planning/ROADMAP.md:47:- [x] **Phase 4: Capability Tests** - ACL, storage, signer, inter-pane tests
+.planning/ROADMAP.md:316:**Milestone Goal:** Finish the IPC→IFC rename across first-party source, published READMEs, specs, and skills — zero `ipc`/`IPC`/`IPC-PEER`/"inter-pane" remaining outside historical archives. One hard break, no backward-compat alias.
+.planning/ROADMAP.md:318:- [x] **Phase 122: Source Rename** - Break `window.napplet.ipc` → `.ifc`, rename SDK `ipc` export → `ifc`, and sweep core + nub/ifc JSDoc to IFC-PEER / "inter-frame" phrasing (completed 2026-04-19)
+.planning/ROADMAP.md:319:- [x] **Phase 123: Documentation Sweep** - Purge `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" from root + 3 package READMEs, `skills/build-napplet/SKILL.md`, and active `.planning/` docs (completed 2026-04-19)
+.planning/ROADMAP.md:325:**Goal**: The developer-facing runtime API surface is IFC-named end-to-end — `window.napplet.ifc` resolves (and `.ipc` does not), `@napplet/sdk` exports `ifc`, and every surviving JSDoc / section comment in `@napplet/core` + `@napplet/nub/ifc` uses IFC-PEER / "inter-frame" phrasing.
+.planning/ROADMAP.md:329:  1. A napplet calling `window.napplet.ifc.send(...)` resolves through the shim to the IFC NUB; `window.napplet.ipc` is `undefined` (hard break, no alias).
+.planning/ROADMAP.md:330:  2. A bundler consumer doing `import { ifc } from '@napplet/sdk'` type-checks and runs; `import { ipc } from '@napplet/sdk'` fails at compile time.
+.planning/ROADMAP.md:331:  3. A reader scanning `packages/core/src/types.ts`, `topics.ts`, `envelope.ts`, and `packages/nub/src/ifc/sdk.ts` sees only IFC-PEER / "inter-frame" terminology in JSDoc and section headers — zero `IPC-PEER` or `.ipc` references survive.
+.planning/ROADMAP.md:334:- [x] 122-01-PLAN.md — Rename ipc -> ifc across core types, shim installer, SDK export, and nub/ifc SDK helper; localized build + type-check gate
+.planning/ROADMAP.md:341:  1. Root `README.md` and `packages/{core,shim,sdk}/README.md` contain zero `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" outside historical "Shipped: vX.Y.Z" changelog bullets; every code fence showing runtime API uses `window.napplet.ifc` / the `ifc` SDK export.
+.planning/ROADMAP.md:344:  4. A reader sweeping the docs after this phase sees IFC everywhere current and IPC nowhere except inside explicitly historical quote blocks.
+.planning/ROADMAP.md:351:**Goal**: The IFC rename is proven complete end-to-end — monorepo builds + type-checks green across all 14 packages, and a zero-match grep across the first-party surface (source, specs, skills, root README, active planning) confirms no IPC leakage remains.
+.planning/ROADMAP.md:357:  3. A repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/codebase/` (with documented INTEGRATIONS.md:168 INTER_PANE historical-constant exception per 123-03-NOTES.md). Self-describing planning docs (PROJECT/ROADMAP/REQUIREMENTS/STATE/research/SPEC-GAPS) are path-excluded per 123-03-NOTES.md Option (a) — they necessarily describe the rename work itself.
+.planning/REQUIREMENTS.md:3:**Goal:** Finish the IPC→IFC rename across first-party source, published READMEs, specs, and skills. The NUB domain is already named `ifc` (`@napplet/nub/ifc`, `shell.supports('nub:ifc')`, NUB-IFC spec), but the developer-facing runtime API surface and documentation still say `ipc` / "IPC-PEER" / "inter-pane". This milestone closes that gap — one hard break, no backward-compat alias.
+.planning/REQUIREMENTS.md:13:- [x] **API-01**: `window.napplet.ipc` namespace renamed to `window.napplet.ifc` across `packages/core/src/types.ts` (NappletGlobal shape) and `packages/shim/src/index.ts` (installer/routing). No backward-compat alias; `window.napplet.ipc` no longer resolves.
+.planning/REQUIREMENTS.md:14:- [x] **API-02**: `@napplet/sdk` exports `ifc` (not `ipc`) as the named namespace export. `packages/sdk/src/index.ts` section header, JSDoc `@example` blocks, and the exported `const` identifier all renamed; any downstream type re-exports updated.
+.planning/REQUIREMENTS.md:18:- [x] **SRC-01**: `@napplet/core` JSDoc + section comments in `packages/core/src/types.ts`, `packages/core/src/topics.ts`, and `packages/core/src/envelope.ts` use IFC-PEER / "inter-frame" phrasing — zero IPC-PEER leakage. `packages/nub/src/ifc/sdk.ts` JSDoc references `window.napplet.ifc` (not `.ipc`).
+.planning/REQUIREMENTS.md:22:- [x] **DOC-01**: Root `README.md` + `packages/core/README.md` + `packages/shim/README.md` + `packages/sdk/README.md` updated — no `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" (except historical "shipped" changelog lines where renaming would distort history). Sample code in code fences uses `ifc`.
+.planning/REQUIREMENTS.md:32:- [ ] **VER-02**: Repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/` docs (historical archives excluded).
+.planning/REQUIREMENTS.md:42:- **Backward-compat alias on `window.napplet.ipc`** — explicitly rejected; this is a hard break (confirmed at milestone kickoff).
+.planning/SPEC-GAPS.md:120:The `TOPICS` constant in `packages/core/src/topics.ts` defines 28 IPC topic strings from the pre-v4 era when napplet communication used NIP-01 kind 29003 events with `t` tags. NIP-5D says nothing about topic constants. The IFC NUB defines envelope message types (`ifc.emit`, `ifc.event`, etc.) but does not prescribe a fixed set of topic strings.
+.planning/SPEC-GAPS.md:182:**Evidence:** The `STATE_*` topics were the pre-v4 mechanism for napplet storage, using kind 29003 IPC events with `t` tags. The `storage.*` NUB messages (`storage.get`, `storage.set`, `storage.remove`, `storage.keys`) replaced them entirely. The shim's `state-shim.ts` now uses `storage.*` envelope messages directly (confirmed by reading the file -- it imports `StorageGetMessage`, `StorageSetMessage`, etc. from `@napplet/nub-storage`). `AUTH_IDENTITY_CHANGED` referenced NIP-42 AUTH which was removed in v0.15.0 (Phase 70).
+.planning/research/SDK_NAMING_SUMMARY.md:21:**Event/IPC API:** Already matches universal consensus. `emit` + `on` (mitt, Socket.IO, nanoevents). `subscribe`/`publish` for relay operations (Ably, Pusher). No changes needed.
+.planning/research/SUMMARY.md:12:The recommended approach is declarative-first capability negotiation: the shell advertises available features via kind 29010 service discovery events, the napplet declares requirements in its NIP-5A manifest `requires` tags at build time, and probes at runtime via `window.napplet.services.has()`. This pattern draws from LSP/MCP's layered requirements, NIP-11's flat capability advertisement, and WebExtensions' manifest permissions -- while avoiding the interactive negotiation round-trips the Nostr community explicitly rejected (NIP-91). The mandatory core is minimal: postMessage transport + NIP-01 wire format + AUTH handshake + service discovery. Everything else (relay proxy, signer, storage, IPC, channels, nostrdb) is MAY.
+.planning/research/SUMMARY.md:68:3. **Standard capabilities (Section 6)** -- Signer proxy, storage, IPC pub/sub, channels, nostrdb. All MAY. Each independently discoverable and implementable.
+.planning/research/ONTOLOGY.md:94:| `BusKind.INTER_PANE` (29003) | IPC / Notification / Event | **Deviates.** "Inter-pane" describes the transport topology (between panes/iframes) rather than the message semantics. Standard vocabulary would call this **IPC** (inter-process communication) or **PeerEvent**. The planned rename to `IPC_PEER` is a significant improvement -- it names the semantic role (peer-to-peer IPC) rather than the physical topology (between panes). |
+.planning/research/ONTOLOGY.md:127:| Electron | Renderer-to-main process delegation | **IPC** (ipcMain/ipcRenderer) |
+.planning/research/ONTOLOGY.md:387:| `BusKind.INTER_PANE` | Message types | IPC / PeerEvent | Deviates | Planned rename to `IPC_PEER` is an improvement. |
+.planning/research/ONTOLOGY.md:462:- [Android Binder IPC](https://source.android.com/docs/core/architecture/ipc/binder-overview)
+.planning/research/SDK_NAMING_PATTERNS.md:142:**Napplet relevance:** The current napplet SDK uses `emit` + `on` for IPC, which aligns perfectly. Topic prefixes use `:` (e.g., `audio:play`, `shell:storage-get`), which matches Ably convention.
+.planning/research/SDK_NAMING_PATTERNS.md:348:| `emit()` + `on()` for IPC | Universal consensus (mitt, Socket.IO, Postmate) | KEEP |
+.planning/research/SDK_NAMING_PATTERNS.md:436:- [Electron IPC Tutorial](https://www.electronjs.org/docs/latest/tutorial/ipc)
+
+SELF_DESCRIBING_RAW_EXIT_CODE: 0
+SELF_DESCRIBING_MATCH_COUNT: 55
+
+=== VER-02 complete ===
