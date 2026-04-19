@@ -80,34 +80,41 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01      | —     | Pending |
-| PKG-02      | —     | Pending |
-| PKG-03      | —     | Pending |
-| EXP-01      | —     | Pending |
-| EXP-02      | —     | Pending |
-| EXP-03      | —     | Pending |
-| EXP-04      | —     | Pending |
-| BUILD-01    | —     | Pending |
-| BUILD-02    | —     | Pending |
-| MIG-01      | —     | Pending |
-| MIG-02      | —     | Pending |
-| MIG-03      | —     | Pending |
-| CONS-01     | —     | Pending |
-| CONS-02     | —     | Pending |
-| CONS-03     | —     | Pending |
-| DOC-01      | —     | Pending |
-| DOC-02      | —     | Pending |
-| DOC-03      | —     | Pending |
-| DOC-04      | —     | Pending |
-| VER-01      | —     | Pending |
-| VER-02      | —     | Pending |
-| VER-03      | —     | Pending |
+| PKG-01      | 117   | Pending |
+| PKG-02      | 117   | Pending |
+| PKG-03      | 117   | Pending |
+| EXP-01      | 117   | Pending |
+| EXP-02      | 117   | Pending |
+| EXP-03      | 117   | Pending |
+| EXP-04      | 117   | Pending |
+| BUILD-01    | 117   | Pending |
+| BUILD-02    | 117   | Pending |
+| MIG-01      | 118   | Pending |
+| MIG-02      | 118   | Pending |
+| MIG-03      | 118   | Pending |
+| CONS-01     | 119   | Pending |
+| CONS-02     | 119   | Pending |
+| CONS-03     | 119   | Pending |
+| DOC-01      | 120   | Pending |
+| DOC-02      | 120   | Pending |
+| DOC-03      | 120   | Pending |
+| DOC-04      | 120   | Pending |
+| VER-01      | 121   | Pending |
+| VER-02      | 121   | Pending |
+| VER-03      | 121   | Pending |
 
 **Coverage:**
 - v0.26.0 requirements: 22 total
-- Mapped to phases: 0 (awaiting roadmap)
-- Unmapped: 22 ⚠️ (roadmapper will fill)
+- Mapped to phases: 22 ✓
+- Unmapped: 0
+
+**Phase distribution:**
+- Phase 117 (@napplet/nub Package Foundation): 9 requirements (PKG-01..03, EXP-01..04, BUILD-01..02)
+- Phase 118 (Deprecation Re-Export Shims): 3 requirements (MIG-01..03)
+- Phase 119 (Internal Consumer Migration): 3 requirements (CONS-01..03)
+- Phase 120 (Documentation Update): 4 requirements (DOC-01..04)
+- Phase 121 (Verification & Sign-Off): 3 requirements (VER-01..03)
 
 ---
 *Requirements defined: 2026-04-19*
-*Last updated: 2026-04-19 after initial definition*
+*Last updated: 2026-04-19 — traceability filled by roadmapper (22/22 mapped across phases 117-121)*

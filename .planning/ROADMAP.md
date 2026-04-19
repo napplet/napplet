@@ -27,6 +27,7 @@
 - ✅ **v0.23.0 Notify NUB** — Phases 101-104 (shipped 2026-04-09) — [Archive](milestones/v0.23.0-ROADMAP.md)
 - ✅ **v0.24.0 Identity NUB + Kill NIP-07** — Phases 105-110 (shipped 2026-04-09) — [Archive](milestones/v0.24.0-ROADMAP.md)
 - ✅ **v0.25.0 Config NUB** — Phases 111-116 (shipped 2026-04-17) — [Archive](milestones/v0.25.0-ROADMAP.md)
+- 🚧 **v0.26.0 Better Packages** — Phases 117-121 (in progress)
 
 ## Phases
 
@@ -298,8 +299,82 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
+### 🚧 v0.26.0 Better Packages (In Progress)
+
+**Milestone Goal:** Consolidate the 9 separate `@napplet/nub-*` packages (relay, storage, ifc, keys, theme, media, notify, identity, config) into a single tree-shakable `@napplet/nub` package with per-domain barrel + granular subpath exports. Ship the old packages as 1-line deprecation re-export shims for one release cycle so every pinned consumer keeps working. Migrate internal consumers and all docs to the new paths.
+
+- [ ] **Phase 117: @napplet/nub Package Foundation** - Scaffold packages/nub/ with 9 domain subdirectories, exports map for all 36 entry points, tsup build, and sideEffects:false tree-shaking contract
+- [ ] **Phase 118: Deprecation Re-Export Shims** - Convert the 9 `@napplet/nub-<domain>` packages into 1-line re-export shims with @deprecated markers and banner READMEs
+- [ ] **Phase 119: Internal Consumer Migration** - Rewire @napplet/shim, @napplet/sdk, and in-repo demos/tests to import from `@napplet/nub/<domain>` paths
+- [ ] **Phase 120: Documentation Update** - New @napplet/nub README, updated package READMEs, NIP-5D example imports, and skills/ directory examples point at new subpaths
+- [ ] **Phase 121: Verification & Sign-Off** - Full monorepo build + type-check green, tree-shaking smoke test proves per-domain isolation, deprecation shims import cleanly
+
 ## Phase Details
 
-All v0.25.0 phase details archived in [milestones/v0.25.0-ROADMAP.md](milestones/v0.25.0-ROADMAP.md).
+### Phase 117: @napplet/nub Package Foundation
+**Goal**: A single `@napplet/nub` package exists at `packages/nub/`, contains all 9 domain subdirectories as source, builds cleanly, and exposes all 36 entry points (9 barrels + 27 granular) through a `package.json` `exports` map with types + import conditions. This is the load-bearing foundation — nothing downstream can migrate until `@napplet/nub/<domain>` paths are real and resolvable from inside the monorepo.
+**Depends on**: Nothing (first phase of milestone)
+**Requirements**: PKG-01, PKG-02, PKG-03, EXP-01, EXP-02, EXP-03, EXP-04, BUILD-01, BUILD-02
+**Success Criteria** (what must be TRUE):
+  1. `packages/nub/` exists with a 9-subdirectory source tree (one per domain: relay, storage, ifc, keys, theme, media, notify, identity, config), each containing the re-homed types + shim + sdk source
+  2. `packages/nub/package.json` declares `@napplet/core` as its sole runtime dep, keeps `json-schema-to-ts` as an optional peerDep (config domain `FromSchema`), and sets `sideEffects: false`
+  3. `packages/nub/package.json` `exports` field maps all 36 entry points — 9 `./` + `<domain>` barrels plus 27 `./<domain>/{types,shim,sdk}` granular paths — each with `types` and `import` conditions
+  4. There is no root `.` export — a consumer writing `import ... from '@napplet/nub'` fails to resolve, forcing domain-specific subpath imports
+  5. `pnpm --filter @napplet/nub build` exits 0 and emits one ESM `.js` + co-located `.d.ts` per entry point; `pnpm --filter @napplet/nub type-check` exits 0
+**Plans**: TBD
 
-Next milestone: `/gsd:new-milestone`
+### Phase 118: Deprecation Re-Export Shims
+**Goal**: Every one of the 9 existing `@napplet/nub-<domain>` packages is converted into a 1-line re-export shim that forwards to `@napplet/nub/<domain>`, is marked `@deprecated` in its `package.json`, and carries a top-of-README banner pointing at the new import path and stating the removal milestone. Pinned consumers of the old package names continue to work with zero behavioral change; existing imports do not need to be touched to keep building.
+**Depends on**: Phase 117
+**Requirements**: MIG-01, MIG-02, MIG-03
+**Success Criteria** (what must be TRUE):
+  1. Each of the 9 `packages/nubs/<domain>/src/index.ts` files is reduced to a single `export * from '@napplet/nub/<domain>';` (or equivalent barrel re-export) — zero domain-specific logic remains in the deprecated packages
+  2. Every deprecated package's `package.json` description begins with `[DEPRECATED]` (or equivalent) so `@deprecated` surfaces in registry UIs and editor tooltips
+  3. Every deprecated package's README starts with a deprecation banner naming `@napplet/nub/<domain>` as the replacement path and identifying the planned removal milestone
+  4. Building any one of the 9 deprecated packages resolves the re-export through the new `@napplet/nub` package and emits a `.d.ts` that type-identically forwards the domain's types + shim + sdk exports
+**Plans**: TBD
+
+### Phase 119: Internal Consumer Migration
+**Goal**: Every internal consumer inside this monorepo — `@napplet/shim`, `@napplet/sdk`, and any demo/test code — imports from the new `@napplet/nub/<domain>` paths instead of the deprecated `@napplet/nub-<domain>` package names. The shim uses `/shim` granular subpaths; the SDK uses domain barrels to preserve its `export * as <domain>` pattern. After this phase, no first-party code depends on the deprecated package names (those names exist solely for external pinned consumers).
+**Depends on**: Phase 117, Phase 118
+**Requirements**: CONS-01, CONS-02, CONS-03
+**Success Criteria** (what must be TRUE):
+  1. `@napplet/shim` source imports installers from `@napplet/nub/<domain>/shim` for every NUB domain it mounts; there are zero `@napplet/nub-<domain>` imports remaining anywhere in `packages/shim/`
+  2. `@napplet/sdk` source imports from `@napplet/nub/<domain>` barrels for every domain it re-exports, and its public `export * as <domain>` pattern remains byte-identical as seen by consumers
+  3. `grep -r "@napplet/nub-" packages/` returns only matches inside `packages/nubs/<domain>/` (the deprecated shim packages themselves) — no first-party code outside those directories references the deprecated names
+  4. `pnpm build` across the full monorepo completes 0 errors with only the new-path imports in first-party code
+**Plans**: TBD
+
+### Phase 120: Documentation Update
+**Goal**: All human-facing documentation — the new `@napplet/nub` README, the four updated package READMEs, the NIP-5D example blocks, and the `skills/` directory — references the stable `@napplet/nub/<domain>` subpath pattern. Documentation runs late so every example can name the final, real, resolvable import path rather than a transient one.
+**Depends on**: Phase 117, Phase 119
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04
+**Success Criteria** (what must be TRUE):
+  1. `packages/nub/README.md` exists and documents install, the 9-domain layout, the barrel-vs-granular subpath pattern, and the tree-shaking contract (`sideEffects: false` + per-domain isolation)
+  2. Root README plus `@napplet/core`, `@napplet/shim`, and `@napplet/sdk` READMEs reference `@napplet/nub/<domain>` in every NUB-related example; no remaining `@napplet/nub-<domain>` references except where explicitly calling out deprecation
+  3. NIP-5D (wherever it shows example imports for NUB domains) uses `@napplet/nub/<domain>` paths
+  4. Every file under `skills/` that contains a NUB-related example import uses `@napplet/nub/<domain>` paths
+**Plans**: TBD
+
+### Phase 121: Verification & Sign-Off
+**Goal**: The milestone's final gate — prove that the new package builds clean, the subpath tree-shaking contract holds in a real bundler, and the deprecated re-export shims still resolve and type-check for pinned consumers. This phase adds no new artifacts; it verifies the three truths that prior phases committed to.
+**Depends on**: Phase 117, Phase 118, Phase 119, Phase 120
+**Requirements**: VER-01, VER-02, VER-03
+**Success Criteria** (what must be TRUE):
+  1. `pnpm build` and `pnpm type-check` across the full monorepo (the new `@napplet/nub`, the 9 deprecated shim packages, and all unchanged packages) both exit 0
+  2. A minimal isolated consumer that imports only `@napplet/nub/relay/types` produces a bundle whose output contains zero bytes originating from the other 8 domains' source files (verified by grep on the bundle output)
+  3. For each of the 9 deprecated `@napplet/nub-<domain>` packages, a smoke test that does `import { /* any legacy symbol */ } from '@napplet/nub-<domain>'` both resolves and type-checks without error
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 117. @napplet/nub Package Foundation | 0/TBD | Not started | - |
+| 118. Deprecation Re-Export Shims | 0/TBD | Not started | - |
+| 119. Internal Consumer Migration | 0/TBD | Not started | - |
+| 120. Documentation Update | 0/TBD | Not started | - |
+| 121. Verification & Sign-Off | 0/TBD | Not started | - |
