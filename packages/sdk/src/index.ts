@@ -1,12 +1,12 @@
 /**
  * @napplet/sdk -- Typed named exports wrapping window.napplet.
  *
- * Provides `relay`, `ipc`, `storage`, and `keys` objects that delegate
+ * Provides `relay`, `ifc`, `storage`, and `keys` objects that delegate
  * to `window.napplet.*` at call time. Developers using a bundler can import
  * individual namespaces without depending on the shim's side-effect install:
  *
  * ```ts
- * import { relay, ipc } from '@napplet/sdk';
+ * import { relay, ifc } from '@napplet/sdk';
  * ```
  *
  * The shim must still be imported somewhere in the application to install
@@ -131,35 +131,35 @@ export const relay = {
   },
 };
 
-// ─── IPC namespace ──────────────────────────────────────────────────────────
+// ─── IFC namespace ──────────────────────────────────────────────────────────
 
 /**
- * Inter-napplet pubsub: broadcast and receive IPC-PEER events through the shell.
+ * Inter-frame pubsub: broadcast and receive IFC-PEER events through the shell.
  *
  * @example
  * ```ts
- * import { ipc } from '@napplet/sdk';
+ * import { ifc } from '@napplet/sdk';
  *
- * ipc.emit('profile:open', [], JSON.stringify({ pubkey: '...' }));
+ * ifc.emit('profile:open', [], JSON.stringify({ pubkey: '...' }));
  *
- * const sub = ipc.on('profile:open', (payload) => {
+ * const sub = ifc.on('profile:open', (payload) => {
  *   console.log('Profile requested:', payload);
  * });
  * ```
  */
-export const ipc = {
+export const ifc = {
   /**
-   * Broadcast an IPC-PEER event to other napplets via the shell.
+   * Broadcast an IFC-PEER event to other napplets via the shell.
    * @param topic      The 't' tag value (e.g., 'profile:open')
    * @param extraTags  Additional NIP-01 tags beyond the 't' tag (default: [])
    * @param content    Event content (default: empty string)
    */
   emit(topic: string, extraTags?: string[][], content?: string): void {
-    requireNapplet().ipc.emit(topic, extraTags, content);
+    requireNapplet().ifc.emit(topic, extraTags, content);
   },
 
   /**
-   * Subscribe to IPC-PEER events on a specific topic.
+   * Subscribe to IFC-PEER events on a specific topic.
    * @param topic     The 't' tag value to listen for
    * @param callback  Called with `(payload, event)` for each matching event
    * @returns A Subscription handle with a `close()` method
@@ -168,7 +168,7 @@ export const ipc = {
     topic: string,
     callback: (payload: unknown, event: NostrEvent) => void,
   ): Subscription {
-    return requireNapplet().ipc.on(topic, callback);
+    return requireNapplet().ifc.on(topic, callback);
   },
 };
 
