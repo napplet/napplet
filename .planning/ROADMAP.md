@@ -304,7 +304,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Milestone Goal:** Consolidate the 9 separate `@napplet/nub-*` packages (relay, storage, ifc, keys, theme, media, notify, identity, config) into a single tree-shakable `@napplet/nub` package with per-domain barrel + granular subpath exports. Ship the old packages as 1-line deprecation re-export shims for one release cycle so every pinned consumer keeps working. Migrate internal consumers and all docs to the new paths.
 
 - [x] **Phase 117: @napplet/nub Package Foundation** - Scaffold packages/nub/ with 9 domain subdirectories, exports map for all 36 entry points, tsup build, and sideEffects:false tree-shaking contract (completed 2026-04-19)
-- [ ] **Phase 118: Deprecation Re-Export Shims** - Convert the 9 `@napplet/nub-<domain>` packages into 1-line re-export shims with @deprecated markers and banner READMEs
+- [x] **Phase 118: Deprecation Re-Export Shims** - Convert the 9 `@napplet/nub-<domain>` packages into 1-line re-export shims with @deprecated markers and banner READMEs (completed 2026-04-19)
 - [ ] **Phase 119: Internal Consumer Migration** - Rewire @napplet/shim, @napplet/sdk, and in-repo demos/tests to import from `@napplet/nub/<domain>` paths
 - [ ] **Phase 120: Documentation Update** - New @napplet/nub README, updated package READMEs, NIP-5D example imports, and skills/ directory examples point at new subpaths
 - [ ] **Phase 121: Verification & Sign-Off** - Full monorepo build + type-check green, tree-shaking smoke test proves per-domain isolation, deprecation shims import cleanly
@@ -335,10 +335,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Every deprecated package's `package.json` description begins with `[DEPRECATED]` (or equivalent) so `@deprecated` surfaces in registry UIs and editor tooltips
   3. Every deprecated package's README starts with a deprecation banner naming `@napplet/nub/<domain>` as the replacement path and identifying the planned removal milestone
   4. Building any one of the 9 deprecated packages resolves the re-export through the new `@napplet/nub` package and emits a `.d.ts` that type-identically forwards the domain's types + shim + sdk exports
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
   - [x] 118-01-PLAN.md — Reduce 9 src/index.ts to re-export shims; delete redundant source files; add deprecation banner to all 9 READMEs
   - [x] 118-02-PLAN.md — Rewrite 9 package.json (DEPRECATED prefix + @napplet/nub dep); stage 0.3.0 minor bump via changeset
-  - [ ] 118-03-PLAN.md — Run pnpm -r build + type-check; verify export-shape parity between deprecated packages and @napplet/nub canonical barrels
+  - [x] 118-03-PLAN.md — Run pnpm -r build + type-check; verify export-shape parity between deprecated packages and @napplet/nub canonical barrels
 
 ### Phase 119: Internal Consumer Migration
 **Goal**: Every internal consumer inside this monorepo — `@napplet/shim`, `@napplet/sdk`, and any demo/test code — imports from the new `@napplet/nub/<domain>` paths instead of the deprecated `@napplet/nub-<domain>` package names. The shim uses `/shim` granular subpaths; the SDK uses domain barrels to preserve its `export * as <domain>` pattern. After this phase, no first-party code depends on the deprecated package names (those names exist solely for external pinned consumers).
@@ -380,7 +380,7 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 117. @napplet/nub Package Foundation | 3/3 | Complete    | 2026-04-19 |
-| 118. Deprecation Re-Export Shims | 2/3 | In Progress|  |
+| 118. Deprecation Re-Export Shims | 3/3 | Complete   | 2026-04-19 |
 | 119. Internal Consumer Migration | 0/TBD | Not started | - |
 | 120. Documentation Update | 0/TBD | Not started | - |
 | 121. Verification & Sign-Off | 0/TBD | Not started | - |

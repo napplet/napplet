@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.26.0
 milestone_name: Better Packages
-status: executing
-stopped_at: Completed 118-02-PLAN.md
-last_updated: "2026-04-19T13:46:33.503Z"
+status: verifying
+stopped_at: Completed 118-03-PLAN.md
+last_updated: "2026-04-19T13:53:18.940Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 100
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-04-19)
 
 Phase: 118 (Deprecation Re-Export Shims) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-19
 
-Progress: [████████░░] 83% (5/6 plans complete: Phase 117 fully shipped; Phase 118 Plans 01–02 complete; Phase 118 Plan 03 pending)
+Progress: [██████████] 100% (6/6 plans complete: Phase 117 fully shipped; Phase 118 fully executed — Plans 01, 02, 03 all complete; Phase 118 ready for verification)
 
 ## Accumulated Context
 
@@ -57,6 +57,7 @@ Progress: [████████░░] 83% (5/6 plans complete: Phase 117 fu
 - v0.26.0 (Phase 118-01): Deprecated nub-* package src/ trees reduced to single-file index.ts re-export shim (`export * from '@napplet/nub/<domain>'`); 24 stale types/shim/sdk files removed from 8 domains plus theme's sole types.ts; src/ .ts count 34 -> 9. `export *` semantics preserve types, runtime exports, AND the registerNub side effect via the canonical @napplet/nub/<domain> module. Build/type-check verification deferred to Plan 03; package.json + [DEPRECATED] description updates deferred to Plan 02.
 - v0.26.0 (Phase 118-01): Uniform deprecation banner applied to all 9 deprecated package READMEs — prepended above original content for the 4 that shipped a README previously (config, keys, media, notify); 5 new READMEs created with banner + migration snippet (identity, ifc, relay, storage, theme). Every banner names `@napplet/nub/<domain>` as the migration target and cites "a future milestone" as the removal window.
 - v0.26.0 (Phase 118-02): All 9 deprecated `packages/nubs/<domain>/package.json` files carry `[DEPRECATED] Use @napplet/nub/<domain> instead. ` description prefix + sole `@napplet/nub: workspace:*` runtime dep (`@napplet/core` dropped — transitively satisfied). Config special case preserves `json-schema-to-ts` peerDep at `^3.1.1`, `peerDependenciesMeta.json-schema-to-ts.optional: true`, and `@types/json-schema@^7.0.15` devDep byte-identical. Other 8 packages remain free of peerDependencies/peerDependenciesMeta. Version field untouched at 0.2.1 everywhere; `.changeset/deprecate-nub-domain-packages.md` records a `minor` bump (0.2.1 → 0.3.0) across all 9 deprecated packages. Root `@napplet/nub` intentionally excluded from the changeset (frozen this phase). Release-time `pnpm version-packages` applies the bump; Plan 02 only records intent. MIG-01 (runtime wiring) + MIG-03 (@deprecated metadata surface) satisfied; Plan 03 unblocked.
+- v0.26.0 (Phase 118-03): Monorepo build gate GREEN — `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages (@napplet/core, @napplet/nub, @napplet/shim, @napplet/sdk, @napplet/vite-plugin + 9 deprecated @napplet/nub-<domain>). All 9 deprecated packages emit `dist/index.{js,d.ts}` referencing @napplet/nub. Runtime `Object.keys()` shape parity verified 9/9 domains (config 8, identity 21, ifc 7, keys 10, media 17, notify 21, relay 10, storage 7, theme 1 — 102 total named exports identical between `@napplet/nub-<domain>` and `@napplet/nub/<domain>`). Shape-parity smoke harness at `/tmp/napplet-mig01-smoke` with file: deps (plan's fallback env) — packages/shim can't serve as harness because it lacks @napplet/nub in its node_modules until Phase 119. Phase 117 canonical @napplet/nub dist/ unregressed. pnpm-lock.yaml refreshed with 9 @napplet/core→@napplet/nub dep edge swaps (commit 5cc2809 — only artifact produced by Plan 03). Versions still 0.2.1; changeset idle; `pnpm version-packages` / `pnpm publish-packages` NOT run. MIG-01 closed end-to-end (source→manifest→build emit→runtime surface). Phase 118 ships MIG-01, MIG-02, MIG-03 in practice; Phase 119 consumer migration unblocked.
 
 ### Blockers/Concerns
 
@@ -75,9 +76,10 @@ Progress: [████████░░] 83% (5/6 plans complete: Phase 117 fu
 |-------|------|----------|-------|-------|
 | 118   | 01   | 2 min    | 2     | 22    |
 | 118   | 02   | 2 min    | 2     | 10    |
+| Phase 118 P03 | 3 min | 2 tasks | 1 files |
 
 ## Session Continuity
 
-Last session: 2026-04-19T13:45:56.452Z
-Stopped at: Completed 118-02-PLAN.md
+Last session: 2026-04-19T13:53:18.937Z
+Stopped at: Completed 118-03-PLAN.md
 Resume: Phase 118 Plan 02 complete. Next: execute 118-03-PLAN.md (monorepo-wide `pnpm install` + `pnpm build` + `pnpm type-check` to verify the re-export shims + new `@napplet/nub` runtime dep resolve correctly across all 9 deprecated packages and the rest of the monorepo).
