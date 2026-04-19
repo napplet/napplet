@@ -1,5 +1,17 @@
 # Napplet Protocol SDK
 
+## Current Milestone: v0.27.0 IFC Terminology Lock-In
+
+**Goal:** Finish the IPC→IFC rename across first-party source, published READMEs, specs, and skills — zero `ipc`/`IPC`/`IPC_PEER`/`IPC-PEER`/"inter-pane" remaining outside historical archives.
+
+**Target features:**
+- Rename `window.napplet.ipc` namespace → `window.napplet.ifc` (breaking API change, no backward-compat alias)
+- Rename `@napplet/sdk` `ipc` named export → `ifc`
+- Rename `IPC_PEER` constant (and any `ipc:*` topic constants) → IFC equivalents
+- Rewrite "IPC-PEER" / "inter-pane" / "inter-napplet" phrasing across root README, four package READMEs, core types/topics/envelope JSDoc, and `skills/build-napplet/SKILL.md`
+- Sweep active planning docs (PROJECT.md, STATE.md, ROADMAP.md, codebase/) so forward-looking context matches the code; leave archived milestone artifacts as history
+- Verify no stale IPC references leak into public specs or first-party source
+
 ## Shipped: v0.26.0 Better Packages
 
 Consolidated the 9 separate `@napplet/nub-<domain>` packages into a single tree-shakable `@napplet/nub` with 34 subpath entry points (9 barrel + 9 types + 8 shim + 8 sdk — theme is types-only). The 9 old packages became 1-line `export * from '@napplet/nub/<domain>'` re-export shims with `[DEPRECATED]` metadata + README banners (one-release deprecation cycle; removal deferred to a future milestone via `REMOVE-01..03`). `@napplet/shim` migrated to `/shim` granular subpaths; `@napplet/sdk` migrated to `/<domain>` barrels; 0 `@napplet/nub-` specifiers remain in first-party source. Root + 4 package READMEs rewritten; defunct `@napplet/nub-signer` references purged. Tree-shaking contract proven (39-byte bundle for types-only consumer, 0 `registerNub`, 0 cross-domain leakage). 5 phases, 12 plans shipped 2026-04-19. See [archive](milestones/v0.26.0-ROADMAP.md).
@@ -247,7 +259,15 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+- [ ] **API-01**: `window.napplet.ipc` renamed to `window.napplet.ifc` across shim, core types, and every first-party caller — no backward-compat alias
+- [ ] **API-02**: `@napplet/sdk` exports `ifc` (not `ipc`) as the named namespace export
+- [ ] **CONST-01**: Every IPC-branded symbol in `@napplet/core` (identifiers, JSDoc, topic strings) renamed to the IFC equivalent
+- [ ] **DOC-01**: Root `README.md` + `packages/{core,shim,sdk}/README.md` updated — no `ipc` / `IPC-PEER` / "inter-pane" outside historical context
+- [ ] **DOC-02**: `skills/build-napplet/SKILL.md` updated — description line, inter-pane phrasing, and code samples aligned with IFC
+- [ ] **DOC-03**: `packages/nub/src/ifc/sdk.ts` JSDoc references `window.napplet.ifc` (not `.ipc`)
+- [ ] **PLAN-01**: Active planning docs (`PROJECT.md`, `STATE.md`, `ROADMAP.md`, `.planning/codebase/*.md`) reflect IFC terminology; archived milestone dirs intentionally left unchanged
+- [ ] **VER-01**: Monorepo `pnpm -r build` + `pnpm -r type-check` green across all 14 packages with IFC-renamed surface
+- [ ] **VER-02**: Repo-wide grep for `\bIPC\b` / `\bipc\b` / `IPC_PEER` / `IPC-PEER` / `inter-pane` returns zero matches outside `.planning/milestones/` and `.planning/quick/` archives
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -359,4 +379,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-19 after v0.26.0 Better Packages milestone*
+*Last updated: 2026-04-19 — v0.27.0 IFC Terminology Lock-In milestone started*

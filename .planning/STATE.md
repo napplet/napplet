@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.26.0
-milestone_name: Better Packages
-status: verifying
-stopped_at: Completed 121-01-PLAN.md
-last_updated: "2026-04-19T15:05:13.036Z"
+milestone: v0.27.0
+milestone_name: IFC Terminology Lock-In
+status: defining-requirements
+stopped_at: Milestone kickoff
+last_updated: "2026-04-19T00:00:00.000Z"
 last_activity: 2026-04-19
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-19)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 121 — Verification & Sign-Off
+**Current focus:** v0.27.0 IFC Terminology Lock-In — defining requirements
 
 ## Current Position
 
-Phase: 121
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-19
-
-Progress: [██████████] 100% (12/12 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 fully shipped; Phase 120 fully shipped; Phase 121 fully shipped — VER-01/02/03 all SATISFIED via /tmp harness runs, zero first-party edits)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-19 — Milestone v0.27.0 started
 
 ## Accumulated Context
 
