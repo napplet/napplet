@@ -33,9 +33,9 @@ Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable
 
 ### Internal Consumer Migration
 
-- [ ] **CONS-01**: `@napplet/shim` imports from `@napplet/nub/<domain>/shim` paths instead of `@napplet/nub-<domain>`
-- [ ] **CONS-02**: `@napplet/sdk` imports from `@napplet/nub/<domain>` barrels instead of `@napplet/nub-<domain>` (preserving its `export * as <domain>` pattern)
-- [ ] **CONS-03**: Any in-repo demo/test consumers migrated to the new paths
+- [x] **CONS-01**: `@napplet/shim` imports from `@napplet/nub/<domain>/shim` paths instead of `@napplet/nub-<domain>`
+- [x] **CONS-02**: `@napplet/sdk` imports from `@napplet/nub/<domain>` barrels instead of `@napplet/nub-<domain>` (preserving its `export * as <domain>` pattern)
+- [x] **CONS-03**: Any in-repo demo/test consumers migrated to the new paths
 
 ### Documentation
 
@@ -92,9 +92,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | MIG-01      | 118   | Complete |
 | MIG-02      | 118   | Complete |
 | MIG-03      | 118   | Complete |
-| CONS-01     | 119   | Pending |
-| CONS-02     | 119   | Pending |
-| CONS-03     | 119   | Pending |
+| CONS-01     | 119   | Complete |
+| CONS-02     | 119   | Complete |
+| CONS-03     | 119   | Complete |
 | DOC-01      | 120   | Pending |
 | DOC-02      | 120   | Pending |
 | DOC-03      | 120   | Pending |

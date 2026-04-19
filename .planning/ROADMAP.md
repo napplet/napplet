@@ -349,8 +349,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. `@napplet/sdk` source imports from `@napplet/nub/<domain>` barrels for every domain it re-exports, and its public `export * as <domain>` pattern remains byte-identical as seen by consumers
   3. `grep -r "@napplet/nub-" packages/` returns only matches inside `packages/nubs/<domain>/` (the deprecated shim packages themselves) — no first-party code outside those directories references the deprecated names
   4. `pnpm build` across the full monorepo completes 0 errors with only the new-path imports in first-party code
-**Plans:** 2 plans
-  - [ ] 119-01-PLAN.md — Migrate source imports + JSDoc in packages/shim/src/index.ts (/shim granular subpaths + /ifc/types for IfcEventMessage) and packages/sdk/src/index.ts (/<domain> barrels); package.json left untouched so Phase 118 deprecation shims keep builds green mid-migration
+**Plans:** 1/2 plans executed
+  - [x] 119-01-PLAN.md — Migrate source imports + JSDoc in packages/shim/src/index.ts (/shim granular subpaths + /ifc/types for IfcEventMessage) and packages/sdk/src/index.ts (/<domain> barrels); package.json left untouched so Phase 118 deprecation shims keep builds green mid-migration
   - [ ] 119-02-PLAN.md — Rewrite packages/shim/package.json + packages/sdk/package.json deps to {@napplet/core, @napplet/nub}; refresh pnpm-lock.yaml; prove pnpm -r build + pnpm -r type-check exit 0 monorepo-wide + inspect emitted dist for correct @napplet/nub/* refs
 
 ### Phase 120: Documentation Update
@@ -383,6 +383,6 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 |-------|----------------|--------|-----------|
 | 117. @napplet/nub Package Foundation | 3/3 | Complete    | 2026-04-19 |
 | 118. Deprecation Re-Export Shims | 3/3 | Complete    | 2026-04-19 |
-| 119. Internal Consumer Migration | 0/TBD | Not started | - |
+| 119. Internal Consumer Migration | 1/2 | In Progress|  |
 | 120. Documentation Update | 0/TBD | Not started | - |
 | 121. Verification & Sign-Off | 0/TBD | Not started | - |
