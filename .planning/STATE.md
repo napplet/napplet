@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.26.0
 milestone_name: Better Packages
 status: verifying
-stopped_at: Completed 120-03-PLAN.md
-last_updated: "2026-04-19T14:42:13.648Z"
+stopped_at: Completed 121-01-PLAN.md
+last_updated: "2026-04-19T14:55:46.108Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 12
+  completed_plans: 12
   percent: 100
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-19)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 120 — Documentation Update
+**Current focus:** Phase 121 — Verification & Sign-Off
 
 ## Current Position
 
-Phase: 121
-Plan: Not started
+Phase: 121 (Verification & Sign-Off) — COMPLETE
+Plan: 1 of 1 — shipped
 Status: Phase complete — ready for verification
-Last activity: 2026-04-19
+Last activity: 2026-04-19 -- Phase 121 execution complete; VER-01/02/03 satisfied; milestone v0.26.0 ready for sign-off
 
-Progress: [██████████] 100% (11/11 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 fully shipped; Phase 120 fully shipped — DOC-01/02/03/04 closed via 3 parallel wave-1 plans)
+Progress: [██████████] 100% (12/12 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 fully shipped; Phase 120 fully shipped; Phase 121 fully shipped — VER-01/02/03 all SATISFIED via /tmp harness runs, zero first-party edits)
 
 ## Accumulated Context
 
@@ -63,6 +63,7 @@ Progress: [██████████] 100% (11/11 plans complete: Phase 117
 - v0.26.0 (Phase 120-01): Canonical `packages/nub/README.md` created (160 lines) with all 11 required H2 sections (Install, Quick Start, 9 Domains, Subpath Patterns, Tree-Shaking Contract, Theme Exception, Migration, Optional Peer Dependency, Protocol Reference, License + H1 title). 9-domain subpath table uses em-dash U+2014 (14 occurrences; Theme Shim/SDK cells per types-only exception). Four concrete runnable import examples cover every subpath pattern: barrel (`@napplet/nub/relay`), types-only (`@napplet/nub/ifc/types`), shim-only (`@napplet/nub/storage/shim`), sdk-only (`@napplet/nub/notify/sdk`) plus an end-to-end relay example showing napplet-side `relaySubscribe` and shell-side `installRelayShim` together. 9-row migration table maps every deprecated `@napplet/nub-<domain>` → `@napplet/nub/<domain>` (barrel + granular). Relative `../../specs/NIP-5D.md` protocol reference. Optional `json-schema-to-ts@^3.1.1` peerDep documented with a `FromSchema` usage example. Task commit: 0033b4d (docs). DOC-01 closed.
 - v0.26.0 (Phase 120-02): 4 user-facing READMEs migrated off deprecated `@napplet/nub-<domain>` names to the consolidated `@napplet/nub` surface. Root README package table: 5 per-nub rows collapsed to single `[@napplet/nub](packages/nub)` row; 10-box dep graph redrawn to 5-box post-consolidation shape (`@napplet/shim + @napplet/sdk → @napplet/nub → @napplet/core`, with `@napplet/vite-plugin` as independent build-time leaf); all defunct `@napplet/nub-signer` references (removed in v0.24.0) purged. `packages/core/README.md` integration note (line 353) enumerates `@napplet/nub/<domain>` subpaths for the 8 `registerNub` domains with a parenthetical noting `@napplet/nub/theme` is types-only. `packages/shim/README.md` Shim-vs-SDK comparison table deps row (line 426) collapsed to single `@napplet/nub` entry with note about internal `/shim` subpath routing. `packages/sdk/README.md` line 178 peerDep note rewritten to cite `@napplet/nub` scoped to `@napplet/nub/config` domain; lines 296-303 type-to-package mapping table's 8 rows switched to `@napplet/nub/<domain>` barrel subpaths (column header "NUB Package" kept unchanged — values are subpaths of the same `@napplet/nub` package). Cross-file invariant: `grep -c "@napplet/nub-"` returns 0 across all 4 files. Zero deviations. Parallel-executor scope respected (companion agent owns `packages/nub/README.md` — untouched by this plan). Task commits: d29b9f2 (root), 80366cb (core), 6039111 (shim), 24a0289 (sdk). All with --no-verify per parallel-executor protocol. DOC-02 satisfied.
 - v0.26.0 (Phase 120-03): Verify-only plan confirmed DOC-03 + DOC-04 closed. `specs/NIP-5D.md` (118 lines, 6,997 bytes): 0 `@napplet/nub-` grep matches + full file-content read confirms zero deprecated references (spec uses `<nub-name>` placeholder and `foo.bar` example domain only). `skills/build-napplet/SKILL.md` (208 lines, 7,954 bytes): 0 grep matches + full read confirms all `pnpm add` / import blocks reference `@napplet/shim` + `@napplet/vite-plugin` only. Phase-wide acceptance grep across root README + 4 edited package READMEs + `packages/nub/README.md` + `packages/vite-plugin/README.md` + `specs/` + `skills/` returns 0 matches outside two intentional content zones: `packages/nubs/<domain>/` deprecation banners AND `packages/nub/README.md`'s `## Migration` section (lines 110–126; awk-scoped verification: 10 of 10 matches fall inside Migration, 0 leakage elsewhere). Rule 3 deviation documented: Task 3's verify grep command under-specified its exclusion list by omitting `packages/nub/README.md` despite Plan 01's CONTEXT.md non-negotiables requiring that migration table. Adjusted gate clean; zero file modifications; no per-task commits under happy path. Phase 120 functionally complete across DOC-01, DOC-02, DOC-03, DOC-04.
+- v0.26.0 (Phase 121-01): v0.26.0 Better Packages milestone acceptance gate PASSED. VER-01 SATISFIED: `pnpm -r build` and `pnpm -r type-check` both exit 0 across 14 workspace packages (scope "14 of 15 workspace projects" — 15th is repo root with no build script). @napplet/nub dist preserves 34 .js + 34 .d.ts entry points (Phase 117 baseline); all 9 deprecated @napplet/nub-<domain> dist/index.js shims remain 2 lines each (Phase 118 baseline). VER-02 SATISFIED: a types-only consumer importing `RelaySubscribeMessage` from `@napplet/nub/relay/types` bundled via `esbuild --bundle --minify --format=esm` produces a 39-byte output (`var r=e=>e.subId;export{r as handler};`) — well under the 1024-byte ceiling. Zero `registerNub` refs, zero string-literal matches across all 8 non-relay domains, proving Phase 117's `sideEffects: false` contract holds at the bundler level. VER-03 SATISFIED: 9/9 deprecated `@napplet/nub-<domain>` shims type-round-trip cleanly under tsc --noEmit via pinned-name consumers at `/tmp/napplet-pinned-<domain>/` (npm-installed with three file: deps each: nub-<domain>, nub canonical, core; theme harness is barrel-only-types per Option A). Rule 3 Blocking deviation: plan's `npx -y tsc@5.9.3 --noEmit` is non-functional (no tsc package exists on npm at that version; tsc is the CLI within the typescript package); fixed by invoking each harness's local `node_modules/.bin/tsc` (installed via `typescript: "^5.9.3"` devDependency; all 9 confirmed Version 5.9.3 before run). CONTEXT.md-flagged substitutions confirmed: NappletConfigSchema (not NappletConfig) and MediaSessionCreateMessage (not MediaCreateSessionMessage). Zero first-party edits to packages/ or repo root — sole artifact is this SUMMARY. /tmp/napplet-ver01, /tmp/napplet-treeshake-verify, and 9× /tmp/napplet-pinned-<domain> harnesses cleaned up after evidence capture. Milestone v0.26.0 Better Packages is acceptance-verified end-to-end and ready for retrospective.
 
 ### Blockers/Concerns
 
@@ -87,9 +88,10 @@ Progress: [██████████] 100% (11/11 plans complete: Phase 117
 | Phase 120 P02 | 2min | 4 tasks | 4 files |
 | Phase 120 P01 | 2 min | 1 tasks | 1 files |
 | Phase 120 P03 | 3 min | 3 tasks | 1 files |
+| Phase 121 P01 | 3 min | 3 tasks | 1 files |
 
 ## Session Continuity
 
-Last session: 2026-04-19T14:38:10.972Z
-Stopped at: Completed 120-03-PLAN.md
-Resume: Phase 120 complete (Plan 01 + Plan 02 + Plan 03 all shipped in parallel wave-1). DOC-01/02/03/04 closed end-to-end. Next: `/gsd:verify-work 120` to run phase verification, then advance to the next phase in the v0.26.0 milestone.
+Last session: 2026-04-19T14:55:46.106Z
+Stopped at: Completed 121-01-PLAN.md
+Resume: Phase 121 complete (Plan 01 shipped). VER-01/02/03 all SATISFIED. Zero first-party edits. v0.26.0 Better Packages milestone is feature-complete and acceptance-verified end-to-end. Next: `/gsd:verify-work 121` to run phase verification, then `/gsd:complete-milestone` to archive v0.26.0.

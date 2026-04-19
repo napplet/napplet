@@ -46,9 +46,9 @@ Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable
 
 ### Verification
 
-- [ ] **VER-01**: Full monorepo `pnpm build` + `pnpm type-check` exits 0 across all packages (new + deprecated shims + unchanged)
-- [ ] **VER-02**: Subpath tree-shaking verified — a minimal consumer importing only `@napplet/nub/relay/types` produces a bundle containing none of the other 8 domains' code
-- [ ] **VER-03**: Old `@napplet/nub-<domain>` packages still import + type-check under their deprecation shim (no breakage for pinned consumers)
+- [x] **VER-01**: Full monorepo `pnpm build` + `pnpm type-check` exits 0 across all packages (new + deprecated shims + unchanged)
+- [x] **VER-02**: Subpath tree-shaking verified — a minimal consumer importing only `@napplet/nub/relay/types` produces a bundle containing none of the other 8 domains' code
+- [x] **VER-03**: Old `@napplet/nub-<domain>` packages still import + type-check under their deprecation shim (no breakage for pinned consumers)
 
 ## Future Requirements
 
@@ -99,9 +99,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | DOC-02      | 120   | Complete |
 | DOC-03      | 120   | Complete |
 | DOC-04      | 120   | Complete |
-| VER-01      | 121   | Pending |
-| VER-02      | 121   | Pending |
-| VER-03      | 121   | Pending |
+| VER-01      | 121   | Complete |
+| VER-02      | 121   | Complete |
+| VER-03      | 121   | Complete |
 
 **Coverage:**
 - v0.26.0 requirements: 22 total
