@@ -4,8 +4,8 @@
 //
 // Domain logic lives in NUB packages. This file orchestrates installation.
 
-import { installKeysShim, handleKeysMessage, registerAction, unregisterAction, onAction } from '@napplet/nub-keys';
-import { installMediaShim, handleMediaMessage, createSession, updateSession, destroySession, reportState, reportCapabilities, onCommand, onControls } from '@napplet/nub-media';
+import { installKeysShim, handleKeysMessage, registerAction, unregisterAction, onAction } from '@napplet/nub/keys/shim';
+import { installMediaShim, handleMediaMessage, createSession, updateSession, destroySession, reportState, reportCapabilities, onCommand, onControls } from '@napplet/nub/media/shim';
 import {
   installNotifyShim,
   handleNotifyMessage,
@@ -18,10 +18,10 @@ import {
   onClicked as notifyOnClicked,
   onDismissed as notifyOnDismissed,
   onControls as notifyOnControls,
-} from '@napplet/nub-notify';
+} from '@napplet/nub/notify/shim';
 import { installNostrDb } from './nipdb-shim.js';
-import { installStorageShim, nappletStorage } from '@napplet/nub-storage';
-import { subscribe, publish, publishEncrypted, query } from '@napplet/nub-relay';
+import { installStorageShim, nappletStorage } from '@napplet/nub/storage/shim';
+import { subscribe, publish, publishEncrypted, query } from '@napplet/nub/relay/shim';
 import {
   installIdentityShim,
   handleIdentityMessage,
@@ -34,8 +34,8 @@ import {
   getMutes,
   getBlocked,
   getBadges,
-} from '@napplet/nub-identity';
-import { installIfcShim, emit, on, handleIfcEvent } from '@napplet/nub-ifc';
+} from '@napplet/nub/identity/shim';
+import { installIfcShim, emit, on, handleIfcEvent } from '@napplet/nub/ifc/shim';
 import {
   installConfigShim,
   handleConfigMessage,
@@ -44,9 +44,9 @@ import {
   subscribe as configSubscribe,
   openSettings as configOpenSettings,
   onSchemaError as configOnSchemaError,
-} from '@napplet/nub-config';
+} from '@napplet/nub/config/shim';
 import type { NappletGlobal } from '@napplet/core';
-import type { IfcEventMessage } from '@napplet/nub-ifc';
+import type { IfcEventMessage } from '@napplet/nub/ifc/types';
 
 // ─── Global type augmentation ────────────────────────────────────────────────
 // Activates window.napplet TypeScript types on `import '@napplet/shim'`.
