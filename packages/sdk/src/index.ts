@@ -14,8 +14,8 @@
  *
  * Domain-specific SDK helpers are also available directly from NUB packages:
  * ```ts
- * import { relaySubscribe } from '@napplet/nub-relay';
- * import { storageGetItem } from '@napplet/nub-storage';
+ * import { relaySubscribe } from '@napplet/nub/relay';
+ * import { storageGetItem } from '@napplet/nub/storage';
  * ```
  *
  * @packageDocumentation
@@ -771,7 +771,7 @@ export type {
   RelayOutboundMessage,
   RelayInboundMessage,
   RelayNubMessage,
-} from '@napplet/nub-relay';
+} from '@napplet/nub/relay';
 
 // Identity NUB
 export type {
@@ -801,7 +801,7 @@ export type {
   IdentityRequestMessage,
   IdentityResultMessage,
   IdentityNubMessage,
-} from '@napplet/nub-identity';
+} from '@napplet/nub/identity';
 
 // Storage NUB
 export type {
@@ -817,7 +817,7 @@ export type {
   StorageRequestMessage,
   StorageResultMessage,
   StorageNubMessage,
-} from '@napplet/nub-storage';
+} from '@napplet/nub/storage';
 
 // IFC NUB
 export type {
@@ -841,7 +841,7 @@ export type {
   IfcOutboundMessage,
   IfcInboundMessage,
   IfcNubMessage,
-} from '@napplet/nub-ifc';
+} from '@napplet/nub/ifc';
 
 // Theme NUB
 export type {
@@ -856,7 +856,7 @@ export type {
   ThemeRequestMessage,
   ThemeResultMessage,
   ThemeNubMessage,
-} from '@napplet/nub-theme';
+} from '@napplet/nub/theme';
 
 // Keys NUB
 export type {
@@ -873,7 +873,7 @@ export type {
   KeysRequestMessage,
   KeysResultMessage,
   KeysNubMessage,
-} from '@napplet/nub-keys';
+} from '@napplet/nub/keys';
 
 // Media NUB
 export type {
@@ -893,7 +893,7 @@ export type {
   MediaRequestMessage,
   MediaResultMessage,
   MediaNubMessage,
-} from '@napplet/nub-media';
+} from '@napplet/nub/media';
 
 // Notify NUB
 export type {
@@ -916,7 +916,7 @@ export type {
   NotifyRequestMessage,
   NotifyResultMessage,
   NotifyNubMessage,
-} from '@napplet/nub-notify';
+} from '@napplet/nub/notify';
 
 // Config NUB
 export type {
@@ -937,39 +937,39 @@ export type {
   ConfigRequestMessage,
   ConfigResultMessage,
   ConfigNubMessage,
-} from '@napplet/nub-config';
+} from '@napplet/nub/config';
 
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
-export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub-relay';
-export { DOMAIN as IDENTITY_DOMAIN } from '@napplet/nub-identity';
-export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub-storage';
-export { DOMAIN as IFC_DOMAIN } from '@napplet/nub-ifc';
-export { DOMAIN as THEME_DOMAIN } from '@napplet/nub-theme';
-export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub-keys';
-export { DOMAIN as MEDIA_DOMAIN } from '@napplet/nub-media';
-export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub-notify';
-export { DOMAIN as CONFIG_DOMAIN } from '@napplet/nub-config';
+export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub/relay';
+export { DOMAIN as IDENTITY_DOMAIN } from '@napplet/nub/identity';
+export { DOMAIN as STORAGE_DOMAIN } from '@napplet/nub/storage';
+export { DOMAIN as IFC_DOMAIN } from '@napplet/nub/ifc';
+export { DOMAIN as THEME_DOMAIN } from '@napplet/nub/theme';
+export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub/keys';
+export { DOMAIN as MEDIA_DOMAIN } from '@napplet/nub/media';
+export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub/notify';
+export { DOMAIN as CONFIG_DOMAIN } from '@napplet/nub/config';
 
 // ─── NUB Shim Installer Re-exports ─────────────────────────────────────────
 // Allow consumers to cherry-pick shim installers per domain.
 
-export { installRelayShim } from '@napplet/nub-relay';
-export { installIdentityShim } from '@napplet/nub-identity';
-export { installStorageShim } from '@napplet/nub-storage';
-export { installIfcShim } from '@napplet/nub-ifc';
-export { installKeysShim } from '@napplet/nub-keys';
-export { installMediaShim } from '@napplet/nub-media';
-export { installNotifyShim } from '@napplet/nub-notify';
-export { installConfigShim } from '@napplet/nub-config';
+export { installRelayShim } from '@napplet/nub/relay';
+export { installIdentityShim } from '@napplet/nub/identity';
+export { installStorageShim } from '@napplet/nub/storage';
+export { installIfcShim } from '@napplet/nub/ifc';
+export { installKeysShim } from '@napplet/nub/keys';
+export { installMediaShim } from '@napplet/nub/media';
+export { installNotifyShim } from '@napplet/nub/notify';
+export { installConfigShim } from '@napplet/nub/config';
 
 // ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
 
-export { relaySubscribe, relayPublish, relayPublishEncrypted, relayQuery } from '@napplet/nub-relay';
-export { identityGetPublicKey, identityGetRelays, identityGetProfile, identityGetFollows, identityGetList, identityGetZaps, identityGetMutes, identityGetBlocked, identityGetBadges } from '@napplet/nub-identity';
-export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub-storage';
-export { ifcEmit, ifcOn } from '@napplet/nub-ifc';
-export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub-keys';
-export { mediaCreateSession, mediaUpdateSession, mediaDestroySession, mediaReportState, mediaReportCapabilities, mediaOnCommand, mediaOnControls } from '@napplet/nub-media';
-export { notifySend, notifyDismiss, notifyBadge, notifyRegisterChannel, notifyRequestPermission, notifyOnAction, notifyOnClicked, notifyOnDismissed, notifyOnControls } from '@napplet/nub-notify';
+export { relaySubscribe, relayPublish, relayPublishEncrypted, relayQuery } from '@napplet/nub/relay';
+export { identityGetPublicKey, identityGetRelays, identityGetProfile, identityGetFollows, identityGetList, identityGetZaps, identityGetMutes, identityGetBlocked, identityGetBadges } from '@napplet/nub/identity';
+export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub/storage';
+export { ifcEmit, ifcOn } from '@napplet/nub/ifc';
+export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub/keys';
+export { mediaCreateSession, mediaUpdateSession, mediaDestroySession, mediaReportState, mediaReportCapabilities, mediaOnCommand, mediaOnControls } from '@napplet/nub/media';
+export { notifySend, notifyDismiss, notifyBadge, notifyRegisterChannel, notifyRequestPermission, notifyOnAction, notifyOnClicked, notifyOnDismissed, notifyOnControls } from '@napplet/nub/notify';

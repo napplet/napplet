@@ -183,6 +183,9 @@ importers:
       '@napplet/core':
         specifier: workspace:*
         version: link:../core
+      '@napplet/nub':
+        specifier: workspace:*
+        version: link:../nub
       '@napplet/nub-config':
         specifier: workspace:*
         version: link:../nubs/config
