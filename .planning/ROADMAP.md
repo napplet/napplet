@@ -305,7 +305,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 - [x] **Phase 117: @napplet/nub Package Foundation** - Scaffold packages/nub/ with 9 domain subdirectories, exports map for all 36 entry points, tsup build, and sideEffects:false tree-shaking contract (completed 2026-04-19)
 - [x] **Phase 118: Deprecation Re-Export Shims** - Convert the 9 `@napplet/nub-<domain>` packages into 1-line re-export shims with @deprecated markers and banner READMEs (completed 2026-04-19)
-- [ ] **Phase 119: Internal Consumer Migration** - Rewire @napplet/shim, @napplet/sdk, and in-repo demos/tests to import from `@napplet/nub/<domain>` paths
+- [x] **Phase 119: Internal Consumer Migration** - Rewire @napplet/shim, @napplet/sdk, and in-repo demos/tests to import from `@napplet/nub/<domain>` paths (completed 2026-04-19)
 - [ ] **Phase 120: Documentation Update** - New @napplet/nub README, updated package READMEs, NIP-5D example imports, and skills/ directory examples point at new subpaths
 - [ ] **Phase 121: Verification & Sign-Off** - Full monorepo build + type-check green, tree-shaking smoke test proves per-domain isolation, deprecation shims import cleanly
 
@@ -349,9 +349,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. `@napplet/sdk` source imports from `@napplet/nub/<domain>` barrels for every domain it re-exports, and its public `export * as <domain>` pattern remains byte-identical as seen by consumers
   3. `grep -r "@napplet/nub-" packages/` returns only matches inside `packages/nubs/<domain>/` (the deprecated shim packages themselves) — no first-party code outside those directories references the deprecated names
   4. `pnpm build` across the full monorepo completes 0 errors with only the new-path imports in first-party code
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
   - [x] 119-01-PLAN.md — Migrate source imports + JSDoc in packages/shim/src/index.ts (/shim granular subpaths + /ifc/types for IfcEventMessage) and packages/sdk/src/index.ts (/<domain> barrels); package.json left untouched so Phase 118 deprecation shims keep builds green mid-migration
-  - [ ] 119-02-PLAN.md — Rewrite packages/shim/package.json + packages/sdk/package.json deps to {@napplet/core, @napplet/nub}; refresh pnpm-lock.yaml; prove pnpm -r build + pnpm -r type-check exit 0 monorepo-wide + inspect emitted dist for correct @napplet/nub/* refs
+  - [x] 119-02-PLAN.md — Rewrite packages/shim/package.json + packages/sdk/package.json deps to {@napplet/core, @napplet/nub}; refresh pnpm-lock.yaml; prove pnpm -r build + pnpm -r type-check exit 0 monorepo-wide + inspect emitted dist for correct @napplet/nub/* refs
 
 ### Phase 120: Documentation Update
 **Goal**: All human-facing documentation — the new `@napplet/nub` README, the four updated package READMEs, the NIP-5D example blocks, and the `skills/` directory — references the stable `@napplet/nub/<domain>` subpath pattern. Documentation runs late so every example can name the final, real, resolvable import path rather than a transient one.
@@ -383,6 +383,6 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 |-------|----------------|--------|-----------|
 | 117. @napplet/nub Package Foundation | 3/3 | Complete    | 2026-04-19 |
 | 118. Deprecation Re-Export Shims | 3/3 | Complete    | 2026-04-19 |
-| 119. Internal Consumer Migration | 1/2 | In Progress|  |
+| 119. Internal Consumer Migration | 2/2 | Complete   | 2026-04-19 |
 | 120. Documentation Update | 0/TBD | Not started | - |
 | 121. Verification & Sign-Off | 0/TBD | Not started | - |

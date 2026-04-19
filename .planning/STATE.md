@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.26.0
 milestone_name: Better Packages
-status: executing
-stopped_at: Completed 119-01-PLAN.md
-last_updated: "2026-04-19T14:13:50.894Z"
+status: verifying
+stopped_at: Completed 119-02-PLAN.md
+last_updated: "2026-04-19T14:20:17.725Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 100
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-19)
 
 ## Current Position
 
-Phase: 119 (Internal Consumer Migration) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
+Phase: 119 (Internal Consumer Migration) — COMPLETE (ready for verification)
+Plan: 2 of 2 (final plan shipped)
+Status: Phase complete — ready for `/gsd:verify-work 119`
 Last activity: 2026-04-19
 
-Progress: [█████████░] 88% (7/8 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 Plan 01 complete — Phase 119 Plan 02 remaining)
+Progress: [██████████] 100% (8/8 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 fully shipped — source + manifest + lockfile + emit)
 
 ## Accumulated Context
 
@@ -59,6 +59,7 @@ Progress: [█████████░] 88% (7/8 plans complete: Phase 117 fu
 - v0.26.0 (Phase 118-02): All 9 deprecated `packages/nubs/<domain>/package.json` files carry `[DEPRECATED] Use @napplet/nub/<domain> instead. ` description prefix + sole `@napplet/nub: workspace:*` runtime dep (`@napplet/core` dropped — transitively satisfied). Config special case preserves `json-schema-to-ts` peerDep at `^3.1.1`, `peerDependenciesMeta.json-schema-to-ts.optional: true`, and `@types/json-schema@^7.0.15` devDep byte-identical. Other 8 packages remain free of peerDependencies/peerDependenciesMeta. Version field untouched at 0.2.1 everywhere; `.changeset/deprecate-nub-domain-packages.md` records a `minor` bump (0.2.1 → 0.3.0) across all 9 deprecated packages. Root `@napplet/nub` intentionally excluded from the changeset (frozen this phase). Release-time `pnpm version-packages` applies the bump; Plan 02 only records intent. MIG-01 (runtime wiring) + MIG-03 (@deprecated metadata surface) satisfied; Plan 03 unblocked.
 - v0.26.0 (Phase 118-03): Monorepo build gate GREEN — `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages (@napplet/core, @napplet/nub, @napplet/shim, @napplet/sdk, @napplet/vite-plugin + 9 deprecated @napplet/nub-<domain>). All 9 deprecated packages emit `dist/index.{js,d.ts}` referencing @napplet/nub. Runtime `Object.keys()` shape parity verified 9/9 domains (config 8, identity 21, ifc 7, keys 10, media 17, notify 21, relay 10, storage 7, theme 1 — 102 total named exports identical between `@napplet/nub-<domain>` and `@napplet/nub/<domain>`). Shape-parity smoke harness at `/tmp/napplet-mig01-smoke` with file: deps (plan's fallback env) — packages/shim can't serve as harness because it lacks @napplet/nub in its node_modules until Phase 119. Phase 117 canonical @napplet/nub dist/ unregressed. pnpm-lock.yaml refreshed with 9 @napplet/core→@napplet/nub dep edge swaps (commit 5cc2809 — only artifact produced by Plan 03). Versions still 0.2.1; changeset idle; `pnpm version-packages` / `pnpm publish-packages` NOT run. MIG-01 closed end-to-end (source→manifest→build emit→runtime surface). Phase 118 ships MIG-01, MIG-02, MIG-03 in practice; Phase 119 consumer migration unblocked.
 - v0.26.0 (Phase 119-01): Shim + SDK source-level import migration complete. `packages/shim/src/index.ts` routes 9 specifiers through `@napplet/nub/<domain>/shim` (8 domains: keys, media, notify, storage, relay, identity, ifc, config) plus `@napplet/nub/ifc/types` for the single type-only `IfcEventMessage` import. `packages/sdk/src/index.ts` routes every type re-export block (9), DOMAIN constant re-export (9), installer re-export (8), SDK helper re-export (7), and 2 JSDoc `@example` imports through `@napplet/nub/<domain>` barrels — all 9 domains covered including theme (barrel-only per Option A; zero theme/shim or theme/sdk refs). Runtime namespaces (relay, ipc, storage, media, notify, keys, identity, config) and shim routing logic byte-identical. Zero `@napplet/nub-<domain>` specifiers remain in first-party src under `packages/shim/src/` or `packages/sdk/src/`. `packages/nubs/` (deprecated) and `packages/nub/` (canonical) untouched. Rule 3 auto-fix: added `@napplet/nub: workspace:*` as an additive dep to both `packages/shim/package.json` and `packages/sdk/package.json` — the plan's literal "deps untouched" reading was unachievable because Phase 118 shims resolve old `@napplet/nub-<domain>` names (which were deleted from the src), not the new `@napplet/nub/<domain>` subpaths. All 9 legacy deps retained alongside the new edge; Plan 02 drops them. Build + type-check green for @napplet/shim (ESM 7.88 KB) and @napplet/sdk (ESM 15.86 KB). Task commits: f58c994 (shim), f2f2721 (sdk). CONS-01, CONS-02, CONS-03 satisfied (CONS-03 trivially — no demo/test consumers exist in repo).
+- v0.26.0 (Phase 119-02): Dep-swap complete. `packages/shim/package.json` dependencies 10→2 (removed 8 legacy `@napplet/nub-<domain>` entries — relay, identity, storage, ifc, keys, media, notify, config); `packages/sdk/package.json` 11→2 (removed 9 — same 8 plus theme). Both end at `{@napplet/core: workspace:*, @napplet/nub: workspace:*}`. Non-dep fields byte-identical in both files. `pnpm-lock.yaml` refreshed — shim+sdk importer stanzas each reference `link:../core` + `link:../nub` only (0 legacy edges for those importers). `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages. `packages/shim/dist/index.js` emits 8 distinct `@napplet/nub/<domain>/shim` refs (1 each for keys/media/notify/storage/relay/identity/ifc/config) + 0 legacy. `packages/sdk/dist/index.js` emits all 9 `@napplet/nub/<domain>` barrels (relay/identity/storage/ifc/theme/keys/media/notify/config — theme barrel-only per Option A) + 0 legacy + 0 theme/shim + 0 theme/sdk. `packages/nub/` (canonical) and `packages/nubs/` (deprecated) source+metadata trees untouched (empty `git diff --stat`). Plan scope reduced vs as-written: the 119-01 Rule-3 auto-fix already added `@napplet/nub`, so this plan was pure deletion — "add" action documented as no-op. No deviations. No changeset (internal refactor; dist-level consumers are unaffected, Phase 118 deprecation changeset untouched). Task commit: 8f83e14 (chore). Phase 119 closes CONS-01, CONS-02, CONS-03 end-to-end (source Plan 01 + manifest/lockfile/emit Plan 02); Phase 120 (documentation migration) unblocked.
 
 ### Blockers/Concerns
 
@@ -79,9 +80,10 @@ Progress: [█████████░] 88% (7/8 plans complete: Phase 117 fu
 | 118   | 02   | 2 min    | 2     | 10    |
 | Phase 118 P03 | 3 min | 2 tasks | 1 files |
 | Phase 119 P01 | 3 min | 2 tasks | 5 files |
+| Phase 119 P02 | 3 min | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-04-19T14:13:50.891Z
-Stopped at: Completed 119-01-PLAN.md
-Resume: Phase 119 Plan 01 complete. Next: execute 119-02-PLAN.md (monorepo-wide dep swap — drop the 9 legacy `@napplet/nub-<domain>: workspace:*` entries from `packages/shim/package.json` and `packages/sdk/package.json` now that `@napplet/nub: workspace:*` is already wired in both; run `pnpm install` to prune dead edges, then `pnpm -r build` + `pnpm -r type-check` as the monorepo-wide green gate).
+Last session: 2026-04-19T14:20:17.722Z
+Stopped at: Completed 119-02-PLAN.md
+Resume: Phase 119 complete (Plan 01 + Plan 02 both shipped). CONS-01/02/03 closed end-to-end. Next: `/gsd:verify-work 119` to run phase verification, then `/gsd:plan-phase 120` to scope the documentation migration phase (NIP-5D and package READMEs to reference `@napplet/nub/<domain>` instead of the deprecated `@napplet/nub-<domain>` names).
