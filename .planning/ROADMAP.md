@@ -349,7 +349,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. `@napplet/sdk` source imports from `@napplet/nub/<domain>` barrels for every domain it re-exports, and its public `export * as <domain>` pattern remains byte-identical as seen by consumers
   3. `grep -r "@napplet/nub-" packages/` returns only matches inside `packages/nubs/<domain>/` (the deprecated shim packages themselves) — no first-party code outside those directories references the deprecated names
   4. `pnpm build` across the full monorepo completes 0 errors with only the new-path imports in first-party code
-**Plans**: TBD
+**Plans:** 2 plans
+  - [ ] 119-01-PLAN.md — Migrate source imports + JSDoc in packages/shim/src/index.ts (/shim granular subpaths + /ifc/types for IfcEventMessage) and packages/sdk/src/index.ts (/<domain> barrels); package.json left untouched so Phase 118 deprecation shims keep builds green mid-migration
+  - [ ] 119-02-PLAN.md — Rewrite packages/shim/package.json + packages/sdk/package.json deps to {@napplet/core, @napplet/nub}; refresh pnpm-lock.yaml; prove pnpm -r build + pnpm -r type-check exit 0 monorepo-wide + inspect emitted dist for correct @napplet/nub/* refs
 
 ### Phase 120: Documentation Update
 **Goal**: All human-facing documentation — the new `@napplet/nub` README, the four updated package READMEs, the NIP-5D example blocks, and the `skills/` directory — references the stable `@napplet/nub/<domain>` subpath pattern. Documentation runs late so every example can name the final, real, resolvable import path rather than a transient one.
