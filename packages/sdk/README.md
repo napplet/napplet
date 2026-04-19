@@ -12,7 +12,7 @@
 ### How It Works
 
 1. Import `@napplet/shim` in your entry point to install the `window.napplet` global
-2. Import named exports from `@napplet/sdk` -- `relay`, `ipc`, `storage`, `keys`
+2. Import named exports from `@napplet/sdk` -- `relay`, `ifc`, `storage`, `keys`
 3. Each SDK method delegates to its `window.napplet.*` counterpart at call time
 4. If `window.napplet` is not installed when a method is called, a descriptive error is thrown
 
@@ -26,7 +26,7 @@ npm install @napplet/sdk @napplet/shim
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys, media, notify, config, type NostrEvent } from '@napplet/sdk';
+import { relay, ifc, storage, keys, media, notify, config, type NostrEvent } from '@napplet/sdk';
 
 // Subscribe to kind 1 notes
 const sub = relay.subscribe(
@@ -43,9 +43,9 @@ const signed = await relay.publish({
   created_at: Math.floor(Date.now() / 1000),
 });
 
-// Inter-pane messaging
-ipc.emit('chat:message', [], JSON.stringify({ text: 'hi' }));
-const ipcSub = ipc.on('bot:response', (payload) => {
+// Inter-frame messaging
+ifc.emit('chat:message', [], JSON.stringify({ text: 'hi' }));
+const ifcSub = ifc.on('bot:response', (payload) => {
   console.log('Bot says:', payload);
 });
 
@@ -89,7 +89,7 @@ config.openSettings({ section: 'appearance' });
 
 // Clean up
 sub.close();
-ipcSub.close();
+ifcSub.close();
 keySub.close();
 configSub.close();
 ```
@@ -107,9 +107,9 @@ Relay operations through the shell's relay pool. Mirrors `window.napplet.relay`.
 | `publishEncrypted(template, recipient, encryption?)` | `Promise<NostrEvent>` | Send event template for encryption, signing, and broadcast |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: subscribe, collect until EOSE, resolve |
 
-### `ipc`
+### `ifc`
 
-Inter-napplet communication between napplets. Mirrors `window.napplet.ipc`.
+Inter-frame communication between napplets. Mirrors `window.napplet.ifc`.
 
 Messages are sent as JSON envelope objects (`{ type: 'ifc.emit', topic, payload }`) and received as
 (`{ type: 'ifc.event', topic, payload, sender }`).
@@ -355,7 +355,7 @@ This protects against importing `@napplet/sdk` without the side-effect shim impo
 
 ```ts
 import '@napplet/shim';                                                  // required: installs window.napplet
-import { relay, ipc, storage, keys, media, notify } from '@napplet/sdk';  // optional: typed API
+import { relay, ifc, storage, keys, media, notify } from '@napplet/sdk';  // optional: typed API
 ```
 
 If you are writing a vanilla napplet with no build step, use `window.napplet.*` directly after importing the shim -- the SDK is not required.
