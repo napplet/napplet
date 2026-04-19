@@ -4,7 +4,7 @@ milestone: v0.26.0
 milestone_name: Better Packages
 status: verifying
 stopped_at: Completed 119-02-PLAN.md
-last_updated: "2026-04-19T14:20:17.725Z"
+last_updated: "2026-04-19T14:24:57.759Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-19)
 
 ## Current Position
 
-Phase: 119 (Internal Consumer Migration) — COMPLETE (ready for verification)
-Plan: 2 of 2 (final plan shipped)
+Phase: 120
+Plan: Not started
 Status: Phase complete — ready for `/gsd:verify-work 119`
 Last activity: 2026-04-19
 

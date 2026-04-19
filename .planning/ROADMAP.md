@@ -383,6 +383,6 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 |-------|----------------|--------|-----------|
 | 117. @napplet/nub Package Foundation | 3/3 | Complete    | 2026-04-19 |
 | 118. Deprecation Re-Export Shims | 3/3 | Complete    | 2026-04-19 |
-| 119. Internal Consumer Migration | 2/2 | Complete   | 2026-04-19 |
+| 119. Internal Consumer Migration | 2/2 | Complete    | 2026-04-19 |
 | 120. Documentation Update | 0/TBD | Not started | - |
 | 121. Verification & Sign-Off | 0/TBD | Not started | - |
