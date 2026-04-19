@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with relay, ipc, storage, keys, media, notify, identity, config, and shell sub-objects
+3. Once registered, `window.napplet` is populated with relay, ifc, storage, keys, media, notify, identity, config, and shell sub-objects
 4. No `window.nostr` is installed -- signing and encryption are mediated by the shell via `relay.publish()` and `relay.publishEncrypted()`
 
 ### Installation
@@ -42,8 +42,8 @@ const signed = await window.napplet.relay.publish({
   created_at: Math.floor(Date.now() / 1000),
 });
 
-// Listen for inter-pane events from other napplets
-const ipcSub = window.napplet.ipc.on('profile:open', (payload) => {
+// Listen for inter-frame events from other napplets
+const ifcSub = window.napplet.ifc.on('profile:open', (payload) => {
   console.log('Profile requested:', payload);
 });
 
@@ -104,7 +104,7 @@ window.napplet.config.openSettings({ section: 'appearance' });
 
 // Clean up
 sub.close();
-ipcSub.close();
+ifcSub.close();
 keySub.close();
 mediaSub.close();
 notifySub.close();
@@ -230,7 +230,7 @@ window.napplet = {
     publishEncrypted(template, recipient, encryption?): Promise<NostrEvent>;
     query(filters): Promise<NostrEvent[]>;
   },
-  ipc: {
+  ifc: {
     emit(topic, extraTags?, content?): void;
     on(topic, callback): { close(): void };
   },
@@ -301,9 +301,9 @@ Relay operations through the shell's relay pool via JSON envelope (relay.subscri
 | `publishEncrypted(template, recipient, encryption?)` | `Promise<NostrEvent>` | Send an event template to the shell for encryption, signing, and broadcast. NIP-44 default. |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: sends a relay.query envelope, resolves when results arrive. |
 
-### `window.napplet.ipc`
+### `window.napplet.ifc`
 
-Inter-pane communication between napplets via the shell.
+Inter-frame communication between napplets via the shell.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -405,7 +405,7 @@ Importing `@napplet/shim` activates a global Window type augmentation:
 // This side-effect import gives TypeScript full autocompletion for window.napplet.*
 import '@napplet/shim';
 
-// TypeScript knows about window.napplet.relay, .ipc, .storage, .keys, .media, .notify, .identity, .shell
+// TypeScript knows about window.napplet.relay, .ifc, .storage, .keys, .media, .notify, .identity, .shell
 window.napplet.relay.subscribe({ kinds: [1] }, (event) => {
   // event is typed as NostrEvent
 });
@@ -421,17 +421,17 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 
 | | `@napplet/shim` | `@napplet/sdk` |
 |---|---|---|
-| **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
+| **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ifc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
 | **Dependencies** | `@napplet/nub` (uses `@napplet/nub/<domain>/shim` subpaths internally) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
-| **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, `identity`, plus types |
+| **Named exports** | None | `relay`, `ifc`, `storage`, `keys`, `identity`, plus types |
 
 **Typical usage:** Import both -- shim for window installation, SDK for typed API access:
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys, identity } from '@napplet/sdk';
+import { relay, ifc, storage, keys, identity } from '@napplet/sdk';
 ```
 
 ## Protocol Reference
