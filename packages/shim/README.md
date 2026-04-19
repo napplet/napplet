@@ -423,7 +423,7 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 |---|---|---|
 | **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
-| **Dependencies** | `@napplet/nub-relay`, `@napplet/nub-identity`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify`, `@napplet/nub-config` | `@napplet/core` (types only) |
+| **Dependencies** | `@napplet/nub` (uses `@napplet/nub/<domain>/shim` subpaths internally) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
 | **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, `identity`, plus types |
 
