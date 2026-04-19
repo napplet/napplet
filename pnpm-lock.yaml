@@ -186,33 +186,6 @@ importers:
       '@napplet/nub':
         specifier: workspace:*
         version: link:../nub
-      '@napplet/nub-config':
-        specifier: workspace:*
-        version: link:../nubs/config
-      '@napplet/nub-identity':
-        specifier: workspace:*
-        version: link:../nubs/identity
-      '@napplet/nub-ifc':
-        specifier: workspace:*
-        version: link:../nubs/ifc
-      '@napplet/nub-keys':
-        specifier: workspace:*
-        version: link:../nubs/keys
-      '@napplet/nub-media':
-        specifier: workspace:*
-        version: link:../nubs/media
-      '@napplet/nub-notify':
-        specifier: workspace:*
-        version: link:../nubs/notify
-      '@napplet/nub-relay':
-        specifier: workspace:*
-        version: link:../nubs/relay
-      '@napplet/nub-storage':
-        specifier: workspace:*
-        version: link:../nubs/storage
-      '@napplet/nub-theme':
-        specifier: workspace:*
-        version: link:../nubs/theme
     devDependencies:
       tsup:
         specifier: ^8.5.0
@@ -229,30 +202,6 @@ importers:
       '@napplet/nub':
         specifier: workspace:*
         version: link:../nub
-      '@napplet/nub-config':
-        specifier: workspace:*
-        version: link:../nubs/config
-      '@napplet/nub-identity':
-        specifier: workspace:*
-        version: link:../nubs/identity
-      '@napplet/nub-ifc':
-        specifier: workspace:*
-        version: link:../nubs/ifc
-      '@napplet/nub-keys':
-        specifier: workspace:*
-        version: link:../nubs/keys
-      '@napplet/nub-media':
-        specifier: workspace:*
-        version: link:../nubs/media
-      '@napplet/nub-notify':
-        specifier: workspace:*
-        version: link:../nubs/notify
-      '@napplet/nub-relay':
-        specifier: workspace:*
-        version: link:../nubs/relay
-      '@napplet/nub-storage':
-        specifier: workspace:*
-        version: link:../nubs/storage
     devDependencies:
       tsup:
         specifier: ^8.5.0

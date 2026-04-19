@@ -21,15 +21,7 @@
   },
   "dependencies": {
     "@napplet/core": "workspace:*",
-    "@napplet/nub": "workspace:*",
-    "@napplet/nub-relay": "workspace:*",
-    "@napplet/nub-identity": "workspace:*",
-    "@napplet/nub-storage": "workspace:*",
-    "@napplet/nub-ifc": "workspace:*",
-    "@napplet/nub-keys": "workspace:*",
-    "@napplet/nub-media": "workspace:*",
-    "@napplet/nub-notify": "workspace:*",
-    "@napplet/nub-config": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
