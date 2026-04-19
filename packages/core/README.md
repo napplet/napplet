@@ -269,7 +269,7 @@ for (const cap of ALL_CAPABILITIES) {
 
 #### `Subscription`
 
-Handle returned by `relay.subscribe()` and `ipc.on()`.
+Handle returned by `relay.subscribe()` and `ifc.on()`.
 
 ```ts
 interface Subscription {

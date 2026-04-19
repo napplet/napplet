@@ -10,7 +10,7 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 |---------|-----|-------------|
 | [@napplet/core](packages/core) | `@napplet/core` | JSON envelope types (`NappletMessage`, `NubDomain`), NUB dispatch infrastructure (`registerNub`, `dispatch`), protocol constants and Nostr types. Imported by all other packages. |
 | [@napplet/shim](packages/shim) | `@napplet/shim` | Side-effect-only window installer for napplet iframes. Importing `@napplet/shim` installs the `window.napplet` global and registers with the shell. Sends JSON envelope messages via postMessage. Zero named exports. |
-| [@napplet/sdk](packages/sdk) | `@napplet/sdk` | Named TypeScript exports wrapping `window.napplet` for bundler consumers. Provides `relay`, `ipc`, `services`, `storage` objects plus NUB message type re-exports. |
+| [@napplet/sdk](packages/sdk) | `@napplet/sdk` | Named TypeScript exports wrapping `window.napplet` for bundler consumers. Provides `relay`, `ifc`, `services`, `storage` objects plus NUB message type re-exports. |
 | [@napplet/nub](packages/nub) | `@napplet/nub` | Consolidated NUB package. 9 domain subpaths (relay, storage, ifc, keys, theme, media, notify, identity, config) with barrel + granular (types/shim/sdk) exports. Tree-shakable (`sideEffects: false`). See [packages/nub/README.md](packages/nub/README.md) for the full subpath reference. |
 | [@napplet/vite-plugin](packages/vite-plugin) | `@napplet/vite-plugin` | Vite plugin for NIP-5D manifest generation. Computes per-file SHA-256 hashes, signs a kind 35128 manifest event at build time, and injects `requires` meta tags. |
 
@@ -31,7 +31,7 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 ```
 Shell (any compatible shell)                @napplet/shim
   ShellBridge                                window.napplet.relay (subscribe/publish/query)
-  ├── JSON envelope message routing          window.napplet.ipc   (emit/on)
+  ├── JSON envelope message routing          window.napplet.ifc   (emit/on)
   ├── Identity via message.source            window.napplet.storage (get/set/remove)
   ├── ACL enforcement                        window.napplet.shell.supports(domain)
   ├── NUB dispatch (relay/signer/storage)    window.nostr (NIP-07 proxy)
