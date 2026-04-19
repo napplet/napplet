@@ -335,7 +335,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Every deprecated package's `package.json` description begins with `[DEPRECATED]` (or equivalent) so `@deprecated` surfaces in registry UIs and editor tooltips
   3. Every deprecated package's README starts with a deprecation banner naming `@napplet/nub/<domain>` as the replacement path and identifying the planned removal milestone
   4. Building any one of the 9 deprecated packages resolves the re-export through the new `@napplet/nub` package and emits a `.d.ts` that type-identically forwards the domain's types + shim + sdk exports
-**Plans**: TBD
+**Plans:** 3 plans
+  - [ ] 118-01-PLAN.md — Reduce 9 src/index.ts to re-export shims; delete redundant source files; add deprecation banner to all 9 READMEs
+  - [ ] 118-02-PLAN.md — Rewrite 9 package.json (DEPRECATED prefix + @napplet/nub dep); stage 0.3.0 minor bump via changeset
+  - [ ] 118-03-PLAN.md — Run pnpm -r build + type-check; verify export-shape parity between deprecated packages and @napplet/nub canonical barrels
 
 ### Phase 119: Internal Consumer Migration
 **Goal**: Every internal consumer inside this monorepo — `@napplet/shim`, `@napplet/sdk`, and any demo/test code — imports from the new `@napplet/nub/<domain>` paths instead of the deprecated `@napplet/nub-<domain>` package names. The shim uses `/shim` granular subpaths; the SDK uses domain barrels to preserve its `export * as <domain>` pattern. After this phase, no first-party code depends on the deprecated package names (those names exist solely for external pinned consumers).
@@ -377,7 +380,7 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 117. @napplet/nub Package Foundation | 3/3 | Complete    | 2026-04-19 |
-| 118. Deprecation Re-Export Shims | 0/TBD | Not started | - |
+| 118. Deprecation Re-Export Shims | 0/3 | Planned | - |
 | 119. Internal Consumer Migration | 0/TBD | Not started | - |
 | 120. Documentation Update | 0/TBD | Not started | - |
 | 121. Verification & Sign-Off | 0/TBD | Not started | - |
