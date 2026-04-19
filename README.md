@@ -11,11 +11,7 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 | [@napplet/core](packages/core) | `@napplet/core` | JSON envelope types (`NappletMessage`, `NubDomain`), NUB dispatch infrastructure (`registerNub`, `dispatch`), protocol constants and Nostr types. Imported by all other packages. |
 | [@napplet/shim](packages/shim) | `@napplet/shim` | Side-effect-only window installer for napplet iframes. Importing `@napplet/shim` installs the `window.napplet` global and registers with the shell. Sends JSON envelope messages via postMessage. Zero named exports. |
 | [@napplet/sdk](packages/sdk) | `@napplet/sdk` | Named TypeScript exports wrapping `window.napplet` for bundler consumers. Provides `relay`, `ipc`, `services`, `storage` objects plus NUB message type re-exports. |
-| @napplet/nub-relay | `@napplet/nub-relay` | Relay NUB: typed JSON envelope message definitions for relay proxy operations (subscribe, publish, query). |
-| @napplet/nub-signer | `@napplet/nub-signer` | Signer NUB: typed message definitions for NIP-07/NIP-44 signing delegation. |
-| @napplet/nub-storage | `@napplet/nub-storage` | Storage NUB: typed message definitions for scoped key-value storage proxy. |
-| @napplet/nub-ifc | `@napplet/nub-ifc` | IFC NUB: typed message definitions for inter-frame communication (topic pub/sub and named channels). |
-| @napplet/nub-theme | `@napplet/nub-theme` | Theme NUB: typed message definitions for read-only shell theme access. |
+| [@napplet/nub](packages/nub) | `@napplet/nub` | Consolidated NUB package. 9 domain subpaths (relay, storage, ifc, keys, theme, media, notify, identity, config) with barrel + granular (types/shim/sdk) exports. Tree-shakable (`sideEffects: false`). See [packages/nub/README.md](packages/nub/README.md) for the full subpath reference. |
 | [@napplet/vite-plugin](packages/vite-plugin) | `@napplet/vite-plugin` | Vite plugin for NIP-5D manifest generation. Computes per-file SHA-256 hashes, signs a kind 35128 manifest event at build time, and injects `requires` meta tags. |
 
 ## Architecture
@@ -23,17 +19,9 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 ### Package Dependency Graph
 
 ```
-@napplet/shim ──► @napplet/core
-                ──► @napplet/nub-signer (types)
-                ──► @napplet/nub-ifc    (types)
-@napplet/sdk  ──► @napplet/core
-                ──► @napplet/nub-relay   (types)
-                ──► @napplet/nub-signer  (types)
-                ──► @napplet/nub-storage (types)
-                ──► @napplet/nub-ifc     (types)
-                ──► @napplet/nub-theme   (types)
-
-@napplet/nub-*   ──► @napplet/core
+@napplet/shim ──┐
+                ├──► @napplet/nub ──► @napplet/core
+@napplet/sdk  ──┘
 
 @napplet/vite-plugin  (build-time only, depends on nostr-tools)
 ```
