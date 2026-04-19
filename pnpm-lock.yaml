@@ -36,6 +36,25 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/nub:
+    dependencies:
+      '@napplet/core':
+        specifier: workspace:*
+        version: link:../core
+      json-schema-to-ts:
+        specifier: ^3.1.1
+        version: 3.1.1
+    devDependencies:
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/nubs/config:
     dependencies:
       '@napplet/core':
