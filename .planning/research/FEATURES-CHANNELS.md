@@ -1,6 +1,6 @@
 # Feature Landscape: NIP-5C Channel & Broadcast Protocol
 
-**Domain:** Low-latency authenticated IPC channels for sandboxed iframe applications
+**Domain:** Low-latency authenticated postMessage channels for sandboxed iframe applications
 **Researched:** 2026-04-05
 **Overall confidence:** MEDIUM-HIGH
 
@@ -14,10 +14,10 @@ Features napplet developers and shell implementors expect from a channel primiti
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Named channels with open/close lifecycle | Every port/channel system has this (WebExtensions `runtime.connect({name})`, Electron MessagePort, WebSocket). Without it, devs reinvent multiplexing over raw IPC. | Low | Chrome extensions, Electron, Comlink all use named channels |
-| Auth-on-open (not per-message) | Existing NIP-01 IPC wraps every message in a kind 29003 event with full signature. Channels must amortize auth to the handshake. Per-message auth is why current IPC is too heavy for real-time. | Medium | This is the core motivation for channels |
+| Named channels with open/close lifecycle | Every port/channel system has this (WebExtensions `runtime.connect({name})`, Electron MessagePort, WebSocket). Without it, devs reinvent multiplexing over raw postMessage. | Low | Chrome extensions, Electron, Comlink all use named channels |
+| Auth-on-open (not per-message) | Existing NIP-01 IFC wraps every message in a kind 29003 event with full signature. Channels must amortize auth to the handshake. Per-message auth is why current IFC is too heavy for real-time. | Medium | This is the core motivation for channels |
 | Graceful close with notification | Both sides must know when the other disconnects. WebExtensions fire `Port.onDisconnect`. Electron MessagePort fires `close` event. Without this, leaked subscriptions and zombie channels. | Low | `onDisconnect` / `close` event pattern is universal |
-| Bidirectional message flow | All reference systems are bidirectional once the channel is open: WebExtensions Port, Electron MessagePort, Comlink endpoints. One-way channels are an anti-pattern for IPC. | Low | Not negotiable |
+| Bidirectional message flow | All reference systems are bidirectional once the channel is open: WebExtensions Port, Electron MessagePort, Comlink endpoints. One-way channels are an anti-pattern for postMessage. | Low | Not negotiable |
 | Shell as broker (no direct iframe-to-iframe) | Sandboxed iframes without `allow-same-origin` cannot reference each other's `contentWindow` to transfer MessagePorts directly. Shell must mediate channel setup. | Low | Hard constraint from sandbox policy |
 | Channel identity (who opened it) | Both ends need to know the authenticated identity (napp pubkey / dTag) of their peer. Without this, channels are anonymous pipes with no ACL applicability. | Low | Shell already tracks session identity via SessionRegistry |
 | Structured message payload | Messages on an open channel need a defined envelope. JSON is the pragmatic choice -- the wire already uses JSON arrays. Binary payloads can be base64-encoded in content field. | Low | Keep consistent with NIP-01 JSON arrays |
@@ -27,11 +27,11 @@ Features napplet developers and shell implementors expect from a channel primiti
 
 ## Differentiators
 
-Features that set the napplet channel protocol apart from generic IPC. Not strictly expected, but create real value.
+Features that set the napplet channel protocol apart from generic postMessage. Not strictly expected, but create real value.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Custom wire format after AUTH (non-NIP-01) | The core value proposition. Current IPC wraps everything in NIP-01 events (kind 29003 with signatures, pubkeys, timestamps). Channels drop to a minimal envelope after auth, eliminating per-message signing overhead. Estimated savings: ~400-600 bytes per message + Schnorr signature computation. | Medium | Must define the post-auth envelope format precisely |
+| Custom wire format after AUTH (non-NIP-01) | The core value proposition. Current IFC wraps everything in NIP-01 events (kind 29003 with signatures, pubkeys, timestamps). Channels drop to a minimal envelope after auth, eliminating per-message signing overhead. Estimated savings: ~400-600 bytes per message + Schnorr signature computation. | Medium | Must define the post-auth envelope format precisely |
 | MessagePort upgrade path (optional, MAY) | After auth handshake over postMessage, shell transfers a `MessagePort` to each endpoint. Subsequent data flows over the dedicated port, bypassing the shell's global message listener and dispatch logic. | High | Works with sandboxed iframes (port transfer via postMessage third argument). Browser-specific perf varies. Shell must maintain a port registry. Spec as MAY. |
 | Channel capability gating | Shell gates `CH_OPEN` by ACL. A napplet without a `channel:connect` capability cannot open channels. Can be further restricted to specific peer dTags. | Medium | Extends existing ACL system naturally |
 | Selective broadcast (channel groups) | Broadcast to a named group of channels rather than all. Analogous to WebExtensions `runtime.connect({name: "mixer"})` -- only channels in the "mixer" group receive. | Medium | DAW use case: BPM sync to "transport" group only |
@@ -47,7 +47,7 @@ Features to explicitly NOT build. These are traps, based on framework analysis a
 |--------------|-----------|-------------------|
 | Direct iframe-to-iframe MessagePort transfer | Cannot work without `allow-same-origin`. Even if it could, bypasses shell ACL and audit trail. The shell MUST remain the broker for security and observability. | Shell creates MessageChannel, transfers port1 to initiator, port2 to target. Shell retains knowledge of both ends. |
 | SharedArrayBuffer for shared state | Requires COOP (`Cross-Origin-Opener-Policy: same-origin`) + COEP (`Cross-Origin-Embedder-Policy: require-corp`) headers on the entire document chain -- top-level page AND all iframes. This is an invasive deployment requirement that breaks many hosting setups (CDNs, third-party resources). Opaque-origin iframes (no `allow-same-origin`) cannot create cross-context SABs. | Use postMessage for all data transfer. For large binary data (audio buffers, state snapshots), use Transferable ArrayBuffers (zero-copy, no COOP/COEP needed). |
-| WebRTC DataChannel for local IPC | Massive API surface (ICE candidates, DTLS handshake, SCTP) for a problem postMessage already solves at comparable latency. Local loopback latency is 0-2ms in Chrome (same as postMessage). Firefox historically had 40-100ms local DataChannel latency due to Nagle's algorithm. Adds ~100KB of WebRTC stack. | postMessage + optional MessagePort upgrade. |
+| WebRTC DataChannel for local iframe messaging | Massive API surface (ICE candidates, DTLS handshake, SCTP) for a problem postMessage already solves at comparable latency. Local loopback latency is 0-2ms in Chrome (same as postMessage). Firefox historically had 40-100ms local DataChannel latency due to Nagle's algorithm. Adds ~100KB of WebRTC stack. | postMessage + optional MessagePort upgrade. |
 | BroadcastChannel API | Throws `SecurityError DOMException` in sandboxed iframes without `allow-same-origin` (confirmed: WHATWG HTML issue #1319, Chromium blink-dev PSA). Opaque origins cannot create matching BroadcastChannel instances across browsing contexts. Dead end. | Route broadcast through the shell. Shell iterates open channels and forwards. |
 | Per-message cryptographic signatures on channels | The whole point of channels is eliminating the overhead of kind 29003's per-message event signing. Auth on open, then trust the channel. | AUTH handshake on channel open (reuse existing session AUTH identity). After that, messages are trusted because they arrive on an authenticated channel. Shell verifies message source via `MessageEvent.source` (postMessage) or port ownership (MessagePort). |
 | Comlink-style transparent proxy RPC | Hides message-passing behind ES6 Proxies. Convenient but opaque -- developers need to understand they are crossing a postMessage boundary for debugging and performance reasoning. Also, Comlink's proxy model does not compose well with manual channel lifecycle management. | Provide explicit `channel.send()` / `channel.on()` API. Keep the "I am sending a message" mental model. RPC libraries can be built on top by userland (Comlink already supports arbitrary MessagePort endpoints via `MessageChannelAdapter`). |
@@ -174,7 +174,7 @@ These numbers establish whether the protocol needs a MessagePort upgrade path or
 
 3. **Transferable ArrayBuffers are the answer for binary data.** Zero-copy transfer eliminates the ~300ms structured clone penalty for large buffers. No COOP/COEP deployment burden. The spec should mention Transferable support as a MAY optimization.
 
-4. **The real latency savings come from removing application-layer overhead**, not from changing the transport. Current kind 29003 IPC costs: event object construction, Schnorr signature computation, JSON serialization of a full NIP-01 event, filter matching on the shell side. The channel wire format (`["CH", id, payload]`) eliminates all of this. This is where 10-100x improvement comes from, not from postMessage vs MessagePort.
+4. **The real latency savings come from removing application-layer overhead**, not from changing the transport. Current kind 29003 IFC costs: event object construction, Schnorr signature computation, JSON serialization of a full NIP-01 event, filter matching on the shell side. The channel wire format (`["CH", id, payload]`) eliminates all of this. This is where 10-100x improvement comes from, not from postMessage vs MessagePort.
 
 5. **Startup latency matters.** During iframe loading, postMessage can be 10-70ms (Firefox). Channel implementations should account for this by queuing early messages (matching Figma's pattern).
 
@@ -182,7 +182,7 @@ These numbers establish whether the protocol needs a MessagePort upgrade path or
 
 ## Wire Format: Post-Auth Channel Messages
 
-### Current IPC (kind 29003) -- The Overhead Channels Eliminate
+### Current IFC (kind 29003) -- The Overhead Channels Eliminate
 
 ```json
 ["EVENT", {
