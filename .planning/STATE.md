@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.26.0
 milestone_name: Better Packages
-status: executing
-stopped_at: Completed 117-02-PLAN.md
-last_updated: "2026-04-19T13:06:54.384Z"
+status: verifying
+stopped_at: Completed 117-03-PLAN.md
+last_updated: "2026-04-19T13:13:10.416Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 67
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-19)
 
 ## Current Position
 
-Phase: 117 (@napplet/nub Package Foundation) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
+Phase: 117 (@napplet/nub Package Foundation) — COMPLETE (ready for verification)
+Plan: 3 of 3 (all plans complete)
+Status: Phase complete — ready for verification
 Last activity: 2026-04-19
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100% (Phase 117 plans complete; milestone progress across 5 phases pending)
 
 ## Accumulated Context
 
@@ -53,6 +53,7 @@ Progress: [███████░░░] 67%
 - v0.26.0 (Phase 117-01): `@napplet/nub` tsconfig extends `../../tsconfig.json` (2 levels), not `../../../` — packages/nub/ sits directly under packages/, unlike packages/nubs/<domain>/ which is 3 levels deep
 - v0.26.0 (Phase 117-02): Theme NUB is types-only today (index.ts + types.ts only). Total @napplet/nub exports = 34, not 36. Phantom `./theme/shim` and `./theme/sdk` entries removed from Plan 117-01's package.json + tsup.config.ts in the same commit as the 34-file source copy. Option A selected at checkpoint — matches upstream reality, preserves Phase 117 "no behavioral migration" boundary. Supersedes the earlier v0.26.0 "36 subpath exports" decision above.
 - v0.26.0 (Phase 117-02): registerNub asymmetry preserved — 8/9 domain barrels call `registerNub(DOMAIN, ...)` (identity, ifc, keys, media, notify, relay, storage, theme); config stays side-effect-free (integration happens in central shim per @napplet/nub-config pattern). Theme barrel registers normally.
+- v0.26.0 (Phase 117-03): @napplet/nub initial tsup build green — 68 primary emitted files (34 .js + 34 .d.ts) plus 25 shared `chunk-*.js` files from tsup code-splitting. Root `@napplet/nub` import fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` (EXP-04 runtime-verified from a real consumer context, not just by package.json inspection). All 9 `<domain>/types.js` emits are free of runtime `@napplet/core` imports (`import type` erased as expected). registerNub asymmetry preserved at runtime: 8 domains register (identity, ifc, keys, media, notify, relay, storage, theme), config does not. Theme/shim + theme/sdk correctly fail to resolve per Option A. Phase 117 is complete; ready for Phase 118 (deprecation re-export shims).
 
 ### Blockers/Concerns
 
@@ -67,6 +68,6 @@ Progress: [███████░░░] 67%
 
 ## Session Continuity
 
-Last session: 2026-04-19T13:06:54.381Z
-Stopped at: Completed 117-02-PLAN.md
-Resume: Run `/gsd:execute-phase 117` to execute plan 3 of 3 (first build of @napplet/nub via tsup).
+Last session: 2026-04-19T13:13:10.413Z
+Stopped at: Completed 117-03-PLAN.md
+Resume: Phase 117 complete. Next: `/gsd:verify-phase 117` (or advance to Phase 118 — Deprecation Re-Export Shims — once verification passes).

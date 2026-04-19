@@ -303,7 +303,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Consolidate the 9 separate `@napplet/nub-*` packages (relay, storage, ifc, keys, theme, media, notify, identity, config) into a single tree-shakable `@napplet/nub` package with per-domain barrel + granular subpath exports. Ship the old packages as 1-line deprecation re-export shims for one release cycle so every pinned consumer keeps working. Migrate internal consumers and all docs to the new paths.
 
-- [ ] **Phase 117: @napplet/nub Package Foundation** - Scaffold packages/nub/ with 9 domain subdirectories, exports map for all 36 entry points, tsup build, and sideEffects:false tree-shaking contract
+- [x] **Phase 117: @napplet/nub Package Foundation** - Scaffold packages/nub/ with 9 domain subdirectories, exports map for all 36 entry points, tsup build, and sideEffects:false tree-shaking contract (completed 2026-04-19)
 - [ ] **Phase 118: Deprecation Re-Export Shims** - Convert the 9 `@napplet/nub-<domain>` packages into 1-line re-export shims with @deprecated markers and banner READMEs
 - [ ] **Phase 119: Internal Consumer Migration** - Rewire @napplet/shim, @napplet/sdk, and in-repo demos/tests to import from `@napplet/nub/<domain>` paths
 - [ ] **Phase 120: Documentation Update** - New @napplet/nub README, updated package READMEs, NIP-5D example imports, and skills/ directory examples point at new subpaths
@@ -321,10 +321,10 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `packages/nub/package.json` `exports` field maps all 36 entry points — 9 `./` + `<domain>` barrels plus 27 `./<domain>/{types,shim,sdk}` granular paths — each with `types` and `import` conditions
   4. There is no root `.` export — a consumer writing `import ... from '@napplet/nub'` fails to resolve, forcing domain-specific subpath imports
   5. `pnpm --filter @napplet/nub build` exits 0 and emits one ESM `.js` + co-located `.d.ts` per entry point; `pnpm --filter @napplet/nub type-check` exits 0
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
   - [x] 117-01-PLAN.md — Scaffold packages/nub/ with package.json (36-entry exports map, no root export), tsconfig, tsup.config.ts (36 entry keys), and empty src/
   - [x] 117-02-PLAN.md — Copy all 9 NUB domains' source trees verbatim into packages/nub/src/<domain>/{index,types,shim,sdk}.ts (36 files total)
-  - [ ] 117-03-PLAN.md — Build @napplet/nub, type-check, verify every exports entry resolves + root @napplet/nub fails to resolve (EXP-04 runtime enforcement)
+  - [x] 117-03-PLAN.md — Build @napplet/nub, type-check, verify every exports entry resolves + root @napplet/nub fails to resolve (EXP-04 runtime enforcement)
 
 ### Phase 118: Deprecation Re-Export Shims
 **Goal**: Every one of the 9 existing `@napplet/nub-<domain>` packages is converted into a 1-line re-export shim that forwards to `@napplet/nub/<domain>`, is marked `@deprecated` in its `package.json`, and carries a top-of-README banner pointing at the new import path and stating the removal milestone. Pinned consumers of the old package names continue to work with zero behavioral change; existing imports do not need to be touched to keep building.
@@ -376,7 +376,7 @@ Phases execute in numeric order: 117 → 118 → 119 → 120 → 121
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 117. @napplet/nub Package Foundation | 2/3 | In Progress|  |
+| 117. @napplet/nub Package Foundation | 3/3 | Complete   | 2026-04-19 |
 | 118. Deprecation Re-Export Shims | 0/TBD | Not started | - |
 | 119. Internal Consumer Migration | 0/TBD | Not started | - |
 | 120. Documentation Update | 0/TBD | Not started | - |

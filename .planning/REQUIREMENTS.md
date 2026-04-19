@@ -22,8 +22,8 @@ Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable
 
 ### Build
 
-- [ ] **BUILD-01**: `tsup` config emits one ESM file per entry point with co-located `.d.ts`
-- [ ] **BUILD-02**: Build completes with zero TypeScript errors; every subpath emits a `.d.ts`
+- [x] **BUILD-01**: `tsup` config emits one ESM file per entry point with co-located `.d.ts`
+- [x] **BUILD-02**: Build completes with zero TypeScript errors; every subpath emits a `.d.ts`
 
 ### Deprecation Shims
 
@@ -87,8 +87,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | EXP-02      | 117   | Complete |
 | EXP-03      | 117   | Complete |
 | EXP-04      | 117   | Complete |
-| BUILD-01    | 117   | Pending |
-| BUILD-02    | 117   | Pending |
+| BUILD-01    | 117   | Complete |
+| BUILD-02    | 117   | Complete |
 | MIG-01      | 118   | Pending |
 | MIG-02      | 118   | Pending |
 | MIG-03      | 118   | Pending |
