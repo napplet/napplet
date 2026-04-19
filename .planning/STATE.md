@@ -4,7 +4,7 @@ milestone: v0.27.0
 milestone_name: IFC Terminology Lock-In
 status: Milestone ready for audit — all 3 phases + 5 plans shipped
 stopped_at: "Completed 124-01-PLAN.md (Phase 124 Verification & Sign-Off — VER-01/VER-02 satisfied; v0.27.0 ready for /gsd:audit-milestone)"
-last_updated: "2026-04-19T23:28:29.594Z"
+last_updated: "2026-04-19T23:32:55.163Z"
 last_activity: 2026-04-19
 progress:
   total_phases: 3

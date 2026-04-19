@@ -1,5 +1,19 @@
 # Milestones
 
+## v0.27.0 IFC Terminology Lock-In (Shipped: 2026-04-19)
+
+**Phases completed:** 3 phases, 5 plans, 17 tasks
+
+**Key accomplishments:**
+
+- Renamed the developer-facing runtime API from `ipc` to `ifc` across @napplet/core, @napplet/shim, @napplet/sdk, and @napplet/nub/ifc — hard break with no backward-compat alias, localized build + type-check green across all four packages.
+- Four published READMEs (root + core + shim + sdk) swept to IFC terminology via 20 literal token-swap edits — zero structural rewrites, zero source files touched, zero `.planning/` drift, zero-leakage grep clean.
+- `skills/build-napplet/SKILL.md` swept to IFC terminology via 2 literal frontmatter edits + 1 scoped Step 8 block-rewrite + 1 pitfalls bullet update — zero IFC leakage in the skill file, cold-reading agents now write `window.napplet.ifc.emit/on` against the Phase 122 surface.
+- Active `.planning/` surface swept to IFC + accurate-transport terminology via 28 literal edits across 7 files — 18 codebase prose swaps + 2 TESTING.md transport-description swaps + 1 research code-fence swap + 9 FEATURES-CHANNELS.md swaps (2 plan-specified + 7 Rule 2 deviation extension). Seven documented-exception files preserved byte-identical. Phase 124 inherits a transparent trade-off record in 123-03-NOTES.md.
+- `pnpm -r build` + `pnpm -r type-check` green across all 14 workspace packages; first-party-surface zero-grep clean (0 matches) across `packages/`, `specs/`, `skills/`, `README.md`, `.planning/codebase/`; 55 self-describing planning-doc matches path-excluded per 123-03-NOTES.md Option (a) and captured for audit transparency. v0.27.0 IFC Terminology Lock-In milestone mechanically proven complete; ready for `/gsd:audit-milestone`.
+
+---
+
 ## v0.26.0 Better Packages (Shipped: 2026-04-19)
 
 **Phases completed:** 5 phases, 12 plans, 24 tasks
