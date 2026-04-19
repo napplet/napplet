@@ -29,7 +29,7 @@ Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable
 
 - [x] **MIG-01**: Each of the 9 `@napplet/nub-<domain>` packages keeps its published name and becomes a 1-line re-export of `@napplet/nub/<domain>` (zero behavioral change for existing consumers)
 - [x] **MIG-02**: Each deprecated package adds a top-of-README deprecation banner pointing to `@napplet/nub/<domain>` and states the removal milestone
-- [ ] **MIG-03**: Each deprecated package adds `@deprecated` to its `package.json` description + publishes one more version
+- [x] **MIG-03**: Each deprecated package adds `@deprecated` to its `package.json` description + publishes one more version
 
 ### Internal Consumer Migration
 
@@ -91,7 +91,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | BUILD-02    | 117   | Complete |
 | MIG-01      | 118   | Complete |
 | MIG-02      | 118   | Complete |
-| MIG-03      | 118   | Pending |
+| MIG-03      | 118   | Complete |
 | CONS-01     | 119   | Pending |
 | CONS-02     | 119   | Pending |
 | CONS-03     | 119   | Pending |
