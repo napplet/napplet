@@ -19,7 +19,7 @@
 
 ### Public Documentation
 
-- [ ] **DOC-01**: Root `README.md` + `packages/core/README.md` + `packages/shim/README.md` + `packages/sdk/README.md` updated — no `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" (except historical "shipped" changelog lines where renaming would distort history). Sample code in code fences uses `ifc`.
+- [x] **DOC-01**: Root `README.md` + `packages/core/README.md` + `packages/shim/README.md` + `packages/sdk/README.md` updated — no `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" (except historical "shipped" changelog lines where renaming would distort history). Sample code in code fences uses `ifc`.
 - [ ] **DOC-02**: `skills/build-napplet/SKILL.md` updated — description frontmatter, body prose, and all code samples aligned with `ifc` / "inter-frame" terminology.
 
 ### Active Planning Sweep
@@ -52,7 +52,7 @@ Every requirement maps to exactly one phase. Coverage: 8/8.
 | API-01 | Phase 122 (Source Rename) | Complete |
 | API-02 | Phase 122 (Source Rename) | Complete |
 | SRC-01 | Phase 122 (Source Rename) | Complete |
-| DOC-01 | Phase 123 (Documentation Sweep) | Pending |
+| DOC-01 | Phase 123 (Documentation Sweep) | Complete |
 | DOC-02 | Phase 123 (Documentation Sweep) | Pending |
 | PLAN-01 | Phase 123 (Documentation Sweep) | Pending |
 | VER-01 | Phase 124 (Verification & Sign-Off) | Pending |

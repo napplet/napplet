@@ -343,7 +343,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. Active planning docs (`PROJECT.md`, `STATE.md`, `ROADMAP.md`, `.planning/codebase/*.md`, `.planning/research/*.md`, `.planning/SPEC-GAPS.md`) reflect IFC terminology; archived `.planning/milestones/` and `.planning/quick/` directories are untouched.
   4. A reader sweeping the docs after this phase sees IFC everywhere current and IPC nowhere except inside explicitly historical quote blocks.
 **Plans**: 3 plans
-- [ ] 123-01-PLAN.md — Sweep 4 package READMEs (root + core + shim + sdk) for IFC terminology (DOC-01)
+- [x] 123-01-PLAN.md — Sweep 4 package READMEs (root + core + shim + sdk) for IFC terminology (DOC-01)
 - [ ] 123-02-PLAN.md — Sweep skills/build-napplet/SKILL.md frontmatter + Step 8 + pitfalls for IFC terminology (DOC-02)
 - [ ] 123-03-PLAN.md — Sweep active .planning/codebase/ + research/ for current-tense IFC terminology; preserve dated historical content (PLAN-01)
 
@@ -366,5 +366,5 @@ Phases execute in numeric order: 122 → 123 → 124
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 122. Source Rename | 1/1 | Complete    | 2026-04-19 |
-| 123. Documentation Sweep | 0/3 | Not started | - |
+| 123. Documentation Sweep | 1/3 | In Progress|  |
 | 124. Verification & Sign-Off | 0/TBD | Not started | - |
