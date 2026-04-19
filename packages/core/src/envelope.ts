@@ -50,7 +50,7 @@ export interface NappletMessage {
  * | `relay`    | NIP-01 relay proxy (subscribe, publish)   |
  * | `identity` | Read-only user identity queries           |
  * | `storage`  | Scoped key-value storage proxy            |
- * | `ifc`      | Inter-frame communication (IPC peer bus)  |
+ * | `ifc`      | Inter-frame communication (IFC peer bus)  |
  * | `theme`    | Theme tokens and appearance settings      |
  * | `keys`     | Keyboard forwarding and action keybindings|
  * | `media`    | Media session control and playback        |

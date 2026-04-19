@@ -1,19 +1,19 @@
 /**
- * @napplet/core — Topic constants for the napplet IPC-PEER event bus.
+ * @napplet/core — Topic constants for the napplet IFC-PEER event bus.
  *
- * These constants define the topic strings used in IPC-PEER
+ * These constants define the topic strings used in IFC-PEER
  * events for shell commands, state operations, audio,
  * and UI coordination.
  */
 
 /**
- * Built-in topic constants for the napplet shell IPC-PEER protocol.
+ * Built-in topic constants for the napplet shell IFC-PEER protocol.
  *
  * @example
  * ```ts
  * import { TOPICS } from '@napplet/core';
  *
- * // Open a profile view via IPC-PEER
+ * // Open a profile view via IFC-PEER
  * shim.publish({ kind: 29003, tags: [['t', TOPICS.PROFILE_OPEN]], content: '{}' });
  * ```
  *

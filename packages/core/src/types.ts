@@ -49,7 +49,7 @@ export interface NostrFilter {
 // ─── Shim API Types ──────────────────────────────────────────────────────────
 
 /**
- * Subscription handle returned by relay.subscribe() and ipc.on().
+ * Subscription handle returned by relay.subscribe() and ifc.on().
  * Call close() to unsubscribe and stop receiving events.
  *
  * @example
@@ -142,18 +142,18 @@ export interface NappletGlobal {
     query(filters: NostrFilter | NostrFilter[]): Promise<NostrEvent[]>;
   };
   /**
-   * Inter-napplet pubsub: broadcast and receive IPC-PEER events through the shell.
+   * Inter-frame pubsub: broadcast and receive IFC-PEER events through the shell.
    */
-  ipc: {
+  ifc: {
     /**
-     * Broadcast an IPC-PEER event to other napplets via the shell.
+     * Broadcast an IFC-PEER event to other napplets via the shell.
      * @param topic      The 't' tag value (e.g., 'profile:open')
      * @param extraTags  Additional NIP-01 tags beyond the 't' tag (default: [])
      * @param content    Event content (default: empty string)
      */
     emit(topic: string, extraTags?: string[][], content?: string): void;
     /**
-     * Subscribe to IPC-PEER events on a specific topic.
+     * Subscribe to IFC-PEER events on a specific topic.
      * @param topic     The 't' tag value to listen for
      * @param callback  Called with `(payload, event)` for each matching event
      * @returns A Subscription handle with a `close()` method
