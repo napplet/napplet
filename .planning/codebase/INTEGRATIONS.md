@@ -7,7 +7,7 @@
 **Nostr Wire Format (NIP-01):**
 - All communication between shell and napplet uses NIP-01 (event/request/close messages) via `postMessage`
 - Shell acts as a "pseudo-relay" (`PSEUDO_RELAY_URI = 'hyprgate://shell'`) that napplets connect to
-- Napplet sends REQ/EVENT/CLOSE messages; shell routes to real relays, local cache, or inter-pane subscriptions
+- Napplet sends REQ/EVENT/CLOSE messages; shell routes to real relays, local cache, or inter-frame subscriptions
 
 **Authentication (NIP-42):**
 - Challenge-response handshake during napplet registration
@@ -22,7 +22,7 @@
 - Optional signature with `VITE_DEV_PRIVKEY_HEX`
 - Implementation: `packages/vite-plugin/src/index.ts`
 
-**Inter-Pane Events (NIP-29003):**
+**Inter-Frame Events (NIP-29003):**
 - Custom kind 29003 for napplet-to-napplet pub/sub via shell
 - Topics tagged with 't' tag
 - Enables napplets to communicate (profile open, stream channel switch, etc.)
@@ -44,7 +44,7 @@
 **Scoped Storage (nappStorage):**
 - Per-napplet localStorage proxy scoped by `nappType:aggregateHash`
 - 512 KB default quota per napplet (DEFAULT_STORAGE_QUOTA)
-- Shell routes GET/SET/REMOVE/CLEAR operations via inter-pane messages
+- Shell routes GET/SET/REMOVE/CLEAR operations via inter-frame messages
 - Cannot read other napplets' storage; iframes cannot access shell's localStorage
 - Implementation: `packages/shim/src/storage-shim.ts`, `packages/shell/src/storage-proxy.ts`
 

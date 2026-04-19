@@ -17,7 +17,7 @@
 ## Layers
 
 **Napplet Layer (@napplet/shim):**
-- Purpose: SDK for sandboxed iframe applications. Provides high-level relay API, NIP-07 proxy, inter-pane pubsub, storage proxy client
+- Purpose: SDK for sandboxed iframe applications. Provides high-level relay API, NIP-07 proxy, inter-frame pubsub, storage proxy client
 - Location: `packages/shim/src/`
 - Contains: `subscribe`, `publish`, `query`, `emit`, `on`, `nappStorage` APIs; relay message shim; NIP-07/NIP-44 signer proxy; storage client; keyboard forwarding
 - Depends on: nostr-tools (peer dependency) for event signing
@@ -41,7 +41,7 @@
 
 **Support Services:**
 - **Audio Manager** (`packages/shell/src/audio-manager.ts`): Manages web audio context and plays notification sounds from ephemeral audio sources
-- **Topics** (`packages/shell/src/topics.ts`): Command constants for shell inter-pane routing (e.g., `shell:storage-get`, `shell:relay-scoped-connect`)
+- **Topics** (`packages/shell/src/topics.ts`): Command constants for shell inter-frame routing (e.g., `shell:storage-get`, `shell:relay-scoped-connect`)
 
 **Build Plugin:**
 - **Vite Plugin** (`packages/vite-plugin/src/index.ts`): Build-time manifest generation. Computes per-file SHA-256 hashes, aggregate hash, signs kind 35128 manifest event, injects meta tags into index.html
@@ -55,7 +55,7 @@
 3. Shell's pseudo-relay receives message, validates event signature
 4. ACL check: does napplet pubkey:dTag:aggregateHash have `relay:write` capability?
 5. Replay check: is event creation timestamp recent? Is event ID new?
-6. Router decision: special topic (storage, inter-pane) → proxy handler; normal event → relay pool publish
+6. Router decision: special topic (storage, inter-frame) → proxy handler; normal event → relay pool publish
 7. Shell publishes to selected relay URLs or stores in local cache
 
 **Shell → Napplet (subscribe/query):**
@@ -77,7 +77,7 @@
 5. Shell registers in NappKeyRegistry, initializes ACL entry
 6. Shell posts `['REQ', '__signer__', { kinds: [29002] }]` to enable signer response delivery
 
-**Inter-pane Pubsub (topics):**
+**Inter-frame Pubsub (topics):**
 
 1. Napplet A calls `emit('profile:open', [], JSON.stringify({ pubkey: '...' }))`
 2. @napplet/shim signs kind 29003 event with tag ['t', 'profile:open'], posts to shell
@@ -91,7 +91,7 @@
 3. Shell proxy handler intercepts, looks up pubkey:dTag:aggregateHash, computes scoped key
 4. Shell checks `storage:read` or `storage:write` ACL capability
 5. Shell reads/writes to shell's localStorage at scoped key `napp-storage:${pubkey}:${dTag}:${aggregateHash}:${userKey}`
-6. Shell returns response via inter-pane event
+6. Shell returns response via inter-frame event
 
 ## Key Abstractions
 

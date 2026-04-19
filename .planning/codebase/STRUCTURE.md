@@ -65,7 +65,7 @@ napplet/                               # Root monorepo
 
 **packages/shim:**
 - Purpose: Napplet-side SDK for iframe applications
-- Contains: Relay API, inter-pane pubsub, NIP-07 proxy, storage client, keypair management
+- Contains: Relay API, inter-frame pubsub, NIP-07 proxy, storage client, keypair management
 - Key files: `index.ts` (public API), `relay-shim.ts` (subscribe/publish), `napp-keypair.ts` (session key)
 
 **packages/shell:**
@@ -146,7 +146,7 @@ napplet/                               # Root monorepo
 - `createPseudoRelay()` — Factory function (camelCase)
 - `handleMessage()`, `sendChallenge()`, `injectEvent()` — Pseudo-relay methods
 - `subscribe()`, `publish()`, `query()` — Napplet API (camelCase, verb-first)
-- `emit()`, `on()` — Inter-pane pubsub (camelCase, lowercase)
+- `emit()`, `on()` — Inter-frame pubsub (camelCase, lowercase)
 - `nappStorage` — Global storage proxy object (lowercase)
 - `BusKind` — Constants object (PascalCase)
 - `PSEUDO_RELAY_URI`, `PROTOCOL_VERSION`, `AUTH_KIND` — Constants (UPPER_SNAKE_CASE)

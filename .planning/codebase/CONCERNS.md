@@ -19,7 +19,7 @@
 **Missing event ID validation:**
 - Issue: Event IDs injected by `injectEvent()` in `packages/shell/src/pseudo-relay.ts` (line 600) are not cryptographically valid. They are generated as `crypto.randomUUID().replace(/-/g, '').slice(0, 64).padEnd(64, '0')` — this is a fake hex string, not a real SHA-256 hash. Napplets may try to verify these event IDs and fail.
 - Files: `packages/shell/src/pseudo-relay.ts` lines 598-607
-- Impact: Shell-injected inter-pane events fail signature/hash verification. Napplets expecting valid event IDs may reject them.
+- Impact: Shell-injected inter-frame events fail signature/hash verification. Napplets expecting valid event IDs may reject them.
 - Fix approach: Either (a) compute real SHA-256 hash of event fields, or (b) document that shell-injected events are unsigned/unverified and should not be trusted for identity claims.
 
 **Permissive ACL default (security risk):**
@@ -96,11 +96,11 @@
 
 ## Fragile Areas
 
-**Inter-pane event delivery with no ordering guarantee:**
+**Inter-frame event delivery with no ordering guarantee:**
 - Files: `packages/shell/src/pseudo-relay.ts` lines 96-112
 - Why fragile: Events are delivered to all subscribers that match filters, but no guarantee of order across multiple napplets. A napplet might receive events out of order, causing state inconsistency if it assumes causality.
 - Safe modification: Document event ordering assumptions clearly. Add sequence numbers or causal tracking if order is critical. Test subscription delivery order in integration tests (currently missing).
-- Test coverage: None. No test for multi-subscriber inter-pane event delivery.
+- Test coverage: None. No test for multi-subscriber inter-frame event delivery.
 
 **Storage proxy response parsing is trusting:**
 - Files: `packages/shim/src/storage-shim.ts` lines 41-68
@@ -123,8 +123,8 @@
 ## Scaling Limits
 
 **Ring buffer capped at 100 events:**
-- Current capacity: 100 inter-pane events in memory
-- Limit: Beyond 100 events, old events drop off silently. Long-running shells with lots of inter-pane traffic lose history.
+- Current capacity: 100 inter-frame events in memory
+- Limit: Beyond 100 events, old events drop off silently. Long-running shells with lots of inter-frame traffic lose history.
 - Scaling path: Make buffer size configurable. Implement disk-backed or worker-relay backed event store. Add compression.
 
 **localStorage size limit for ACL and manifest cache:**
@@ -156,7 +156,7 @@
 - Blocks: Efficient napplet batch initialization. Bulk capability grants at startup.
 
 **No subscription filters on napp type/dTag:**
-- Problem: Napples can subscribe to any inter-pane event from any other napp. There's no built-in capability to restrict napplets to events from specific napp types (e.g., only listen to events from `type:chat`).
+- Problem: Napples can subscribe to any inter-frame event from any other napp. There's no built-in capability to restrict napplets to events from specific napp types (e.g., only listen to events from `type:chat`).
 - Blocks: Privacy-preserving napplet ecosystems. Napplets currently must check source pubkey manually.
 
 **No key rotation for napp ephemeral keypair:**
