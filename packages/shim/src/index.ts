@@ -122,7 +122,7 @@ installIfcShim();
     publishEncrypted,
     query,
   },
-  ipc: {
+  ifc: {
     emit,
     on,
   },
