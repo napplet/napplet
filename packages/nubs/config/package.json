@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub-config",
   "version": "0.2.1",
-  "description": "NUB-CONFIG message types and shim methods for per-napplet declarative configuration",
+  "description": "[DEPRECATED] Use @napplet/nub/config instead. NUB-CONFIG message types and shim methods for per-napplet declarative configuration",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",

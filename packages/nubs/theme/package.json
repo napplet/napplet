@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub-theme",
   "version": "0.2.1",
-  "description": "NUB-THEME message types for shell-provided theming",
+  "description": "[DEPRECATED] Use @napplet/nub/theme instead. NUB-THEME message types for shell-provided theming",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

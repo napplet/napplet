@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub-media",
   "version": "0.2.1",
-  "description": "NUB-MEDIA message types for media session control and playback",
+  "description": "[DEPRECATED] Use @napplet/nub/media instead. NUB-MEDIA message types for media session control and playback",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

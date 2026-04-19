@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub-identity",
   "version": "0.2.1",
-  "description": "NUB-IDENTITY message types and shim methods for read-only user identity queries",
+  "description": "[DEPRECATED] Use @napplet/nub/identity instead. NUB-IDENTITY message types and shim methods for read-only user identity queries",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

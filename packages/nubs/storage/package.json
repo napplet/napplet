@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub-storage",
   "version": "0.2.1",
-  "description": "NUB-STORAGE message types and shim methods for scoped storage",
+  "description": "[DEPRECATED] Use @napplet/nub/storage instead. NUB-STORAGE message types and shim methods for scoped storage",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

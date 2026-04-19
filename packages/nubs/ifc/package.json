@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub-ifc",
   "version": "0.2.1",
-  "description": "NUB-IFC message types and shim methods for inter-frame communication",
+  "description": "[DEPRECATED] Use @napplet/nub/ifc instead. NUB-IFC message types and shim methods for inter-frame communication",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

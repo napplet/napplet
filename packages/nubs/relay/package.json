@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub-relay",
   "version": "0.2.1",
-  "description": "NUB-RELAY message types and shim methods for relay proxy operations",
+  "description": "[DEPRECATED] Use @napplet/nub/relay instead. NUB-RELAY message types and shim methods for relay proxy operations",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@napplet/core": "workspace:*"
+    "@napplet/nub": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
