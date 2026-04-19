@@ -28,6 +28,7 @@
 - ✅ **v0.24.0 Identity NUB + Kill NIP-07** — Phases 105-110 (shipped 2026-04-09) — [Archive](milestones/v0.24.0-ROADMAP.md)
 - ✅ **v0.25.0 Config NUB** — Phases 111-116 (shipped 2026-04-17) — [Archive](milestones/v0.25.0-ROADMAP.md)
 - ✅ **v0.26.0 Better Packages** — Phases 117-121 (shipped 2026-04-19) — [Archive](milestones/v0.26.0-ROADMAP.md)
+- 🚧 **v0.27.0 IFC Terminology Lock-In** — Phases 122-124 (in progress)
 
 ## Phases
 
@@ -310,3 +311,56 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 </details>
 
+### 🚧 v0.27.0 IFC Terminology Lock-In (In Progress)
+
+**Milestone Goal:** Finish the IPC→IFC rename across first-party source, published READMEs, specs, and skills — zero `ipc`/`IPC`/`IPC-PEER`/"inter-pane" remaining outside historical archives. One hard break, no backward-compat alias.
+
+- [ ] **Phase 122: Source Rename** - Break `window.napplet.ipc` → `.ifc`, rename SDK `ipc` export → `ifc`, and sweep core + nub/ifc JSDoc to IFC-PEER / "inter-frame" phrasing
+- [ ] **Phase 123: Documentation Sweep** - Purge `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" from root + 3 package READMEs, `skills/build-napplet/SKILL.md`, and active `.planning/` docs
+- [ ] **Phase 124: Verification & Sign-Off** - Monorepo build + type-check green under renamed surface; repo-wide zero-grep proves the cleanup holds
+
+## Phase Details
+
+### Phase 122: Source Rename
+**Goal**: The developer-facing runtime API surface is IFC-named end-to-end — `window.napplet.ifc` resolves (and `.ipc` does not), `@napplet/sdk` exports `ifc`, and every surviving JSDoc / section comment in `@napplet/core` + `@napplet/nub/ifc` uses IFC-PEER / "inter-frame" phrasing.
+**Depends on**: Nothing (first phase of milestone; v0.26.0 Phase 121 shipped)
+**Requirements**: API-01, API-02, SRC-01
+**Success Criteria** (what must be TRUE):
+  1. A napplet calling `window.napplet.ifc.send(...)` resolves through the shim to the IFC NUB; `window.napplet.ipc` is `undefined` (hard break, no alias).
+  2. A bundler consumer doing `import { ifc } from '@napplet/sdk'` type-checks and runs; `import { ipc } from '@napplet/sdk'` fails at compile time.
+  3. A reader scanning `packages/core/src/types.ts`, `topics.ts`, `envelope.ts`, and `packages/nub/src/ifc/sdk.ts` sees only IFC-PEER / "inter-frame" terminology in JSDoc and section headers — zero `IPC-PEER` or `.ipc` references survive.
+  4. `pnpm --filter @napplet/core --filter @napplet/shim --filter @napplet/sdk --filter @napplet/nub build` and `type-check` exit 0 after the rename (localized gate; full monorepo verification is Phase 124).
+**Plans**: TBD
+
+### Phase 123: Documentation Sweep
+**Goal**: Every non-archival doc a developer actually reads when onboarding to napplet — 4 READMEs, the `build-napplet` skill, and active `.planning/` — uses IFC terminology in prose and code samples, so the docs match the source shipped in Phase 122.
+**Depends on**: Phase 122
+**Requirements**: DOC-01, DOC-02, PLAN-01
+**Success Criteria** (what must be TRUE):
+  1. Root `README.md` and `packages/{core,shim,sdk}/README.md` contain zero `ipc` / `IPC-PEER` / "inter-pane" / "inter-napplet" outside historical "Shipped: vX.Y.Z" changelog bullets; every code fence showing runtime API uses `window.napplet.ifc` / the `ifc` SDK export.
+  2. `skills/build-napplet/SKILL.md` frontmatter, body prose, and code samples align with `ifc` / "inter-frame" terminology — an agent reading the skill cold writes IFC-correct code.
+  3. Active planning docs (`PROJECT.md`, `STATE.md`, `ROADMAP.md`, `.planning/codebase/*.md`, `.planning/research/*.md`, `.planning/SPEC-GAPS.md`) reflect IFC terminology; archived `.planning/milestones/` and `.planning/quick/` directories are untouched.
+  4. A reader sweeping the docs after this phase sees IFC everywhere current and IPC nowhere except inside explicitly historical quote blocks.
+**Plans**: TBD
+
+### Phase 124: Verification & Sign-Off
+**Goal**: The IFC rename is proven complete end-to-end — monorepo builds + type-checks green across all 14 packages, and a zero-match grep across the first-party surface (source, specs, skills, root README, active planning) confirms no IPC leakage remains.
+**Depends on**: Phase 123
+**Requirements**: VER-01, VER-02
+**Success Criteria** (what must be TRUE):
+  1. `pnpm -r build` exits 0 across all 14 workspace packages with the IFC-renamed API surface.
+  2. `pnpm -r type-check` exits 0 across all 14 workspace packages.
+  3. A repo-wide grep for `\bIPC\b`, `\bipc\b`, `IPC-PEER`, and `inter-pane` returns zero matches under `packages/`, `specs/`, `skills/`, root `README.md`, and active `.planning/` docs — historical `.planning/milestones/` and `.planning/quick/` archives excluded.
+  4. Evidence for VER-01 + VER-02 (command output, grep transcript) is captured in the phase summary so the milestone acceptance gate is auditable.
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 122 → 123 → 124
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 122. Source Rename | 0/TBD | Not started | - |
+| 123. Documentation Sweep | 0/TBD | Not started | - |
+| 124. Verification & Sign-Off | 0/TBD | Not started | - |

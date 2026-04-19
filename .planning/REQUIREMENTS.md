@@ -45,4 +45,15 @@
 
 ## Traceability
 
-_To be filled by roadmap._
+Every requirement maps to exactly one phase. Coverage: 8/8.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| API-01 | Phase 122 (Source Rename) | Pending |
+| API-02 | Phase 122 (Source Rename) | Pending |
+| SRC-01 | Phase 122 (Source Rename) | Pending |
+| DOC-01 | Phase 123 (Documentation Sweep) | Pending |
+| DOC-02 | Phase 123 (Documentation Sweep) | Pending |
+| PLAN-01 | Phase 123 (Documentation Sweep) | Pending |
+| VER-01 | Phase 124 (Verification & Sign-Off) | Pending |
+| VER-02 | Phase 124 (Verification & Sign-Off) | Pending |
