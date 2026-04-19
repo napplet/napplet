@@ -350,7 +350,7 @@ import type {
 `@napplet/core` is consumed by all packages in the napplet ecosystem for envelope types and NUB dispatch.
 
 - **In this repo:** `@napplet/shim`, `@napplet/sdk`, and `@napplet/vite-plugin` import `NappletMessage`, `NubDomain`, `ShellSupports`, and all shared protocol types from `@napplet/core`.
-- **NUB packages** (`@napplet/nub-relay`, `@napplet/nub-identity`, `@napplet/nub-storage`, `@napplet/nub-ifc`, `@napplet/nub-keys`, `@napplet/nub-media`, `@napplet/nub-notify`, `@napplet/nub-config`): extend `NappletMessage` for their domain-specific message types and call `registerNub` at import time.
+- **`@napplet/nub` domain modules** (`@napplet/nub/relay`, `@napplet/nub/identity`, `@napplet/nub/storage`, `@napplet/nub/ifc`, `@napplet/nub/keys`, `@napplet/nub/media`, `@napplet/nub/notify`, `@napplet/nub/config`): extend `NappletMessage` for their domain-specific message types and call `registerNub` at import time. (The `@napplet/nub/theme` barrel is types-only — no `registerNub` side effect.)
 
 ## Protocol Reference
 
