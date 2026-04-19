@@ -1,5 +1,17 @@
 # Napplet Protocol SDK
 
+## Current Milestone: v0.26.0 Better Packages
+
+**Goal:** Consolidate the 9 separate `@napplet/nub-*` packages into a single tree-shakable `@napplet/nub` package with layered subpath exports, and ship deprecation shims so existing consumers keep working.
+
+**Target features:**
+- Single `@napplet/nub` package housing all 9 NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config)
+- Per-domain barrel subpath `@napplet/nub/<domain>` re-exporting `{ types, shim, sdk }`
+- Granular subpaths `@napplet/nub/<domain>/types`, `@napplet/nub/<domain>/shim`, `@napplet/nub/<domain>/sdk` — individually importable for maximum tree-shaking
+- Existing `@napplet/nub-*` packages become 1-line re-export shims, marked `@deprecated` for one release cycle
+- Zero changes to runtime behavior, wire protocol, or non-NUB packages (`@napplet/core`, `shim`, `sdk`, `vite-plugin`)
+- All READMEs, NIP-5D references, and skills updated to the new import paths
+
 ## What This Is
 
 A portable SDK for the napplet protocol — sandboxed Nostr mini-apps that run in restrictive iframes and delegate functionality (signing, storage, relay access) to a host shell via JSON envelope postMessage wire format defined by NIP-5D.
@@ -237,7 +249,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+- v0.26.0 Better Packages — Consolidate 9 `@napplet/nub-*` packages into a single tree-shakable `@napplet/nub` with per-domain barrel + granular subpath exports; deprecate old packages as re-export shims
 
 ### Out of Scope
 
@@ -343,4 +355,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-17 — v0.25.0 Config NUB milestone complete*
+*Last updated: 2026-04-19 — v0.26.0 Better Packages milestone started*
