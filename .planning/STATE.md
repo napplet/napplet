@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
-status: Roadmap approved — ready to plan Phase 125
-stopped_at: "Roadmap created — 10 phases (125-134), 65 requirements mapped, REQUIREMENTS.md traceability filled"
-last_updated: "2026-04-20T00:00:00.000Z"
+status: verifying
+stopped_at: Completed 125-01-PLAN.md (CORE-01..03); Phase 125 ready for verification. @napplet/core type-check + build + test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01).
+last_updated: "2026-04-20T12:21:42.348Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.28.0 Browser-Enforced Resource Isolation — roadmap approved, ready to plan Phase 125
+**Current focus:** Phase 125 — Core Type Surface
 
 ## Current Position
 
-Phase: 125 (next up — Core Type Surface)
-Plan: —
-Status: Roadmap approved
-Last activity: 2026-04-20 — Roadmap created for v0.28.0 (10 phases, 65 requirements mapped)
+Phase: 125 (Core Type Surface) — PLAN COMPLETE; awaiting phase verification
+Plan: 1 of 1 (complete)
+Status: Phase complete — ready for verification
+Last activity: 2026-04-20 — Phase 125 plan 01 executed (CORE-01..03)
 
-Progress: [░░░░░░░░░░] 0% (0/10 phases complete)
+Progress: [█░░░░░░░░░░] 10% (1/10 phases plan-complete; awaiting verification)
 
 ## Phase Map
 
@@ -79,19 +79,23 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Sidecar default: **OFF** (opt-in per shell policy + per event-kind allowlist); privacy rationale required in NUB-RELAY amendment
 - Vite dev CSP relaxation for HMR: dev allows `connect-src ws://localhost:* wss://localhost:*`; build enforces `connect-src 'none'`; build-time assertion prevents leakage
 - Demo napplet scope: **Option B** — downstream shell repo owns v0.28.0 demos; this repo ships only wire + SDK surface (DEMO-01 is a single coordination note)
+- Phase 125: Added DOM lib to `@napplet/core` tsconfig (`lib: ["ES2022", "DOM", "DOM.Iterable"]`) so `Blob` global is in scope without runtime import; aligns `@napplet/core` with `shim`/`sdk`/`nub`/`vite-plugin` which all already enable DOM
+- Phase 125: `NappletGlobal.resource` declared as REQUIRED (not optional); cascade type-check failure in `@napplet/shim` is expected planned breakage until Phase 128 (Central Shim Integration) wires it (DEF-125-01)
 
 ### Pending Todos
 
-None yet; Phase 125 ready to plan.
+- Phase 126 (Resource NUB Scaffold + `data:` Scheme) — ready to plan; consumes `'resource'` literal and `NappletGlobal['resource']` shape from `@napplet/core`
+- Phase 130 (Vite-Plugin Strict CSP) — independent of 126; can plan in parallel; consumes `perm:strict-csp` JSDoc-documented capability identifier
 
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth (PUB-04).
 - CARRIED: NIP number conflict with Scrolls PR#2281 (RES-01 from v0.12.0 era — not related to v0.28.0's RES-* IDs).
 - NEW (informational): REQUIREMENTS.md originally reported "56 total" REQ-IDs; actual enumerated REQ-ID count is 65. Traceability updated to 65/65 mapped. No coverage gap.
+- Workspace-wide pnpm -r type-check fails in @napplet/shim (TS2741: missing 'resource' in window.napplet literal). Expected and planned: Phase 128 (Central Shim Integration) will repair. Use per-package validation (pnpm --filter @napplet/core ...) until then. Tracked as DEF-125-01.
 
 ## Session Continuity
 
-Last session: 2026-04-20T00:00:00.000Z
-Stopped at: Roadmap created — 10 phases (125–134), 65 requirements mapped, REQUIREMENTS.md traceability filled
+Last session: 2026-04-20T12:21:34.172Z
+Stopped at: Completed 125-01-PLAN.md (CORE-01..03); Phase 125 ready for verification. @napplet/core type-check + build + test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01).
 Resume: Run `/gsd:plan-phase 125` to decompose Phase 125 (Core Type Surface) into plans.

@@ -41,9 +41,9 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Core Type Surface
 
-- [ ] **CORE-01**: `'resource'` added to `NubDomain` union and `NUB_DOMAINS` constant in `packages/core/src/envelope.ts`
-- [ ] **CORE-02**: `resource: { bytes, bytesAsObjectURL }` namespace added to `NappletGlobal` in `packages/core/src/types.ts`
-- [ ] **CORE-03**: `perm:strict-csp` documented as valid `NamespacedCapability` (existing `perm:${string}` template literal already supports — JSDoc clarification only)
+- [x] **CORE-01**: `'resource'` added to `NubDomain` union and `NUB_DOMAINS` constant in `packages/core/src/envelope.ts`
+- [x] **CORE-02**: `resource: { bytes, bytesAsObjectURL }` namespace added to `NappletGlobal` in `packages/core/src/types.ts`
+- [x] **CORE-03**: `perm:strict-csp` documented as valid `NamespacedCapability` (existing `perm:${string}` template literal already supports — JSDoc clarification only)
 
 ### CSP Enforcement (Vite Plugin)
 
@@ -169,9 +169,9 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | SVG-01 | Phase 132 | Pending |
 | SVG-02 | Phase 132 | Pending |
 | SVG-03 | Phase 132 | Pending |
-| CORE-01 | Phase 125 | Pending |
-| CORE-02 | Phase 125 | Pending |
-| CORE-03 | Phase 125 | Pending |
+| CORE-01 | Phase 125 | Complete |
+| CORE-02 | Phase 125 | Complete |
+| CORE-03 | Phase 125 | Complete |
 | CSP-01 | Phase 130 | Pending |
 | CSP-02 | Phase 130 | Pending |
 | CSP-03 | Phase 130 | Pending |

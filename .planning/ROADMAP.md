@@ -325,7 +325,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Convert napplet iframe security from ambient trust ("napplets shouldn't fetch directly") to browser-enforced isolation ("napplets cannot fetch directly — the browser blocks it"). Ship one new NUB (`resource`) with `resource.bytes(url) → Blob`, scheme-pluggable URL space (`https:`, `blossom:`, `nostr:`, `data:`), optional sidecar pre-resolution on relay events, strict CSP enforcement at the iframe boundary via `@napplet/vite-plugin`, and the spec amendments needed to lock the model in (NIP-5D Security Considerations + NUB-RESOURCE new spec + NUB-RELAY/IDENTITY/MEDIA amendments in `napplet/nubs`).
 
-- [ ] **Phase 125: Core Type Surface** - Add `'resource'` to `NubDomain` + `NUB_DOMAINS`, add `resource` namespace to `NappletGlobal`, document `perm:strict-csp`
+- [x] **Phase 125: Core Type Surface** - Add `'resource'` to `NubDomain` + `NUB_DOMAINS`, add `resource` namespace to `NappletGlobal`, document `perm:strict-csp` (completed 2026-04-20)
 - [ ] **Phase 126: Resource NUB Scaffold + `data:` Scheme** - Create `packages/nub/src/resource/` triad, ship `data:` scheme decoded in-shim, implement single-flight cache, AbortSignal cancellation, blob URL lifecycle helpers
 - [ ] **Phase 127: NUB-RELAY Sidecar Amendment** - Add optional `resources?: ResourceSidecarEntry[]` to `RelayEventMessage`; relay shim hydrates resource cache before `onEvent`
 - [ ] **Phase 128: Central Shim Integration** - Wire resource NUB into `@napplet/shim`; mount `window.napplet.resource`; ship `nub:resource` and `resource:scheme:<name>` capability checks
@@ -348,7 +348,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. The `NamespacedCapability` type (or its JSDoc) documents `perm:strict-csp` as a valid permission identifier; a usage example appears in the core JSDoc/README.
   4. `pnpm --filter @napplet/core build` and `pnpm --filter @napplet/core type-check` exit 0.
 **Plans**: 1
-- [ ] 125-01-PLAN.md — Add 'resource' to NubDomain + NUB_DOMAINS, NappletGlobal.resource namespace, perm:strict-csp JSDoc clarification
+- [x] 125-01-PLAN.md — Add 'resource' to NubDomain + NUB_DOMAINS, NappletGlobal.resource namespace, perm:strict-csp JSDoc clarification
 
 ### Phase 126: Resource NUB Scaffold + `data:` Scheme
 **Goal**: A complete, self-contained `@napplet/nub/resource` subpath exists with envelope types, single-flight shim, SDK helpers, and zero-network `data:` decoding — proving the full request / result / cancel / cache / lifecycle dispatch path before anything integrates.
@@ -463,7 +463,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 125. Core Type Surface | 0/1 | Planned | - |
+| 125. Core Type Surface | 1/1 | Complete   | 2026-04-20 |
 | 126. Resource NUB Scaffold + `data:` Scheme | 0/0 | Not started | - |
 | 127. NUB-RELAY Sidecar Amendment | 0/0 | Not started | - |
 | 128. Central Shim Integration | 0/0 | Not started | - |
