@@ -1,5 +1,27 @@
 # Napplet Protocol SDK
 
+## Current Milestone: v0.28.0 Browser-Enforced Resource Isolation
+
+**Goal:** Convert napplet iframe security from ambient trust ("napplets shouldn't fetch directly") to browser-enforced isolation ("napplets cannot fetch directly, the browser blocks it"). Make the shell the sole resource broker for all network-sourced content, with a single scheme-pluggable primitive on the napplet side.
+
+**Target features:**
+- New NUB defining `resource.bytes(url) → blob` primitive with scheme-pluggable URL space (`https:`, `blossom:`, `nostr:`, `data:`)
+- Strict CSP enforcement on napplet iframes (`connect-src 'none'` minimum) with shell-controlled delivery
+- NIP-5D Security Considerations amendment for strict-CSP posture
+- NUB-RELAY amendment: optional sidecar field on `relay.event` for shell-pre-resolved resources
+- NUB-IDENTITY + NUB-MEDIA clarifications: profile pictures and artwork URLs flow through the resource primitive
+- vite-plugin updates: emit CSP-aware napplet HTML in dev so napplets are developed under the same constraints they ship under
+- Demo napplets exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer)
+- Shell-side SVG rasterization (napplets never receive scriptable XML)
+- Default shell resource policy guidance (private-IP blocks, size caps, timeouts, rate limits, MIME classification)
+
+**Key context:**
+- Audio/video EXPLICITLY OUT OF SCOPE — deferred to a separate later milestone using a shell-composited compositor model
+- Backwards compatibility is not a concern — single user, active design, break freely
+- Hashes stay shell-internal; napplets address resources by URL only
+- Sidecar pre-resolution is an invisible optimization, not a separate API path
+- Shell-as-fetch-proxy attack surface accepted as irreducible; bounded by policy defaults
+
 ## Shipped: v0.27.0 IFC Terminology Lock-In
 
 Completed the `ipc` → `ifc` rename end-to-end. Hard break with no backward-compat alias: `window.napplet.ipc` renamed to `window.napplet.ifc` in `@napplet/core`, `@napplet/shim`, `@napplet/sdk`, and `@napplet/nub/ifc`; the `@napplet/sdk` `ipc` named export deleted and replaced with `ifc`; every JSDoc / section comment updated to `IFC-PEER` / "inter-frame" phrasing. Public docs aligned: root README + four package READMEs + `skills/build-napplet/SKILL.md` + active `.planning/` docs swept to IFC terminology with historical changelog bullets preserved as records. Acceptance gate passed: `pnpm -r build` + `pnpm -r type-check` green across all 14 workspace packages; first-party-surface zero-grep across `packages/`, `specs/`, `skills/`, root README, and `.planning/codebase/` returns zero matches (with one documented `INTEGRATIONS.md:168` `INTER_PANE` historical-constant exception). 3 phases, 5 plans shipped 2026-04-19. See [archive](milestones/v0.27.0-ROADMAP.md).
@@ -260,7 +282,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+v0.28.0 Browser-Enforced Resource Isolation — see Current Milestone section above. Specific REQ-IDs landed in REQUIREMENTS.md after milestone scoping.
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -372,4 +394,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-19 after v0.27.0 IFC Terminology Lock-In milestone*
+*Last updated: 2026-04-20 — v0.28.0 Browser-Enforced Resource Isolation milestone started*
