@@ -463,7 +463,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 125. Core Type Surface | 1/1 | Complete   | 2026-04-20 |
+| 125. Core Type Surface | 1/1 | Complete    | 2026-04-20 |
 | 126. Resource NUB Scaffold + `data:` Scheme | 0/0 | Not started | - |
 | 127. NUB-RELAY Sidecar Amendment | 0/0 | Not started | - |
 | 128. Central Shim Integration | 0/0 | Not started | - |

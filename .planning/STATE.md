@@ -4,14 +4,14 @@ milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
 stopped_at: Completed 125-01-PLAN.md (CORE-01..03); Phase 125 ready for verification. @napplet/core type-check + build + test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01).
-last_updated: "2026-04-20T12:21:42.348Z"
+last_updated: "2026-04-20T12:25:34.343Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 1
   completed_plans: 1
-  percent: 0
+  percent: 10
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 125 (Core Type Surface) — PLAN COMPLETE; awaiting phase verification
-Plan: 1 of 1 (complete)
+Phase: 126
+Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-20 — Phase 125 plan 01 executed (CORE-01..03)
+Last activity: 2026-04-20
 
 Progress: [█░░░░░░░░░░] 10% (1/10 phases plan-complete; awaiting verification)
 
