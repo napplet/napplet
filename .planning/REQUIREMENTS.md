@@ -145,17 +145,99 @@ Explicitly excluded from v0.28.0. Documented to prevent scope creep mid-mileston
 
 ## Traceability
 
-Mapped during roadmap creation by gsd-roadmapper.
+Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one phase. Zero orphans.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmapper) | | |
+| RES-01 | Phase 126 | Pending |
+| RES-02 | Phase 126 | Pending |
+| RES-03 | Phase 126 | Pending |
+| RES-04 | Phase 126 | Pending |
+| RES-05 | Phase 126 | Pending |
+| RES-06 | Phase 126 | Pending |
+| RES-07 | Phase 126 | Pending |
+| SCH-01 | Phase 126 | Pending |
+| SCH-02 | Phase 132 | Pending |
+| SCH-03 | Phase 132 | Pending |
+| SCH-04 | Phase 132 | Pending |
+| POL-01 | Phase 132 | Pending |
+| POL-02 | Phase 132 | Pending |
+| POL-03 | Phase 132 | Pending |
+| POL-04 | Phase 132 | Pending |
+| POL-05 | Phase 132 | Pending |
+| POL-06 | Phase 132 | Pending |
+| SVG-01 | Phase 132 | Pending |
+| SVG-02 | Phase 132 | Pending |
+| SVG-03 | Phase 132 | Pending |
+| CORE-01 | Phase 125 | Pending |
+| CORE-02 | Phase 125 | Pending |
+| CORE-03 | Phase 125 | Pending |
+| CSP-01 | Phase 130 | Pending |
+| CSP-02 | Phase 130 | Pending |
+| CSP-03 | Phase 130 | Pending |
+| CSP-04 | Phase 130 | Pending |
+| CSP-05 | Phase 130 | Pending |
+| CSP-06 | Phase 130 | Pending |
+| CSP-07 | Phase 130 | Pending |
+| CAP-01 | Phase 128 | Pending |
+| CAP-02 | Phase 128 | Pending |
+| CAP-03 | Phase 130 | Pending |
+| SIDE-01 | Phase 127 | Pending |
+| SIDE-02 | Phase 127 | Pending |
+| SIDE-03 | Phase 127 | Pending |
+| SIDE-04 | Phase 127 | Pending |
+| SIDE-05 | Phase 132 | Pending |
+| SHIM-01 | Phase 128 | Pending |
+| SHIM-02 | Phase 128 | Pending |
+| SHIM-03 | Phase 128 | Pending |
+| SDK-01 | Phase 129 | Pending |
+| SDK-02 | Phase 129 | Pending |
+| SDK-03 | Phase 129 | Pending |
+| SPEC-01 | Phase 131 | Pending |
+| SPEC-02 | Phase 132 | Pending |
+| SPEC-03 | Phase 132 | Pending |
+| SPEC-04 | Phase 132 | Pending |
+| SPEC-05 | Phase 132 | Pending |
+| SPEC-06 | Phase 132 | Pending |
+| DOC-01 | Phase 133 | Pending |
+| DOC-02 | Phase 133 | Pending |
+| DOC-03 | Phase 133 | Pending |
+| DOC-04 | Phase 133 | Pending |
+| DOC-05 | Phase 133 | Pending |
+| DOC-06 | Phase 133 | Pending |
+| DOC-07 | Phase 133 | Pending |
+| DEMO-01 | Phase 133 | Pending |
+| VER-01 | Phase 134 | Pending |
+| VER-02 | Phase 134 | Pending |
+| VER-03 | Phase 134 | Pending |
+| VER-04 | Phase 134 | Pending |
+| VER-05 | Phase 134 | Pending |
+| VER-06 | Phase 134 | Pending |
+| VER-07 | Phase 134 | Pending |
 
 **Coverage:**
-- v0.28.0 requirements: 56 total (RES×7 + SCH×4 + POL×6 + SVG×3 + CORE×3 + CSP×7 + CAP×3 + SIDE×5 + SHIM×3 + SDK×3 + SPEC×6 + DOC×7 + DEMO×1 + VER×7)
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 56 ⚠️ (will become 0 after roadmap)
+- v0.28.0 requirements: 65 total (RES×7 + SCH×4 + POL×6 + SVG×3 + CORE×3 + CSP×7 + CAP×3 + SIDE×5 + SHIM×3 + SDK×3 + SPEC×6 + DOC×7 + DEMO×1 + VER×7)
+  - **Note**: An earlier draft of this section reported "56 total"; that figure was an arithmetic error. The actual REQ-ID count enumerated in this document is 65.
+- Mapped to phases: 65 ✓
+- Unmapped: 0
+- Phases used: 10 (125, 126, 127, 128, 129, 130, 131, 132, 133, 134)
+
+**Phase distribution:**
+
+| Phase | REQ Count | Categories |
+|-------|-----------|------------|
+| 125. Core Type Surface | 3 | CORE |
+| 126. Resource NUB Scaffold + `data:` Scheme | 8 | RES (all 7) + SCH-01 |
+| 127. NUB-RELAY Sidecar Amendment | 4 | SIDE-01..04 |
+| 128. Central Shim Integration | 5 | SHIM (all 3) + CAP-01, CAP-02 |
+| 129. Central SDK Integration | 3 | SDK |
+| 130. Vite-Plugin Strict CSP | 8 | CSP (all 7) + CAP-03 |
+| 131. NIP-5D In-Repo Spec Amendment | 1 | SPEC-01 |
+| 132. Cross-Repo Nubs PRs | 18 | SPEC-02..06, SCH-02..04, POL (all 6), SVG (all 3), SIDE-05 |
+| 133. Documentation + Demo Coordination | 8 | DOC (all 7) + DEMO-01 |
+| 134. Verification & Milestone Close | 7 | VER (all 7) |
+| **Total** | **65** | |
 
 ---
 *Requirements defined: 2026-04-20*
-*Last updated: 2026-04-20 after initial definition for v0.28.0*
+*Last updated: 2026-04-20 — traceability mapped to 10 phases (125–134) by gsd-roadmapper*

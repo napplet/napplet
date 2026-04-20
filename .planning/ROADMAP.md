@@ -29,6 +29,7 @@
 - ✅ **v0.25.0 Config NUB** — Phases 111-116 (shipped 2026-04-17) — [Archive](milestones/v0.25.0-ROADMAP.md)
 - ✅ **v0.26.0 Better Packages** — Phases 117-121 (shipped 2026-04-19) — [Archive](milestones/v0.26.0-ROADMAP.md)
 - ✅ **v0.27.0 IFC Terminology Lock-In** — Phases 122-124 (shipped 2026-04-19) — [Archive](milestones/v0.27.0-ROADMAP.md)
+- 🚧 **v0.28.0 Browser-Enforced Resource Isolation** — Phases 125-134 (in progress)
 
 ## Phases
 
@@ -319,3 +320,155 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 124: Verification & Sign-Off** - Monorepo build + type-check green; first-party zero-grep clean
 
 </details>
+
+### 🚧 v0.28.0 Browser-Enforced Resource Isolation (In Progress)
+
+**Milestone Goal:** Convert napplet iframe security from ambient trust ("napplets shouldn't fetch directly") to browser-enforced isolation ("napplets cannot fetch directly — the browser blocks it"). Ship one new NUB (`resource`) with `resource.bytes(url) → Blob`, scheme-pluggable URL space (`https:`, `blossom:`, `nostr:`, `data:`), optional sidecar pre-resolution on relay events, strict CSP enforcement at the iframe boundary via `@napplet/vite-plugin`, and the spec amendments needed to lock the model in (NIP-5D Security Considerations + NUB-RESOURCE new spec + NUB-RELAY/IDENTITY/MEDIA amendments in `napplet/nubs`).
+
+- [ ] **Phase 125: Core Type Surface** - Add `'resource'` to `NubDomain` + `NUB_DOMAINS`, add `resource` namespace to `NappletGlobal`, document `perm:strict-csp`
+- [ ] **Phase 126: Resource NUB Scaffold + `data:` Scheme** - Create `packages/nub/src/resource/` triad, ship `data:` scheme decoded in-shim, implement single-flight cache, AbortSignal cancellation, blob URL lifecycle helpers
+- [ ] **Phase 127: NUB-RELAY Sidecar Amendment** - Add optional `resources?: ResourceSidecarEntry[]` to `RelayEventMessage`; relay shim hydrates resource cache before `onEvent`
+- [ ] **Phase 128: Central Shim Integration** - Wire resource NUB into `@napplet/shim`; mount `window.napplet.resource`; ship `nub:resource` and `resource:scheme:<name>` capability checks
+- [ ] **Phase 129: Central SDK Integration** - Add `resource` namespace + `RESOURCE_DOMAIN` const + type re-exports to `@napplet/sdk`
+- [ ] **Phase 130: Vite-Plugin Strict CSP** - Ship `strictCsp` option with first-`<head>`-child meta injection, header-only directive rejection, dev/prod split, nonce-based scripts, complete 10-directive baseline; ship `perm:strict-csp` capability
+- [ ] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md`
+- [ ] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*`
+- [ ] **Phase 133: Documentation + Demo Coordination** - Update 5 package READMEs + skills/build-napplet + shell-deployer policy checklist; PROJECT.md + NUB-RESOURCE coordination note delegating demos to downstream shell repo
+- [ ] **Phase 134: Verification & Milestone Close** - Build + type-check green; positive CSP block assertion in Playwright; SVG bomb / `<foreignObject>` / recursive-`<use>` rejection; single-flight cache stampede dedup; sidecar default-OFF; cross-repo zero-grep; bundle tree-shake
+
+## Phase Details
+
+### Phase 125: Core Type Surface
+**Goal**: The shared type vocabulary downstream packages need to compile against the resource NUB exists in `@napplet/core`.
+**Depends on**: Nothing (first phase of milestone; v0.27.0 Phase 124 shipped)
+**Requirements**: CORE-01, CORE-02, CORE-03
+**Success Criteria** (what must be TRUE):
+  1. `import { type NubDomain } from '@napplet/core'` resolves a union that includes `'resource'`, and `NUB_DOMAINS` array includes `'resource'`.
+  2. `import { type NappletGlobal } from '@napplet/core'` resolves an interface whose `resource` property exposes `bytes` and `bytesAsObjectURL` method signatures.
+  3. The `NamespacedCapability` type (or its JSDoc) documents `perm:strict-csp` as a valid permission identifier; a usage example appears in the core JSDoc/README.
+  4. `pnpm --filter @napplet/core build` and `pnpm --filter @napplet/core type-check` exit 0.
+**Plans**: TBD
+
+### Phase 126: Resource NUB Scaffold + `data:` Scheme
+**Goal**: A complete, self-contained `@napplet/nub/resource` subpath exists with envelope types, single-flight shim, SDK helpers, and zero-network `data:` decoding — proving the full request / result / cancel / cache / lifecycle dispatch path before anything integrates.
+**Depends on**: Phase 125
+**Requirements**: RES-01, RES-02, RES-03, RES-04, RES-05, RES-06, RES-07, SCH-01
+**Success Criteria** (what must be TRUE):
+  1. `import { bytes } from '@napplet/nub/resource/shim'` resolves; calling `bytes('data:image/png;base64,...')` returns a `Promise<Blob>` that resolves with the decoded bytes without sending any postMessage.
+  2. The result envelope union exposes a typed `error` discriminator with all 8 codes (`not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`).
+  3. `bytesAsObjectURL(url)` returns `{ url, revoke }`; calling `revoke()` invokes `URL.revokeObjectURL` exactly once.
+  4. Calling `bytes(url, { signal })` with an already-aborted `AbortSignal` rejects with an `AbortError`-shaped error and sends a `resource.cancel` envelope to the parent window.
+  5. The `Blob` field on `ResourceBytesResultMessage` is the type-system-enforced delivery shape — no `chunk`, `stream`, or partial-payload field exists anywhere in the result union (RES-07 single-Blob contract).
+  6. `@napplet/nub` `package.json` declares 4 new `exports` entries (`./resource`, `./resource/types`, `./resource/shim`, `./resource/sdk`) and tsup builds 4 corresponding entries.
+**Plans**: TBD
+
+### Phase 127: NUB-RELAY Sidecar Amendment
+**Goal**: Shells that opt in can pre-resolve resources referenced by relay events; the napplet's `resource.bytes(url)` call resolves from cache without round-trip when the sidecar pre-populated the URL — invisibly to the napplet caller.
+**Depends on**: Phase 126
+**Requirements**: SIDE-01, SIDE-02, SIDE-03, SIDE-04
+**Success Criteria** (what must be TRUE):
+  1. `RelayEventMessage` accepts an optional `resources?: ResourceSidecarEntry[]` field; old shells that omit it produce envelopes that type-check and parse identically to pre-v0.28.0.
+  2. `ResourceSidecarEntry` is exported from `@napplet/nub/resource/types` (resource NUB owns it); `@napplet/nub/relay/types` imports it as a type-only in-package reference (no runtime cross-domain dep).
+  3. When a `relay.event` envelope arrives with a non-empty `resources` array, the relay shim invokes `hydrateResourceCache(entries)` from the resource shim before delivering the event to the caller's `onEvent` callback — verifiable by ordering: a synchronous `napplet.resource.bytes(sidecarUrl)` call inside `onEvent` resolves from cache without a postMessage.
+  4. Concurrent `bytes(sameUrl)` calls share one in-flight Promise (single-flight `Map<canonicalURL, Promise<Blob>>`); N concurrent calls produce 1 fetch and N resolutions of the same Blob reference.
+**Plans**: TBD
+
+### Phase 128: Central Shim Integration
+**Goal**: Napplets that `import '@napplet/shim'` get `window.napplet.resource` mounted automatically and can detect resource-NUB + per-scheme support via `shell.supports()`.
+**Depends on**: Phase 126
+**Requirements**: SHIM-01, SHIM-02, SHIM-03, CAP-01, CAP-02
+**Success Criteria** (what must be TRUE):
+  1. After `import '@napplet/shim'`, `window.napplet.resource.bytes` and `window.napplet.resource.bytesAsObjectURL` are callable functions.
+  2. Inbound envelopes whose type prefix is `resource.` are routed by the central shim to the resource NUB's `handleResourceMessage` — verified by an end-to-end echo test against a mock shell.
+  3. `window.napplet.shell.supports('nub:resource')` returns true when the shell has advertised resource support; `window.napplet.shell.supports('resource:scheme:blossom')` returns true when the shell has advertised that specific scheme.
+  4. The shim init sequence calls `installResourceShim()` exactly once, following the established 9-NUB pattern.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 129: Central SDK Integration
+**Goal**: Bundler consumers that import from `@napplet/sdk` get the resource namespace, the domain constant, and all resource type re-exports without reaching into `@napplet/nub` subpaths.
+**Depends on**: Phase 126
+**Requirements**: SDK-01, SDK-02, SDK-03
+**Success Criteria** (what must be TRUE):
+  1. `import { resource } from '@napplet/sdk'` exposes `resource.bytes` and `resource.bytesAsObjectURL` as named functions.
+  2. `import { RESOURCE_DOMAIN } from '@napplet/sdk'` resolves to the string `'resource'`.
+  3. All resource NUB types (`ResourceBytesMessage`, `ResourceBytesResultMessage`, `ResourceSidecarEntry`, `ResourceScheme`, error code union, etc.) re-export from `@napplet/sdk` and round-trip through `tsc --isolatedModules`.
+**Plans**: TBD
+
+### Phase 130: Vite-Plugin Strict CSP
+**Goal**: Napplets developed with `@napplet/vite-plugin` ship under a 10-directive strict CSP baseline that survives meta placement, blocks header-only directive misuse, separates dev (HMR-relaxed) from prod (`connect-src 'none'`), and never permits `'unsafe-inline'` or `'unsafe-eval'` for scripts.
+**Depends on**: Phase 125 (for `perm:strict-csp` capability JSDoc)
+**Requirements**: CSP-01, CSP-02, CSP-03, CSP-04, CSP-05, CSP-06, CSP-07, CAP-03
+**Success Criteria** (what must be TRUE):
+  1. The vite-plugin accepts `strictCsp?: boolean | StrictCspOptions` on `Nip5aManifestOptions`; when enabled, the emitted napplet HTML has `<meta http-equiv="Content-Security-Policy">` as the literal first child of `<head>`, verifiable by post-build HTML walk (Pitfall 1 mitigation).
+  2. Vite build fails with a clear diagnostic if any `<script>`, `<style>`, or `<link>` element appears before the CSP meta in `<head>`, or if the configured policy contains any of `frame-ancestors`, `sandbox`, `report-uri`, `report-to` (header-only directives that silently fail in meta delivery — Pitfall 2 mitigation).
+  3. Dev mode emits a CSP that includes `connect-src 'self' ws://localhost:* wss://localhost:*` for HMR; production build emits `connect-src 'none'`; build-time assertion fails the build if any dev-relaxation appears in the production manifest.
+  4. The default baseline policy emits 10 directives including `default-src 'none'`, `script-src 'nonce-...' 'self'` (never `'unsafe-inline'`, never `'unsafe-eval'`), `connect-src 'none'`, `img-src blob: data:`, `font-src blob: data:`, `style-src 'self'`, `worker-src 'none'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`.
+  5. Shells that enforce this policy advertise `shell.supports('perm:strict-csp')`; the capability is documented as orthogonal to `nub:resource` (a permissive dev shell can implement the resource NUB without enforcing strict CSP).
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 131: NIP-5D In-Repo Spec Amendment
+**Goal**: `specs/NIP-5D.md` documents the v0.28.0 strict-CSP security posture so anyone reading the NIP understands the resource NUB is the canonical fetch path and `sandbox="allow-scripts"` (no `allow-same-origin`) is reaffirmed.
+**Depends on**: Phase 126 (wire shape stable), Phase 130 (`perm:strict-csp` capability shape locked)
+**Requirements**: SPEC-01
+**Success Criteria** (what must be TRUE):
+  1. `specs/NIP-5D.md` contains a Security Considerations subsection describing strict-CSP posture as **SHOULD**, the `perm:strict-csp` capability identifier, the resource NUB as the canonical path for network-sourced bytes, and an explicit prohibition on `sandbox="allow-same-origin"` (closes the service-worker bypass vector — Pitfall 5 mitigation).
+  2. The amendment cross-references NUB-RESOURCE in the public `napplet/nubs` repo without naming `@napplet/*` packages — public-repo hygiene preserved.
+**Plans**: TBD
+
+### Phase 132: Cross-Repo Nubs PRs
+**Goal**: Four draft PRs are open against `napplet/nubs` capturing the protocol-level surface for v0.28.0 — NUB-RESOURCE as a new spec, NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY and NUB-MEDIA clarifications routing picture / artwork URLs through the resource NUB. Every PR is `@napplet/*`-clean.
+**Depends on**: Phase 126 (wire shape stable)
+**Requirements**: SPEC-02, SPEC-03, SPEC-04, SPEC-05, SPEC-06, SCH-02, SCH-03, SCH-04, POL-01, POL-02, POL-03, POL-04, POL-05, POL-06, SVG-01, SVG-02, SVG-03, SIDE-05
+**Success Criteria** (what must be TRUE):
+  1. NUB-RESOURCE.md draft PR is open at `napplet/nubs`; spec contains the message catalog, the four canonical scheme protocol surfaces (`https:` with shell-side network policy, `blossom:` with canonical hash form, `nostr:` with single-hop NIP-19 bech32 resolution, `data:` per RFC 2397), the 8-code error vocabulary, and a MUST/SHOULD/MAY shell behavior contract.
+  2. The default shell resource policy in NUB-RESOURCE locks: a private-IP block list as **MUST** at DNS-resolution time covering RFC1918 (10/8, 172.16/12, 192.168/16), loopback (127/8, ::1), link-local (169.254/16, fe80::/10), unique-local (fc00::/7), and cloud metadata (169.254.169.254); response size cap, fetch timeout, per-napplet concurrency / rate limit, and redirect chain cap with per-hop re-validation as **SHOULD** with recommended values; MIME byte-sniffing as **MUST** with explicit ban on upstream `Content-Type` passthrough (Pitfall 6 mitigation).
+  3. SVG handling in NUB-RESOURCE locks: shell-side rasterization to PNG/WebP as **MUST**, prohibition on delivering `image/svg+xml` bytes to napplets as **MUST**, rasterization caps (max input bytes, max output dimensions, wall-clock budget) as **SHOULD** with sandboxed-Worker-no-network requirement (Pitfall 7 mitigation).
+  4. NUB-RELAY amendment PR is open; sidecar field is documented as **OPTIONAL** with **default OFF** privacy rationale (shell pre-fetching reveals user activity to upstream avatar hosts before user has rendered the event); opt-in is per shell policy with per-event-kind allowlist guidance (Pitfall 10 mitigation).
+  5. NUB-IDENTITY clarification PR is open noting `picture` / `banner` URLs flow through `resource.bytes()` (no wire change); NUB-MEDIA clarification PR is open noting `MediaArtwork.url` flows through `resource.bytes()` (no wire change).
+  6. All 4 PR bodies, commit messages, and spec content are zero-grep clean of `@napplet/*` private package references — verified by manual sweep + grep before milestone close (also asserted by VER-06 in Phase 134 — Pitfall 8 mitigation).
+**Plans**: TBD
+
+### Phase 133: Documentation + Demo Coordination
+**Goal**: Five package READMEs, the napplet-author skill, the root README, and a shell-deployer resource policy checklist all reflect the v0.28.0 surface; demo napplets are explicitly delegated to the downstream shell repo via a coordination note.
+**Depends on**: Phases 126–130 (wire shape and CSP behavior stable)
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04, DOC-05, DOC-06, DOC-07, DEMO-01
+**Success Criteria** (what must be TRUE):
+  1. `@napplet/nub` README documents the new `/resource` subpath with the four-scheme overview; `@napplet/shim` README documents resource NUB integration; `@napplet/sdk` README documents the resource namespace + `RESOURCE_DOMAIN`; `@napplet/vite-plugin` README documents the `strictCsp` option with dev/prod CSP behavior; root README updated for v0.28.0 (resource NUB + browser-enforced isolation framing).
+  2. `skills/build-napplet/SKILL.md` is updated so cold-reading agents write `napplet.resource.bytes(url)` instead of `<img src=externalUrl>` or `fetch()`.
+  3. A shell-deployer resource policy checklist exists (location to be selected in Phase 133 plan; e.g. `specs/SHELL-RESOURCE-POLICY.md`) covering private-IP block ranges, sidecar opt-in semantics, SVG rasterization caps, MIME allowlist, and redirect chain limits.
+  4. PROJECT.md and the NUB-RESOURCE spec both contain a coordination note explicitly delegating v0.28.0 demo napplets (profile viewer, feed-with-images, scheme-mixed consumer) to the downstream shell repo; this repo's responsibility ends at the wire + SDK surface.
+**Plans**: TBD
+
+### Phase 134: Verification & Milestone Close
+**Goal**: Mechanical proof that the milestone is shippable — build / type-check green, CSP genuinely blocks (positive assertion, not absence-of-request), SVG attack vectors are rejected, cache stampede is prevented, sidecar opt-in default holds, public-repo hygiene is verified, and the resource NUB tree-shakes cleanly.
+**Depends on**: Phases 125–133 (everything else)
+**Requirements**: VER-01, VER-02, VER-03, VER-04, VER-05, VER-06, VER-07
+**Success Criteria** (what must be TRUE):
+  1. `pnpm -r build` and `pnpm -r type-check` exit 0 across all 14 workspace packages.
+  2. A Playwright test correlates `page.on('console')` CSP violation messages with `page.on('requestfailed')` for the same URL and asserts the specific blocked URL was seen — proving CSP enforcement, not absence (Pitfall 21 mitigation).
+  3. SVG bomb / `<foreignObject>` / recursive-`<use>` test inputs are rejected by the rasterization pipeline (or its spec-conformant simulation) under the documented caps; raw `image/svg+xml` bytes never reach the napplet.
+  4. A single-flight cache stampede test fires N concurrent `resource.bytes(sameUrl)` calls and observes exactly 1 outbound fetch, with all N callers receiving the same Blob reference (Pitfall 13 mitigation).
+  5. A relay event with a `resources` field is ignored by the relay shim unless the shell has explicitly opted in (sidecar default OFF) — verified by a test that constructs an opt-out shell and asserts no cache hydration.
+  6. Cross-repo zero-grep sweep across all 4 `napplet/nubs` PR bodies, commit messages, and spec content returns zero `@napplet/*` private references.
+  7. A consumer that imports only `@napplet/nub/relay/types` produces a tree-shaken bundle with zero bytes from `@napplet/nub/resource` (proven by bundle inspection, matching the v0.26.0 39-byte tree-shake precedent).
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of each other after 126 and may be parallelized; Phase 131 follows 126 + 130; Phase 132 (cross-repo) opens drafts as soon as 126 stabilizes the wire shape and is gated by Phase 134 for final merge. Phase 133 follows the in-repo phases. Phase 134 closes the milestone.
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 125. Core Type Surface | 0/0 | Not started | - |
+| 126. Resource NUB Scaffold + `data:` Scheme | 0/0 | Not started | - |
+| 127. NUB-RELAY Sidecar Amendment | 0/0 | Not started | - |
+| 128. Central Shim Integration | 0/0 | Not started | - |
+| 129. Central SDK Integration | 0/0 | Not started | - |
+| 130. Vite-Plugin Strict CSP | 0/0 | Not started | - |
+| 131. NIP-5D In-Repo Spec Amendment | 0/0 | Not started | - |
+| 132. Cross-Repo Nubs PRs | 0/0 | Not started | - |
+| 133. Documentation + Demo Coordination | 0/0 | Not started | - |
+| 134. Verification & Milestone Close | 0/0 | Not started | - |
