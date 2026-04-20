@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
-status: verifying
+status: executing
 stopped_at: Completed 128-01-PLAN.md (SHIM-01..03, CAP-01, CAP-02). DEF-125-01 cascade CLOSED — workspace-wide pnpm -r type-check exits 0 across all 14 packages. End-to-end smoke test PASS through built @napplet/shim entry point. Phase 128 ready for verification.
-last_updated: "2026-04-20T14:53:43.292Z"
-last_activity: 2026-04-20
+last_updated: "2026-04-20T15:15:16.975Z"
+last_activity: 2026-04-20 -- Phase 129 execution started
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 4
+  total_plans: 5
   completed_plans: 4
   percent: 40
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 128 — Central Shim Integration
+**Current focus:** Phase 129 — Central SDK Integration
 
 ## Current Position
 
-Phase: 129
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-20
+Phase: 129 (Central SDK Integration) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 129
+Last activity: 2026-04-20 -- Phase 129 execution started
 
 Progress: [████░░░░░░] 40% (4/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
 
