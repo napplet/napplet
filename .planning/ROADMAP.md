@@ -333,7 +333,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 130: Vite-Plugin Strict CSP** - Ship `strictCsp` option with first-`<head>`-child meta injection, header-only directive rejection, dev/prod split, nonce-based scripts, complete 10-directive baseline; ship `perm:strict-csp` capability (completed 2026-04-20)
 - [x] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md` (completed 2026-04-20)
 - [x] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*` (completed 2026-04-20 — drafts authored; manual cross-repo PR opening deferred per CONTEXT.md)
-- [ ] **Phase 133: Documentation + Demo Coordination** - Update 5 package READMEs + skills/build-napplet + shell-deployer policy checklist; PROJECT.md + NUB-RESOURCE coordination note delegating demos to downstream shell repo
+- [x] **Phase 133: Documentation + Demo Coordination** - Update 5 package READMEs + skills/build-napplet + shell-deployer policy checklist; PROJECT.md + NUB-RESOURCE coordination note delegating demos to downstream shell repo (completed 2026-04-20)
 - [ ] **Phase 134: Verification & Milestone Close** - Build + type-check green; positive CSP block assertion in Playwright; SVG bomb / `<foreignObject>` / recursive-`<use>` rejection; single-flight cache stampede dedup; sidecar default-OFF; cross-repo zero-grep; bundle tree-shake
 
 ## Phase Details
@@ -446,7 +446,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. `skills/build-napplet/SKILL.md` is updated so cold-reading agents write `napplet.resource.bytes(url)` instead of `<img src=externalUrl>` or `fetch()`.
   3. A shell-deployer resource policy checklist exists (location to be selected in Phase 133 plan; e.g. `specs/SHELL-RESOURCE-POLICY.md`) covering private-IP block ranges, sidecar opt-in semantics, SVG rasterization caps, MIME allowlist, and redirect chain limits.
   4. PROJECT.md and the NUB-RESOURCE spec both contain a coordination note explicitly delegating v0.28.0 demo napplets (profile viewer, feed-with-images, scheme-mixed consumer) to the downstream shell repo; this repo's responsibility ends at the wire + SDK surface.
-**Plans**: TBD
+**Plans**: 1
+- [x] 133-01-PLAN.md — Update 5 package READMEs + skills/build-napplet + create specs/SHELL-RESOURCE-POLICY.md + PROJECT.md/NUB-RESOURCE demo coordination notes (DOC-01..07 + DEMO-01)
 
 ### Phase 134: Verification & Milestone Close
 **Goal**: Mechanical proof that the milestone is shippable — build / type-check green, CSP genuinely blocks (positive assertion, not absence-of-request), SVG attack vectors are rejected, cache stampede is prevented, sidecar opt-in default holds, public-repo hygiene is verified, and the resource NUB tree-shakes cleanly.
@@ -477,5 +478,5 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 130. Vite-Plugin Strict CSP | 1/1 | Complete    | 2026-04-20 |
 | 131. NIP-5D In-Repo Spec Amendment | 1/1 | Complete    | 2026-04-20 |
 | 132. Cross-Repo Nubs PRs | 1/1 | Complete    | 2026-04-20 |
-| 133. Documentation + Demo Coordination | 0/0 | Not started | - |
+| 133. Documentation + Demo Coordination | 1/1 | Complete   | 2026-04-20 |
 | 134. Verification & Milestone Close | 0/0 | Not started | - |

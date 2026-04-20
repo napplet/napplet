@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
-status: completed
-stopped_at: Completed 132-01-PLAN.md (SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05; 18 REQ-IDs). 4 NUB drafts authored at .planning/phases/132-cross-repo-nubs-prs/drafts/. Public-repo hygiene clean (zero @napplet/, zero kehto, zero hyprgate). Workspace pnpm -r type-check green (no source changes). Phase 132 plan-complete; awaiting verification. Manual cross-repo git ops on ~/Develop/nubs deferred per CONTEXT.md.
-last_updated: "2026-04-20T20:42:10.562Z"
+status: verifying
+stopped_at: Completed 133-01-PLAN.md (DOC-01..07 + DEMO-01; 8 REQ-IDs). 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean (zero @napplet/ in 2 public-destined files; zero kehto/hyprgate everywhere). Workspace pnpm -r type-check green (no source touched). Phase 133 plan-complete; awaiting verification.
+last_updated: "2026-04-20T21:11:32.324Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
-  completed_phases: 8
-  total_plans: 8
-  completed_plans: 8
-  percent: 80
+  completed_phases: 9
+  total_plans: 10
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 132 — Cross-Repo Nubs PRs
+**Current focus:** Phase 133 — Documentation + Demo Coordination
 
 ## Current Position
 
-Phase: 133
-Plan: Not started
-Status: Phase 132 plan-complete
-Last activity: 2026-04-20
+Phase: 133 (Documentation + Demo Coordination) — PLAN-COMPLETE
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-04-20 — Phase 133 plan-complete (DOC-01..07 + DEMO-01)
 
-Progress: [████████░░] 80% (8/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
+Progress: [█████████░] 90% (9/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
 
 ## Phase Map
 
@@ -97,6 +97,8 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 130: closeBundle CSP-extraction regex Rule 1 bug fix — original `[^"']` capture group truncated CSP values at first single quote (CSP values legitimately contain `'none'`/`'self'`), defeating CSP-05/Pitfall 18 dev-leak detection. Fix: pin to double-quote delimiters, accept any non-double-quote in capture. Caught by Task 3's 7-case smoke test. Pattern: when extracting attribute values that themselves contain single quotes, anchor the regex on double-quote delimiters specifically — `[^"']` is wrong because the capture should permit single quotes.
 - Phase 130: closeBundle restructure — strict-CSP assertion moved to TOP of `closeBundle()` (before the `VITE_DEV_PRIVKEY_HEX` early-return) so strict CSP enforcement is INDEPENDENT of manifest signing. Plan placement would have been after the privkey gate, skipping the assertion when no privkey is configured. Pattern locked: load-bearing security checks must run regardless of optional features (privkey, schema discovery, etc.).
 - Phase 130: tsup config — `src/csp.ts` added as a separate entry alongside `src/index.ts`. Without this, tsup chunk-splits csp.ts into a hashed shared chunk and `dist/csp.js` is not produced; with this, `dist/csp.js` becomes a small re-export shim importable standalone by Node-side validation scripts. Pattern: when a sibling module's exports need to be Node-importable from `dist/<name>.js` directly (for verification scripts, third-party consumers), add it as a tsup entry — cost is minimal (the shim re-uses the same chunk, no code duplication).
+- Phase 133: Documentation phase pattern locked — per-task atomic commits (one commit per modifying task; verification gate task is non-committing), automated grep verification after each edit, workspace `pnpm -r type-check` as the load-bearing acceptance gate. Public-repo hygiene split for mixed-audience phases: per-file `@napplet/` grep checks (clean on public-destined files; expected on first-party docs) rather than a single repo-wide rule.
+- Phase 133: TS-vs-spec error envelope drift surfaced for future resolution — NUB-RESOURCE draft uses `code: ResourceErrorCode` and `error?: string` for `resource.bytes.error`; shipped TypeScript in `packages/nub/src/resource/types.ts` uses `error: ResourceErrorCode` and `message?: string`. Documentation now matches the TS wire shape in `packages/shim/README.md` (since READMEs document on-the-wire reality); spec/skill text follows the plan/spec convention. Resolution scoped to a future phase, NOT a docs-only sweep.
 
 ### Pending Todos
 
@@ -107,6 +109,7 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 130 (Vite-Plugin Strict CSP) — PLAN-COMPLETE; awaiting verification. CSP-01..07 + CAP-03 satisfied. 4 project-killer pitfalls fail the build. Workspace-wide green; DEF-125-01 stays closed.
 - Phase 131 (NIP-5D In-Repo Spec Amendment) — UNBLOCKED by Phase 130; resource wire envelopes locked at v0.28.0 contract; `perm:strict-csp` capability identifier ready to be referenced from spec text
 - Phase 132 (Cross-Repo Nubs PRs) — PLAN-COMPLETE; 4 drafts at .planning/phases/132-cross-repo-nubs-prs/drafts/; awaiting verification. Cross-repo zero-grep clean. SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05 satisfied. Manual git ops on ~/Develop/nubs deferred per CONTEXT.md (user creates branches, commits, pushes drafts, opens 4 PRs to napplet/nubs).
+- Phase 133 (Documentation + Demo Coordination) — PLAN-COMPLETE; awaiting verification. DOC-01..07 + DEMO-01 satisfied. 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean. Workspace pnpm -r type-check green (no source touched).
 
 ### Blockers/Concerns
 
@@ -117,6 +120,6 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 
 ## Session Continuity
 
-Last session: 2026-04-20T20:30:00.000Z
-Stopped at: Completed 132-01-PLAN.md (SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05; 18 REQ-IDs). 4 NUB drafts authored at .planning/phases/132-cross-repo-nubs-prs/drafts/. Public-repo hygiene clean (zero @napplet/, zero kehto, zero hyprgate). Workspace pnpm -r type-check green (no source changes). Phase 132 plan-complete; awaiting verification. Manual cross-repo git ops on ~/Develop/nubs deferred per CONTEXT.md.
+Last session: 2026-04-20T21:11:32.320Z
+Stopped at: Completed 133-01-PLAN.md (DOC-01..07 + DEMO-01; 8 REQ-IDs). 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean (zero @napplet/ in 2 public-destined files; zero kehto/hyprgate everywhere). Workspace pnpm -r type-check green (no source touched). Phase 133 plan-complete; awaiting verification.
 Resume: Run `/gsd:verify-phase 132` to verify Phase 132 deliverables (and 126/127/128/129/130/131 if any remain unverified), then `/gsd:plan-phase 133` (Documentation + Demo Coordination) to begin the next executable phase.

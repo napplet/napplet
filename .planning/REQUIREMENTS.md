@@ -92,17 +92,17 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Documentation
 
-- [ ] **DOC-01**: `@napplet/nub` README updated with new `/resource` subpath documentation
-- [ ] **DOC-02**: `@napplet/shim` README updated for resource NUB integration
-- [ ] **DOC-03**: `@napplet/sdk` README updated for resource namespace + RESOURCE_DOMAIN
-- [ ] **DOC-04**: `@napplet/vite-plugin` README updated for `strictCsp` option + dev/prod CSP behavior
-- [ ] **DOC-05**: Root README updated for v0.28.0 surface (resource NUB, browser-enforced isolation framing)
-- [ ] **DOC-06**: `skills/build-napplet/SKILL.md` updated: napplets use `napplet.resource.bytes(url)` instead of `<img src=externalUrl>` or `fetch()`
-- [ ] **DOC-07**: Shell-deployer resource policy checklist authored (private-IP block ranges, sidecar opt-in semantics, SVG rasterization caps, MIME allowlist, redirect chain limits)
+- [x] **DOC-01**: `@napplet/nub` README updated with new `/resource` subpath documentation
+- [x] **DOC-02**: `@napplet/shim` README updated for resource NUB integration
+- [x] **DOC-03**: `@napplet/sdk` README updated for resource namespace + RESOURCE_DOMAIN
+- [x] **DOC-04**: `@napplet/vite-plugin` README updated for `strictCsp` option + dev/prod CSP behavior
+- [x] **DOC-05**: Root README updated for v0.28.0 surface (resource NUB, browser-enforced isolation framing)
+- [x] **DOC-06**: `skills/build-napplet/SKILL.md` updated: napplets use `napplet.resource.bytes(url)` instead of `<img src=externalUrl>` or `fetch()`
+- [x] **DOC-07**: Shell-deployer resource policy checklist authored (private-IP block ranges, sidecar opt-in semantics, SVG rasterization caps, MIME allowlist, redirect chain limits)
 
 ### Demo Coordination
 
-- [ ] **DEMO-01**: Demo napplets explicitly delegated to downstream shell repo for v0.28.0 — coordination note in PROJECT.md and NUB-RESOURCE spec; this repo's responsibility ends at the wire + SDK surface
+- [x] **DEMO-01**: Demo napplets explicitly delegated to downstream shell repo for v0.28.0 — coordination note in PROJECT.md and NUB-RESOURCE spec; this repo's responsibility ends at the wire + SDK surface
 
 ### Verification
 
@@ -199,14 +199,14 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | SPEC-04 | Phase 132 | Complete |
 | SPEC-05 | Phase 132 | Complete |
 | SPEC-06 | Phase 132 | Complete |
-| DOC-01 | Phase 133 | Pending |
-| DOC-02 | Phase 133 | Pending |
-| DOC-03 | Phase 133 | Pending |
-| DOC-04 | Phase 133 | Pending |
-| DOC-05 | Phase 133 | Pending |
-| DOC-06 | Phase 133 | Pending |
-| DOC-07 | Phase 133 | Pending |
-| DEMO-01 | Phase 133 | Pending |
+| DOC-01 | Phase 133 | Complete |
+| DOC-02 | Phase 133 | Complete |
+| DOC-03 | Phase 133 | Complete |
+| DOC-04 | Phase 133 | Complete |
+| DOC-05 | Phase 133 | Complete |
+| DOC-06 | Phase 133 | Complete |
+| DOC-07 | Phase 133 | Complete |
+| DEMO-01 | Phase 133 | Complete |
 | VER-01 | Phase 134 | Pending |
 | VER-02 | Phase 134 | Pending |
 | VER-03 | Phase 134 | Pending |
