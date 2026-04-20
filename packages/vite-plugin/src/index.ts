@@ -522,8 +522,12 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         assertMetaIsFirstHeadChild(finalHtml); // throws on Pitfall 1 violation
         // CSP-05 / Pitfall 18 — production manifest MUST NOT contain ws:// or
         // wss:// anywhere in the CSP. Extract the policy from the meta tag
-        // and check.
-        const cspMatch = /<meta\s+http-equiv\s*=\s*["']Content-Security-Policy["']\s+content\s*=\s*["']([^"']+)["']/i.exec(finalHtml);
+        // and check. The content attribute is double-quoted (Vite-emitted)
+        // and itself contains single quotes (e.g. 'none', 'self'), so the
+        // capture group accepts any non-double-quote character — using
+        // [^"'] would truncate at the first single quote and miss ws:// in
+        // the tail (Rule 1 bug fix found via Phase 130 smoke test Case 3).
+        const cspMatch = /<meta\s+http-equiv\s*=\s*"Content-Security-Policy"\s+content\s*=\s*"([^"]+)"/i.exec(finalHtml);
         if (cspMatch) {
           assertNoDevLeakage(cspMatch[1], cspMode); // throws if prod policy contains ws://
         }
