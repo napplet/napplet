@@ -47,19 +47,19 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### CSP Enforcement (Vite Plugin)
 
-- [ ] **CSP-01**: `@napplet/vite-plugin` adds `strictCsp?: boolean | StrictCspOptions` option to `Nip5aManifestOptions`
-- [ ] **CSP-02**: `transformIndexHtml` hook with `enforce: 'pre'` injects CSP `<meta http-equiv>` as the first child of `<head>` (placement matters — meta CSP only binds elements parsed after it)
-- [ ] **CSP-03**: Build-time assertion: CSP meta is the first `<head>` child; build fails with clear diagnostic if any `<script>` precedes it
-- [ ] **CSP-04**: Build-time rejection of header-only directives in meta CSP: `frame-ancestors`, `sandbox`, `report-uri`, `report-to` (silently ignored by browsers in meta delivery — fail fast with clear error)
-- [ ] **CSP-05**: Dev/build mode split: dev relaxes `connect-src` for HMR (`ws://localhost:* wss://localhost:*`); build emits strict `connect-src 'none'`; build-time assertion that dev relaxations don't leak into prod manifest
-- [ ] **CSP-06**: Default 10-directive baseline policy documented (default-src, script-src, connect-src 'none', img-src blob: data:, font-src blob: data:, style-src 'self', worker-src 'none', object-src 'none', base-uri 'none', form-action 'none')
-- [ ] **CSP-07**: Nonce-based `script-src` for any inline scripts; never `'unsafe-inline'`, never `'unsafe-eval'`
+- [x] **CSP-01**: `@napplet/vite-plugin` adds `strictCsp?: boolean | StrictCspOptions` option to `Nip5aManifestOptions`
+- [x] **CSP-02**: `transformIndexHtml` hook with `enforce: 'pre'` injects CSP `<meta http-equiv>` as the first child of `<head>` (placement matters — meta CSP only binds elements parsed after it)
+- [x] **CSP-03**: Build-time assertion: CSP meta is the first `<head>` child; build fails with clear diagnostic if any `<script>` precedes it
+- [x] **CSP-04**: Build-time rejection of header-only directives in meta CSP: `frame-ancestors`, `sandbox`, `report-uri`, `report-to` (silently ignored by browsers in meta delivery — fail fast with clear error)
+- [x] **CSP-05**: Dev/build mode split: dev relaxes `connect-src` for HMR (`ws://localhost:* wss://localhost:*`); build emits strict `connect-src 'none'`; build-time assertion that dev relaxations don't leak into prod manifest
+- [x] **CSP-06**: Default 10-directive baseline policy documented (default-src, script-src, connect-src 'none', img-src blob: data:, font-src blob: data:, style-src 'self', worker-src 'none', object-src 'none', base-uri 'none', form-action 'none')
+- [x] **CSP-07**: Nonce-based `script-src` for any inline scripts; never `'unsafe-inline'`, never `'unsafe-eval'`
 
 ### Capability Negotiation
 
 - [x] **CAP-01**: `shell.supports('nub:resource')` returns true for shells implementing the resource NUB
 - [x] **CAP-02**: `shell.supports('resource:scheme:<name>')` per-scheme capability check (e.g., `resource:scheme:blossom`)
-- [ ] **CAP-03**: `shell.supports('perm:strict-csp')` capability advertises the security posture (orthogonal to nub:resource so permissive dev shells can implement the NUB without enforcing CSP)
+- [x] **CAP-03**: `shell.supports('perm:strict-csp')` capability advertises the security posture (orthogonal to nub:resource so permissive dev shells can implement the NUB without enforcing CSP)
 
 ### Sidecar Pre-Resolution (NUB-RELAY)
 
@@ -172,16 +172,16 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | CORE-01 | Phase 125 | Complete |
 | CORE-02 | Phase 125 | Complete |
 | CORE-03 | Phase 125 | Complete |
-| CSP-01 | Phase 130 | Pending |
-| CSP-02 | Phase 130 | Pending |
-| CSP-03 | Phase 130 | Pending |
-| CSP-04 | Phase 130 | Pending |
-| CSP-05 | Phase 130 | Pending |
-| CSP-06 | Phase 130 | Pending |
-| CSP-07 | Phase 130 | Pending |
+| CSP-01 | Phase 130 | Complete |
+| CSP-02 | Phase 130 | Complete |
+| CSP-03 | Phase 130 | Complete |
+| CSP-04 | Phase 130 | Complete |
+| CSP-05 | Phase 130 | Complete |
+| CSP-06 | Phase 130 | Complete |
+| CSP-07 | Phase 130 | Complete |
 | CAP-01 | Phase 128 | Complete |
 | CAP-02 | Phase 128 | Complete |
-| CAP-03 | Phase 130 | Pending |
+| CAP-03 | Phase 130 | Complete |
 | SIDE-01 | Phase 127 | Complete |
 | SIDE-02 | Phase 127 | Complete |
 | SIDE-03 | Phase 127 | Complete |

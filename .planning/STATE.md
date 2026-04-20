@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
-stopped_at: Completed 129-01-PLAN.md (SDK-01..03). 10-NUB central SDK integration pattern locked. Workspace-wide pnpm -r type-check + pnpm -r build exit 0 across all 14 packages — DEF-125-01 stays closed. Node smoke against built @napplet/sdk dist confirms namespace + RESOURCE_DOMAIN + helpers + installer all surface correctly. Phase 129 ready for verification.
-last_updated: "2026-04-20T18:50:12.576Z"
+stopped_at: "Completed 130-01-PLAN.md (CSP-01..07, CAP-03). Strict CSP shipped: 4 project-killer pitfalls (1/2/18/19) fail the build with [nip5a-manifest] diagnostics. 10-directive baseline + nonce + dev/prod split + meta-first-head-child + assertNoDevLeakage all enforced. 7/7 smoke cases pass (4 pos + 3 neg). Workspace pnpm -r type-check + pnpm -r build green across all 14 packages — DEF-125-01 stays closed. Zero new runtime deps. Phase 130 ready for verification."
+last_updated: "2026-04-20T19:29:45.618Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
-  completed_phases: 5
-  total_plans: 5
-  completed_plans: 5
-  percent: 50
+  completed_phases: 6
+  total_plans: 6
+  completed_plans: 6
+  percent: 60
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 129 — Central SDK Integration
+**Current focus:** Phase 130 — Vite-Plugin Strict CSP
 
 ## Current Position
 
-Phase: 130
-Plan: Not started
+Phase: 130 (Vite-Plugin Strict CSP) — PLAN-COMPLETE
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
-Progress: [█████░░░░░] 50% (5/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
+Progress: [██████░░░░] 60% (6/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
 
 ## Phase Map
 
@@ -93,6 +93,10 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 128: DEF-125-01 cascade CLOSED — workspace-wide `pnpm -r type-check` exits 0 across all 14 packages for the first time since Phase 125 introduced the planned breakage. `pnpm -r build` also green. Pattern locked: introduce required type slot in Phase N, wire runtime population in Phase N+M, workspace-wide type-check is the load-bearing acceptance criterion.
 - Phase 128: Smoke-test scaffolding pattern extended — Node-side tests against the built `@napplet/shim` must stub `globalThis.document` (querySelector + addEventListener) alongside `globalThis.window` because keys-shim and config-shim access `document` at install time. Source code unchanged; stub lives in `/tmp` test only and is cleaned up post-pass.
 - Phase 129: 10-NUB central SDK integration pattern locked — 4 surgical edits (namespace const → type-reexport block → DOMAIN const re-export → shim installer + SDK helper re-exports), all sourced from `@napplet/nub/<domain>` barrel. Used prefixed SDK helpers (`resourceBytes`/`resourceBytesAsObjectURL`) over bare names, matching `notifySend`/`configRegisterSchema` precedent. `installResourceShim` re-exported alongside other 8 `install*Shim` functions. `hydrateResourceCache` deliberately NOT re-exported (relay-shim-internal helper for sidecar cache seeding, cross-NUB borrow-don't-own per Phase 127). Type-only consumer round-trip verified via temporary `__type-check__.ts` fixture (deleted pre-commit). Workspace-wide `pnpm -r type-check` + `pnpm -r build` stay green across all 14 packages — DEF-125-01 remains closed.
+- Phase 130: Strict CSP enforcement shipped — 4 project-killer pitfalls (1/2/18/19) now fail the build with prefixed `[nip5a-manifest]` diagnostics. 10-directive baseline + nonce-based script-src + dev/prod connect-src split + meta-must-be-first-head-child assertion all enforced via hand-rolled regex (zero new runtime deps per STACK.md). `Nip5aManifestOptions.strictCsp?: boolean | StrictCspOptions` is opt-in; back-compat preserved when omitted. CAP-03 closure is JSDoc-only (capability identifier `perm:strict-csp` is shell-side advertisement, vite-plugin only documents the pairing).
+- Phase 130: closeBundle CSP-extraction regex Rule 1 bug fix — original `[^"']` capture group truncated CSP values at first single quote (CSP values legitimately contain `'none'`/`'self'`), defeating CSP-05/Pitfall 18 dev-leak detection. Fix: pin to double-quote delimiters, accept any non-double-quote in capture. Caught by Task 3's 7-case smoke test. Pattern: when extracting attribute values that themselves contain single quotes, anchor the regex on double-quote delimiters specifically — `[^"']` is wrong because the capture should permit single quotes.
+- Phase 130: closeBundle restructure — strict-CSP assertion moved to TOP of `closeBundle()` (before the `VITE_DEV_PRIVKEY_HEX` early-return) so strict CSP enforcement is INDEPENDENT of manifest signing. Plan placement would have been after the privkey gate, skipping the assertion when no privkey is configured. Pattern locked: load-bearing security checks must run regardless of optional features (privkey, schema discovery, etc.).
+- Phase 130: tsup config — `src/csp.ts` added as a separate entry alongside `src/index.ts`. Without this, tsup chunk-splits csp.ts into a hashed shared chunk and `dist/csp.js` is not produced; with this, `dist/csp.js` becomes a small re-export shim importable standalone by Node-side validation scripts. Pattern: when a sibling module's exports need to be Node-importable from `dist/<name>.js` directly (for verification scripts, third-party consumers), add it as a tsup entry — cost is minimal (the shim re-uses the same chunk, no code duplication).
 
 ### Pending Todos
 
@@ -100,8 +104,8 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE; awaiting verification
 - Phase 128 (Central Shim Integration) — PLAN-COMPLETE; awaiting verification. DEF-125-01 closed.
 - Phase 129 (Central SDK Integration) — PLAN-COMPLETE; awaiting verification. SDK seam closed. DEF-125-01 stays closed.
-- Phase 130 (Vite-Plugin Strict CSP) — independent of 126; can plan in parallel; consumes `perm:strict-csp` JSDoc-documented capability identifier
-- Phase 131 (NIP-5D In-Repo Spec Amendment) — gated by 126 + 130; resource wire envelopes locked at v0.28.0 contract
+- Phase 130 (Vite-Plugin Strict CSP) — PLAN-COMPLETE; awaiting verification. CSP-01..07 + CAP-03 satisfied. 4 project-killer pitfalls fail the build. Workspace-wide green; DEF-125-01 stays closed.
+- Phase 131 (NIP-5D In-Repo Spec Amendment) — UNBLOCKED by Phase 130; resource wire envelopes locked at v0.28.0 contract; `perm:strict-csp` capability identifier ready to be referenced from spec text
 
 ### Blockers/Concerns
 
@@ -112,6 +116,6 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 
 ## Session Continuity
 
-Last session: 2026-04-20T18:46:17.645Z
-Stopped at: Completed 129-01-PLAN.md (SDK-01..03). 10-NUB central SDK integration pattern locked. Workspace-wide pnpm -r type-check + pnpm -r build exit 0 across all 14 packages — DEF-125-01 stays closed. Node smoke against built @napplet/sdk dist confirms namespace + RESOURCE_DOMAIN + helpers + installer all surface correctly. Phase 129 ready for verification.
+Last session: 2026-04-20T19:29:45.615Z
+Stopped at: Completed 130-01-PLAN.md (CSP-01..07, CAP-03). Strict CSP shipped: 4 project-killer pitfalls (1/2/18/19) fail the build with [nip5a-manifest] diagnostics. 10-directive baseline + nonce + dev/prod split + meta-first-head-child + assertNoDevLeakage all enforced. 7/7 smoke cases pass (4 pos + 3 neg). Workspace pnpm -r type-check + pnpm -r build green across all 14 packages — DEF-125-01 stays closed. Zero new runtime deps. Phase 130 ready for verification.
 Resume: Run `/gsd:verify-phase 129` to verify Phase 129 deliverables (then 126/127/128 if not yet verified), then `/gsd:plan-phase 130` (Vite-Plugin Strict CSP) to begin the next executable phase. Phase 130 is independent of 129 and unblocks 131 (NIP-5D in-repo spec amendment).

@@ -330,7 +330,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 127: NUB-RELAY Sidecar Amendment** - Add optional `resources?: ResourceSidecarEntry[]` to `RelayEventMessage`; relay shim hydrates resource cache before `onEvent` (completed 2026-04-20)
 - [x] **Phase 128: Central Shim Integration** - Wire resource NUB into `@napplet/shim`; mount `window.napplet.resource`; ship `nub:resource` and `resource:scheme:<name>` capability checks (completed 2026-04-20)
 - [x] **Phase 129: Central SDK Integration** - Add `resource` namespace + `RESOURCE_DOMAIN` const + type re-exports to `@napplet/sdk` (completed 2026-04-20)
-- [ ] **Phase 130: Vite-Plugin Strict CSP** - Ship `strictCsp` option with first-`<head>`-child meta injection, header-only directive rejection, dev/prod split, nonce-based scripts, complete 10-directive baseline; ship `perm:strict-csp` capability
+- [x] **Phase 130: Vite-Plugin Strict CSP** - Ship `strictCsp` option with first-`<head>`-child meta injection, header-only directive rejection, dev/prod split, nonce-based scripts, complete 10-directive baseline; ship `perm:strict-csp` capability (completed 2026-04-20)
 - [ ] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md`
 - [ ] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*`
 - [ ] **Phase 133: Documentation + Demo Coordination** - Update 5 package READMEs + skills/build-napplet + shell-deployer policy checklist; PROJECT.md + NUB-RESOURCE coordination note delegating demos to downstream shell repo
@@ -410,7 +410,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   4. The default baseline policy emits 10 directives including `default-src 'none'`, `script-src 'nonce-...' 'self'` (never `'unsafe-inline'`, never `'unsafe-eval'`), `connect-src 'none'`, `img-src blob: data:`, `font-src blob: data:`, `style-src 'self'`, `worker-src 'none'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`.
   5. Shells that enforce this policy advertise `shell.supports('perm:strict-csp')`; the capability is documented as orthogonal to `nub:resource` (a permissive dev shell can implement the resource NUB without enforcing strict CSP).
 **Plans**: 1
-- [ ] 130-01-PLAN.md — Add strictCsp option to vite-plugin: hand-rolled CspBuilder + first-head-child meta injection (transformIndexHtml order: 'pre' + injectTo: 'head-prepend') + closeBundle assertions for Pitfalls 1/2/18/19 + 7-case end-to-end smoke test (CSP-01..07 + CAP-03 JSDoc)
+- [x] 130-01-PLAN.md — Add strictCsp option to vite-plugin: hand-rolled CspBuilder + first-head-child meta injection (transformIndexHtml order: 'pre' + injectTo: 'head-prepend') + closeBundle assertions for Pitfalls 1/2/18/19 + 7-case end-to-end smoke test (CSP-01..07 + CAP-03 JSDoc)
 **UI hint**: yes
 
 ### Phase 131: NIP-5D In-Repo Spec Amendment
@@ -472,7 +472,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 127. NUB-RELAY Sidecar Amendment | 1/1 | Complete    | 2026-04-20 |
 | 128. Central Shim Integration | 1/1 | Complete    | 2026-04-20 |
 | 129. Central SDK Integration | 1/1 | Complete    | 2026-04-20 |
-| 130. Vite-Plugin Strict CSP | 0/1 | Plan-complete | - |
+| 130. Vite-Plugin Strict CSP | 1/1 | Complete   | 2026-04-20 |
 | 131. NIP-5D In-Repo Spec Amendment | 0/0 | Not started | - |
 | 132. Cross-Repo Nubs PRs | 0/0 | Not started | - |
 | 133. Documentation + Demo Coordination | 0/0 | Not started | - |
