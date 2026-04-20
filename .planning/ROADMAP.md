@@ -434,7 +434,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   4. NUB-RELAY amendment PR is open; sidecar field is documented as **OPTIONAL** with **default OFF** privacy rationale (shell pre-fetching reveals user activity to upstream avatar hosts before user has rendered the event); opt-in is per shell policy with per-event-kind allowlist guidance (Pitfall 10 mitigation).
   5. NUB-IDENTITY clarification PR is open noting `picture` / `banner` URLs flow through `resource.bytes()` (no wire change); NUB-MEDIA clarification PR is open noting `MediaArtwork.url` flows through `resource.bytes()` (no wire change).
   6. All 4 PR bodies, commit messages, and spec content are zero-grep clean of `@napplet/*` private package references — verified by manual sweep + grep before milestone close (also asserted by VER-06 in Phase 134 — Pitfall 8 mitigation).
-**Plans**: TBD
+**Plans**: 1
+- [ ] 132-01-PLAN.md — Draft 4 nubs PRs locally (NUB-RESOURCE new spec + NUB-RELAY/IDENTITY/MEDIA amendments) with cross-repo public-repo hygiene gates (SPEC-02..06, SCH-02..04, POL-01..06, SVG-01..03, SIDE-05)
 
 ### Phase 133: Documentation + Demo Coordination
 **Goal**: Five package READMEs, the napplet-author skill, the root README, and a shell-deployer resource policy checklist all reflect the v0.28.0 surface; demo napplets are explicitly delegated to the downstream shell repo via a coordination note.
