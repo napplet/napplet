@@ -472,7 +472,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 127. NUB-RELAY Sidecar Amendment | 1/1 | Complete    | 2026-04-20 |
 | 128. Central Shim Integration | 1/1 | Complete    | 2026-04-20 |
 | 129. Central SDK Integration | 1/1 | Complete    | 2026-04-20 |
-| 130. Vite-Plugin Strict CSP | 1/1 | Complete   | 2026-04-20 |
+| 130. Vite-Plugin Strict CSP | 1/1 | Complete    | 2026-04-20 |
 | 131. NIP-5D In-Repo Spec Amendment | 0/0 | Not started | - |
 | 132. Cross-Repo Nubs PRs | 0/0 | Not started | - |
 | 133. Documentation + Demo Coordination | 0/0 | Not started | - |
