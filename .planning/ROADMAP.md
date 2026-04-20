@@ -409,7 +409,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. Dev mode emits a CSP that includes `connect-src 'self' ws://localhost:* wss://localhost:*` for HMR; production build emits `connect-src 'none'`; build-time assertion fails the build if any dev-relaxation appears in the production manifest.
   4. The default baseline policy emits 10 directives including `default-src 'none'`, `script-src 'nonce-...' 'self'` (never `'unsafe-inline'`, never `'unsafe-eval'`), `connect-src 'none'`, `img-src blob: data:`, `font-src blob: data:`, `style-src 'self'`, `worker-src 'none'`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`.
   5. Shells that enforce this policy advertise `shell.supports('perm:strict-csp')`; the capability is documented as orthogonal to `nub:resource` (a permissive dev shell can implement the resource NUB without enforcing strict CSP).
-**Plans**: TBD
+**Plans**: 1
+- [ ] 130-01-PLAN.md — Add strictCsp option to vite-plugin: hand-rolled CspBuilder + first-head-child meta injection (transformIndexHtml order: 'pre' + injectTo: 'head-prepend') + closeBundle assertions for Pitfalls 1/2/18/19 + 7-case end-to-end smoke test (CSP-01..07 + CAP-03 JSDoc)
 **UI hint**: yes
 
 ### Phase 131: NIP-5D In-Repo Spec Amendment
@@ -471,7 +472,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 127. NUB-RELAY Sidecar Amendment | 1/1 | Complete    | 2026-04-20 |
 | 128. Central Shim Integration | 1/1 | Complete    | 2026-04-20 |
 | 129. Central SDK Integration | 1/1 | Complete    | 2026-04-20 |
-| 130. Vite-Plugin Strict CSP | 0/0 | Not started | - |
+| 130. Vite-Plugin Strict CSP | 0/1 | Plan-complete | - |
 | 131. NIP-5D In-Repo Spec Amendment | 0/0 | Not started | - |
 | 132. Cross-Repo Nubs PRs | 0/0 | Not started | - |
 | 133. Documentation + Demo Coordination | 0/0 | Not started | - |
