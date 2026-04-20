@@ -15,6 +15,7 @@ import type {
   RelayClosedMessage,
   RelayQueryResultMessage,
 } from './types.js';
+import { hydrateResourceCache } from '../resource/shim.js';
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -60,7 +61,15 @@ export function subscribe(
     if (!('subId' in typedMsg) || typedMsg.subId !== subId) return;
 
     if (msg.type === 'relay.event') {
-      onEvent((msg as RelayEventMessage).event);
+      const eventMsg = msg as RelayEventMessage;
+      // Pre-populate the resource single-flight cache from any sidecar entries
+      // BEFORE delivering the event, so a synchronous bytes(url) call inside
+      // onEvent for a sidecar-pre-populated URL resolves from cache without a
+      // postMessage round-trip. hydrateResourceCache is null-safe (undefined
+      // or empty entries is a no-op), so no guard is needed for shells that
+      // don't opt in to the sidecar (default-OFF per NUB-RELAY spec).
+      hydrateResourceCache(eventMsg.resources);
+      onEvent(eventMsg.event);
     } else if (msg.type === 'relay.eose') {
       onEose();
     } else if (msg.type === 'relay.closed') {
