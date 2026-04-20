@@ -4,7 +4,7 @@ milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
 stopped_at: "Completed 131-01-PLAN.md (SPEC-01). NIP-5D Security Considerations amended with Browser-Enforced Resource Isolation subsection: strict-CSP SHOULD posture, perm:strict-csp capability identifier, NUB-RESOURCE cross-reference by name, sandbox=allow-scripts reaffirmation with allow-same-origin prohibition reasoning. Zero @napplet/ kehto hyprgate leakage. pnpm -r type-check green across all 14 packages. Phase 131 plan-complete, awaiting verification."
-last_updated: "2026-04-20T19:46:59.800Z"
+last_updated: "2026-04-20T19:49:30.465Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 131 (NIP-5D In-Repo Spec Amendment) — EXECUTING
-Plan: 1 of 1
+Phase: 132
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
