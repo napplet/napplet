@@ -10,6 +10,7 @@
 
 import type { NappletMessage } from '@napplet/core';
 import type { NostrEvent, NostrFilter, EventTemplate } from '@napplet/core';
+import type { ResourceSidecarEntry } from '../resource/types.js';
 
 // ─── Domain Constants ──────────────────────────────────────────────────────
 
@@ -176,6 +177,17 @@ export interface RelayPublishEncryptedResultMessage extends RelayMessage {
 
 /**
  * A matching event delivered to an active subscription.
+ *
+ * The optional `resources` sidecar lets a shell pre-resolve resources
+ * referenced by the event (e.g., avatar / picture URLs in a kind:0 metadata
+ * event); the relay shim calls `hydrateResourceCache(resources)` before
+ * delivering this event to the napplet's `onEvent` callback so subsequent
+ * `napplet.resource.bytes(url)` calls for sidecar-pre-populated URLs
+ * resolve from cache without a postMessage round-trip.
+ *
+ * Default OFF per shell policy (privacy: pre-fetching reveals user activity
+ * to upstream hosts before the user has rendered the event). See NUB-RELAY
+ * spec for the per-event-kind allowlist guidance and opt-in semantics.
  */
 export interface RelayEventMessage extends RelayMessage {
   type: 'relay.event';
@@ -183,6 +195,13 @@ export interface RelayEventMessage extends RelayMessage {
   subId: string;
   /** The matching Nostr event. */
   event: NostrEvent;
+  /**
+   * Optional pre-resolved resources for URLs referenced by `event`.
+   * Shell-populated; default OFF (see JSDoc above for privacy rationale).
+   * Owned by the resource NUB (`@napplet/nub/resource/types`); imported
+   * here type-only as a sibling cross-NUB reference.
+   */
+  resources?: ResourceSidecarEntry[];
 }
 
 /**
