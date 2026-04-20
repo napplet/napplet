@@ -478,5 +478,5 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 130. Vite-Plugin Strict CSP | 1/1 | Complete    | 2026-04-20 |
 | 131. NIP-5D In-Repo Spec Amendment | 1/1 | Complete    | 2026-04-20 |
 | 132. Cross-Repo Nubs PRs | 1/1 | Complete    | 2026-04-20 |
-| 133. Documentation + Demo Coordination | 1/1 | Complete   | 2026-04-20 |
+| 133. Documentation + Demo Coordination | 1/1 | Complete    | 2026-04-20 |
 | 134. Verification & Milestone Close | 0/0 | Not started | - |

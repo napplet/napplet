@@ -4,12 +4,12 @@ milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
 stopped_at: Completed 133-01-PLAN.md (DOC-01..07 + DEMO-01; 8 REQ-IDs). 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean (zero @napplet/ in 2 public-destined files; zero kehto/hyprgate everywhere). Workspace pnpm -r type-check green (no source touched). Phase 133 plan-complete; awaiting verification.
-last_updated: "2026-04-20T21:11:32.324Z"
+last_updated: "2026-04-20T21:16:54.851Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
   completed_phases: 9
-  total_plans: 10
+  total_plans: 9
   completed_plans: 9
   percent: 90
 ---
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 133 (Documentation + Demo Coordination) — PLAN-COMPLETE
-Plan: 1 of 1
+Phase: 134
+Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-20 — Phase 133 plan-complete (DOC-01..07 + DEMO-01)
+Last activity: 2026-04-20
 
 Progress: [█████████░] 90% (9/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
 
