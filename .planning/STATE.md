@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
-status: executing
-stopped_at: "Completed 132-01-PLAN.md (SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05; 18 REQ-IDs). 4 NUB drafts authored at .planning/phases/132-cross-repo-nubs-prs/drafts/: NUB-RESOURCE.md (300 lines, full spec with 4 schemes / 8-code error vocabulary / SSRF MUSTs at DNS-resolution time / SVG sandboxed-Worker-no-network rasterization MUST), NUB-RELAY-AMENDMENT.md (135 lines, additive resources?: ResourceSidecarEntry[] field with default-OFF privacy rationale + per-event-kind allowlist guidance), NUB-IDENTITY-AMENDMENT.md (41 lines, doc-only), NUB-MEDIA-AMENDMENT.md (40 lines, doc-only). Public-repo hygiene clean: zero @napplet/, zero kehto, zero hyprgate, zero packages/(nub|shim|sdk|vite-plugin) across all 4 drafts. pnpm -r type-check green across all 14 packages (no source changes; DEF-125-01 stays closed). Phase 132 plan-complete, awaiting verification. Cross-repo git ops on ~/Develop/nubs deferred to manual step per CONTEXT.md."
-last_updated: "2026-04-20T20:30:00.000Z"
-last_activity: 2026-04-20 -- Phase 132 plan-complete
+status: completed
+stopped_at: Completed 132-01-PLAN.md (SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05; 18 REQ-IDs). 4 NUB drafts authored at .planning/phases/132-cross-repo-nubs-prs/drafts/. Public-repo hygiene clean (zero @napplet/, zero kehto, zero hyprgate). Workspace pnpm -r type-check green (no source changes). Phase 132 plan-complete; awaiting verification. Manual cross-repo git ops on ~/Develop/nubs deferred per CONTEXT.md.
+last_updated: "2026-04-20T20:42:10.562Z"
+last_activity: 2026-04-20
 progress:
   total_phases: 10
   completed_phases: 8
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 132 (Cross-Repo Nubs PRs) — PLAN-COMPLETE; awaiting verification
-Plan: 1 of 1 complete
+Phase: 133
+Plan: Not started
 Status: Phase 132 plan-complete
-Last activity: 2026-04-20 -- Phase 132 plan-complete
+Last activity: 2026-04-20
 
 Progress: [████████░░] 80% (8/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
 
