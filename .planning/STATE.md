@@ -4,7 +4,7 @@ milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
 stopped_at: Completed 128-01-PLAN.md (SHIM-01..03, CAP-01, CAP-02). DEF-125-01 cascade CLOSED — workspace-wide pnpm -r type-check exits 0 across all 14 packages. End-to-end smoke test PASS through built @napplet/shim entry point. Phase 128 ready for verification.
-last_updated: "2026-04-20T14:48:18.540Z"
+last_updated: "2026-04-20T14:53:43.292Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 128 (Central Shim Integration) — PLAN-COMPLETE
-Plan: 1 of 1
+Phase: 129
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
