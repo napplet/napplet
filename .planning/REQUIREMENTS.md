@@ -77,9 +77,9 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### SDK Integration
 
-- [ ] **SDK-01**: `packages/sdk/src/index.ts` adds `resource` namespace with named exports
-- [ ] **SDK-02**: `RESOURCE_DOMAIN` const re-exported alongside other domain constants
-- [ ] **SDK-03**: All resource NUB types re-exported from `@napplet/sdk` for bundler consumers
+- [x] **SDK-01**: `packages/sdk/src/index.ts` adds `resource` namespace with named exports
+- [x] **SDK-02**: `RESOURCE_DOMAIN` const re-exported alongside other domain constants
+- [x] **SDK-03**: All resource NUB types re-exported from `@napplet/sdk` for bundler consumers
 
 ### Spec Amendments
 
@@ -190,9 +190,9 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | SHIM-01 | Phase 128 | Complete |
 | SHIM-02 | Phase 128 | Complete |
 | SHIM-03 | Phase 128 | Complete |
-| SDK-01 | Phase 129 | Pending |
-| SDK-02 | Phase 129 | Pending |
-| SDK-03 | Phase 129 | Pending |
+| SDK-01 | Phase 129 | Complete |
+| SDK-02 | Phase 129 | Complete |
+| SDK-03 | Phase 129 | Complete |
 | SPEC-01 | Phase 131 | Pending |
 | SPEC-02 | Phase 132 | Pending |
 | SPEC-03 | Phase 132 | Pending |

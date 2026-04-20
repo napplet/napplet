@@ -329,7 +329,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 126: Resource NUB Scaffold + `data:` Scheme** - Create `packages/nub/src/resource/` triad, ship `data:` scheme decoded in-shim, implement single-flight cache, AbortSignal cancellation, blob URL lifecycle helpers (completed 2026-04-20)
 - [x] **Phase 127: NUB-RELAY Sidecar Amendment** - Add optional `resources?: ResourceSidecarEntry[]` to `RelayEventMessage`; relay shim hydrates resource cache before `onEvent` (completed 2026-04-20)
 - [x] **Phase 128: Central Shim Integration** - Wire resource NUB into `@napplet/shim`; mount `window.napplet.resource`; ship `nub:resource` and `resource:scheme:<name>` capability checks (completed 2026-04-20)
-- [ ] **Phase 129: Central SDK Integration** - Add `resource` namespace + `RESOURCE_DOMAIN` const + type re-exports to `@napplet/sdk`
+- [x] **Phase 129: Central SDK Integration** - Add `resource` namespace + `RESOURCE_DOMAIN` const + type re-exports to `@napplet/sdk` (completed 2026-04-20)
 - [ ] **Phase 130: Vite-Plugin Strict CSP** - Ship `strictCsp` option with first-`<head>`-child meta injection, header-only directive rejection, dev/prod split, nonce-based scripts, complete 10-directive baseline; ship `perm:strict-csp` capability
 - [ ] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md`
 - [ ] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*`
@@ -397,7 +397,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. `import { RESOURCE_DOMAIN } from '@napplet/sdk'` resolves to the string `'resource'`.
   3. All resource NUB types (`ResourceBytesMessage`, `ResourceBytesResultMessage`, `ResourceSidecarEntry`, `ResourceScheme`, error code union, etc.) re-export from `@napplet/sdk` and round-trip through `tsc --isolatedModules`.
 **Plans**: 1
-- [ ] 129-01-PLAN.md — Add resource NUB to @napplet/sdk barrel: namespace export, RESOURCE_DOMAIN, 11 type re-exports, installResourceShim + resourceBytes/resourceBytesAsObjectURL helpers (SDK-01..03)
+- [x] 129-01-PLAN.md — Add resource NUB to @napplet/sdk barrel: namespace export, RESOURCE_DOMAIN, 11 type re-exports, installResourceShim + resourceBytes/resourceBytesAsObjectURL helpers (SDK-01..03)
 
 ### Phase 130: Vite-Plugin Strict CSP
 **Goal**: Napplets developed with `@napplet/vite-plugin` ship under a 10-directive strict CSP baseline that survives meta placement, blocks header-only directive misuse, separates dev (HMR-relaxed) from prod (`connect-src 'none'`), and never permits `'unsafe-inline'` or `'unsafe-eval'` for scripts.
@@ -470,7 +470,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 126. Resource NUB Scaffold + `data:` Scheme | 1/1 | Complete    | 2026-04-20 |
 | 127. NUB-RELAY Sidecar Amendment | 1/1 | Complete    | 2026-04-20 |
 | 128. Central Shim Integration | 1/1 | Complete    | 2026-04-20 |
-| 129. Central SDK Integration | 0/1 | In progress | - |
+| 129. Central SDK Integration | 1/1 | Complete   | 2026-04-20 |
 | 130. Vite-Plugin Strict CSP | 0/0 | Not started | - |
 | 131. NIP-5D In-Repo Spec Amendment | 0/0 | Not started | - |
 | 132. Cross-Repo Nubs PRs | 0/0 | Not started | - |
