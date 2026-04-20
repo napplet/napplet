@@ -331,7 +331,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 128: Central Shim Integration** - Wire resource NUB into `@napplet/shim`; mount `window.napplet.resource`; ship `nub:resource` and `resource:scheme:<name>` capability checks (completed 2026-04-20)
 - [x] **Phase 129: Central SDK Integration** - Add `resource` namespace + `RESOURCE_DOMAIN` const + type re-exports to `@napplet/sdk` (completed 2026-04-20)
 - [x] **Phase 130: Vite-Plugin Strict CSP** - Ship `strictCsp` option with first-`<head>`-child meta injection, header-only directive rejection, dev/prod split, nonce-based scripts, complete 10-directive baseline; ship `perm:strict-csp` capability (completed 2026-04-20)
-- [ ] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md`
+- [x] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md` (completed 2026-04-20)
 - [ ] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*`
 - [ ] **Phase 133: Documentation + Demo Coordination** - Update 5 package READMEs + skills/build-napplet + shell-deployer policy checklist; PROJECT.md + NUB-RESOURCE coordination note delegating demos to downstream shell repo
 - [ ] **Phase 134: Verification & Milestone Close** - Build + type-check green; positive CSP block assertion in Playwright; SVG bomb / `<foreignObject>` / recursive-`<use>` rejection; single-flight cache stampede dedup; sidecar default-OFF; cross-repo zero-grep; bundle tree-shake
@@ -421,7 +421,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   1. `specs/NIP-5D.md` contains a Security Considerations subsection describing strict-CSP posture as **SHOULD**, the `perm:strict-csp` capability identifier, the resource NUB as the canonical path for network-sourced bytes, and an explicit prohibition on `sandbox="allow-same-origin"` (closes the service-worker bypass vector — Pitfall 5 mitigation).
   2. The amendment cross-references NUB-RESOURCE in the public `napplet/nubs` repo without naming `@napplet/*` packages — public-repo hygiene preserved.
 **Plans**: 1
-- [ ] 131-01-PLAN.md — Add Browser-Enforced Resource Isolation subsection to specs/NIP-5D.md (SPEC-01: strict-CSP SHOULD posture, perm:strict-csp capability, NUB-RESOURCE cross-reference, sandbox="allow-scripts" reaffirmation, public-repo hygiene)
+- [x] 131-01-PLAN.md — Add Browser-Enforced Resource Isolation subsection to specs/NIP-5D.md (SPEC-01: strict-CSP SHOULD posture, perm:strict-csp capability, NUB-RESOURCE cross-reference, sandbox="allow-scripts" reaffirmation, public-repo hygiene)
 
 ### Phase 132: Cross-Repo Nubs PRs
 **Goal**: Four draft PRs are open against `napplet/nubs` capturing the protocol-level surface for v0.28.0 — NUB-RESOURCE as a new spec, NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY and NUB-MEDIA clarifications routing picture / artwork URLs through the resource NUB. Every PR is `@napplet/*`-clean.
@@ -474,7 +474,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 128. Central Shim Integration | 1/1 | Complete    | 2026-04-20 |
 | 129. Central SDK Integration | 1/1 | Complete    | 2026-04-20 |
 | 130. Vite-Plugin Strict CSP | 1/1 | Complete    | 2026-04-20 |
-| 131. NIP-5D In-Repo Spec Amendment | 0/1 | Planned     | - |
+| 131. NIP-5D In-Repo Spec Amendment | 1/1 | Complete   | 2026-04-20 |
 | 132. Cross-Repo Nubs PRs | 0/0 | Not started | - |
 | 133. Documentation + Demo Coordination | 0/0 | Not started | - |
 | 134. Verification & Milestone Close | 0/0 | Not started | - |

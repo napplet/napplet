@@ -83,7 +83,7 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Spec Amendments
 
-- [ ] **SPEC-01**: `specs/NIP-5D.md` Security Considerations subsection added: strict-CSP posture as **SHOULD**, `perm:strict-csp` capability, resource NUB as canonical fetch path, `sandbox="allow-scripts"` reaffirmation, prohibition on `allow-same-origin` (closes service-worker bypass vector)
+- [x] **SPEC-01**: `specs/NIP-5D.md` Security Considerations subsection added: strict-CSP posture as **SHOULD**, `perm:strict-csp` capability, resource NUB as canonical fetch path, `sandbox="allow-scripts"` reaffirmation, prohibition on `allow-same-origin` (closes service-worker bypass vector)
 - [ ] **SPEC-02**: NUB-RESOURCE.md drafted and PR opened to public `napplet/nubs` repo (new spec): message catalog, scheme registration semantics, error code vocabulary, MUST/SHOULD/MAY shell behavior contract
 - [ ] **SPEC-03**: NUB-RELAY.md amendment PR opened to `napplet/nubs` (sidecar field + ordering semantics + default-OFF privacy rationale)
 - [ ] **SPEC-04**: NUB-IDENTITY.md clarification PR opened to `napplet/nubs` (no wire change; `picture` and `banner` URLs flow through `resource.bytes()`; pattern documented)
@@ -193,7 +193,7 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | SDK-01 | Phase 129 | Complete |
 | SDK-02 | Phase 129 | Complete |
 | SDK-03 | Phase 129 | Complete |
-| SPEC-01 | Phase 131 | Pending |
+| SPEC-01 | Phase 131 | Complete |
 | SPEC-02 | Phase 132 | Pending |
 | SPEC-03 | Phase 132 | Pending |
 | SPEC-04 | Phase 132 | Pending |

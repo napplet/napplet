@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
-stopped_at: "Completed 130-01-PLAN.md (CSP-01..07, CAP-03). Strict CSP shipped: 4 project-killer pitfalls (1/2/18/19) fail the build with [nip5a-manifest] diagnostics. 10-directive baseline + nonce + dev/prod split + meta-first-head-child + assertNoDevLeakage all enforced. 7/7 smoke cases pass (4 pos + 3 neg). Workspace pnpm -r type-check + pnpm -r build green across all 14 packages — DEF-125-01 stays closed. Zero new runtime deps. Phase 130 ready for verification."
-last_updated: "2026-04-20T19:34:37.710Z"
+stopped_at: "Completed 131-01-PLAN.md (SPEC-01). NIP-5D Security Considerations amended with Browser-Enforced Resource Isolation subsection: strict-CSP SHOULD posture, perm:strict-csp capability identifier, NUB-RESOURCE cross-reference by name, sandbox=allow-scripts reaffirmation with allow-same-origin prohibition reasoning. Zero @napplet/ kehto hyprgate leakage. pnpm -r type-check green across all 14 packages. Phase 131 plan-complete, awaiting verification."
+last_updated: "2026-04-20T19:46:59.800Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
-  completed_phases: 6
-  total_plans: 6
-  completed_plans: 6
+  completed_phases: 7
+  total_plans: 7
+  completed_plans: 7
   percent: 60
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 130 — Vite-Plugin Strict CSP
+**Current focus:** Phase 131 — NIP-5D In-Repo Spec Amendment
 
 ## Current Position
 
-Phase: 131
-Plan: Not started
+Phase: 131 (NIP-5D In-Repo Spec Amendment) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
@@ -116,6 +116,6 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 
 ## Session Continuity
 
-Last session: 2026-04-20T19:29:45.615Z
-Stopped at: Completed 130-01-PLAN.md (CSP-01..07, CAP-03). Strict CSP shipped: 4 project-killer pitfalls (1/2/18/19) fail the build with [nip5a-manifest] diagnostics. 10-directive baseline + nonce + dev/prod split + meta-first-head-child + assertNoDevLeakage all enforced. 7/7 smoke cases pass (4 pos + 3 neg). Workspace pnpm -r type-check + pnpm -r build green across all 14 packages — DEF-125-01 stays closed. Zero new runtime deps. Phase 130 ready for verification.
+Last session: 2026-04-20T19:46:59.797Z
+Stopped at: Completed 131-01-PLAN.md (SPEC-01). NIP-5D Security Considerations amended with Browser-Enforced Resource Isolation subsection: strict-CSP SHOULD posture, perm:strict-csp capability identifier, NUB-RESOURCE cross-reference by name, sandbox=allow-scripts reaffirmation with allow-same-origin prohibition reasoning. Zero @napplet/ kehto hyprgate leakage. pnpm -r type-check green across all 14 packages. Phase 131 plan-complete, awaiting verification.
 Resume: Run `/gsd:verify-phase 129` to verify Phase 129 deliverables (then 126/127/128 if not yet verified), then `/gsd:plan-phase 130` (Vite-Plugin Strict CSP) to begin the next executable phase. Phase 130 is independent of 129 and unblocks 131 (NIP-5D in-repo spec amendment).
