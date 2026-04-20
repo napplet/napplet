@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
-stopped_at: Completed 125-01-PLAN.md (CORE-01..03); Phase 125 ready for verification. @napplet/core type-check + build + test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01).
-last_updated: "2026-04-20T12:25:34.343Z"
+stopped_at: Completed 126-01-PLAN.md (RES-01..07, SCH-01); Phase 126 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
+last_updated: "2026-04-20T12:48:36.900Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
   percent: 10
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 125 — Core Type Surface
+**Current focus:** Phase 126 — Resource NUB Scaffold + data: Scheme (plan-complete; awaiting verification)
 
 ## Current Position
 
-Phase: 126
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-20
+Phase: 126 (Resource NUB Scaffold + data: Scheme) — VERIFYING
+Plan: 1 of 1 (complete)
+Status: Phase 126 plan-complete — ready for verification
+Last activity: 2026-04-20 -- Phase 126 plan execution complete (RES-01..07, SCH-01)
 
-Progress: [█░░░░░░░░░░] 10% (1/10 phases plan-complete; awaiting verification)
+Progress: [██░░░░░░░░] 20% (2/10 phases plan-complete; awaiting verification)
 
 ## Phase Map
 
@@ -81,11 +81,19 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Demo napplet scope: **Option B** — downstream shell repo owns v0.28.0 demos; this repo ships only wire + SDK surface (DEMO-01 is a single coordination note)
 - Phase 125: Added DOM lib to `@napplet/core` tsconfig (`lib: ["ES2022", "DOM", "DOM.Iterable"]`) so `Blob` global is in scope without runtime import; aligns `@napplet/core` with `shim`/`sdk`/`nub`/`vite-plugin` which all already enable DOM
 - Phase 125: `NappletGlobal.resource` declared as REQUIRED (not optional); cascade type-check failure in `@napplet/shim` is expected planned breakage until Phase 128 (Central Shim Integration) wires it (DEF-125-01)
+- Phase 126: `bytesAsObjectURL` returns synchronous `{ url, revoke }` handle with non-enumerable `ready` Promise extension (Option C from CONTEXT discretion); preserves locked `NappletGlobal['resource']` return shape while exposing await path. `revoke()` is idempotent; bails ready handler via `revoked` flag if called pre-settle.
+- Phase 126: `data:` scheme decoded inline via `fetch(url).then(r => r.blob())` with zero postMessage round-trip (SCH-01). Establishes the in-shim scheme decoder precedent; future schemes plug in at NUB-RESOURCE spec level (Phase 132).
+- Phase 126: Single-flight cache via `Map<canonicalURL, Promise<Blob>>` with `finally`-delete; N concurrent same-URL calls share 1 work-unit; aborted entries removed for retryability. v0.28.0 uses raw URL string as cache key (canonicalization deferred to NUB-RESOURCE spec).
+- Phase 126: AbortSignal contract — synchronous pre-dispatch reject + post-dispatch `resource.cancel` envelope; both gates use `new DOMException('Aborted', 'AbortError')`. Establishes the cancellation pattern for any future NUB needing AbortController support.
 
 ### Pending Todos
 
-- Phase 126 (Resource NUB Scaffold + `data:` Scheme) — ready to plan; consumes `'resource'` literal and `NappletGlobal['resource']` shape from `@napplet/core`
+- Phase 126 (Resource NUB Scaffold + `data:` Scheme) — PLAN-COMPLETE; awaiting verification
+- Phase 127 (NUB-RELAY Sidecar Amendment) — ready to plan; consumes `ResourceSidecarEntry` type-only from `@napplet/nub/resource/types`
+- Phase 128 (Central Shim Integration) — ready to plan; consumes `installResourceShim`/`handleResourceMessage`/`bytes`/`bytesAsObjectURL`/`hydrateResourceCache` from `@napplet/nub/resource/shim`; will resolve DEF-125-01 by wiring `window.napplet.resource`
+- Phase 129 (Central SDK Integration) — ready to plan; consumes `resourceBytes`/`resourceBytesAsObjectURL` from `@napplet/nub/resource`
 - Phase 130 (Vite-Plugin Strict CSP) — independent of 126; can plan in parallel; consumes `perm:strict-csp` JSDoc-documented capability identifier
+- Phase 131 (NIP-5D In-Repo Spec Amendment) — gated by 126 + 130; resource wire envelopes locked at v0.28.0 contract
 
 ### Blockers/Concerns
 
@@ -96,6 +104,6 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 
 ## Session Continuity
 
-Last session: 2026-04-20T12:21:34.172Z
-Stopped at: Completed 125-01-PLAN.md (CORE-01..03); Phase 125 ready for verification. @napplet/core type-check + build + test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01).
-Resume: Run `/gsd:plan-phase 125` to decompose Phase 125 (Core Type Surface) into plans.
+Last session: 2026-04-20T12:48:36.897Z
+Stopped at: Completed 126-01-PLAN.md (RES-01..07, SCH-01); Phase 126 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
+Resume: Run `/gsd:verify-phase 126` to verify Phase 126 deliverables, then `/gsd:plan-phase 127` (or 128/129/130) to begin the next executable phase.

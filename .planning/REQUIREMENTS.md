@@ -9,17 +9,17 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Resource NUB Primitive
 
-- [ ] **RES-01**: New `@napplet/nub/resource` subpath at `packages/nub/src/resource/` with `types.ts`, `shim.ts`, `sdk.ts`, `index.ts` following the established NUB triad pattern; 4 new `exports` entries + 4 tsup entries in `@napplet/nub` package.json
-- [ ] **RES-02**: `ResourceBytesMessage` / `ResourceBytesResultMessage` envelope types with correlation ID, payload `{ url: string }`, result payload `{ blob: Blob, mime: string }`
-- [ ] **RES-03**: Typed error discriminator on result envelope: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`
-- [ ] **RES-04**: Canonical MIME field on result, shell-classified via byte sniffing (NOT upstream `Content-Type` passthrough — RES-04 explicitly bans honoring attacker-controlled MIME)
-- [ ] **RES-05**: `resource.cancel` envelope + `AbortSignal`-shaped SDK helper for napplet-side cancellation
-- [ ] **RES-06**: `bytesAsObjectURL(url) → string` SDK helper with paired `revoke(objectURL)` for blob URL lifecycle management
-- [ ] **RES-07**: Single-Blob delivery contract enforced by type shape (no streaming, no chunked — that's a future audio/video milestone)
+- [x] **RES-01**: New `@napplet/nub/resource` subpath at `packages/nub/src/resource/` with `types.ts`, `shim.ts`, `sdk.ts`, `index.ts` following the established NUB triad pattern; 4 new `exports` entries + 4 tsup entries in `@napplet/nub` package.json
+- [x] **RES-02**: `ResourceBytesMessage` / `ResourceBytesResultMessage` envelope types with correlation ID, payload `{ url: string }`, result payload `{ blob: Blob, mime: string }`
+- [x] **RES-03**: Typed error discriminator on result envelope: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`
+- [x] **RES-04**: Canonical MIME field on result, shell-classified via byte sniffing (NOT upstream `Content-Type` passthrough — RES-04 explicitly bans honoring attacker-controlled MIME)
+- [x] **RES-05**: `resource.cancel` envelope + `AbortSignal`-shaped SDK helper for napplet-side cancellation
+- [x] **RES-06**: `bytesAsObjectURL(url) → string` SDK helper with paired `revoke(objectURL)` for blob URL lifecycle management
+- [x] **RES-07**: Single-Blob delivery contract enforced by type shape (no streaming, no chunked — that's a future audio/video milestone)
 
 ### Scheme Handlers
 
-- [ ] **SCH-01**: `data:` scheme decoded inside napplet shim with zero shell round-trip (validates dispatch path; mandatory base case)
+- [x] **SCH-01**: `data:` scheme decoded inside napplet shim with zero shell round-trip (validates dispatch path; mandatory base case)
 - [ ] **SCH-02**: `https:` scheme protocol surface defined in spec (shell-side network fetch with policy enforcement)
 - [ ] **SCH-03**: `blossom:` scheme protocol surface defined in spec (Blossom hash → bytes resolution; canonical hash form)
 - [ ] **SCH-04**: `nostr:` scheme protocol surface defined in spec with single-hop resolution semantics (NIP-19 bech32 input form)
@@ -149,14 +149,14 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RES-01 | Phase 126 | Pending |
-| RES-02 | Phase 126 | Pending |
-| RES-03 | Phase 126 | Pending |
-| RES-04 | Phase 126 | Pending |
-| RES-05 | Phase 126 | Pending |
-| RES-06 | Phase 126 | Pending |
-| RES-07 | Phase 126 | Pending |
-| SCH-01 | Phase 126 | Pending |
+| RES-01 | Phase 126 | Complete |
+| RES-02 | Phase 126 | Complete |
+| RES-03 | Phase 126 | Complete |
+| RES-04 | Phase 126 | Complete |
+| RES-05 | Phase 126 | Complete |
+| RES-06 | Phase 126 | Complete |
+| RES-07 | Phase 126 | Complete |
+| SCH-01 | Phase 126 | Complete |
 | SCH-02 | Phase 132 | Pending |
 | SCH-03 | Phase 132 | Pending |
 | SCH-04 | Phase 132 | Pending |
