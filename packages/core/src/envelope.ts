@@ -42,7 +42,7 @@ export interface NappletMessage {
 // ─── NUB Domain Types ──────────────────────────────────────────────────────
 
 /**
- * String literal union of the eight NUB (Napplet Unified Blueprint) domains.
+ * String literal union of the ten NUB (Napplet Unified Blueprint) domains.
  * Each domain corresponds to a capability namespace that a shell may support.
  *
  * | Domain     | Scope                                     |
@@ -56,6 +56,7 @@ export interface NappletMessage {
  * | `media`    | Media session control and playback        |
  * | `notify`   | Shell-rendered notifications              |
  * | `config`   | Per-napplet declarative configuration     |
+ * | `resource` | Byte-fetching primitive (URL → Blob)      |
  *
  * @example
  * ```ts
@@ -63,7 +64,7 @@ export interface NappletMessage {
  * const isValid = NUB_DOMAINS.includes(domain); // true
  * ```
  */
-export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify' | 'config';
+export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify' | 'config' | 'resource';
 
 /**
  * Runtime-accessible constant array of all NUB domain names.
@@ -76,7 +77,7 @@ export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'ke
  * }
  * ```
  */
-export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config'] as const;
+export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config', 'resource'] as const;
 
 // ─── Namespaced Capability Type ───────────────────────────────────────────
 
@@ -89,6 +90,7 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage'
  * |---------|---------------------|--------------------------------|
  * | `nub:`  | `'nub:relay'`       | Shell implements the relay NUB |
  * | `perm:` | `'perm:popups'`     | Shell grants popup permission  |
+ * | `perm:` | `'perm:strict-csp'` | Shell enforces strict CSP posture (v0.28.0) |
  * | *(bare)*| `'relay'`           | Shorthand for `'nub:relay'`    |
  *
  * Bare strings are valid only for NUB domains.
@@ -99,6 +101,7 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage'
  * const cap: NamespacedCapability = 'nub:relay';
  * const bare: NamespacedCapability = 'relay'; // shorthand OK
  * const perm: NamespacedCapability = 'perm:popups';
+ * const csp: NamespacedCapability = 'perm:strict-csp';
  * ```
  */
 export type NamespacedCapability =
