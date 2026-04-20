@@ -22,6 +22,10 @@
 - Sidecar pre-resolution is an invisible optimization, not a separate API path
 - Shell-as-fetch-proxy attack surface accepted as irreducible; bounded by policy defaults
 
+**Demo coordination (v0.28.0):**
+
+This monorepo ships only the **wire + SDK surface** for v0.28.0 — `@napplet/nub/resource`, the `@napplet/shim` integration, the `@napplet/sdk` re-exports, the `@napplet/vite-plugin` `strictCsp` option, the `specs/NIP-5D.md` Security Considerations amendment, and the four cross-repo PRs to `napplet/nubs`. **Demo napplets** exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer) are explicitly delegated to the **downstream shell repo** for v0.28.0 (Option B per milestone scoping). The downstream shell hosts the demo napplets because demos require a complete shell implementation including the resource NUB handler, default policy enforcement, SVG rasterizer, and strict CSP — all of which are shell-side responsibilities living outside this monorepo since the v0.13.0 extraction. Direct contributors to v0.28.0 demo work to the downstream shell repo, not here.
+
 ## Shipped: v0.27.0 IFC Terminology Lock-In
 
 Completed the `ipc` → `ifc` rename end-to-end. Hard break with no backward-compat alias: `window.napplet.ipc` renamed to `window.napplet.ifc` in `@napplet/core`, `@napplet/shim`, `@napplet/sdk`, and `@napplet/nub/ifc`; the `@napplet/sdk` `ipc` named export deleted and replaced with `ifc`; every JSDoc / section comment updated to `IFC-PEER` / "inter-frame" phrasing. Public docs aligned: root README + four package READMEs + `skills/build-napplet/SKILL.md` + active `.planning/` docs swept to IFC terminology with historical changelog bullets preserved as records. Acceptance gate passed: `pnpm -r build` + `pnpm -r type-check` green across all 14 workspace packages; first-party-surface zero-grep across `packages/`, `specs/`, `skills/`, root README, and `.planning/codebase/` returns zero matches (with one documented `INTEGRATIONS.md:168` `INTER_PANE` historical-constant exception). 3 phases, 5 plans shipped 2026-04-19. See [archive](milestones/v0.27.0-ROADMAP.md).
