@@ -63,10 +63,10 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Sidecar Pre-Resolution (NUB-RELAY)
 
-- [ ] **SIDE-01**: Optional `resources?: ResourceSidecarEntry[]` field on `RelayEventMessage` (additive, backward-compatible wire change)
-- [ ] **SIDE-02**: `ResourceSidecarEntry` type defined in resource NUB; relay NUB imports as type-only in-package dep (resource NUB owns ALL its types per NUB modular principle)
-- [ ] **SIDE-03**: Relay shim calls `hydrateResourceCache(msg.resources)` from resource shim before delivering each event to `onEvent` callback (transparent to napplet caller)
-- [ ] **SIDE-04**: Single-flight cache map keyed by canonical URL; subsequent `resource.bytes(url)` calls for sidecar-pre-populated URLs resolve from cache without round-trip; concurrent calls for same URL share one in-flight promise
+- [x] **SIDE-01**: Optional `resources?: ResourceSidecarEntry[]` field on `RelayEventMessage` (additive, backward-compatible wire change)
+- [x] **SIDE-02**: `ResourceSidecarEntry` type defined in resource NUB; relay NUB imports as type-only in-package dep (resource NUB owns ALL its types per NUB modular principle)
+- [x] **SIDE-03**: Relay shim calls `hydrateResourceCache(msg.resources)` from resource shim before delivering each event to `onEvent` callback (transparent to napplet caller)
+- [x] **SIDE-04**: Single-flight cache map keyed by canonical URL; subsequent `resource.bytes(url)` calls for sidecar-pre-populated URLs resolve from cache without round-trip; concurrent calls for same URL share one in-flight promise
 - [ ] **SIDE-05**: Sidecar default OFF in NUB-RELAY spec (privacy: shell pre-fetching reveals user activity to upstream avatar hosts before user has rendered the event); opt-in per shell policy + per event-kind allowlist documented in spec
 
 ### Shim Integration
@@ -182,10 +182,10 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | CAP-01 | Phase 128 | Pending |
 | CAP-02 | Phase 128 | Pending |
 | CAP-03 | Phase 130 | Pending |
-| SIDE-01 | Phase 127 | Pending |
-| SIDE-02 | Phase 127 | Pending |
-| SIDE-03 | Phase 127 | Pending |
-| SIDE-04 | Phase 127 | Pending |
+| SIDE-01 | Phase 127 | Complete |
+| SIDE-02 | Phase 127 | Complete |
+| SIDE-03 | Phase 127 | Complete |
+| SIDE-04 | Phase 127 | Complete |
 | SIDE-05 | Phase 132 | Pending |
 | SHIM-01 | Phase 128 | Pending |
 | SHIM-02 | Phase 128 | Pending |

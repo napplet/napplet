@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
-stopped_at: Completed 126-01-PLAN.md (RES-01..07, SCH-01); Phase 126 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
-last_updated: "2026-04-20T12:55:08.434Z"
+stopped_at: Completed 127-01-PLAN.md (SIDE-01..04); Phase 127 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
+last_updated: "2026-04-20T13:13:41.484Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 3
+  completed_plans: 3
   percent: 20
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 126 — Resource NUB Scaffold + data: Scheme (plan-complete; awaiting verification)
+**Current focus:** Phase 127 — NUB-RELAY Sidecar Amendment
 
 ## Current Position
 
-Phase: 127
-Plan: Not started
-Status: Phase 126 plan-complete — ready for verification
+Phase: 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
-Progress: [██░░░░░░░░] 20% (2/10 phases plan-complete; awaiting verification)
+Progress: [███░░░░░░░] 30% (3/10 phases plan-complete; awaiting verification)
 
 ## Phase Map
 
@@ -85,11 +85,15 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 126: `data:` scheme decoded inline via `fetch(url).then(r => r.blob())` with zero postMessage round-trip (SCH-01). Establishes the in-shim scheme decoder precedent; future schemes plug in at NUB-RESOURCE spec level (Phase 132).
 - Phase 126: Single-flight cache via `Map<canonicalURL, Promise<Blob>>` with `finally`-delete; N concurrent same-URL calls share 1 work-unit; aborted entries removed for retryability. v0.28.0 uses raw URL string as cache key (canonicalization deferred to NUB-RESOURCE spec).
 - Phase 126: AbortSignal contract — synchronous pre-dispatch reject + post-dispatch `resource.cancel` envelope; both gates use `new DOMException('Aborted', 'AbortError')`. Establishes the cancellation pattern for any future NUB needing AbortController support.
+- Phase 127: Hoisted local `eventMsg` cast in relay shim's `handleMessage` `relay.event` branch (vs. inline double-cast) — single cast, two reads. Source-order pattern: `hydrateResourceCache(eventMsg.resources)` placed BEFORE `onEvent(eventMsg.event)` is load-bearing for SIDE-04 (synchronous `bytes(url)` inside `onEvent` resolves from cache).
+- Phase 127: Established cross-NUB borrow-don't-own pattern — relay NUB type-only-imports `ResourceSidecarEntry` from `../resource/types.js` (sibling relative); ownership stays with resource NUB; no runtime cross-domain dep.
+- Phase 127: Smoke test scaffolding deviation (Rule 3) — Node 18+ `globalThis.crypto` is non-configurable getter; plan's literal assignment crashed; replaced with guarded `Object.defineProperty` in `/tmp` test only. Source code unchanged. Future smoke tests should use the guarded form.
+- Phase 127: tsup chunk-splitting splits the relay shim runtime into shared chunks (`chunk-RHDDLJ3D.js` / `chunk-OV3R23GE.js`); literal grep on `dist/relay/shim.js` for `hydrateResourceCache` returns 0 (the call is in the chunk). End-to-end smoke test (PASS, 0 postMessages) is the load-bearing acceptance criterion. Future verification scripts should target shared chunks too, or rely on smoke tests over literal dist greps.
 
 ### Pending Todos
 
 - Phase 126 (Resource NUB Scaffold + `data:` Scheme) — PLAN-COMPLETE; awaiting verification
-- Phase 127 (NUB-RELAY Sidecar Amendment) — ready to plan; consumes `ResourceSidecarEntry` type-only from `@napplet/nub/resource/types`
+- Phase 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE; awaiting verification
 - Phase 128 (Central Shim Integration) — ready to plan; consumes `installResourceShim`/`handleResourceMessage`/`bytes`/`bytesAsObjectURL`/`hydrateResourceCache` from `@napplet/nub/resource/shim`; will resolve DEF-125-01 by wiring `window.napplet.resource`
 - Phase 129 (Central SDK Integration) — ready to plan; consumes `resourceBytes`/`resourceBytesAsObjectURL` from `@napplet/nub/resource`
 - Phase 130 (Vite-Plugin Strict CSP) — independent of 126; can plan in parallel; consumes `perm:strict-csp` JSDoc-documented capability identifier
@@ -104,6 +108,6 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 
 ## Session Continuity
 
-Last session: 2026-04-20T12:48:36.897Z
-Stopped at: Completed 126-01-PLAN.md (RES-01..07, SCH-01); Phase 126 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
-Resume: Run `/gsd:verify-phase 126` to verify Phase 126 deliverables, then `/gsd:plan-phase 127` (or 128/129/130) to begin the next executable phase.
+Last session: 2026-04-20T13:13:41.481Z
+Stopped at: Completed 127-01-PLAN.md (SIDE-01..04); Phase 127 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
+Resume: Run `/gsd:verify-phase 127` (or 126) to verify the latest phase deliverables, then `/gsd:plan-phase 128` (or 129/130) to begin the next executable phase.
