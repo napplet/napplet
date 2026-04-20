@@ -4,14 +4,14 @@ milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
 stopped_at: Completed 126-01-PLAN.md (RES-01..07, SCH-01); Phase 126 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
-last_updated: "2026-04-20T12:48:36.900Z"
+last_updated: "2026-04-20T12:55:08.434Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 2
   completed_plans: 2
-  percent: 10
+  percent: 20
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 126 (Resource NUB Scaffold + data: Scheme) — VERIFYING
-Plan: 1 of 1 (complete)
+Phase: 127
+Plan: Not started
 Status: Phase 126 plan-complete — ready for verification
-Last activity: 2026-04-20 -- Phase 126 plan execution complete (RES-01..07, SCH-01)
+Last activity: 2026-04-20
 
 Progress: [██░░░░░░░░] 20% (2/10 phases plan-complete; awaiting verification)
 
