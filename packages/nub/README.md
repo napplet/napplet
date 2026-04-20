@@ -1,6 +1,6 @@
 # @napplet/nub
 
-> All 9 napplet NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config) as layered subpath exports.
+> All 10 napplet NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config, resource) as layered subpath exports.
 
 ## Install
 
@@ -63,7 +63,7 @@ installRelayShim(nappletWindow, {
 });
 ```
 
-## 9 Domains
+## 10 Domains
 
 Each domain is an independent subpath. Barrel imports bundle types + shim installer + SDK helpers; granular subpaths isolate each surface.
 
@@ -78,6 +78,7 @@ Each domain is an independent subpath. Barrel imports bundle types + shim instal
 | notify | `@napplet/nub/notify` | `@napplet/nub/notify/types` | `@napplet/nub/notify/shim` | `@napplet/nub/notify/sdk` | Shell-rendered notifications |
 | identity | `@napplet/nub/identity` | `@napplet/nub/identity/types` | `@napplet/nub/identity/shim` | `@napplet/nub/identity/sdk` | Read-only user queries (pubkey, metadata) |
 | config | `@napplet/nub/config` | `@napplet/nub/config/types` | `@napplet/nub/config/shim` | `@napplet/nub/config/sdk` | Declarative per-napplet config (schema-driven) |
+| resource | `@napplet/nub/resource` | `@napplet/nub/resource/types` | `@napplet/nub/resource/shim` | `@napplet/nub/resource/sdk` | Sandboxed byte fetching (https/blossom/nostr/data) via `bytes(url) → Blob` |
 
 ## Subpath Patterns
 
@@ -94,18 +95,49 @@ Each domain exposes up to three patterns (four including the barrel). Pick the s
 - Every subpath in the `exports` map is a discrete entry point; a bundler importing only `@napplet/nub/relay/types` produces zero bytes from the other 8 domains
 - Verified end-to-end in Phase 121 with a minimal-consumer smoke test
 
-The `exports` map in `package.json` declares 34 entry points:
+The `exports` map in `package.json` declares 38 entry points:
 
-- 9 domain barrels (`@napplet/nub/<domain>`)
-- 9 granular types entries (`@napplet/nub/<domain>/types`)
-- 8 granular shim entries (theme omitted — see [Theme Exception](#theme-exception))
-- 8 granular sdk entries (theme omitted — see [Theme Exception](#theme-exception))
+- 10 domain barrels (`@napplet/nub/<domain>`)
+- 10 granular types entries (`@napplet/nub/<domain>/types`)
+- 9 granular shim entries (theme omitted — see [Theme Exception](#theme-exception))
+- 9 granular sdk entries (theme omitted — see [Theme Exception](#theme-exception))
 
 Each entry maps to its own pre-built `.js` + `.d.ts` pair under `dist/<domain>/<surface>.{js,d.ts}`. No root `.` key exists, and there is no top-level `main`/`module`/`types` field — attempting `import '@napplet/nub'` fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` by design.
 
 ## Theme Exception
 
 Theme is types-only today — only `@napplet/nub/theme` (barrel, re-exports `./types`) and `@napplet/nub/theme/types` exist. There is no `@napplet/nub/theme/shim` or `@napplet/nub/theme/sdk` entry in the exports map. Shell-side theme handling stays in the host shell; this may change in a future milestone if a theme shim/sdk surface is added upstream.
+
+## Resource NUB (v0.28.0)
+
+The `resource` domain ships in v0.28.0 alongside the milestone of browser-enforced
+resource isolation. It defines a single scheme-pluggable byte-fetching primitive:
+
+```ts
+import { bytes, bytesAsObjectURL } from '@napplet/nub/resource/sdk';
+
+// Fetch any URL the shell accepts under its policy. URL space is scheme-pluggable.
+const blob: Blob = await bytes('https://example.com/avatar.png');
+
+// Synchronous handle for <img src> use; revoke when done.
+const handle = bytesAsObjectURL('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+imgEl.src = handle.url;
+// later
+handle.revoke();
+```
+
+Four canonical schemes are defined in the spec:
+
+- `data:` — RFC 2397, decoded inside the napplet shim with zero shell round-trip
+- `https:` — shell-side network fetch under the default resource policy (private-IP block list at DNS time, MIME byte-sniffing, size cap, timeout, rate limit, redirect cap)
+- `blossom:sha256:<hex>` — Blossom hash → bytes; shell verifies hash before delivery
+- `nostr:<bech32>` — single-hop NIP-19 resolution against the shell's relay pool
+
+Errors arrive as one of 8 typed codes: `not-found`, `blocked-by-policy`, `timeout`,
+`too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`.
+
+See [NUB-RESOURCE](https://github.com/napplet/nubs) for the normative spec, the
+default shell resource policy, and the SVG rasterization MUSTs.
 
 ## Migration
 
@@ -124,6 +156,8 @@ Every deprecated `@napplet/nub-<domain>` package is now a 1-line re-export shim 
 | `@napplet/nub-config` | `@napplet/nub/config` (barrel) or `@napplet/nub/config/{types,shim,sdk}` (granular) |
 
 The 9 deprecated packages ship as re-export shims for one release cycle. Removal is tracked as REMOVE-01..03 in a future milestone.
+
+*Note: the `resource` domain (v0.28.0) shipped only via `@napplet/nub/resource`. There is no deprecated `@napplet/nub-resource` package.*
 
 ## Optional Peer Dependency
 

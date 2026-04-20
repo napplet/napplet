@@ -26,7 +26,7 @@ npm install @napplet/sdk @napplet/shim
 
 ```ts
 import '@napplet/shim';
-import { relay, ifc, storage, keys, media, notify, config, type NostrEvent } from '@napplet/sdk';
+import { relay, ifc, storage, keys, media, notify, config, resource, type NostrEvent } from '@napplet/sdk';
 
 // Subscribe to kind 1 notes
 const sub = relay.subscribe(
@@ -86,6 +86,12 @@ const configSub = config.subscribe((v) => {
 
 // Deep-link settings UI
 config.openSettings({ section: 'appearance' });
+
+// Fetch external bytes via the shell (the iframe sandbox + strict CSP block direct fetch)
+const avatarBlob = await resource.bytes('https://example.com/avatar.png');
+const handle = resource.bytesAsObjectURL('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+imgEl.src = handle.url;
+// handle.revoke() when done
 
 // Clean up
 sub.close();
@@ -203,6 +209,26 @@ Install the peer when you want typed callbacks:
 npm install --save-dev json-schema-to-ts
 ```
 
+### `resource`
+
+Sandboxed byte fetching (NUB-RESOURCE). Mirrors `window.napplet.resource`. Required because the iframe sandbox + strict CSP block direct `fetch()` / `<img src=externalUrl>` / `XMLHttpRequest`.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `bytes(url, opts?)` | `Promise<Blob>` | Fetch bytes through the shell. `opts.signal` accepts an `AbortSignal`. |
+| `bytesAsObjectURL(url)` | `{ url: string; revoke: () => void }` | Synchronous handle whose `url` resolves to a blob URL once the fetch completes. |
+
+Four canonical schemes: `data:` (in-shim), `https:` (shell-side under policy), `blossom:sha256:<hex>` (hash-verified), `nostr:<bech32>` (single-hop NIP-19).
+
+Bare helper aliases are also re-exported for consumers that prefer functional imports:
+
+```ts
+import { resourceBytes, resourceBytesAsObjectURL } from '@napplet/sdk';
+
+const blob = await resourceBytes('https://example.com/avatar.png');
+const handle = resourceBytesAsObjectURL('blossom:sha256:...');
+```
+
 ### `keys`
 
 Keyboard forwarding and action keybindings. Mirrors `window.napplet.keys`.
@@ -301,6 +327,7 @@ handlers in shell implementations or protocol-aware code.
 | `MediaNubMessage` | `@napplet/nub/media` | Discriminated union of all media domain messages |
 | `NotifyNubMessage` | `@napplet/nub/notify` | Discriminated union of all notify domain messages |
 | `ConfigNubMessage` | `@napplet/nub/config` | Discriminated union of all config domain messages |
+| `ResourceNubMessage` | `@napplet/nub/resource` | Discriminated union of all resource domain messages |
 
 Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
@@ -310,8 +337,8 @@ Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMe
 Each NUB domain has a string constant re-exported from its package:
 
 ```ts
-import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN, CONFIG_DOMAIN } from '@napplet/sdk';
-// Values: 'relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config'
+import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN, CONFIG_DOMAIN, RESOURCE_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config', 'resource'
 ```
 
 These constants are re-exported from the individual NUB packages. Use them with the shell capability query
@@ -328,6 +355,11 @@ if (window.napplet.shell.supports('nub:identity')) {
 
 if (window.napplet.shell.supports('nub:config')) {
   // NUB-CONFIG is available -- schema registration and subscribe()
+}
+
+if (window.napplet.shell.supports('nub:resource')) {
+  // resource.bytes(url) is available; check per-scheme too:
+  if (window.napplet.shell.supports('resource:scheme:blossom')) { /* ... */ }
 }
 ```
 
