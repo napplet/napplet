@@ -57,8 +57,8 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Capability Negotiation
 
-- [ ] **CAP-01**: `shell.supports('nub:resource')` returns true for shells implementing the resource NUB
-- [ ] **CAP-02**: `shell.supports('resource:scheme:<name>')` per-scheme capability check (e.g., `resource:scheme:blossom`)
+- [x] **CAP-01**: `shell.supports('nub:resource')` returns true for shells implementing the resource NUB
+- [x] **CAP-02**: `shell.supports('resource:scheme:<name>')` per-scheme capability check (e.g., `resource:scheme:blossom`)
 - [ ] **CAP-03**: `shell.supports('perm:strict-csp')` capability advertises the security posture (orthogonal to nub:resource so permissive dev shells can implement the NUB without enforcing CSP)
 
 ### Sidecar Pre-Resolution (NUB-RELAY)
@@ -71,9 +71,9 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Shim Integration
 
-- [ ] **SHIM-01**: `packages/shim/src/index.ts` adds `resource.*` envelope routing branch
-- [ ] **SHIM-02**: `window.napplet.resource` namespace mounted by shim
-- [ ] **SHIM-03**: `installResourceShim()` called from central shim installer following established 9-NUB pattern
+- [x] **SHIM-01**: `packages/shim/src/index.ts` adds `resource.*` envelope routing branch
+- [x] **SHIM-02**: `window.napplet.resource` namespace mounted by shim
+- [x] **SHIM-03**: `installResourceShim()` called from central shim installer following established 9-NUB pattern
 
 ### SDK Integration
 
@@ -179,17 +179,17 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | CSP-05 | Phase 130 | Pending |
 | CSP-06 | Phase 130 | Pending |
 | CSP-07 | Phase 130 | Pending |
-| CAP-01 | Phase 128 | Pending |
-| CAP-02 | Phase 128 | Pending |
+| CAP-01 | Phase 128 | Complete |
+| CAP-02 | Phase 128 | Complete |
 | CAP-03 | Phase 130 | Pending |
 | SIDE-01 | Phase 127 | Complete |
 | SIDE-02 | Phase 127 | Complete |
 | SIDE-03 | Phase 127 | Complete |
 | SIDE-04 | Phase 127 | Complete |
 | SIDE-05 | Phase 132 | Pending |
-| SHIM-01 | Phase 128 | Pending |
-| SHIM-02 | Phase 128 | Pending |
-| SHIM-03 | Phase 128 | Pending |
+| SHIM-01 | Phase 128 | Complete |
+| SHIM-02 | Phase 128 | Complete |
+| SHIM-03 | Phase 128 | Complete |
 | SDK-01 | Phase 129 | Pending |
 | SDK-02 | Phase 129 | Pending |
 | SDK-03 | Phase 129 | Pending |

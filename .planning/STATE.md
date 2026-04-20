@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
-stopped_at: Completed 127-01-PLAN.md (SIDE-01..04); Phase 127 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
-last_updated: "2026-04-20T13:18:49.826Z"
+stopped_at: Completed 128-01-PLAN.md (SHIM-01..03, CAP-01, CAP-02). DEF-125-01 cascade CLOSED — workspace-wide pnpm -r type-check exits 0 across all 14 packages. End-to-end smoke test PASS through built @napplet/shim entry point. Phase 128 ready for verification.
+last_updated: "2026-04-20T14:48:18.540Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
-  percent: 30
+  completed_phases: 4
+  total_plans: 4
+  completed_plans: 4
+  percent: 40
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 127 — NUB-RELAY Sidecar Amendment
+**Current focus:** Phase 128 — Central Shim Integration
 
 ## Current Position
 
-Phase: 128
-Plan: Not started
+Phase: 128 (Central Shim Integration) — PLAN-COMPLETE
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
-Progress: [███░░░░░░░] 30% (3/10 phases plan-complete; awaiting verification)
+Progress: [████░░░░░░] 40% (4/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
 
 ## Phase Map
 
@@ -89,12 +89,15 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 127: Established cross-NUB borrow-don't-own pattern — relay NUB type-only-imports `ResourceSidecarEntry` from `../resource/types.js` (sibling relative); ownership stays with resource NUB; no runtime cross-domain dep.
 - Phase 127: Smoke test scaffolding deviation (Rule 3) — Node 18+ `globalThis.crypto` is non-configurable getter; plan's literal assignment crashed; replaced with guarded `Object.defineProperty` in `/tmp` test only. Source code unchanged. Future smoke tests should use the guarded form.
 - Phase 127: tsup chunk-splitting splits the relay shim runtime into shared chunks (`chunk-RHDDLJ3D.js` / `chunk-OV3R23GE.js`); literal grep on `dist/relay/shim.js` for `hydrateResourceCache` returns 0 (the call is in the chunk). End-to-end smoke test (PASS, 0 postMessages) is the load-bearing acceptance criterion. Future verification scripts should target shared chunks too, or rely on smoke tests over literal dist greps.
+- Phase 128: 10-NUB central shim integration pattern locked — 4 surgical edits (import block → handleEnvelopeMessage routing branch → window.napplet global mount property → installXShim() in init sequence). Used aliased imports (`resourceBytes`/`resourceBytesAsObjectURL`) over bare names matching `notifySend`/`configRegisterSchema` precedent; bare names risk collisions with future NUB additions in the central shim file.
+- Phase 128: DEF-125-01 cascade CLOSED — workspace-wide `pnpm -r type-check` exits 0 across all 14 packages for the first time since Phase 125 introduced the planned breakage. `pnpm -r build` also green. Pattern locked: introduce required type slot in Phase N, wire runtime population in Phase N+M, workspace-wide type-check is the load-bearing acceptance criterion.
+- Phase 128: Smoke-test scaffolding pattern extended — Node-side tests against the built `@napplet/shim` must stub `globalThis.document` (querySelector + addEventListener) alongside `globalThis.window` because keys-shim and config-shim access `document` at install time. Source code unchanged; stub lives in `/tmp` test only and is cleaned up post-pass.
 
 ### Pending Todos
 
 - Phase 126 (Resource NUB Scaffold + `data:` Scheme) — PLAN-COMPLETE; awaiting verification
 - Phase 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE; awaiting verification
-- Phase 128 (Central Shim Integration) — ready to plan; consumes `installResourceShim`/`handleResourceMessage`/`bytes`/`bytesAsObjectURL`/`hydrateResourceCache` from `@napplet/nub/resource/shim`; will resolve DEF-125-01 by wiring `window.napplet.resource`
+- Phase 128 (Central Shim Integration) — PLAN-COMPLETE; awaiting verification. DEF-125-01 closed.
 - Phase 129 (Central SDK Integration) — ready to plan; consumes `resourceBytes`/`resourceBytesAsObjectURL` from `@napplet/nub/resource`
 - Phase 130 (Vite-Plugin Strict CSP) — independent of 126; can plan in parallel; consumes `perm:strict-csp` JSDoc-documented capability identifier
 - Phase 131 (NIP-5D In-Repo Spec Amendment) — gated by 126 + 130; resource wire envelopes locked at v0.28.0 contract
@@ -104,10 +107,10 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - CARRIED: npm publish blocked on human npm auth (PUB-04).
 - CARRIED: NIP number conflict with Scrolls PR#2281 (RES-01 from v0.12.0 era — not related to v0.28.0's RES-* IDs).
 - NEW (informational): REQUIREMENTS.md originally reported "56 total" REQ-IDs; actual enumerated REQ-ID count is 65. Traceability updated to 65/65 mapped. No coverage gap.
-- Workspace-wide pnpm -r type-check fails in @napplet/shim (TS2741: missing 'resource' in window.napplet literal). Expected and planned: Phase 128 (Central Shim Integration) will repair. Use per-package validation (pnpm --filter @napplet/core ...) until then. Tracked as DEF-125-01.
+- CLOSED 2026-04-20: DEF-125-01 — Workspace-wide `pnpm -r type-check` is now green across all 14 packages. Phase 128 (Central Shim Integration) wired `window.napplet.resource = { bytes, bytesAsObjectURL }` satisfying the `NappletGlobal['resource']` shape locked in Phase 125. TS2741 on `packages/shim/src/index.ts` is gone. Workspace-wide type-check is the gating signal again (instead of per-package).
 
 ## Session Continuity
 
-Last session: 2026-04-20T13:13:41.481Z
-Stopped at: Completed 127-01-PLAN.md (SIDE-01..04); Phase 127 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
-Resume: Run `/gsd:verify-phase 127` (or 126) to verify the latest phase deliverables, then `/gsd:plan-phase 128` (or 129/130) to begin the next executable phase.
+Last session: 2026-04-20T14:46:24Z
+Stopped at: Completed 128-01-PLAN.md (SHIM-01..03, CAP-01, CAP-02). DEF-125-01 cascade CLOSED — workspace-wide pnpm -r type-check exits 0 across all 14 packages. End-to-end smoke test PASS through built @napplet/shim entry point. Phase 128 ready for verification.
+Resume: Run `/gsd:verify-phase 128` to verify Phase 128 deliverables, then `/gsd:plan-phase 129` (Central SDK Integration) or `/gsd:plan-phase 130` (Vite-Plugin Strict CSP) to begin the next executable phase. Phases 129 and 130 are independent of each other and can be planned in parallel.
