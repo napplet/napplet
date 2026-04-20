@@ -347,7 +347,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. `import { type NappletGlobal } from '@napplet/core'` resolves an interface whose `resource` property exposes `bytes` and `bytesAsObjectURL` method signatures.
   3. The `NamespacedCapability` type (or its JSDoc) documents `perm:strict-csp` as a valid permission identifier; a usage example appears in the core JSDoc/README.
   4. `pnpm --filter @napplet/core build` and `pnpm --filter @napplet/core type-check` exit 0.
-**Plans**: TBD
+**Plans**: 1
+- [ ] 125-01-PLAN.md — Add 'resource' to NubDomain + NUB_DOMAINS, NappletGlobal.resource namespace, perm:strict-csp JSDoc clarification
 
 ### Phase 126: Resource NUB Scaffold + `data:` Scheme
 **Goal**: A complete, self-contained `@napplet/nub/resource` subpath exists with envelope types, single-flight shim, SDK helpers, and zero-network `data:` decoding — proving the full request / result / cancel / cache / lifecycle dispatch path before anything integrates.
@@ -462,7 +463,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 125. Core Type Surface | 0/0 | Not started | - |
+| 125. Core Type Surface | 0/1 | Planned | - |
 | 126. Resource NUB Scaffold + `data:` Scheme | 0/0 | Not started | - |
 | 127. NUB-RELAY Sidecar Amendment | 0/0 | Not started | - |
 | 128. Central Shim Integration | 0/0 | Not started | - |
