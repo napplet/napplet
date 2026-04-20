@@ -385,8 +385,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. Inbound envelopes whose type prefix is `resource.` are routed by the central shim to the resource NUB's `handleResourceMessage` — verified by an end-to-end echo test against a mock shell.
   3. `window.napplet.shell.supports('nub:resource')` returns true when the shell has advertised resource support; `window.napplet.shell.supports('resource:scheme:blossom')` returns true when the shell has advertised that specific scheme.
   4. The shim init sequence calls `installResourceShim()` exactly once, following the established 9-NUB pattern.
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 1
+- [ ] 128-01-PLAN.md — Integrate resource NUB into @napplet/shim central installer (import + route + mount + install) and close DEF-125-01 (workspace-wide pnpm -r type-check green across all 14 packages)
 
 ### Phase 129: Central SDK Integration
 **Goal**: Bundler consumers that import from `@napplet/sdk` get the resource namespace, the domain constant, and all resource type re-exports without reaching into `@napplet/nub` subpaths.
@@ -468,7 +468,7 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 125. Core Type Surface | 1/1 | Complete    | 2026-04-20 |
 | 126. Resource NUB Scaffold + `data:` Scheme | 1/1 | Complete    | 2026-04-20 |
 | 127. NUB-RELAY Sidecar Amendment | 1/1 | Complete    | 2026-04-20 |
-| 128. Central Shim Integration | 0/0 | Not started | - |
+| 128. Central Shim Integration | 0/1 | In progress | - |
 | 129. Central SDK Integration | 0/0 | Not started | - |
 | 130. Vite-Plugin Strict CSP | 0/0 | Not started | - |
 | 131. NIP-5D In-Repo Spec Amendment | 0/0 | Not started | - |
