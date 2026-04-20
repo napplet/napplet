@@ -546,6 +546,47 @@ export interface NappletGlobal {
     readonly schema: Record<string, unknown> | null;
   };
   /**
+   * Browser-enforced resource fetching: napplets request bytes by URL,
+   * shell fetches and returns a Blob. The strict-CSP iframe sandbox
+   * blocks all napplet-side network access, so this is the canonical
+   * (and only) byte-fetching primitive available inside a napplet.
+   *
+   * URL space is scheme-pluggable: shells register handlers per scheme.
+   * The four canonical v0.28.0 schemes are `data:` (decoded in-shim,
+   * no round-trip), `https:` (shell-side network with policy), `blossom:`
+   * (Blossom hash → bytes), and `nostr:` (NIP-19 single-hop resolution).
+   *
+   * @example
+   * ```ts
+   * // Fetch raw bytes:
+   * const blob = await window.napplet.resource.bytes('https://example.com/avatar.png');
+   *
+   * // Get a managed object URL (revoke when done to free memory):
+   * const { url, revoke } = window.napplet.resource.bytesAsObjectURL('blossom:abc123...');
+   * imgEl.src = url;
+   * imgEl.onload = () => revoke();
+   * ```
+   */
+  resource: {
+    /**
+     * Fetch the bytes referenced by `url` through the shell's resource pipeline.
+     * The shell selects a scheme handler, applies its resource policy
+     * (private-IP blocks, size caps, timeouts, MIME classification), and
+     * returns the bytes as a single Blob. No streaming, no chunking.
+     * @param url  URL identifying the resource (any registered scheme)
+     * @returns Promise resolving to the fetched bytes as a Blob
+     */
+    bytes(url: string): Promise<Blob>;
+    /**
+     * Convenience wrapper around `bytes(url)` that returns a managed
+     * object URL plus a `revoke` function. Calling `revoke()` invokes
+     * `URL.revokeObjectURL` exactly once to free the underlying Blob.
+     * @param url  URL identifying the resource
+     * @returns Object containing the blob URL and a revoke function
+     */
+    bytesAsObjectURL(url: string): { url: string; revoke: () => void };
+  };
+  /**
    * Shell capability queries. Check whether the shell supports a NUB
    * or permission.
    *
