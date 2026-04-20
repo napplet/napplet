@@ -4,14 +4,14 @@ milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
 stopped_at: Completed 127-01-PLAN.md (SIDE-01..04); Phase 127 ready for verification. @napplet/nub type-check + build + smoke test green. @napplet/shim cascade type-check failure expected until Phase 128 (DEF-125-01 carry).
-last_updated: "2026-04-20T13:13:41.484Z"
+last_updated: "2026-04-20T13:18:49.826Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
   completed_phases: 3
   total_plans: 3
   completed_plans: 3
-  percent: 20
+  percent: 30
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE
-Plan: 1 of 1
+Phase: 128
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
