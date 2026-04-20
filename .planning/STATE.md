@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
-status: verifying
-stopped_at: "Completed 131-01-PLAN.md (SPEC-01). NIP-5D Security Considerations amended with Browser-Enforced Resource Isolation subsection: strict-CSP SHOULD posture, perm:strict-csp capability identifier, NUB-RESOURCE cross-reference by name, sandbox=allow-scripts reaffirmation with allow-same-origin prohibition reasoning. Zero @napplet/ kehto hyprgate leakage. pnpm -r type-check green across all 14 packages. Phase 131 plan-complete, awaiting verification."
-last_updated: "2026-04-20T19:49:30.465Z"
-last_activity: 2026-04-20
+status: executing
+stopped_at: "Completed 132-01-PLAN.md (SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05; 18 REQ-IDs). 4 NUB drafts authored at .planning/phases/132-cross-repo-nubs-prs/drafts/: NUB-RESOURCE.md (300 lines, full spec with 4 schemes / 8-code error vocabulary / SSRF MUSTs at DNS-resolution time / SVG sandboxed-Worker-no-network rasterization MUST), NUB-RELAY-AMENDMENT.md (135 lines, additive resources?: ResourceSidecarEntry[] field with default-OFF privacy rationale + per-event-kind allowlist guidance), NUB-IDENTITY-AMENDMENT.md (41 lines, doc-only), NUB-MEDIA-AMENDMENT.md (40 lines, doc-only). Public-repo hygiene clean: zero @napplet/, zero kehto, zero hyprgate, zero packages/(nub|shim|sdk|vite-plugin) across all 4 drafts. pnpm -r type-check green across all 14 packages (no source changes; DEF-125-01 stays closed). Phase 132 plan-complete, awaiting verification. Cross-repo git ops on ~/Develop/nubs deferred to manual step per CONTEXT.md."
+last_updated: "2026-04-20T20:30:00.000Z"
+last_activity: 2026-04-20 -- Phase 132 plan-complete
 progress:
   total_phases: 10
-  completed_phases: 7
-  total_plans: 7
-  completed_plans: 7
-  percent: 60
+  completed_phases: 8
+  total_plans: 8
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 131 — NIP-5D In-Repo Spec Amendment
+**Current focus:** Phase 132 — Cross-Repo Nubs PRs
 
 ## Current Position
 
-Phase: 132
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-20
+Phase: 132 (Cross-Repo Nubs PRs) — PLAN-COMPLETE; awaiting verification
+Plan: 1 of 1 complete
+Status: Phase 132 plan-complete
+Last activity: 2026-04-20 -- Phase 132 plan-complete
 
-Progress: [██████░░░░] 60% (6/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
+Progress: [████████░░] 80% (8/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
 
 ## Phase Map
 
@@ -106,6 +106,7 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 129 (Central SDK Integration) — PLAN-COMPLETE; awaiting verification. SDK seam closed. DEF-125-01 stays closed.
 - Phase 130 (Vite-Plugin Strict CSP) — PLAN-COMPLETE; awaiting verification. CSP-01..07 + CAP-03 satisfied. 4 project-killer pitfalls fail the build. Workspace-wide green; DEF-125-01 stays closed.
 - Phase 131 (NIP-5D In-Repo Spec Amendment) — UNBLOCKED by Phase 130; resource wire envelopes locked at v0.28.0 contract; `perm:strict-csp` capability identifier ready to be referenced from spec text
+- Phase 132 (Cross-Repo Nubs PRs) — PLAN-COMPLETE; 4 drafts at .planning/phases/132-cross-repo-nubs-prs/drafts/; awaiting verification. Cross-repo zero-grep clean. SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05 satisfied. Manual git ops on ~/Develop/nubs deferred per CONTEXT.md (user creates branches, commits, pushes drafts, opens 4 PRs to napplet/nubs).
 
 ### Blockers/Concerns
 
@@ -116,6 +117,6 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 
 ## Session Continuity
 
-Last session: 2026-04-20T19:46:59.797Z
-Stopped at: Completed 131-01-PLAN.md (SPEC-01). NIP-5D Security Considerations amended with Browser-Enforced Resource Isolation subsection: strict-CSP SHOULD posture, perm:strict-csp capability identifier, NUB-RESOURCE cross-reference by name, sandbox=allow-scripts reaffirmation with allow-same-origin prohibition reasoning. Zero @napplet/ kehto hyprgate leakage. pnpm -r type-check green across all 14 packages. Phase 131 plan-complete, awaiting verification.
-Resume: Run `/gsd:verify-phase 129` to verify Phase 129 deliverables (then 126/127/128 if not yet verified), then `/gsd:plan-phase 130` (Vite-Plugin Strict CSP) to begin the next executable phase. Phase 130 is independent of 129 and unblocks 131 (NIP-5D in-repo spec amendment).
+Last session: 2026-04-20T20:30:00.000Z
+Stopped at: Completed 132-01-PLAN.md (SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05; 18 REQ-IDs). 4 NUB drafts authored at .planning/phases/132-cross-repo-nubs-prs/drafts/. Public-repo hygiene clean (zero @napplet/, zero kehto, zero hyprgate). Workspace pnpm -r type-check green (no source changes). Phase 132 plan-complete; awaiting verification. Manual cross-repo git ops on ~/Develop/nubs deferred per CONTEXT.md.
+Resume: Run `/gsd:verify-phase 132` to verify Phase 132 deliverables (and 126/127/128/129/130/131 if any remain unverified), then `/gsd:plan-phase 133` (Documentation + Demo Coordination) to begin the next executable phase.

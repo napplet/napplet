@@ -20,24 +20,24 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 ### Scheme Handlers
 
 - [x] **SCH-01**: `data:` scheme decoded inside napplet shim with zero shell round-trip (validates dispatch path; mandatory base case)
-- [ ] **SCH-02**: `https:` scheme protocol surface defined in spec (shell-side network fetch with policy enforcement)
-- [ ] **SCH-03**: `blossom:` scheme protocol surface defined in spec (Blossom hash → bytes resolution; canonical hash form)
-- [ ] **SCH-04**: `nostr:` scheme protocol surface defined in spec with single-hop resolution semantics (NIP-19 bech32 input form)
+- [x] **SCH-02**: `https:` scheme protocol surface defined in spec (shell-side network fetch with policy enforcement)
+- [x] **SCH-03**: `blossom:` scheme protocol surface defined in spec (Blossom hash → bytes resolution; canonical hash form)
+- [x] **SCH-04**: `nostr:` scheme protocol surface defined in spec with single-hop resolution semantics (NIP-19 bech32 input form)
 
 ### Default Shell Resource Policy
 
-- [ ] **POL-01**: Default private-IP block list documented as MUST in NUB-RESOURCE: RFC1918 (10/8, 172.16/12, 192.168/16), loopback (127/8, ::1), link-local (169.254/16, fe80::/10), unique-local (fc00::/7), cloud metadata (169.254.169.254). Block at DNS-resolution time, not URL parse time
-- [ ] **POL-02**: Default response size cap documented as SHOULD with recommended value (target ~10 MiB; deferred to phase planning for exact tuning)
-- [ ] **POL-03**: Default per-URL fetch timeout documented as SHOULD (target ~30s)
-- [ ] **POL-04**: Default per-napplet concurrent fetch + rate limit documented as SHOULD
-- [ ] **POL-05**: MIME classification policy: shell byte-sniffs response; rejects upstream `Content-Type` passthrough; enforces scheme-appropriate MIME allowlist
-- [ ] **POL-06**: Redirect chain cap documented as SHOULD with per-hop re-validation against private-IP block list (redirect amplification mitigation)
+- [x] **POL-01**: Default private-IP block list documented as MUST in NUB-RESOURCE: RFC1918 (10/8, 172.16/12, 192.168/16), loopback (127/8, ::1), link-local (169.254/16, fe80::/10), unique-local (fc00::/7), cloud metadata (169.254.169.254). Block at DNS-resolution time, not URL parse time
+- [x] **POL-02**: Default response size cap documented as SHOULD with recommended value (target ~10 MiB; deferred to phase planning for exact tuning)
+- [x] **POL-03**: Default per-URL fetch timeout documented as SHOULD (target ~30s)
+- [x] **POL-04**: Default per-napplet concurrent fetch + rate limit documented as SHOULD
+- [x] **POL-05**: MIME classification policy: shell byte-sniffs response; rejects upstream `Content-Type` passthrough; enforces scheme-appropriate MIME allowlist
+- [x] **POL-06**: Redirect chain cap documented as SHOULD with per-hop re-validation against private-IP block list (redirect amplification mitigation)
 
 ### SVG Rasterization
 
-- [ ] **SVG-01**: Shell-side SVG rasterization to PNG/WebP at requested dimensions documented as MUST in NUB-RESOURCE
-- [ ] **SVG-02**: Napplets MUST NOT receive `image/svg+xml` bytes; shell rasterizes before delivery
-- [ ] **SVG-03**: Rasterization caps documented as SHOULD: max input bytes (target 5 MiB), max output dimensions (target 4096×4096), wall-clock budget (target 2s); rasterization runs in sandboxed Worker with no network
+- [x] **SVG-01**: Shell-side SVG rasterization to PNG/WebP at requested dimensions documented as MUST in NUB-RESOURCE
+- [x] **SVG-02**: Napplets MUST NOT receive `image/svg+xml` bytes; shell rasterizes before delivery
+- [x] **SVG-03**: Rasterization caps documented as SHOULD: max input bytes (target 5 MiB), max output dimensions (target 4096×4096), wall-clock budget (target 2s); rasterization runs in sandboxed Worker with no network
 
 ### Core Type Surface
 
@@ -67,7 +67,7 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 - [x] **SIDE-02**: `ResourceSidecarEntry` type defined in resource NUB; relay NUB imports as type-only in-package dep (resource NUB owns ALL its types per NUB modular principle)
 - [x] **SIDE-03**: Relay shim calls `hydrateResourceCache(msg.resources)` from resource shim before delivering each event to `onEvent` callback (transparent to napplet caller)
 - [x] **SIDE-04**: Single-flight cache map keyed by canonical URL; subsequent `resource.bytes(url)` calls for sidecar-pre-populated URLs resolve from cache without round-trip; concurrent calls for same URL share one in-flight promise
-- [ ] **SIDE-05**: Sidecar default OFF in NUB-RELAY spec (privacy: shell pre-fetching reveals user activity to upstream avatar hosts before user has rendered the event); opt-in per shell policy + per event-kind allowlist documented in spec
+- [x] **SIDE-05**: Sidecar default OFF in NUB-RELAY spec (privacy: shell pre-fetching reveals user activity to upstream avatar hosts before user has rendered the event); opt-in per shell policy + per event-kind allowlist documented in spec
 
 ### Shim Integration
 
@@ -84,11 +84,11 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 ### Spec Amendments
 
 - [x] **SPEC-01**: `specs/NIP-5D.md` Security Considerations subsection added: strict-CSP posture as **SHOULD**, `perm:strict-csp` capability, resource NUB as canonical fetch path, `sandbox="allow-scripts"` reaffirmation, prohibition on `allow-same-origin` (closes service-worker bypass vector)
-- [ ] **SPEC-02**: NUB-RESOURCE.md drafted and PR opened to public `napplet/nubs` repo (new spec): message catalog, scheme registration semantics, error code vocabulary, MUST/SHOULD/MAY shell behavior contract
-- [ ] **SPEC-03**: NUB-RELAY.md amendment PR opened to `napplet/nubs` (sidecar field + ordering semantics + default-OFF privacy rationale)
-- [ ] **SPEC-04**: NUB-IDENTITY.md clarification PR opened to `napplet/nubs` (no wire change; `picture` and `banner` URLs flow through `resource.bytes()`; pattern documented)
-- [ ] **SPEC-05**: NUB-MEDIA.md clarification PR opened to `napplet/nubs` (no wire change; `MediaArtwork.url` flows through `resource.bytes()`)
-- [ ] **SPEC-06**: All 4 nubs PRs zero-grep clean of `@napplet/*` private package references; CI guard or manual sweep before merge
+- [x] **SPEC-02**: NUB-RESOURCE.md drafted and PR opened to public `napplet/nubs` repo (new spec): message catalog, scheme registration semantics, error code vocabulary, MUST/SHOULD/MAY shell behavior contract
+- [x] **SPEC-03**: NUB-RELAY.md amendment PR opened to `napplet/nubs` (sidecar field + ordering semantics + default-OFF privacy rationale)
+- [x] **SPEC-04**: NUB-IDENTITY.md clarification PR opened to `napplet/nubs` (no wire change; `picture` and `banner` URLs flow through `resource.bytes()`; pattern documented)
+- [x] **SPEC-05**: NUB-MEDIA.md clarification PR opened to `napplet/nubs` (no wire change; `MediaArtwork.url` flows through `resource.bytes()`)
+- [x] **SPEC-06**: All 4 nubs PRs zero-grep clean of `@napplet/*` private package references; CI guard or manual sweep before merge
 
 ### Documentation
 
@@ -157,18 +157,18 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | RES-06 | Phase 126 | Complete |
 | RES-07 | Phase 126 | Complete |
 | SCH-01 | Phase 126 | Complete |
-| SCH-02 | Phase 132 | Pending |
-| SCH-03 | Phase 132 | Pending |
-| SCH-04 | Phase 132 | Pending |
-| POL-01 | Phase 132 | Pending |
-| POL-02 | Phase 132 | Pending |
-| POL-03 | Phase 132 | Pending |
-| POL-04 | Phase 132 | Pending |
-| POL-05 | Phase 132 | Pending |
-| POL-06 | Phase 132 | Pending |
-| SVG-01 | Phase 132 | Pending |
-| SVG-02 | Phase 132 | Pending |
-| SVG-03 | Phase 132 | Pending |
+| SCH-02 | Phase 132 | Complete |
+| SCH-03 | Phase 132 | Complete |
+| SCH-04 | Phase 132 | Complete |
+| POL-01 | Phase 132 | Complete |
+| POL-02 | Phase 132 | Complete |
+| POL-03 | Phase 132 | Complete |
+| POL-04 | Phase 132 | Complete |
+| POL-05 | Phase 132 | Complete |
+| POL-06 | Phase 132 | Complete |
+| SVG-01 | Phase 132 | Complete |
+| SVG-02 | Phase 132 | Complete |
+| SVG-03 | Phase 132 | Complete |
 | CORE-01 | Phase 125 | Complete |
 | CORE-02 | Phase 125 | Complete |
 | CORE-03 | Phase 125 | Complete |
@@ -186,7 +186,7 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | SIDE-02 | Phase 127 | Complete |
 | SIDE-03 | Phase 127 | Complete |
 | SIDE-04 | Phase 127 | Complete |
-| SIDE-05 | Phase 132 | Pending |
+| SIDE-05 | Phase 132 | Complete |
 | SHIM-01 | Phase 128 | Complete |
 | SHIM-02 | Phase 128 | Complete |
 | SHIM-03 | Phase 128 | Complete |
@@ -194,11 +194,11 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | SDK-02 | Phase 129 | Complete |
 | SDK-03 | Phase 129 | Complete |
 | SPEC-01 | Phase 131 | Complete |
-| SPEC-02 | Phase 132 | Pending |
-| SPEC-03 | Phase 132 | Pending |
-| SPEC-04 | Phase 132 | Pending |
-| SPEC-05 | Phase 132 | Pending |
-| SPEC-06 | Phase 132 | Pending |
+| SPEC-02 | Phase 132 | Complete |
+| SPEC-03 | Phase 132 | Complete |
+| SPEC-04 | Phase 132 | Complete |
+| SPEC-05 | Phase 132 | Complete |
+| SPEC-06 | Phase 132 | Complete |
 | DOC-01 | Phase 133 | Pending |
 | DOC-02 | Phase 133 | Pending |
 | DOC-03 | Phase 133 | Pending |

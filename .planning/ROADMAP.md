@@ -332,7 +332,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 129: Central SDK Integration** - Add `resource` namespace + `RESOURCE_DOMAIN` const + type re-exports to `@napplet/sdk` (completed 2026-04-20)
 - [x] **Phase 130: Vite-Plugin Strict CSP** - Ship `strictCsp` option with first-`<head>`-child meta injection, header-only directive rejection, dev/prod split, nonce-based scripts, complete 10-directive baseline; ship `perm:strict-csp` capability (completed 2026-04-20)
 - [x] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md` (completed 2026-04-20)
-- [ ] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*`
+- [x] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*` (completed 2026-04-20 — drafts authored; manual cross-repo PR opening deferred per CONTEXT.md)
 - [ ] **Phase 133: Documentation + Demo Coordination** - Update 5 package READMEs + skills/build-napplet + shell-deployer policy checklist; PROJECT.md + NUB-RESOURCE coordination note delegating demos to downstream shell repo
 - [ ] **Phase 134: Verification & Milestone Close** - Build + type-check green; positive CSP block assertion in Playwright; SVG bomb / `<foreignObject>` / recursive-`<use>` rejection; single-flight cache stampede dedup; sidecar default-OFF; cross-repo zero-grep; bundle tree-shake
 
@@ -435,7 +435,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   5. NUB-IDENTITY clarification PR is open noting `picture` / `banner` URLs flow through `resource.bytes()` (no wire change); NUB-MEDIA clarification PR is open noting `MediaArtwork.url` flows through `resource.bytes()` (no wire change).
   6. All 4 PR bodies, commit messages, and spec content are zero-grep clean of `@napplet/*` private package references — verified by manual sweep + grep before milestone close (also asserted by VER-06 in Phase 134 — Pitfall 8 mitigation).
 **Plans**: 1
-- [ ] 132-01-PLAN.md — Draft 4 nubs PRs locally (NUB-RESOURCE new spec + NUB-RELAY/IDENTITY/MEDIA amendments) with cross-repo public-repo hygiene gates (SPEC-02..06, SCH-02..04, POL-01..06, SVG-01..03, SIDE-05)
+- [x] 132-01-PLAN.md — Draft 4 nubs PRs locally (NUB-RESOURCE new spec + NUB-RELAY/IDENTITY/MEDIA amendments) with cross-repo public-repo hygiene gates (SPEC-02..06, SCH-02..04, POL-01..06, SVG-01..03, SIDE-05)
 
 ### Phase 133: Documentation + Demo Coordination
 **Goal**: Five package READMEs, the napplet-author skill, the root README, and a shell-deployer resource policy checklist all reflect the v0.28.0 surface; demo napplets are explicitly delegated to the downstream shell repo via a coordination note.
@@ -476,6 +476,6 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 129. Central SDK Integration | 1/1 | Complete    | 2026-04-20 |
 | 130. Vite-Plugin Strict CSP | 1/1 | Complete    | 2026-04-20 |
 | 131. NIP-5D In-Repo Spec Amendment | 1/1 | Complete    | 2026-04-20 |
-| 132. Cross-Repo Nubs PRs | 0/0 | Not started | - |
+| 132. Cross-Repo Nubs PRs | 1/1 | Complete    | 2026-04-20 |
 | 133. Documentation + Demo Coordination | 0/0 | Not started | - |
 | 134. Verification & Milestone Close | 0/0 | Not started | - |
