@@ -1,198 +1,329 @@
-# Project Research Summary
+# Research Summary — v0.28.0 Browser-Enforced Resource Isolation
 
-**Project:** NIP-5C "Nostr Web Applets" Specification
-**Domain:** Protocol specification + channel protocol implementation for sandboxed Nostr iframe applications
-**Researched:** 2026-04-05
+**Project:** Napplet Protocol SDK
+**Domain:** Strict CSP enforcement on sandboxed iframes + scheme-pluggable shell-as-resource-broker
+**Researched:** 2026-04-20
 **Confidence:** HIGH
+
+---
 
 ## Executive Summary
 
-This milestone is fundamentally a specification authorship exercise paired with a targeted protocol implementation. The project must distill a 1520-line internal SPEC.md into a terse NIP (~300 lines of markdown, ~2800 words) that defines the postMessage wire protocol between sandboxed iframe "napplets" and a host "shell," then implement a new channel protocol for low-latency point-to-point inter-napplet communication. The NIP sits in the "NIP-5x" family alongside NIP-5A (file hosting, merged) and NIP-5B (app discovery, open PR), filling the gap for runtime communication -- what happens after the iframe loads. This orthogonality to existing proposals is a strategic advantage for acceptance.
+v0.28.0 converts napplet iframe security from ambient trust ("napplets shouldn't fetch directly") to browser-enforced isolation ("napplets cannot fetch directly — the browser blocks it"). The mechanism is a strict Content Security Policy (`connect-src 'none'` minimum) delivered by the shell at iframe creation time, paired with a single new napplet-side primitive: `resource.bytes(url) → Blob`, backed by a scheme-pluggable shell broker. All four researchers converged on the same architectural verdict: one new NUB, two surgical wire amendments, zero new runtime dependencies. The entire feature set is built on web-platform primitives already available in every evergreen browser (CSP3, structured-clone Blobs, WebCrypto, OffscreenCanvas, WHATWG URL).
 
-The recommended approach is declarative-first capability negotiation: the shell advertises available features via kind 29010 service discovery events, the napplet declares requirements in its NIP-5A manifest `requires` tags at build time, and probes at runtime via `window.napplet.services.has()`. This pattern draws from LSP/MCP's layered requirements, NIP-11's flat capability advertisement, and WebExtensions' manifest permissions -- while avoiding the interactive negotiation round-trips the Nostr community explicitly rejected (NIP-91). The mandatory core is minimal: postMessage transport + NIP-01 wire format + AUTH handshake + service discovery. Everything else (relay proxy, signer, storage, IPC, channels, nostrdb) is MAY.
+The recommended approach is additive at every layer: one new `packages/nub/src/resource/` directory following the established NUB triad pattern (types / shim / sdk), an optional `resources` sidecar field on the existing `relay.event` envelope, and a new `transformIndexHtml` hook in `@napplet/vite-plugin` that mirrors the production shell's CSP in dev so napplets are developed under the constraints they will ship under. The sidecar pattern — shell pre-resolves URLs referenced in an event and piggybacks the bytes on the same envelope — is genuinely novel compared to peer systems (Electron, Tauri, Figma plugins, Salesforce LWS) and warrants careful spec wording to prevent misuse as a default-on tracking vector.
 
-The primary risks are political rather than technical. The NIP-5x space has active territorial dynamics (hzrd149, arthurfranca, fiatjaf), and submitting without pre-engagement will invite jurisdictional debate that derails technical review. The top technical risk is overspecification -- the internal SPEC.md contains runtime implementation details (ACL persistence, hook interfaces, ring buffer sizing) that do not belong in a NIP and will trigger "too long and complex" rejection from fiatjaf. Additionally, "NIP-5C" is claimed by fiatjaf's "Scrolls" (WASM programs, PR#2281) -- the project must choose an alternative number (5D, 5E, 5F) or contest the claim.
+The primary risks are implementation discipline problems, not architectural unknowns. The top project-killer pitfalls all have clear prevention strategies: CSP meta must be injected as the first `<head>` child with `enforce: 'pre'` (Pitfall 1), header-only directives (`frame-ancestors`, `sandbox`) silently fail in meta delivery (Pitfall 2), srcdoc inheritance is wontfix at WHATWG so production delivery must use HTTP header or blob URL (Pitfall 3), SSRF via private IP ranges and DNS rebinding requires block-at-resolution-time policy (Pitfall 6), SVG must be rasterized shell-side to PNG/WebP (Pitfall 7), and spec drift between the public `napplet/nubs` repo and this private repo must be gated at milestone close (Pitfall 8). Audio and video are explicitly out of scope and must not sneak in via the `resource.bytes` primitive.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-This is a specification milestone. The "stack" is markdown, JSON examples, and RFC 2119 keywords -- all dictated by NIP conventions. No new dependencies are needed. The channel protocol implementation phase uses the existing monorepo toolchain (TypeScript 5.9, tsup, turborepo, vitest, playwright). See [STACK.md](STACK.md) for full details.
+Zero new runtime dependencies. Every required browser capability — CSP enforcement, `securitypolicyviolation` DOM events, structured-clone Blobs over postMessage, WHATWG URL scheme dispatch, `crypto.subtle.digest` for content-addressed caching, `OffscreenCanvas` + `createImageBitmap` for shell-side rasterization — ships in every evergreen browser. The only optional addition worth noting is `@resvg/resvg-wasm@2.6.2` (MPL-2.0, ~560 KB WASM) for SVG rasterization in a DOM-less shell or Worker context, but the recommended default is `<img src=blob:svg>` → canvas → `convertToBlob`, which is DOM-native and zero-dep. If `@resvg/resvg-wasm` is ever needed it belongs in the shell repo, never in `@napplet/*`.
+
+The Vite CSP integration should be a small in-house `transformIndexHtml` hook inside the existing `@napplet/vite-plugin` — no third-party Vite CSP plugin is appropriate (they solve full-app SPA hashing problems; napplet scripts come from a manifest). The hand-rolled `CspBuilder` helper is ~30 lines.
 
 **Core technologies:**
-- **Markdown (CommonMark)**: NIP document format -- all NIPs are plain markdown with setext headings
-- **RFC 2119 keywords**: MUST/SHOULD/MAY requirement levels -- follow NIP-42 style (capitalized)
-- **JSON (RFC 8259)**: Wire format examples -- NIP-01 events are JSON
-- **TypeScript 5.9**: Channel protocol implementation -- existing codebase language
-- **Vitest 4.x + Playwright**: Channel protocol testing -- existing test infrastructure
 
-**Critical version note:** NIP-5A was merged 2026-03-25. PR#2287 (aggregate hash extension by hzrd149) is open and unmerged -- the project depends on this for version-specific ACL identity.
+- **CSP3 `Content-Security-Policy` header / `<meta http-equiv>`** — browser enforcement gate; `connect-src 'none'` is the minimum that makes this milestone's security property true
+- **`securitypolicyviolation` DOM event** — native dev-mode visibility into blocked fetches; use for Playwright CSP assertions
+- **`postMessage` + structured-clone `Blob`** — hand bytes from shell to napplet; Blobs are refcounted by the browser on clone
+- **WHATWG `URL` + `Map<protocol, handler>`** — scheme dispatch; `new URL(input).protocol` handles `'https:'`, `'blossom:'`, `'nostr:'`, `'data:'` etc.; no npm package needed
+- **`crypto.subtle.digest('SHA-256', bytes)`** — content-addressed shell cache key; buffer-then-hash is the only browser-native path (streaming digest is still a proposal); safe because the milestone enforces a size cap
+- **`<img src=blob:svg>` → `OffscreenCanvas.drawImage` → `convertToBlob`** — SVG rasterization: `<img>`-loaded SVG runs in "secure static mode" per HTML spec (scripts disabled, external loads blocked); zero deps
+- **`@napplet/vite-plugin` extended** — new `strictCsp?: boolean | StrictCspOptions` option; `transformIndexHtml` hook with `enforce: 'pre'`; dev mode relaxes `connect-src` for HMR websocket; build mode enforces strict
 
 ### Expected Features
 
-Findings synthesized from [FEATURES.md](FEATURES.md) (NIP content scope) and [FEATURES-CHANNELS.md](FEATURES-CHANNELS.md) (channel protocol patterns).
+**Must have — Table Stakes (all 12 non-negotiable for v0.28.0):**
 
-**Must have (table stakes for the NIP):**
-- Transport definition (postMessage + sandbox policy)
-- Wire format tables (NIP-01 verbs + REGISTER/IDENTITY additions)
-- AUTH handshake specification (REGISTER/IDENTITY/AUTH flow with key derivation formula)
-- Capability model with MUST/MAY layering
-- Service discovery mechanism (kind 29010)
-- NIP-5A manifest integration (`requires` tag semantics)
-- Security model (threat model, iframe sandbox guarantees)
-- Event kind assignments (postMessage bus kinds, not relay kinds)
-- Minimal implementation examples (~30 lines each for napplet and shell)
+- **TS-1** `resource.bytes(url) → Blob` request/result envelope with correlation ID — the primitive itself
+- **TS-2** Four schemes plumbed end-to-end: `https:`, `data:`, `blossom:`, `nostr:` — `data:` is mandatory as zero-network fallback; validates dispatch
+- **TS-3** Typed error discriminator on result: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`
+- **TS-4** Canonical MIME string on result, shell-classified via byte sniffing (not upstream header passthrough)
+- **TS-5** Cancellation envelope (`resource.cancel`) + AbortSignal-shaped SDK helper
+- **TS-6** Strict CSP delivered to napplet iframe at creation time; `connect-src 'none'` minimum
+- **TS-7** Default shell resource policy: private-IP block at DNS resolution time, size cap, rate limit, timeout
+- **TS-8** Shell-side SVG rasterization; napplet never receives raw `image/svg+xml`
+- **TS-9** `shell.supports('resource')` and `shell.supports('resource:scheme:<name>')` capability checks
+- **TS-10** Vite-plugin emits CSP-aware napplet HTML in dev
+- **TS-11** NIP-5D Security Considerations amendment
+- **TS-12** Single-Blob delivery (no streaming, no chunked)
 
-**Should have (differentiators):**
-- Declarative capability negotiation (no round-trip)
-- Build-time requirement declaration via NIP-5A `requires` tags
-- Delegated key identity model (HMAC-SHA256 derivation)
-- `window.napplet` namespace standard (analogous to NIP-07's `window.nostr`)
-- Channel protocol: named channels, auth-on-open, `["CH", id, payload]` wire format, broadcast
+**Should have — ship with v0.28.0:**
 
-**Defer (v2+ / follow-up NIP):**
-- `window.nostrdb` (may warrant its own NIP)
-- MessagePort upgrade path for channels (high complexity, spec as MAY only)
-- Transferable ArrayBuffer support for binary channel data
-- Channel groups for selective broadcast
-- Backpressure/flow control
+- **DF-1** Optional `resources` sidecar field on `relay.event` — high value for feed napplets; must default OFF for privacy
+- **DF-8** NUB-IDENTITY JSDoc: `picture` URLs must flow through `resource.bytes()` — prevents `<img src={profile.picture}>` CSP block
+- **DF-9** NUB-MEDIA JSDoc: `MediaArtwork.url` must flow through `resource.bytes()`
+- **DF-10** Demo napplets — required as contract tests that the milestone is actually usable
+
+**Defer to v0.28.x or later:**
+
+- **DF-2** Pluggable scheme registry exposed to shell hosts
+- **DF-3** Transform hints (`maxWidth`, `maxHeight`, `preferFormat`)
+- **DF-4** Priority hint (`high` / `low` / `auto`)
+- **DF-5** Progress push events
+- **DF-6** `resource.preload(url)` fire-and-forget warm-up
+- **DF-7** `cacheKey` on result
+
+**Explicit anti-features (document so they don't get re-proposed during scoping):**
+
+| Anti-Feature | Why Banned |
+|---|---|
+| AF-1: Raw `fetch` passthrough | Reintroduces every SSRF vector this milestone solves |
+| AF-2: Napplet-controlled cache invalidation | DoS vector + cache timing side-channel |
+| AF-3: OAuth / cookie-bearing requests | Credential laundering; shell becomes confused deputy |
+| AF-4: Lightning L402 payment URLs | Separate NUB (NUB-PAY); don't conflate payment auth with byte fetching |
+| AF-5: Audio/video streaming, range requests, MediaSource | Belongs in a future compositor milestone |
+| AF-6: WebSocket proxy (`resource.socket`) | Generic socket bridge is a separate NUB |
+| AF-7: Napplet-controlled or upstream-trusted MIME | Shell must classify; upstream Content-Type is attacker-controlled |
+| AF-8: Napplet-negotiable CSP | Defeats the milestone entirely |
+| AF-9: Hash exposure to napplets | Decided: hashes are shell-internal; napplets address by URL only |
+| AF-10: Synchronous `resource.bytes` | Incompatible with postMessage; requires SAB which conflicts with opaque-origin sandbox |
+| AF-11: `<img src=blossom://...>` interception | Requires `allow-same-origin` or Service Worker; both are sandbox escapes |
 
 ### Architecture Approach
 
-NIP-5C should be structured as a ~2800-word specification with layered requirements: a small MUST core (transport + AUTH + service discovery) and a large MAY surface (all standard capabilities). The capability negotiation model combines NIP-11-style passive advertisement, WebExtensions-style manifest declaration, and W3C-style runtime feature detection. The channel protocol follows the consensus state machine observed across five frameworks (WebExtensions, Electron, Figma, SharedWorker, VST/DAW): `CLOSED -> OPENING -> AUTH_CHECK -> OPEN -> CLOSING -> CLOSED`. See [ARCHITECTURE.md](ARCHITECTURE.md) and [FEATURES-CHANNELS.md](FEATURES-CHANNELS.md) for full analysis.
+The milestone is additive at every layer: one new NUB domain plus two surgical wire amendments. The build/dependency DAG is unchanged (`core → nub → {shim, sdk}` with `vite-plugin` orthogonal). CSP enforcement is a shell-side runtime concern expressed as a new `perm:strict-csp` capability on `shell.supports()` — not a NUB. Cross-repo spec authoring (public `napplet/nubs` repo) must proceed in parallel with this-repo implementation.
 
-**Major components of the NIP:**
+**New files (~4):**
 
-1. **Core protocol (Sections 1-3)** -- Transport, wire format, AUTH handshake. The mandatory foundation every shell and napplet must implement.
-2. **Capability framework (Sections 4-5)** -- Relay proxy contract, capability model with MUST/MAY split, service discovery mechanism. The architectural innovation that makes the protocol extensible.
-3. **Standard capabilities (Section 6)** -- Signer proxy, storage, IPC pub/sub, channels, nostrdb. All MAY. Each independently discoverable and implementable.
-4. **API surface standard (Section 7)** -- Normative `window.napplet.*` namespace, analogous to NIP-07.
-5. **Security model (Section 8)** -- Threat model, sandbox guarantees, wildcard origin justification, delegated key confinement.
+| File | Role |
+|---|---|
+| `packages/nub/src/resource/types.ts` | Wire envelope types: `ResourceBytesMessage`, `ResourceBytesResultMessage`, `ResourceBytesErrorMessage`, `ResourceSidecarEntry`, `ResourceScheme`, discriminated unions |
+| `packages/nub/src/resource/shim.ts` | `bytes()`, `bytesAsObjectURL()`, `hydrateResourceCache()`, `handleResourceMessage()`, `installResourceShim()` |
+| `packages/nub/src/resource/sdk.ts` | Named exports for bundler consumers |
+| `packages/nub/src/resource/index.ts` | Barrel + `registerNub()` placeholder |
+
+**Modified files (~7):**
+
+| File | Change |
+|---|---|
+| `packages/core/src/envelope.ts` | Add `'resource'` to `NubDomain` + `NUB_DOMAINS` |
+| `packages/core/src/types.ts` | Add `resource: { bytes, bytesAsObjectURL }` to `NappletGlobal` |
+| `packages/nub/src/relay/types.ts` | Add optional `resources?: ResourceSidecarEntry[]` to `RelayEventMessage` |
+| `packages/nub/src/relay/shim.ts` | Call `hydrateResourceCache(msg.resources)` before `onEvent()` in `subscribe()` |
+| `packages/shim/src/index.ts` | Import + wire resource NUB: routing branch, namespace mount, `installResourceShim()` |
+| `packages/sdk/src/index.ts` | Add `resource` namespace + type re-exports + `RESOURCE_DOMAIN` const |
+| `packages/vite-plugin/src/index.ts` | `strictCsp` option; CSP meta injection with `enforce: 'pre'`; dev/build split |
+
+**External repo — napplet/nubs (4 PRs):**
+
+- `NUB-RESOURCE.md` — new spec (message catalog, scheme registration, error codes, MUST/SHOULD/MAY shell behavior)
+- `NUB-RELAY.md` amendment — optional sidecar field + ordering semantics
+- `NUB-IDENTITY.md` clarification — `picture` URLs via resource NUB (no wire change)
+- `NUB-MEDIA.md` clarification — `artwork.url` via resource NUB (no wire change)
 
 **Key architectural decisions:**
-- Runtime internals (ACL persistence, hook interfaces, ring buffer sizing, topic-prefix routing) are explicitly EXCLUDED from the NIP
-- Kind numbers 29001-29010 are normative (required for cross-shell napplet portability) but documented as postMessage-channel-only identifiers, never relay-destined
-- The NIP references NIP-5A for manifests, NIP-01 for wire format, NIP-42 for AUTH structure, NIP-07 for signer interface -- never reproduces their content
+
+- **Blob over postMessage** — structured-clone for payloads < 256 KB (shell retains cache copy); Transferable for large payloads (zero-copy, shell drops reference)
+- **Sidecar type ownership** — `ResourceSidecarEntry` defined in resource NUB; relay NUB imports it as type-only in-package dep (resource NUB owns ALL its types per `feedback_nub_modular`)
+- **CSP as shell posture** — `perm:strict-csp` capability, not a NUB capability; orthogonal to `nub:resource` so permissive dev shells can implement resource NUB without enforcing strict CSP
+- **Demo napplets** — do not exist in this repo (extracted at v0.13.0; `apps/` and `tests/` absent from disk). Recommendation: Option B — downstream shell repo owns demos for v0.28.0
 
 ### Critical Pitfalls
 
-Top 5 from [PITFALLS.md](PITFALLS.md), ordered by severity:
+**PROJECT-KILLER severity — must address before v0.28.0 ships:**
 
-1. **Overspecification of runtime internals** -- The 41KB SPEC.md contains ACL bitfields, service registry internals, session management details. None of this belongs in the NIP. Hard rule: if it is not observable on the postMessage wire, it does not belong. Target under 300 lines. Detection: if the NIP references internal data structures or class names, it is overspecified.
+1. **CSP meta after `<script>` tags — policy doesn't bind** (Pitfall 1) — vite-plugin must inject CSP meta as first `<head>` child with `enforce: 'pre'`; add build-time assertion; fail build if any `<script>` precedes the meta
+2. **Header-only directives silently ignored in `<meta>` CSP** (Pitfall 2) — `frame-ancestors`, `sandbox`, `report-uri` do not work in meta; vite-plugin must reject them at build time with a clear error
+3. **srcdoc inherits parent CSP — wontfix at WHATWG** (Pitfall 3) — production napplet delivery must use HTTP header or blob URL; document constraint in NIP-5D
+4. **SSRF via private IPs and DNS rebinding** (Pitfall 6) — block at DNS-resolution time (not URL parse time); private ranges: 10/8, 172.16/12, 192.168/16, 127/8, 169.254/16, ::1, fc00::/7, fe80::/10; cap redirect chains at 5 with per-hop re-validation
+5. **SVG `<foreignObject>` / billion-laughs DoS** (Pitfall 7) — rasterize all SVG to PNG/WebP in a sandboxed Worker with no network; cap input bytes (5 MB), output dimensions (4096×4096), wall-clock time (2 s); never pass raw `image/svg+xml` to napplets
+6. **Sidecar privacy leak — shell pre-fetches URLs user hasn't seen** (Pitfall 10) — sidecar MUST default OFF; NUB-RELAY amendment must specify opt-in semantics; scope cache per `(dTag, aggregateHash)`
+7. **Spec drift between public napplet/nubs repo and private implementation** (Pitfall 8) — gate milestone close on all nubs PRs merged or having draft URLs; every wire shape in `@napplet/nub/resource` must have a counterpart in the public spec; NEVER mention `@napplet/*` in public nubs commits or PR bodies
 
-2. **Defining "what is a napp"** -- Do NOT create a prescriptive classification of "nostr app" vs "static website." dskvr filed CHANGES_REQUESTED on NIP-5B for exactly this. A napplet is anything that speaks this protocol. Period. The embedding relationship is the defining characteristic, not feature support.
+**SERIOUS severity — address per phase:**
 
-3. **Territorial conflict with NIP-5B/NIP-C4** -- Three related proposals already exist. NIP-5C must be framed as complementary (5A = file storage, 5B = discovery, 5C = runtime communication). Pre-engage hzrd149, arthurfranca, and fiatjaf before submitting the PR.
+- **Blob URL lifetime / memory leak** (Pitfall 11) — `bytesAsObjectURL()` with paired `revoke()`; shell quota per napplet via `denied: 'quota-exceeded'`
+- **Cache stampede — N concurrent requests for same URL** (Pitfall 13) — single-flight `Map<canonicalURL, Promise<Blob>>`; URL canonicalization rules in spec
+- **Vite HMR `connect-src ws://` conflict** (Pitfall 18) — dev CSP allows HMR websocket; build CSP enforces `connect-src 'none'`; build-time assertion that dev relaxations don't appear in prod manifest
+- **Vite inline scripts need nonces** (Pitfall 19) — nonce-based `script-src`, not `'unsafe-inline'`; never `'unsafe-eval'`
+- **Playwright auto-wait doesn't catch CSP violations silently** (Pitfall 21) — CSP violation helper using `page.on('console')` + `page.on('requestfailed')` correlation; assert specific blocked URL
 
-4. **Ephemeral kind range confusion** -- Kinds 29001-29010 fall in the 20000-29999 "ephemeral events" range per NIP-01, but they carry persistent semantic weight. The NIP must make crystal clear these are postMessage bus identifiers that never touch relays.
-
-5. **postMessage `*` origin without security analysis** -- Sandboxed iframes require wildcard target origin. A proactive Security Considerations section must address this, explaining that `allow-same-origin` exclusion creates opaque origins, and sender authentication uses `MessageEvent.source` + AUTH cryptographic challenge-response, not `event.origin`.
+---
 
 ## Implications for Roadmap
 
-Based on the combined research, the milestone decomposes into 5 phases with clear dependency ordering.
+Research has converged on a natural 10-phase sequence. Critical-path observation: Phases 1-2 are blocking for everything else; Phases 3-6 are independent of each other and can be parallelized; Phases 7-9 can land any time after 1-6; Phase 10 is best last to avoid doc churn.
 
-### Phase 1: NIP Number Resolution and Stakeholder Pre-Engagement
+### Phase 1: Core Type Surface
 
-**Rationale:** The NIP-5C filename is claimed (PR#2281). This must be resolved before any spec writing begins. Stakeholder engagement is the single highest-leverage activity for NIP acceptance and must happen before the PR is submitted.
-**Delivers:** Confirmed NIP number (5D/5E/5F or contested 5C), preliminary buy-in from hzrd149/arthurfranca/fiatjaf on scope differentiation.
-**Addresses:** Pitfall 3 (territorial conflict), Pitfall 8 (no pre-engagement), STACK.md NIP number finding.
-**Avoids:** Submitting a PR that immediately triggers jurisdictional debate.
+**Rationale:** `NubDomain` and `NappletGlobal` are consumed by every downstream package; must land first to unblock parallel work.
+**Delivers:** `'resource'` added to `NubDomain` union + `NUB_DOMAINS`; `resource: { bytes, bytesAsObjectURL }` added to `NappletGlobal`; `perm:strict-csp` documented as valid `NamespacedCapability`
+**Addresses:** TS-9 prerequisite, TS-1 type foundation
+**Research flag:** Standard pattern — no research phase needed; mirrors how `'config'` and `'identity'` were added in prior milestones
 
-### Phase 2: NIP Spec Authorship (Core Protocol)
+### Phase 2: Resource NUB Scaffold
 
-**Rationale:** The NIP is the deliverable that matters most for the Nostr ecosystem. The spec must be written before channel implementation because the channel protocol section needs to be designed at the spec level first, then implemented.
-**Delivers:** Complete NIP markdown file (~300 lines) covering Sections 1-5 (transport, wire format, AUTH, relay proxy, capability model) plus Section 7 (API surface), Section 8 (security), Section 9 (event kinds), and appendices.
-**Addresses:** All FEATURES.md table stakes, ARCHITECTURE.md structure decisions, Pitfalls 1/2/4/5/6/9/11/12.
-**Avoids:** Overspecification by using the "is it observable on the wire?" test for every paragraph.
+**Rationale:** Foundation everything else integrates from; must exist before shim/SDK can import it.
+**Delivers:** `packages/nub/src/resource/{types,shim,sdk,index}.ts`; 4 `exports` entries + 4 tsup entry points in `@napplet/nub`; all envelope types; `bytes()`, `bytesAsObjectURL()`, `hydrateResourceCache()`, `handleResourceMessage()`, `installResourceShim()`; `data:` scheme decoded inside shim (zero-network, validates dispatch path)
+**Addresses:** TS-1, TS-3 (typed errors), TS-4 (MIME field), TS-5 (cancellation), TS-12 (single-Blob enforced by type shape)
+**Avoids:** Pitfall 11 (`bytesAsObjectURL` with paired `revoke()`)
+**Research flag:** Standard NUB triad — no research phase needed; reference identity and config NUBs
 
-### Phase 3: Channel Protocol Design and Spec Section
+### Phase 3: NUB-RELAY Sidecar Amendment
 
-**Rationale:** The channel protocol is the only feature that needs both design and implementation. The spec section (Section 6.4) should be written before implementation so the wire format is locked.
-**Delivers:** NIP Section 6.4 (channels), channel wire format definition (`CH_OPEN/CH_ACCEPT/CH_CLOSE/CH_CLOSED/CH_ERROR/CH/CH_BROADCAST`), shim API surface design (`window.napplet.channels`).
-**Addresses:** FEATURES-CHANNELS.md table stakes and differentiators, FEATURES.md channel protocol entry.
-**Avoids:** Pitfall 10 (terminology collision with NIP-28/NIP-29 "channels" -- consider alternative naming).
+**Rationale:** Additive wire change; independent of shim/SDK integration; sidecar type owned by resource NUB (Phase 2 provides it).
+**Delivers:** Optional `resources?: ResourceSidecarEntry[]` on `RelayEventMessage`; `hydrateResourceCache()` called before `onEvent()` in relay `subscribe()` handler; transparent cache so `resource.bytes(url)` gets a hit if sidecar pre-populated
+**Addresses:** DF-1 (sidecar optimization)
+**Avoids:** Pitfall 10 (default OFF, opt-in per shell policy); Pitfall 15 (bytes MUST be in same envelope as event, not a follow-up)
+**Research flag:** Standard wire amendment — no research phase needed
 
-### Phase 4: Channel Protocol Implementation
+### Phase 4: Shim Integration
 
-**Rationale:** Implementation validates the spec and provides the reference implementation needed for NIP acceptance ("fully implemented in at least two clients").
-**Delivers:** Channel protocol in `@napplet/shim` and `@napplet/shell` packages, test suite covering open/close/data/broadcast lifecycle, integration with existing ACL system.
-**Uses:** TypeScript 5.9, vitest, existing monorepo toolchain (no new dependencies).
-**Implements:** FEATURES-CHANNELS.md MVP: named channels, auth-on-open, minimal post-auth wire format, broadcast as channel operation, shim API on `window.napplet.channels`.
-**Avoids:** Pitfall 7 (no working implementations at submission time).
+**Rationale:** Mechanical after Phase 2 provides the NUB; follows the exact pattern from 9 prior NUBs.
+**Delivers:** `packages/shim/src/index.ts` updated: `resource.*` routing branch, `window.napplet.resource` namespace mount, `installResourceShim()` call
+**Addresses:** TS-1 (napplet-callable API)
+**Research flag:** No research phase — ~15 lines following established pattern
 
-### Phase 5: NIP Submission and Standard Capabilities Sections
+### Phase 5: SDK Integration
 
-**Rationale:** Submit after implementation validates the protocol. Include the full standard capabilities section (6.1-6.5) and Implementations section listing napplet SDK + hyprgate.
-**Delivers:** Completed NIP PR to nostr-protocol/nips with README.md updates, Implementations section, all standard capability definitions finalized.
-**Addresses:** Pitfall 7 (reference implementations), Pitfall 11 (README updates), NIP acceptance criteria.
-**Avoids:** Submitting a theoretical spec without implementation proof.
+**Rationale:** Mirrors shim integration; `@napplet/sdk` consumers need the `resource` namespace.
+**Delivers:** `packages/sdk/src/index.ts` updated: `resource` namespace, type re-exports, `RESOURCE_DOMAIN` const, SDK helper re-exports
+**Addresses:** TS-1 (bundler-friendly API), TS-9 (sdk-level capability helper)
+**Research flag:** No research phase — mechanical mirror of shim integration
+
+### Phase 6: Vite-Plugin CSP Injection
+
+**Rationale:** Independent of NUB integration; dev-mode CSP is a table stake and common source of prod/dev divergence.
+**Delivers:** `strictCsp?: boolean | StrictCspOptions` on `Nip5aManifestOptions`; `transformIndexHtml` with `enforce: 'pre'`; complete 10-directive default baseline policy; dev/build mode split for HMR `connect-src`; build-time assertion CSP meta is first `<head>` child; build-time rejection of header-only directives in meta
+**Addresses:** TS-6 (dev-mode CSP), TS-10 (vite-plugin CSP)
+**Avoids:** Pitfall 1 (meta placement), Pitfall 2 (header-only directives), Pitfall 18 (HMR conflict), Pitfall 19 (nonces not unsafe-inline), Pitfall 23 (incomplete directive set)
+**Research flag:** Validate `enforce: 'pre'` interaction with Vite's HMR script injection order against an actual Vite build before calling phase complete — Pitfall 1 is a project-killer if missed
+
+### Phase 7: Spec Amendments (This Repo)
+
+**Rationale:** NIP-5D lives in this repo; can land after Phases 1-6 stabilize the wire shape.
+**Delivers:** `specs/NIP-5D.md` Security Considerations subsection: strict-CSP posture, `perm:strict-csp`, resource NUB as canonical fetch path, `sandbox="allow-scripts"` reaffirmation, prohibition on `allow-same-origin`
+**Addresses:** TS-11 (NIP-5D amendment)
+**Avoids:** Pitfall 5 (`allow-same-origin` service worker bypass), Pitfall 9 (no-opt-out language)
+**Research flag:** No research phase — coordinate wording with nubs PRs
+
+### Phase 8: Cross-Repo Spec PRs (napplet/nubs)
+
+**Rationale:** Must open as drafts early in the milestone; gating milestone close; must not mention `@napplet/*`.
+**Delivers:** Draft PRs: NUB-RESOURCE (new), NUB-RELAY sidecar amendment, NUB-IDENTITY picture clarification, NUB-MEDIA artwork clarification; each PR references the relevant other specs in a "Coexistence" section
+**Addresses:** DF-8, DF-9, TS-7 (SSRF policy as MUST), TS-8 (SVG handling as MUST), Pitfall 27 (nostr:/blossom: scheme disambiguation)
+**Avoids:** Pitfall 8 (spec drift); Pitfall 6 (private-IP block list in spec's MUST surface)
+**Research flag:** Amendment path to public nubs repo is less-tested than new-spec path; open drafts early and iterate; don't let spec and implementation drift into final days of milestone
+
+### Phase 9: Demo Napplets
+
+**Rationale:** Demos are the contract test that the milestone is actually usable. Scope decision required.
+**Delivers (Option B — downstream shell repo):** Three demo napplets: (1) profile viewer (`identity.getProfile()` → `resource.bytes(picture)` → render, tests sidecar), (2) feed with inline images (kind 1 + NIP-92 imeta + sidecar), (3) scheme-mixed consumer (`https:` + `blossom:` + `data:` + `nostr:` on one screen)
+**Addresses:** DF-10 (demos as milestone validation gate)
+**Scope decision:** Demo napplets do NOT exist in this repo — `apps/` and `tests/` directories were extracted at v0.13.0 and workspace globs are vestigial (confirmed by filesystem inspection). Options: (A) re-introduce `tests/fixtures/napplets/` here with mock shell — significant build-out; (B) downstream shell repo owns demos — recommended; (C) thin Playwright iframe fixtures with mock shell — non-trivial second implementation. Flag as blocking decision in REQUIREMENTS.md.
+**Research flag:** Cross-repo coordination concern; if downstream shell repo is unavailable, Phase 9 may expand scope significantly
+
+### Phase 10: Documentation Sweep
+
+**Rationale:** Best done last to avoid churn as wire shapes stabilize during Phases 1-9.
+**Delivers:** 6 package READMEs updated; `skills/build-napplet/SKILL.md` updated; shell-deployer resource-policy checklist (SSRF IP ranges, sidecar opt-in semantics, SVG policy, MIME allowlist); napplet-author migration note (`fetch()` → `resource.bytes()`)
+**Addresses:** TS-11 (hygiene), DF-8/DF-9 (JSDoc clarifications)
+**Research flag:** No research phase — mechanical sweep
 
 ### Phase Ordering Rationale
 
-- **Stakeholder engagement first** because political acceptance is the highest risk. Technical work done before engagement may need to be reworked based on community feedback.
-- **Core spec before channels** because the channel protocol depends on the transport, AUTH, and capability framework being designed first (FEATURES.md dependency graph).
-- **Channel spec before implementation** because implementing without a locked wire format leads to spec-implementation divergence.
-- **Implementation before submission** because NIP acceptance criteria require working implementations, and implementation validates the spec design.
-- **Submission last** because it incorporates all prior work and includes the README.md updates that are easy to forget (Pitfall 11).
+- Phases 1-2 are blocking because every other phase imports from core (Phase 1) or from the resource NUB package (Phase 2)
+- Phases 3-6 are independent of each other after Phase 2 lands; a small team can parallelize or order by preference
+- Phase 7 should follow Phase 2 closely so NIP-5D amendment language tracks the final wire shape
+- Phase 8 must open as drafts early even if wire shape is still evolving; final merge is gated on Phases 1-7
+- Phase 9 is independent but provides the canary test; running demos early catches integration gaps before doc sweep
+- Phase 10 must come last — documenting a moving wire shape wastes effort
+
+### Open Design Questions — Research Recommendations
+
+| Question | Research Recommendation | Confidence |
+|---|---|---|
+| NUB name | `resource` — matches the concept, the API, the type prefix; brevity wins | HIGH |
+| CSP delivery mechanism (header vs meta vs both) | HTTP response header PREFERRED for production (enforces `frame-ancestors`/`sandbox` that meta cannot); meta acceptable for blob-URL delivered napplets in dev; document both paths in NIP-5D | HIGH |
+| Demo napplets location | Option B: downstream shell repo for v0.28.0; revisit Option C (mock-shell fixtures) later | HIGH (confirmed: apps/ and tests/ don't exist in this repo) |
+| Sidecar default | OFF — opt-in per shell policy per event kind; privacy rationale in NUB-RELAY amendment | HIGH |
+| Vite dev CSP relaxation for HMR | Dev allows `connect-src ws://localhost:* wss://localhost:*`; build enforces strict; build-time assertion prevents leakage | HIGH |
+| Strict CSP in NIP-5D as MUST/SHOULD/MAY | SHOULD (default but waivable by permissive dev shells); shells advertising `perm:strict-csp` SHOULD also advertise `nub:resource` | MEDIUM |
+| Cache eviction in resource shim | Bounded LRU at 16 MB; shell quota enforced via `denied: 'quota-exceeded'` result | MEDIUM |
+| `resource.bytes.pending` interim message | MAY in spec; not a v0.28.0 requirement | HIGH |
+| `worker-src` default | `'none'` — napplets requiring Web Workers opt in via manifest; document in vite-plugin baseline | HIGH |
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
+**Phases needing careful validation:**
 
-- **Phase 1 (NIP Number + Stakeholders):** Needs live research -- check current state of PR#2281, PR#2282, PR#2287 at planning time. The political landscape may have shifted.
-- **Phase 3 (Channel Protocol Design):** MEDIUM -- the FEATURES-CHANNELS.md research is thorough but the naming decision (channels vs pipes vs connections to avoid NIP-28/29 collision) needs finalization.
+- **Phase 6 (Vite-plugin CSP):** `enforce: 'pre'` interaction with Vite's internal HMR client injection order is the highest-risk implementation detail. Validate with an actual Vite build that CSP meta appears first in emitted HTML before declaring phase complete. Pitfall 1 is project-killer if missed.
+- **Phase 8 (Cross-repo spec PRs):** NUB amendments to the public nubs repo are less-trodden than new NUB PRs. Open draft PRs early; don't let spec and implementation drift into final days.
+- **Phase 9 (Demos):** Demo napplet location is a scope decision. If downstream shell repo is unavailable or team wants in-repo coverage, Phase 9 may expand significantly. Flag in REQUIREMENTS.md before scoping.
 
-Phases with standard patterns (skip deep research):
+**Phases with standard, well-documented patterns (no research phase needed):**
 
-- **Phase 2 (NIP Spec Authorship):** The ARCHITECTURE.md research provides a complete document structure with section-by-section word counts. The PITFALLS.md gives a clear checklist of what to avoid. Well-documented pattern.
-- **Phase 4 (Channel Implementation):** Standard TypeScript implementation using existing monorepo toolchain. The wire format and API surface are defined in Phase 3. No new technologies.
-- **Phase 5 (Submission):** Mechanical -- fork, branch, add file, update README, open PR. Process documented in STACK.md.
+- Phase 1 (core types): mechanical addition, pattern proven 10+ times
+- Phase 2 (NUB scaffold): NUB triad is established; reference identity/config NUBs
+- Phase 3 (relay sidecar): surgical wire amendment; relay/types.ts + relay/shim.ts, both verified
+- Phase 4 (shim integration): ~15 lines following a mechanical pattern proven across 9 NUBs
+- Phase 5 (SDK integration): mirrors Phase 4
+- Phase 7 (NIP-5D spec): amendment scope documented; coordinate wording with nubs PRs
+- Phase 10 (docs): mechanical sweep following prior milestone patterns
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | NIP format is fully deterministic (markdown, JSON). Implementation stack is the existing monorepo. No choices to make. |
-| Features (NIP content) | HIGH | Grounded in analysis of 6+ existing NIPs and the 1520-line SPEC.md. Clear table stakes/differentiators/anti-features separation. |
-| Features (Channels) | MEDIUM-HIGH | Analyzed 5 real-world channel/port frameworks with convergent lifecycle patterns. Performance data is benchmark-quality. MessagePort upgrade path has lower confidence (browser-specific). |
-| Architecture | HIGH | Analyzed 6 protocol specs (NIP-11, LSP, MCP, WebExtensions, W3C Permissions, WebRTC SDP). Clear convergence on declarative advertisement pattern. Concrete document structure with word-count estimates. |
-| Pitfalls | HIGH | All critical pitfalls grounded in actual NIP PR review history (PR#1538, #2274, #2277, #2282). fiatjaf's feedback directly observed. postMessage security backed by CVE references. |
+|---|---|---|
+| Stack | HIGH | Zero new runtime dependencies confirmed; all technologies are web-platform builtins verified via MDN/W3C; existing stack confirmed conflict-free |
+| Features | HIGH on table stakes and anti-features; MEDIUM on differentiators | Table stakes and anti-features converge from multiple peer systems. Sidecar shape and transform-hint vocabulary generalized from GraphQL/Imgix — MEDIUM confidence on exact field names |
+| Architecture | HIGH on this-repo integration; MEDIUM on cross-repo coordination | Every file path and modification scope verified by reading actual source. Cross-repo nubs PR amendment path is MEDIUM — less tested than new-spec PRs |
+| Pitfalls | HIGH on security/browser pitfalls; MEDIUM on performance numbers | CSP3 behaviors verified via MDN/W3C/Chromium bugs. SVG attack vectors verified via CVEs. Performance thresholds (256 KB Transferable boundary, 10 MB size cap, 16 MB LRU) are informed heuristics |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **NIP number availability:** "5C" is claimed by fiatjaf's Scrolls (PR#2281). Must decide: use 5D/5E/5F or contest. Cannot be resolved by research alone -- requires stakeholder discussion.
-- **PR#2287 (aggregate hash) status:** The project depends on this unmerged NIP-5A extension for version-specific ACL. If it stalls, NIP-5C must either inline the algorithm or note the dependency. Check status at Phase 2 planning.
-- **Kind number strategy:** Research recommends normative assignment for cross-shell interoperability, but SPEC.md Section 3.8 says "implementation-specific." Decision needed: normative (all shells use 29001 for signer requests) or informative. Recommendation: normative.
-- **Channel naming:** "Channels" collides with NIP-28 "Public Chat Channels" and NIP-29 "Relay-based Groups." Consider "pipes," "links," or "connections." Decide during Phase 3.
-- **Second implementation for NIP acceptance:** NIP merge criteria want "two clients." The napplet SDK + hyprgate is arguably one ecosystem. Engaging arthurfranca's 44billion.net as a second shell would strengthen the submission. Assess during Phase 1.
+- **Demo napplet scope:** Must be resolved before REQUIREMENTS.md is written. Research recommendation is Option B (downstream shell repo), but this requires a cross-repo decision. Flag in requirements as a blocking decision.
+- **Strict CSP normative level in NIP-5D:** SHOULD is the research recommendation but MUST would strengthen the security story. This is a spec philosophy call — surface to the maintainer before Phase 7 begins.
+- **Performance thresholds:** The 256 KB Blob/Transferable threshold, 10 MB size cap, 16 MB LRU cache size, and 30-second request timeout are reasonable defaults. Validate against real napplet behavior once Phase 9 demos exist.
+- **`nostr:` scheme resolution path:** Must define whether `nostr:` URLs resolve via NUB-RELAY internally (shell queries relays, fetches referenced event/profile, fetches referenced URL) or via simpler single-hop. Define before Phase 2 finalizes type shapes.
+
+---
 
 ## Sources
 
-### Primary (HIGH confidence)
-- nostr-protocol/nips repo (verified 2026-04-05) -- NIP format conventions, kind registry, PR history
-- NIP-5A merged spec (PR#1538) -- base layer specification, 5-month review history
-- NIP-5B open PR (#2282) -- app discovery proposal, fiatjaf/dskvr review comments
-- NIP-5C/Scrolls open PR (#2281) -- filename conflict, fiatjaf authorship
-- Chrome Extension Message Passing docs -- Port lifecycle, named channels, disconnect semantics
-- Electron MessagePorts tutorial -- Broker pattern, port transfer optimization
-- LSP 3.17 specification -- Bidirectional capability exchange, layered requirements
-- MCP specification (2025-11-25) -- Capability objects, presence/absence semantics
+### Primary — HIGH confidence (verified against official spec or repo source)
 
-### Secondary (MEDIUM confidence)
-- Jeff Kaufman: MessageChannel overhead benchmarks -- Chrome/Firefox/Safari comparison
-- Figma plugin architecture docs -- Message queuing, two-environment model
-- Chrome Blog: Transferable Objects -- 302ms clone vs 6.6ms transfer benchmarks
-- Mozilla bugzilla: postMessage startup latency (#1164539), WebRTC DataChannel latency (#976115)
-- PostMessage CVE references (CVE-2024-49038, MSRC analysis)
+- `packages/nub/src/{identity,config,notify}/` — NUB triad pattern reference (all files read)
+- `packages/nub/src/relay/{types,shim}.ts` — sidecar modification targets (read)
+- `packages/shim/src/index.ts` — shim orchestrator pattern (212 lines read)
+- `packages/sdk/src/index.ts` — SDK barrel pattern (976 lines read)
+- `packages/vite-plugin/src/index.ts` — existing plugin structure (559 lines read)
+- `packages/core/src/{envelope,types}.ts` — NubDomain + NappletGlobal (read)
+- `.planning/PROJECT.md` — milestone goals and 7 open design questions
+- `.planning/STATE.md` — in-progress decisions
+- `specs/NIP-5D.md` — current spec
+- MDN: SecurityPolicyViolationEvent, SubtleCrypto.digest, URL.createObjectURL, postMessage structured-clone
+- W3C CSP3 spec — `<meta>` limitations, header-only directives
+- W3C webappsec-csp issue #700 (srcdoc wontfix), w3c/webcrypto #73 (streaming digest not in spec yet)
+- Playwright TestOptions (bypassCSP documentation)
+- OWASP SSRF Prevention Cheat Sheet — private IP block list, DNS rebinding
 
-### Tertiary (LOW confidence)
-- Surma: postMessage performance analysis (from training data, 403 on direct access)
-- Nolan Lawson: Web Worker message performance (2016, may be outdated)
-- Community forum discussions on VST/MIDI timing patterns
+### Secondary — MEDIUM confidence (vendor docs, multiple sources agree)
+
+- Electron `protocol.handle` API — scheme-handler pattern reference
+- Tauri custom protocol docs — whole-response delivery pattern
+- Figma plugin `allowedDomains` — sandboxed-fetch peer system comparison
+- Salesforce LWS CORS/CSP — strict-CSP enforcement peer
+- Vite issues #11862, #16749, #9719 — HMR connect-src + inline script CSP conflicts
+- GraphQL @defer/@stream RFC — sidecar same-envelope guarantee pattern
+- Imgix rendering API — transform hint vocabulary
+- NIP-B7 Blossom spec + hzrd149/blossom — `blossom:` URL conventions
+- CVE-2025-66412 (Angular SVG XSS), CVE-2023-22461 (sanitize-svg bypass) — SVG attack surface
+
+### Tertiary — LOW confidence (inferred or single-source)
+
+- Surma "Is postMessage slow?" (2019, may be outdated) — Transferable vs structured-clone performance numbers; validate with current browsers during Phase 2
 
 ---
-*Research completed: 2026-04-05*
+
+*Research completed: 2026-04-20*
 *Ready for roadmap: yes*

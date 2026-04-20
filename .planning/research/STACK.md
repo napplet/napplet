@@ -1,210 +1,239 @@
-# Stack Research: NUB-CONFIG (v0.25.0)
+# Stack Research — v0.28.0 Browser-Enforced Resource Isolation
 
-**Domain:** Napplet protocol — per-napplet declarative configuration NUB (spec + SDK package + vite-plugin extension)
-**Researched:** 2026-04-17
-**Confidence:** HIGH
+**Domain:** Browser-enforced iframe resource isolation + scheme-pluggable shell-mediated fetch
+**Researched:** 2026-04-20
+**Confidence:** HIGH (web-platform APIs verified via MDN/W3C; library versions verified via npm/GitHub)
+**Scope:** STACK ADDITIONS only. Existing validated stack (TS 5.9.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4, Playwright, nostr-tools 2.23.3, 14 packages at v0.2.x) is NOT re-researched.
 
-## Executive Summary (read this first)
+## Headline Verdict
 
-**No runtime dependencies need to be added to any @napplet/* package for NUB-CONFIG.** The entire feature is expressible with:
+**The milestone needs zero new runtime dependencies.** Every required capability — CSP enforcement, CSP violation reporting, Blob transfer over postMessage, WHATWG URL parsing, scheme dispatch, SHA-256 hashing, OffscreenCanvas/ImageBitmap rasterization — is a built-in browser API. The only optional addition worth considering is **`@resvg/resvg-wasm`** for shell-side SVG rasterization, and only if `OffscreenCanvas.drawImage(<img src=blob:svg>)` proves insufficient (e.g., for headless server rasterization or font fidelity). That dep belongs in the *shell* repo, **never** in `@napplet/*`.
 
-1. `@napplet/nub-config` — a 13th package that mirrors `@napplet/nub-identity` exactly in structure (`types.ts + shim.ts + sdk.ts + index.ts`, `workspace:*` on `@napplet/core` as its only dependency).
-2. `@napplet/vite-plugin` — gains **one optional field** in `Nip5aManifestOptions` (`configSchema?: unknown`) and emits it as a `["config", JSON.stringify(schema)]` tag in the NIP-5A kind 35128 event. No new npm deps.
-3. `@napplet/core` — one-line `NubDomain` + `NUB_DOMAINS` addition, plus the `config` namespace typed on `NappletGlobal`.
+**For Playwright tests**, no new packages — built-in `page.on('console')`, `page.on('response')`, `page.route()`, and the W3C `securitypolicyviolation` event surface everything you need.
 
-**TypeScript inference from a JSON Schema literal (the author-DX carrot) is delivered via `json-schema-to-ts@3.1.1` as a `peerDependencies` (optional) on `@napplet/nub-config`, not a direct `dependencies`.** This is important and explained below — the package ships runtime helpers (1.1MB + babel-runtime transitively) that napplet authors do NOT need. Shipping it as an optional peer lets authors who want `FromSchema<typeof schema>` install it themselves; authors who are happy with `unknown`/`Record<string, unknown>` pay nothing.
+**For Vite dev-mode CSP**, no third-party plugin is recommended. Build a small custom `transformIndexHtml` hook inside `@napplet/vite-plugin` that mirrors what the production shell will inject. The popular `vite-plugin-csp-guard` solves a different problem (full-app SPA CSP) and pulls in subresource-integrity machinery this project does not need.
 
-Validators (ajv, etc.) are explicitly **not** recommended anywhere in the SDK surface. Shell validates per the NUB-CONFIG spec MUST; the shim forwards and subscribes, nothing more. Build-time schema sanity checks in the vite-plugin can be done with a ~40-line hand-written guard rather than pulling a 500KB validator into the dev toolchain.
+This is consistent with the project's "zero framework deps" constraint and the existing pattern where `@napplet/core` is zero-deps and `@napplet/vite-plugin` keeps its single runtime dep (`nostr-tools`) tightly scoped.
+
+---
 
 ## Recommended Stack
 
-### Core Technologies (unchanged from existing milestones)
+### Core Technologies — All Built-In Web APIs
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| TypeScript | 5.9.3 | Strict ESM-only sources for types, shim, sdk | Already the repo-wide pin. No reason to diverge. |
-| tsup | 8.5.0 | ESM bundling for the new `@napplet/nub-config` package and the modified `@napplet/vite-plugin` | Verbatim copy of every other NUB package's `tsup.config.ts`. |
-| turborepo | 2.5.0 | Monorepo orchestration; picks up the new package automatically via pnpm workspace glob | No config change needed — `pipeline.build` already covers it. |
-| pnpm | 10.8.0 | Workspace linking (`workspace:*`) | Same as every other NUB dep edge. |
-| changesets | 2.30.0 | Version bump + publish for the new package | Standard milestone flow — add a `@napplet/nub-config` changeset in Phase N. |
-| nostr-tools | 2.23.3 | Used only by `@napplet/vite-plugin` for kind 35128 event signing | Unchanged. Config schema embedding does **not** require nostr-tools; it adds a tag to the existing unsigned template before `finalizeEvent()`. |
+| Technology | Availability | Purpose in v0.28.0 | Why It's the Right Choice |
+|------------|--------------|---------------------|---------------------------|
+| **CSP `Content-Security-Policy` header / `<meta http-equiv>`** | All evergreen browsers (W3C CSP3) | Strict isolation: `default-src 'none'; connect-src 'none'; script-src 'self'; img-src blob:` etc. | The whole milestone goal *is* "browser-enforced". CSP is the enforcer. |
+| **`securitypolicyviolation` DOM event** | All evergreen browsers (W3C CSP3 §6) | Dev-mode visibility into what a napplet tried to fetch behind the shell's back; hookable by the shell to log/alert violations. | Native, zero overhead. `document.addEventListener('securitypolicyviolation', e => …)` exposes `blockedURI`, `violatedDirective`, `effectiveDirective`, `disposition`, `sample`. |
+| **`Content-Security-Policy-Report-Only` header** | All evergreen browsers | A second policy that shell can serve in dev to *observe without blocking*, alongside the enforced one. Both fire `securitypolicyviolation` events. | Built-in. The two-policy pattern is the standard "tighten safely" workflow. |
+| **`postMessage` with `Transferable`** | All evergreen browsers | Hand a `Blob` (or `ArrayBuffer`) from shell to napplet without a copy: napplet receives a `blob:` URL or a transferred `ArrayBuffer`. | `Blob`s are structured-cloneable (cheap because the underlying bytes are refcounted, not copied). `ArrayBuffer`s are transferable. `MessagePort`s are transferable. No library needed. |
+| **`URL` (WHATWG)** | All evergreen browsers | Parse arbitrary URLs napplets pass to `resource.bytes(url)` and dispatch on `url.protocol`. | Built-in. Handles `https:`, `data:`, custom schemes (`blossom:`, `nostr:`) — all yield a parsed `URL` with `protocol` ending in `:`. |
+| **`crypto.subtle.digest('SHA-256', bytes)`** | All evergreen browsers (W3C WebCrypto) | Content-addressed cache keys for shell-internal dedup of fetched bytes. | Built-in. **Streaming digest is NOT in the spec yet** ([proposal-webcrypto-streams](https://github.com/WinterTC55/proposal-webcrypto-streams), [w3c/webcrypto#73](https://github.com/w3c/webcrypto/issues/73)) — buffer-then-digest is the only browser-native option, which is fine because the byte-cap policy makes in-memory hashing safe. |
+| **`OffscreenCanvas` + `ImageBitmap`** | All evergreen browsers | Shell-side resize / re-encode of fetched bitmap content before handing the napplet a `blob:`. Worker-friendly. | Built-in. `createImageBitmap(blob, { resizeWidth, resizeHeight })` is the one-liner. `OffscreenCanvas.convertToBlob({ type: 'image/webp', quality }) → Promise<Blob>` closes the loop. |
+| **`<img src="blob:…svg…">` → `drawImage` → `convertToBlob`** | All evergreen browsers | The default SVG-rasterization path: load SVG into an `<img>` (which strictly disables script execution per HTML spec — "secure static mode"), draw to canvas, export raster. | Built-in, zero deps. **This is the recommended path** for v0.28.0 unless font/feature fidelity gaps emerge. |
 
-### New Supporting Library (optional peer only)
+### Optional Supporting Library — One Candidate, Conditional
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| `json-schema-to-ts` | **3.1.1** | Compile-time `FromSchema<typeof schema>` type inference from a literal JSON Schema with `as const` | **Only** as an optional `peerDependencies` on `@napplet/nub-config`. Napplet authors who want typed `config.values` opt in by installing it themselves. Ships with `@babel/runtime` + `ts-algebra` runtime deps (~1.5MB transitive) that we do NOT want to force on authors who don't care. |
+| Library | Latest Version | Size | License | Conditional Use |
+|---------|----------------|------|---------|-----------------|
+| **`@resvg/resvg-wasm`** | `2.6.2` (verified via npm/Bundlephobia, [resvg-js GitHub](https://github.com/thx/resvg-js)) | ~560 KB on-the-wire (the WASM artifact dominates) | MPL-2.0 | **Add ONLY if** the shell needs to rasterize SVG outside a DOM (e.g., a Worker without `<img>` access, or a future headless shell), OR if `<img>`-based rasterization shows fidelity gaps (custom fonts, filters). |
 
-Caveat: the `json-schema-to-ts` package *does* export three runtime helpers (`asConst`, `wrapCompilerAsTypeGuard`, `wrapValidatorAsTypeGuard`). The `FromSchema` export is type-only and gets erased. `@napplet/nub-config` MUST only use `import type { FromSchema } from 'json-schema-to-ts'` and the tsconfig's `verbatimModuleSyntax: true` (already set repo-wide) will enforce that at compile time.
+**Default position: do NOT add it for v0.28.0.** The `<img src=blob:svg>` → canvas pipeline runs in the shell's browsing context (which has DOM access), preserves all native SVG features the browser supports, and weighs zero KB. `@resvg/resvg-wasm` is the right fallback to *document* in PITFALLS, not a default dep.
 
-### Development Tools (no change)
+If it's added later, the integration point is a separate optional package in the *shell* repo (e.g., `@napplet-shell/resvg`), **never** in `@napplet/*` — the SDK stays WASM-free.
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| tsup | Build `packages/nubs/config/` | Config file identical to `packages/nubs/notify/tsup.config.ts` — copy verbatim. |
-| typescript --noEmit | `type-check` script in each package | Already per-package pattern; just add the script to the new package.json. |
-| changesets | Version + publish | `pnpm changeset` captures the new package at v0.2.0 alongside the minor bump for `core`/`shim`/`sdk`/`vite-plugin`. |
+### What `@napplet/nub` Gets
+
+A new `resource` subdomain following the established NUB pattern (`packages/nub/src/resource/{index.ts,types.ts,shim.ts,sdk.ts}` plus matching `exports` entries in `packages/nub/package.json`). Zero new dependencies; rides on `@napplet/core` only. Mirrors the structural precedent of `packages/nub/src/identity/` (request/result RPC shape with timeout) — concrete shape lives in REQUIREMENTS.
+
+Pseudo-shape:
+
+- `packages/nub/src/resource/types.ts` — message envelopes (`resource.bytes`, `resource.bytes.result`)
+- `packages/nub/src/resource/shim.ts` — `installResourceShim()` that wires `window.napplet.resource.bytes(url)` → postMessage → `Promise<Blob>`
+- `packages/nub/src/resource/sdk.ts` — typed wrapper for bundler consumers
+- 4 new `exports` entries on `@napplet/nub/package.json` (`./resource`, `./resource/types`, `./resource/shim`, `./resource/sdk`)
+- 1 new `'resource'` member of `NubDomain` in `@napplet/core`
+
+### What `@napplet/vite-plugin` Gets
+
+One new option (`csp?: { policy: string | CspBuilder; reportOnly?: string }`) and one new code path: a `transformIndexHtml` hook that injects the policy into the served napplet HTML in dev. **No new runtime deps.** `vite` itself already exposes everything needed.
+
+Optional: a tiny `CspBuilder` helper type living in `packages/vite-plugin/src/csp.ts` that produces the canonical strict-default policy as a string. **Don't import a library** — CSP is a small grammar and a hand-rolled builder is ~30 lines.
+
+### Development Tools — Already Present
+
+| Tool | Role | Notes |
+|------|------|-------|
+| **Playwright** (already pinned) | CSP-violation assertions in e2e tests | Use `page.on('console', …)` to catch CSP violation messages, OR `page.evaluate(() => new Promise(r => addEventListener('securitypolicyviolation', r, { once: true })))` for direct event assertion. **Do NOT enable `bypassCSP`** in v0.28.0 test contexts — that disables exactly what this milestone is testing. (Reserve `bypassCSP: true` only for unrelated suites.) Verified via [Playwright TestOptions](https://playwright.dev/docs/api/class-testoptions). |
+| **Vitest 4** (already pinned) | Unit tests for `CspBuilder`, scheme-dispatch table | jsdom does not implement CSP enforcement; reserve CSP behavioral tests for Playwright. |
+| **tsup 8.5** (already pinned) | Build the new `nub/resource` subpath | No config change beyond adding the entry; `nub/tsup.config.ts` already iterates subdomains. |
+
+---
+
+## Question-by-Question Answers
+
+### 1. CSP Reporting / Enforcement
+
+- **Browser API, no library.** `document.addEventListener('securitypolicyviolation', e => …)` per W3C CSP3 ([MDN: SecurityPolicyViolationEvent](https://developer.mozilla.org/en-US/docs/Web/API/SecurityPolicyViolationEvent)). The event has `blockedURI`, `violatedDirective`, `effectiveDirective`, `disposition` (`"enforce"` vs `"report"`), `documentURI`, `sample`, `sourceFile`, `lineNumber`, `columnNumber`.
+- **Pair `Content-Security-Policy` with `Content-Security-Policy-Report-Only`** to observe violations of a tighter candidate policy without blocking, before tightening for real. Both fire the same event.
+- **Cross-frame caveat**: violations in a child iframe target *that iframe's document*. The shell can either install a listener inside the napplet via the bootstrap script it already injects, or rely on browser DevTools console for dev-time visibility. Per [chromium issue 41491434](https://issues.chromium.org/issues/41491434), `frame-ancestors` violations notably do *not* fire in the embedded frame — design accordingly.
+- **Do NOT add**: `csp-report-handler`, `csp-evaluator`, or any "CSP report endpoint" library. Endpoint reporting (`report-to` / `report-uri`) is for production telemetry to a server — out of scope for this single-shell, single-user project.
+
+### 2. Blob Handling Across postMessage
+
+- **Built-in: `Blob` is structured-cloneable.** Pass a `Blob` directly to `iframe.contentWindow.postMessage(blob, '*')`. Underlying bytes are refcounted by the browser; the napplet receives a usable `Blob` reference without a memory copy.
+- **Alternative: transfer `ArrayBuffer`** with the second `postMessage(message, [transfer])` argument when you want to relinquish ownership and avoid even the bookkeeping cost.
+- **Alternative: hand a `blob:` URL.** Shell calls `URL.createObjectURL(blob)` and posts the string. Napplet uses it as `<img src>` / `<video src>` / `fetch(blobUrl)`. **Caveat**: the napplet must be allowed `blob:` in the relevant CSP directive (`img-src blob:`, `media-src blob:`, etc.). Document this in the default policy template.
+- **`OffscreenCanvas` + `ImageBitmap` for shell-side resize**: built-in. `createImageBitmap(blob, { resizeWidth: 256, resizeHeight: 256, resizeQuality: 'high' })` then `new OffscreenCanvas(...).getContext('2d').drawImage(bitmap, 0, 0)` then `canvas.convertToBlob({ type: 'image/webp', quality: 0.85 })`. **Zero deps.** Works in a Worker if the shell pushes resize off the main thread (recommended for large images).
+- **Do NOT add**: `pica`, `browser-image-compression`, `blob-util`. They wrap exactly the above APIs. The shell repo can add them later if a specific quality-tuning need emerges; the SDK does not need them.
+
+### 3. URL Parsing / Scheme Dispatch
+
+- **Built-in: WHATWG `URL`.** `new URL('blossom://abc/xyz').protocol === 'blossom:'`. Custom schemes parse fine; what they don't get is "special scheme" treatment (no automatic relative-URL resolution, no enforced authority structure) — which is exactly what you want for opaque-scheme dispatch.
+- **Pattern: a `Map<string, SchemeHandler>` keyed on `url.protocol`.** This is the same shape Service Workers use internally for `fetch` event dispatch and the same shape Tauri's `register_uri_scheme_protocol` and Electron's `protocol.handle` use. There is no widely-adopted browser library for this because the dispatch is a one-liner.
+- **Reference to mention in ARCHITECTURE.md**: Service Worker `fetch` handlers, Electron `protocol.handle` (built-in 2024+), and Android `WebViewAssetLoader` all share this shape. None ship as an npm package; they're 5–10 lines of registry + lookup.
+- **Do NOT add**: `url-parse`, `whatwg-url`. The platform's `URL` is the spec implementation. `whatwg-url` is for Node-side parity with the same spec and not needed in browsers.
+
+### 4. Vite Dev-Mode CSP
+
+**Recommendation: build a small in-house `transformIndexHtml` hook inside `@napplet/vite-plugin`.** Reasons:
+
+- The existing plugin already uses `transformIndexHtml` for the NIP-5A meta-tag and aggregate-hash injection — adding one more line to inject `<meta http-equiv="Content-Security-Policy" content="…">` (or to set the response header in the `configureServer` middleware hook) is trivial and stays inside the plugin's existing surface.
+- The third-party options exist but mismatch this project's needs:
+  - **`vite-plugin-csp-guard`** ([npm](https://www.npmjs.com/package/vite-plugin-csp-guard), [docs](https://vite-csp.tsotne.co.uk/)) — well-engineered, ~16K weekly downloads, but it solves the *full-app SPA* problem (hash all top-level inline scripts, hash all Vite-generated app code, add SRI). Napplets are deliberately *not* full SPAs in this sense — they're small sandboxed iframes whose scripts come from a manifest. Its hashing pipeline would fight rather than help.
+  - **`Coreoz/vite-plugin-content-security-policy`** ([repo](https://github.com/Coreoz/vite-plugin-content-security-policy)) — focused on generating Nginx/Apache config. Wrong target.
+  - **`vite-plugin-csp`** ([npm](https://www.npmjs.com/package/vite-plugin-csp)) — uses `csp-typed-directives`. Pulls in a typed-CSP dep for a 30-line problem.
+- **Vite's own `html.cspNonce`** ([docs / issues](https://github.com/vitejs/vite/issues/16749)) injects a nonce attribute on Vite-emitted `<script>`/`<style>` tags but **does not generate or serve the policy itself** — you still need either a header or a `<meta>` injection step.
+
+**Concrete plan**: extend `Nip5aManifestOptions` with `csp?: NappletCspOptions` (string policy or builder); inject as `<meta http-equiv="Content-Security-Policy">` in dev mode via the existing `transformIndexHtml`; document that production shells deliver the same policy via response header.
+
+### 5. Content-Addressed Cache Primitives
+
+- **Built-in: `crypto.subtle.digest('SHA-256', bytes)`** returns `Promise<ArrayBuffer>` ([MDN: SubtleCrypto.digest](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest)).
+- **Streaming digest**: NOT in the platform spec yet. Active proposal at [WinterTC55/proposal-webcrypto-streams](https://github.com/WinterTC55/proposal-webcrypto-streams) and W3C webcrypto issue [#73](https://github.com/w3c/webcrypto/issues/73) — both still open as of April 2026. This means the shell must `await response.arrayBuffer()` (or `blob.arrayBuffer()`) before hashing. **This is fine** for v0.28.0 because the milestone explicitly enforces a size cap on shell-fetched resources — buffer-then-hash within a known max is safe and doesn't motivate a polyfill.
+- **Hash-to-key encoding**: convert the `ArrayBuffer` to hex (one-line: `Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')`) or base64url. No library needed.
+- **Do NOT add**: `js-sha256`, `hash-wasm`, `multiformats`. WebCrypto's native implementation is faster than any JS/WASM alternative and ships with the browser. `multiformats` (CID encoding) is right *if and only if* the shell exposes hashes to napplets — which the milestone explicitly does NOT do ("hashes stay shell-internal").
+
+### 6. Testing Strict-CSP Iframes in Playwright
+
+- **Pattern A — Console assertion**: CSP violations log to the console as `Refused to <verb> because it violates the following Content Security Policy directive…`. Use `page.on('console', msg => …)` and assert. Cheap, works for any browser engine.
+- **Pattern B — `securitypolicyviolation` event**: inside the iframe, install a listener with `page.evaluate` and resolve a Promise on first fire; assert directive/blockedURI shape. Strongest assertion when you want to verify *which* directive blocked.
+- **Pattern C — Network observation**: `page.on('response', …)` or `context.on('response', …)`. If CSP successfully blocks a request, the request never hits the network — so the *absence* of a response is the proof. Pair with a positive assertion that the *shell-mediated* fetch *did* hit the network for the same URL.
+- **Pattern D — `page.route()` interception** to assert the napplet didn't even attempt the request (`route.continue()` or fail with assertion-tracking).
+- **Critical: do NOT enable `bypassCSP: true`** for v0.28.0 suites — that's the option that exists for testing apps *under* CSP without dealing with it; we want to test *that CSP is in place*. Keep `bypassCSP` opt-in per-suite if it's needed elsewhere. Verified via [Playwright TestOptions](https://playwright.dev/docs/api/class-testoptions).
+- **No new packages.** All built-in.
+
+### 7. SVG Sanitization / Rasterization
+
+The threat model: napplets must never receive scriptable XML (SVG can carry `<script>`, `on*` handlers, `xlink:href` to JS, `<foreignObject>` HTML). Solution per the milestone scope: shell rasterizes shell-side and hands napplet a non-scriptable raster (PNG/WebP/AVIF).
+
+**Three rasterization paths, ranked:**
+
+1. **`<img src="blob:…svg…">` → `drawImage` → `convertToBlob`** *(recommended default)*. Native browser SVG renderer; CRITICAL spec property: `<img>`-loaded SVG runs in *secure static mode* — scripts disabled, external loads blocked, no animation events. Per HTML spec and verified MDN behavior. Zero dependencies. Drawback: the shell needs a DOM context (true for the current target architecture).
+2. **`@resvg/resvg-wasm@2.6.2`** *(MPL-2.0, ~560 KB WASM)*. Pure-WASM Rust renderer. Use *only if* the shell needs to rasterize from a Worker without DOM, or from a future Node/server shell, or if path 1 has fidelity issues. Sources: [thx/resvg-js](https://github.com/thx/resvg-js), [npm](https://www.npmjs.com/package/@resvg/resvg-wasm), [Bundlephobia](https://bundlephobia.com/package/@resvg/resvg-wasm). MPL-2.0 is permissive enough for MIT-licensed consumers.
+3. **`canvg`** — DOM-based SVG-to-canvas in JS. Older, less faithful than the browser's native renderer, larger than path 1. Not recommended.
+
+**Sanitization vs rasterization**: do not bother with `DOMPurify`-style sanitization here. The whole point of rasterization is that the *output* (PNG/WebP) is fundamentally non-scriptable, so any SVG-level malice is neutralized by the rendering boundary. Sanitization would be belt-and-braces *before* rendering; for the threat model ("napplet never sees scriptable XML"), rasterization alone suffices.
+
+**Do NOT add**: `DOMPurify`, `svg-sanitizer`, `xss-filters`. Wrong layer for this milestone.
+
+---
 
 ## Installation
 
-The reference implementation workspace changes:
-
 ```bash
-# No new root-level installs. Package-local devDeps only:
-# 1. Create packages/nubs/config/ mirroring packages/nubs/identity/ structure
-# 2. Copy package.json, tsup.config.ts, tsconfig.json from nubs/identity/
-# 3. Add dependency edges in packages/shim/package.json and packages/sdk/package.json:
-#       "@napplet/nub-config": "workspace:*"
+# NO new runtime dependencies are required for v0.28.0.
 
-pnpm install    # resolves the new workspace link
-pnpm build      # turborepo builds the new package in topo order
+# Optional, only if path-1 SVG rasterization proves insufficient (deferred decision):
+# pnpm add @resvg/resvg-wasm   # add to the SHELL repo, NOT @napplet/*
 ```
-
-Napplet authors who want typed config:
-
-```bash
-# Optional — only if author wants FromSchema<typeof schema> inference
-pnpm add -D json-schema-to-ts
-```
-
-## Answering the Specific Questions
-
-### 1. JSON Schema TypeScript inference — which option, and does it cost anything?
-
-**Recommendation: `json-schema-to-ts@3.1.1` as an optional peer dependency, used with `import type { FromSchema }`.**
-
-| Option | Runtime cost to napplet | DX value | Verdict |
-|--------|-------------------------|----------|---------|
-| `@types/json-schema@7.0.15` | **Zero** (types-only, no runtime code at all) | Provides `JSONSchema7` type only — NOT instance inference. Author writes `const schema: JSONSchema7 = {...}` and `config.values` stays `Record<string, unknown>`. | Ship this as `devDependencies` in `@napplet/nub-config` and re-export `JSONSchema7` as a convenience type. Enables authors to get autocomplete on their schema definition without any instance-type inference. |
-| `json-schema-to-ts@3.1.1` | Zero **at runtime** when only `FromSchema` is imported as `type`. Non-zero if author pulls in `asConst`/`wrapCompilerAsTypeGuard` (which we do NOT expose). Transitive install cost: `@babel/runtime` + `ts-algebra` ≈ 1.5MB `node_modules` footprint. | Full instance type inference: `type Config = FromSchema<typeof schema>` gives `{ theme: 'light' | 'dark'; fontSize: number }` from a literal schema. Major author-DX win for the "write schema → get typed values" workflow. | Ship as `peerDependencies` + `peerDependenciesMeta.optional: true`. Authors opt in; those who don't bear zero cost. |
-| `ajv@8.18.0` | Runtime — ~120KB minified+gzipped, brings `fast-uri`, `fast-deep-equal`, etc. | Full runtime validation. Irrelevant to SDK — shell validates per the spec MUST. | **Do not add.** The reference shim MUST NOT duplicate shell-side validation. Keeps the "zero runtime deps on napplet side" invariant intact. |
-| `typebox` | Runtime (5–15KB) — creates JSON Schema objects in code that also infer as TS types. | Alternative author-DX: write a TypeBox definition instead of a JSON Schema literal, get types for free, serialize to JSON Schema for the manifest. | **Do not ship**, but document as an allowed author choice: authors can use TypeBox on their own and pass `Type.Object({...})` output to `nip5aManifest({ configSchema: ... })` — works today with no SDK changes. |
-| Hand-rolled `FromSchema`-ish generic | Zero | Very limited — re-implementing `json-schema-to-ts` is 2,000+ lines across `ts-algebra` and the schema traversal; not justified. | **Do not attempt.** |
-
-**Final call:** `@napplet/nub-config` declares `@types/json-schema@7.0.15` in `devDependencies` (for internal use + convenience re-export of the `JSONSchema7` type) and `json-schema-to-ts@3.1.1` in `peerDependencies` as **optional**. The package's `types.ts` uses `import type { JSONSchema7 } from 'json-schema-to-ts'` so the FromSchema import site tree-shakes to nothing. README documents both paths.
-
-### 2. Vite-plugin changes — do we need a schema validator at build time?
-
-**Recommendation: No library. Write a ~40-line structural guard inline.**
-
-The vite-plugin already has zero JSON-Schema-aware code. What needs to happen:
-
-1. `Nip5aManifestOptions` gains one optional field:
-   ```ts
-   /** Optional JSON Schema (draft-07+) for napplet configuration, embedded in the NIP-5A manifest. */
-   configSchema?: JSONSchema7 | Record<string, unknown>;
-   ```
-2. If present, a build-time sanity check confirms:
-   - Value is a plain object (not null, not array)
-   - `type: 'object'` at the root (config is always an object of named fields)
-   - `properties` is a plain object if present
-   - Nothing in the schema uses unsupported shapes (e.g., remote `$ref` which the shell cannot resolve)
-3. On pass, the schema is JSON-stringified and added as a tag: `['config', JSON.stringify(schema)]` in the kind 35128 `tags` array.
-4. On fail, `this.error(...)` aborts the build with a pointer to the offending field.
-
-**Why no library:**
-- Ajv would be a devDep, not shipped — but it's still ~500KB in `node_modules` and ~2s in CI install time for a check that a 40-line function does correctly.
-- The "malformed schema" cases we care about (null, array, missing `type`, non-object `properties`, remote `$ref`) are trivially detectable. We do not need to re-validate that the JSON Schema itself conforms to the meta-schema — that's the schema author's problem and a JSON Schema-aware editor will catch it long before Vite runs.
-- Keeps the vite-plugin's dep graph stable. Currently: `nostr-tools` + `@types/node` (dev). Adding `ajv` for a 40-line check is a regression.
-
-**If authors want strict meta-schema conformance at build time**, the correct UX is: document `pnpm dlx ajv compile -s config.schema.json --strict` as a pre-flight check. Keeps it a one-off developer opt-in, not a protocol-level requirement.
-
-### 3. Zero-runtime-dep constraint — can we ship?
-
-**Yes, fully, with the structure already documented:**
-
-| Package | Added runtime deps | Added dev deps | Added peer deps |
-|---------|-------------------|----------------|-----------------|
-| `@napplet/core` | none | none | none |
-| `@napplet/nub-config` | `@napplet/core: workspace:*` (same as every NUB) | `tsup@8.5.0`, `typescript@5.9.3`, `@types/json-schema@7.0.15` | `json-schema-to-ts@3.1.1` (optional) |
-| `@napplet/shim` | `@napplet/nub-config: workspace:*` (same pattern as existing NUB shim imports) | none | none |
-| `@napplet/sdk` | `@napplet/nub-config: workspace:*` | none | none |
-| `@napplet/vite-plugin` | none added | none added | none added |
-
-Net external-npm additions for the monorepo: **0 direct runtime deps, 1 dev-only type package (`@types/json-schema`), 1 optional peer (`json-schema-to-ts`).** The optional peer is only pulled when a downstream author opts in — neither CI nor publish consumers pay for it.
-
-### 4. Precedent check — which NUB does nub-config most resemble?
-
-**Closest match: `@napplet/nub-notify` (similar wire shape) + `@napplet/nub-keys` (push-subscription pattern).**
-
-- **Structurally identical to `nub-notify`:** `types.ts` + `shim.ts` + `sdk.ts` + `index.ts` with a `DOMAIN = 'notify' as const` constant. Same `package.json` boilerplate (just swap name/description/keywords). Same `tsup.config.ts` — copy verbatim.
-- **Subscription semantics cribbed from `nub-keys`:** `config.subscribe` and `config.values` push model parallels the `keys.bind` / `keys.config` push pattern. Shim maintains a listener map keyed by subscription ID, shell pushes `config.values` on change, shim fans out to local subscribers.
-- **Request/result pairs cribbed from `nub-identity`:** `config.get` / `config.get.result` and `config.registerSchema` / `config.registerSchema.result` are RPC pairs with a correlation `id` — exactly the `IdentityGet*Message` / `IdentityGet*ResultMessage` pattern already used 9 times in nub-identity.
-
-**Concrete checklist for the package scaffolding phase** (no research required — this is pure template copy):
-
-1. Copy `packages/nubs/notify/` → `packages/nubs/config/`.
-2. Rewrite `package.json`: name `@napplet/nub-config`, description "NUB-CONFIG message types and shim methods for per-napplet declarative configuration", keywords `['nostr', 'napplet', 'nub', 'config']`, add `devDependencies["@types/json-schema"]: "^7.0.15"` and `peerDependencies["json-schema-to-ts"]: "^3.1.1"` with `peerDependenciesMeta."json-schema-to-ts".optional: true`.
-3. Replace `src/types.ts` with config message definitions (`DOMAIN = 'config' as const`, `ConfigRegisterSchemaMessage`, `ConfigGetMessage`, `ConfigSubscribeMessage`, `ConfigValuesMessage`, `ConfigOpenSettingsMessage` + their `.result` variants; plus `ConfigSchema` type re-exporting `JSONSchema7` as a convenience alias).
-4. `src/shim.ts` mirrors `nub-notify/shim.ts` for RPCs + `nub-keys/shim.ts` for the subscribe-live fan-out.
-5. `src/sdk.ts` mirrors `nub-identity/sdk.ts` — `requireConfig()` guard + one named export per method.
-6. `src/index.ts` — barrel re-exports and `registerNub(DOMAIN, ...)` stub exactly like every other NUB.
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| `json-schema-to-ts` optional peer | Hardcode `ConfigValues = Record<string, unknown>` and make authors cast | Valid for a truly minimal first cut. Downside: eliminates the killer DX demo ("change schema, values type updates automatically"). Document but default to the peer-dep route. |
-| `json-schema-to-ts` optional peer | Ship `json-schema-to-ts` as direct `dependencies` | Never — forces `@babel/runtime` + `ts-algebra` into every downstream consumer's `node_modules`, violates the zero-runtime-deps invariant. |
-| Inline schema sanity check | `ajv` in vite-plugin devDeps for build-time validation | If the spec grows to require draft-2020-12 features the hand-written guard can't cover (e.g., `$dynamicRef` resolution), reconsider. Not needed for v0.25.0. |
-| `@types/json-schema@7.0.15` | `json-schema-typed` (enum-ish pkg) | No benefit — `@types/json-schema` is the DefinitelyTyped canonical and widely known. |
-| Embed schema as `['config', JSON.stringify(schema)]` tag | Embed as a separate kind 35129 event | Overkill. The NIP-5A manifest is already the single authoritative per-napplet event; schema belongs there. A tag is the standard NIP pattern. |
-| Author chooses TypeBox independently | `typebox` as a direct dep of `@napplet/nub-config` | Forcing TypeBox on authors who prefer hand-written JSON Schemas adds a runtime footprint for nothing. Authors who like TypeBox install it themselves; the config NUB API accepts any JSON Schema object. |
+| Recommended (Built-in) | Alternative | When the Alternative Wins |
+|------------------------|-------------|----------------------------|
+| `<img src=blob:svg>` rasterization | `@resvg/resvg-wasm@2.6.2` | DOM-less shell context (Worker without DOM access, Node/server shell), or measurable fidelity issues with native renderer |
+| Custom `transformIndexHtml` CSP injection | `vite-plugin-csp-guard@^1` | Full-app SPA where every inline script needs hashing — explicitly NOT this project |
+| `crypto.subtle.digest` (buffer-then-hash) | `hash-wasm` streaming SHA-256 | Only if size caps are removed and gigabyte-scale streaming hashing becomes a real workload — not v0.28.0 |
+| `URL` + `Map<protocol, handler>` dispatch | `whatwg-url` package | Never needed in browsers; only relevant for cross-runtime parity work |
+| `Content-Security-Policy-Report-Only` + `securitypolicyviolation` listener | `csp-report-handler` + `report-to` endpoint | Only when shipping a multi-user production shell with telemetry — out of scope for single-user dev |
+| `createImageBitmap` + `OffscreenCanvas` | `pica`, `browser-image-compression` | Specific quality-tuning needs (e.g., Lanczos resampling for thumbnails) — defer to shell repo if ever needed |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `ajv` (any version) as a direct dep of `@napplet/nub-config` or `@napplet/shim` | Shell validates per the NUB-CONFIG MUST. Shim duplication violates separation of concerns, bloats the napplet bundle (~50KB gzipped on the napplet side of the sandbox), and invites drift between shim-side and shell-side validation semantics. | Nothing. The shim forwards values that the shell has already validated. |
-| `@rjsf/core`, `@rjsf/validator-ajv8`, `formkit`, or any form renderer | The settings UI is a **shell concern** per the locked decision. Referencing a renderer in the SDK or vite-plugin leaks shell UX opinions into the spec. | Shell implementations pick their own renderer. `@napplet/nub-config` ships zero UI. |
-| `zod`, `valibot`, `yup`, `io-ts` | These are alternative schema systems, not JSON Schema. NUB-CONFIG has locked JSON Schema (draft-07+) as the wire format. Bringing in a second schema DSL confuses authors and fragments the ecosystem. | `json-schema-to-ts` (optional peer) for TS inference. Authors who prefer Zod can still call `zodToJsonSchema()` themselves and pass the result. |
-| `json-schema-to-typescript` (bcherny) | Code-generation library (writes `.d.ts` files from schemas). Solves a different problem — it's for authors who want to regenerate TS types as a build step rather than infer them in-place. Adds a CLI step to the author workflow. | `json-schema-to-ts` gives in-place inference without a codegen step. |
-| `json-schema-to-ts` as direct `dependencies` on `@napplet/nub-config` | Transitively pulls `@babel/runtime` (~1.1MB) and `ts-algebra` (~452KB) into every consumer, even those that don't use `FromSchema`. | Optional `peerDependencies` — opt-in only. |
-| `typescript-json-schema` / `ts-json-schema-generator` in the vite-plugin | These generate JSON Schema *from* TypeScript source. Opposite direction — we want authors to author JSON Schema (the wire contract) and optionally derive TS types from it, not the other way around. | Vite-plugin takes a JSON Schema literal; authors author it directly or via TypeBox. |
-| A new `@napplet/config-util` or `@napplet/schema-util` helper package | Over-packaging. Every NUB keeps its logic in its NUB package — see v0.21.0 modularization decision. Validators/utilities live inside `nub-config` if needed at all. | Put any helpers inside `packages/nubs/config/src/`. |
+| `vite-plugin-csp-guard` (or any SPA-CSP plugin) | Designed for full-app SPAs with hash-all-inline-scripts; pulls in SRI machinery; fights the napplet sandbox model where scripts come from a manifest | Custom `transformIndexHtml` hook in `@napplet/vite-plugin` |
+| `csp-typed-directives` / `csp-builder` | Tiny problem (a CSP string is a deterministic concatenation); a typed builder is fine but doesn't justify a dep | Hand-rolled `CspBuilder` helper (~30 LOC) inside `packages/vite-plugin/src/csp.ts` |
+| `DOMPurify` for SVG sanitization | Wrong layer — rasterization neutralizes XML; sanitization adds maintenance burden for no incremental security in this threat model | Rasterization-only (path 1 above) |
+| `js-sha256`, `hash-wasm`, `crypto-js` | Slower than `crypto.subtle.digest`, larger bundle, redundant with platform | `crypto.subtle.digest('SHA-256', bytes)` |
+| `multiformats` (CID encoding) | Hashes are explicitly shell-internal in this milestone; napplets never see them; CID is wrong abstraction | Hex or base64url string, internal only |
+| `whatwg-url` | Browsers ship the spec implementation as `URL` | `new URL(input)` |
+| `pica`, `browser-image-compression` | Wrap `createImageBitmap` / `OffscreenCanvas` with extra surface | Direct platform APIs |
+| `csp-report-handler` | Endpoint reporting is for production telemetry to a server | `securitypolicyviolation` event listener for dev-mode visibility |
+| Service Worker as a fetch interceptor for napplets | Service Workers are scoped to origin; napplets-as-iframes have a different security model; SW would violate the "no `allow-same-origin`" sandbox posture | `postMessage`-based `resource.bytes(url)` primitive |
+| `bypassCSP: true` in Playwright **for v0.28.0 suites** | That's the option that hides exactly what this milestone tests | Test under enforced CSP; assert via console / `securitypolicyviolation` / network observation |
 
 ## Stack Patterns by Variant
 
-**If the spec stays at MVP scope (get/subscribe/openSettings/registerSchema + values push):**
-- Use exactly the pattern above. No additional files beyond `types.ts`, `shim.ts`, `sdk.ts`, `index.ts`.
-- The vite-plugin change is ~30 lines + the new option field.
+**If the shell stays browser-resident (current case):**
+- Use `<img src=blob:svg>` for SVG rasterization. No `@resvg/*`.
+- Inject CSP via `<meta http-equiv>` in dev (Vite plugin) and via response header in production shell.
+- Use `crypto.subtle.digest` directly with size-capped buffers.
 
-**If the spec later adds partial-update semantics (`config.patch` style RPCs):**
-- Still no new runtime deps. Add message types to `types.ts`, handlers to `shim.ts`. Shell is still sole writer — any `config.patch` is just a shell-side operation dispatched by the UI.
+**If the shell ever moves off-DOM (future Worker-only or server-side variant):**
+- Add `@resvg/resvg-wasm@^2.6` for SVG rasterization in the *shell* repo (not in `@napplet/*`).
+- Streaming digest: revisit then; the [WinterTC55 proposal](https://github.com/WinterTC55/proposal-webcrypto-streams) may have shipped, or a `hash-wasm` add becomes justified by an explicit non-buffered workload.
 
-**If `$version` migration becomes a runtime concern for the shim:**
-- The decided answer is "shell-resolved" — shim never sees old values. No change needed. If that decision reverses later, consider a minimal migration helper inside `nub-config`, still zero-runtime-dep.
+**If multi-shell production deployment ever happens (deferred):**
+- Add a CSP report endpoint and `report-to` directive support. `csp-report-handler` becomes worth evaluating then. Out of scope for v0.28.0.
 
-**If author DX feedback demands richer schema utilities (e.g., schema → form preview for development):**
-- Ship that as a separate `@napplet/config-devtools` package outside this milestone. Do not pollute `@napplet/nub-config`.
+## Version Compatibility & Conflicts With Existing Stack
 
-## Version Compatibility
+**No conflicts.** Reviewed the existing dependency surface (`nostr-tools@^2.23.3`, `tsup@^8.5`, `turbo@^2.5`, `vite@^6.3`, `vitest@^4.1`, `typescript@^5.9.3`, `@types/json-schema@^7.0.15`, `json-schema-to-ts@^3.1.1` peer in `@napplet/nub`):
 
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| `@napplet/nub-config@0.2.0` | `@napplet/core@workspace:*` | Same monorepo-wide pin as every NUB. |
-| `json-schema-to-ts@3.1.1` | `typescript@>=4.7`, repo pin `5.9.3` is comfortably in range | Requires `verbatimModuleSyntax: true` + `import type` to avoid pulling runtime helpers. Repo `tsconfig.json` already sets this. |
-| `@types/json-schema@7.0.15` | Any TypeScript ≥4.0 | Last published Nov 2023. Stable — JSON Schema draft-07 types don't drift. |
-| `vite@>=5.0.0` peer (existing) | `vite@6.3.0` used in demos | Unchanged. Schema-tag injection is a pure build-phase addition inside `closeBundle()`. |
-| `nostr-tools@2.23.3` | `vite-plugin` dep (unchanged) | Config schema goes into `manifest.tags` before `finalizeEvent()`. Signing works identically to today; the new tag is just more bytes in the event payload. |
+- None of these dependencies execute network fetches at runtime in a way that strict CSP would break. `nostr-tools` is data-types and signing utilities (no `fetch` in the parts re-exported by `@napplet/vite-plugin`). The build-time tools (tsup, vite, vitest) run in Node, not under napplet CSP.
+- **Vite 6.3** — `transformIndexHtml` API stable. `html.cspNonce` exists if needed (we likely won't need it; napplet scripts come from a manifest, not Vite-injected `<script>` tags inside the napplet HTML).
+- **Vitest 4** — jsdom does not enforce CSP. Keep CSP behavioral tests in Playwright; reserve Vitest for unit tests of `CspBuilder` string output and the scheme dispatch table.
+- **Playwright** — `bypassCSP` exists ([TestOptions](https://playwright.dev/docs/api/class-testoptions)) but **must be left at default `false`** for v0.28.0 suites.
+- **`@napplet/core` zero-dep contract** — preserved. The new `resource` NUB types live in `@napplet/nub/resource` (which already only depends on `@napplet/core`).
+- **`sideEffects: false` on `@napplet/nub`** — preserved. New subpath exports are tree-shakable per the existing pattern.
+
+## Anything to REMOVE or Change
+
+**Nothing structural to remove.** Audit findings:
+
+- The shim does not currently fetch external resources directly — it's a postMessage shim. No existing code conflicts with strict CSP.
+- The `@napplet/vite-plugin` `nostr-tools` dependency is build-time only and unaffected.
+- The 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for `REMOVE-01..03` in a future milestone) need a corresponding `@napplet/nub-resource` re-export shim **only if** the project decides to keep the deprecation pattern consistent. **Recommendation: skip it** — `nub-resource` is brand-new, was never published as a separate package, has no existing consumers. The deprecation shims exist for backward compat; there's nothing to be backward-compat with. Surface `resource` exclusively via `@napplet/nub/resource`.
+
+One **inconsistency to flag** (not a removal, but worth noting in REQUIREMENTS): the `relay.publishEncrypted` precedent (v0.24.0) means the shell already has a "do crypto on behalf of napplet" pattern. The new `resource.bytes` should follow the same envelope/timeout/error conventions — no new infra needed, just consistency in the new NUB's message-shape design.
 
 ## Sources
 
-- [json-schema-to-ts on GitHub](https://github.com/ThomasAribart/json-schema-to-ts) — verified 3.1.1 is current; README confirms `FromSchema` is type-only and can be used as a dev-dependency. HIGH.
-- `npm view json-schema-to-ts version dependencies` (live registry) — confirms `@babel/runtime ^7.18.3` and `ts-algebra ^2.0.0` as direct runtime deps of the package itself. HIGH.
-- Package ESM entry inspection (`lib/esm/index.js`) — confirms three runtime exports (`asConst`, `wrapCompilerAsTypeGuard`, `wrapValidatorAsTypeGuard`) exist but `FromSchema` is type-only. HIGH.
-- `npm view @types/json-schema version` — 7.0.15 (current stable). HIGH.
-- `npm view ajv version dependencies` — 8.18.0; confirmed supports draft-04/06/07/2019-09/2020-12 but explicitly excluded from SDK scope per the locked decision that shell validates. HIGH.
-- [Ajv JSON schema validator docs](https://ajv.js.org/json-schema.html) — confirms draft-07 is the safe interoperable baseline. HIGH (for the draft-07 choice already locked in STATE.md).
-- Existing codebase, primary source:
-  - `packages/nubs/identity/` — closest structural precedent. HIGH.
-  - `packages/nubs/notify/` — similar RPC shape; same package.json boilerplate. HIGH.
-  - `packages/nubs/keys/src/shim.ts` — subscribe-live / push-update pattern for `config.values`. HIGH.
-  - `packages/vite-plugin/src/index.ts` — exact insertion point for `configSchema` tag is between the `x` tags and `requires` tags in the `manifest.tags` array construction (lines 145–152). HIGH.
-  - `packages/core/src/envelope.ts` — `NubDomain` union + `NUB_DOMAINS` array location. HIGH.
-  - `packages/core/src/types.ts` — `NappletGlobal` interface location for the new `config` namespace. HIGH.
-- Prior milestone research `.planning/research/STACK.md` (v0.20.0 Keys NUB) — established the "no-deps NUB" pattern and the rationale for keeping utility code inside NUB packages. HIGH.
+- **MDN: SecurityPolicyViolationEvent** — https://developer.mozilla.org/en-US/docs/Web/API/SecurityPolicyViolationEvent — HIGH confidence (W3C-tracking authoritative reference)
+- **MDN: Document securitypolicyviolation event** — https://developer.mozilla.org/en-US/docs/Web/API/Document/securitypolicyviolation_event — HIGH confidence
+- **MDN: SubtleCrypto.digest()** — https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest — HIGH confidence
+- **W3C webcrypto issue #73 (streaming digest)** — https://github.com/w3c/webcrypto/issues/73 — HIGH confidence; verified the streaming-digest gap
+- **WinterTC55 webcrypto-streams proposal** — https://github.com/WinterTC55/proposal-webcrypto-streams — HIGH confidence; verified proposal status
+- **Playwright TestOptions (bypassCSP)** — https://playwright.dev/docs/api/class-testoptions — HIGH confidence
+- **Vite issue #16749 (strict CSP in production)** — https://github.com/vitejs/vite/issues/16749 — MEDIUM (Vite team statements, evolving)
+- **Vite issue #11862 (strict CSP in dev)** — https://github.com/vitejs/vite/issues/11862 — MEDIUM
+- **vite-plugin-csp-guard** — https://www.npmjs.com/package/vite-plugin-csp-guard, https://vite-csp.tsotne.co.uk/ — MEDIUM (third-party plugin, evaluated and rejected with rationale)
+- **Coreoz/vite-plugin-content-security-policy** — https://github.com/Coreoz/vite-plugin-content-security-policy — MEDIUM (evaluated and rejected)
+- **vite-plugin-csp** — https://www.npmjs.com/package/vite-plugin-csp — MEDIUM (evaluated and rejected)
+- **resvg-js / @resvg/resvg-wasm** — https://github.com/thx/resvg-js, https://www.npmjs.com/package/@resvg/resvg-wasm — HIGH confidence; v2.6.2 verified via npm + Bundlephobia
+- **Bundlephobia: @resvg/resvg-wasm@2.6.2** — https://bundlephobia.com/package/@resvg/resvg-wasm — HIGH confidence on size (~560 KB)
+- **Chromium issue 41491434 (`securitypolicyviolation` cross-frame quirks)** — https://issues.chromium.org/issues/41491434 — MEDIUM (browser bug tracker; relevant caveat)
+- **content-security-policy.com quick reference** — https://content-security-policy.com/ — MEDIUM (community reference, cross-checked against MDN)
+- **OWASP CSP Cheat Sheet** — https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html — HIGH for general CSP guidance
+- **Existing repo source (verified by reading)**:
+  - `/home/sandwich/Develop/napplet/package.json` — root devDeps inventory
+  - `/home/sandwich/Develop/napplet/packages/vite-plugin/package.json` — vite-plugin dep surface (sole runtime dep: `nostr-tools`)
+  - `/home/sandwich/Develop/napplet/packages/core/package.json` — confirmed zero runtime deps
+  - `/home/sandwich/Develop/napplet/packages/nub/package.json` — confirmed subpath-export pattern; resource subdomain to follow
 
 ---
-*Stack research for: v0.25.0 NUB-CONFIG (spec + SDK + vite-plugin)*
-*Researched: 2026-04-17*
+*Stack research for: v0.28.0 Browser-Enforced Resource Isolation*
+*Researched: 2026-04-20*
+*Confidence: HIGH overall. Web platform APIs cited from MDN/W3C are normative. Library version pins (`@resvg/resvg-wasm@2.6.2`, third-party Vite CSP plugins) verified via npm; recommendations to NOT add them documented with rationale.*
