@@ -4,14 +4,14 @@ milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
 status: verifying
 stopped_at: Completed 129-01-PLAN.md (SDK-01..03). 10-NUB central SDK integration pattern locked. Workspace-wide pnpm -r type-check + pnpm -r build exit 0 across all 14 packages — DEF-125-01 stays closed. Node smoke against built @napplet/sdk dist confirms namespace + RESOURCE_DOMAIN + helpers + installer all surface correctly. Phase 129 ready for verification.
-last_updated: "2026-04-20T18:46:17.648Z"
+last_updated: "2026-04-20T18:50:12.576Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 10
   completed_phases: 5
   total_plans: 5
   completed_plans: 5
-  percent: 40
+  percent: 50
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 ## Current Position
 
-Phase: 129 (Central SDK Integration) — EXECUTING
-Plan: 1 of 1
+Phase: 130
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
