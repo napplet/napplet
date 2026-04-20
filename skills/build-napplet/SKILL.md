@@ -1,6 +1,6 @@
 ---
 name: build-napplet
-description: Use when writing a napplet (sandboxed Nostr iframe app) using @napplet/shim — covers Vite project setup, NIP-5A manifest plugin, subscribe/publish/query relay API, nappStorage, window.nostr NIP-07 proxy, inter-frame events, and service discovery
+description: Use when writing a napplet (sandboxed Nostr iframe app) using @napplet/shim — covers Vite project setup, NIP-5A manifest plugin, subscribe/publish/query relay API, scoped storage, inter-frame events, and the v0.28.0 resource NUB for sandboxed byte fetching (replaces direct fetch / <img src=externalUrl>, both of which the iframe CSP blocks)
 ---
 
 # Building a Napplet with @napplet/shim
@@ -197,6 +197,64 @@ if (await hasServiceVersion('audio', '1.0.0')) {
 
 `discoverServices()` results are session-cached — subsequent calls return the same array without a network round-trip. Cache is cleared on page reload.
 
+## Step 10 — Fetch external bytes (resource NUB, v0.28.0+)
+
+The iframe sandbox (no `allow-same-origin`) plus strict CSP (`connect-src 'none'`) means `fetch()`, `<img src="https://...">`, `XMLHttpRequest`, and `new WebSocket(...)` are all blocked by the browser. Any external bytes — avatars, blossom-served images, NIP-19 resource resolution — flow through the shell via the resource NUB.
+
+```ts
+import '@napplet/shim';
+
+// Fetch any URL the shell accepts. Returns a Blob.
+const blob: Blob = await window.napplet.resource.bytes('https://example.com/avatar.png');
+const objectUrl = URL.createObjectURL(blob);
+imgEl.src = objectUrl;
+// remember to URL.revokeObjectURL(objectUrl) when done
+
+// Or use the synchronous handle helper:
+const handle = window.napplet.resource.bytesAsObjectURL('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+imgEl.src = handle.url;            // populated once the underlying fetch resolves
+// later
+handle.revoke();
+```
+
+Four canonical schemes are supported:
+
+| Scheme | Example | Resolution |
+|--------|---------|------------|
+| `data:` | `data:image/png;base64,iVBORw0KGgo...` | Decoded in the napplet shim — zero shell round-trip |
+| `https:` | `https://example.com/avatar.png` | Shell-side network fetch under policy (private-IP block at DNS time, MIME byte-sniffing, size cap, timeout, rate limit, redirect cap) |
+| `blossom:sha256:<hex>` | `blossom:sha256:e3b0c44...` | Blossom hash → bytes; shell verifies hash before delivery |
+| `nostr:<bech32>` | `nostr:nprofile1...` | Single-hop NIP-19 resolution against the shell's relay pool |
+
+**Cancellation:** Pass an `AbortSignal` to cancel an in-flight fetch:
+
+```ts
+const ctrl = new AbortController();
+const promise = window.napplet.resource.bytes(url, { signal: ctrl.signal });
+ctrl.abort();   // sends resource.cancel to the shell; promise rejects with AbortError
+```
+
+**Errors:** The Promise rejects with an Error whose `code` is one of:
+`not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`.
+
+Always branch on `code`, never on the `error` string.
+
+**Capability detection:**
+
+```ts
+if (window.napplet.shell.supports('nub:resource')) {
+  // resource.bytes(url) is available
+}
+if (window.napplet.shell.supports('resource:scheme:blossom')) {
+  // blossom: scheme is available specifically
+}
+if (window.napplet.shell.supports('perm:strict-csp')) {
+  // shell enforces strict CSP — direct fetch / <img src=externalUrl> WILL be blocked
+}
+```
+
+SVG inputs are silently rasterized server-side to PNG/WebP — napplets never receive `image/svg+xml` bytes (the shell rasterizes in a sandboxed Worker with no network access). The `mime` returned to the napplet is shell-classified via byte-sniffing, never the upstream `Content-Type` header.
+
 ## Common pitfalls
 
 - Do not call `window.nostr` before `@napplet/shim` is imported — it is installed synchronously at module load, but all signer calls are async and require the AUTH handshake to complete first.
@@ -207,3 +265,5 @@ if (await hasServiceVersion('audio', '1.0.0')) {
 - `discoverServices()` results are session-cached. To refresh, the page must reload.
 - `window.napplet.ifc.emit()` does not return a value and does not confirm delivery. Use inter-frame `window.napplet.ifc.on()` subscriptions for acknowledgment patterns.
 - The `on()` callback receives `(payload: unknown, event: NostrEvent)` — always type-check `payload` before accessing properties.
+- **Do not call `fetch()`, `<img src="https://...">`, `<link href="https://...">`, `XMLHttpRequest`, or `new WebSocket(...)` from a napplet.** The iframe sandbox + strict CSP (`connect-src 'none'`, `img-src blob: data:`) block all of them at the browser level. Use `window.napplet.resource.bytes(url)` instead — it returns a `Blob` you can pass to `URL.createObjectURL()` for `<img src>` use.
+- **Do not use the upstream `Content-Type` for resource MIME decisions.** The shell byte-sniffs the response and delivers a classified `mime` field on the result; the upstream `Content-Type` header is attacker-controlled and never reaches the napplet.
