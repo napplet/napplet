@@ -43,7 +43,7 @@ For napplets with a NUB-CLASS-1 posture (no `connect` tags), residual meta-CSP i
 
 ### Why parser, not regex
 
-The residual-meta-CSP scan runs server-side against arbitrary napplet-author HTML. Regex-based scanners miss at least five real-world shapes: attribute reordering (`content=... http-equiv=...` order), case variations (`HTTP-EQUIV` vs `http-equiv`), single- vs double-quoted attribute values, HTML comments that mask a literal `<meta>` match in text, and `<![CDATA[...]]>` sections whose content looks like HTML but is not active. The build-time `assertMetaIsFirstHeadChild` regex shipped in `@napplet/vite-plugin`'s earlier releases was acceptable for the build-time path because the napplet author controls the HTML shape the regex sees; shell-side scanning of arbitrary incoming napplet HTML MUST NOT use regex and MUST use a real WHATWG-compliant HTML parser such as `parse5`, `htmlparser2`, or equivalent.
+The residual-meta-CSP scan runs server-side against arbitrary napplet-author HTML. Regex-based scanners miss at least five real-world shapes: attribute reordering (`content=... http-equiv=...` order), case variations (`HTTP-EQUIV` vs `http-equiv`), single- vs double-quoted attribute values, HTML comments that mask a literal `<meta>` match in text, and `<![CDATA[...]]>` sections whose content looks like HTML but is not active. Regex-based meta-CSP checks may be acceptable at build time, where the napplet author controls the HTML shape the regex sees; shell-side scanning of arbitrary incoming napplet HTML MUST NOT use regex and MUST use a real WHATWG-compliant HTML parser such as `parse5`, `htmlparser2`, or equivalent.
 
 ### Parser-based example
 
