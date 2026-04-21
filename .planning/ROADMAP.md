@@ -174,7 +174,11 @@ Plans:
 3. Both documents' audit checklists enumerate every MUST item as a bullet with a "tested" checkbox for deployer sign-off
 4. `grep -E '@napplet/' specs/SHELL-CONNECT-POLICY.md specs/SHELL-CLASS-POLICY.md` returns zero matches across both files (this repo is private SDK but files must remain citation-safe for the NUBs track)
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 140-01-PLAN.md — Author specs/SHELL-CONNECT-POLICY.md (POLICY-01..10)
+- [ ] 140-02-PLAN.md — Author specs/SHELL-CLASS-POLICY.md (POLICY-11..16)
 
 **UI hint**: yes
 
@@ -225,7 +229,7 @@ Plans:
 | 137. `@napplet/nub/connect` Subpath Scaffold | 3/3 | Complete    | 2026-04-21 |
 | 138. `@napplet/vite-plugin` Surgery | 3/3 | Complete    | 2026-04-21 |
 | 139. Central Shim + SDK Integration | 1/1 | Complete    | 2026-04-21 |
-| 140. `specs/SHELL-CONNECT-POLICY.md` | 0/? | Not started | - |
+| 140. Shell-Deployer Policy Docs | 0/2 | Not started | - |
 | 141. Documentation Sweep | 0/? | Not started | - |
 | 142. Verification & Milestone Close | 0/? | Not started | - |
 
