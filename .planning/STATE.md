@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
-status: Milestone ready for audit
-stopped_at: Completed 142-03-PLAN.md (Phase 142 TERMINAL-COMPLETE)
-last_updated: "2026-04-21T19:21:09.219Z"
+status: Shipped — planning next milestone
+stopped_at: Completed quick task 260421-u87 (cross-repo PRs #16-#19 opened in napplet/nubs for NUB-CLASS/CLASS-1/CLASS-2/CONNECT)
+last_updated: "2026-04-21T19:58:00.000Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
@@ -93,7 +93,13 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 - CARRIED: npm publish blocked on human npm auth (PUB-04 from prior milestones)
 - CARRIED: NIP number conflict with Scrolls PR#2281 (RES-01 from v0.12.0 era)
-- CARRIED: Manual cross-repo PR opening — v0.29.0 adds a NUB-CONNECT draft PR to the existing pattern; human creates branch, pushes, opens PR (Phase 135)
+- RESOLVED 2026-04-21: v0.29.0 cross-repo PRs opened in `napplet/nubs` — NUB-CLASS (#16), NUB-CLASS-1 (#17), NUB-CLASS-2 (#18), NUB-CONNECT (#19)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260421-u87 | Create cross-repo PRs in napplet/nubs from the 4 v0.29.0 drafts | 2026-04-21 | c28d8e4 | [260421-u87-create-cross-repo-prs-in-napplet-nubs-fr](./quick/260421-u87-create-cross-repo-prs-in-napplet-nubs-fr/) |
 
 ## Session Continuity
 
