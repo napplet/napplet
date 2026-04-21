@@ -16,6 +16,7 @@ import type { JSONSchema7 } from 'json-schema';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { normalizeConnectOrigin } from '@napplet/nub/connect/types';
 
 /** Configuration options for the NIP-5A manifest plugin. */
 export interface Nip5aManifestOptions {
