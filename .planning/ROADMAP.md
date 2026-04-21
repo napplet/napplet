@@ -30,7 +30,7 @@
 - ✅ **v0.26.0 Better Packages** — Phases 117-121 (shipped 2026-04-19) — [Archive](milestones/v0.26.0-ROADMAP.md)
 - ✅ **v0.27.0 IFC Terminology Lock-In** — Phases 122-124 (shipped 2026-04-19) — [Archive](milestones/v0.27.0-ROADMAP.md)
 - ✅ **v0.28.0 Browser-Enforced Resource Isolation** — Phases 125-134 (shipped 2026-04-21) — [Archive](milestones/v0.28.0-ROADMAP.md)
-- ⏳ **v0.29.0 NUB-CONNECT + Shell as CSP Authority** — Phases 135-142 (active)
+- ✅ **v0.29.0 NUB-CONNECT + Shell as CSP Authority** — Phases 135-142 (shipped 2026-04-21) — [Archive](milestones/v0.29.0-ROADMAP.md)
 
 ## Phases
 
@@ -40,7 +40,7 @@
 
 Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0.8.0 and is not part of the v0.9.0 roadmap.
 
-### v0.29.0 NUB-CONNECT + Shell as CSP Authority (Phases 135-142) — ACTIVE
+### v0.29.0 NUB-CONNECT + Shell as CSP Authority (Phases 135-142) — SHIPPED 2026-04-21
 
 - [ ] **Phase 135: Cross-Repo Spec Work** - Draft NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2 in napplet/nubs public repo; NUB-CLASS establishes the class sub-track with template+guidance; NUB-CONNECT cites NUB-CLASS-2 by name; amend in-repo NIP-5D to drop NUB-flavored prose and add a generic class-delegation paragraph
 - [x] **Phase 136: Core Type Surface** - Add `'connect'` AND `'class'` to `NubDomain` + `NUB_DOMAINS`; add `connect` + optional `class?: number` to `NappletGlobal`; deprecate `perm:strict-csp` in JSDoc
@@ -49,7 +49,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 139: Central Shim + SDK Integration** - Wire BOTH `installConnectShim` and `installClassShim` into `@napplet/shim`; mount `window.napplet.connect` (defaults to `{granted: false, origins: []}`) and `window.napplet.class` (defaults to `undefined`); re-export both SDK surfaces
 - [ ] **Phase 140: Shell-Deployer Policy Docs** - Author `specs/SHELL-CONNECT-POLICY.md` (per-serving-mode pitfalls, residual-meta-CSP scan, consent UX) AND `specs/SHELL-CLASS-POLICY.md` (class-determination authority, wire timing, cross-NUB invariants, revocation UX)
 - [ ] **Phase 141: Documentation Sweep** - Update root README + 4 package READMEs + skills/build-napplet/SKILL.md for NUB-CLASS + NUB-CONNECT, class-track concept, and NUB-RESOURCE-first guidance
-- [ ] **Phase 142: Verification & Milestone Close** - `pnpm -r build` + `type-check` green across 14 packages; tree-shake + integration + cross-repo-zero-grep gates; class wire + graceful-degradation + cross-NUB-invariant tests; changeset authored; downstream demo tracking confirmed
+- [x] **Phase 142: Verification & Milestone Close** - `pnpm -r build` + `type-check` green across 14 packages; tree-shake + integration + cross-repo-zero-grep gates; class wire + graceful-degradation + cross-NUB-invariant tests; changeset authored; downstream demo tracking confirmed (completed 2026-04-21)
 
 ## Phase Details
 
@@ -223,9 +223,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [x] 142-01-PLAN.md — Terminal gates: build/type-check/zero-grep/changeset/doc-check (VER-01, VER-02, VER-08, VER-09, VER-10)
-- [x] 142-02-PLAN.md — In-repo vitest tests: tree-shake harness + aggregateHash + class wire + graceful degradation + cross-NUB invariant (VER-03, VER-06, VER-11, VER-12, VER-13)
-- [ ] 142-03-PLAN.md — Documented Playwright fixtures (VER-04, VER-05, VER-07) + milestone-close docs
+- [x] 142-01-PLAN.md — Terminal gates: build/type-check/zero-grep/changeset/doc-check (VER-01, VER-02, VER-08, VER-09, VER-10) ✅ 2026-04-21
+- [x] 142-02-PLAN.md — In-repo vitest tests: tree-shake harness + aggregateHash + class wire + graceful degradation + cross-NUB invariant (VER-03, VER-06, VER-11, VER-12, VER-13) ✅ 2026-04-21
+- [x] 142-03-PLAN.md — Documented Playwright fixtures (VER-04, VER-05, VER-07) + milestone-close docs ✅ 2026-04-21
 
 ---
 
@@ -240,7 +240,7 @@ Plans:
 | 139. Central Shim + SDK Integration | 1/1 | Complete    | 2026-04-21 |
 | 140. Shell-Deployer Policy Docs | 2/2 | Complete    | 2026-04-21 |
 | 141. Documentation Sweep | 2/2 | Complete    | 2026-04-21 |
-| 142. Verification & Milestone Close | 2/3 | In Progress|  |
+| 142. Verification & Milestone Close | 3/3 | Complete    | 2026-04-21 |
 
 ---
 
