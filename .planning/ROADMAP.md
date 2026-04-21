@@ -69,7 +69,13 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 5. `grep -r -E '@napplet/|kehto|hyprgate' <napplet/nubs draft branch>` returns zero matches across all four drafts.
 6. `specs/NIP-5D.md` no longer names any specific NUB or class: the "Browser-Enforced Resource Isolation" subsection is removed or generalized; the `perm:strict-csp` example is removed; NIP-5D stays transport-only with a single generic paragraph delegating class definitions to the NUBs track without naming them.
 
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 135-01-PLAN.md — NUB-CLASS track (NUB-CLASS.md + NUB-CLASS-1.md + NUB-CLASS-2.md)
+- [ ] 135-02-PLAN.md — NIP-5D.md amendment (NUB-neutral transport-only)
+- [ ] 135-03-PLAN.md — NUB-CONNECT.md (cites NUB-CLASS-2 by file name)
+- [ ] 135-04-PLAN.md — Zero-grep hygiene audit + phase commit
 
 ### Phase 136: Core Type Surface
 
@@ -198,7 +204,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. Cross-Repo Spec Work | 0/? | Not started | - |
+| 135. Cross-Repo Spec Work | 0/4 | Planned (4 plans, 3 waves) | - |
 | 136. Core Type Surface | 0/? | Not started | - |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 0/? | Not started | - |
 | 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
