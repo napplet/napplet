@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: executing
-stopped_at: Completed 138-01-PLAN.md
-last_updated: "2026-04-21T14:31:43.685Z"
+stopped_at: Completed 138-02-PLAN.md
+last_updated: "2026-04-21T14:44:05.197Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 ## Current Position
 
 Phase: 138 (vite-plugin Surgery) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-21
 
@@ -91,6 +91,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T14:31:43.681Z
-Stopped at: Completed 138-01-PLAN.md
+Last session: 2026-04-21T14:44:05.193Z
+Stopped at: Completed 138-02-PLAN.md
 Resume: Phase 138 Plan 02 (additive half — connect option, `normalizeConnectOrigin` validation, cleartext warning, inline-script diagnostic, `SYNTHETIC_XTAG_PATHS` extraction, `connect:origins` aggregateHash fold, `['connect', origin]` manifest tags)

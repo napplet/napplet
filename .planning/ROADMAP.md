@@ -138,7 +138,7 @@ Plans:
 
 Plans:
 - [x] 138-01-PLAN.md — Remove strictCsp machinery + delete csp.ts + @deprecated warn-once shim (VITE-01, VITE-02)
-- [ ] 138-02-PLAN.md — Add connect option + normalizer + aggregateHash fold + SYNTHETIC_XTAG_PATHS + manifest tags + inline-script fail-loud + cleartext warn + dev-mode connect-requires meta (VITE-03..10)
+- [x] 138-02-PLAN.md — Add connect option + normalizer + aggregateHash fold + SYNTHETIC_XTAG_PATHS + manifest tags + inline-script fail-loud + cleartext warn + dev-mode connect-requires meta (VITE-03..10)
 - [ ] 138-03-PLAN.md — Module-load conformance-fixture self-check + final end-to-end sanity sweep
 
 ### Phase 139: Central Shim + SDK Integration
@@ -220,7 +220,7 @@ Plans:
 | 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
 | 136. Core Type Surface | 1/1 | Complete    | 2026-04-21 |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 3/3 | Complete    | 2026-04-21 |
-| 138. `@napplet/vite-plugin` Surgery | 1/3 | In Progress|  |
+| 138. `@napplet/vite-plugin` Surgery | 2/3 | In Progress|  |
 | 139. Central Shim + SDK Integration | 0/? | Not started | - |
 | 140. `specs/SHELL-CONNECT-POLICY.md` | 0/? | Not started | - |
 | 141. Documentation Sweep | 0/? | Not started | - |
