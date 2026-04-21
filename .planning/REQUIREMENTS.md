@@ -71,16 +71,16 @@
 
 ### Shell-Deployer Policy Documents (`specs/SHELL-CONNECT-POLICY.md`, `specs/SHELL-CLASS-POLICY.md`)
 
-- [ ] **POLICY-01**: Author `specs/SHELL-CONNECT-POLICY.md` as shell-deployer checklist parallel to `specs/SHELL-RESOURCE-POLICY.md`; non-normative companion to NUB-CONNECT spec
-- [ ] **POLICY-02**: Document HTTP-responder precondition — shell MUST own the response headers for napplet HTML; list acceptable delivery mechanisms (direct serving, HTTP proxy, `blob:` URL with HTML rewrite, `srcdoc`), with per-mode pitfalls (blob has no HTTP headers so CSP meta-as-first-head-child returns; srcdoc `about:srcdoc` origin resolves `'self'` differently; proxy must preserve/rewrite CSP; direct-serve watch CDN caching)
-- [ ] **POLICY-03**: Document residual meta-CSP scan requirement — shells MUST refuse to serve Class-2 napplets (manifest with `connect` tags) that contain `<meta http-equiv="Content-Security-Policy">`; include parser-based example (not regex); 5-fixture conformance bundle covering attribute-order variations, CDATA/comments, quoted variants
-- [ ] **POLICY-04**: Document mixed-content reality check — `http:` origins from HTTPS shell silently fail except localhost/127.0.0.1 secure-context exceptions
-- [ ] **POLICY-05**: Document cleartext-scheme policy — shells MAY refuse cleartext entirely (advertise `shell.supports('connect:scheme:http') === false`); consent UI MUST visibly warn when granting cleartext origins
-- [ ] **POLICY-06**: Document grant-persistence composite-key requirement — grants keyed on exact `(dTag, aggregateHash)`; napplet rebuild with changed `connect` tags produces new aggregateHash (via `connect:origins` fold) and auto-invalidates prior grant
-- [ ] **POLICY-07**: Document revocation UI requirement — shells MUST expose a user-facing revocation affordance; revoked grants mark state as DENIED (not deleted) so shell retains historical knowledge
-- [ ] **POLICY-08**: Document consent-prompt language requirement — MUST capture that grant allows send AND receive with the origin, and that shell has zero visibility into post-grant traffic ("this napplet can talk with foo.com however it wants")
-- [ ] **POLICY-09**: Document explicit N/A items — no private-IP block (browser matches URL literal not resolved IP), no MIME sniffing, no SVG rasterization caps, no redirect chain limits (all are NUB-RESOURCE concerns; NUB-CONNECT has no shell-visibility post-grant)
-- [ ] **POLICY-10**: Zero-grep hygiene on SHELL-CONNECT-POLICY.md — no `@napplet/*` references (this file is in the private SDK repo but must remain citation-safe for the NUBs track)
+- [x] **POLICY-01**: Author `specs/SHELL-CONNECT-POLICY.md` as shell-deployer checklist parallel to `specs/SHELL-RESOURCE-POLICY.md`; non-normative companion to NUB-CONNECT spec
+- [x] **POLICY-02**: Document HTTP-responder precondition — shell MUST own the response headers for napplet HTML; list acceptable delivery mechanisms (direct serving, HTTP proxy, `blob:` URL with HTML rewrite, `srcdoc`), with per-mode pitfalls (blob has no HTTP headers so CSP meta-as-first-head-child returns; srcdoc `about:srcdoc` origin resolves `'self'` differently; proxy must preserve/rewrite CSP; direct-serve watch CDN caching)
+- [x] **POLICY-03**: Document residual meta-CSP scan requirement — shells MUST refuse to serve Class-2 napplets (manifest with `connect` tags) that contain `<meta http-equiv="Content-Security-Policy">`; include parser-based example (not regex); 5-fixture conformance bundle covering attribute-order variations, CDATA/comments, quoted variants
+- [x] **POLICY-04**: Document mixed-content reality check — `http:` origins from HTTPS shell silently fail except localhost/127.0.0.1 secure-context exceptions
+- [x] **POLICY-05**: Document cleartext-scheme policy — shells MAY refuse cleartext entirely (advertise `shell.supports('connect:scheme:http') === false`); consent UI MUST visibly warn when granting cleartext origins
+- [x] **POLICY-06**: Document grant-persistence composite-key requirement — grants keyed on exact `(dTag, aggregateHash)`; napplet rebuild with changed `connect` tags produces new aggregateHash (via `connect:origins` fold) and auto-invalidates prior grant
+- [x] **POLICY-07**: Document revocation UI requirement — shells MUST expose a user-facing revocation affordance; revoked grants mark state as DENIED (not deleted) so shell retains historical knowledge
+- [x] **POLICY-08**: Document consent-prompt language requirement — MUST capture that grant allows send AND receive with the origin, and that shell has zero visibility into post-grant traffic ("this napplet can talk with foo.com however it wants")
+- [x] **POLICY-09**: Document explicit N/A items — no private-IP block (browser matches URL literal not resolved IP), no MIME sniffing, no SVG rasterization caps, no redirect chain limits (all are NUB-RESOURCE concerns; NUB-CONNECT has no shell-visibility post-grant)
+- [x] **POLICY-10**: Zero-grep hygiene on SHELL-CONNECT-POLICY.md — no `@napplet/*` references (this file is in the private SDK repo but must remain citation-safe for the NUBs track)
 - [ ] **POLICY-11**: Author `specs/SHELL-CLASS-POLICY.md` as shell-deployer checklist parallel to `specs/SHELL-CONNECT-POLICY.md`; non-normative companion to NUB-CLASS spec
 - [ ] **POLICY-12**: Document class-determination authority — shell is the sole authority on what class a napplet is assigned; class is determined by which class-contributing NUBs are declared in the manifest combined with any user-consent outcomes; shell MUST send `class.assigned` wire at iframe ready, with at-most-one terminal envelope per napplet lifecycle (dynamic re-classification out of scope for v0.29.0)
 - [ ] **POLICY-13**: Document the wire timing — `class.assigned` MUST be sent AFTER the iframe signals readiness (shim bootstrap complete) and BEFORE the napplet's own code can meaningfully branch on class; recommend coupling to the shim's ready signal
@@ -197,16 +197,16 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | SHIM-04 | Phase 139 | Complete |
 | SDK-01 | Phase 139 | Complete |
 | SDK-02 | Phase 139 | Complete |
-| POLICY-01 | Phase 140 | Pending |
-| POLICY-02 | Phase 140 | Pending |
-| POLICY-03 | Phase 140 | Pending |
-| POLICY-04 | Phase 140 | Pending |
-| POLICY-05 | Phase 140 | Pending |
-| POLICY-06 | Phase 140 | Pending |
-| POLICY-07 | Phase 140 | Pending |
-| POLICY-08 | Phase 140 | Pending |
-| POLICY-09 | Phase 140 | Pending |
-| POLICY-10 | Phase 140 | Pending |
+| POLICY-01 | Phase 140 | Complete |
+| POLICY-02 | Phase 140 | Complete |
+| POLICY-03 | Phase 140 | Complete |
+| POLICY-04 | Phase 140 | Complete |
+| POLICY-05 | Phase 140 | Complete |
+| POLICY-06 | Phase 140 | Complete |
+| POLICY-07 | Phase 140 | Complete |
+| POLICY-08 | Phase 140 | Complete |
+| POLICY-09 | Phase 140 | Complete |
+| POLICY-10 | Phase 140 | Complete |
 | DOC-01 | Phase 141 | Pending |
 | DOC-02 | Phase 141 | Pending |
 | DOC-03 | Phase 141 | Pending |

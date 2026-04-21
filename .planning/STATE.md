@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
-status: verifying
-stopped_at: Completed 139-01-PLAN.md (Phase 139 COMPLETE — TS2741 carry closed)
-last_updated: "2026-04-21T17:14:50.028Z"
-last_activity: 2026-04-21
+status: executing
+stopped_at: Completed 140-01-PLAN.md (SHELL-CONNECT-POLICY.md authored, 6d9af8b)
+last_updated: "2026-04-21T17:30:06.181Z"
+last_activity: 2026-04-21 -- Phase 140 execution started
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 14
+  completed_plans: 13
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 139 — Central Shim + SDK Integration
+**Current focus:** Phase 140 — Shell-Deployer Policy Docs
 
 ## Current Position
 
-Phase: 140
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-21
+Phase: 140 (Shell-Deployer Policy Docs) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 140
+Last activity: 2026-04-21 -- Phase 140 execution started
 
 ## Phase Map (v0.29.0)
 
@@ -94,6 +94,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T17:10:17.317Z
-Stopped at: Completed 139-01-PLAN.md (Phase 139 COMPLETE — TS2741 carry closed)
+Last session: 2026-04-21T17:30:06.177Z
+Stopped at: Completed 140-01-PLAN.md (SHELL-CONNECT-POLICY.md authored, 6d9af8b)
 Resume: Phase 139 TERMINAL-COMPLETE — `window.napplet.connect` + `window.napplet.class` mounted; @napplet/sdk re-exports parallel surfaces; workspace-wide `pnpm -r type-check` + `pnpm -r build` both green across all 14 packages. Ready for orchestrator verify_phase_goal pass. Next planned phase: 140 (Shell-Deployer Policy Docs — author `specs/SHELL-CONNECT-POLICY.md` + `specs/SHELL-CLASS-POLICY.md` as shell-deployer checklists, can now reference the live SDK surface).
