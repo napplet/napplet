@@ -45,7 +45,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [ ] **Phase 135: Cross-Repo Spec Work** - Draft NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2 in napplet/nubs public repo; NUB-CLASS establishes the class sub-track with template+guidance; NUB-CONNECT cites NUB-CLASS-2 by name; amend in-repo NIP-5D to drop NUB-flavored prose and add a generic class-delegation paragraph
 - [x] **Phase 136: Core Type Surface** - Add `'connect'` AND `'class'` to `NubDomain` + `NUB_DOMAINS`; add `connect` + optional `class?: number` to `NappletGlobal`; deprecate `perm:strict-csp` in JSDoc
 - [ ] **Phase 137: `@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffolds** - Create 4-file subpath for each (`types`/`shim`/`sdk`/`index`); connect ships shared `normalizeConnectOrigin()`; class ships `ClassAssignedMessage` wire type + `installClassShim` dispatcher handler; add 8 new subpath exports; prove tree-shake contract for both
-- [ ] **Phase 138: `@napplet/vite-plugin` Surgery** - Drop production strictCsp machinery; add `connect?: string[]` option with normalizer, aggregateHash fold, manifest tag emission; add fail-loud inline-script diagnostic. (No vite-plugin changes for NUB-CLASS — class is shell-determined at runtime, not build-declared.)
+- [x] **Phase 138: `@napplet/vite-plugin` Surgery** - Drop production strictCsp machinery; add `connect?: string[]` option with normalizer, aggregateHash fold, manifest tag emission; add fail-loud inline-script diagnostic. (No vite-plugin changes for NUB-CLASS — class is shell-determined at runtime, not build-declared.)
 - [ ] **Phase 139: Central Shim + SDK Integration** - Wire BOTH `installConnectShim` and `installClassShim` into `@napplet/shim`; mount `window.napplet.connect` (defaults to `{granted: false, origins: []}`) and `window.napplet.class` (defaults to `undefined`); re-export both SDK surfaces
 - [ ] **Phase 140: Shell-Deployer Policy Docs** - Author `specs/SHELL-CONNECT-POLICY.md` (per-serving-mode pitfalls, residual-meta-CSP scan, consent UX) AND `specs/SHELL-CLASS-POLICY.md` (class-determination authority, wire timing, cross-NUB invariants, revocation UX)
 - [ ] **Phase 141: Documentation Sweep** - Update root README + 4 package READMEs + skills/build-napplet/SKILL.md for NUB-CLASS + NUB-CONNECT, class-track concept, and NUB-RESOURCE-first guidance
@@ -139,7 +139,7 @@ Plans:
 Plans:
 - [x] 138-01-PLAN.md — Remove strictCsp machinery + delete csp.ts + @deprecated warn-once shim (VITE-01, VITE-02)
 - [x] 138-02-PLAN.md — Add connect option + normalizer + aggregateHash fold + SYNTHETIC_XTAG_PATHS + manifest tags + inline-script fail-loud + cleartext warn + dev-mode connect-requires meta (VITE-03..10)
-- [ ] 138-03-PLAN.md — Module-load conformance-fixture self-check + final end-to-end sanity sweep
+- [x] 138-03-PLAN.md — Module-load conformance-fixture self-check + final end-to-end sanity sweep
 
 ### Phase 139: Central Shim + SDK Integration
 
@@ -220,7 +220,7 @@ Plans:
 | 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
 | 136. Core Type Surface | 1/1 | Complete    | 2026-04-21 |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 3/3 | Complete    | 2026-04-21 |
-| 138. `@napplet/vite-plugin` Surgery | 2/3 | In Progress|  |
+| 138. `@napplet/vite-plugin` Surgery | 3/3 | Complete   | 2026-04-21 |
 | 139. Central Shim + SDK Integration | 0/? | Not started | - |
 | 140. `specs/SHELL-CONNECT-POLICY.md` | 0/? | Not started | - |
 | 141. Documentation Sweep | 0/? | Not started | - |
