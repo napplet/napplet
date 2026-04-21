@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: verifying
 stopped_at: Completed 136-01-PLAN.md (Phase 136 — Core Type Surface; NubDomain 12 entries; NappletGlobal.connect + class? added)
-last_updated: "2026-04-21T13:22:24.436Z"
+last_updated: "2026-04-21T13:26:50.044Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 136 (Core Type Surface) — COMPLETE (pending phase-level verification)
-Plan: 1 of 1 complete
+Phase: 137
+Plan: Not started
 Status: Phase complete — ready for verification; Phase 137 unblocked
-Last activity: 2026-04-21 — Phase 136 executed (CORE-01..05 satisfied; NubDomain 12 entries; NappletGlobal.connect required + class? optional; perm:strict-csp JSDoc-deprecated)
+Last activity: 2026-04-21
 
 ## Phase Map (v0.29.0)
 
