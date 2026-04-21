@@ -22,11 +22,11 @@
 
 ### Core Type Surface (`packages/core/`)
 
-- [ ] **CORE-01**: Add `'connect'` to `NubDomain` union in `envelope.ts` and to `NUB_DOMAINS` array
-- [ ] **CORE-02**: Add `connect: NappletConnect` field to `NappletGlobal` interface in `types.ts`, mirroring the `resource:` block pattern
-- [ ] **CORE-03**: Mark `perm:strict-csp` as `@deprecated` in JSDoc on `NamespacedCapability` type; document supersession by `nub:connect` + `nub:class`
-- [ ] **CORE-04**: Add `'class'` to `NubDomain` union in `envelope.ts` and to `NUB_DOMAINS` array (12 domains total with connect + class)
-- [ ] **CORE-05**: Add `class?: number` field to `NappletGlobal` interface in `types.ts` — typed as optional because shells may not implement `nub:class`; napplet reads `undefined` when shell doesn't implement the NUB or before `class.assigned` wire arrives
+- [x] **CORE-01**: Add `'connect'` to `NubDomain` union in `envelope.ts` and to `NUB_DOMAINS` array
+- [x] **CORE-02**: Add `connect: NappletConnect` field to `NappletGlobal` interface in `types.ts`, mirroring the `resource:` block pattern
+- [x] **CORE-03**: Mark `perm:strict-csp` as `@deprecated` in JSDoc on `NamespacedCapability` type; document supersession by `nub:connect` + `nub:class`
+- [x] **CORE-04**: Add `'class'` to `NubDomain` union in `envelope.ts` and to `NUB_DOMAINS` array (12 domains total with connect + class)
+- [x] **CORE-05**: Add `class?: number` field to `NappletGlobal` interface in `types.ts` — typed as optional because shells may not implement `nub:class`; napplet reads `undefined` when shell doesn't implement the NUB or before `class.assigned` wire arrives
 
 ### `@napplet/nub/connect` Subpath (`packages/nub/src/connect/`)
 
@@ -169,9 +169,11 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | SPEC-05 | Phase 135 | Complete |
 | NIP5D-01 | Phase 135 | ✅ Complete |
 | NIP5D-02 | Phase 135 | ✅ Complete |
-| CORE-01 | Phase 136 | Pending |
-| CORE-02 | Phase 136 | Pending |
-| CORE-03 | Phase 136 | Pending |
+| CORE-01 | Phase 136 | Complete |
+| CORE-02 | Phase 136 | Complete |
+| CORE-03 | Phase 136 | Complete |
+| CORE-04 | Phase 136 | Complete |
+| CORE-05 | Phase 136 | Complete |
 | NUB-01 | Phase 137 | Pending |
 | NUB-02 | Phase 137 | Pending |
 | NUB-03 | Phase 137 | Pending |

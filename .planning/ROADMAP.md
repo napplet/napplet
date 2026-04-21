@@ -43,7 +43,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 ### v0.29.0 NUB-CONNECT + Shell as CSP Authority (Phases 135-142) — ACTIVE
 
 - [ ] **Phase 135: Cross-Repo Spec Work** - Draft NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2 in napplet/nubs public repo; NUB-CLASS establishes the class sub-track with template+guidance; NUB-CONNECT cites NUB-CLASS-2 by name; amend in-repo NIP-5D to drop NUB-flavored prose and add a generic class-delegation paragraph
-- [ ] **Phase 136: Core Type Surface** - Add `'connect'` AND `'class'` to `NubDomain` + `NUB_DOMAINS`; add `connect` + optional `class?: number` to `NappletGlobal`; deprecate `perm:strict-csp` in JSDoc
+- [x] **Phase 136: Core Type Surface** - Add `'connect'` AND `'class'` to `NubDomain` + `NUB_DOMAINS`; add `connect` + optional `class?: number` to `NappletGlobal`; deprecate `perm:strict-csp` in JSDoc
 - [ ] **Phase 137: `@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffolds** - Create 4-file subpath for each (`types`/`shim`/`sdk`/`index`); connect ships shared `normalizeConnectOrigin()`; class ships `ClassAssignedMessage` wire type + `installClassShim` dispatcher handler; add 8 new subpath exports; prove tree-shake contract for both
 - [ ] **Phase 138: `@napplet/vite-plugin` Surgery** - Drop production strictCsp machinery; add `connect?: string[]` option with normalizer, aggregateHash fold, manifest tag emission; add fail-loud inline-script diagnostic. (No vite-plugin changes for NUB-CLASS — class is shell-determined at runtime, not build-declared.)
 - [ ] **Phase 139: Central Shim + SDK Integration** - Wire BOTH `installConnectShim` and `installClassShim` into `@napplet/shim`; mount `window.napplet.connect` (defaults to `{granted: false, origins: []}`) and `window.napplet.class` (defaults to `undefined`); re-export both SDK surfaces
@@ -94,7 +94,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 136-01-PLAN.md — Core type surface: add 'connect' + 'class' to NubDomain/NUB_DOMAINS, add `connect` namespace + `class?: number` to NappletGlobal, @deprecated JSDoc on perm:strict-csp
+- [x] 136-01-PLAN.md — Core type surface: add 'connect' + 'class' to NubDomain/NUB_DOMAINS, add `connect` namespace + `class?: number` to NappletGlobal, @deprecated JSDoc on perm:strict-csp
 
 ### Phase 137: `@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffolds
 
@@ -208,7 +208,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
-| 136. Core Type Surface | 0/1 | Not started | - |
+| 136. Core Type Surface | 1/1 | Complete   | 2026-04-21 |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 0/? | Not started | - |
 | 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
 | 139. Central Shim + SDK Integration | 0/? | Not started | - |
