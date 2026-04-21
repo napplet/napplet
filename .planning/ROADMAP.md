@@ -461,7 +461,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   5. A relay event with a `resources` field is ignored by the relay shim unless the shell has explicitly opted in (sidecar default OFF) — verified by a test that constructs an opt-out shell and asserts no cache hydration.
   6. Cross-repo zero-grep sweep across all 4 `napplet/nubs` PR bodies, commit messages, and spec content returns zero `@napplet/*` private references.
   7. A consumer that imports only `@napplet/nub/relay/types` produces a tree-shaken bundle with zero bytes from `@napplet/nub/resource` (proven by bundle inspection, matching the v0.26.0 39-byte tree-shake precedent).
-**Plans**: TBD
+**Plans**: 1
+- [ ] 134-01-PLAN.md — Run all 7 VER gates (VER-01..07), fix NUB-RESOURCE.md code:→error: drift, write VERIFICATION.md, flip STATE/PROJECT to milestone-audit-ready
 
 ## Progress
 
@@ -479,4 +480,4 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 131. NIP-5D In-Repo Spec Amendment | 1/1 | Complete    | 2026-04-20 |
 | 132. Cross-Repo Nubs PRs | 1/1 | Complete    | 2026-04-20 |
 | 133. Documentation + Demo Coordination | 1/1 | Complete    | 2026-04-20 |
-| 134. Verification & Milestone Close | 0/0 | Not started | - |
+| 134. Verification & Milestone Close | 0/1 | Pending     | - |
