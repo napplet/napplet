@@ -32,6 +32,16 @@ Three moving parts, and nothing else:
 
 No wire protocol, no postMessage traffic, no negotiation. The manifest is the napplet's request; the CSP header is the shell's answer.
 
+## Napplet Classes
+
+Two classes of napplets exist under NUB-CONNECT. The classes describe the *posture* a napplet takes, not the CSP-emission mechanism — both classes get their CSP from the shell at runtime, only the effective `connect-src` differs.
+
+**Class 1 — Static-CSP napplets.** No `connect` tags in the manifest. No consent prompt, no user-facing friction. The shell emits the baseline CSP with `connect-src 'none'`. `window.napplet.connect.granted === false`, `origins === []`. This is the default posture — if a napplet doesn't declare network needs, it gets no network, exactly as today's strict-CSP environment. Fully compatible with NUB-RESOURCE for shell-mediated byte fetches.
+
+**Class 2 — Network-access napplets.** One or more `connect` tags in the manifest. Shell prompts the user the first time a given `(dTag, aggregateHash)` is loaded, persists the decision, and emits a CSP whose `connect-src` reflects the grant: approved → the declared origins verbatim; denied → `'none'`. `window.napplet.connect.granted` reflects the grant state.
+
+The class is determined entirely by whether the napplet's manifest declares `connect` tags — there is no separate opt-in flag. A napplet moves between classes by rebuilding with a different tag set (which changes the aggregateHash).
+
 ## Responsibility Split
 
 Under NUB-CONNECT, CSP emission is **entirely runtime, entirely shell-side** — for every napplet, not just network-access ones.
@@ -109,10 +119,10 @@ On every napplet iframe load, the shell performs the following sequence before r
 2. **Validate aggregateHash.** (existing v0.28.0 path).
 3. **Parse `connect` tags.** Malformed tags → refuse load with diagnostic.
 4. **Look up grant state** keyed on `(dTag, aggregateHash)`:
-   - **No `connect` tags present** → emit the baseline CSP (below) with `connect-src 'none'`, proceed to load, set `granted = false, origins = []`.
-   - **Grant record is APPROVED** → emit CSP with `connect-src` listing granted origins, proceed to load, set `granted = true, origins = [...]`.
-   - **Grant record is DENIED** → emit CSP with `connect-src 'none'`, proceed to load, set `granted = false, origins = []`.
-   - **No grant record** → prompt user (below), persist result, proceed as per decision.
+   - **No `connect` tags present (Class 1)** → emit the baseline CSP (below) with `connect-src 'none'`, proceed to load, set `granted = false, origins = []`.
+   - **Class 2, grant record is APPROVED** → emit CSP with `connect-src` listing granted origins, proceed to load, set `granted = true, origins = [...]`.
+   - **Class 2, grant record is DENIED** → emit CSP with `connect-src 'none'`, proceed to load, set `granted = false, origins = []`.
+   - **Class 2, no grant record** → prompt user (below), persist result, proceed as per decision.
 5. **Serve HTML** with the composed CSP header.
 6. **Install shim** with `window.napplet.connect` populated from the decision.
 
@@ -179,9 +189,9 @@ Where `{VARIABLE}` is:
 
 A napplet built under v0.28.0 may ship with a meta CSP declaring `connect-src 'none'`. When the shell serves this napplet with a header CSP declaring `connect-src https://foo.com`, the browser takes the **intersection** → effective `connect-src 'none'` → grant is silently suppressed.
 
-**Mitigation:** shells serving any napplet with a non-empty `connect` manifest (one or more `connect` tags on the NIP-5A kind-35128 event) MUST scan the served HTML for a `<meta http-equiv="Content-Security-Policy">` element and refuse to serve with a clear diagnostic. Illustrative wording: *"napplet ships with a meta CSP that would suppress granted origins — rebuild with a version of `@napplet/vite-plugin` that omits meta CSP."*
+**Mitigation:** shells serving any Class-2 napplet (manifest with one or more `connect` tags) MUST scan the served HTML for a `<meta http-equiv="Content-Security-Policy">` element and refuse to serve with a clear diagnostic. Illustrative wording: *"napplet ships with a meta CSP that would suppress granted origins — rebuild with a version of `@napplet/vite-plugin` that omits meta CSP."*
 
-Napplets with **no** `connect` tags and a legacy meta CSP are harmless — both the meta and the header say `connect-src 'none'`, intersection is still `'none'`, no user-visible breakage.
+Class-1 napplets with a legacy meta CSP are harmless — both the meta and the header say `connect-src 'none'`, intersection is still `'none'`, no user-visible breakage.
 
 ### 2. Port and IDN normalization
 
@@ -285,7 +295,7 @@ States 1 and 2 are the common paths. States 3 and 4 are graceful shutdowns.
 - Add `specs/SHELL-CONNECT-POLICY.md` as the shell-deployer checklist (parallel to existing `specs/SHELL-RESOURCE-POLICY.md`).
 - Bump all packages, ship via changesets.
 
-**Existing napplets continue to work** — the residual v0.28.0 meta CSP is harmless for napplets with no `connect` tags (both meta and header say `connect-src 'none'`, intersection is `'none'`, no change). Napplets that later adopt `connect` tags MUST rebuild without the meta CSP.
+**Existing napplets continue to work as Class 1** — the residual v0.28.0 meta CSP is harmless for napplets with no `connect` tags (both meta and header say `connect-src 'none'`, intersection is `'none'`, no change). Napplets that later become Class 2 by adopting `connect` tags MUST rebuild without the meta CSP.
 
 ## Testing Posture
 
@@ -294,7 +304,8 @@ States 1 and 2 are the common paths. States 3 and 4 are graceful shutdowns.
 - Integration test: napplet with `connect` tag + denied grant → `connect-src 'none'` in emitted CSP, `window.napplet.connect.granted === false`.
 - Integration test: napplet aggregateHash change (any dist file changed) → prior grant auto-invalidated, re-prompt occurs on next load.
 - Integration test: napplet's `connect` origin list changed while dist files are unchanged → aggregateHash still changes (via the synthetic `connect:origins` fold) → prior grant auto-invalidated, re-prompt occurs on next load.
-- Integration test: napplet ships residual meta CSP + a manifest declaring `connect` tags → shell refuses to serve with the prescribed diagnostic.
+- Integration test: Class-2 napplet ships residual meta CSP → shell refuses to serve with the prescribed diagnostic (Edge Case 1).
+- Integration test: Class-1 napplet ships residual meta CSP → shell serves normally (both meta and header converge on `connect-src 'none'`, no functional break).
 - UX test: cleartext origin in the consent prompt is visibly distinguished from secure origins.
 - UX test: origin-diff on aggregateHash change surfaces net-new origins.
 
