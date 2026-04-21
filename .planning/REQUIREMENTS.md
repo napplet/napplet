@@ -81,12 +81,12 @@
 - [x] **POLICY-08**: Document consent-prompt language requirement — MUST capture that grant allows send AND receive with the origin, and that shell has zero visibility into post-grant traffic ("this napplet can talk with foo.com however it wants")
 - [x] **POLICY-09**: Document explicit N/A items — no private-IP block (browser matches URL literal not resolved IP), no MIME sniffing, no SVG rasterization caps, no redirect chain limits (all are NUB-RESOURCE concerns; NUB-CONNECT has no shell-visibility post-grant)
 - [x] **POLICY-10**: Zero-grep hygiene on SHELL-CONNECT-POLICY.md — no `@napplet/*` references (this file is in the private SDK repo but must remain citation-safe for the NUBs track)
-- [ ] **POLICY-11**: Author `specs/SHELL-CLASS-POLICY.md` as shell-deployer checklist parallel to `specs/SHELL-CONNECT-POLICY.md`; non-normative companion to NUB-CLASS spec
-- [ ] **POLICY-12**: Document class-determination authority — shell is the sole authority on what class a napplet is assigned; class is determined by which class-contributing NUBs are declared in the manifest combined with any user-consent outcomes; shell MUST send `class.assigned` wire at iframe ready, with at-most-one terminal envelope per napplet lifecycle (dynamic re-classification out of scope for v0.29.0)
-- [ ] **POLICY-13**: Document the wire timing — `class.assigned` MUST be sent AFTER the iframe signals readiness (shim bootstrap complete) and BEFORE the napplet's own code can meaningfully branch on class; recommend coupling to the shim's ready signal
-- [ ] **POLICY-14**: Document the cross-NUB invariant (shell responsibility) — in shells implementing BOTH `nub:connect` and `nub:class`: `class === 2` iff `connect.granted === true` at the time `class.assigned` is sent; shells MUST NOT emit a state where these two signals disagree
-- [ ] **POLICY-15**: Document revocation UX for class-2 napplets — revoking a connect grant MUST trigger either a napplet reload with `class.assigned` `class: 1`, or a shell-side refusal-to-serve until user re-approves; mid-session dynamic class change is out of v0.29.0 scope
-- [ ] **POLICY-16**: Zero-grep hygiene on SHELL-CLASS-POLICY.md — no `@napplet/*` references
+- [x] **POLICY-11**: Author `specs/SHELL-CLASS-POLICY.md` as shell-deployer checklist parallel to `specs/SHELL-CONNECT-POLICY.md`; non-normative companion to NUB-CLASS spec
+- [x] **POLICY-12**: Document class-determination authority — shell is the sole authority on what class a napplet is assigned; class is determined by which class-contributing NUBs are declared in the manifest combined with any user-consent outcomes; shell MUST send `class.assigned` wire at iframe ready, with at-most-one terminal envelope per napplet lifecycle (dynamic re-classification out of scope for v0.29.0)
+- [x] **POLICY-13**: Document the wire timing — `class.assigned` MUST be sent AFTER the iframe signals readiness (shim bootstrap complete) and BEFORE the napplet's own code can meaningfully branch on class; recommend coupling to the shim's ready signal
+- [x] **POLICY-14**: Document the cross-NUB invariant (shell responsibility) — in shells implementing BOTH `nub:connect` and `nub:class`: `class === 2` iff `connect.granted === true` at the time `class.assigned` is sent; shells MUST NOT emit a state where these two signals disagree
+- [x] **POLICY-15**: Document revocation UX for class-2 napplets — revoking a connect grant MUST trigger either a napplet reload with `class.assigned` `class: 1`, or a shell-side refusal-to-serve until user re-approves; mid-session dynamic class change is out of v0.29.0 scope
+- [x] **POLICY-16**: Zero-grep hygiene on SHELL-CLASS-POLICY.md — no `@napplet/*` references
 
 ### Documentation Sweep
 
