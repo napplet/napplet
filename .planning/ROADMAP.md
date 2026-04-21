@@ -334,7 +334,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 131: NIP-5D In-Repo Spec Amendment** - Add Security Considerations subsection to `specs/NIP-5D.md` (completed 2026-04-20)
 - [x] **Phase 132: Cross-Repo Nubs PRs** - Open 4 draft PRs to `napplet/nubs`: NUB-RESOURCE (new), NUB-RELAY sidecar amendment with default-OFF privacy, NUB-IDENTITY clarification, NUB-MEDIA clarification; lock SSRF + SVG MUSTs in spec; zero-grep clean of `@napplet/*` (completed 2026-04-20 — drafts authored; manual cross-repo PR opening deferred per CONTEXT.md)
 - [x] **Phase 133: Documentation + Demo Coordination** - Update 5 package READMEs + skills/build-napplet + shell-deployer policy checklist; PROJECT.md + NUB-RESOURCE coordination note delegating demos to downstream shell repo (completed 2026-04-20)
-- [ ] **Phase 134: Verification & Milestone Close** - Build + type-check green; positive CSP block assertion in Playwright; SVG bomb / `<foreignObject>` / recursive-`<use>` rejection; single-flight cache stampede dedup; sidecar default-OFF; cross-repo zero-grep; bundle tree-shake
+- [x] **Phase 134: Verification & Milestone Close** - Build + type-check green; positive CSP block assertion in Playwright; SVG bomb / `<foreignObject>` / recursive-`<use>` rejection; single-flight cache stampede dedup; sidecar default-OFF; cross-repo zero-grep; bundle tree-shake (completed 2026-04-21)
 
 ## Phase Details
 
@@ -462,7 +462,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   6. Cross-repo zero-grep sweep across all 4 `napplet/nubs` PR bodies, commit messages, and spec content returns zero `@napplet/*` private references.
   7. A consumer that imports only `@napplet/nub/relay/types` produces a tree-shaken bundle with zero bytes from `@napplet/nub/resource` (proven by bundle inspection, matching the v0.26.0 39-byte tree-shake precedent).
 **Plans**: 1
-- [ ] 134-01-PLAN.md — Run all 7 VER gates (VER-01..07), fix NUB-RESOURCE.md code:→error: drift, write VERIFICATION.md, flip STATE/PROJECT to milestone-audit-ready
+- [x] 134-01-PLAN.md — Run all 7 VER gates (VER-01..07), fix NUB-RESOURCE.md code:→error: drift, write VERIFICATION.md, flip STATE/PROJECT to milestone-audit-ready
 
 ## Progress
 
@@ -480,4 +480,4 @@ Phases 125 and 126 are blocking-sequential; Phases 127–130 are independent of 
 | 131. NIP-5D In-Repo Spec Amendment | 1/1 | Complete    | 2026-04-20 |
 | 132. Cross-Repo Nubs PRs | 1/1 | Complete    | 2026-04-20 |
 | 133. Documentation + Demo Coordination | 1/1 | Complete    | 2026-04-20 |
-| 134. Verification & Milestone Close | 0/1 | Pending     | - |
+| 134. Verification & Milestone Close | 1/1 | Complete   | 2026-04-21 |

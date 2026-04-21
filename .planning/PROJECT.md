@@ -1,30 +1,8 @@
 # Napplet Protocol SDK
 
-## Current Milestone: v0.28.0 Browser-Enforced Resource Isolation
+## Shipped: v0.28.0 Browser-Enforced Resource Isolation
 
-**Goal:** Convert napplet iframe security from ambient trust ("napplets shouldn't fetch directly") to browser-enforced isolation ("napplets cannot fetch directly, the browser blocks it"). Make the shell the sole resource broker for all network-sourced content, with a single scheme-pluggable primitive on the napplet side.
-
-**Target features:**
-- New NUB defining `resource.bytes(url) → blob` primitive with scheme-pluggable URL space (`https:`, `blossom:`, `nostr:`, `data:`)
-- Strict CSP enforcement on napplet iframes (`connect-src 'none'` minimum) with shell-controlled delivery
-- NIP-5D Security Considerations amendment for strict-CSP posture
-- NUB-RELAY amendment: optional sidecar field on `relay.event` for shell-pre-resolved resources
-- NUB-IDENTITY + NUB-MEDIA clarifications: profile pictures and artwork URLs flow through the resource primitive
-- vite-plugin updates: emit CSP-aware napplet HTML in dev so napplets are developed under the same constraints they ship under
-- Demo napplets exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer)
-- Shell-side SVG rasterization (napplets never receive scriptable XML)
-- Default shell resource policy guidance (private-IP blocks, size caps, timeouts, rate limits, MIME classification)
-
-**Key context:**
-- Audio/video EXPLICITLY OUT OF SCOPE — deferred to a separate later milestone using a shell-composited compositor model
-- Backwards compatibility is not a concern — single user, active design, break freely
-- Hashes stay shell-internal; napplets address resources by URL only
-- Sidecar pre-resolution is an invisible optimization, not a separate API path
-- Shell-as-fetch-proxy attack surface accepted as irreducible; bounded by policy defaults
-
-**Demo coordination (v0.28.0):**
-
-This monorepo ships only the **wire + SDK surface** for v0.28.0 — `@napplet/nub/resource`, the `@napplet/shim` integration, the `@napplet/sdk` re-exports, the `@napplet/vite-plugin` `strictCsp` option, the `specs/NIP-5D.md` Security Considerations amendment, and the four cross-repo PRs to `napplet/nubs`. **Demo napplets** exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer) are explicitly delegated to the **downstream shell repo** for v0.28.0 (Option B per milestone scoping). The downstream shell hosts the demo napplets because demos require a complete shell implementation including the resource NUB handler, default policy enforcement, SVG rasterizer, and strict CSP — all of which are shell-side responsibilities living outside this monorepo since the v0.13.0 extraction. Direct contributors to v0.28.0 demo work to the downstream shell repo, not here.
+Converted napplet iframe security from ambient trust to browser-enforced isolation. Single new NUB (`resource`) with `resource.bytes(url) → Blob` primitive, scheme-pluggable URL space (4 canonical schemes: `https:`, `blossom:`, `nostr:`, `data:`). `data:` decoded inline (zero shell round-trip); other schemes route via `postMessage` envelopes through the host shell. Single-flight cache (N concurrent same-URL calls share 1 fetch), AbortSignal cancellation with `resource.cancel` envelope, `bytesAsObjectURL(url)` lifecycle helper. Optional sidecar pre-resolution on `relay.event` envelopes (`resources?: ResourceSidecarEntry[]`) with default-OFF privacy posture per NUB-RELAY amendment. Strict CSP enforcement at the iframe boundary via `@napplet/vite-plugin` `strictCsp` option: 10-directive baseline, first-`<head>`-child meta injection, header-only directive rejection, dev/prod connect-src split, nonce-based scripts. NIP-5D Security Considerations subsection added in-repo; 4 cross-repo draft PRs authored for `napplet/nubs` (NUB-RESOURCE new spec; NUB-RELAY/IDENTITY/MEDIA amendments). Acceptance gates: `pnpm -r build` + `pnpm -r type-check` green across all 14 packages; CSP positive-blocking Playwright simulation; single-flight stampede against built dist; sidecar default-OFF + SVG-bomb spec conformance; cross-repo zero-grep clean; tree-shake bundle (zero resource-shim symbols in relay-types-only consumer). Demo napplets explicitly delegated to downstream shell repo (Option B). 10 phases, 10 plans shipped 2026-04-21. See [archive](milestones/v0.28.0-ROADMAP.md).
 
 ## Shipped: v0.27.0 IFC Terminology Lock-In
 
@@ -286,7 +264,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-v0.28.0 Browser-Enforced Resource Isolation — see Current Milestone section above. Specific REQ-IDs landed in REQUIREMENTS.md after milestone scoping.
+None — v0.28.0 (Browser-Enforced Resource Isolation) shipped 2026-04-21. Next milestone TBD.
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -309,7 +287,7 @@ v0.28.0 Browser-Enforced Resource Isolation — see Current Milestone section ab
 
 ## Context
 
-- **Current state**: v0.27.0 shipped (IFC Terminology Lock-In). 14 packages: 4 core SDK (core, shim, sdk, vite-plugin) + consolidated `@napplet/nub` with 34 subpath entry points + 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for removal in a future milestone). Runtime API surface is IFC-named end-to-end: `window.napplet.ifc`, `@napplet/sdk` `ifc` export, `IFC-PEER` / "inter-frame" JSDoc — hard break, no backward-compat alias. 27 milestones shipped.
+- **Current state**: v0.28.0 shipped (Browser-Enforced Resource Isolation). 14 packages: 4 core SDK (core, shim, sdk, vite-plugin) + consolidated `@napplet/nub` with 38 subpath entry points (now includes `/resource/{index,types,shim,sdk}`) + 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for removal in a future milestone). Runtime API surface adds `window.napplet.resource` namespace, `nub:resource` + `resource:scheme:<name>` + `perm:strict-csp` capability identifiers, optional `relay.event.resources?` sidecar field. 28 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | nub(core) | shim(core+nub) | sdk(core+nub) | vite-plugin. Deprecated `@napplet/nub-<domain>` (×9) re-export `@napplet/nub/<domain>` and are kept for one release cycle. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -398,4 +376,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-20 — v0.28.0 Browser-Enforced Resource Isolation milestone started*
+*Last updated: 2026-04-21 — v0.28.0 Browser-Enforced Resource Isolation shipped*

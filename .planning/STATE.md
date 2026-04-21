@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
-status: verifying
-stopped_at: Completed 133-01-PLAN.md (DOC-01..07 + DEMO-01; 8 REQ-IDs). 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean (zero @napplet/ in 2 public-destined files; zero kehto/hyprgate everywhere). Workspace pnpm -r type-check green (no source touched). Phase 133 plan-complete; awaiting verification.
-last_updated: "2026-04-20T21:16:54.851Z"
-last_activity: 2026-04-20
+status: Milestone ready for audit
+stopped_at: "Completed 134-01-PLAN.md (VER-01..07; 7 REQ-IDs). All 7 verification gates PASS with /tmp evidence per AGENTS.md no-pollution. NUB-RESOURCE.md spec drift resolved (19 surgical substitutions; commit 2f80342). 134-VERIFICATION.md authored. STATE.md flipped to ready-for-audit. PROJECT.md flipped: v0.28.0 moved from Current Milestone to Shipped section above v0.27.0. REQUIREMENTS.md VER-01..07 traceability rows flipped Pending -> Complete. ROADMAP.md Phase 134 marked Complete. Milestone v0.28.0 plan-complete and ready for audit."
+last_updated: "2026-04-21T08:18:37.409Z"
+last_activity: 2026-04-21 -- Phase 134 plan-complete; all 7 VER-IDs PASS
 progress:
   total_phases: 10
-  completed_phases: 9
-  total_plans: 9
-  completed_plans: 9
-  percent: 90
+  completed_phases: 10
+  total_plans: 10
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 133 — Documentation + Demo Coordination
+**Current focus:** Phase 134 — Verification & Milestone Close
 
 ## Current Position
 
-Phase: 134
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-20
+Phase: 134 (Verification & Milestone Close) — PLAN-COMPLETE
+Plan: 1 of 1 (complete)
+Status: Milestone ready for audit
+Last activity: 2026-04-21 -- Phase 134 plan-complete; all 7 VER-IDs PASS
 
-Progress: [█████████░] 90% (9/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
+Progress: [██████████] 100% (10/10 phases plan-complete; v0.28.0 ready for audit. DEF-125-01 closed.)
 
 ## Phase Map
 
@@ -99,17 +99,21 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 - Phase 130: tsup config — `src/csp.ts` added as a separate entry alongside `src/index.ts`. Without this, tsup chunk-splits csp.ts into a hashed shared chunk and `dist/csp.js` is not produced; with this, `dist/csp.js` becomes a small re-export shim importable standalone by Node-side validation scripts. Pattern: when a sibling module's exports need to be Node-importable from `dist/<name>.js` directly (for verification scripts, third-party consumers), add it as a tsup entry — cost is minimal (the shim re-uses the same chunk, no code duplication).
 - Phase 133: Documentation phase pattern locked — per-task atomic commits (one commit per modifying task; verification gate task is non-committing), automated grep verification after each edit, workspace `pnpm -r type-check` as the load-bearing acceptance gate. Public-repo hygiene split for mixed-audience phases: per-file `@napplet/` grep checks (clean on public-destined files; expected on first-party docs) rather than a single repo-wide rule.
 - Phase 133: TS-vs-spec error envelope drift surfaced for future resolution — NUB-RESOURCE draft uses `code: ResourceErrorCode` and `error?: string` for `resource.bytes.error`; shipped TypeScript in `packages/nub/src/resource/types.ts` uses `error: ResourceErrorCode` and `message?: string`. Documentation now matches the TS wire shape in `packages/shim/README.md` (since READMEs document on-the-wire reality); spec/skill text follows the plan/spec convention. Resolution scoped to a future phase, NOT a docs-only sweep.
+- Phase 134: Spec/impl drift RESOLVED — NUB-RESOURCE.md draft now uses `error: ResourceErrorCode` + `message?: string` per shipped `types.ts`. 19 surgical substitutions across spec table, key notes, examples, scheme prose (data:/blossom:/nostr:), policy section, SVG caps table, and Shell Guarantees table (plan listed 18; one additional `code: "decode-failed"` in blossom: prose at line 113 found by post-edit sanity grep — Rule 1 deviation). Cross-repo PR not yet opened, so correction is in-repo only. Single commit on feat/strict-model: `2f80342`. Cross-repo zero-grep across all 4 nubs drafts: 0:0:0:0 (TOTAL=0).
+- Phase 134: Verification methodology pattern — Node-side spec-conformant simulations + grep-verifiable logs in /tmp/ (per AGENTS.md no-pollution) acceptable evidence for milestone close when full integration tests are downstream-shell territory. VER-02 (Playwright CSP positive-block), VER-04 (single-flight stampede against built dist with stubbed postMessage), VER-07 (esbuild tree-shake bundle inspection) are runtime tests; VER-03, VER-05 are spec-conformance greps; VER-01, VER-06 are exit-code/grep gates. 74-byte tree-shake bundle confirms `@napplet/nub` `sideEffects: false` + per-subpath entry points working as designed (vs v0.26.0's 39-byte precedent — small delta from explicit `null` return in entry).
+- Phase 134: Playwright ESM-import workaround for AGENTS.md system-installed playwright — Pacman-installed `/usr/lib/node_modules/playwright` is a CJS package; Node 22 ESM rejects bare directory imports AND named imports from CJS modules. Use `import pkg from '/usr/lib/node_modules/playwright/index.js'; const { chromium } = pkg;` pattern. Documented for future Playwright-from-Node-script smoke tests in this repo.
 
 ### Pending Todos
 
-- Phase 126 (Resource NUB Scaffold + `data:` Scheme) — PLAN-COMPLETE; awaiting verification
-- Phase 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE; awaiting verification
-- Phase 128 (Central Shim Integration) — PLAN-COMPLETE; awaiting verification. DEF-125-01 closed.
-- Phase 129 (Central SDK Integration) — PLAN-COMPLETE; awaiting verification. SDK seam closed. DEF-125-01 stays closed.
-- Phase 130 (Vite-Plugin Strict CSP) — PLAN-COMPLETE; awaiting verification. CSP-01..07 + CAP-03 satisfied. 4 project-killer pitfalls fail the build. Workspace-wide green; DEF-125-01 stays closed.
-- Phase 131 (NIP-5D In-Repo Spec Amendment) — UNBLOCKED by Phase 130; resource wire envelopes locked at v0.28.0 contract; `perm:strict-csp` capability identifier ready to be referenced from spec text
-- Phase 132 (Cross-Repo Nubs PRs) — PLAN-COMPLETE; 4 drafts at .planning/phases/132-cross-repo-nubs-prs/drafts/; awaiting verification. Cross-repo zero-grep clean. SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05 satisfied. Manual git ops on ~/Develop/nubs deferred per CONTEXT.md (user creates branches, commits, pushes drafts, opens 4 PRs to napplet/nubs).
-- Phase 133 (Documentation + Demo Coordination) — PLAN-COMPLETE; awaiting verification. DOC-01..07 + DEMO-01 satisfied. 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean. Workspace pnpm -r type-check green (no source touched).
+- Phase 126 (Resource NUB Scaffold + `data:` Scheme) — PLAN-COMPLETE; verified by Phase 134 (VER-01 build/type-check + VER-04 single-flight stampede against built dist).
+- Phase 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE; verified by Phase 134 (VER-04 single-flight + VER-05 sidecar default-OFF spec conformance).
+- Phase 128 (Central Shim Integration) — PLAN-COMPLETE; verified by Phase 134 (VER-01). DEF-125-01 closed.
+- Phase 129 (Central SDK Integration) — PLAN-COMPLETE; verified by Phase 134 (VER-01 + VER-07 tree-shake). SDK seam closed.
+- Phase 130 (Vite-Plugin Strict CSP) — PLAN-COMPLETE; verified by Phase 134 (VER-01 + VER-02 CSP positive-block).
+- Phase 131 (NIP-5D In-Repo Spec Amendment) — PLAN-COMPLETE; verified by Phase 134 (VER-01).
+- Phase 132 (Cross-Repo Nubs PRs) — PLAN-COMPLETE; verified by Phase 134 (VER-03 SVG spec, VER-05 sidecar spec, VER-06 zero-grep). Manual git ops on ~/Develop/nubs deferred per CONTEXT.md (user creates branches, commits, pushes drafts, opens 4 PRs to napplet/nubs after milestone audit clears).
+- Phase 133 (Documentation + Demo Coordination) — PLAN-COMPLETE; verified by Phase 134 (VER-01).
+- Phase 134 (Verification & Milestone Close) — PLAN-COMPLETE; all 7 VER-IDs PASS. Milestone ready for `/gsd:audit-milestone v0.28.0`.
 
 ### Blockers/Concerns
 
@@ -120,6 +124,6 @@ v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
 
 ## Session Continuity
 
-Last session: 2026-04-20T21:11:32.320Z
-Stopped at: Completed 133-01-PLAN.md (DOC-01..07 + DEMO-01; 8 REQ-IDs). 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean (zero @napplet/ in 2 public-destined files; zero kehto/hyprgate everywhere). Workspace pnpm -r type-check green (no source touched). Phase 133 plan-complete; awaiting verification.
-Resume: Run `/gsd:verify-phase 132` to verify Phase 132 deliverables (and 126/127/128/129/130/131 if any remain unverified), then `/gsd:plan-phase 133` (Documentation + Demo Coordination) to begin the next executable phase.
+Last session: 2026-04-21T08:16:14.000Z
+Stopped at: Completed 134-01-PLAN.md (VER-01..07; 7 REQ-IDs). All 7 verification gates PASS with /tmp evidence per AGENTS.md no-pollution. NUB-RESOURCE.md spec drift resolved (19 surgical substitutions; commit 2f80342). 134-VERIFICATION.md authored. STATE.md flipped to ready-for-audit. PROJECT.md flipped: v0.28.0 moved from Current Milestone to Shipped section above v0.27.0. REQUIREMENTS.md VER-01..07 traceability rows flipped Pending -> Complete. ROADMAP.md Phase 134 marked Complete. Milestone v0.28.0 plan-complete and ready for audit.
+Resume: Run `/gsd:audit-milestone v0.28.0` to enter the autonomous lifecycle's audit step, then `/gsd:complete-milestone` to archive v0.28.0. Branch `feat/strict-model` ready for manual merge to `main` after audit clears.
