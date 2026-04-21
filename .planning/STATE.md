@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: executing
-stopped_at: Completed 135-01-PLAN.md (NUB-CLASS track authoring)
-last_updated: "2026-04-21T12:46:31.210Z"
-last_activity: 2026-04-21 -- Plan 135-02 complete (NIP-5D NUB-neutral amendment)
+stopped_at: Completed 135-03-PLAN.md (NUB-CONNECT draft)
+last_updated: "2026-04-21T12:56:14.568Z"
+last_activity: 2026-04-21 -- Plan 135-03 complete (NUB-CONNECT draft with byte-verified conformance fixture)
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 ## Current Position
 
 Phase: 135 (Cross-Repo Spec Work) — EXECUTING
-Plan: 1 of 4 (Plan 02 complete in parallel Wave 1)
+Plan: 3 of 4 (Plans 01, 02, 03 complete)
 Status: Executing Phase 135
-Last activity: 2026-04-21 -- Plan 135-02 complete (NIP-5D NUB-neutral amendment)
+Last activity: 2026-04-21 -- Plan 135-03 complete (NUB-CONNECT draft with byte-verified conformance fixture)
 
 ## Phase Map (v0.29.0)
 
@@ -56,6 +56,7 @@ Last activity: 2026-04-21 -- Plan 135-02 complete (NIP-5D NUB-neutral amendment)
 - v0.27.0: Runtime API surface uses IFC terminology (`window.napplet.ifc`, `@napplet/sdk` `ifc` export); hard break, no backward-compat alias
 - v0.28.0: Browser-enforced isolation via strict CSP; single `resource.bytes(url)` primitive with scheme-pluggable URL space; `data:` decoded inline; sidecar pre-resolution opt-in default OFF for privacy; shell-side SVG rasterization MUST; `perm:strict-csp` capability orthogonal to `nub:resource`; demos delegated to downstream shell repo (Option B)
 - v0.29.0: Shell is sole runtime CSP authority (every napplet). Two new NUBs: NUB-CLASS (abstract posture authority via wire `class.assigned`, `window.napplet.class`, owns `NUB-CLASS-$N` sub-track) and NUB-CONNECT (user-gated direct network access via manifest `connect` tags, self-sufficient `window.napplet.connect.{granted,origins}` surface). Napplet-class distinction removed entirely from NIP-5D into NUB-CLASS's sub-track. Class-1 = strict baseline; Class-2 = user-approved explicit-origin CSP; each defined as its own doc (`NUB-CLASS-1.md`, `NUB-CLASS-2.md`). Inline scripts forbidden for all napplets under the unified CSP model. Grants keyed on `(dTag, aggregateHash)` with `connect` origins folded into aggregateHash via synthetic `connect:origins` entry. NUBs expose independent runtime surfaces (no cross-NUB state collapse); cross-NUB invariants documented as shell responsibilities.
+- v0.29.0 / Phase 135-03: NUB-CONNECT draft cites `NUB-CLASS-2.md` by file name (10 times) and does NOT inline-redefine Class 1/2 postures (delegated in full). Canonical `connect:origins` aggregateHash fold is: lowercase → ASCII-ascending sort → LF-join with no trailing newline → UTF-8 encode → SHA-256 → lowercase hex. Normative conformance fixture: 3 origins (`https://api.example.com`, `https://xn--caf-dma.example.com`, `wss://events.example.com`), 80-byte joined UTF-8 input, SHA-256 digest `cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742` (independently verified). `NappletConnect` runtime API MUST NEVER be `undefined` — default `{granted: false, origins: []}` on unsupported shells, denied prompts, or pre-injection.
 
 ### Open Decisions for Plan Phases
 
@@ -72,7 +73,7 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ### Pending Todos
 
-- Start Phase 135 via `/gsd:plan-phase 135`
+- Execute Plan 135-04 (zero-grep hygiene audit + phase commit) — the last remaining plan in Phase 135
 
 ### Blockers/Concerns
 
@@ -82,6 +83,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T12:46:31.207Z
-Stopped at: Completed 135-01-PLAN.md (NUB-CLASS track authoring)
-Resume: Plans 135-03 (NUB-CONNECT) and 135-04 (zero-grep hygiene + phase commit) remain
+Last session: 2026-04-21T12:56:14.565Z
+Stopped at: Completed 135-03-PLAN.md (NUB-CONNECT draft)
+Resume: Plan 135-04 (zero-grep hygiene audit + phase commit) remains
