@@ -51,6 +51,8 @@ import {
   bytes as resourceBytes,
   bytesAsObjectURL as resourceBytesAsObjectURL,
 } from '@napplet/nub/resource/shim';
+import { installConnectShim } from '@napplet/nub/connect/shim';
+import { installClassShim, handleClassMessage } from '@napplet/nub/class/shim';
 import type { NappletGlobal } from '@napplet/core';
 import type { IfcEventMessage } from '@napplet/nub/ifc/types';
 
@@ -97,6 +99,12 @@ function handleEnvelopeMessage(event: MessageEvent): void {
   // Route resource.* messages to resource shim (covers resource.bytes.result + resource.bytes.error)
   if (type.startsWith('resource.')) {
     handleResourceMessage(msg as { type: string; [key: string]: unknown });
+    return;
+  }
+
+  // Route class.* messages to class shim (covers class.assigned)
+  if (type.startsWith('class.')) {
+    handleClassMessage(msg as { type: string; [key: string]: unknown });
     return;
   }
 
@@ -192,6 +200,10 @@ installIfcShim();
     bytes: resourceBytes,
     bytesAsObjectURL: resourceBytesAsObjectURL,
   },
+  connect: {
+    granted: false,
+    origins: [],
+  },
   shell: {
     supports(_capability: string): boolean {
       // TODO: Shell populates supported capabilities at iframe creation
@@ -228,3 +240,9 @@ installConfigShim();
 
 // Install resource shim (single-flight cache for byte fetches; no install-time work)
 installResourceShim();
+
+// Install class shim (mounts window.napplet.class readonly getter; undefined until class.assigned arrives)
+installClassShim();
+
+// Install connect shim (reads <meta name="napplet-connect-granted">; replaces literal's connect field with defineProperty getter)
+installConnectShim();
