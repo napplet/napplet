@@ -1,24 +1,8 @@
 # Napplet Protocol SDK
 
-## Current Milestone: v0.29.0 NUB-CONNECT + Shell as CSP Authority
+## Shipped: v0.29.0 NUB-CONNECT + Shell as CSP Authority
 
-**Goal:** Introduce a new NUB (`connect`) letting napplets declare required network origins for user-gated `fetch`/`WebSocket`/`SSE` access, and shift CSP emission entirely to the shell at runtime — moving the SDK from build-baked strict CSP to shell-authoritative runtime CSP for every napplet.
-
-**Target features:**
-- NUB-CONNECT spec drafted in `napplet/nubs` public repo (connect manifest tag, origin-format rules, consent flow, runtime API, capability advertisement, security considerations)
-- NIP-5D amendment delegating napplet-class distinctions (Class 1 / Class 2) to the NUBs track
-- NUBs-track advisory on how to define napplet classes on top of existing NUB specs
-- `@napplet/nub/connect` subpath (types + shim installer exposing `window.napplet.connect.{granted, origins}` + SDK helpers)
-- `@napplet/vite-plugin` production CSP removal (meta builder, nonce generator, four CSP assertions move to dev-only or drop); new `connect?: string[]` option that emits `connect` manifest tags and folds into `aggregateHash` via a synthetic `connect:origins` entry; new fail-loud inline-script diagnostic
-- `@napplet/shim` + `@napplet/sdk` central integration of the connect NUB (parallel to resource NUB wiring in v0.28.0)
-- `specs/SHELL-CONNECT-POLICY.md` shell-deployer checklist (parallel to `specs/SHELL-RESOURCE-POLICY.md`), including mixed-content reality check, cleartext warnings, and the Class-2 residual-meta-CSP scan requirement
-- Documentation sweep: root README + affected package READMEs + `skills/build-napplet/SKILL.md` updated for the two classes, the connect API, and "default to NUB-RESOURCE; reach for NUB-CONNECT only when resource NUB can't express what you need"
-
-**Key context:**
-- Full design: `docs/superpowers/specs/2026-04-21-napplet-network-permission-design.md` (committed `9f77c29`)
-- Breaking change: deprecates v0.28.0's vite-plugin `strictCsp` production path; `perm:strict-csp` capability superseded (kept true for back-compat, marked deprecated)
-- Demo napplets remain downstream-shell-repo's concern (Option B carried forward from v0.28.0)
-- Cross-repo coordination: NUB-CONNECT is a new spec in `napplet/nubs`; human opens the PR following established manual flow
+Shifted strict CSP emission from the vite-plugin (build time) to the host shell (runtime) for every napplet, and introduced two new NUBs: NUB-CLASS (shell-authoritative abstract security posture via `class.assigned` wire, `window.napplet.class: number | undefined`, sub-track of `NUB-CLASS-$N` documents) and NUB-CONNECT (user-gated direct network access declared via `["connect", "<origin>"]` manifest tags, no postMessage wire protocol — grants flow through the runtime CSP the shell serves in the HTTP response plus a `<meta name="napplet-connect-granted">` tag read synchronously at shim install time, `window.napplet.connect.{granted, origins}`). Shared `normalizeConnectOrigin()` validator (21 rule violations enumerated, 28/28 smoke tests pass) is single source of truth for build-side and shell-side origin validation; canonical `connect:origins` aggregateHash fold (lowercase → ASCII-sort → LF-join → UTF-8 → SHA-256 → lowercase hex) is byte-locked to a 3-origin conformance fixture with independently verified digest `cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742`. `@napplet/vite-plugin` strict-CSP production path removed (accept-but-warn `strictCsp` shim retained for one release cycle; hard-removal tracked as REMOVE-STRICTCSP for v0.30.0); `connect?: string[]` option added with manifest tag emission + aggregateHash fold + fail-loud inline-script diagnostic + dev-mode-only `napplet-connect-requires` meta; module-load self-check binds the plugin's fold to the spec conformance fixture at ESM-init. `@napplet/shim` + `@napplet/sdk` mount both NUB surfaces with graceful-degradation defaults (`connect` → `{granted: false, origins: []}`, `class` → `undefined`) and the central dispatcher routes `class.*` envelopes. 4 draft specs authored in `napplet/nubs` public repo (NUB-CONNECT, NUB-CLASS, NUB-CLASS-1, NUB-CLASS-2); NIP-5D amended to become NUB-neutral transport-only; `specs/SHELL-CONNECT-POLICY.md` + `specs/SHELL-CLASS-POLICY.md` shell-deployer checklists authored. Acceptance gates (13 VER-IDs total): `pnpm -r build` + `pnpm -r type-check` green across 14 packages; tree-shake harness extended with connect + class types-only consumer cases (zero forbidden symbols, within 500 B budget); 4 in-repo vitest suites (connect+class shim, aggregateHash conformance fixture, cross-NUB invariant table-driven across 7 SHELL-CLASS-POLICY scenarios); 3 documented Playwright fixtures exportable to downstream shell repo (approved-grant positive path, denied-grant negative path, residual-meta-CSP refusal contrast); cross-repo zero-grep clean across 4 drafts; changeset authored; downstream-shell tracking doc-check passed. Demo napplets delegated to downstream shell repo (Option B carried forward from v0.28.0). 8 phases, 19 plans shipped 2026-04-21. See [archive](milestones/v0.29.0-ROADMAP.md).
 
 ## Shipped: v0.28.0 Browser-Enforced Resource Isolation
 
