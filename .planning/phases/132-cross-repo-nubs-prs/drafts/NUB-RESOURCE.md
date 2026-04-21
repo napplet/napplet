@@ -51,7 +51,7 @@ Both methods are scoped to the napplet's `(dTag, aggregateHash)` identity per NI
 | `resource.bytes`        | napplet -> shell | `id`, `url`              |
 | `resource.cancel`       | napplet -> shell | `id`                     |
 | `resource.bytes.result` | shell -> napplet | `id`, `blob`, `mime`     |
-| `resource.bytes.error`  | shell -> napplet | `id`, `code`, `error?`   |
+| `resource.bytes.error`  | shell -> napplet | `id`, `error`, `message?` |
 
 Key design notes:
 
@@ -59,7 +59,7 @@ Key design notes:
 - The `mime` field on `resource.bytes.result` is **shell-classified by byte-sniffing** -- never passed through from the upstream `Content-Type` header. See Default Resource Policy § MIME byte-sniffing for the rationale.
 - `resource.cancel` is fire-and-forget; shells SHOULD release any in-flight fetch resources for the correlated `id` and SHOULD NOT emit a terminal envelope for that `id` after receiving the cancel. Late-arriving result envelopes for cancelled `id`s MUST be silently dropped by conformant napplet shims.
 - **Single-Blob contract**: the result envelope delivers exactly one `Blob` -- there is no streaming, chunking, range, or progress field anywhere in this NUB. Streaming media (audio, video) is reserved for a future NUB with a different delivery model.
-- The `error?` field on `resource.bytes.error` is a human-readable string for diagnostics; programmatic dispatch MUST be driven by the `code` field (one of the eight enumerated codes), never by string-matching `error`.
+- The `message?` field on `resource.bytes.error` is a human-readable string for diagnostics; programmatic dispatch MUST be driven by the `error` field (one of the eight enumerated codes), never by string-matching `message`.
 
 ### Examples
 
@@ -84,7 +84,7 @@ napplet: napplet.resource.bytes('data:image/png;base64,iVBORw0KGgo...')
 **Error response (private-IP rejection at DNS-resolution time):**
 ```
 -> { "type": "resource.bytes", "id": "r3", "url": "https://internal.local/secret" }
-<- { "type": "resource.bytes.error", "id": "r3", "code": "blocked-by-policy", "error": "resolved IP 10.0.0.5 is in the RFC1918 private range" }
+<- { "type": "resource.bytes.error", "id": "r3", "error": "blocked-by-policy", "message": "resolved IP 10.0.0.5 is in the RFC1918 private range" }
 ```
 
 **Cancellation (napplet aborts an in-flight fetch):**
@@ -96,7 +96,7 @@ napplet: napplet.resource.bytes('data:image/png;base64,iVBORw0KGgo...')
 
 ## Scheme Protocol Surfaces
 
-NUB-RESOURCE defines four canonical schemes. Shells MUST implement scheme dispatch as a **whitelist**: only the canonical schemes (and any explicitly opt-in shell-extension schemes) MAY produce a fetch attempt. Smuggling-prone schemes (`file:`, `gopher:`, `dict:`, `ftp:`, `tftp:`, etc.) MUST NOT be supported under any default policy. Unknown schemes MUST result in `code: "unsupported-scheme"`.
+NUB-RESOURCE defines four canonical schemes. Shells MUST implement scheme dispatch as a **whitelist**: only the canonical schemes (and any explicitly opt-in shell-extension schemes) MAY produce a fetch attempt. Smuggling-prone schemes (`file:`, `gopher:`, `dict:`, `ftp:`, `tftp:`, etc.) MUST NOT be supported under any default policy. Unknown schemes MUST result in `error: "unsupported-scheme"`.
 
 ### `data:`
 
@@ -110,7 +110,7 @@ The shell performs the network fetch. This scheme is subject to the **full Defau
 
 ### `blossom:`
 
-Blossom hash → bytes resolution. Canonical URL form: `blossom:sha256:<hex>` where `<hex>` is the lowercase 64-character SHA-256 hex digest of the resource bytes. Shells MAY consult any number of Blossom servers per their server-selection policy (typically a user-configured list of preferred Blossom hosts). The shell MUST verify the returned bytes hash against the URL's declared digest **before** delivering them to the napplet; mismatch MUST result in `code: "decode-failed"`. The `mime` field is byte-sniffed by the shell after hash verification, not before.
+Blossom hash → bytes resolution. Canonical URL form: `blossom:sha256:<hex>` where `<hex>` is the lowercase 64-character SHA-256 hex digest of the resource bytes. Shells MAY consult any number of Blossom servers per their server-selection policy (typically a user-configured list of preferred Blossom hosts). The shell MUST verify the returned bytes hash against the URL's declared digest **before** delivering them to the napplet; mismatch MUST result in `error: "decode-failed"`. The `mime` field is byte-sniffed by the shell after hash verification, not before.
 
 When fetching from upstream Blossom hosts, shells MUST apply the same `https:` policy (private-IP block list at DNS-resolution time, etc.) to each candidate host. Blossom-host selection MUST NOT bypass DNS-pinning.
 
@@ -120,7 +120,7 @@ NIP-19 bech32 input form (e.g., `nostr:nprofile1...`, `nostr:naddr1...`, `nostr:
 
 **Single-hop resolution semantics**: the shell resolves the bech32 to its immediately-referenced Nostr resource and returns those bytes. Shells MUST NOT recursively follow URLs, hashtags, or `nostr:` references found *within* the resolved bytes -- recursive resolution is the napplet's job via subsequent `resource.bytes()` calls. Single-hop semantics prevent shell-side fan-out attacks, recursive amplification, and deeply nested traversal-cost surprises.
 
-If the bech32 cannot be decoded or the referenced resource cannot be found in the shell's relay pool, the result MUST be `code: "not-found"`.
+If the bech32 cannot be decoded or the referenced resource cannot be found in the shell's relay pool, the result MUST be `error: "not-found"`.
 
 ## Default Resource Policy
 
@@ -138,29 +138,29 @@ Shells implementing the `https:` scheme handler MUST, **at DNS resolution time**
 | `fc00::/7` | Unique-local IPv6 |
 | `169.254.169.254` | Cloud metadata service (AWS, GCP, Azure, DigitalOcean, etc.) |
 
-Rejection MUST emit `code: "blocked-by-policy"`. The error string SHOULD identify which range matched so deployers can debug policy. Shells MAY allow additional addresses behind explicit shell-administrator policy (e.g., enterprise on-prem services), but the default for community-deployed shells MUST be restrictive.
+Rejection MUST emit `error: "blocked-by-policy"`. The `message` string SHOULD identify which range matched so deployers can debug policy. Shells MAY allow additional addresses behind explicit shell-administrator policy (e.g., enterprise on-prem services), but the default for community-deployed shells MUST be restrictive.
 
 URL-parse-time checks (e.g., looking at the literal hostname in the URL) are NOT sufficient. An attacker-controlled DNS record can resolve `attacker.example.com` to `127.0.0.1` and bypass any check that does not actually inspect the resolved address. The DNS pinning requirement here exists specifically to defeat DNS-rebinding and TOCTOU attacks.
 
 ### MIME byte-sniffing (MUST)
 
-Shells MUST classify the returned bytes via a byte-sniffing strategy (e.g., the [WHATWG MIME Sniffing Standard](https://mimesniff.spec.whatwg.org/) or equivalent). The upstream `Content-Type` header MUST NOT be passed through to the napplet -- that header is attacker-controlled, and the entire trust model breaks if a napplet renders `text/html` because an attacker said so. Shells MUST enforce a scheme-appropriate MIME allowlist (e.g., for image rendering: `image/png`, `image/jpeg`, `image/webp`, `image/gif`, plus `image/svg+xml` subject to SVG handling below). Bytes whose sniffed MIME falls outside the allowlist MUST be rejected with `code: "blocked-by-policy"` rather than delivered as an unknown MIME.
+Shells MUST classify the returned bytes via a byte-sniffing strategy (e.g., the [WHATWG MIME Sniffing Standard](https://mimesniff.spec.whatwg.org/) or equivalent). The upstream `Content-Type` header MUST NOT be passed through to the napplet -- that header is attacker-controlled, and the entire trust model breaks if a napplet renders `text/html` because an attacker said so. Shells MUST enforce a scheme-appropriate MIME allowlist (e.g., for image rendering: `image/png`, `image/jpeg`, `image/webp`, `image/gif`, plus `image/svg+xml` subject to SVG handling below). Bytes whose sniffed MIME falls outside the allowlist MUST be rejected with `error: "blocked-by-policy"` rather than delivered as an unknown MIME.
 
 ### Response size cap (SHOULD, recommended ~10 MiB)
 
-Shells SHOULD cap individual response bodies at a reasonable upper bound; recommended default is 10 MiB. Excess MUST result in `code: "too-large"`. The cap MAY be configurable per-shell deployment; community-deployed shells SHOULD NOT raise the cap above ~50 MiB without explicit operator opt-in.
+Shells SHOULD cap individual response bodies at a reasonable upper bound; recommended default is 10 MiB. Excess MUST result in `error: "too-large"`. The cap MAY be configurable per-shell deployment; community-deployed shells SHOULD NOT raise the cap above ~50 MiB without explicit operator opt-in.
 
 ### Fetch timeout (SHOULD, recommended ~30s)
 
-Shells SHOULD enforce a per-URL fetch timeout; recommended default is 30 seconds, measured wall-clock from request dispatch to last byte received. Timeout MUST result in `code: "timeout"`. The timeout MAY be configurable per-shell deployment.
+Shells SHOULD enforce a per-URL fetch timeout; recommended default is 30 seconds, measured wall-clock from request dispatch to last byte received. Timeout MUST result in `error: "timeout"`. The timeout MAY be configurable per-shell deployment.
 
 ### Per-napplet concurrency + rate limit (SHOULD)
 
-Shells SHOULD enforce a per-napplet limit on concurrent in-flight `resource.bytes` calls (recommended: 10) and a per-napplet rate limit (recommended: 60 calls per minute, sliding window). Rate-limit and concurrency-limit rejections MUST emit `code: "blocked-by-policy"` with an error string identifying which limit was hit.
+Shells SHOULD enforce a per-napplet limit on concurrent in-flight `resource.bytes` calls (recommended: 10) and a per-napplet rate limit (recommended: 60 calls per minute, sliding window). Rate-limit and concurrency-limit rejections MUST emit `error: "blocked-by-policy"` with a `message` string identifying which limit was hit.
 
 ### Redirect chain cap (SHOULD, recommended ≤ 5)
 
-Shells SHOULD cap the redirect chain at 5 hops. **Each hop MUST be re-validated against the private-IP block list** (DNS pinning per hop). Excess hops or a redirect to a blocked address MUST result in `code: "blocked-by-policy"`. This per-hop re-validation is the mitigation for redirect-amplification attacks where a public host 302s to an internal address.
+Shells SHOULD cap the redirect chain at 5 hops. **Each hop MUST be re-validated against the private-IP block list** (DNS pinning per hop). Excess hops or a redirect to a blocked address MUST result in `error: "blocked-by-policy"`. This per-hop re-validation is the mitigation for redirect-amplification attacks where a public host 302s to an internal address.
 
 ## SVG Handling
 
@@ -180,9 +180,9 @@ Rasterizers MUST run in a **sandboxed Worker** with **no network** access. The r
 
 | Cap | Recommended default | On exceed |
 |-----|---------------------|-----------|
-| Max input bytes | 5 MiB | `code: "too-large"` |
-| Max output dimensions | 4096 × 4096 pixels | `code: "too-large"` |
-| Wall-clock rasterization budget | 2 s | `code: "timeout"` |
+| Max input bytes | 5 MiB | `error: "too-large"` |
+| Max output dimensions | 4096 × 4096 pixels | `error: "too-large"` |
+| Wall-clock rasterization budget | 2 s | `error: "timeout"` |
 
 These caps mitigate the billion-laughs entity-expansion attack (input is bounded), recursive-`<use>` rendering bombs (output dimensions are bounded), and `<foreignObject>` script-driven CPU exhaustion (wall-clock budget bounds the worst case). All three caps SHOULD be enforced together; relaxing any one undermines the others.
 
@@ -216,12 +216,12 @@ The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY in this document are t
 
 | Behavior | Details |
 |----------|---------|
-| Whitelist scheme dispatch | Only the canonical schemes (`https:`, `blossom:`, `nostr:`, `data:`) plus shell-extension schemes the shell explicitly opts in to. Unknown schemes MUST return `code: "unsupported-scheme"`. |
+| Whitelist scheme dispatch | Only the canonical schemes (`https:`, `blossom:`, `nostr:`, `data:`) plus shell-extension schemes the shell explicitly opts in to. Unknown schemes MUST return `error: "unsupported-scheme"`. |
 | Enforce private-IP block list at DNS-resolution time | Per the Default Resource Policy. Each redirect hop re-validated independently. |
 | Byte-sniff MIME | Never honor upstream `Content-Type` for the value delivered to the napplet. Sniffed MIME drives scheme-appropriate allowlist enforcement. |
 | Rasterize SVG in a sandboxed Worker with no network | Per the SVG Handling section. `image/svg+xml` MUST NOT be delivered to napplets. |
 | Single-Blob delivery | Result envelope contains exactly one `Blob`; no streaming, no chunked, no range, no progress. |
-| Verify Blossom hash before delivery | For `blossom:sha256:<hex>` URLs, the returned bytes MUST hash to the declared digest. Mismatch MUST result in `code: "decode-failed"`. |
+| Verify Blossom hash before delivery | For `blossom:sha256:<hex>` URLs, the returned bytes MUST hash to the declared digest. Mismatch MUST result in `error: "decode-failed"`. |
 | Single-hop `nostr:` resolution | Do NOT recursively follow URLs found within resolved Nostr resources. |
 | Scope cache per `(dTag, aggregateHash)` | Per NIP-5D identity binding. Napplets MUST NOT see another napplet's cached resources. |
 | Drop late envelopes after cancel | After receiving `resource.cancel` for an `id`, shells SHOULD NOT emit a terminal envelope for that `id`; if one is emitted (race), conformant napplet shims MUST silently drop it. |
@@ -230,11 +230,11 @@ The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY in this document are t
 
 | Behavior | Details |
 |----------|---------|
-| Enforce response size cap | Recommended 10 MiB per response. Excess MUST result in `code: "too-large"`. |
-| Enforce fetch timeout | Recommended 30 s per URL. Excess MUST result in `code: "timeout"`. |
-| Enforce per-napplet concurrency / rate limit | Recommended 10 concurrent / 60 per minute. Excess MUST result in `code: "blocked-by-policy"`. |
+| Enforce response size cap | Recommended 10 MiB per response. Excess MUST result in `error: "too-large"`. |
+| Enforce fetch timeout | Recommended 30 s per URL. Excess MUST result in `error: "timeout"`. |
+| Enforce per-napplet concurrency / rate limit | Recommended 10 concurrent / 60 per minute. Excess MUST result in `error: "blocked-by-policy"`. |
 | Cap redirect chain | Recommended ≤ 5 hops, re-validating against IP block list per hop. |
-| Enforce per-napplet outstanding-Blob quota | Recommended ~50 MiB outstanding per napplet; over-quota MUST emit `code: "quota-exceeded"`. Existing Blobs unaffected. |
+| Enforce per-napplet outstanding-Blob quota | Recommended ~50 MiB outstanding per napplet; over-quota MUST emit `error: "quota-exceeded"`. Existing Blobs unaffected. |
 | Coalesce concurrent same-URL fetches | Single-flight cache keyed on canonical URL form; N concurrent calls for the same URL share one in-flight fetch. |
 | Surface deviations in shell documentation | When the operator overrides any default policy, the shell SHOULD document the override so napplet authors can discover and adapt. |
 
