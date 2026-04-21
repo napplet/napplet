@@ -42,21 +42,23 @@ export interface NappletMessage {
 // ─── NUB Domain Types ──────────────────────────────────────────────────────
 
 /**
- * String literal union of the ten NUB (Napplet Unified Blueprint) domains.
+ * String literal union of the twelve NUB (Napplet Unified Blueprint) domains.
  * Each domain corresponds to a capability namespace that a shell may support.
  *
- * | Domain     | Scope                                     |
- * |------------|-------------------------------------------|
- * | `relay`    | NIP-01 relay proxy (subscribe, publish)   |
- * | `identity` | Read-only user identity queries           |
- * | `storage`  | Scoped key-value storage proxy            |
- * | `ifc`      | Inter-frame communication (IFC peer bus)  |
- * | `theme`    | Theme tokens and appearance settings      |
- * | `keys`     | Keyboard forwarding and action keybindings|
- * | `media`    | Media session control and playback        |
- * | `notify`   | Shell-rendered notifications              |
- * | `config`   | Per-napplet declarative configuration     |
- * | `resource` | Byte-fetching primitive (URL → Blob)      |
+ * | Domain     | Scope                                              |
+ * |------------|----------------------------------------------------|
+ * | `relay`    | NIP-01 relay proxy (subscribe, publish)            |
+ * | `identity` | Read-only user identity queries                    |
+ * | `storage`  | Scoped key-value storage proxy                     |
+ * | `ifc`      | Inter-frame communication (IFC peer bus)           |
+ * | `theme`    | Theme tokens and appearance settings               |
+ * | `keys`     | Keyboard forwarding and action keybindings         |
+ * | `media`    | Media session control and playback                 |
+ * | `notify`   | Shell-rendered notifications                       |
+ * | `config`   | Per-napplet declarative configuration              |
+ * | `resource` | Byte-fetching primitive (URL → Blob)               |
+ * | `connect`  | User-gated direct network access (CSP connect-src) |
+ * | `class`    | Shell-assigned napplet class / security posture    |
  *
  * @example
  * ```ts
@@ -64,7 +66,7 @@ export interface NappletMessage {
  * const isValid = NUB_DOMAINS.includes(domain); // true
  * ```
  */
-export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify' | 'config' | 'resource';
+export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'keys' | 'media' | 'notify' | 'config' | 'resource' | 'connect' | 'class';
 
 /**
  * Runtime-accessible constant array of all NUB domain names.
@@ -77,7 +79,7 @@ export type NubDomain = 'relay' | 'identity' | 'storage' | 'ifc' | 'theme' | 'ke
  * }
  * ```
  */
-export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config', 'resource'] as const;
+export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config', 'resource', 'connect', 'class'] as const;
 
 // ─── Namespaced Capability Type ───────────────────────────────────────────
 
@@ -90,7 +92,7 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage'
  * |---------|---------------------|--------------------------------|
  * | `nub:`  | `'nub:relay'`       | Shell implements the relay NUB |
  * | `perm:` | `'perm:popups'`     | Shell grants popup permission  |
- * | `perm:` | `'perm:strict-csp'` | Shell enforces strict CSP posture (v0.28.0) |
+ * | `perm:` | `'perm:strict-csp'` | **@deprecated (v0.29.0)** — superseded by `nub:connect` + `nub:class`. Shell enforces strict CSP posture (v0.28.0). |
  * | *(bare)*| `'relay'`           | Shorthand for `'nub:relay'`    |
  *
  * Bare strings are valid only for NUB domains.
@@ -103,6 +105,9 @@ export const NUB_DOMAINS: readonly NubDomain[] = ['relay', 'identity', 'storage'
  * const perm: NamespacedCapability = 'perm:popups';
  * const csp: NamespacedCapability = 'perm:strict-csp';
  * ```
+ *
+ * @deprecated `perm:strict-csp` — superseded in v0.29.0 by `nub:connect` + `nub:class`.
+ * Shells implementing NUB-CONNECT and NUB-CLASS replace the v0.28.0 `perm:strict-csp` model.
  */
 export type NamespacedCapability =
   | NubDomain
