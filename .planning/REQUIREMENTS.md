@@ -130,7 +130,67 @@
 
 ## Traceability
 
-(Filled in by roadmap — maps each REQ-ID to its owning phase.)
+Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase numbering continues from v0.28.0 (ended at Phase 134).
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SPEC-01 | Phase 135 | Pending |
+| SPEC-02 | Phase 135 | Pending |
+| SPEC-03 | Phase 135 | Pending |
+| SPEC-04 | Phase 135 | Pending |
+| SPEC-05 | Phase 135 | Pending |
+| NIP5D-01 | Phase 135 | Pending |
+| NIP5D-02 | Phase 135 | Pending |
+| CORE-01 | Phase 136 | Pending |
+| CORE-02 | Phase 136 | Pending |
+| CORE-03 | Phase 136 | Pending |
+| NUB-01 | Phase 137 | Pending |
+| NUB-02 | Phase 137 | Pending |
+| NUB-03 | Phase 137 | Pending |
+| NUB-04 | Phase 137 | Pending |
+| NUB-05 | Phase 137 | Pending |
+| NUB-06 | Phase 137 | Pending |
+| NUB-07 | Phase 137 | Pending |
+| VITE-01 | Phase 138 | Pending |
+| VITE-02 | Phase 138 | Pending |
+| VITE-03 | Phase 138 | Pending |
+| VITE-04 | Phase 138 | Pending |
+| VITE-05 | Phase 138 | Pending |
+| VITE-06 | Phase 138 | Pending |
+| VITE-07 | Phase 138 | Pending |
+| VITE-08 | Phase 138 | Pending |
+| VITE-09 | Phase 138 | Pending |
+| VITE-10 | Phase 138 | Pending |
+| SHIM-01 | Phase 139 | Pending |
+| SHIM-02 | Phase 139 | Pending |
+| SDK-01 | Phase 139 | Pending |
+| POLICY-01 | Phase 140 | Pending |
+| POLICY-02 | Phase 140 | Pending |
+| POLICY-03 | Phase 140 | Pending |
+| POLICY-04 | Phase 140 | Pending |
+| POLICY-05 | Phase 140 | Pending |
+| POLICY-06 | Phase 140 | Pending |
+| POLICY-07 | Phase 140 | Pending |
+| POLICY-08 | Phase 140 | Pending |
+| POLICY-09 | Phase 140 | Pending |
+| POLICY-10 | Phase 140 | Pending |
+| DOC-01 | Phase 141 | Pending |
+| DOC-02 | Phase 141 | Pending |
+| DOC-03 | Phase 141 | Pending |
+| DOC-04 | Phase 141 | Pending |
+| DOC-05 | Phase 141 | Pending |
+| DOC-06 | Phase 141 | Pending |
+| DOC-07 | Phase 141 | Pending |
+| VER-01 | Phase 142 | Pending |
+| VER-02 | Phase 142 | Pending |
+| VER-03 | Phase 142 | Pending |
+| VER-04 | Phase 142 | Pending |
+| VER-05 | Phase 142 | Pending |
+| VER-06 | Phase 142 | Pending |
+| VER-07 | Phase 142 | Pending |
+| VER-08 | Phase 142 | Pending |
+| VER-09 | Phase 142 | Pending |
+| VER-10 | Phase 142 | Pending |
 
 ---
 

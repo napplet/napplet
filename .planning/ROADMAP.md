@@ -30,6 +30,7 @@
 - ✅ **v0.26.0 Better Packages** — Phases 117-121 (shipped 2026-04-19) — [Archive](milestones/v0.26.0-ROADMAP.md)
 - ✅ **v0.27.0 IFC Terminology Lock-In** — Phases 122-124 (shipped 2026-04-19) — [Archive](milestones/v0.27.0-ROADMAP.md)
 - ✅ **v0.28.0 Browser-Enforced Resource Isolation** — Phases 125-134 (shipped 2026-04-21) — [Archive](milestones/v0.28.0-ROADMAP.md)
+- ⏳ **v0.29.0 NUB-CONNECT + Shell as CSP Authority** — Phases 135-142 (active)
 
 ## Phases
 
@@ -38,6 +39,172 @@
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0.8.0 and is not part of the v0.9.0 roadmap.
+
+### v0.29.0 NUB-CONNECT + Shell as CSP Authority (Phases 135-142) — ACTIVE
+
+- [ ] **Phase 135: Cross-Repo Spec Work** - Draft NUB-CONNECT spec + NUBs-track class advisory in napplet/nubs public repo; amend in-repo NIP-5D to delegate class taxonomy
+- [ ] **Phase 136: Core Type Surface** - Add `'connect'` to `NubDomain` + `NUB_DOMAINS`; add `connect` namespace to `NappletGlobal`; deprecate `perm:strict-csp` in JSDoc
+- [ ] **Phase 137: `@napplet/nub/connect` Subpath Scaffold** - Create 4-file subpath (`types`/`shim`/`sdk`/`index`) with shared `normalizeConnectOrigin()`; add 4 subpath exports; prove tree-shake contract
+- [ ] **Phase 138: `@napplet/vite-plugin` Surgery** - Drop production strictCsp machinery; add `connect?: string[]` option with normalizer, aggregateHash fold, manifest tag emission; add fail-loud inline-script diagnostic
+- [ ] **Phase 139: Central Shim + SDK Integration** - Wire `installConnectShim` into `@napplet/shim`; mount `window.napplet.connect` with graceful-degradation defaults; re-export connect SDK surface
+- [ ] **Phase 140: `specs/SHELL-CONNECT-POLICY.md`** - Author shell-deployer checklist parallel to SHELL-RESOURCE-POLICY.md; per-serving-mode pitfalls; residual-meta-CSP scan requirement; consent-UX language floor
+- [ ] **Phase 141: Documentation Sweep** - Update root README + 4 package READMEs + skills/build-napplet/SKILL.md for two-class posture and NUB-RESOURCE-first guidance
+- [ ] **Phase 142: Verification & Milestone Close** - `pnpm -r build` + `type-check` green across 14 packages; tree-shake + integration + cross-repo-zero-grep gates; changeset authored; downstream demo tracking confirmed
+
+## Phase Details
+
+### Phase 135: Cross-Repo Spec Work
+
+**Goal**: The NUB-CONNECT spec + NUBs-track class advisory exist as public drafts in napplet/nubs, and in-repo NIP-5D delegates napplet-class taxonomy to the NUBs track
+
+**Depends on**: Nothing (independent spec lane, can run in parallel with Phases 136/137/138)
+
+**Requirements**: SPEC-01, SPEC-02, SPEC-03, SPEC-04, SPEC-05, NIP5D-01, NIP5D-02
+
+**Success Criteria** (what must be TRUE):
+1. `NUB-CONNECT.md` draft exists in a branch of napplet/nubs covering manifest tag shape, origin format rules, consent flow, runtime API, capability advertisement, grant lifecycle, security considerations, Class-1/Class-2 taxonomy, and test vectors
+2. NUB-CONNECT draft includes a normative canonical aggregateHash fold procedure (lowercase → ASCII sort → `\n`-join → UTF-8 → SHA-256 → lowercase hex) with at least one copy-pasteable conformance fixture
+3. A NUBs-track advisory document exists in napplet/nubs explaining how NUBs define napplet classes on top of existing NUB specs (Class 1 = no opt-in, Class 2 = `connect` tags trigger consent)
+4. `grep -r -E '@napplet/|kehto|hyprgate' <napplet/nubs draft branch>` returns zero matches across the NUB-CONNECT draft and advisory document
+5. `specs/NIP-5D.md` "Browser-Enforced Resource Isolation" subsection is softened to a forward-pointer at NUB-CONNECT; NIP-5D contains no class enumeration or CSP-emission implementation detail
+
+**Plans**: TBD
+
+### Phase 136: Core Type Surface
+
+**Goal**: `@napplet/core` exposes the `connect` domain identifier and the `NappletConnect` shape so downstream packages can compile against the new type surface
+
+**Depends on**: Nothing (minor touch; optionally sequenced after Phase 135 so spec field names are locked in)
+
+**Requirements**: CORE-01, CORE-02, CORE-03
+
+**Success Criteria** (what must be TRUE):
+1. `packages/core/src/envelope.ts` exports `NubDomain` with `'connect'` in the union and `NUB_DOMAINS` containing 11 entries
+2. `packages/core/src/types.ts` `NappletGlobal` interface has a `connect: NappletConnect` field, structurally mirroring the `resource:` block
+3. `perm:strict-csp` is annotated `@deprecated` in JSDoc on `NamespacedCapability` with a pointer to `nub:connect`
+4. `pnpm --filter @napplet/core build` and `pnpm --filter @napplet/core type-check` exit 0 against the updated type surface
+
+**Plans**: TBD
+
+### Phase 137: `@napplet/nub/connect` Subpath Scaffold
+
+**Goal**: The `@napplet/nub/connect` subpath exists with types, shim installer, SDK helpers, and barrel — fully tree-shakable and ready for central shim/SDK integration
+
+**Depends on**: Phase 136 (core `NubDomain` + `NappletGlobal.connect` must exist so the types/shim compile)
+
+**Requirements**: NUB-01, NUB-02, NUB-03, NUB-04, NUB-05, NUB-06, NUB-07
+
+**Success Criteria** (what must be TRUE):
+1. Files `packages/nub/src/connect/{types,shim,sdk,index}.ts` exist; `types.ts` exports `DOMAIN = 'connect'`, `NappletConnect` interface, and the shared pure `normalizeConnectOrigin(origin: string): string` function
+2. `shim.ts` exports `installConnectShim()` that reads `<meta name="napplet-connect-granted">`, parses whitespace-separated origins, and populates `window.napplet.connect` with readonly state (default `{granted: false, origins: []}` when meta absent)
+3. `packages/nub/package.json` has four new subpath exports (`./connect`, `./connect/types`, `./connect/shim`, `./connect/sdk`) and `packages/nub/tsup.config.ts` has four matching entry points
+4. `pnpm --filter @napplet/nub build` + `type-check` exit 0 and emit all four dist entry points
+5. Tree-shake smoke: a consumer that imports only `@napplet/nub/connect/types` via `import type` produces a bundle with zero `installConnectShim` and zero `registerNub` emissions (matches v0.26.0 theme-NUB precedent)
+
+**Plans**: TBD
+
+### Phase 138: `@napplet/vite-plugin` Surgery
+
+**Goal**: The vite-plugin stops emitting production strict CSP and starts emitting `connect` manifest tags, folding origins into aggregateHash, and failing loud on inline scripts
+
+**Depends on**: Phase 136 (core types) and Phase 137 (shared `normalizeConnectOrigin()` import). Parallel-safe with Phase 139.
+
+**Requirements**: VITE-01, VITE-02, VITE-03, VITE-04, VITE-05, VITE-06, VITE-07, VITE-08, VITE-09, VITE-10
+
+**Success Criteria** (what must be TRUE):
+1. Production builds no longer emit a `<meta http-equiv="Content-Security-Policy">` — `grep "Content-Security-Policy" dist/index.html` returns zero matches on a v0.29.0-built fixture (strictCsp machinery removed or dev-gated)
+2. `Nip5aManifestOptions` accepts `connect?: string[]`; origin normalization throws with `[nip5a-manifest]` prefix on uppercase host, wildcard, path, query, fragment, default port, or non-Punycode IDN — backed by table-driven tests
+3. Manifest emitted at `dist/.nip5a-manifest.json` contains one `['connect', origin]` tag per normalized origin, placed between `manifestXTags` and `configTags`; aggregateHash computation includes a synthetic `[hash, 'connect:origins']` xTag that is filtered out of the `['x', …]` projection
+4. Synthetic xTag filter is driven by a shared `SYNTHETIC_XTAG_PATHS` constant (or equivalent) so both `config:schema` and `connect:origins` are excluded without duplicate string-literal filters
+5. `closeBundle` fails the build when `dist/index.html` contains any `<script>` element without a `src` attribute, with a diagnostic referencing the shell-CSP `script-src 'self'` reason
+6. Declaring an `http:` or `ws:` origin in `connect` emits an informational build-log warning explaining browser mixed-content rules; optional dev-mode-only `<meta name="napplet-connect-requires">` injection is distinct from the shell-authoritative `napplet-connect-granted` name
+
+**Plans**: TBD
+
+### Phase 139: Central Shim + SDK Integration
+
+**Goal**: `window.napplet.connect` is present on every shim-installed napplet with the correct default (`{granted: false, origins: []}`) on pre-v0.29 shells, and `@napplet/sdk` re-exports the connect surface
+
+**Depends on**: Phase 137 (`@napplet/nub/connect` subpath must export `installConnectShim` and types). Parallel-safe with Phase 138.
+
+**Requirements**: SHIM-01, SHIM-02, SDK-01
+
+**Success Criteria** (what must be TRUE):
+1. `packages/shim/src/index.ts` imports `installConnectShim` from `@napplet/nub/connect/shim`, calls it at bootstrap, and declares a `connect: { granted, origins }` block on the `window.napplet` literal with no new central-dispatch router entry
+2. On a mock shell advertising `shell.supports('nub:connect') === false` and injecting no grant meta, `window.napplet.connect` resolves to `{granted: false, origins: []}` — never `undefined` (verified by a shim smoke test)
+3. `packages/sdk/src/index.ts` re-exports the connect SDK surface parallel to `resource`: types from `@napplet/nub/connect`, `DOMAIN as CONNECT_DOMAIN`, and `installConnectShim`
+4. `pnpm --filter @napplet/shim build` and `pnpm --filter @napplet/sdk build` exit 0; `type-check` green across both
+
+**Plans**: TBD
+
+### Phase 140: `specs/SHELL-CONNECT-POLICY.md`
+
+**Goal**: A non-normative shell-deployer checklist exists that covers every shell-side precondition, anti-pattern, and required UX surface for shipping NUB-CONNECT
+
+**Depends on**: Phase 135 (spec prose establishes the normative language this document maps to deployer actions). Parallel-safe with Phases 136-139.
+
+**Requirements**: POLICY-01, POLICY-02, POLICY-03, POLICY-04, POLICY-05, POLICY-06, POLICY-07, POLICY-08, POLICY-09, POLICY-10
+
+**Success Criteria** (what must be TRUE):
+1. `specs/SHELL-CONNECT-POLICY.md` exists, is structured in parallel to `specs/SHELL-RESOURCE-POLICY.md` (Status → Why-this-exists → per-policy sections → Audit checklist → References), and labels itself non-normative with citation pointer to NUB-CONNECT in napplet/nubs
+2. Document contains dedicated sections for: HTTP-responder precondition (with per-delivery-mode pitfalls for direct / proxy / `blob:` / `srcdoc`), residual meta-CSP scan (parser-based example + 5-fixture conformance bundle), mixed-content reality check, cleartext policy + `connect:scheme:http` advertisement, grant-persistence composite key `(dTag, aggregateHash)`, revocation UI requirement with DENIED-not-deleted semantics, consent-prompt language (send AND receive + shell-blind), and explicit N/A items (private-IP block, MIME sniff, SVG raster caps, redirect limits)
+3. `grep -E '@napplet/' specs/SHELL-CONNECT-POLICY.md` returns zero matches (this file is in the private SDK repo but must remain citation-safe for future use by the NUBs track)
+4. Audit checklist at end of document enumerates every MUST item above as a bullet with a "tested" checkbox for deployer sign-off
+
+**Plans**: TBD
+
+**UI hint**: yes
+
+### Phase 141: Documentation Sweep
+
+**Goal**: Every user-facing doc reflects the two-class posture, the `connect` API surface, and the "default to NUB-RESOURCE" architectural guidance — without rewriting historical changelog bullets
+
+**Depends on**: Phase 139 (central shim/SDK shape must be locked) and Phase 138 (vite-plugin option names finalized). Terminal doc phase.
+
+**Requirements**: DOC-01, DOC-02, DOC-03, DOC-04, DOC-05, DOC-06, DOC-07
+
+**Success Criteria** (what must be TRUE):
+1. Root `README.md` documents the two-class posture, cites `window.napplet.connect`, and includes the "default to NUB-RESOURCE; reach for NUB-CONNECT only when resource NUB can't express what you need" guidance
+2. `packages/nub/README.md` has a `connect` row in its NUB domain table; `packages/vite-plugin/README.md` has strict-CSP documentation removed and `connect` + inline-script-diagnostic documentation added; `packages/shim/README.md` documents the `window.napplet.connect` surface and its graceful-degradation defaults; `packages/sdk/README.md` documents the `connect` namespace, `CONNECT_DOMAIN` const, and `installConnectShim` export
+3. `skills/build-napplet/SKILL.md` is updated for two classes, the connect API, "default to NUB-RESOURCE" guidance, and a cleartext / mixed-content warning
+4. `git diff` on `.planning/PROJECT.md` shows the v0.28.0 "Shipped" bullet is byte-identical before and after this phase (historical changelog preservation per v0.27.0 precedent)
+
+**Plans**: TBD
+
+### Phase 142: Verification & Milestone Close
+
+**Goal**: Every v0.29.0 REQ is observably satisfied; the monorepo is green across all 14 packages; cross-repo hygiene is clean; changeset + downstream-shell tracking items are landed
+
+**Depends on**: Every prior phase (Phases 135-141). Terminal verification gate.
+
+**Requirements**: VER-01, VER-02, VER-03, VER-04, VER-05, VER-06, VER-07, VER-08, VER-09, VER-10
+
+**Success Criteria** (what must be TRUE):
+1. `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages with the connect subpath present
+2. Tree-shake harness (extending v0.26.0 VER-03 / v0.28.0 VER-01) includes a "types-only connect consumer" case; asserted bundle output contains zero `installConnectShim` and zero `registerNub` emissions
+3. Playwright smokes pass for both grant states: approved → `fetch(granted-url)` succeeds and `fetch(other-url)` emits `securitypolicyviolation`; denied → emitted CSP header has `connect-src 'none'` and `window.napplet.connect.granted === false`
+4. Integration tests pass for aggregateHash content-addressing: `connect` origin list changed with dist files unchanged → aggregateHash flips via the `connect:origins` fold → prior grant auto-invalidated; Class-2 napplet with residual meta CSP → shell refuses to serve with the prescribed diagnostic while Class-1 residual meta CSP is harmless
+5. `grep -r -E '@napplet/|kehto|hyprgate|packages/(nub\|shim\|sdk\|vite-plugin)' <napplet/nubs draft branch>` returns zero matches across NUB-CONNECT + advisory drafts
+6. A changeset exists calling out the v0.29.0 breaking change loudly (strictCsp production path removed/deprecated); downstream-shell-repo tracking issue for v0.29.0 demo napplets exists (Option B carried forward from v0.28.0)
+
+**Plans**: TBD
+
+---
+
+## Summary Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 135. Cross-Repo Spec Work | 0/? | Not started | - |
+| 136. Core Type Surface | 0/? | Not started | - |
+| 137. `@napplet/nub/connect` Subpath Scaffold | 0/? | Not started | - |
+| 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
+| 139. Central Shim + SDK Integration | 0/? | Not started | - |
+| 140. `specs/SHELL-CONNECT-POLICY.md` | 0/? | Not started | - |
+| 141. Documentation Sweep | 0/? | Not started | - |
+| 142. Verification & Milestone Close | 0/? | Not started | - |
+
+---
 
 <details>
 <summary>v0.1.0 Alpha (Phases 1-6) — SHIPPED 2026-03-30</summary>
