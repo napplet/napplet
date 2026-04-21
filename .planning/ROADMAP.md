@@ -91,7 +91,10 @@ Plans:
 3. `perm:strict-csp` is annotated `@deprecated` on `NamespacedCapability` with pointer to `nub:connect` + `nub:class`
 4. `pnpm --filter @napplet/core build` and `pnpm --filter @napplet/core type-check` exit 0 against the updated type surface
 
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 136-01-PLAN.md — Core type surface: add 'connect' + 'class' to NubDomain/NUB_DOMAINS, add `connect` namespace + `class?: number` to NappletGlobal, @deprecated JSDoc on perm:strict-csp
 
 ### Phase 137: `@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffolds
 
@@ -205,7 +208,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
-| 136. Core Type Surface | 0/? | Not started | - |
+| 136. Core Type Surface | 0/1 | Not started | - |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 0/? | Not started | - |
 | 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
 | 139. Central Shim + SDK Integration | 0/? | Not started | - |
