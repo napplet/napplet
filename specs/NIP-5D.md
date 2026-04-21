@@ -112,6 +112,8 @@ Napplets are untrusted code. The shell is trusted. The browser enforces iframe s
 
 Storage isolation, relay access control, and ACL enforcement are defined by their respective NUB specs.
 
+**Class-posture delegation.** NUBs MAY define napplet classes with different security postures delivered through shell-controlled HTTP response headers. Class taxonomy, the mechanism for assigning a class to a napplet, and the wire or header shapes used to express a class are out of scope for this NIP. NUB specs that define class-contributing capabilities document their own posture and their own shell responsibilities; NIP-5D provides only the transport, identity, manifest-negotiation, and capability-query primitives on which such NUB-level machinery can layer.
+
 **Non-Guarantees:** The protocol does NOT protect against a compromised browser, a malicious shell, side-channel attacks, or social engineering.
 
 ## References
