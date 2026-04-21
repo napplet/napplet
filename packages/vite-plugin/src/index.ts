@@ -16,13 +16,6 @@ import type { JSONSchema7 } from 'json-schema';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  buildBaselineCsp,
-  validateStrictCspOptions,
-  assertNoDevLeakage,
-  assertMetaIsFirstHeadChild,
-  type StrictCspOptions,
-} from './csp.js';
 
 /** Configuration options for the NIP-5A manifest plugin. */
 export interface Nip5aManifestOptions {
@@ -54,39 +47,15 @@ export interface Nip5aManifestOptions {
   configSchema?: JSONSchema7 | string;
 
   /**
-   * Strict CSP enforcement (CSP-01). When `true`, emits a 10-directive baseline
-   * policy via `<meta http-equiv="Content-Security-Policy">` injected as the
-   * LITERAL first child of `<head>`. When set to a `StrictCspOptions` object,
-   * allows per-directive source-expression appends to the baseline (extend, not
-   * relax).
+   * @deprecated v0.29.0 — the shell is now the sole CSP authority. This option has NO effect
+   * and will be hard-removed in v0.30.0 (tracked as REMOVE-STRICTCSP). The plugin emits a
+   * one-shot `console.warn` per build when this field is set so existing v0.28.0 consumers
+   * discover the deprecation on upgrade without their `vite.config.ts` breaking.
    *
-   * Baseline (production): default-src 'none'; script-src 'nonce-...' 'self';
-   * connect-src 'none'; img-src blob: data:; font-src blob: data:; style-src 'self';
-   * worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'.
-   *
-   * Dev mode (Vite serve): connect-src is relaxed to
-   * `'self' ws://localhost:* wss://localhost:*` for HMR. Build-time assertion
-   * guarantees the dev relaxation never appears in the production manifest
-   * (Pitfall 18 mitigation).
-   *
-   * Build FAILS if:
-   * - Any `<script>`, `<style>`, or `<link>` element precedes the CSP meta in
-   *   `<head>` (Pitfall 1 — meta CSP only binds elements parsed AFTER it)
-   * - User-supplied options include header-only directives (`frame-ancestors`,
-   *   `sandbox`, `report-uri`, `report-to`) — silently ignored by browsers in
-   *   meta delivery per W3C CSP3 §4.2 (Pitfall 2)
-   * - `script-src` contains `'unsafe-inline'` or `'unsafe-eval'` (Pitfall 19)
-   *
-   * Pairs with shells advertising `shell.supports('perm:strict-csp')` (CAP-03).
-   * The capability identifier is shell-side; this option is napplet-author-side.
-   * Setting this option does NOT itself negotiate the capability — it only
-   * ensures the napplet ships with a policy the browser will enforce when the
-   * shell honors it.
-   *
-   * @see NUB-RESOURCE spec (forthcoming napplet/nubs PR — Phase 132)
-   * @see NIP-5D §Security Considerations (forthcoming — Phase 131)
+   * Typed as `unknown` to remain assignment-compatible with the removed
+   * `boolean | object` shape — any prior value parses cleanly; no branch reads it.
    */
-  strictCsp?: boolean | StrictCspOptions;
+  strictCsp?: unknown;
 }
 
 /** Walk a directory recursively and return all file paths (relative to root). */
@@ -387,14 +356,6 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
   let resolvedSchema: JSONSchema7 | null = null;
   let resolvedSchemaSource: string | null = null;
 
-  // Strict CSP runtime state (CSP-01..07). When `options.strictCsp` is undefined
-  // or false, all CSP-related code paths are inert and the plugin's HTML output
-  // is byte-identical to pre-phase-130 — back-compat for napplets not opting in.
-  let cspNonce: string | null = null;
-  let cspMode: 'dev' | 'prod' = 'prod';
-  let strictCspOptions: StrictCspOptions | undefined = undefined;
-  const strictCspEnabled = options.strictCsp !== undefined && options.strictCsp !== false;
-
   return {
     name: 'vite-plugin-nip5a-manifest',
 
@@ -422,117 +383,56 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         );
       }
 
-      // CSP-04 / CSP-07 — fail-fast validation of user-supplied StrictCspOptions.
-      // Runs in configResolved (earliest hook with full config) so the build
-      // aborts before any HTML emission if the user supplied an invalid policy
-      // override.
-      if (strictCspEnabled) {
-        strictCspOptions = typeof options.strictCsp === 'object' ? options.strictCsp : {};
-        validateStrictCspOptions(strictCspOptions); // throws on header-only or unsafe-*
-        cspMode = config.command === 'serve' ? 'dev' : 'prod';
-        // Generate fresh nonce per build. crypto.randomBytes(16).toString('base64url')
-        // yields 128 bits of entropy (>= W3C CSP3 § Nonce-source minimum). Use
-        // the explicit override if provided (StrictCspOptions.nonce — for tests
-        // / reproducible builds).
-        cspNonce = strictCspOptions.nonce ?? crypto.randomBytes(16).toString('base64url');
-        console.log(`[nip5a-manifest] ${options.nappletType}: strict CSP enabled (mode: ${cspMode})`);
+      // v0.29.0 deprecation shim: `strictCsp` option is @deprecated and has no effect.
+      // Shell is now the sole CSP authority. Warn once per build so upgrading consumers
+      // discover the deprecation without their v0.28.0 vite.config.ts breaking on type-check
+      // or build. Hard removal tracked as REMOVE-STRICTCSP in REQUIREMENTS.md for v0.30.0.
+      // configResolved is called exactly once per plugin invocation by Vite, so this
+      // is effectively once-per-build with no external guard variable needed.
+      if (options.strictCsp !== undefined) {
+        console.warn(
+          '[nip5a-manifest] strictCsp is deprecated in v0.29.0 and has no effect — the shell is now the sole CSP authority. Remove this option from your vite.config.ts. See v0.29.0 changelog for migration. (REMOVE-STRICTCSP tracks hard removal in v0.30.0.)',
+        );
       }
     },
 
-    transformIndexHtml: {
-      order: 'pre' as const, // Pitfall 1: run BEFORE Vite's HMR client injection
-      handler(_html: string, ctx: { server?: unknown }): IndexHtmlTransformResult {
-        // dev vs prod fallback — configResolved already set cspMode, but
-        // ctx.server is the authoritative runtime signal (test harnesses may
-        // not call configResolved).
-        const isDev = !!ctx.server;
-        const tags: IndexHtmlTransformResult = [];
+    transformIndexHtml(_html: string, _ctx?: unknown): IndexHtmlTransformResult {
+      const tags: IndexHtmlTransformResult = [];
 
-        // CSP META — MUST be first head child (Pitfall 1 / CSP-02).
-        // injectTo: 'head-prepend' ensures Vite places this BEFORE any other
-        // plugin's head injections, AND combined with order: 'pre' on the hook
-        // itself ensures THIS plugin's head-prepend runs before Vite's own HMR
-        // client head-prepend. closeBundle does the post-build assert.
-        if (strictCspEnabled && cspNonce) {
-          const policyValue = buildBaselineCsp(isDev ? 'dev' : 'prod', cspNonce, strictCspOptions);
-          tags.push({
-            tag: 'meta',
-            attrs: {
-              'http-equiv': 'Content-Security-Policy',
-              content: policyValue,
-            },
-            injectTo: 'head-prepend' as const, // FIRST in head
-          });
-        }
+      // Existing meta tags — preserve byte-identical output for backward
+      // compat with pre-v0.29.0 consumers (minus the now-removed CSP meta).
+      tags.push({
+        tag: 'meta',
+        attrs: { name: 'napplet-aggregate-hash', content: '' },
+        injectTo: 'head' as const,
+      });
+      tags.push({
+        tag: 'meta',
+        attrs: { name: 'napplet-type', content: options.nappletType },
+        injectTo: 'head' as const,
+      });
 
-        // Existing meta tags — preserve byte-identical output for backward
-        // compat. These remain injectTo: 'head' (append, not prepend) so they
-        // land AFTER the CSP meta. The CSP meta MUST be first; everything else
-        // is fine after.
+      if (options.requires && options.requires.length > 0) {
         tags.push({
           tag: 'meta',
-          attrs: { name: 'napplet-aggregate-hash', content: '' },
+          attrs: { name: 'napplet-requires', content: options.requires.join(',') },
           injectTo: 'head' as const,
         });
+      }
+
+      if (resolvedSchema !== null) {
         tags.push({
           tag: 'meta',
-          attrs: { name: 'napplet-type', content: options.nappletType },
+          attrs: { name: 'napplet-config-schema', content: JSON.stringify(resolvedSchema) },
           injectTo: 'head' as const,
         });
+      }
 
-        if (options.requires && options.requires.length > 0) {
-          tags.push({
-            tag: 'meta',
-            attrs: { name: 'napplet-requires', content: options.requires.join(',') },
-            injectTo: 'head' as const,
-          });
-        }
-
-        if (resolvedSchema !== null) {
-          tags.push({
-            tag: 'meta',
-            attrs: { name: 'napplet-config-schema', content: JSON.stringify(resolvedSchema) },
-            injectTo: 'head' as const,
-          });
-        }
-
-        return tags;
-      },
+      return tags;
     },
 
     async closeBundle() {
       const distPath = path.resolve(outDir);
-
-      // CSP-03 / Pitfall 1 — post-build assertion that the CSP meta is the
-      // literal first child of <head>. Runs BEFORE the manifest-signing branch
-      // (which gates on VITE_DEV_PRIVKEY_HEX) because strict CSP enforcement
-      // is independent of manifest signing — a napplet author may opt into
-      // strict CSP without configuring a manifest privkey, and the build-time
-      // gates MUST still fire. The transformIndexHtml hook with `order: 'pre'`
-      // + `injectTo: 'head-prepend'` SHOULD have placed the meta correctly,
-      // but we MUST verify on disk because plugin-order interactions with
-      // other plugins are not contractually guaranteed by Vite. This is the
-      // load-bearing build-time gate: if any other plugin sneaks something in
-      // before our CSP meta, the browser would silently parse-and-execute the
-      // early element WITHOUT the policy in force (project-killer per
-      // Pitfall 1).
-      const indexPathForCsp = path.join(distPath, 'index.html');
-      if (strictCspEnabled && fs.existsSync(indexPathForCsp)) {
-        const finalHtml = fs.readFileSync(indexPathForCsp, 'utf-8');
-        assertMetaIsFirstHeadChild(finalHtml); // throws on Pitfall 1 violation
-        // CSP-05 / Pitfall 18 — production manifest MUST NOT contain ws:// or
-        // wss:// anywhere in the CSP. Extract the policy from the meta tag
-        // and check. The content attribute is double-quoted (Vite-emitted)
-        // and itself contains single quotes (e.g. 'none', 'self'), so the
-        // capture group accepts any non-double-quote character — using
-        // [^"'] would truncate at the first single quote and miss ws:// in
-        // the tail (Rule 1 bug fix found via Phase 130 smoke test Case 3).
-        const cspMatch = /<meta\s+http-equiv\s*=\s*"Content-Security-Policy"\s+content\s*=\s*"([^"]+)"/i.exec(finalHtml);
-        if (cspMatch) {
-          assertNoDevLeakage(cspMatch[1], cspMode); // throws if prod policy contains ws://
-        }
-        console.log(`[nip5a-manifest] ${options.nappletType}: strict CSP verified (meta-first + no-dev-leak)`);
-      }
 
       const privkeyHex = process.env.VITE_DEV_PRIVKEY_HEX;
       if (!privkeyHex) {
