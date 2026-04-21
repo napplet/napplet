@@ -199,8 +199,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 141-01-PLAN.md — Root README + nub + shim + sdk READMEs + SKILL.md (5 files; additive surgical edits)
-- [ ] 141-02-PLAN.md — packages/vite-plugin/README.md rewrite (strictCsp deprecated → connect option + diagnostics)
+- [x] 141-01-PLAN.md — Root README + nub + shim + sdk READMEs + SKILL.md (5 files; additive surgical edits)
+- [x] 141-02-PLAN.md — packages/vite-plugin/README.md rewrite (strictCsp deprecated → connect option + diagnostics)
 
 ### Phase 142: Verification & Milestone Close
 
@@ -234,7 +234,7 @@ Plans:
 | 138. `@napplet/vite-plugin` Surgery | 3/3 | Complete    | 2026-04-21 |
 | 139. Central Shim + SDK Integration | 1/1 | Complete    | 2026-04-21 |
 | 140. Shell-Deployer Policy Docs | 2/2 | Complete    | 2026-04-21 |
-| 141. Documentation Sweep | 0/? | Not started | - |
+| 141. Documentation Sweep | 2/2 | Complete   | 2026-04-21 |
 | 142. Verification & Milestone Close | 0/? | Not started | - |
 
 ---

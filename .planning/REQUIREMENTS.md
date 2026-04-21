@@ -90,13 +90,13 @@
 
 ### Documentation Sweep
 
-- [ ] **DOC-01**: Update root `README.md` for two-class posture, connect API, and "default to NUB-RESOURCE; reach for NUB-CONNECT only when resource NUB can't express what you need" guidance
-- [ ] **DOC-02**: Update `packages/nub/README.md` to add `connect` row to the NUB domain table; note types-only vs full-surface distinction
-- [ ] **DOC-03**: Update `packages/vite-plugin/README.md` — remove strict-CSP documentation; add `connect` option documentation; add inline-script-diagnostic documentation
-- [ ] **DOC-04**: Update `packages/shim/README.md` to document `window.napplet.connect` surface and graceful-degradation defaults
-- [ ] **DOC-05**: Update `packages/sdk/README.md` to document the `connect` namespace, `CONNECT_DOMAIN` constant, and `installConnectShim` export
-- [ ] **DOC-06**: Update `skills/build-napplet/SKILL.md` for two classes, connect API, "default to NUB-RESOURCE" guidance, and cleartext / mixed-content warning
-- [ ] **DOC-07**: Preserve v0.28.0 historical changelog bullets byte-identical (v0.27.0 precedent)
+- [x] **DOC-01**: Update root `README.md` for two-class posture, connect API, and "default to NUB-RESOURCE; reach for NUB-CONNECT only when resource NUB can't express what you need" guidance
+- [x] **DOC-02**: Update `packages/nub/README.md` to add `connect` row to the NUB domain table; note types-only vs full-surface distinction
+- [x] **DOC-03**: Update `packages/vite-plugin/README.md` — remove strict-CSP documentation; add `connect` option documentation; add inline-script-diagnostic documentation
+- [x] **DOC-04**: Update `packages/shim/README.md` to document `window.napplet.connect` surface and graceful-degradation defaults
+- [x] **DOC-05**: Update `packages/sdk/README.md` to document the `connect` namespace, `CONNECT_DOMAIN` constant, and `installConnectShim` export
+- [x] **DOC-06**: Update `skills/build-napplet/SKILL.md` for two classes, connect API, "default to NUB-RESOURCE" guidance, and cleartext / mixed-content warning
+- [x] **DOC-07**: Preserve v0.28.0 historical changelog bullets byte-identical (v0.27.0 precedent)
 
 ### Verification & Milestone Close
 
@@ -207,13 +207,13 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | POLICY-08 | Phase 140 | Complete |
 | POLICY-09 | Phase 140 | Complete |
 | POLICY-10 | Phase 140 | Complete |
-| DOC-01 | Phase 141 | Pending |
-| DOC-02 | Phase 141 | Pending |
-| DOC-03 | Phase 141 | Pending |
-| DOC-04 | Phase 141 | Pending |
-| DOC-05 | Phase 141 | Pending |
-| DOC-06 | Phase 141 | Pending |
-| DOC-07 | Phase 141 | Pending |
+| DOC-01 | Phase 141 | Complete |
+| DOC-02 | Phase 141 | Complete |
+| DOC-03 | Phase 141 | Complete |
+| DOC-04 | Phase 141 | Complete |
+| DOC-05 | Phase 141 | Complete |
+| DOC-06 | Phase 141 | Complete |
+| DOC-07 | Phase 141 | Complete |
 | VER-01 | Phase 142 | Pending |
 | VER-02 | Phase 142 | Pending |
 | VER-03 | Phase 142 | Pending |
