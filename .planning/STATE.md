@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: executing
-stopped_at: "Completed 137-01-PLAN.md (Plan 01: connect/types.ts + class/types.ts types-only scaffolds; NUB-01 + CLASS-01 satisfied; normalizer 28/28 smoke tests pass)"
-last_updated: "2026-04-21T13:47:33.429Z"
+stopped_at: Completed 137-02-PLAN.md
+last_updated: "2026-04-21T13:55:28.907Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 ## Current Position
 
 Phase: 137 (NUB Subpath Scaffolds) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-21
 
@@ -88,6 +88,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T13:47:33.426Z
-Stopped at: Completed 137-01-PLAN.md (Plan 01: connect/types.ts + class/types.ts types-only scaffolds; NUB-01 + CLASS-01 satisfied; normalizer 28/28 smoke tests pass)
+Last session: 2026-04-21T13:55:28.904Z
+Stopped at: Completed 137-02-PLAN.md
 Resume: Phase-level verify_phase_goal for Phase 136, then Phase 137 (`@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffolds)
