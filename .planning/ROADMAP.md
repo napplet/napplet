@@ -220,7 +220,12 @@ Plans:
 7. `grep -r -E '@napplet/|kehto|hyprgate|packages/(nub\|shim\|sdk\|vite-plugin)' <napplet/nubs draft branch>` returns zero matches across NUB-CONNECT, NUB-CLASS, NUB-CLASS-1, NUB-CLASS-2 drafts
 8. A changeset exists calling out the v0.29.0 breaking change loudly (strictCsp production path removed/deprecated); downstream-shell-repo tracking issue for v0.29.0 demo napplets exists (Option B carried forward from v0.28.0)
 
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 142-01-PLAN.md — Terminal gates: build/type-check/zero-grep/changeset/doc-check (VER-01, VER-02, VER-08, VER-09, VER-10)
+- [ ] 142-02-PLAN.md — In-repo vitest tests: tree-shake harness + aggregateHash + class wire + graceful degradation + cross-NUB invariant (VER-03, VER-06, VER-11, VER-12, VER-13)
+- [ ] 142-03-PLAN.md — Documented Playwright fixtures (VER-04, VER-05, VER-07) + milestone-close docs
 
 ---
 
