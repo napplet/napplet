@@ -116,7 +116,7 @@ Plans:
 Plans:
 - [x] 137-01-PLAN.md — connect/types.ts + class/types.ts (types + shared normalizeConnectOrigin + ClassAssignedMessage wire type)
 - [x] 137-02-PLAN.md — connect/{shim,sdk,index}.ts + class/{shim,sdk,index}.ts (6 files: meta-tag-reader + wire-handler triads)
-- [ ] 137-03-PLAN.md — package.json + tsup.config.ts subpath exports (46 total) + build + type-check + tree-shake prerequisite
+- [x] 137-03-PLAN.md — package.json + tsup.config.ts subpath exports (46 total) + build + type-check + tree-shake prerequisite
 
 ### Phase 138: `@napplet/vite-plugin` Surgery
 
@@ -214,7 +214,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
 | 136. Core Type Surface | 1/1 | Complete    | 2026-04-21 |
-| 137. `@napplet/nub/connect` Subpath Scaffold | 2/3 | In Progress|  |
+| 137. `@napplet/nub/connect` Subpath Scaffold | 3/3 | Complete   | 2026-04-21 |
 | 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
 | 139. Central Shim + SDK Integration | 0/? | Not started | - |
 | 140. `specs/SHELL-CONNECT-POLICY.md` | 0/? | Not started | - |

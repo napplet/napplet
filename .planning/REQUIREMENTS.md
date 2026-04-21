@@ -34,9 +34,9 @@
 - [x] **NUB-02**: Create `shim.ts` with `installConnectShim()` that reads `<meta name="napplet-connect-granted">`, parses whitespace-separated origins, and populates `window.napplet.connect` with readonly-getter state (default `{granted: false, origins: []}` when meta absent)
 - [x] **NUB-03**: Create `sdk.ts` with thin readonly-getter wrappers (`connectGranted()`, `connectOrigins()`) — OR omit if design lands on types-only exposure like theme NUB (decide during plan phase)
 - [x] **NUB-04**: Create `index.ts` barrel re-exporting types + shim + SDK, plus `registerNub(DOMAIN, noop)` side-effect on import
-- [ ] **NUB-05**: Add 4 subpath exports to `packages/nub/package.json`: `./connect`, `./connect/types`, `./connect/shim`, `./connect/sdk`
-- [ ] **NUB-06**: Add 4 entry points to `packages/nub/tsup.config.ts` for the connect subpath files
-- [ ] **NUB-07**: Tree-shaking contract: `@napplet/nub/connect/types` consumed via `import type` emits zero runtime code (matches v0.26.0 theme-NUB bundle-size proof)
+- [x] **NUB-05**: Add 4 subpath exports to `packages/nub/package.json`: `./connect`, `./connect/types`, `./connect/shim`, `./connect/sdk`
+- [x] **NUB-06**: Add 4 entry points to `packages/nub/tsup.config.ts` for the connect subpath files
+- [x] **NUB-07**: Tree-shaking contract: `@napplet/nub/connect/types` consumed via `import type` emits zero runtime code (matches v0.26.0 theme-NUB bundle-size proof)
 
 ### `@napplet/nub/class` Subpath (`packages/nub/src/class/`)
 
@@ -44,8 +44,8 @@
 - [x] **CLASS-02**: Create `shim.ts` with `installClassShim()` that registers a dispatcher handler for `class.assigned` envelopes; on receipt, writes the assigned number to `window.napplet.class` (readonly getter); leaves `window.napplet.class` as `undefined` until the wire arrives; idempotent re-assignment (last write wins) for future dynamic-class extension
 - [x] **CLASS-03**: Create `sdk.ts` with thin readonly-getter wrapper (`getClass()`) — optional parallel to connect/sdk.ts; may omit if design lands on types-only exposure (decide during plan phase)
 - [x] **CLASS-04**: Create `index.ts` barrel re-exporting types + shim + SDK, plus `registerNub(DOMAIN, handler)` side-effect registering the class.assigned handler
-- [ ] **CLASS-05**: Add 4 subpath exports to `packages/nub/package.json`: `./class`, `./class/types`, `./class/shim`, `./class/sdk`, plus 4 matching entry points in `packages/nub/tsup.config.ts`
-- [ ] **CLASS-06**: Tree-shaking contract: `@napplet/nub/class/types` consumed via `import type` emits zero runtime code (matches connect + theme NUB precedent)
+- [x] **CLASS-05**: Add 4 subpath exports to `packages/nub/package.json`: `./class`, `./class/types`, `./class/shim`, `./class/sdk`, plus 4 matching entry points in `packages/nub/tsup.config.ts`
+- [x] **CLASS-06**: Tree-shaking contract: `@napplet/nub/class/types` consumed via `import type` emits zero runtime code (matches connect + theme NUB precedent)
 
 ### `@napplet/vite-plugin` Surgery (`packages/vite-plugin/`)
 
@@ -178,9 +178,9 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | NUB-02 | Phase 137 | Complete |
 | NUB-03 | Phase 137 | Complete |
 | NUB-04 | Phase 137 | Complete |
-| NUB-05 | Phase 137 | Pending |
-| NUB-06 | Phase 137 | Pending |
-| NUB-07 | Phase 137 | Pending |
+| NUB-05 | Phase 137 | Complete |
+| NUB-06 | Phase 137 | Complete |
+| NUB-07 | Phase 137 | Complete |
 | VITE-01 | Phase 138 | Pending |
 | VITE-02 | Phase 138 | Pending |
 | VITE-03 | Phase 138 | Pending |
