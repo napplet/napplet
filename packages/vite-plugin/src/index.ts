@@ -18,6 +18,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { normalizeConnectOrigin } from '@napplet/nub/connect/types';
 
+/**
+ * Synthetic xTag paths — folded into `aggregateHash` but excluded from the
+ * `['x', ...]` tag projection on the signed manifest. Each entry is a pseudo
+ * path in `<nub>:<kind>` format; the colon prevents collision with real
+ * dist-relative file paths on all platforms.
+ *
+ * Exported for testability and as the single extension point: future synthetic
+ * xTags (new NUBs folding bytes into aggregateHash) MUST add their pseudo-path
+ * here rather than adding a sibling hardcoded filter. (Mitigates BUILD-P3 drift.)
+ */
+export const SYNTHETIC_XTAG_PATHS: ReadonlySet<string> = new Set([
+  'config:schema',
+  'connect:origins',
+]);
+
 /** Configuration options for the NIP-5A manifest plugin. */
 export interface Nip5aManifestOptions {
   /** Napplet type/dtag identifier (e.g., 'feed', 'chat'). Used as the NIP-5A 'd' tag and injected as napplet-type meta attribute. */
@@ -57,6 +72,52 @@ export interface Nip5aManifestOptions {
    * `boolean | object` shape — any prior value parses cleanly; no branch reads it.
    */
   strictCsp?: unknown;
+
+  /**
+   * Direct-network-access origins this napplet intends to reach from the sandbox
+   * (NUB-CONNECT). Each entry is an **origin** — scheme + host + optional
+   * non-default port — validated against the NUB-CONNECT Origin Format rules
+   * and emitted as one `['connect', <origin>]` tag per origin on the signed
+   * NIP-5A manifest.
+   *
+   * **Origin format rules** (delegated to the shared
+   * {@link normalizeConnectOrigin} validator from `@napplet/nub/connect/types`):
+   * - Scheme MUST be one of `https:` / `wss:` / `http:` / `ws:` (lowercase).
+   * - Host MUST be lowercase. Wildcards (`*`) are not permitted.
+   * - Default ports MUST be omitted (`:443` on `https:`/`wss:`, `:80` on `http:`/`ws:`).
+   * - IDN hosts MUST be Punycode-encoded before emission (`xn--` form, lowercase).
+   *   IPv4 literals are accepted; IPv6 literals are out of v1 scope.
+   * - Path / query / fragment MUST NOT appear.
+   *
+   * **Build-time behaviors:**
+   * 1. Each origin is normalized through the shared validator in `configResolved`;
+   *    violations throw a `[nip5a-manifest]`-prefixed error that chains the
+   *    nub's diagnostic so authors see exactly which origin failed and why.
+   * 2. Normalized origins are folded into `aggregateHash` via the NUB-CONNECT
+   *    canonical fold (lowercase → ASCII-ascending sort → LF-join → UTF-8 →
+   *    SHA-256 → lowercase hex) and pushed as the synthetic xTag entry
+   *    `[<hash>, 'connect:origins']`. Any origin-list change flips
+   *    `aggregateHash`, which auto-invalidates shell grants keyed on
+   *    `(dTag, aggregateHash)`.
+   * 3. One `['connect', <normalized-origin>]` manifest tag is emitted per
+   *    origin in author-declared order, placed between `['x', ...]` tags and
+   *    `['config', ...]` tags on the signed event.
+   * 4. Cleartext origins (`http:` / `ws:`) trigger an informational
+   *    `console.warn` describing browser mixed-content rules. Non-blocking.
+   * 5. When Vite is running in dev mode (`vite serve`), an optional
+   *    `<meta name="napplet-connect-requires" content="...">` tag is injected
+   *    for shell-less local preview. This name is **distinct** from the
+   *    shell-authoritative `napplet-connect-granted` meta — the plugin MUST
+   *    NEVER emit the `granted` name; the shell is the sole writer per
+   *    NUB-CONNECT §Runtime API.
+   *
+   * When omitted or empty, the plugin emits no `connect` tags, performs no
+   * fold, and the napplet is treated as NUB-CLASS-1 (strict / no-user-declared-
+   * origins) by conformant shells.
+   *
+   * @see NUB-CONNECT spec — napplet/nubs#NUB-CONNECT
+   */
+  connect?: string[];
 }
 
 /** Walk a directory recursively and return all file paths (relative to root). */
@@ -356,6 +417,7 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
   let projectRoot: string = process.cwd();
   let resolvedSchema: JSONSchema7 | null = null;
   let resolvedSchemaSource: string | null = null;
+  let normalizedConnect: string[] = [];
 
   return {
     name: 'vite-plugin-nip5a-manifest',
@@ -394,6 +456,46 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         console.warn(
           '[nip5a-manifest] strictCsp is deprecated in v0.29.0 and has no effect — the shell is now the sole CSP authority. Remove this option from your vite.config.ts. See v0.29.0 changelog for migration. (REMOVE-STRICTCSP tracks hard removal in v0.30.0.)',
         );
+      }
+
+      // VITE-03 / VITE-04 / VITE-09: NUB-CONNECT origin declaration.
+      //
+      // Validate each origin through the shared `normalizeConnectOrigin()` from
+      // `@napplet/nub/connect/types` — this is the single source of truth used
+      // on BOTH the build side (here) and the shell side (at manifest-load
+      // time) per NUB-CONNECT §Origin Format. Chaining the nub's diagnostic
+      // into a `[nip5a-manifest]`-prefixed error keeps the plugin's namespace
+      // visible to authors while preserving the specific reason.
+      //
+      // Cleartext origins (http:/ws:) are legal for localhost dev but warrant
+      // an informational warning because browser mixed-content rules silently
+      // block them from HTTPS shells unless they're localhost/127.0.0.1 (the
+      // secure-context exception). Non-blocking per RUNTIME-P2 mitigation.
+      if (options.connect !== undefined) {
+        if (!Array.isArray(options.connect)) {
+          throw new Error(
+            '[nip5a-manifest] connect option must be an array of origin strings',
+          );
+        }
+        const normalized: string[] = [];
+        for (const origin of options.connect) {
+          try {
+            normalized.push(normalizeConnectOrigin(origin));
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            throw new Error(`[nip5a-manifest] invalid connect origin: ${msg}`);
+          }
+        }
+        normalizedConnect = normalized;
+
+        const cleartext = normalizedConnect.filter(
+          (o) => o.startsWith('http://') || o.startsWith('ws://'),
+        );
+        if (cleartext.length > 0) {
+          console.warn(
+            `[@napplet/vite-plugin] connect includes cleartext origin(s): ${cleartext.join(', ')} — browser mixed-content rules will silently block http:/ws: fetches from HTTPS shells unless the origin is http://localhost or http://127.0.0.1. Some shells refuse cleartext entirely (check \`shell.supports('connect:scheme:http')\`). See NUB-CONNECT for details.`,
+          );
+        }
       }
     },
 
@@ -478,13 +580,18 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       // Build requires tags from plugin options
       const requiresTags = (options.requires ?? []).map((name) => ['requires', name]);
 
-      // Filter the synthetic config:schema entry out of the ['x', ...] tag
-      // projection — the schema participates in aggregateHash but is NOT a
-      // real dist/ file, so emitting it as an x-tag would leak a misleading
-      // file-hash record. The schema is instead surfaced via its dedicated
-      // ['config', ...] tag below.
+      // Filter synthetic xTag entries out of the ['x', ...] tag projection —
+      // these entries participate in aggregateHash but are NOT real dist/
+      // files, so emitting them as x-tags would leak misleading file-hash
+      // records. Synthetic paths live in SYNTHETIC_XTAG_PATHS (module scope)
+      // so adding a new NUB fold doesn't require patching the filter twice.
+      // (VITE-07 / BUILD-P3 mitigation.)
+      //
+      // Each synthetic entry surfaces on the manifest via its own dedicated
+      // tag: `config:schema` → `['config', ...]`, `connect:origins` →
+      // `['connect', ...]` (one per origin).
       const manifestXTags = xTags
-        .filter(([, p]) => p !== 'config:schema')
+        .filter(([, p]) => !SYNTHETIC_XTAG_PATHS.has(p))
         .map(([hash, p]) => ['x', hash, p]);
 
       // NUB-CONFIG: dedicated ['config', JSON.stringify(schema)] manifest tag.
