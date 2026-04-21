@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: executing
 stopped_at: Completed 140-02-PLAN.md
-last_updated: "2026-04-21T17:34:37.523Z"
+last_updated: "2026-04-21T17:38:31.364Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 140 (Shell-Deployer Policy Docs) — EXECUTING
-Plan: 2 of 2
+Phase: 141
+Plan: Not started
 Status: Ready to execute
 Last activity: 2026-04-21
 

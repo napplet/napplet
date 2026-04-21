@@ -229,7 +229,7 @@ Plans:
 | 137. `@napplet/nub/connect` Subpath Scaffold | 3/3 | Complete    | 2026-04-21 |
 | 138. `@napplet/vite-plugin` Surgery | 3/3 | Complete    | 2026-04-21 |
 | 139. Central Shim + SDK Integration | 1/1 | Complete    | 2026-04-21 |
-| 140. Shell-Deployer Policy Docs | 2/2 | Complete   | 2026-04-21 |
+| 140. Shell-Deployer Policy Docs | 2/2 | Complete    | 2026-04-21 |
 | 141. Documentation Sweep | 0/? | Not started | - |
 | 142. Verification & Milestone Close | 0/? | Not started | - |
 
