@@ -11,8 +11,8 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 | [@napplet/core](packages/core) | `@napplet/core` | JSON envelope types (`NappletMessage`, `NubDomain`), NUB dispatch infrastructure (`registerNub`, `dispatch`), protocol constants and Nostr types. Imported by all other packages. |
 | [@napplet/shim](packages/shim) | `@napplet/shim` | Side-effect-only window installer for napplet iframes. Importing `@napplet/shim` installs the `window.napplet` global and registers with the shell. Sends JSON envelope messages via postMessage. Zero named exports. |
 | [@napplet/sdk](packages/sdk) | `@napplet/sdk` | Named TypeScript exports wrapping `window.napplet` for bundler consumers. Provides `relay`, `ifc`, `services`, `storage` objects plus NUB message type re-exports. |
-| [@napplet/nub](packages/nub) | `@napplet/nub` | Consolidated NUB package. 10 domain subpaths (relay, storage, ifc, keys, theme, media, notify, identity, config, resource) with barrel + granular (types/shim/sdk) exports. Tree-shakable (`sideEffects: false`). Includes the v0.28.0 `resource` NUB for sandboxed byte fetching. See [packages/nub/README.md](packages/nub/README.md) for the full subpath reference. |
-| [@napplet/vite-plugin](packages/vite-plugin) | `@napplet/vite-plugin` | Vite plugin for NIP-5D manifest generation. Computes per-file SHA-256 hashes, signs a kind 35128 manifest event at build time, and injects `requires` meta tags. v0.28.0+ ships a `strictCsp` option for 10-directive browser-enforced CSP. |
+| [@napplet/nub](packages/nub) | `@napplet/nub` | Consolidated NUB package. 10 domain subpaths (relay, storage, ifc, keys, theme, media, notify, identity, config, resource) with barrel + granular (types/shim/sdk) exports. Tree-shakable (`sideEffects: false`). Includes the v0.28.0 `resource` NUB for sandboxed byte fetching and the v0.29.0 `connect` + `class` NUBs for user-gated direct network access and shell-assigned security class. See [packages/nub/README.md](packages/nub/README.md) for the full subpath reference. |
+| [@napplet/vite-plugin](packages/vite-plugin) | `@napplet/vite-plugin` | Vite plugin for NIP-5D manifest generation. Computes per-file SHA-256 hashes, signs a kind 35128 manifest event at build time, and injects `requires` meta tags. v0.29.0 ships a `connect?: string[]` option for user-gated direct-network origin declaration and a fail-loud inline-script diagnostic; the `strictCsp` option from v0.28.0 is `@deprecated` (accepts-but-warns) since the shell is now the sole runtime CSP authority. |
 
 ## Architecture
 
@@ -34,6 +34,8 @@ Shell (any compatible shell)                @napplet/shim
   ├── JSON envelope message routing          window.napplet.ifc   (emit/on)
   ├── Identity via message.source            window.napplet.storage (get/set/remove)
   ├── ACL enforcement                        window.napplet.resource (bytes/bytesAsObjectURL)
+  ├── Class assignment (class.assigned)      window.napplet.connect  (granted/origins)
+  ├── Connect grant injection (CSP + meta)   window.napplet.class    (shell-assigned integer)
   ├── NUB dispatch (relay/signer/storage)    window.napplet.shell.supports(domain)
   └── IFC routing
 
@@ -58,6 +60,25 @@ v0.28.0 converts napplet iframe security from ambient trust ("napplets shouldn't
 - **Shell-deployer guide:** `specs/SHELL-RESOURCE-POLICY.md` checklists the private-IP block list, sidecar opt-in, SVG caps, MIME allowlist, and redirect chain limits.
 
 Demo napplets exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer) live in the **downstream shell repo** — this monorepo ships only the wire + SDK surface.
+
+## v0.29.0 — NUB-CONNECT + Shell as CSP Authority
+
+v0.29.0 adds two new NUBs that together let napplets explicitly request direct browser-level network access while keeping the shell as the sole runtime CSP authority:
+
+- **NUB-CLASS** — the shell assigns every napplet an integer class at iframe-ready time via a single `class.assigned` postMessage envelope. Napplets read `window.napplet.class` (`number | undefined`). The class selects a posture from the `NUB-CLASS-$N` sub-track; v0.29.0 ships two track members.
+- **NUB-CLASS-1** — default strict baseline. CSP posture: `connect-src 'none'`. Triggered when the napplet manifest declares no class-contributing NUB tags. Shell sends `class.assigned` with `class: 1`. No consent prompt.
+- **NUB-CLASS-2** — user-approved explicit-origin posture. CSP posture: `connect-src <granted-origins>`. Triggered when the manifest contains `["connect", "<origin>"]` tags AND the user approves at first load per `(dTag, aggregateHash)`. Shell sends `class.assigned` with `class: 2` on approval, or `class: 1` on denial (the denied napplet is served under the NUB-CLASS-1 posture).
+- **NUB-CONNECT** — the manifest-tag + origin-format + runtime-surface NUB that contributes to class determination. Napplets declare origins at build time via `@napplet/vite-plugin`'s `connect: string[]` option; the plugin normalizes, validates, emits one `["connect", "<origin>"]` tag per origin, and folds the normalized origin set into `aggregateHash` via a synthetic `connect:origins` entry so any origin change auto-invalidates prior grants. Napplets read `window.napplet.connect` (`{ granted: boolean; origins: readonly string[] }`). No postMessage wire — grants flow through the runtime CSP header the shell serves plus a shell-injected `<meta name="napplet-connect-granted">` tag read synchronously at shim install.
+- **Inline scripts forbidden** — the shell is now the sole runtime CSP authority. `@napplet/vite-plugin` fails the build on any `<script>` element without a `src` attribute (the CSP baseline all shells enforce is `script-src 'self'`).
+
+### Default to NUB-RESOURCE; reach for NUB-CONNECT only when necessary
+
+Default to NUB-RESOURCE for avatars, static assets, one-shot byte fetches, and bech32 resolution. Reach for NUB-CONNECT only when you need: POST/PUT/PATCH methods, WebSocket/SSE, custom headers, long-lived connections, streaming responses, or third-party libraries that call `fetch()` directly and aren't reasonable to refactor.
+
+Declaring a `connect` origin is a tax (user-facing prompt, full trust vote) — earn it by needing what NUB-RESOURCE can't give you. The shell has zero browser-level hook to observe, filter, or rate-limit post-grant traffic between a napplet and an approved origin; that is the fundamental tradeoff of NUB-CONNECT versus NUB-RESOURCE's shell-mediated model.
+
+- **Specs:** `NUB-CLASS.md`, `NUB-CLASS-1.md`, `NUB-CLASS-2.md`, and `NUB-CONNECT.md` are drafted at `napplet/nubs`; `specs/NIP-5D.md` carries a generic class-delegation paragraph.
+- **Shell-deployer guides:** [`specs/SHELL-CONNECT-POLICY.md`](specs/SHELL-CONNECT-POLICY.md) + [`specs/SHELL-CLASS-POLICY.md`](specs/SHELL-CLASS-POLICY.md) checklist the HTTP-responder precondition, residual meta-CSP refuse-to-serve requirement, consent-prompt MUSTs, grant-persistence key, revocation UX, class-determination authority, wire timing, and the cross-NUB invariant (`class === 2` iff `connect.granted === true`).
 
 ## Origin
 

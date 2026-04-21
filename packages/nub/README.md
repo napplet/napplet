@@ -1,6 +1,6 @@
 # @napplet/nub
 
-> All 10 napplet NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config, resource) as layered subpath exports.
+> All 12 napplet NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config, resource, connect, class) as layered subpath exports.
 
 ## Install
 
@@ -63,7 +63,7 @@ installRelayShim(nappletWindow, {
 });
 ```
 
-## 10 Domains
+## 12 Domains
 
 Each domain is an independent subpath. Barrel imports bundle types + shim installer + SDK helpers; granular subpaths isolate each surface.
 
@@ -79,6 +79,8 @@ Each domain is an independent subpath. Barrel imports bundle types + shim instal
 | identity | `@napplet/nub/identity` | `@napplet/nub/identity/types` | `@napplet/nub/identity/shim` | `@napplet/nub/identity/sdk` | Read-only user queries (pubkey, metadata) |
 | config | `@napplet/nub/config` | `@napplet/nub/config/types` | `@napplet/nub/config/shim` | `@napplet/nub/config/sdk` | Declarative per-napplet config (schema-driven) |
 | resource | `@napplet/nub/resource` | `@napplet/nub/resource/types` | `@napplet/nub/resource/shim` | `@napplet/nub/resource/sdk` | Sandboxed byte fetching (https/blossom/nostr/data) via `bytes(url) → Blob` |
+| connect | `@napplet/nub/connect` | `@napplet/nub/connect/types` | `@napplet/nub/connect/shim` | `@napplet/nub/connect/sdk` | User-gated direct network access (state-only; no wire — grants flow via CSP + discovery meta tag) |
+| class | `@napplet/nub/class` | `@napplet/nub/class/types` | `@napplet/nub/class/shim` | `@napplet/nub/class/sdk` | Shell-assigned integer class via `class.assigned` wire envelope; exposes `window.napplet.class` |
 
 ## Subpath Patterns
 
@@ -95,12 +97,12 @@ Each domain exposes up to three patterns (four including the barrel). Pick the s
 - Every subpath in the `exports` map is a discrete entry point; a bundler importing only `@napplet/nub/relay/types` produces zero bytes from the other 8 domains
 - Verified end-to-end in Phase 121 with a minimal-consumer smoke test
 
-The `exports` map in `package.json` declares 38 entry points:
+The `exports` map in `package.json` declares 46 entry points:
 
-- 10 domain barrels (`@napplet/nub/<domain>`)
-- 10 granular types entries (`@napplet/nub/<domain>/types`)
-- 9 granular shim entries (theme omitted — see [Theme Exception](#theme-exception))
-- 9 granular sdk entries (theme omitted — see [Theme Exception](#theme-exception))
+- 12 domain barrels (`@napplet/nub/<domain>`)
+- 12 granular types entries (`@napplet/nub/<domain>/types`)
+- 11 granular shim entries (theme omitted — see [Theme Exception](#theme-exception))
+- 11 granular sdk entries (theme omitted — see [Theme Exception](#theme-exception))
 
 Each entry maps to its own pre-built `.js` + `.d.ts` pair under `dist/<domain>/<surface>.{js,d.ts}`. No root `.` key exists, and there is no top-level `main`/`module`/`types` field — attempting `import '@napplet/nub'` fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` by design.
 
@@ -139,6 +141,51 @@ Errors arrive as one of 8 typed codes: `not-found`, `blocked-by-policy`, `timeou
 See [NUB-RESOURCE](https://github.com/napplet/nubs) for the normative spec, the
 default shell resource policy, and the SVG rasterization MUSTs.
 
+## Connect + Class NUBs (v0.29.0)
+
+v0.29.0 adds two subpaths that work together to express user-gated direct network access and shell-assigned security class.
+
+### `@napplet/nub/connect`
+
+State-only NUB — NO postMessage wire. Grants flow through the runtime CSP the shell serves with the napplet HTML, plus a shell-injected `<meta name="napplet-connect-granted" content="<space-separated-origins>">` tag read synchronously by the napplet shim at install time.
+
+```ts
+import type { NappletConnect } from '@napplet/nub/connect/types';
+import { installConnectShim, normalizeConnectOrigin } from '@napplet/nub/connect';
+
+// Napplet-side (runs inside the sandboxed iframe)
+// The shim populates window.napplet.connect synchronously at install time.
+if (window.napplet.connect.granted) {
+  const res = await fetch(`${window.napplet.connect.origins[0]}/items`, { method: 'POST', body: '{}' });
+}
+
+// Build-side / shell-side (shared origin validator; throws on invalid input)
+const o = normalizeConnectOrigin('https://api.example.com');   // 'https://api.example.com'
+```
+
+`NappletConnect` is `{ readonly granted: boolean; readonly origins: readonly string[] }`. Default on shells that do not implement `nub:connect`, on denied prompts, or pre-injection: `{ granted: false, origins: [] }` (never `undefined`).
+
+### `@napplet/nub/class`
+
+Wire-driven NUB with a single shell → napplet envelope `class.assigned` (`{ type: 'class.assigned'; id: string; class: number }`). Sent at iframe-ready time, exactly once per napplet lifecycle. The napplet shim writes the received integer to `window.napplet.class` via a `defineProperty` getter.
+
+```ts
+import type { ClassAssignedMessage, NappletClass } from '@napplet/nub/class/types';
+import { installClassShim, getClass } from '@napplet/nub/class';
+
+// Napplet-side (runs inside the sandboxed iframe)
+// installClassShim() registers the class.assigned dispatcher handler via registerNub.
+// Before the envelope arrives, or if the shell does not implement nub:class:
+// window.napplet.class === undefined (never 0, never null).
+if (window.napplet.shell.supports('nub:class') && getClass() === 2) {
+  // NUB-CLASS-2 posture — user approved direct network access.
+}
+```
+
+The class integer is an identifier into the `NUB-CLASS-$N` sub-track (1 = strict baseline, 2 = user-approved explicit-origin). See the NUB-CLASS specs at `napplet/nubs` for posture semantics.
+
+See [NUB-CONNECT](https://github.com/napplet/nubs) and [NUB-CLASS](https://github.com/napplet/nubs) for the normative specs, the canonical `connect:origins` aggregateHash fold, the origin format rules, the consent-flow MUSTs, and the at-most-one-terminal-envelope-per-lifecycle constraint.
+
 ## Migration
 
 Every deprecated `@napplet/nub-<domain>` package is now a 1-line re-export shim of the corresponding `@napplet/nub/<domain>` subpath. Pinned consumers keep working; new code SHOULD use the new path.
@@ -158,6 +205,8 @@ Every deprecated `@napplet/nub-<domain>` package is now a 1-line re-export shim 
 The 9 deprecated packages ship as re-export shims for one release cycle. Removal is tracked as REMOVE-01..03 in a future milestone.
 
 *Note: the `resource` domain (v0.28.0) shipped only via `@napplet/nub/resource`. There is no deprecated `@napplet/nub-resource` package.*
+
+*Note: the `connect` and `class` domains (v0.29.0) shipped only via `@napplet/nub/connect` and `@napplet/nub/class`. There are no deprecated `@napplet/nub-connect` or `@napplet/nub-class` packages.*
 
 ## Optional Peer Dependency
 
