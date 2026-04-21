@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with relay, ifc, storage, keys, media, notify, identity, config, resource, and shell sub-objects
+3. Once registered, `window.napplet` is populated with relay, ifc, storage, keys, media, notify, identity, config, resource, connect, class, and shell sub-objects
 4. No `window.nostr` is installed -- signing and encryption are mediated by the shell via `relay.publish()` and `relay.publishEncrypted()`
 
 ### Installation
@@ -108,6 +108,18 @@ const handle = window.napplet.resource.bytesAsObjectURL('blossom:sha256:e3b0c442
 imgEl.src = handle.url;
 // later: handle.revoke();
 
+// Check the shell-assigned class (undefined if shell doesn't implement nub:class)
+if (window.napplet.shell.supports('nub:class')) {
+  const cls = window.napplet.class;
+  if (cls === 2) { /* user-approved explicit-origin posture */ }
+}
+
+// Use direct network access if the user approved `connect` origins at build time
+if (window.napplet.connect.granted) {
+  const res = await fetch(`${window.napplet.connect.origins[0]}/items`);
+  const data = await res.json();
+}
+
 // Clean up
 sub.close();
 ifcSub.close();
@@ -175,6 +187,8 @@ Messages sent via `window.parent.postMessage(msg, '*')`:
 
 { type: 'resource.bytes', id: string, url: string }
 { type: 'resource.cancel', id: string }
+
+// (NUB-CONNECT has no postMessage wire — grants flow via CSP header + <meta name="napplet-connect-granted">)
 ```
 
 ### Inbound (shell → napplet)
@@ -226,6 +240,8 @@ Messages received via `window.addEventListener('message', ...)`:
 
 { type: 'resource.bytes.result', id: string, blob: Blob, mime: string }
 { type: 'resource.bytes.error', id: string, error: 'not-found' | 'blocked-by-policy' | 'timeout' | 'too-large' | 'unsupported-scheme' | 'decode-failed' | 'network-error' | 'quota-exceeded', message?: string }
+
+{ type: 'class.assigned', id: string, class: number }
 ```
 
 All request/response pairs are correlated by the `id` field. Identity request timeouts after 30 seconds.
@@ -300,6 +316,11 @@ window.napplet = {
     bytes(url, opts?): Promise<Blob>;
     bytesAsObjectURL(url): { url: string; revoke: () => void };
   },
+  connect: {
+    readonly granted: boolean;
+    readonly origins: readonly string[];
+  },
+  class?: number,   // shell-assigned via class.assigned envelope; undefined on shells without nub:class
   shell: {
     supports(capability: NamespacedCapability): boolean;
   },
@@ -419,6 +440,48 @@ if (window.napplet.shell.supports('resource:scheme:blossom')) { /* ... */ }
 if (window.napplet.shell.supports('perm:strict-csp')) { /* shell enforces strict CSP */ }
 ```
 
+### `window.napplet.connect`
+
+User-gated direct network access (NUB-CONNECT). NO postMessage wire — the shim reads `<meta name="napplet-connect-granted" content="<space-separated-origins>">` synchronously at install time. Napplets declare required origins at build time via `@napplet/vite-plugin`'s `connect: string[]` option; the user is prompted by the shell at first load per `(dTag, aggregateHash)`; on approval the shell emits a runtime CSP whose `connect-src` contains the approved origins AND injects the discovery meta tag.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `granted` | `boolean` | `true` when the user approved all declared origins for this `(dTag, aggregateHash)`. `false` on denial, on shells without `nub:connect`, or pre-injection. |
+| `origins` | `readonly string[]` | The user-approved origins (already normalized per the shared `normalizeConnectOrigin` validator). Empty on denial. |
+
+**Graceful-degradation default:** `window.napplet.connect === { granted: false, origins: [] }` on shells that do not advertise `nub:connect` or have not injected the meta tag. The property is NEVER `undefined`.
+
+```ts
+if (window.napplet.shell.supports('nub:connect') && window.napplet.connect.granted) {
+  // Direct fetch / WebSocket to window.napplet.connect.origins is permitted.
+} else {
+  // Fall back to window.napplet.resource.bytes(url) for read-only byte fetches.
+}
+```
+
+Capability detection (operator-policy refinements):
+
+```ts
+if (window.napplet.shell.supports('connect:scheme:http')) { /* cleartext http: origins permitted */ }
+if (window.napplet.shell.supports('connect:scheme:ws'))   { /* cleartext ws: origins permitted */ }
+```
+
+### `window.napplet.class`
+
+Shell-assigned integer class (NUB-CLASS). The shell sends exactly one `class.assigned` envelope per napplet lifecycle at iframe-ready time; the shim writes the integer to `window.napplet.class` via a `defineProperty` getter.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `class` | `number \| undefined` | The class integer from the `class.assigned` envelope. `undefined` until the envelope arrives, or permanently `undefined` on shells that do not implement `nub:class`. |
+
+**Graceful-degradation default:** `window.napplet.class === undefined` on shells without `nub:class`, or before the wire envelope arrives. Never `0`, never `null`. Napplets SHOULD check `shell.supports('nub:class')` before branching on the value to distinguish "shell doesn't implement" from "envelope hasn't arrived yet".
+
+v0.29.0 ships two track members:
+- `class: 1` → NUB-CLASS-1 (strict baseline; `connect-src 'none'`)
+- `class: 2` → NUB-CLASS-2 (user-approved explicit-origin; `connect-src <granted-origins>`)
+
+The class integer is informational to the napplet; the shell enforces the posture via the CSP it serves with the HTML. Napplet code MUST NOT attempt to infer its own class from observed CSP or other signals — only `class.assigned` is authoritative.
+
 ### `window.napplet.shell`
 
 Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain or permission.
@@ -442,7 +505,7 @@ Importing `@napplet/shim` activates a global Window type augmentation:
 // This side-effect import gives TypeScript full autocompletion for window.napplet.*
 import '@napplet/shim';
 
-// TypeScript knows about window.napplet.relay, .ifc, .storage, .keys, .media, .notify, .identity, .resource, .shell
+// TypeScript knows about window.napplet.relay, .ifc, .storage, .keys, .media, .notify, .identity, .resource, .connect, .class, .shell
 window.napplet.relay.subscribe({ kinds: [1] }, (event) => {
   // event is typed as NostrEvent
 });
