@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
-status: ready-for-audit
-stopped_at: Phase 142 plan-complete — all 13 VER-IDs (VER-01..13) verified PASS. 3 documented Playwright fixtures authored for downstream shell repo (VER-04, VER-05, VER-07). 4 new in-repo vitest files land (connect/shim, class/shim, connect/aggregate-hash, class/cross-nub-invariant). v0.29.0 changeset authored. STATE/PROJECT/REQUIREMENTS/ROADMAP flipped for milestone audit. Ready for /gsd:audit-milestone v0.29.0.
-last_updated: "2026-04-21T18:53:11.050Z"
+status: Milestone ready for audit
+stopped_at: Completed 142-03-PLAN.md (Phase 142 TERMINAL-COMPLETE)
+last_updated: "2026-04-21T18:54:24.723Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 142 (Verification & Milestone Close) — TERMINAL-COMPLETE
-Plan: 3 of 3 (complete)
+Phase: 142
+Plan: Not started
 Status: Milestone ready for audit
 Last activity: 2026-04-21
 
