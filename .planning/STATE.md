@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: verifying
 stopped_at: Completed 137-03-PLAN.md
-last_updated: "2026-04-21T14:01:08.891Z"
+last_updated: "2026-04-21T14:04:59.232Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 137 (NUB Subpath Scaffolds) — EXECUTING
-Plan: 3 of 3
+Phase: 138
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-21
 
