@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
-status: Roadmap created — ready for planning
-stopped_at: "Phase 135 (Cross-Repo Spec Work) pending plan"
-last_updated: "2026-04-21T12:30:00.000Z"
+status: Roadmap created — ready for Phase 135 planning
+stopped_at: "Phase 135 Cross-Repo Spec Work context written; NUB-CLASS added to v0.29.0 scope (wire-based class authority)"
+last_updated: "2026-04-21T13:30:00.000Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
@@ -56,7 +56,7 @@ Last activity: 2026-04-21 — ROADMAP.md authored for v0.29.0
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
 - v0.27.0: Runtime API surface uses IFC terminology (`window.napplet.ifc`, `@napplet/sdk` `ifc` export); hard break, no backward-compat alias
 - v0.28.0: Browser-enforced isolation via strict CSP; single `resource.bytes(url)` primitive with scheme-pluggable URL space; `data:` decoded inline; sidecar pre-resolution opt-in default OFF for privacy; shell-side SVG rasterization MUST; `perm:strict-csp` capability orthogonal to `nub:resource`; demos delegated to downstream shell repo (Option B)
-- v0.29.0: Shell is sole runtime CSP authority (every napplet, not just network-access ones); NUB-CONNECT expresses user-gated direct network access via manifest `connect` tags; napplet-class distinction (Class 1 strict / Class 2 network-access) delegated out of NIP-5D into the NUBs track; inline scripts forbidden for all napplets under the unified CSP model; grants keyed on `(dTag, aggregateHash)` with `connect` origins folded into aggregateHash via a synthetic `connect:origins` entry
+- v0.29.0: Shell is sole runtime CSP authority (every napplet). Two new NUBs: NUB-CLASS (abstract posture authority via wire `class.assigned`, `window.napplet.class`, owns `NUB-CLASS-$N` sub-track) and NUB-CONNECT (user-gated direct network access via manifest `connect` tags, self-sufficient `window.napplet.connect.{granted,origins}` surface). Napplet-class distinction removed entirely from NIP-5D into NUB-CLASS's sub-track. Class-1 = strict baseline; Class-2 = user-approved explicit-origin CSP; each defined as its own doc (`NUB-CLASS-1.md`, `NUB-CLASS-2.md`). Inline scripts forbidden for all napplets under the unified CSP model. Grants keyed on `(dTag, aggregateHash)` with `connect` origins folded into aggregateHash via synthetic `connect:origins` entry. NUBs expose independent runtime surfaces (no cross-NUB state collapse); cross-NUB invariants documented as shell responsibilities.
 
 ### Open Decisions for Plan Phases
 

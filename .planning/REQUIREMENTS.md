@@ -1,25 +1,32 @@
 # Milestone v0.29.0 Requirements — NUB-CONNECT + Shell as CSP Authority
 
+> **Architecture note:** v0.29.0 introduces **two** NUBs — NUB-CLASS (abstract posture authority, wire-based class assignment) and NUB-CONNECT (user-gated direct network access). NUB-CLASS owns the napplet class-track via a sub-track of NUB-CLASS-$N documents. NUB-CONNECT is one of potentially several NUBs that contribute to class determination. Each NUB is voluntarily implementable and exposes a self-sufficient runtime surface (no cross-NUB state collapse).
+
 ## v1 Requirements
 
 ### Cross-Repo Spec (`napplet/nubs` public repo)
 
-- [ ] **SPEC-01**: Draft NUB-CONNECT.md in napplet/nubs covering manifest tag shape (`["connect", "<origin>"]`), origin format rules (scheme/host/port/path/wildcard/Punycode), consent flow, runtime API (`NappletConnect` interface), capability advertisement (`nub:connect`, `connect:scheme:http`, `connect:scheme:ws`), grant lifecycle (key = `(dTag, aggregateHash)`), security considerations, Class-1 / Class-2 taxonomy, test vectors
+- [ ] **SPEC-01**: Draft NUB-CONNECT.md in napplet/nubs covering manifest tag shape (`["connect", "<origin>"]`), origin format rules (scheme/host/port/path/wildcard/Punycode), consent flow, runtime API (`NappletConnect` interface with `granted: boolean` + `origins: readonly string[]`), capability advertisement (`nub:connect`, `connect:scheme:http`, `connect:scheme:ws`), grant lifecycle (key = `(dTag, aggregateHash)`), security considerations, references to NUB-CLASS-2 as the posture triggered by presence of `connect` tags, test vectors. NUB-CONNECT does NOT redefine Class 1/Class 2 — cites NUB-CLASS-2 by name.
 - [ ] **SPEC-02**: Define canonical aggregateHash fold procedure for `connect:origins` at byte level (lowercase → ASCII sort → `\n`-join no trailing → UTF-8 → SHA-256 → lowercase hex) — normative pseudocode + conformance fixture so build and shell produce byte-identical hashes
 - [ ] **SPEC-03**: Specify IDN handling direction of authority (build converts UTF-8 → Punycode; shell rejects non-Punycode) with test vectors
-- [ ] **SPEC-04**: Author NUBs-track advisory document on how NUBs define napplet classes on top of existing tracks (Class 1 = no opt-in, Class 2 = `connect` tags trigger consent + grant-derived CSP)
-- [ ] **SPEC-05**: Zero-grep hygiene across NUB-CONNECT + advisory drafts: no `@napplet/*` mentions, no `kehto`/`hyprgate`, no private-package names
+- [ ] **SPEC-04**: Draft NUB-CLASS.md in napplet/nubs — establishes the NUB-CLASS track, defines the wire message `class.assigned` (shell → napplet at iframe ready, one terminal envelope per lifecycle with `{ class: number }` payload), defines the napplet-side runtime surface (`window.napplet.class` → `number | undefined`; undefined until wire arrives or if shell doesn't implement the NUB), defines capability `nub:class`, includes an internal section authoring the template + guidance for NUB-CLASS-$N sub-track member documents (CSP posture, manifest prerequisites, shell responsibilities, security considerations format)
+- [ ] **SPEC-05**: Zero-grep hygiene across NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2 drafts: no `@napplet/*` mentions, no `kehto`/`hyprgate`, no private-package names
+- [ ] **SPEC-06**: Draft NUB-CLASS-1.md in napplet/nubs — the strict / no-user-declared-origins posture. CSP shape: baseline with `connect-src 'none'`. Triggers: napplet manifest has no class-contributing NUB tags (current: no `connect` tags). Shell behavior: emit strict CSP header, no consent prompt, send `class.assigned` with `class: 1`.
+- [ ] **SPEC-07**: Draft NUB-CLASS-2.md in napplet/nubs — the user-approved explicit-origin CSP posture. CSP shape: `connect-src <granted-origins>`. Triggers: napplet manifest has `connect` tags AND user approved. Shell behavior: prompt user at first load per `(dTag, aggregateHash)`, persist decision, emit grant-derived CSP header, send `class.assigned` with `class: 2` (or `class: 1` on denial — napplet falls back to strict posture).
+- [ ] **SPEC-08**: Update NUB-CONNECT draft to cite NUB-CLASS-2 by name ("a napplet declaring any `connect` tag takes on the NUB-CLASS-2 posture defined in `NUB-CLASS-2.md`"); remove any inline Class-1/Class-2 redefinition
 
 ### NIP-5D Amendment (`specs/NIP-5D.md`)
 
-- [ ] **NIP5D-01**: Soften "Browser-Enforced Resource Isolation" subsection (lines 115-130) to forward-pointer to NUB-CONNECT, delegating napplet-class distinction out of NIP-5D into the NUBs track
-- [ ] **NIP5D-02**: Keep NIP-5D's transport-only philosophy; do not add class enumeration or CSP emission details inline — NIP-5D points at NUB-CONNECT for these concerns
+- [ ] **NIP5D-01**: Remove or generalize the "Browser-Enforced Resource Isolation" subsection (lines 115-130). Replace with a generic one-paragraph Security Considerations note: "NUBs MAY define napplet classes with different security postures delivered through shell-controlled HTTP response headers; class taxonomy and delivery mechanics are out of scope for this NIP." No NUB names, no class names, no CSP directives inline.
+- [ ] **NIP5D-02**: Remove the `perm:strict-csp` capability-advertisement example; keep the generic `shell.supports(...)` table with `nub:/perm:/svc:` prefixes as an example pattern, but no NUB-flavored examples
 
 ### Core Type Surface (`packages/core/`)
 
-- [ ] **CORE-01**: Add `'connect'` to `NubDomain` union in `envelope.ts` and to `NUB_DOMAINS` array (11 domains total)
+- [ ] **CORE-01**: Add `'connect'` to `NubDomain` union in `envelope.ts` and to `NUB_DOMAINS` array
 - [ ] **CORE-02**: Add `connect: NappletConnect` field to `NappletGlobal` interface in `types.ts`, mirroring the `resource:` block pattern
-- [ ] **CORE-03**: Mark `perm:strict-csp` as `@deprecated` in JSDoc on `NamespacedCapability` type; document supersession by `nub:connect`
+- [ ] **CORE-03**: Mark `perm:strict-csp` as `@deprecated` in JSDoc on `NamespacedCapability` type; document supersession by `nub:connect` + `nub:class`
+- [ ] **CORE-04**: Add `'class'` to `NubDomain` union in `envelope.ts` and to `NUB_DOMAINS` array (12 domains total with connect + class)
+- [ ] **CORE-05**: Add `class?: number` field to `NappletGlobal` interface in `types.ts` — typed as optional because shells may not implement `nub:class`; napplet reads `undefined` when shell doesn't implement the NUB or before `class.assigned` wire arrives
 
 ### `@napplet/nub/connect` Subpath (`packages/nub/src/connect/`)
 
@@ -30,6 +37,15 @@
 - [ ] **NUB-05**: Add 4 subpath exports to `packages/nub/package.json`: `./connect`, `./connect/types`, `./connect/shim`, `./connect/sdk`
 - [ ] **NUB-06**: Add 4 entry points to `packages/nub/tsup.config.ts` for the connect subpath files
 - [ ] **NUB-07**: Tree-shaking contract: `@napplet/nub/connect/types` consumed via `import type` emits zero runtime code (matches v0.26.0 theme-NUB bundle-size proof)
+
+### `@napplet/nub/class` Subpath (`packages/nub/src/class/`)
+
+- [ ] **CLASS-01**: Create `types.ts` with `DOMAIN = 'class'` const, `ClassAssignedMessage` wire type (`{ type: 'class.assigned'; id: string; class: number }`), optional `NappletClass` interface capturing the runtime state shape
+- [ ] **CLASS-02**: Create `shim.ts` with `installClassShim()` that registers a dispatcher handler for `class.assigned` envelopes; on receipt, writes the assigned number to `window.napplet.class` (readonly getter); leaves `window.napplet.class` as `undefined` until the wire arrives; idempotent re-assignment (last write wins) for future dynamic-class extension
+- [ ] **CLASS-03**: Create `sdk.ts` with thin readonly-getter wrapper (`getClass()`) — optional parallel to connect/sdk.ts; may omit if design lands on types-only exposure (decide during plan phase)
+- [ ] **CLASS-04**: Create `index.ts` barrel re-exporting types + shim + SDK, plus `registerNub(DOMAIN, handler)` side-effect registering the class.assigned handler
+- [ ] **CLASS-05**: Add 4 subpath exports to `packages/nub/package.json`: `./class`, `./class/types`, `./class/shim`, `./class/sdk`, plus 4 matching entry points in `packages/nub/tsup.config.ts`
+- [ ] **CLASS-06**: Tree-shaking contract: `@napplet/nub/class/types` consumed via `import type` emits zero runtime code (matches connect + theme NUB precedent)
 
 ### `@napplet/vite-plugin` Surgery (`packages/vite-plugin/`)
 
@@ -48,9 +64,12 @@
 
 - [ ] **SHIM-01**: Import `installConnectShim` from `@napplet/nub/connect/shim` in `packages/shim/src/index.ts`; call at bootstrap; add `connect: { granted, origins }` block to the `window.napplet` literal. No central-dispatch router entry — NUB-CONNECT has no wire messages
 - [ ] **SHIM-02**: Graceful degradation — `window.napplet.connect` MUST default to `{granted: false, origins: []}` (never `undefined`) when shell does not advertise `nub:connect` or does not inject the grant meta tag
+- [ ] **SHIM-03**: Import `installClassShim` from `@napplet/nub/class/shim` in `packages/shim/src/index.ts`; call at bootstrap; add `class: undefined` initial value (readonly getter) to the `window.napplet` literal. Wire dispatcher routes `class.assigned` envelopes to the class shim's handler.
+- [ ] **SHIM-04**: Graceful degradation — `window.napplet.class` MUST be `undefined` (never `0`, never `null`) when shell does not advertise `nub:class` or has not yet sent `class.assigned`; napplets gracefully degrade by checking `shell.supports('nub:class')` before depending on the value
 - [ ] **SDK-01**: Add `connect` namespace block to `packages/sdk/src/index.ts` parallel to `resource`; re-export types from `@napplet/nub/connect`; export `DOMAIN as CONNECT_DOMAIN`; export `installConnectShim`
+- [ ] **SDK-02**: Add `class` namespace block to `packages/sdk/src/index.ts` parallel to `connect`; re-export types from `@napplet/nub/class`; export `DOMAIN as CLASS_DOMAIN`; export `installClassShim`
 
-### Shell-Deployer Policy Document (`specs/SHELL-CONNECT-POLICY.md`)
+### Shell-Deployer Policy Documents (`specs/SHELL-CONNECT-POLICY.md`, `specs/SHELL-CLASS-POLICY.md`)
 
 - [ ] **POLICY-01**: Author `specs/SHELL-CONNECT-POLICY.md` as shell-deployer checklist parallel to `specs/SHELL-RESOURCE-POLICY.md`; non-normative companion to NUB-CONNECT spec
 - [ ] **POLICY-02**: Document HTTP-responder precondition — shell MUST own the response headers for napplet HTML; list acceptable delivery mechanisms (direct serving, HTTP proxy, `blob:` URL with HTML rewrite, `srcdoc`), with per-mode pitfalls (blob has no HTTP headers so CSP meta-as-first-head-child returns; srcdoc `about:srcdoc` origin resolves `'self'` differently; proxy must preserve/rewrite CSP; direct-serve watch CDN caching)
@@ -62,6 +81,12 @@
 - [ ] **POLICY-08**: Document consent-prompt language requirement — MUST capture that grant allows send AND receive with the origin, and that shell has zero visibility into post-grant traffic ("this napplet can talk with foo.com however it wants")
 - [ ] **POLICY-09**: Document explicit N/A items — no private-IP block (browser matches URL literal not resolved IP), no MIME sniffing, no SVG rasterization caps, no redirect chain limits (all are NUB-RESOURCE concerns; NUB-CONNECT has no shell-visibility post-grant)
 - [ ] **POLICY-10**: Zero-grep hygiene on SHELL-CONNECT-POLICY.md — no `@napplet/*` references (this file is in the private SDK repo but must remain citation-safe for the NUBs track)
+- [ ] **POLICY-11**: Author `specs/SHELL-CLASS-POLICY.md` as shell-deployer checklist parallel to `specs/SHELL-CONNECT-POLICY.md`; non-normative companion to NUB-CLASS spec
+- [ ] **POLICY-12**: Document class-determination authority — shell is the sole authority on what class a napplet is assigned; class is determined by which class-contributing NUBs are declared in the manifest combined with any user-consent outcomes; shell MUST send `class.assigned` wire at iframe ready, with at-most-one terminal envelope per napplet lifecycle (dynamic re-classification out of scope for v0.29.0)
+- [ ] **POLICY-13**: Document the wire timing — `class.assigned` MUST be sent AFTER the iframe signals readiness (shim bootstrap complete) and BEFORE the napplet's own code can meaningfully branch on class; recommend coupling to the shim's ready signal
+- [ ] **POLICY-14**: Document the cross-NUB invariant (shell responsibility) — in shells implementing BOTH `nub:connect` and `nub:class`: `class === 2` iff `connect.granted === true` at the time `class.assigned` is sent; shells MUST NOT emit a state where these two signals disagree
+- [ ] **POLICY-15**: Document revocation UX for class-2 napplets — revoking a connect grant MUST trigger either a napplet reload with `class.assigned` `class: 1`, or a shell-side refusal-to-serve until user re-approves; mid-session dynamic class change is out of v0.29.0 scope
+- [ ] **POLICY-16**: Zero-grep hygiene on SHELL-CLASS-POLICY.md — no `@napplet/*` references
 
 ### Documentation Sweep
 
@@ -85,6 +110,9 @@
 - [ ] **VER-08**: Cross-repo zero-grep audit — public-repo hygiene clean on NUB-CONNECT draft + NUBs-track advisory (zero `@napplet/`, zero `kehto`, zero `hyprgate`, zero `packages/(nub|shim|sdk|vite-plugin)`)
 - [ ] **VER-09**: Author changeset for v0.29.0 breaking change; call out `strictCsp` removal/deprecation loudly
 - [ ] **VER-10**: Confirm downstream-shell-repo tracking issue exists for v0.29.0 demo napplets (Option B carried forward from v0.28.0)
+- [ ] **VER-11**: Playwright smoke test — shell sends `class.assigned` envelope with `class: 2` → `window.napplet.class === 2` after dispatcher processes the wire; shell sends with `class: 1` → `window.napplet.class === 1`
+- [ ] **VER-12**: Playwright smoke test — shell advertises `shell.supports('nub:class') === false` and never sends `class.assigned` → `window.napplet.class === undefined` (graceful degradation)
+- [ ] **VER-13**: Integration test — cross-NUB invariant in shell implementing both NUBs: `window.napplet.class === 2` iff `window.napplet.connect.granted === true`; shell MUST NOT emit a state where these disagree
 
 ## Future Requirements (Deferred)
 
