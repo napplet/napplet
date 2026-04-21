@@ -106,10 +106,10 @@ export interface Nip5aManifestOptions {
    *    `console.warn` describing browser mixed-content rules. Non-blocking.
    * 5. When Vite is running in dev mode (`vite serve`), an optional
    *    `<meta name="napplet-connect-requires" content="...">` tag is injected
-   *    for shell-less local preview. This name is **distinct** from the
-   *    shell-authoritative `napplet-connect-granted` meta — the plugin MUST
-   *    NEVER emit the `granted` name; the shell is the sole writer per
-   *    NUB-CONNECT §Runtime API.
+   *    for shell-less local preview. This `requires` name is **distinct**
+   *    from the shell-authoritative `...-granted` meta defined in NUB-CONNECT
+   *    §Runtime API — the plugin MUST NEVER emit the `granted` variant; the
+   *    shell is the sole writer of that name.
    *
    * When omitted or empty, the plugin emits no `connect` tags, performs no
    * fold, and the napplet is treated as NUB-CLASS-1 (strict / no-user-declared-
@@ -403,6 +403,82 @@ function walk(node: unknown, path: string, errors: string[]): void {
 }
 
 /**
+ * Scan production HTML for forbidden inline `<script>` elements.
+ *
+ * Under the v0.29.0 shell-as-CSP-authority model, shells emit
+ * `script-src 'self'` which blocks inline scripts at runtime. We fail the
+ * build here so authors discover the violation at `pnpm build` rather than
+ * as a silent runtime CSP block. (Locked decision Q4 — hard error.)
+ *
+ * Allow-list (accepted as NOT inline):
+ *   - `<script src="...">` with any non-empty `src` (externally-loaded)
+ *   - `<script type="application/json">...</script>` (non-executing data)
+ *   - `<script type="application/ld+json">...</script>` (non-executing JSON-LD)
+ *   - `<script type="importmap">...</script>` (browser-recognized, non-executing-JS)
+ *   - `<script type="speculationrules">...</script>` (browser-recognized, non-executing-JS)
+ *   - Content inside HTML comments — stripped before scanning
+ *
+ * Rejected (throws):
+ *   - `<script>inline content</script>`
+ *   - `<script src="">...</script>` (empty src = inline fallback per W3C)
+ *   - `<script type="module">inline</script>`
+ *   - `<script type="text/javascript">inline</script>`
+ *
+ * @param html - Contents of `dist/index.html` to scan.
+ * @throws Error with `[nip5a-manifest]` prefix listing every offending tag.
+ */
+function assertNoInlineScripts(html: string): void {
+  // Strip HTML comments (non-greedy, multi-line) so commented-out scripts
+  // don't produce false positives.
+  const stripped = html.replace(/<!--[\s\S]*?-->/g, '');
+
+  // Find every <script ...> opening tag. Attribute section may contain
+  // whitespace and newlines; [\s\S]*? handles both, non-greedy halts at
+  // the first >.
+  const scriptTagRe = /<script\b([\s\S]*?)>/gi;
+  const offenders: string[] = [];
+
+  let m: RegExpExecArray | null;
+  while ((m = scriptTagRe.exec(stripped)) !== null) {
+    const attrsBlob = m[1];
+
+    // src="..." with at least one non-whitespace char — valid external load.
+    const srcMatch = /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrsBlob);
+    if (srcMatch) {
+      const srcValue = (srcMatch[1] ?? srcMatch[2] ?? '').trim();
+      if (srcValue.length > 0) continue;
+      // src="" — treat as inline (empty src executes inline fallback per W3C).
+      const tag = m[0].length > 80 ? m[0].slice(0, 80) + '...' : m[0];
+      offenders.push(`${tag}  (empty src attribute)`);
+      continue;
+    }
+
+    // No src — check type= for allow-listed non-executing values.
+    const typeMatch = /\btype\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrsBlob);
+    if (typeMatch) {
+      const typeValue = (typeMatch[1] ?? typeMatch[2] ?? '').trim().toLowerCase();
+      const NON_EXECUTING_TYPES = new Set([
+        'application/json',
+        'application/ld+json',
+        'importmap',
+        'speculationrules',
+      ]);
+      if (NON_EXECUTING_TYPES.has(typeValue)) continue;
+    }
+
+    const tag = m[0].length > 80 ? m[0].slice(0, 80) + '...' : m[0];
+    offenders.push(`${tag}  (inline <script> without src)`);
+  }
+
+  if (offenders.length > 0) {
+    const list = offenders.map((o) => `  - ${o}`).join('\n');
+    throw new Error(
+      `[nip5a-manifest] Inline <script> elements are not allowed in napplet HTML under the v0.29.0 shell-as-CSP-authority model. The shell emits \`script-src 'self'\` which blocks inline scripts at runtime. Move inline JS to a file and reference it via \`<script src="..."></script>\`. Offending elements (${offenders.length}):\n${list}`,
+    );
+  }
+}
+
+/**
  * Vite plugin for NIP-5A manifest generation.
  *
  * Computes per-file SHA-256 hashes, an aggregate hash, and optionally signs
@@ -499,8 +575,9 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       }
     },
 
-    transformIndexHtml(_html: string, _ctx?: unknown): IndexHtmlTransformResult {
+    transformIndexHtml(_html: string, ctx?: { server?: unknown }): IndexHtmlTransformResult {
       const tags: IndexHtmlTransformResult = [];
+      const isDev = !!ctx?.server;
 
       // Existing meta tags — preserve byte-identical output for backward
       // compat with pre-v0.29.0 consumers (minus the now-removed CSP meta).
@@ -531,11 +608,42 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         });
       }
 
+      // VITE-10: dev-mode-only `napplet-connect-requires` meta for shell-less
+      // `vite serve` preview. Distinct from the shell-authoritative
+      // `...-granted` name defined in NUB-CONNECT §Runtime API — the plugin
+      // MUST NEVER emit the `granted` variant; the shell is the sole writer
+      // of that name. This `requires` name signals build-time intent ONLY
+      // and is stripped from production output (the guard below is `isDev`
+      // strict).
+      if (isDev && normalizedConnect.length > 0) {
+        tags.push({
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-connect-requires',
+            content: normalizedConnect.join(' '),
+          },
+          injectTo: 'head' as const,
+        });
+      }
+
       return tags;
     },
 
     async closeBundle() {
       const distPath = path.resolve(outDir);
+
+      // VITE-08 / BUILD-P1: fail-loud inline-script diagnostic.
+      //
+      // Scan dist/index.html BEFORE any signing / manifest-generation work so
+      // the build aborts on an inline-script violation regardless of whether
+      // a signing privkey is configured. Inline scripts are a hard-fail per
+      // locked decision Q4 — the shell emits `script-src 'self'` at runtime
+      // and silent CSP blocks would be harder to diagnose than a build error.
+      const indexPathForInlineScan = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPathForInlineScan)) {
+        const html = fs.readFileSync(indexPathForInlineScan, 'utf-8');
+        assertNoInlineScripts(html);
+      }
 
       const privkeyHex = process.env.VITE_DEV_PRIVKEY_HEX;
       if (!privkeyHex) {
