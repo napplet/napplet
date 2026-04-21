@@ -1,5 +1,24 @@
 # Milestones
 
+## v0.28.0 Browser-Enforced Resource Isolation (Shipped: 2026-04-21)
+
+**Phases completed:** 10 phases, 10 plans, 32 tasks
+
+**Key accomplishments:**
+
+- Added 'resource' to NubDomain (10 domains) + NappletGlobal.resource namespace with bytes() and bytesAsObjectURL() — pure type-only scaffold that unblocks the 9 downstream v0.28.0 phases
+- @napplet/nub/resource subpath shipped — single-flight bytes(url) primitive with inline data: decoder, AbortSignal cancellation, and synchronous bytesAsObjectURL handle (Option C); zero downstream integration (Phase 128/129 territory)
+- Optional `resources?: ResourceSidecarEntry[]` field added to `RelayEventMessage`; relay shim now invokes `hydrateResourceCache(msg.resources)` before `onEvent(msg.event)` so a synchronous `bytes(sidecarUrl)` inside the napplet's onEvent callback resolves from the single-flight cache with zero postMessage round-trips.
+- 1. [Rule 3 - Blocking] Smoke test scaffolding required document stub for installer-time DOM access
+- Resource NUB exposed through @napplet/sdk via 4 surgical edits — namespace, domain const, 11 type re-exports, shim installer + SDK helper — completing the v0.28.0 SDK-side seam that mirrors Phase 128's central-shim integration.
+- Strict 10-directive CSP enforcement in @napplet/vite-plugin with build-time hard-failure for all 4 project-killer pitfalls (Pitfalls 1, 2, 18, 19) — napplets opting in ship with a browser-enforced policy, and developer mistakes that would weaken the security posture cannot pass `pnpm build`.
+- NIP-5D Security Considerations amended with `### Browser-Enforced Resource Isolation` subsection documenting strict-CSP SHOULD posture, `perm:strict-csp` capability identifier, NUB-RESOURCE cross-reference, and `allow-same-origin` prohibition reasoning
+- Four NUB spec drafts authored as local artifacts at `.planning/phases/132-cross-repo-nubs-prs/drafts/` capturing the protocol-level surface for v0.28.0 Browser-Enforced Resource Isolation: NUB-RESOURCE (new spec, 300 lines, complete with 4 schemes / 8-code error vocabulary / SSRF MUSTs at DNS-resolution time / SVG sandboxed-Worker-no-network rasterization MUST), NUB-RELAY amendment (135 lines, additive optional `resources?` sidecar field with default-OFF privacy rationale and per-event-kind allowlist guidance), NUB-IDENTITY clarification (41 lines, doc-only, picture/banner URLs flow through `resource.bytes()`), NUB-MEDIA clarification (40 lines, doc-only, artwork URL flows through `resource.bytes()`). Public-repo hygiene clean across all 4 drafts (zero `@napplet/`, zero `kehto`, zero `hyprgate`, zero `packages/(nub|shim|sdk|vite-plugin)`). Workspace `pnpm -r type-check` stays green across all 14 packages (no source changes). All 18 REQ-IDs satisfied.
+- 5 package READMEs + napplet-author skill + new shell-deployer policy checklist updated for v0.28.0 resource NUB / strict CSP surface; PROJECT.md + NUB-RESOURCE draft delegate v0.28.0 demo napplets to downstream shell repo per Option B
+- All 7 v0.28.0 verification gates green; NUB-RESOURCE.md spec drift resolved (19 substitutions); STATE/PROJECT/REQUIREMENTS/ROADMAP flipped to ready-for-audit — v0.28.0 Browser-Enforced Resource Isolation is shippable
+
+---
+
 ## v0.27.0 IFC Terminology Lock-In (Shipped: 2026-04-19)
 
 **Phases completed:** 3 phases, 5 plans, 17 tasks
