@@ -204,7 +204,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. Cross-Repo Spec Work | 4/4 | Complete   | 2026-04-21 |
+| 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
 | 136. Core Type Surface | 0/? | Not started | - |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 0/? | Not started | - |
 | 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
