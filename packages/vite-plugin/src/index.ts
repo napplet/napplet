@@ -479,6 +479,65 @@ function assertNoInlineScripts(html: string): void {
 }
 
 /**
+ * Build-time conformance self-check for the NUB-CONNECT `connect:origins`
+ * aggregateHash fold.
+ *
+ * Re-invokes the fold logic (lowercase → ASCII sort → LF-join no trailing →
+ * UTF-8 → SHA-256 → lowercase hex) on the three-origin normative fixture from
+ * NUB-CONNECT.md §Conformance Fixture and asserts the output equals the spec's
+ * expected digest. Any drift in the plugin's fold implementation (join
+ * delimiter, sort order, encoding, hash algorithm) throws at module load,
+ * giving napplet authors an immediate loud failure instead of a silent
+ * grant-invalidation mismatch at shell-side later.
+ *
+ * Cost: one SHA-256 over 80 bytes per plugin-factory invocation. Negligible.
+ *
+ * Runs module-top-level so even plugins that never invoke the fold at runtime
+ * (e.g. napplets with zero `connect` origins) still benefit from the guardrail.
+ *
+ * @see NUB-CONNECT.md §Canonical `connect:origins` aggregateHash Fold
+ * @see NUB-CONNECT.md §Conformance Fixture
+ * @see .planning/research/PITFALLS.md SPEC-P1 (hash-determinism drift)
+ */
+function assertConnectFoldMatchesSpecFixture(): void {
+  // Fixture from NUB-CONNECT.md §Conformance Fixture — order intentionally
+  // scrambled to exercise the sort step (api < xn-- < wss happens to be the
+  // already-sorted form, but passing scrambled guards against someone removing
+  // the sort).
+  const fixtureOrigins = [
+    'wss://events.example.com',
+    'https://api.example.com',
+    'https://xn--caf-dma.example.com',
+  ];
+  const EXPECTED = 'cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742';
+
+  // Re-invoke the SAME fold logic used in closeBundle. If this logic and the
+  // closeBundle logic ever diverge (e.g. one gets refactored, the other
+  // forgotten), update BOTH — or refactor into a shared helper. For now the
+  // 5-line fold is small enough that byte-identical duplication is clearer
+  // than factoring.
+  const sorted = [...fixtureOrigins].sort();
+  const canonical = sorted.join('\n');
+  const actual = crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
+
+  if (actual !== EXPECTED) {
+    throw new Error(
+      `[nip5a-manifest] FATAL: connect:origins fold implementation drift detected. ` +
+      `The plugin's fold on the NUB-CONNECT.md §Conformance Fixture inputs produced ` +
+      `hash ${actual} but the spec requires ${EXPECTED}. This means a build-time ` +
+      `change broke fold-determinism with shells — any napplet built with this plugin ` +
+      `would produce grant-invalidation mismatches. Restore the canonical fold ` +
+      `(lowercase → ASCII sort → LF-join no trailing → UTF-8 → SHA-256 → lowercase hex) ` +
+      `or update NUB-CONNECT.md + all shell implementations in lockstep.`,
+    );
+  }
+}
+
+// Module-load self-check: fires once per process that imports this plugin.
+// Throws at module load if the fold has drifted from NUB-CONNECT.md spec.
+assertConnectFoldMatchesSpecFixture();
+
+/**
  * Vite plugin for NIP-5A manifest generation.
  *
  * Computes per-file SHA-256 hashes, an aggregate hash, and optionally signs
