@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: verifying
 stopped_at: Completed 139-01-PLAN.md (Phase 139 COMPLETE — TS2741 carry closed)
-last_updated: "2026-04-21T17:10:17.320Z"
+last_updated: "2026-04-21T17:14:50.028Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-04-21)
 
 ## Current Position
 
-Phase: 139 (Central Shim + SDK Integration) — EXECUTING
-Plan: 1 of 1
+Phase: 140
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-21
 
