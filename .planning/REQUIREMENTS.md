@@ -30,7 +30,7 @@
 
 ### `@napplet/nub/connect` Subpath (`packages/nub/src/connect/`)
 
-- [ ] **NUB-01**: Create `types.ts` with `DOMAIN = 'connect'` const, `NappletConnect` interface (`readonly granted: boolean`, `readonly origins: readonly string[]`), and pure `normalizeConnectOrigin(origin: string): string` function that validates scheme/host/port/path/IDN (shared source of truth for build-side and shell-side consumers)
+- [x] **NUB-01**: Create `types.ts` with `DOMAIN = 'connect'` const, `NappletConnect` interface (`readonly granted: boolean`, `readonly origins: readonly string[]`), and pure `normalizeConnectOrigin(origin: string): string` function that validates scheme/host/port/path/IDN (shared source of truth for build-side and shell-side consumers)
 - [ ] **NUB-02**: Create `shim.ts` with `installConnectShim()` that reads `<meta name="napplet-connect-granted">`, parses whitespace-separated origins, and populates `window.napplet.connect` with readonly-getter state (default `{granted: false, origins: []}` when meta absent)
 - [ ] **NUB-03**: Create `sdk.ts` with thin readonly-getter wrappers (`connectGranted()`, `connectOrigins()`) — OR omit if design lands on types-only exposure like theme NUB (decide during plan phase)
 - [ ] **NUB-04**: Create `index.ts` barrel re-exporting types + shim + SDK, plus `registerNub(DOMAIN, noop)` side-effect on import
@@ -40,7 +40,7 @@
 
 ### `@napplet/nub/class` Subpath (`packages/nub/src/class/`)
 
-- [ ] **CLASS-01**: Create `types.ts` with `DOMAIN = 'class'` const, `ClassAssignedMessage` wire type (`{ type: 'class.assigned'; id: string; class: number }`), optional `NappletClass` interface capturing the runtime state shape
+- [x] **CLASS-01**: Create `types.ts` with `DOMAIN = 'class'` const, `ClassAssignedMessage` wire type (`{ type: 'class.assigned'; id: string; class: number }`), optional `NappletClass` interface capturing the runtime state shape
 - [ ] **CLASS-02**: Create `shim.ts` with `installClassShim()` that registers a dispatcher handler for `class.assigned` envelopes; on receipt, writes the assigned number to `window.napplet.class` (readonly getter); leaves `window.napplet.class` as `undefined` until the wire arrives; idempotent re-assignment (last write wins) for future dynamic-class extension
 - [ ] **CLASS-03**: Create `sdk.ts` with thin readonly-getter wrapper (`getClass()`) — optional parallel to connect/sdk.ts; may omit if design lands on types-only exposure (decide during plan phase)
 - [ ] **CLASS-04**: Create `index.ts` barrel re-exporting types + shim + SDK, plus `registerNub(DOMAIN, handler)` side-effect registering the class.assigned handler
@@ -174,7 +174,7 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | CORE-03 | Phase 136 | Complete |
 | CORE-04 | Phase 136 | Complete |
 | CORE-05 | Phase 136 | Complete |
-| NUB-01 | Phase 137 | Pending |
+| NUB-01 | Phase 137 | Complete |
 | NUB-02 | Phase 137 | Pending |
 | NUB-03 | Phase 137 | Pending |
 | NUB-04 | Phase 137 | Pending |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
-status: verifying
-stopped_at: Completed 136-01-PLAN.md (Phase 136 — Core Type Surface; NubDomain 12 entries; NappletGlobal.connect + class? added)
-last_updated: "2026-04-21T13:26:50.044Z"
+status: executing
+stopped_at: "Completed 137-01-PLAN.md (Plan 01: connect/types.ts + class/types.ts types-only scaffolds; NUB-01 + CLASS-01 satisfied; normalizer 28/28 smoke tests pass)"
+last_updated: "2026-04-21T13:47:33.429Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 8
+  completed_plans: 6
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 137 — `@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffolds (next)
+**Current focus:** Phase 137 — NUB Subpath Scaffolds
 
 ## Current Position
 
-Phase: 137
-Plan: Not started
-Status: Phase complete — ready for verification; Phase 137 unblocked
+Phase: 137 (NUB Subpath Scaffolds) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-21
 
 ## Phase Map (v0.29.0)
@@ -58,6 +58,7 @@ Last activity: 2026-04-21
 - v0.29.0: Shell is sole runtime CSP authority (every napplet). Two new NUBs: NUB-CLASS (abstract posture authority via wire `class.assigned`, `window.napplet.class`, owns `NUB-CLASS-$N` sub-track) and NUB-CONNECT (user-gated direct network access via manifest `connect` tags, self-sufficient `window.napplet.connect.{granted,origins}` surface). Napplet-class distinction removed entirely from NIP-5D into NUB-CLASS's sub-track. Class-1 = strict baseline; Class-2 = user-approved explicit-origin CSP; each defined as its own doc (`NUB-CLASS-1.md`, `NUB-CLASS-2.md`). Inline scripts forbidden for all napplets under the unified CSP model. Grants keyed on `(dTag, aggregateHash)` with `connect` origins folded into aggregateHash via synthetic `connect:origins` entry. NUBs expose independent runtime surfaces (no cross-NUB state collapse); cross-NUB invariants documented as shell responsibilities.
 - v0.29.0 / Phase 135-03: NUB-CONNECT draft cites `NUB-CLASS-2.md` by file name (10 times) and does NOT inline-redefine Class 1/2 postures (delegated in full). Canonical `connect:origins` aggregateHash fold is: lowercase → ASCII-ascending sort → LF-join with no trailing newline → UTF-8 encode → SHA-256 → lowercase hex. Normative conformance fixture: 3 origins (`https://api.example.com`, `https://xn--caf-dma.example.com`, `wss://events.example.com`), 80-byte joined UTF-8 input, SHA-256 digest `cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742` (independently verified). `NappletConnect` runtime API MUST NEVER be `undefined` — default `{granted: false, origins: []}` on unsupported shells, denied prompts, or pre-injection.
 - v0.29.0 / Phase 136-01: `NappletConnect` shape declared INLINE in `packages/core/src/types.ts` (not imported from `@napplet/nub`) — preserves `@napplet/core` zero-dep constraint. Phase 137's `@napplet/nub/connect/types.NappletConnect` MUST remain structurally assignment-compatible with `NappletGlobal['connect']` (the two locked fields `readonly granted: boolean` + `readonly origins: readonly string[]` must match). `window.napplet.class` typed as bare `number` (not literal union `1 | 2`) — class space is extensible via NUB-CLASS-$N sub-track. `perm:strict-csp` is JSDoc-`@deprecated` only (type unchanged — `perm:${string}` template literal still accepts it during the deprecation window; hard-removal tracked as REMOVE-STRICTCSP-CAP in future requirements).
+- v0.29.0 / Phase 137-01: `NappletConnect` inlined as zero-import interface in `packages/nub/src/connect/types.ts`; bidirectional structural assignability with `NappletGlobal['connect']` verified. `normalizeConnectOrigin()` is the single shared source-of-truth validator for both Phase 138 vite-plugin (build-side) and shell implementations (runtime-side); returns byte-identical input on success, throws with `[@napplet/nub/connect]`-prefixed messages on any of 21 rule violations. IPv4 accepted (including `127.0.0.1` + RFC-1918 private ranges); IPv6 rejected for v1 (bracket notation AND colon-in-host-after-port-strip both throw). `ClassAssignedMessage` wire shape locked as `{ type: 'class.assigned'; id: string; class: number }` with bare `number` (extensible class space via NUB-CLASS-$N). 28/28 normalizer smoke tests pass (7 accept + 21 reject).
 
 ### Open Decisions for Plan Phases
 
@@ -76,7 +77,8 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 - Orchestrator verify_phase_goal pass for Phase 136 (spawned by `/gsd:execute-phase`, not by this executor)
 - Phase 139 (Central Shim + SDK Integration) MUST populate `window.napplet.connect = { granted: false, origins: [] }` default block at `packages/shim/src/index.ts:130` — currently produces expected TS2741 error in monorepo-wide type-check; will be resolved by SHIM-01 + SHIM-02
-- Begin Phase 137 (`@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffold) — unblocked
+- Phase 137 Plan 02 (shim.ts + sdk.ts + index.ts barrels for connect/class) — unblocked
+- Phase 137 Plan 03 (package.json subpath exports + tsup.config.ts entries for connect/class) — unblocked (parallelizable with Plan 02)
 
 ### Blockers/Concerns
 
@@ -86,6 +88,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T13:22:24.433Z
-Stopped at: Completed 136-01-PLAN.md (Phase 136 — Core Type Surface; NubDomain 12 entries; NappletGlobal.connect + class? added)
+Last session: 2026-04-21T13:47:33.426Z
+Stopped at: Completed 137-01-PLAN.md (Plan 01: connect/types.ts + class/types.ts types-only scaffolds; NUB-01 + CLASS-01 satisfied; normalizer 28/28 smoke tests pass)
 Resume: Phase-level verify_phase_goal for Phase 136, then Phase 137 (`@napplet/nub/connect` + `@napplet/nub/class` Subpath Scaffolds)

@@ -111,7 +111,12 @@ Plans:
 4. `pnpm --filter @napplet/nub build` + `type-check` exit 0 and emit all 8 new dist entry points
 5. Tree-shake smoke for each: a consumer importing only `@napplet/nub/connect/types` or only `@napplet/nub/class/types` via `import type` produces a bundle with zero runtime code (zero `installConnectShim`, zero `installClassShim`, zero `registerNub`)
 
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [x] 137-01-PLAN.md — connect/types.ts + class/types.ts (types + shared normalizeConnectOrigin + ClassAssignedMessage wire type)
+- [ ] 137-02-PLAN.md — connect/{shim,sdk,index}.ts + class/{shim,sdk,index}.ts (6 files: meta-tag-reader + wire-handler triads)
+- [ ] 137-03-PLAN.md — package.json + tsup.config.ts subpath exports (46 total) + build + type-check + tree-shake prerequisite
 
 ### Phase 138: `@napplet/vite-plugin` Surgery
 
@@ -209,7 +214,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
 | 136. Core Type Surface | 1/1 | Complete    | 2026-04-21 |
-| 137. `@napplet/nub/connect` Subpath Scaffold | 0/? | Not started | - |
+| 137. `@napplet/nub/connect` Subpath Scaffold | 1/3 | In Progress|  |
 | 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
 | 139. Central Shim + SDK Integration | 0/? | Not started | - |
 | 140. `specs/SHELL-CONNECT-POLICY.md` | 0/? | Not started | - |
