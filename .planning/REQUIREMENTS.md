@@ -17,8 +17,8 @@
 
 ### NIP-5D Amendment (`specs/NIP-5D.md`)
 
-- [ ] **NIP5D-01**: Remove or generalize the "Browser-Enforced Resource Isolation" subsection (lines 115-130). Replace with a generic one-paragraph Security Considerations note: "NUBs MAY define napplet classes with different security postures delivered through shell-controlled HTTP response headers; class taxonomy and delivery mechanics are out of scope for this NIP." No NUB names, no class names, no CSP directives inline.
-- [ ] **NIP5D-02**: Remove the `perm:strict-csp` capability-advertisement example; keep the generic `shell.supports(...)` table with `nub:/perm:/svc:` prefixes as an example pattern, but no NUB-flavored examples
+- [x] **NIP5D-01**: Remove or generalize the "Browser-Enforced Resource Isolation" subsection (lines 115-130). Replace with a generic one-paragraph Security Considerations note: "NUBs MAY define napplet classes with different security postures delivered through shell-controlled HTTP response headers; class taxonomy and delivery mechanics are out of scope for this NIP." No NUB names, no class names, no CSP directives inline. ✅ Phase 135 Plan 02
+- [x] **NIP5D-02**: Remove the `perm:strict-csp` capability-advertisement example; keep the generic `shell.supports(...)` table with `nub:/perm:/svc:` prefixes as an example pattern, but no NUB-flavored examples ✅ Phase 135 Plan 02
 
 ### Core Type Surface (`packages/core/`)
 
@@ -167,8 +167,8 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | SPEC-03 | Phase 135 | Pending |
 | SPEC-04 | Phase 135 | Pending |
 | SPEC-05 | Phase 135 | Pending |
-| NIP5D-01 | Phase 135 | Pending |
-| NIP5D-02 | Phase 135 | Pending |
+| NIP5D-01 | Phase 135 | ✅ Complete |
+| NIP5D-02 | Phase 135 | ✅ Complete |
 | CORE-01 | Phase 136 | Pending |
 | CORE-02 | Phase 136 | Pending |
 | CORE-03 | Phase 136 | Pending |

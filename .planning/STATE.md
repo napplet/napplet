@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
-status: Roadmap created — ready for Phase 135 planning
-stopped_at: "Phase 135 Cross-Repo Spec Work context written; NUB-CLASS added to v0.29.0 scope (wire-based class authority)"
-last_updated: "2026-04-21T13:30:00.000Z"
-last_activity: 2026-04-21
+status: executing
+stopped_at: Roadmap authored; 8 phases (135-142) with 57/57 REQ-IDs mapped
+last_updated: "2026-04-21T12:33:54Z"
+last_activity: 2026-04-21 -- Plan 135-02 complete (NIP-5D NUB-neutral amendment)
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 4
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.29.0 NUB-CONNECT + Shell as CSP Authority — roadmap authored (Phases 135-142)
+**Current focus:** Phase 135 — Cross-Repo Spec Work
 
 ## Current Position
 
-Phase: 135 (Cross-Repo Spec Work) — not started
-Plan: —
-Status: Roadmap created, 57 REQ-IDs mapped across 8 phases, ready for `/gsd:plan-phase 135`
-Last activity: 2026-04-21 — ROADMAP.md authored for v0.29.0
+Phase: 135 (Cross-Repo Spec Work) — EXECUTING
+Plan: 1 of 4 (Plan 02 complete in parallel Wave 1)
+Status: Executing Phase 135
+Last activity: 2026-04-21 -- Plan 135-02 complete (NIP-5D NUB-neutral amendment)
 
 ## Phase Map (v0.29.0)
 
@@ -61,6 +60,7 @@ Last activity: 2026-04-21 — ROADMAP.md authored for v0.29.0
 ### Open Decisions for Plan Phases
 
 Surfaced by research (informational — each belongs to a specific phase plan):
+
 1. Inline-script detection: parse5/htmlparser2 dev-dep vs zero-dep regex — Phase 138
 2. `packages/vite-plugin/src/csp.ts`: delete vs retain dev-only helper vs split-by-concern — Phase 138
 3. `strictCsp` option: hard-remove vs `@deprecated` accept-but-warn for one cycle — Phase 138
@@ -82,6 +82,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T12:30:00.000Z
-Stopped at: Roadmap authored; 8 phases (135-142) with 57/57 REQ-IDs mapped
-Resume: `/gsd:plan-phase 135` (Cross-Repo Spec Work) — parallel-safe with `/gsd:plan-phase 136` (Core Type Surface)
+Last session: 2026-04-21T12:33:54Z
+Stopped at: Plan 135-02 complete — NIP-5D amended to NUB-neutral transport-only; Plan 135-01 (NUB-CLASS drafts) running in parallel Wave 1
+Resume: Plans 135-03 (NUB-CONNECT) and 135-04 (zero-grep hygiene + phase commit) remain
