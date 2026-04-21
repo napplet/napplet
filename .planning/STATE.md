@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.28.0
-milestone_name: Browser-Enforced Resource Isolation
-status: Shipped — milestone archived
-stopped_at: "v0.28.0 complete: 10 phases, 10 plans, 32 tasks; 65/65 REQ-IDs satisfied; milestone audit passed; ROADMAP/REQUIREMENTS/audit + 10 phase directories archived to .planning/milestones/v0.28.0-*; PROJECT.md updated; tag pending."
-last_updated: "2026-04-21T10:35:00.000Z"
+milestone: v0.29.0
+milestone_name: NUB-CONNECT + Shell as CSP Authority
+status: Defining requirements
+stopped_at: ""
+last_updated: "2026-04-21T11:00:00.000Z"
 last_activity: 2026-04-21
 progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** v0.28.0 shipped — ready for `/gsd:new-milestone`
+**Current focus:** v0.29.0 NUB-CONNECT + Shell as CSP Authority — defining requirements
 
 ## Current Position
 
-Phase: — (no active phase)
+Phase: Not started (defining requirements)
 Plan: —
-Status: Shipped — milestone archived
-Last activity: 2026-04-21 — v0.28.0 milestone archived
-
-Progress: [██████████] 100% (10/10 phases of v0.28.0 complete and archived)
+Status: Defining requirements
+Last activity: 2026-04-21 — Milestone v0.29.0 started
 
 ## Accumulated Context
 
@@ -42,19 +40,20 @@ Progress: [██████████] 100% (10/10 phases of v0.28.0 complet
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
 - v0.27.0: Runtime API surface uses IFC terminology (`window.napplet.ifc`, `@napplet/sdk` `ifc` export); hard break, no backward-compat alias
 - v0.28.0: Browser-enforced isolation via strict CSP; single `resource.bytes(url)` primitive with scheme-pluggable URL space; `data:` decoded inline; sidecar pre-resolution opt-in default OFF for privacy; shell-side SVG rasterization MUST; `perm:strict-csp` capability orthogonal to `nub:resource`; demos delegated to downstream shell repo (Option B)
+- v0.29.0: Shell is sole runtime CSP authority (every napplet, not just network-access ones); NUB-CONNECT expresses user-gated direct network access via manifest `connect` tags; napplet-class distinction (Class 1 strict / Class 2 network-access) delegated out of NIP-5D into the NUBs track; inline scripts forbidden for all napplets under the unified CSP model; grants keyed on `(dTag, aggregateHash)` with `connect` origins folded into aggregateHash via a synthetic `connect:origins` entry
 
 ### Pending Todos
 
-None — v0.28.0 archived, ready for `/gsd:new-milestone`.
+None for v0.29.0 yet — roadmap pending.
 
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth (PUB-04 from prior milestones)
 - CARRIED: NIP number conflict with Scrolls PR#2281 (RES-01 from v0.12.0 era)
-- CARRIED: Manual cross-repo PR opening for the 4 napplet/nubs drafts (NUB-RESOURCE + NUB-RELAY/IDENTITY/MEDIA amendments) — drafts authored in `.planning/milestones/v0.28.0-phases/132-cross-repo-nubs-prs/drafts/`; user creates branches, pushes, opens PRs
+- CARRIED: Manual cross-repo PR opening — v0.29.0 will add a NUB-CONNECT draft PR to the existing pattern; human creates branch, pushes, opens PR
 
 ## Session Continuity
 
-Last session: 2026-04-21T10:35:00.000Z
-Stopped at: v0.28.0 milestone archive complete (ROADMAP collapsed, REQUIREMENTS deleted, 10 phase directories moved to milestones/v0.28.0-phases/, audit + roadmap + requirements snapshots in milestones/)
-Resume: `/gsd:new-milestone` to start v0.29.0
+Last session: 2026-04-21T11:00:00.000Z
+Stopped at: v0.29.0 started; PROJECT.md updated with Current Milestone section
+Resume: continue `/gsd:new-milestone` workflow (research decision → requirements → roadmap)

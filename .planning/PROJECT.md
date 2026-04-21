@@ -1,5 +1,25 @@
 # Napplet Protocol SDK
 
+## Current Milestone: v0.29.0 NUB-CONNECT + Shell as CSP Authority
+
+**Goal:** Introduce a new NUB (`connect`) letting napplets declare required network origins for user-gated `fetch`/`WebSocket`/`SSE` access, and shift CSP emission entirely to the shell at runtime — moving the SDK from build-baked strict CSP to shell-authoritative runtime CSP for every napplet.
+
+**Target features:**
+- NUB-CONNECT spec drafted in `napplet/nubs` public repo (connect manifest tag, origin-format rules, consent flow, runtime API, capability advertisement, security considerations)
+- NIP-5D amendment delegating napplet-class distinctions (Class 1 / Class 2) to the NUBs track
+- NUBs-track advisory on how to define napplet classes on top of existing NUB specs
+- `@napplet/nub/connect` subpath (types + shim installer exposing `window.napplet.connect.{granted, origins}` + SDK helpers)
+- `@napplet/vite-plugin` production CSP removal (meta builder, nonce generator, four CSP assertions move to dev-only or drop); new `connect?: string[]` option that emits `connect` manifest tags and folds into `aggregateHash` via a synthetic `connect:origins` entry; new fail-loud inline-script diagnostic
+- `@napplet/shim` + `@napplet/sdk` central integration of the connect NUB (parallel to resource NUB wiring in v0.28.0)
+- `specs/SHELL-CONNECT-POLICY.md` shell-deployer checklist (parallel to `specs/SHELL-RESOURCE-POLICY.md`), including mixed-content reality check, cleartext warnings, and the Class-2 residual-meta-CSP scan requirement
+- Documentation sweep: root README + affected package READMEs + `skills/build-napplet/SKILL.md` updated for the two classes, the connect API, and "default to NUB-RESOURCE; reach for NUB-CONNECT only when resource NUB can't express what you need"
+
+**Key context:**
+- Full design: `docs/superpowers/specs/2026-04-21-napplet-network-permission-design.md` (committed `9f77c29`)
+- Breaking change: deprecates v0.28.0's vite-plugin `strictCsp` production path; `perm:strict-csp` capability superseded (kept true for back-compat, marked deprecated)
+- Demo napplets remain downstream-shell-repo's concern (Option B carried forward from v0.28.0)
+- Cross-repo coordination: NUB-CONNECT is a new spec in `napplet/nubs`; human opens the PR following established manual flow
+
 ## Shipped: v0.28.0 Browser-Enforced Resource Isolation
 
 Converted napplet iframe security from ambient trust to browser-enforced isolation. Single new NUB (`resource`) with `resource.bytes(url) → Blob` primitive, scheme-pluggable URL space (4 canonical schemes: `https:`, `blossom:`, `nostr:`, `data:`). `data:` decoded inline (zero shell round-trip); other schemes route via `postMessage` envelopes through the host shell. Single-flight cache (N concurrent same-URL calls share 1 fetch), AbortSignal cancellation with `resource.cancel` envelope, `bytesAsObjectURL(url)` lifecycle helper. Optional sidecar pre-resolution on `relay.event` envelopes (`resources?: ResourceSidecarEntry[]`) with default-OFF privacy posture per NUB-RELAY amendment. Strict CSP enforcement at the iframe boundary via `@napplet/vite-plugin` `strictCsp` option: 10-directive baseline, first-`<head>`-child meta injection, header-only directive rejection, dev/prod connect-src split, nonce-based scripts. NIP-5D Security Considerations subsection added in-repo; 4 cross-repo draft PRs authored for `napplet/nubs` (NUB-RESOURCE new spec; NUB-RELAY/IDENTITY/MEDIA amendments). Acceptance gates: `pnpm -r build` + `pnpm -r type-check` green across all 14 packages; CSP positive-blocking Playwright simulation; single-flight stampede against built dist; sidecar default-OFF + SVG-bomb spec conformance; cross-repo zero-grep clean; tree-shake bundle (zero resource-shim symbols in relay-types-only consumer). Demo napplets explicitly delegated to downstream shell repo (Option B). 10 phases, 10 plans shipped 2026-04-21. See [archive](milestones/v0.28.0-ROADMAP.md).
@@ -264,7 +284,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-None — v0.28.0 (Browser-Enforced Resource Isolation) shipped 2026-04-21. Next milestone TBD.
+- v0.29.0 NUB-CONNECT + Shell as CSP Authority — NUB-CONNECT spec, NIP-5D class-delegation amendment, `@napplet/nub/connect`, vite-plugin CSP removal + `connect` option + aggregateHash fold, central shim/SDK integration, `SHELL-CONNECT-POLICY.md`, doc sweep
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -376,4 +396,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-21 — v0.28.0 Browser-Enforced Resource Isolation shipped*
+*Last updated: 2026-04-21 — v0.29.0 NUB-CONNECT + Shell as CSP Authority started*
