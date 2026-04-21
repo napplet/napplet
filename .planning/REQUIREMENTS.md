@@ -10,7 +10,7 @@
 - [x] **SPEC-02**: Define canonical aggregateHash fold procedure for `connect:origins` at byte level (lowercase → ASCII sort → `\n`-join no trailing → UTF-8 → SHA-256 → lowercase hex) — normative pseudocode + conformance fixture so build and shell produce byte-identical hashes
 - [x] **SPEC-03**: Specify IDN handling direction of authority (build converts UTF-8 → Punycode; shell rejects non-Punycode) with test vectors
 - [x] **SPEC-04**: Draft NUB-CLASS.md in napplet/nubs — establishes the NUB-CLASS track, defines the wire message `class.assigned` (shell → napplet at iframe ready, one terminal envelope per lifecycle with `{ class: number }` payload), defines the napplet-side runtime surface (`window.napplet.class` → `number | undefined`; undefined until wire arrives or if shell doesn't implement the NUB), defines capability `nub:class`, includes an internal section authoring the template + guidance for NUB-CLASS-$N sub-track member documents (CSP posture, manifest prerequisites, shell responsibilities, security considerations format)
-- [ ] **SPEC-05**: Zero-grep hygiene across NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2 drafts: no `@napplet/*` mentions, no `kehto`/`hyprgate`, no private-package names
+- [x] **SPEC-05**: Zero-grep hygiene across NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2 drafts: no `@napplet/*` mentions, no `kehto`/`hyprgate`, no private-package names
 - [x] **SPEC-06**: Draft NUB-CLASS-1.md in napplet/nubs — the strict / no-user-declared-origins posture. CSP shape: baseline with `connect-src 'none'`. Triggers: napplet manifest has no class-contributing NUB tags (current: no `connect` tags). Shell behavior: emit strict CSP header, no consent prompt, send `class.assigned` with `class: 1`.
 - [x] **SPEC-07**: Draft NUB-CLASS-2.md in napplet/nubs — the user-approved explicit-origin CSP posture. CSP shape: `connect-src <granted-origins>`. Triggers: napplet manifest has `connect` tags AND user approved. Shell behavior: prompt user at first load per `(dTag, aggregateHash)`, persist decision, emit grant-derived CSP header, send `class.assigned` with `class: 2` (or `class: 1` on denial — napplet falls back to strict posture).
 - [x] **SPEC-08**: Update NUB-CONNECT draft to cite NUB-CLASS-2 by name ("a napplet declaring any `connect` tag takes on the NUB-CLASS-2 posture defined in `NUB-CLASS-2.md`"); remove any inline Class-1/Class-2 redefinition
@@ -166,7 +166,7 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | SPEC-02 | Phase 135 | Complete |
 | SPEC-03 | Phase 135 | Complete |
 | SPEC-04 | Phase 135 | Complete |
-| SPEC-05 | Phase 135 | Pending |
+| SPEC-05 | Phase 135 | Complete |
 | NIP5D-01 | Phase 135 | ✅ Complete |
 | NIP5D-02 | Phase 135 | ✅ Complete |
 | CORE-01 | Phase 136 | Pending |
