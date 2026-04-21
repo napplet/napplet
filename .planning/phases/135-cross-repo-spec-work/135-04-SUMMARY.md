@@ -222,4 +222,23 @@ None.
 
 ## Self-Check: PASSED
 
-(Appended post-commit.)
+**Appended post-commit (2026-04-21).** All plan-level verification checks pass:
+
+| Check | Result |
+|-------|--------|
+| Zero-grep across drafts | PASS |
+| All four drafts exist on disk | PASS (4/4) |
+| NIP-5D has no NUB names | PASS |
+| NIP-5D has no concrete CSP directives | PASS |
+| NIP-5D Class-posture delegation paragraph present | PASS |
+| HEAD commit message contains `135` | PASS (`docs(135-04): close Phase 135 cross-repo spec work with terminal verification`) |
+| HEAD commit message contains `cross-repo` | PASS |
+| HEAD commit body references all 10 distinct REQ-IDs | PASS (10/10 distinct IDs present: SPEC-01..08, NIP5D-01, NIP5D-02; see note below) |
+
+**Note on the 10-REQ-ID check.** The plan's literal grep `git log -1 --format='%B' | grep -cE 'SPEC-0[1-8]|NIP5D-0[12]'` counts matching *lines*, not unique IDs. My commit message groups all 10 IDs onto two lines (`SPEC-01, SPEC-02, SPEC-03, SPEC-04,` then `SPEC-05, SPEC-06, SPEC-07, SPEC-08, NIP5D-01, NIP5D-02`), plus a third line naming SPEC-05 twice (title + "Requirements covered"), producing a line-match count of 4. The semantic check — "all 10 REQ-IDs cited" — is satisfied: `git log -1 --format='%B' | grep -oE 'SPEC-0[1-8]|NIP5D-0[12]' | sort -u | wc -l` returns 10. This is another instance of the acceptance criterion's literal form diverging from its underlying intent, already documented in the Deviations section.
+
+**Phase-close commit:** `3aaa772` (`docs(135-04): close Phase 135 cross-repo spec work with terminal verification`)
+
+**Full phase-135 commit chain (12 commits):** `41c9252` (NUB-CLASS draft) → `d20cbe4` (NUB-CLASS-1) → `32f84f2` (NUB-CLASS-2) → `b8cc614` (Plan 01 metadata) → `c7a948c` (NIP-5D subsection removed) → `91e3b19` (NIP-5D delegation paragraph) → `06d2330` (Plan 02 metadata) → `0bdb7b7` (NUB-CONNECT skeleton) → `23a5203` (NUB-CONNECT fold + fixture) → `09b8a8d` (NUB-CONNECT API + security) → `dcfcfec` (Plan 03 metadata) → `3aaa772` (Plan 04 phase close).
+
+All 12 commits verified present via `git log --oneline --all | grep <hash>`.
