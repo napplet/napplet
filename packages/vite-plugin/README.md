@@ -182,64 +182,86 @@ The plugin validates the resolved schema against the NUB-CONFIG Core Subset at `
 
 The walk recurses into `properties`, `items`, `additionalProperties`, `patternProperties`, `oneOf`, `anyOf`, `allOf`, `not`, `definitions`, and `$defs` -- the guard is wide even though the Core Subset is narrow.
 
-#### strictCsp (optional, v0.28.0+)
+#### strictCsp (deprecated in v0.29.0)
 
-**Type:** `boolean | StrictCspOptions`
+**Type:** `unknown` (accepted-but-warns)
 
-When set, the plugin emits a strict Content-Security-Policy `<meta http-equiv="Content-Security-Policy">` tag as the **literal first child of `<head>`** in the napplet's `index.html`. Strict CSP turns the iframe sandbox into browser-enforced resource isolation: napplets cannot `fetch()`, cannot `<img src=externalUrl>`, cannot `XMLHttpRequest`. All external bytes must flow through `napplet.resource.bytes(url)`.
+As of v0.29.0, the shell is the sole runtime CSP authority — every napplet receives its Content-Security-Policy from the HTTP response header the shell serves with the napplet's HTML, not from a meta tag emitted by the build. The `strictCsp` option is therefore **deprecated and has no effect on the emitted HTML**.
+
+For back-compat with pre-v0.29.0 `vite.config.ts` files, the option is still accepted at the type level (typed as `unknown`) and emits exactly one `console.warn` per build from `configResolved`:
+
+```
+[nip5a-manifest] `strictCsp` is deprecated and has no effect (v0.29.0+). The shell is now the sole runtime CSP authority. Remove this option from your vite.config.ts to silence this warning. Scheduled for hard-remove in v0.30.0 (REMOVE-STRICTCSP).
+```
+
+Migration:
+
+- Drop the `strictCsp` key from your `vite.config.ts`. Napplets ship only the HTML + assets; the shell emits the CSP.
+- If your napplet ships inline `<script>` elements (without `src`), fix them before v0.30.0 — the build now hard-fails on inline scripts to mirror the shell's baseline `script-src 'self'` posture. See [Build-Time Diagnostics](#build-time-diagnostics) below.
+- If your napplet needs direct network access (previously implicit under a permissive dev CSP, now explicit), declare the origins via the new [`connect`](#connect-optional-v0290) option and let the shell prompt the user.
+
+See [NUB-CLASS-2.md](https://github.com/napplet/nubs) for the shell-side posture that replaces the old in-page strict-CSP baseline, and [`specs/SHELL-CONNECT-POLICY.md`](../../specs/SHELL-CONNECT-POLICY.md) for the deployer-side checklist covering HTTP-responder precondition, residual meta-CSP refusal, and grant-persistence key.
+
+#### connect (optional, v0.29.0+)
+
+**Type:** `string[]`
+
+Declares the origins the napplet needs direct browser-level network access to (`fetch`, `WebSocket`, `SSE`, `EventSource`). Each origin is validated by the shared `normalizeConnectOrigin` function from `@napplet/nub/connect/types` (the single source of truth used by both the build tool and shell implementations), emitted as a `["connect", "<origin>"]` tag in the signed NIP-5A manifest, and folded into `aggregateHash` via a synthetic `connect:origins` xTag so any origin-list change auto-invalidates prior user grants keyed on `(dTag, aggregateHash)`.
 
 **Quick start:**
 
 ```ts
+// vite.config.ts
 import { defineConfig } from 'vite';
 import { nip5aManifest } from '@napplet/vite-plugin';
 
 export default defineConfig({
   plugins: [
     nip5aManifest({
-      nappletType: 'my-napp',
-      strictCsp: true,   // enable v0.28.0 baseline
+      nappletType: 'my-napplet',
+      connect: [
+        'https://api.example.com',
+        'wss://events.example.com',
+        'https://xn--caf-dma.example.com',   // café.example.com in Punycode
+      ],
     }),
   ],
 });
 ```
 
-**10-directive baseline (when `strictCsp: true`):**
+**Origin format (accept / reject rules):**
 
-| Directive | Value (prod) | Value (dev) |
-|-----------|--------------|-------------|
-| `default-src` | `'none'` | `'none'` |
-| `script-src` | `'nonce-<random>' 'self'` | `'nonce-<random>' 'self'` |
-| `style-src` | `'self'` | `'self'` |
-| `img-src` | `blob: data:` | `blob: data:` |
-| `font-src` | `blob: data:` | `blob: data:` |
-| `connect-src` | `'none'` | `'self' ws://localhost:* wss://localhost:*` |
-| `worker-src` | `'none'` | `'none'` |
-| `object-src` | `'none'` | `'none'` |
-| `base-uri` | `'none'` | `'none'` |
-| `form-action` | `'none'` | `'none'` |
+| Rule | Behaviour |
+|------|-----------|
+| Scheme | MUST be one of `https`, `wss`, `http`, `ws`. Closed set. Anything else rejected. |
+| Lowercase | Scheme AND host MUST be lowercase on the wire. Uppercase anywhere rejected. |
+| Host | ASCII DNS labels or already-Punycode IDN (`xn--…`). Non-Punycode non-ASCII rejected — use Punycode in the config string. |
+| IPv4 literal | Accepted (including `127.0.0.1`, `10.x`, `192.168.x`, `172.16.x`). |
+| IPv6 literal | Rejected in v1 (both bracketed `[::1]` and bare). |
+| Port | Explicit non-default OK (e.g. `:8443`). Default port (`:443` on https/wss, `:80` on http/ws) MUST be omitted — explicit default-port forms rejected for aggregateHash determinism. |
+| Path / query / fragment | Rejected. Origin = scheme + host + optional non-default port. `https://foo.com/api`, `https://foo.com?x=1`, `https://foo.com#x` all invalid. |
+| Wildcard | Rejected. Each subdomain is a separate origin. |
 
-**What the build will REJECT:**
+Rejected inputs throw at `configResolved` with a diagnostic prefixed `[nip5a-manifest]`, failing the Vite build before `dist/` is written.
 
-| Pitfall | What fails the build |
-|---------|----------------------|
-| Pitfall 1 — meta not first head child | Build fails if any `<script>`, `<style>`, or `<link>` precedes the CSP meta in `<head>`. |
-| Pitfall 2 — header-only directives in meta | Build fails if the configured policy contains `frame-ancestors`, `sandbox`, `report-uri`, or `report-to` (these are silently ignored by browsers in meta delivery). |
-| Pitfall 18 — dev relaxation leaks into prod | Build fails if the production manifest contains any of `'unsafe-inline'`, `'unsafe-eval'`, `ws://`, or `wss://`. |
-| Pitfall 19 — single-quote-bearing values | Hand-rolled CSP extractor anchors on `"` delimiters so `'none'` / `'self'` survive correctly. |
+**Manifest tag emission:**
 
-**Capability advertisement:**
+One `["connect", "<origin>"]` tag per origin, emitted in **author-declared order** (as supplied in the config array). Tags are placed between the existing `manifestXTags` (file hashes) and `configTags` (config schema) in the signed kind 35128 manifest event.
 
-Shells that enforce this CSP advertise it via `shell.supports('perm:strict-csp')`. The capability is **orthogonal to `nub:resource`** — a permissive dev shell can implement the resource NUB without enforcing strict CSP, and a production shell can enforce CSP whether or not the napplet actually uses the resource NUB.
+**aggregateHash fold:**
 
-**Disable for legacy / migration napplets:**
+Origins are fed through a canonical fold procedure (lowercase → ASCII-ascending sort → LF-join with no trailing newline → UTF-8 → SHA-256 → lowercase hex) and the resulting digest is pushed as a synthetic xTag entry `[<hex-digest>, 'connect:origins']` into the manifest's xTag array BEFORE `computeAggregateHash`. The synthetic entry participates in `aggregateHash` but is filtered out of the public `['x', ...]` tag projection via a shared `SYNTHETIC_XTAG_PATHS` set (which also covers the v0.25.0 `config:schema` fold).
 
-```ts
-nip5aManifest({ nappletType: 'my-old-napp', strictCsp: false });   // explicit opt-out
-nip5aManifest({ nappletType: 'my-old-napp' });                     // default (off — strict CSP requires explicit opt-in)
-```
+Any addition, removal, or reorder-after-normalization of the origin set produces a different `aggregateHash`, which auto-invalidates any prior user grant keyed on `(dTag, aggregateHash)` — guaranteeing the shell re-prompts on a supply-chain origin change.
 
-See [NUB-RESOURCE](https://github.com/napplet/nubs) and [NIP-5D Security Considerations](../../specs/NIP-5D.md) for the wire-side contract that strict CSP enforces in tandem with the iframe sandbox model.
+**Module-load conformance guardrail:**
+
+At ESM import time, the plugin self-checks its fold procedure against the normative NUB-CONNECT conformance fixture (3 origins → SHA-256 `cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742`). A drift in the fold procedure (even a one-byte change to the sort or separator) fires a fatal at plugin-import time, preventing the build from shipping a hash incompatible with shells.
+
+**See also:**
+- [NUB-CONNECT](https://github.com/napplet/nubs) — normative spec (origin format, aggregateHash fold, conformance fixture)
+- [`specs/SHELL-CONNECT-POLICY.md`](../../specs/SHELL-CONNECT-POLICY.md) — shell-deployer checklist (HTTP-responder precondition, residual meta-CSP refusal, grant persistence, consent prompt MUSTs, revocation UX)
+- [NUB-CLASS-2.md](https://github.com/napplet/nubs) — posture triggered by presence of `connect` tags (CSP shape, shell responsibilities at serve time)
 
 ### Environment Variables
 
@@ -311,6 +333,49 @@ if (!window.napplet.shell.supports('media')) {
 }
 ```
 
+## Build-Time Diagnostics
+
+v0.29.0 adds two build-time safeguards and one informational warning, all enforced in `closeBundle` or `configResolved` so misconfiguration fails loud before `dist/` reaches a shell.
+
+### Inline-script fail-loud (new in v0.29.0)
+
+The plugin scans `dist/index.html` after build for any `<script>` element without a non-empty `src` attribute. Such elements are hard-errors — the build throws and exits non-zero with a diagnostic referencing the shell's baseline `script-src 'self'` posture.
+
+Allowed script variants (not flagged):
+- `<script src="..."></script>` — external module
+- `<script type="application/json">…</script>` — JSON data island
+- `<script type="application/ld+json">…</script>` — JSON-LD data island
+- `<script type="importmap">…</script>` — import map
+- `<script type="speculationrules">…</script>` — speculation rules
+- HTML comments (stripped before scan)
+
+Rejected:
+- `<script>console.log("hi")</script>` — inline JS without `src`
+- `<script type="module">/* inline */</script>` — inline module
+
+**Why:** The shell is now the sole runtime CSP authority. Every conformant shell serves napplet HTML with a CSP that includes `script-src 'self'` (or tighter, via `'nonce-…'`). Inline `<script>` without `src` violates that policy, so shipping inline JS guarantees the napplet will be partially non-functional at runtime. Surfacing this at build time converts a silent runtime failure into a loud build failure.
+
+**Fixing:** Move inline JS into a `.js` module under `src/` and import it. For build-time state that needs to reach runtime code (feature flags, config defaults), use a `<script type="application/json" id="data">…</script>` data island and read it at runtime via `document.getElementById('data').textContent`.
+
+### Cleartext origin warning (new in v0.29.0)
+
+When `connect` contains any `http:` or `ws:` origin, the plugin emits one informational `console.log` during `configResolved` explaining browser mixed-content reality:
+
+```
+[nip5a-manifest] cleartext origin declared in `connect`: http://… / ws://…
+HTTPS shells silently drop fetches to http: / ws: origins (except localhost / 127.0.0.1 secure-context exceptions). Approved grants will produce no traffic when the shell is served over https. Prefer https: / wss: end-to-end, or check shell.supports('connect:scheme:http') at runtime.
+```
+
+This is **informational, not an error** — operator policy may explicitly permit cleartext for localhost development or for explicit-opt-out-of-TLS deployments. Shells advertising `shell.supports('connect:scheme:http') === false` refuse cleartext entirely; check at runtime before depending on cleartext grants.
+
+### Dev-mode-only `napplet-connect-requires` meta (new in v0.29.0)
+
+In dev mode (`vite serve`), the plugin injects a `<meta name="napplet-connect-requires" content="<origins>">` tag into the served HTML's `<head>` when `connect` is non-empty. The `content` is the ASCII-sorted origin list, space-separated. This tag is useful for shell-less local-preview workflows that want to simulate a granted state without running a full shell.
+
+**IMPORTANT:** The tag name is `napplet-connect-requires` — deliberately distinct from the shell-authoritative `napplet-connect-granted`, which is what the napplet shim reads at install time and is injected ONLY by a real shell at HTTP-serve time on grant approval. The plugin MUST NEVER emit `napplet-connect-granted`; the plugin has no authority to represent a user's consent decision.
+
+The `-requires` tag is NOT injected in production builds (`vite build`). Production HTML contains neither tag; grants flow through the shell's HTTP response at serve time.
+
 ## How It Works
 
 ### Dev Mode (`transformIndexHtml`)
@@ -357,8 +422,10 @@ Create a Vite plugin instance.
 interface Nip5aManifestOptions {
   /** Napplet type/dtag (e.g., 'feed', 'chat') */
   nappletType: string;
+
   /** Service dependencies this napplet requires (e.g., ['audio', 'notifications']). Optional. */
   requires?: string[];
+
   /**
    * JSON Schema (draft-07+) describing the napplet's config surface (NUB-CONFIG).
    * May be an inline object or a path string (resolved relative to the Vite
@@ -366,20 +433,34 @@ interface Nip5aManifestOptions {
    * discovery when omitted.
    */
   configSchema?: JSONSchema7 | string;
+
   /**
-   * Emit a strict Content-Security-Policy meta as the first <head> child.
-   * Pairs with the resource NUB to enforce browser-level resource isolation.
-   * Boolean true uses the 10-directive baseline; pass StrictCspOptions to customize.
-   * Disabled by default for back-compat with pre-v0.28.0 napplets.
+   * Origins the napplet needs direct browser-level network access to (v0.29.0+).
+   * Each origin validated via `normalizeConnectOrigin` from
+   * `@napplet/nub/connect/types`, emitted as `["connect", "<origin>"]`
+   * manifest tags, folded into `aggregateHash` via a synthetic `connect:origins`
+   * xTag so any origin change auto-invalidates prior grants.
+   * See NUB-CONNECT for the authoritative origin format.
    */
-  strictCsp?: boolean | StrictCspOptions;
+  connect?: string[];
+
+  /**
+   * @deprecated v0.29.0: The shell is now the sole runtime CSP authority.
+   * This option is accepted-but-warns (one console.warn per build) and has
+   * NO effect on the emitted HTML. Scheduled for hard-remove in v0.30.0
+   * (REMOVE-STRICTCSP). Remove this key from vite.config.ts to silence.
+   */
+  strictCsp?: unknown;
 }
 ```
 
 ## Protocol Reference
 
 - [NUB-CONFIG spec (PR #13)](https://github.com/napplet/nubs/pull/13) -- per-napplet declarative configuration
-- [NUB-RESOURCE (PR pending)](https://github.com/napplet/nubs) — sandboxed byte fetching primitive that strict CSP enforces against
+- [NUB-RESOURCE (drafts)](https://github.com/napplet/nubs) — sandboxed byte fetching primitive that strict CSP enforces against
+- [NUB-CONNECT (drafts)](https://github.com/napplet/nubs) -- user-gated direct network access: origin format, manifest tag shape, canonical `connect:origins` aggregateHash fold, runtime API
+- [NUB-CLASS (drafts)](https://github.com/napplet/nubs) + [`NUB-CLASS-1.md`](https://github.com/napplet/nubs) + [`NUB-CLASS-2.md`](https://github.com/napplet/nubs) -- napplet class track and the two v0.29.0 posture members (strict baseline + user-approved explicit-origin)
+- [`specs/SHELL-CONNECT-POLICY.md`](../../specs/SHELL-CONNECT-POLICY.md) + [`specs/SHELL-CLASS-POLICY.md`](../../specs/SHELL-CLASS-POLICY.md) -- shell-deployer checklists
 - [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
 - [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md) -- Nsite specification
 - [Aggregate Hash PR](https://github.com/nostr-protocol/nips/pull/2287) -- NIP-5A aggregate hash extension (not yet merged)
