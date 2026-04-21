@@ -72,7 +72,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 **Plans:** 4 plans
 
 Plans:
-- [ ] 135-01-PLAN.md — NUB-CLASS track (NUB-CLASS.md + NUB-CLASS-1.md + NUB-CLASS-2.md)
+- [x] 135-01-PLAN.md — NUB-CLASS track (NUB-CLASS.md + NUB-CLASS-1.md + NUB-CLASS-2.md)
 - [x] 135-02-PLAN.md — NIP-5D.md amendment (NUB-neutral transport-only) ✅ 2026-04-21
 - [ ] 135-03-PLAN.md — NUB-CONNECT.md (cites NUB-CLASS-2 by file name)
 - [ ] 135-04-PLAN.md — Zero-grep hygiene audit + phase commit
@@ -204,7 +204,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. Cross-Repo Spec Work | 0/4 | Planned (4 plans, 3 waves) | - |
+| 135. Cross-Repo Spec Work | 2/4 | In Progress|  |
 | 136. Core Type Surface | 0/? | Not started | - |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 0/? | Not started | - |
 | 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |

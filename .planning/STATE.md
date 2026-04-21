@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: executing
-stopped_at: Roadmap authored; 8 phases (135-142) with 57/57 REQ-IDs mapped
-last_updated: "2026-04-21T12:33:54Z"
+stopped_at: Completed 135-01-PLAN.md (NUB-CLASS track authoring)
+last_updated: "2026-04-21T12:46:31.210Z"
 last_activity: 2026-04-21 -- Plan 135-02 complete (NIP-5D NUB-neutral amendment)
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -82,6 +82,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T12:33:54Z
-Stopped at: Plan 135-02 complete — NIP-5D amended to NUB-neutral transport-only; Plan 135-01 (NUB-CLASS drafts) running in parallel Wave 1
+Last session: 2026-04-21T12:46:31.207Z
+Stopped at: Completed 135-01-PLAN.md (NUB-CLASS track authoring)
 Resume: Plans 135-03 (NUB-CONNECT) and 135-04 (zero-grep hygiene + phase commit) remain
