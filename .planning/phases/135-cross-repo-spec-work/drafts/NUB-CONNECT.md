@@ -159,3 +159,102 @@ Expected SHA-256 lowercase hex digest:
 ```
 
 The digest above can be verified independently with a one-liner such as `python3 -c "import hashlib; print(hashlib.sha256(b'https://api.example.com\nhttps://xn--caf-dma.example.com\nwss://events.example.com').hexdigest())"`. Implementations whose output differs from `cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742` for the specified inputs are non-conformant.
+
+## Runtime API
+
+The napplet-side runtime surface is a single property `connect` mounted at `window.napplet.connect`:
+
+```typescript
+interface NappletConnect {
+  /** True if the user has granted all declared origins for this (dTag, aggregateHash). */
+  readonly granted: boolean;
+
+  /** The user-approved origins. Empty array on denial or on shells not implementing nub:connect. */
+  readonly origins: readonly string[];
+}
+
+interface NappletGlobal {
+  readonly connect: NappletConnect;
+}
+```
+
+The shim populates `window.napplet.connect` synchronously at install time from a shell-injected `<meta name="napplet-connect-granted" content="...">` element in the served HTML. The meta tag's `content` attribute is a space-separated list of approved origins. An empty `content` value or an absent meta tag indicates `{ granted: false, origins: [] }`.
+
+Shells implementing this NUB MUST inject the discovery meta tag when serving the napplet's HTML — even on denial, in which case the tag is emitted with an empty `content` attribute. The presence of the meta tag is the signal that the shell implements NUB-CONNECT; absence is indistinguishable from a shell that does not advertise `nub:connect`. Shells MUST NOT rely on postMessage traffic to convey grant state; `window.napplet.connect` is populated before any napplet code runs.
+
+`window.napplet.connect` MUST default to `{ granted: false, origins: [] }` on shells that do not implement `nub:connect`, on shells that implement `nub:connect` but denied the prompt, and on shells that have not yet injected the meta tag at shim install. The property MUST NEVER be `undefined`. Napplets gracefully degrade by checking `shell.supports('nub:connect')` before depending on `window.napplet.connect.granted === true`; a napplet that branches solely on `.granted` without checking `shell.supports(...)` will produce correct (degraded) behavior but will not be able to distinguish "shell does not implement the NUB" from "user denied the prompt".
+
+The `NappletConnect` object and its `origins` array SHOULD be frozen via `Object.freeze` at shim install so that napplet code cannot tamper with the state after install. Freezing is a best-effort integrity signal, not a security control — the napplet runs in the same execution context as the shim and can always replace `window.napplet.connect` wholesale. The shell's CSP header, not the shim object, is the authoritative enforcement.
+
+## Capability Advertisement
+
+Shells advertise NUB-CONNECT support through three capability strings on the NIP-5D `shell.supports()` surface:
+
+- `shell.supports('nub:connect')` — primary capability. Returns `true` when the shell implements this NUB: honors `connect` manifest tags, injects the discovery meta tag, performs the origin-format validation and the `(dTag, aggregateHash)` grant-persistence model, and emits the runtime CSP described in `NUB-CLASS-2.md`. A napplet that branches on `.granted` SHOULD first check this capability to distinguish "shell denied" from "shell does not implement".
+- `shell.supports('connect:scheme:http')` — secondary, operator policy. Returns `true` if the shell permits cleartext `http:` origins in `connect` tags. Operator policy MAY refuse cleartext entirely — some deployments require HTTPS end-to-end and advertise `false` for this capability.
+- `shell.supports('connect:scheme:ws')` — secondary, parallel to `connect:scheme:http`. Returns `true` if the shell permits cleartext `ws:` origins.
+
+Napplets declaring cleartext (`http:` or `ws:`) origins SHOULD check the corresponding `connect:scheme:*` capability before relying on a grant being obtainable and SHOULD gracefully degrade when the shell refuses cleartext. When a shell refuses to serve a napplet solely on the basis of a cleartext origin, the refuse-to-serve diagnostic MUST identify the offending origin and the operator-policy reason, so that the napplet author or a sophisticated end user can understand why the napplet cannot load.
+
+## Shell Consent Flow
+
+The shell consent flow is owned by the posture defined in `NUB-CLASS-2.md`. NUB-CONNECT specifies only the triggering condition and the semantic content of the prompt; the UX wording, layout, and revocation machinery are posture concerns.
+
+The trigger for the consent flow is: the napplet's manifest contains at least one `['connect', '<origin>']` tag AND no prior approve-or-deny decision exists for the composite `(dTag, aggregateHash)` key. Shells encountering this condition MUST present a consent prompt before the iframe is served; shells MUST NOT silently approve or silently deny.
+
+The prompt MUST capture the following semantic elements. Exact wording is a shell-UX decision, but these MUSTs are load-bearing regardless of copy:
+
+1. Napplet name as declared in the NIP-5A manifest.
+2. The complete list of requested origins (verbatim as declared in the `connect` tags — shells MUST NOT summarize, truncate, or first-presentation-elide the list).
+3. An explicit statement that approval allows the napplet to **send AND receive** any data with the listed origins — the grant is not read-only and is not shell-mediated.
+4. An explicit statement that the shell cannot see or filter post-grant traffic between the napplet and the listed origins.
+5. Visible marking of any cleartext (`http:` or `ws:`) origins alongside the confidentiality tradeoff: the user is approving traffic that is not encrypted in transit.
+
+Shells MUST NOT use diminutive language ('just', 'only', 'simply') that understates the trust cost of approval. Consent prompts written to minimize user friction at the cost of informed consent are misleading the user. See `NUB-CLASS-2.md` for the complete consent-flow MUSTs — including refuse-to-serve behavior on residual meta-CSP, revocation UX, at-next-load-only effective-revocation timing, and the full set of shell-side responsibilities.
+
+## Grant Persistence
+
+Grants are keyed on the composite `(dTag, aggregateHash)`. The `aggregateHash` input includes the `connect:origins` synthetic xTag entry defined in the **Canonical `connect:origins` aggregateHash Fold** section above. Any change to the napplet's origin set (addition, removal, or reorder after normalization) produces a new `aggregateHash`, which auto-invalidates the prior grant and triggers a fresh consent prompt on next load.
+
+Shells MUST key grants on the exact composite. Keying on `dTag` alone is a security bug: a rebuilt napplet with a changed origin set would inherit the prior approval silently, giving the attacker-in-the-rebuild a free pass to reach newly-added origins the user never approved. This is the silent-supply-chain-upgrade vector, and the composite-key rule is the direct mitigation.
+
+See `NUB-CLASS-2.md`'s Grant Persistence Semantics section for the full posture-level MUSTs — including the diff UX requirement on re-prompt when a prior approved grant existed under the same `dTag` but a different `aggregateHash`, and the extended-key hygiene rule (shells MAY extend the key tuple but the extension MUST be a strict superset of `(dTag, aggregateHash)` to preserve portability across conformant shells).
+
+## Security Considerations
+
+### Post-grant opacity
+
+Once origins are approved and the runtime CSP is emitted, the shell has zero browser-level hook to inspect or filter subsequent network traffic between the napplet and the approved origins. This is a fundamental tradeoff and cannot be papered over. Consent-prompt language MUST reflect this reality — see **Shell Consent Flow** above. Mechanisms that would enable post-grant traffic inspection — audit logging, per-request quotas, traffic filtering — all require a service worker intercepting the napplet's network layer, and the napplet's `sandbox="allow-scripts"` iframe forbids service-worker registration. NUB-CONNECT does not attempt to provide what the browser's security model does not allow.
+
+### Mixed-content silent failure
+
+Browsers block `http:` and `ws:` fetches from napplets running in shells served over `https:`, regardless of the CSP header's `connect-src` value. A napplet declaring `http:` origins approved by the user will silently fail to fetch when the shell is served over `https:`, except for the `localhost` / `127.0.0.1` secure-context exceptions. The napplet-build tool SHOULD emit a build-time warning when `http:` or `ws:` origins appear in `connect`; shells SHOULD surface this reality in the consent prompt so the user is not surprised by an apparently-approved grant that produces no traffic in practice. Mixed-content is a browser-level rule enforced below the CSP layer; NUB-CONNECT cannot override it.
+
+### Sandbox preservation
+
+Approving `connect` origins does NOT relax the iframe sandbox. The napplet remains at an opaque origin under `sandbox="allow-scripts"`. Grants relax only the `connect-src` CSP directive; all other browser protections (Same-Origin Policy against the shell's origin, absence of cookies on napplet-origin requests, no service-worker registration, no shared-storage access, no direct access to the shell's DOM) remain in force. A NUB-CONNECT grant is a network-egress permission scoped to specific origins — it is not a sandbox escape, it is not a capability-expansion beyond network, and it does not interact with NUB-RESOURCE's own enforcement layer.
+
+### Weaker posture than NUB-RESOURCE
+
+NUB-CONNECT is substantially weaker than NUB-RESOURCE in terms of shell-side visibility and policy enforcement. NUB-RESOURCE proxies all fetches through the shell, which can MIME-sniff response bytes, enforce a private-IP block list at DNS-resolution time, rasterize SVG in a sandboxed worker, cap response size, limit redirect chains, and re-validate per hop. NUB-CONNECT does none of those things — the grant is a full trust vote for the listed origins, and every byte flowing through a NUB-CONNECT grant is outside the shell's view. Napplet authors SHOULD default to NUB-RESOURCE for everything NUB-RESOURCE can express, and reach for NUB-CONNECT only when the use case genuinely requires direct `POST`, WebSocket, SSE, streaming responses, custom headers, or long-lived connections.
+
+## Graceful Degradation
+
+Napplets that might want network access SHOULD branch on four states, in priority order:
+
+1. `shell.supports('nub:connect') === true` AND `window.napplet.connect.granted === true` — the user approved the manifest's `connect` origins. Use direct `fetch` / `WebSocket` / `EventSource` against `window.napplet.connect.origins`.
+2. `shell.supports('nub:connect') === true` AND `window.napplet.connect.granted === false` — user denied the prompt, the prompt has not yet been presented, or the shell implements the NUB but chose not to advertise grants for this napplet. Fall back to NUB-RESOURCE for anything the resource NUB can express; otherwise degrade the affected feature gracefully. Optionally display a napplet-side affordance prompting the user to re-approve through the shell's revocation UI.
+3. `shell.supports('nub:connect') === false` AND `shell.supports('nub:resource') === true` — shell does not implement NUB-CONNECT at all; use NUB-RESOURCE for read-only byte fetches. POST / WebSocket / SSE features are unavailable in this environment and MUST be degraded gracefully; the napplet MUST NOT pressure the user to switch shells.
+4. Neither `nub:connect` nor `nub:resource` is advertised — the napplet cannot reach the network at all. Display appropriate UX (offline mode, read-only-from-cache, or a clear explanation that the feature requires a shell implementing one of the network NUBs) and avoid silent failure.
+
+States (1) and (2) are the common paths in modern shells. States (3) and (4) are graceful-shutdown paths that napplets targeting restrictive or minimal shells MUST handle without crashing, hanging, or presenting confusing error messages.
+
+## References
+
+- `NIP-5D` — Parent transport spec: JSON envelope wire format, iframe sandbox model, capability advertisement surface.
+- `NUB-CLASS.md` — Parent class track: defines the `class.assigned` envelope, the `window.napplet.class` runtime surface, and the authoring rules for track members.
+- `NUB-CLASS-1.md` — Default strict-baseline posture. Triggered when a napplet declares no `connect` tags, and also when a user denies the NUB-CLASS-2 consent prompt (denied napplets are served under the NUB-CLASS-1 posture).
+- `NUB-CLASS-2.md` — User-approved explicit-origin posture triggered by presence of `connect` tags. Owns the CSP shape, consent-flow MUSTs, grant-persistence semantics, residual-meta-CSP refuse-to-serve requirement, and revocation UX.
+- `NUB-RESOURCE` — Sibling NUB providing shell-mediated read-only byte fetching. Authors SHOULD default to NUB-RESOURCE for everything it can express and reach for NUB-CONNECT only when direct network access is genuinely required.
+- WHATWG URL — Origin format and Punycode IDN conversion rules.
+- WHATWG Fetch, Mixed Content — Browser-level mixed-content enforcement (HTTPS shells cannot fetch HTTP origins; `localhost` / `127.0.0.1` secure-context exceptions).
