@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: verifying
-stopped_at: Completed 138-03-PLAN.md (Phase 138 TERMINAL-COMPLETE)
-last_updated: "2026-04-21T15:13:35.354Z"
+stopped_at: Completed 139-01-PLAN.md (Phase 139 COMPLETE — TS2741 carry closed)
+last_updated: "2026-04-21T17:10:17.320Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
-  completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 12
+  completed_plans: 12
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 138 — vite-plugin Surgery
+**Current focus:** Phase 139 — Central Shim + SDK Integration
 
 ## Current Position
 
-Phase: 139
-Plan: Not started
-Status: Phase complete — ready for orchestrator verify_phase_goal pass; then Phase 139
+Phase: 139 (Central Shim + SDK Integration) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-04-21
 
 ## Phase Map (v0.29.0)
@@ -64,6 +64,7 @@ Last activity: 2026-04-21
 - v0.29.0 / Phase 138-03: Phase 138 TERMINAL-COMPLETE. Module-load self-check (`assertConnectFoldMatchesSpecFixture`) binds vite-plugin `connect:origins` fold to NUB-CONNECT.md §Conformance Fixture digest `cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742`; fires at ESM-init on fold-drift. Perturbation experiment confirmed behavior: `.join('\n')` → `.join(',')` triggers FATAL at plugin-import time (`node -e "import(...)"` exits 1), revert exits 0. Build-layer insight: tsup/tsc does NOT execute module-top-level code at build time, so the guardrail fires when Vite imports the plugin (napplet authors' `pnpm build`), not when tsup builds it. Self-check code was pre-landed in commit `d06c293` from an aborted prior 138-03 attempt that bundled with 138-02 Task 4's commit message; no new code commit needed in this session — only the SUMMARY + STATE/ROADMAP updates land. All 10 VITE-XX REQs satisfied; 40+ Phase 138 grep audit passes (two documented drifts: `cc7c1b1…` count = 2 by co-location with 138-02 Task 3 fold-docs comment, and Task 1 no-op commit). `pnpm --filter @napplet/vite-plugin build` + `type-check` both exit 0. Guardrail closes SPEC-P1 (hash-determinism drift between build-time plugin and shell-side implementations) one phase earlier than the Phase 142 VER deferred item. Phase 138 ready for orchestrator verify_phase_goal pass.
 - v0.29.0 / Phase 138-02: Additive half of vite-plugin surgery landed. 254 LOC added to `packages/vite-plugin/src/index.ts` (560 → 814) across 4 task commits (`fdb92d9`/`49aba91`/`264edfb`/`d06c293`). `connect?: string[]` option validated via shared `normalizeConnectOrigin` from `@napplet/nub/connect/types` (Phase 137); `SYNTHETIC_XTAG_PATHS: ReadonlySet<string>` registry (module-scope, exported) covers `config:schema` + `connect:origins` — single extension point for future NUB folds; `aggregateHash` fold produces byte-identical NUB-CONNECT canonical digest; one `['connect', origin]` manifest tag per origin in author-declared order between `manifestXTags` and `configTags`; `assertNoInlineScripts` zero-dep regex helper hard-errors on `<script>` without non-empty `src` (allow-list for application/json, application/ld+json, importmap, speculationrules, HTML comments stripped); informational cleartext warn on `http:`/`ws:` origins; dev-mode-only `napplet-connect-requires` meta distinct from shell-authoritative `...-granted` name (plugin MUST NEVER emit the granted variant). Two orderings: author-declared for manifest tags (readability per NUB-CONNECT §Manifest Tag Shape), ASCII-sorted for fold (determinism). Pre-existing `@napplet/shim` DTS failure (Phase 136-01 added `connect` to `NappletGlobal` without updating shim literal) logged to `deferred-items.md`, scheduled for Phase 139 SHIM-01/02. VITE-03..10 complete.
 - v0.29.0 / Phase 138-01: Subtractive half of vite-plugin surgery landed. `packages/vite-plugin/src/csp.ts` deleted in full (−276 LOC, no dev-only retention per locked Q2). `packages/vite-plugin/src/index.ts` stripped of all CSP production machinery (660 → 560 LOC, −100 net): import block from `./csp.js`, 34-line `strictCsp` JSDoc+field, 4-line CSP runtime state, 11-line `configResolved` CSP branch, 11-line `transformIndexHtml` CSP meta injection (including `order: 'pre'` + `isDev`/`ctx.server` dead code), 18-line `closeBundle` CSP assert block. `strictCsp?: unknown` retained as `@deprecated` accept-but-warn shim emitting one `console.warn` per build from `configResolved` (run-once by Vite contract, no external guard needed). Old v0.28.0 consumers' `vite.config.ts` continues to type-check and build on upgrade — they see one warn per build. Hard-remove tracked as `REMOVE-STRICTCSP` for v0.30.0. `tsup.config.ts` entry reduced to `['src/index.ts']`. Banned-identifier audit: 0 hits each for buildBaselineCsp / validateStrictCspOptions / assertMetaIsFirstHeadChild / assertNoDevLeakage / StrictCspOptions / './csp' import / Content-Security-Policy / head-prepend / strictCspEnabled / cspNonce / cspMode / strictCspOptions. Preserved byte-identically: aggregate-hash injection, napplet-type/requires/config-schema meta, schema discovery + structural validation, synthetic `config:schema` xTag fold, manifest signing via nostr-tools. `pnpm --filter @napplet/vite-plugin build` + `type-check` both exit 0 (8ms ESM build, 639ms DTS, dist/index.js 11.25 KB). Additive half (Plan 138-02: connect option, inline-script diagnostic, `SYNTHETIC_XTAG_PATHS` extraction, `connect:origins` fold, manifest tags) unblocked.
+- v0.29.0 / Phase 139-01: State-only NUB SDK pattern locked — connect + class both skip the namespace const object that method-bearing NUBs use (`export const resource = {...}`, `export const keys = {...}`, etc.); types + DOMAIN-aliased-constant + installer + helper getters are sufficient. `class` is also a reserved identifier so `export const class` would be invalid JS anyway. Shim literal's `connect: { granted: false, origins: [] }` default is PRESERVED even though `installConnectShim` replaces the field at runtime: this satisfies TS2741 at type-check AND provides an authoritative graceful-degradation default for SDK-only consumers who never call the installer (dual-layer guarantee). `class:` field intentionally OMITTED from the literal — the installer's `Object.defineProperty` mounts it; the optional `class?: number` on NappletGlobal allows the omission. Task 1 commit `69814ae` (shim), Task 2 commit `6214702` (sdk); Task 3 verification-only no commit. Phase 136-to-138 carried TS2741 gap CLOSED — `pnpm -r type-check` now exits 0 across all 14 packages, first time since Phase 136 introduced the planned carry. Smoke-test harness drift discovered (document.addEventListener needed by installKeysShim's keydown listener) fixed in /tmp stub only — production shim code untouched.
 
 ### Open Decisions for Plan Phases
 
@@ -80,9 +81,9 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ### Pending Todos
 
-- Orchestrator verify_phase_goal pass for Phase 136, Phase 137, Phase 138 (spawned by `/gsd:execute-phase`, not by this executor)
-- Phase 139 (Central Shim + SDK Integration) MUST populate `window.napplet.connect = { granted: false, origins: [] }` default block at `packages/shim/src/index.ts:130` — currently produces expected TS2741 error in monorepo-wide type-check; will be resolved by SHIM-01 + SHIM-02
+- Orchestrator verify_phase_goal pass for Phase 136, Phase 137, Phase 138, Phase 139 (spawned by `/gsd:execute-phase`, not by this executor)
 - Phase 138 (vite-plugin surgery) TERMINAL-COMPLETE — all 10 VITE-XX REQs satisfied; module-load conformance guardrail in place
+- Phase 139 (Central Shim + SDK Integration) TERMINAL-COMPLETE — all 6 REQs satisfied (SHIM-01..04 + SDK-01..02); TS2741 carry CLOSED (`pnpm -r type-check` green across all 14 packages)
 - Phase 142 VER-03 (tree-shake harness extension) — types-only consumer fixtures to assert bundle-delta ≤ 155 B (connect/types.js) + 103 B (class/types.js) baseline
 
 ### Blockers/Concerns
@@ -93,6 +94,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T15:07:53.508Z
-Stopped at: Completed 138-03-PLAN.md (Phase 138 TERMINAL-COMPLETE)
-Resume: Phase 138 TERMINAL-COMPLETE — ready for orchestrator verify_phase_goal pass. Next planned phase: 139 (Central Shim + SDK Integration — wire `installConnectShim` + `installClassShim` into `@napplet/shim`, mount `window.napplet.connect` + `window.napplet.class`, re-export both SDK surfaces; unblocks downstream TS2741 fix on shim DTS).
+Last session: 2026-04-21T17:10:17.317Z
+Stopped at: Completed 139-01-PLAN.md (Phase 139 COMPLETE — TS2741 carry closed)
+Resume: Phase 139 TERMINAL-COMPLETE — `window.napplet.connect` + `window.napplet.class` mounted; @napplet/sdk re-exports parallel surfaces; workspace-wide `pnpm -r type-check` + `pnpm -r build` both green across all 14 packages. Ready for orchestrator verify_phase_goal pass. Next planned phase: 140 (Shell-Deployer Policy Docs — author `specs/SHELL-CONNECT-POLICY.md` + `specs/SHELL-CLASS-POLICY.md` as shell-deployer checklists, can now reference the live SDK surface).

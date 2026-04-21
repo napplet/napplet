@@ -62,12 +62,12 @@
 
 ### Central Shim + SDK Integration (`packages/shim/`, `packages/sdk/`)
 
-- [ ] **SHIM-01**: Import `installConnectShim` from `@napplet/nub/connect/shim` in `packages/shim/src/index.ts`; call at bootstrap; add `connect: { granted, origins }` block to the `window.napplet` literal. No central-dispatch router entry — NUB-CONNECT has no wire messages
-- [ ] **SHIM-02**: Graceful degradation — `window.napplet.connect` MUST default to `{granted: false, origins: []}` (never `undefined`) when shell does not advertise `nub:connect` or does not inject the grant meta tag
-- [ ] **SHIM-03**: Import `installClassShim` from `@napplet/nub/class/shim` in `packages/shim/src/index.ts`; call at bootstrap; add `class: undefined` initial value (readonly getter) to the `window.napplet` literal. Wire dispatcher routes `class.assigned` envelopes to the class shim's handler.
-- [ ] **SHIM-04**: Graceful degradation — `window.napplet.class` MUST be `undefined` (never `0`, never `null`) when shell does not advertise `nub:class` or has not yet sent `class.assigned`; napplets gracefully degrade by checking `shell.supports('nub:class')` before depending on the value
-- [ ] **SDK-01**: Add `connect` namespace block to `packages/sdk/src/index.ts` parallel to `resource`; re-export types from `@napplet/nub/connect`; export `DOMAIN as CONNECT_DOMAIN`; export `installConnectShim`
-- [ ] **SDK-02**: Add `class` namespace block to `packages/sdk/src/index.ts` parallel to `connect`; re-export types from `@napplet/nub/class`; export `DOMAIN as CLASS_DOMAIN`; export `installClassShim`
+- [x] **SHIM-01**: Import `installConnectShim` from `@napplet/nub/connect/shim` in `packages/shim/src/index.ts`; call at bootstrap; add `connect: { granted, origins }` block to the `window.napplet` literal. No central-dispatch router entry — NUB-CONNECT has no wire messages
+- [x] **SHIM-02**: Graceful degradation — `window.napplet.connect` MUST default to `{granted: false, origins: []}` (never `undefined`) when shell does not advertise `nub:connect` or does not inject the grant meta tag
+- [x] **SHIM-03**: Import `installClassShim` from `@napplet/nub/class/shim` in `packages/shim/src/index.ts`; call at bootstrap; add `class: undefined` initial value (readonly getter) to the `window.napplet` literal. Wire dispatcher routes `class.assigned` envelopes to the class shim's handler.
+- [x] **SHIM-04**: Graceful degradation — `window.napplet.class` MUST be `undefined` (never `0`, never `null`) when shell does not advertise `nub:class` or has not yet sent `class.assigned`; napplets gracefully degrade by checking `shell.supports('nub:class')` before depending on the value
+- [x] **SDK-01**: Add `connect` namespace block to `packages/sdk/src/index.ts` parallel to `resource`; re-export types from `@napplet/nub/connect`; export `DOMAIN as CONNECT_DOMAIN`; export `installConnectShim`
+- [x] **SDK-02**: Add `class` namespace block to `packages/sdk/src/index.ts` parallel to `connect`; re-export types from `@napplet/nub/class`; export `DOMAIN as CLASS_DOMAIN`; export `installClassShim`
 
 ### Shell-Deployer Policy Documents (`specs/SHELL-CONNECT-POLICY.md`, `specs/SHELL-CLASS-POLICY.md`)
 
@@ -191,9 +191,12 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | VITE-08 | Phase 138 | Complete |
 | VITE-09 | Phase 138 | Complete |
 | VITE-10 | Phase 138 | Complete |
-| SHIM-01 | Phase 139 | Pending |
-| SHIM-02 | Phase 139 | Pending |
-| SDK-01 | Phase 139 | Pending |
+| SHIM-01 | Phase 139 | Complete |
+| SHIM-02 | Phase 139 | Complete |
+| SHIM-03 | Phase 139 | Complete |
+| SHIM-04 | Phase 139 | Complete |
+| SDK-01 | Phase 139 | Complete |
+| SDK-02 | Phase 139 | Complete |
 | POLICY-01 | Phase 140 | Pending |
 | POLICY-02 | Phase 140 | Pending |
 | POLICY-03 | Phase 140 | Pending |
