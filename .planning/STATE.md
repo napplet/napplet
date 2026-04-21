@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
-status: verifying
-stopped_at: Completed 141-01-PLAN.md + 141-02-PLAN.md
-last_updated: "2026-04-21T18:08:20.460Z"
+status: executing
+stopped_at: Completed 142-01-PLAN.md
+last_updated: "2026-04-21T18:31:20.954Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 19
+  completed_plans: 17
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 141 — Documentation Sweep
+**Current focus:** Phase 142 — Verification & Milestone Close
 
 ## Current Position
 
-Phase: 142
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 142 (Verification & Milestone Close) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-04-21
 
 ## Phase Map (v0.29.0)
@@ -94,6 +94,6 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 
 ## Session Continuity
 
-Last session: 2026-04-21T18:04:20.954Z
-Stopped at: Completed 141-01-PLAN.md + 141-02-PLAN.md
+Last session: 2026-04-21T18:31:20.950Z
+Stopped at: Completed 142-01-PLAN.md
 Resume: Phase 139 TERMINAL-COMPLETE — `window.napplet.connect` + `window.napplet.class` mounted; @napplet/sdk re-exports parallel surfaces; workspace-wide `pnpm -r type-check` + `pnpm -r build` both green across all 14 packages. Ready for orchestrator verify_phase_goal pass. Next planned phase: 140 (Shell-Deployer Policy Docs — author `specs/SHELL-CONNECT-POLICY.md` + `specs/SHELL-CLASS-POLICY.md` as shell-deployer checklists, can now reference the live SDK surface).

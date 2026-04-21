@@ -100,16 +100,16 @@
 
 ### Verification & Milestone Close
 
-- [ ] **VER-01**: `pnpm -r build` exits 0 across all 14 packages with the connect subpath added
-- [ ] **VER-02**: `pnpm -r type-check` exits 0 across all 14 packages
+- [x] **VER-01**: `pnpm -r build` exits 0 across all 14 packages with the connect subpath added
+- [x] **VER-02**: `pnpm -r type-check` exits 0 across all 14 packages
 - [ ] **VER-03**: Tree-shake bundle test — extend v0.26.0 VER-03 / v0.28.0 VER-01 harness with a "types-only connect consumer" case; assert final bundle contains zero `installConnectShim` and zero `registerNub` emissions
 - [ ] **VER-04**: Playwright smoke test — napplet with `connect` tags + shell with approved grant → `fetch(granted-url)` succeeds, `fetch(other-url)` emits `securitypolicyviolation` event
 - [ ] **VER-05**: Playwright smoke test — napplet with `connect` tags + shell with denied grant → emitted CSP header has `connect-src 'none'`, `window.napplet.connect.granted === false`
 - [ ] **VER-06**: Integration test — napplet's `connect` origin list changed while dist files unchanged → aggregateHash still changes via `connect:origins` fold → prior grant auto-invalidated on next load
 - [ ] **VER-07**: Integration test — napplet ships residual meta CSP + Class-2 manifest → shell refuses to serve with the prescribed diagnostic; Class-1 residual meta CSP is harmless
-- [ ] **VER-08**: Cross-repo zero-grep audit — public-repo hygiene clean on NUB-CONNECT draft + NUBs-track advisory (zero `@napplet/`, zero `kehto`, zero `hyprgate`, zero `packages/(nub|shim|sdk|vite-plugin)`)
-- [ ] **VER-09**: Author changeset for v0.29.0 breaking change; call out `strictCsp` removal/deprecation loudly
-- [ ] **VER-10**: Confirm downstream-shell-repo tracking issue exists for v0.29.0 demo napplets (Option B carried forward from v0.28.0)
+- [x] **VER-08**: Cross-repo zero-grep audit — public-repo hygiene clean on NUB-CONNECT draft + NUBs-track advisory (zero `@napplet/`, zero `kehto`, zero `hyprgate`, zero `packages/(nub|shim|sdk|vite-plugin)`)
+- [x] **VER-09**: Author changeset for v0.29.0 breaking change; call out `strictCsp` removal/deprecation loudly
+- [x] **VER-10**: Confirm downstream-shell-repo tracking issue exists for v0.29.0 demo napplets (Option B carried forward from v0.28.0)
 - [ ] **VER-11**: Playwright smoke test — shell sends `class.assigned` envelope with `class: 2` → `window.napplet.class === 2` after dispatcher processes the wire; shell sends with `class: 1` → `window.napplet.class === 1`
 - [ ] **VER-12**: Playwright smoke test — shell advertises `shell.supports('nub:class') === false` and never sends `class.assigned` → `window.napplet.class === undefined` (graceful degradation)
 - [ ] **VER-13**: Integration test — cross-NUB invariant in shell implementing both NUBs: `window.napplet.class === 2` iff `window.napplet.connect.granted === true`; shell MUST NOT emit a state where these disagree
@@ -214,16 +214,16 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | DOC-05 | Phase 141 | Complete |
 | DOC-06 | Phase 141 | Complete |
 | DOC-07 | Phase 141 | Complete |
-| VER-01 | Phase 142 | Pending |
-| VER-02 | Phase 142 | Pending |
+| VER-01 | Phase 142 | Complete |
+| VER-02 | Phase 142 | Complete |
 | VER-03 | Phase 142 | Pending |
 | VER-04 | Phase 142 | Pending |
 | VER-05 | Phase 142 | Pending |
 | VER-06 | Phase 142 | Pending |
 | VER-07 | Phase 142 | Pending |
-| VER-08 | Phase 142 | Pending |
-| VER-09 | Phase 142 | Pending |
-| VER-10 | Phase 142 | Pending |
+| VER-08 | Phase 142 | Complete |
+| VER-09 | Phase 142 | Complete |
+| VER-10 | Phase 142 | Complete |
 
 ---
 

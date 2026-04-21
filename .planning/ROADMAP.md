@@ -223,7 +223,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 142-01-PLAN.md — Terminal gates: build/type-check/zero-grep/changeset/doc-check (VER-01, VER-02, VER-08, VER-09, VER-10)
+- [x] 142-01-PLAN.md — Terminal gates: build/type-check/zero-grep/changeset/doc-check (VER-01, VER-02, VER-08, VER-09, VER-10)
 - [ ] 142-02-PLAN.md — In-repo vitest tests: tree-shake harness + aggregateHash + class wire + graceful degradation + cross-NUB invariant (VER-03, VER-06, VER-11, VER-12, VER-13)
 - [ ] 142-03-PLAN.md — Documented Playwright fixtures (VER-04, VER-05, VER-07) + milestone-close docs
 
@@ -240,7 +240,7 @@ Plans:
 | 139. Central Shim + SDK Integration | 1/1 | Complete    | 2026-04-21 |
 | 140. Shell-Deployer Policy Docs | 2/2 | Complete    | 2026-04-21 |
 | 141. Documentation Sweep | 2/2 | Complete    | 2026-04-21 |
-| 142. Verification & Milestone Close | 0/? | Not started | - |
+| 142. Verification & Milestone Close | 1/3 | In Progress|  |
 
 ---
 
