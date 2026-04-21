@@ -573,8 +573,35 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         xTags.push([schemaHash, 'config:schema']);
       }
 
-      // Compute aggregate hash (includes synthetic config:schema entry when
-      // a schema is declared)
+      // VITE-06: NUB-CONNECT aggregateHash fold. Canonical procedure per
+      // NUB-CONNECT.md §Canonical `connect:origins` aggregateHash Fold:
+      //   1. lowercase (idempotent after normalizeConnectOrigin)
+      //   2. ASCII-ascending sort (JS default .sort() is code-unit order,
+      //      byte-equivalent for ASCII origins — all conformant origins are
+      //      ASCII post-Punycode; no comparator needed)
+      //   3. LF-join with NO trailing newline
+      //   4. UTF-8 encode
+      //   5. SHA-256 → lowercase hex
+      //
+      // Independently verifiable against the NUB-CONNECT conformance fixture:
+      //   input origins: https://api.example.com, https://xn--caf-dma.example.com, wss://events.example.com
+      //   expected hash: cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742
+      // Plan 138-03 asserts this equivalence at build time.
+      //
+      // The synthetic xTag participates in aggregateHash so origin-list drift
+      // invalidates prior grants on the (dTag, aggregateHash) composite key.
+      // The projection filter (`!SYNTHETIC_XTAG_PATHS.has(p)`) keeps it out of
+      // the manifest's ['x', ...] tag list — origins surface as their own
+      // ['connect', origin] tags below.
+      if (normalizedConnect.length > 0) {
+        const sortedOrigins = [...normalizedConnect].sort();
+        const canonical = sortedOrigins.join('\n');
+        const originsHash = crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
+        xTags.push([originsHash, 'connect:origins']);
+      }
+
+      // Compute aggregate hash (includes synthetic config:schema and
+      // connect:origins entries when present)
       const aggregateHash = computeAggregateHash(xTags);
 
       // Build requires tags from plugin options
@@ -594,6 +621,14 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         .filter(([, p]) => !SYNTHETIC_XTAG_PATHS.has(p))
         .map(([hash, p]) => ['x', hash, p]);
 
+      // VITE-05: connect manifest tags. One ['connect', <normalized-origin>]
+      // per origin. Author's declared array order is preserved (not the sorted
+      // order used for the aggregate-hash fold above) — matches NUB-CONNECT
+      // §Manifest Tag Shape which emits tags in declaration order for human
+      // readability. The hash is order-insensitive via sort; the manifest
+      // tags are author-ordered.
+      const connectTags: string[][] = normalizedConnect.map((origin) => ['connect', origin]);
+
       // NUB-CONFIG: dedicated ['config', JSON.stringify(schema)] manifest tag.
       // Placed between x-tags and requires-tags per phase 114 context
       // decisions block. Only emitted when a schema is declared — napplets
@@ -602,13 +637,16 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       const configTags: string[][] =
         resolvedSchema !== null ? [['config', JSON.stringify(resolvedSchema)]] : [];
 
-      // Build kind 35128 manifest event (unsigned template)
+      // Build kind 35128 manifest event (unsigned template).
+      // Tag order (VITE-05 normative per ARCHITECTURE.md data flow):
+      //   d → x-tags (real files) → connect-tags → config-tag → requires-tags
       const manifest = {
         kind: 35128,
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['d', options.nappletType],
           ...manifestXTags,
+          ...connectTags,
           ...configTags,
           ...requiresTags,
         ],
