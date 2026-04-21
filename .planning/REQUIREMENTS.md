@@ -49,8 +49,8 @@
 
 ### `@napplet/vite-plugin` Surgery (`packages/vite-plugin/`)
 
-- [ ] **VITE-01**: Remove production-path strict-CSP machinery — delete `buildBaselineCsp`, `validateStrictCspOptions`, `assertMetaIsFirstHeadChild`, `assertNoDevLeakage`, nonce generation, CSP meta injection in `transformIndexHtml`, CSP asserts in `closeBundle`, `StrictCspOptions` import; `packages/vite-plugin/src/csp.ts` deleted OR retained dev-only (decide during plan phase)
-- [ ] **VITE-02**: Remove `strictCsp?: boolean | StrictCspOptions` option from `Nip5aManifestOptions` OR retain as `@deprecated` accept-but-warn for one release cycle (decide during plan phase)
+- [x] **VITE-01**: Remove production-path strict-CSP machinery — delete `buildBaselineCsp`, `validateStrictCspOptions`, `assertMetaIsFirstHeadChild`, `assertNoDevLeakage`, nonce generation, CSP meta injection in `transformIndexHtml`, CSP asserts in `closeBundle`, `StrictCspOptions` import; `packages/vite-plugin/src/csp.ts` deleted OR retained dev-only (decide during plan phase)
+- [x] **VITE-02**: Remove `strictCsp?: boolean | StrictCspOptions` option from `Nip5aManifestOptions` OR retain as `@deprecated` accept-but-warn for one release cycle (decide during plan phase)
 - [ ] **VITE-03**: Add `connect?: string[]` option to `Nip5aManifestOptions`
 - [ ] **VITE-04**: Implement origin normalization via shared `normalizeConnectOrigin()` from `@napplet/nub/connect/types`; validate in `configResolved()`; throw with `[nip5a-manifest]` prefix on invalid origins (uppercase host, wildcard, path, query, fragment, default port, non-Punycode IDN, cleartext scheme without explicit opt-in warning)
 - [ ] **VITE-05**: Emit `['connect', origin]` tags (one per origin) in the signed NIP-5A manifest, placed between `manifestXTags` and `configTags`
@@ -181,8 +181,8 @@ Every v1 REQ-ID is mapped to exactly one phase. 57/57 REQ-IDs covered. Phase num
 | NUB-05 | Phase 137 | Complete |
 | NUB-06 | Phase 137 | Complete |
 | NUB-07 | Phase 137 | Complete |
-| VITE-01 | Phase 138 | Pending |
-| VITE-02 | Phase 138 | Pending |
+| VITE-01 | Phase 138 | Complete |
+| VITE-02 | Phase 138 | Complete |
 | VITE-03 | Phase 138 | Pending |
 | VITE-04 | Phase 138 | Pending |
 | VITE-05 | Phase 138 | Pending |

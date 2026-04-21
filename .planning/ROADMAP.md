@@ -134,7 +134,12 @@ Plans:
 5. `closeBundle` fails the build when `dist/index.html` contains any `<script>` element without a `src` attribute, with a diagnostic referencing the shell-CSP `script-src 'self'` reason
 6. Declaring an `http:` or `ws:` origin in `connect` emits an informational build-log warning explaining browser mixed-content rules; optional dev-mode-only `<meta name="napplet-connect-requires">` injection is distinct from the shell-authoritative `napplet-connect-granted` name
 
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [x] 138-01-PLAN.md — Remove strictCsp machinery + delete csp.ts + @deprecated warn-once shim (VITE-01, VITE-02)
+- [ ] 138-02-PLAN.md — Add connect option + normalizer + aggregateHash fold + SYNTHETIC_XTAG_PATHS + manifest tags + inline-script fail-loud + cleartext warn + dev-mode connect-requires meta (VITE-03..10)
+- [ ] 138-03-PLAN.md — Module-load conformance-fixture self-check + final end-to-end sanity sweep
 
 ### Phase 139: Central Shim + SDK Integration
 
@@ -215,7 +220,7 @@ Plans:
 | 135. Cross-Repo Spec Work | 4/4 | Complete    | 2026-04-21 |
 | 136. Core Type Surface | 1/1 | Complete    | 2026-04-21 |
 | 137. `@napplet/nub/connect` Subpath Scaffold | 3/3 | Complete    | 2026-04-21 |
-| 138. `@napplet/vite-plugin` Surgery | 0/? | Not started | - |
+| 138. `@napplet/vite-plugin` Surgery | 1/3 | In Progress|  |
 | 139. Central Shim + SDK Integration | 0/? | Not started | - |
 | 140. `specs/SHELL-CONNECT-POLICY.md` | 0/? | Not started | - |
 | 141. Documentation Sweep | 0/? | Not started | - |
