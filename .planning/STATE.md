@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: NUB-CONNECT + Shell as CSP Authority
 status: Milestone ready for audit
 stopped_at: Completed 142-03-PLAN.md (Phase 142 TERMINAL-COMPLETE)
-last_updated: "2026-04-21T18:54:24.723Z"
+last_updated: "2026-04-21T19:21:09.219Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 8

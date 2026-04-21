@@ -266,9 +266,19 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 workspace packages with renamed API surface — v0.27.0 Phase 124 (VER-01)
 - ✓ Repo-wide first-party-surface zero-grep clean (`packages/`, `specs/`, `skills/`, root README, `.planning/codebase/`) with `INTEGRATIONS.md:168` historical-constant exception and Option (a) path-exclusion for self-describing planning docs — v0.27.0 Phase 124 (VER-02)
 
+- ✓ NUB-CONNECT + NUB-CLASS drafted in napplet/nubs (4 specs: NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2), canonical `connect:origins` fold byte-locked to fixture `cc7c1b19…1aa742` — v0.29.0 Phase 135
+- ✓ NIP-5D amended to NUB-neutral transport-only (Browser-Enforced Resource Isolation subsection generalized, `perm:strict-csp` example removed) — v0.29.0 Phase 135
+- ✓ `'connect'` + `'class'` added to `NubDomain`/`NUB_DOMAINS` (12 entries); `NappletGlobal` gains `connect: NappletConnect` + optional `class?: number`; `perm:strict-csp` `@deprecated` — v0.29.0 Phase 136
+- ✓ `@napplet/nub/connect` + `@napplet/nub/class` subpath scaffolds (8 new entry points) with shared `normalizeConnectOrigin()` + `ClassAssignedMessage` wire type + tree-shake contract — v0.29.0 Phase 137
+- ✓ `@napplet/vite-plugin` strictCsp production path removed (accept-but-warn shim for one release); `connect?: string[]` option with aggregateHash fold + fail-loud inline-script diagnostic + module-load conformance self-check — v0.29.0 Phase 138
+- ✓ Central shim + SDK integration: `window.napplet.connect` (default `{granted: false, origins: []}`) + `window.napplet.class` (default `undefined`); `class.assigned` dispatcher routing — v0.29.0 Phase 139
+- ✓ `specs/SHELL-CONNECT-POLICY.md` + `specs/SHELL-CLASS-POLICY.md` — shell-deployer checklists with class-determination authority, wire timing, cross-NUB invariants, revocation UX — v0.29.0 Phase 140
+- ✓ Documentation sweep: root README + 4 package READMEs + SKILL.md updated for two-class posture + NUB-RESOURCE-first guidance — v0.29.0 Phase 141
+- ✓ 13 VER gates green: `pnpm -r build` + `type-check` across 14 packages; 54 new vitest tests; 3 documented Playwright fixtures; cross-repo zero-grep clean; v0.29.0 changeset authored — v0.29.0 Phase 142
+
 ### Active
 
-- v0.29.0 NUB-CONNECT + Shell as CSP Authority — NUB-CONNECT spec, NIP-5D class-delegation amendment, `@napplet/nub/connect`, vite-plugin CSP removal + `connect` option + aggregateHash fold, central shim/SDK integration, `SHELL-CONNECT-POLICY.md`, doc sweep
+_(Planning next milestone — run `/gsd:new-milestone` to start.)_
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -291,7 +301,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.28.0 shipped (Browser-Enforced Resource Isolation). 14 packages: 4 core SDK (core, shim, sdk, vite-plugin) + consolidated `@napplet/nub` with 38 subpath entry points (now includes `/resource/{index,types,shim,sdk}`) + 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for removal in a future milestone). Runtime API surface adds `window.napplet.resource` namespace, `nub:resource` + `resource:scheme:<name>` + `perm:strict-csp` capability identifiers, optional `relay.event.resources?` sidecar field. 28 milestones shipped.
+- **Current state**: v0.29.0 shipped (NUB-CONNECT + Shell as CSP Authority). 14 packages: 4 core SDK (core, shim, sdk, vite-plugin) + consolidated `@napplet/nub` with 46 subpath entry points (adds `/connect/{index,types,shim,sdk}` + `/class/{index,types,shim,sdk}`) + 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for removal in a future milestone). Runtime API surface adds `window.napplet.connect` (`{granted, origins}`) + `window.napplet.class` (`number | undefined`); `nub:connect`/`nub:class` + `connect:scheme:<http|ws>` capability identifiers; `perm:strict-csp` `@deprecated`; `strictCsp` vite-plugin option accept-but-warn for one release cycle (hard-removal tracked as REMOVE-STRICTCSP for v0.30.0). Canonical `connect:origins` aggregateHash fold byte-locked to fixture `cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742`. 29 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | nub(core) | shim(core+nub) | sdk(core+nub) | vite-plugin. Deprecated `@napplet/nub-<domain>` (×9) re-export `@napplet/nub/<domain>` and are kept for one release cycle. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -348,6 +358,13 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 | Namespaced shell.supports() with nub:/perm:/svc: prefixes | Flat NubDomain\|string caused collision risk; three namespaces with explicit prefixes; bare NUB shorthand kept for ergonomics | ✓ Good — replaced v0.16.0 flat API |
 | NUB-IFC merges IPC + PIPES | dispatch (per-msg ACL) and channel (ACL at open) are modes, not separate specs | ✓ Good — one NUB, two patterns |
 | Protocol version 3.0.0 → 4.0.0 | JSON envelope replaces NIP-01 arrays; breaking wire format change | ✓ Good — clean break |
+| Shell owns production CSP, not vite-plugin | CSP belongs on the HTTP response serving the napplet, not in build-time meta tags — shell is the only actor with authority over iframe origin and response headers | ✓ Good — v0.29.0 inverted v0.28.0 strictCsp machinery; strict posture moves from build-declared to shell-enforced |
+| NUB-CLASS as an abstract authority NUB with a sub-track (NUB-CLASS-$N) | Class semantics are composable across voluntary NUBs; a single flat "class" enum would collapse NUB independence | ✓ Good — NUB-CLASS-1 (strict) and NUB-CLASS-2 (user-approved connect origins) shipped as independent sub-track documents |
+| NUB-CONNECT has no postMessage wire protocol | Grants flow through HTTP response CSP + `<meta name="napplet-connect-granted">` read synchronously at shim install; no envelope needed once the browser is enforcing | ✓ Good — meta-tag-driven shim keeps NUB-CONNECT trivially implementable and removes postMessage round-trip from the hot path |
+| `normalizeConnectOrigin()` as shared single-source-of-truth | Build-side validator (vite-plugin) and shell-side validator MUST agree byte-for-byte on origin canonicalization or grants silently invalidate | ✓ Good — exported from `@napplet/nub/connect/types`; vite-plugin imports it directly; 21 rule violations enumerated, 28/28 smoke tests pass |
+| Module-load conformance-fixture self-check in vite-plugin | A silent drift between the plugin's `connect:origins` fold and the NUB-CONNECT spec digest would cause every grant to auto-invalidate mysteriously; loud ESM-init throw is preferable to silent shell-side mismatch | ✓ Good — `assertConnectFoldMatchesSpecFixture` perturbation-tested; drifts in join delimiter, sort order, encoding, or hash algorithm throw immediately at import time |
+| Fail-loud inline-script diagnostic in closeBundle | Shell serves `script-src 'self'` — an inline `<script>` in dist/index.html would silently fail at runtime with no author feedback; build-time throw surfaces the bug before ship | ✓ Good — closeBundle assertNoInlineScripts throws on any `<script>` without `src` attribute |
+| Delegate v0.29.0 demo napplets to downstream shell repo (Option B, carried from v0.28.0) | Demo napplets exercising NUB-CONNECT require a real shell with CSP-response-header authority; the SDK repo is not the right place to run them | ✓ Good — 3 documented Playwright fixtures authored at `packages/nub/src/connect/__fixtures__/` are self-contained for downstream translation |
 
 ## Evolution
 
@@ -380,4 +397,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-21 — v0.29.0 NUB-CONNECT + Shell as CSP Authority started*
+*Last updated: 2026-04-21 after v0.29.0 NUB-CONNECT + Shell as CSP Authority milestone*
