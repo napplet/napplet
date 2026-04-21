@@ -196,7 +196,11 @@ Plans:
 3. `skills/build-napplet/SKILL.md` is updated for two classes, the connect API, "default to NUB-RESOURCE" guidance, and a cleartext / mixed-content warning
 4. `git diff` on `.planning/PROJECT.md` shows the v0.28.0 "Shipped" bullet is byte-identical before and after this phase (historical changelog preservation per v0.27.0 precedent)
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 141-01-PLAN.md — Root README + nub + shim + sdk READMEs + SKILL.md (5 files; additive surgical edits)
+- [ ] 141-02-PLAN.md — packages/vite-plugin/README.md rewrite (strictCsp deprecated → connect option + diagnostics)
 
 ### Phase 142: Verification & Milestone Close
 
