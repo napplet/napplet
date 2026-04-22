@@ -46,19 +46,6 @@ Shell (any compatible shell)                @napplet/shim
 
 The iframe sandbox requires only `allow-scripts` -- **no `allow-same-origin`**. Shells MAY add additional tokens (`allow-forms`, `allow-popups`, etc.) per shell policy. Napplets cannot access the host shell's DOM, cookies, localStorage, or service workers. All persistent state goes through the shell's proxies.
 
-## v0.28.0 — Browser-Enforced Resource Isolation
-
-v0.28.0 converts napplet iframe security from ambient trust ("napplets shouldn't fetch directly") to browser-enforced isolation ("napplets cannot fetch directly — the browser blocks it"):
-
-- **New NUB:** `@napplet/nub/resource` ships a single scheme-pluggable primitive — `napplet.resource.bytes(url) → Blob`. URL space is scheme-pluggable: `https:` (shell-side network under policy), `blossom:sha256:<hex>` (hash-verified), `nostr:<bech32>` (single-hop NIP-19), `data:` (RFC 2397, decoded in-shim).
-- **Strict CSP:** `@napplet/vite-plugin` ships a `strictCsp` option that emits a 10-directive baseline (`default-src 'none'` + `connect-src 'none'` in prod) as the first child of `<head>`. The browser blocks every `fetch()`, `<img src=externalUrl>`, `XMLHttpRequest`, and direct WebSocket; everything network-sourced flows through the resource NUB.
-- **Optional sidecar:** Shells MAY pre-resolve resources referenced by `relay.event` envelopes via an opt-in (default-OFF) `resources?` field; napplet-side `resource.bytes(sidecarUrl)` calls then resolve from cache without a postMessage round-trip.
-- **SVG rasterization:** Shells MUST rasterize SVG to PNG/WebP in a sandboxed Worker with no network — napplets never receive parseable XML.
-- **Specs:** `specs/NIP-5D.md` ships a Security Considerations subsection; NUB-RESOURCE is drafted at `napplet/nubs`; NUB-RELAY/IDENTITY/MEDIA carry coordination amendments.
-- **Shell-deployer guide:** `specs/SHELL-RESOURCE-POLICY.md` checklists the private-IP block list, sidecar opt-in, SVG caps, MIME allowlist, and redirect chain limits.
-
-Demo napplets exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer) live in the **downstream shell repo** — this monorepo ships only the wire + SDK surface.
-
 ## Origin
 
 The napplet protocol is documented in the [NIP-5D specification draft](specs/NIP-5D.md). Any shell can host napplets, and any web app can become a napplet by importing `@napplet/shim`.
