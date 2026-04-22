@@ -80,7 +80,7 @@ describe('subscribe()', () => {
 **Patterns to establish for future tests:**
 
 **What to Mock:**
-- `window.parent.postMessage()` — Core IPC mechanism in shim
+- `window.parent.postMessage()` — Core postMessage transport in shim
 - `window.addEventListener()` — Event subscription in relay-shim and storage-shim
 - `localStorage` — Required for ACL persistence and storage proxy
 - `crypto.randomUUID()` — Subscription ID generation
@@ -149,7 +149,7 @@ pnpm test --coverage
 - Files: `src/__tests__/relay-shim.test.ts`, `src/__tests__/storage-shim.test.ts`
 
 **Integration Tests (to implement):**
-- Scope: Napplet ↔ Shell IPC via pseudo-relay
+- Scope: Napplet ↔ Shell postMessage via pseudo-relay
 - Approach: Full pseudo-relay with mock relay pool; verify end-to-end message flow
 - Test: AUTH handshake, REQ→EVENT delivery, ACL enforcement, storage proxy
 - Files: `packages/shell/__tests__/pseudo-relay.test.ts`

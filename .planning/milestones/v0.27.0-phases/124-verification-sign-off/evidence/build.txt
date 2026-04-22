@@ -1,0 +1,370 @@
+=== VER-01 Part 1: pnpm -r build ===
+Timestamp (UTC): 2026-04-19T23:17:54Z
+Command: pnpm -r build
+
+--- stdout+stderr ---
+Scope: 14 of 15 workspace projects
+packages/core build$ tsup
+packages/vite-plugin build$ tsup
+packages/core build: CLI Building entry: src/index.ts
+packages/core build: CLI Using tsconfig: tsconfig.json
+packages/core build: CLI tsup v8.5.1
+packages/core build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/core/tsup.config.ts
+packages/core build: CLI Target: es2022
+packages/core build: CLI Cleaning output folder
+packages/core build: ESM Build start
+packages/core build: ESM dist/index.js     2.09 KB
+packages/core build: ESM dist/index.js.map 14.75 KB
+packages/core build: ESM ⚡️ Build success in 7ms
+packages/vite-plugin build: CLI Building entry: src/index.ts
+packages/vite-plugin build: CLI Using tsconfig: tsconfig.json
+packages/vite-plugin build: CLI tsup v8.5.1
+packages/vite-plugin build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/vite-plugin/tsup.config.ts
+packages/vite-plugin build: CLI Target: es2022
+packages/vite-plugin build: CLI Cleaning output folder
+packages/vite-plugin build: ESM Build start
+packages/vite-plugin build: ESM dist/index.js     11.04 KB
+packages/vite-plugin build: ESM dist/index.js.map 30.32 KB
+packages/vite-plugin build: ESM ⚡️ Build success in 9ms
+packages/core build: DTS Build start
+packages/vite-plugin build: DTS Build start
+packages/core build: DTS ⚡️ Build success in 299ms
+packages/core build: DTS dist/index.d.ts 31.71 KB
+packages/core build: Done
+packages/vite-plugin build: DTS ⚡️ Build success in 623ms
+packages/vite-plugin build: DTS dist/index.d.ts 2.66 KB
+packages/vite-plugin build: Done
+packages/nub build$ tsup
+packages/nub build: CLI Building entry: {"relay/index":"src/relay/index.ts","relay/types":"src/relay/types.ts","relay/shim":"src/relay/shim.ts","relay/sdk":"src/relay/sdk.ts","storage/index":"src/storage/index.ts","storage/types":"src/storage/types.ts","storage/shim":"src/storage/shim.ts","storage/sdk":"src/storage/sdk.ts","ifc/index":"src/ifc/index.ts","ifc/types":"src/ifc/types.ts","ifc/shim":"src/ifc/shim.ts","ifc/sdk":"src/ifc/sdk.ts","keys/index":"src/keys/index.ts","keys/types":"src/keys/types.ts","keys/shim":"src/keys/shim.ts","keys/sdk":"src/keys/sdk.ts","theme/index":"src/theme/index.ts","theme/types":"src/theme/types.ts","media/index":"src/media/index.ts","media/types":"src/media/types.ts","media/shim":"src/media/shim.ts","media/sdk":"src/media/sdk.ts","notify/index":"src/notify/index.ts","notify/types":"src/notify/types.ts","notify/shim":"src/notify/shim.ts","notify/sdk":"src/notify/sdk.ts","identity/index":"src/identity/index.ts","identity/types":"src/identity/types.ts","identity/shim":"src/identity/shim.ts","identity/sdk":"src/identity/sdk.ts","config/index":"src/config/index.ts","config/types":"src/config/types.ts","config/shim":"src/config/shim.ts","config/sdk":"src/config/sdk.ts"}
+packages/nub build: CLI Using tsconfig: tsconfig.json
+packages/nub build: CLI tsup v8.5.1
+packages/nub build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nub/tsup.config.ts
+packages/nub build: CLI Target: es2022
+packages/nub build: CLI Cleaning output folder
+packages/nub build: ESM Build start
+packages/nub build: ESM dist/config/shim.js        312.00 B
+packages/nub build: ESM dist/config/sdk.js         223.00 B
+packages/nub build: ESM dist/notify/sdk.js         433.00 B
+packages/nub build: ESM dist/identity/index.js     1000.00 B
+packages/nub build: ESM dist/identity/types.js     103.00 B
+packages/nub build: ESM dist/chunk-2HVP4AWZ.js     114.00 B
+packages/nub build: ESM dist/identity/shim.js      414.00 B
+packages/nub build: ESM dist/identity/sdk.js       461.00 B
+packages/nub build: ESM dist/chunk-Y4MR35AN.js     4.02 KB
+packages/nub build: ESM dist/notify/shim.js        414.00 B
+packages/nub build: ESM dist/config/index.js       411.00 B
+packages/nub build: ESM dist/chunk-NTV5T2PM.js     734.00 B
+packages/nub build: ESM dist/chunk-I7BDRVK6.js     4.66 KB
+packages/nub build: ESM dist/config/types.js       103.00 B
+packages/nub build: ESM dist/chunk-PED2YHNM.js     110.00 B
+packages/nub build: ESM dist/theme/index.js        207.00 B
+packages/nub build: ESM dist/chunk-LMVD77YU.js     1.12 KB
+packages/nub build: ESM dist/chunk-LL3AOX63.js     108.00 B
+packages/nub build: ESM dist/theme/types.js        103.00 B
+packages/nub build: ESM dist/media/index.js        903.00 B
+packages/nub build: ESM dist/media/types.js        103.00 B
+packages/nub build: ESM dist/chunk-3XGGN343.js     108.00 B
+packages/nub build: ESM dist/media/shim.js         398.00 B
+packages/nub build: ESM dist/chunk-U47Y3WZ5.js     3.49 KB
+packages/nub build: ESM dist/media/sdk.js          383.00 B
+packages/nub build: ESM dist/chunk-ZFHPSX2K.js     1.10 KB
+packages/nub build: ESM dist/notify/index.js       970.00 B
+packages/nub build: ESM dist/chunk-5MXGXRSR.js     4.22 KB
+packages/nub build: ESM dist/chunk-AABW4JWZ.js     1.18 KB
+packages/nub build: ESM dist/chunk-OWGVT56Q.js     110.00 B
+packages/nub build: ESM dist/notify/types.js       103.00 B
+packages/nub build: ESM dist/ifc/types.js          103.00 B
+packages/nub build: ESM dist/chunk-5VHO3GN7.js     104.00 B
+packages/nub build: ESM dist/ifc/index.js          423.00 B
+packages/nub build: ESM dist/ifc/shim.js           182.00 B
+packages/nub build: ESM dist/chunk-O4ULQZP6.js     1.85 KB
+packages/nub build: ESM dist/chunk-WZB3XNSG.js     453.00 B
+packages/nub build: ESM dist/ifc/sdk.js            121.00 B
+packages/nub build: ESM dist/keys/index.js         620.00 B
+packages/nub build: ESM dist/keys/types.js         103.00 B
+packages/nub build: ESM dist/chunk-4VFFUOOW.js     106.00 B
+packages/nub build: ESM dist/keys/shim.js          262.00 B
+packages/nub build: ESM dist/chunk-2GE57WLT.js     4.45 KB
+packages/nub build: ESM dist/relay/index.js        577.00 B
+packages/nub build: ESM dist/chunk-QP7S37IP.js     893.00 B
+packages/nub build: ESM dist/keys/sdk.js           237.00 B
+packages/nub build: ESM dist/relay/types.js        103.00 B
+packages/nub build: ESM dist/chunk-ZNPUIQRI.js     108.00 B
+packages/nub build: ESM dist/relay/shim.js         228.00 B
+packages/nub build: ESM dist/chunk-7TJOBUK4.js     4.23 KB
+packages/nub build: ESM dist/chunk-ZU7E2UUK.js     973.00 B
+packages/nub build: ESM dist/storage/index.js      511.00 B
+packages/nub build: ESM dist/relay/sdk.js          227.00 B
+packages/nub build: ESM dist/storage/types.js      103.00 B
+packages/nub build: ESM dist/chunk-FI2C5RBZ.js     112.00 B
+packages/nub build: ESM dist/storage/shim.js       162.00 B
+packages/nub build: ESM dist/chunk-L22KRMXO.js     2.54 KB
+packages/nub build: ESM dist/storage/sdk.js        225.00 B
+packages/nub build: ESM dist/chunk-A3OPVR4U.js     650.00 B
+packages/nub build: ESM dist/notify/sdk.js.map     71.00 B
+packages/nub build: ESM dist/config/shim.js.map    71.00 B
+packages/nub build: ESM dist/config/sdk.js.map     71.00 B
+packages/nub build: ESM dist/identity/types.js.map 71.00 B
+packages/nub build: ESM dist/identity/shim.js.map  71.00 B
+packages/nub build: ESM dist/chunk-2HVP4AWZ.js.map 12.33 KB
+packages/nub build: ESM dist/identity/sdk.js.map   71.00 B
+packages/nub build: ESM dist/identity/index.js.map 2.60 KB
+packages/nub build: ESM dist/notify/shim.js.map    71.00 B
+packages/nub build: ESM dist/chunk-NTV5T2PM.js.map 5.34 KB
+packages/nub build: ESM dist/chunk-I7BDRVK6.js.map 16.51 KB
+packages/nub build: ESM dist/config/index.js.map   71.00 B
+packages/nub build: ESM dist/config/types.js.map   71.00 B
+packages/nub build: ESM dist/chunk-PED2YHNM.js.map 10.26 KB
+packages/nub build: ESM dist/theme/index.js.map    1.39 KB
+packages/nub build: ESM dist/chunk-LMVD77YU.js.map 4.82 KB
+packages/nub build: ESM dist/theme/types.js.map    71.00 B
+packages/nub build: ESM dist/chunk-Y4MR35AN.js.map 11.43 KB
+packages/nub build: ESM dist/media/index.js.map    2.18 KB
+packages/nub build: ESM dist/chunk-LL3AOX63.js.map 3.72 KB
+packages/nub build: ESM dist/media/types.js.map    71.00 B
+packages/nub build: ESM dist/media/sdk.js.map      71.00 B
+packages/nub build: ESM dist/notify/index.js.map   2.32 KB
+packages/nub build: ESM dist/chunk-3XGGN343.js.map 8.81 KB
+packages/nub build: ESM dist/chunk-U47Y3WZ5.js.map 10.51 KB
+packages/nub build: ESM dist/chunk-5MXGXRSR.js.map 13.43 KB
+packages/nub build: ESM dist/chunk-ZFHPSX2K.js.map 5.91 KB
+packages/nub build: ESM dist/media/shim.js.map     71.00 B
+packages/nub build: ESM dist/chunk-AABW4JWZ.js.map 7.29 KB
+packages/nub build: ESM dist/ifc/types.js.map      71.00 B
+packages/nub build: ESM dist/chunk-OWGVT56Q.js.map 9.96 KB
+packages/nub build: ESM dist/notify/types.js.map   71.00 B
+packages/nub build: ESM dist/ifc/index.js.map      1.98 KB
+packages/nub build: ESM dist/ifc/shim.js.map       71.00 B
+packages/nub build: ESM dist/chunk-5VHO3GN7.js.map 7.02 KB
+packages/nub build: ESM dist/chunk-O4ULQZP6.js.map 5.92 KB
+packages/nub build: ESM dist/ifc/sdk.js.map        71.00 B
+packages/nub build: ESM dist/keys/index.js.map     1.92 KB
+packages/nub build: ESM dist/chunk-WZB3XNSG.js.map 2.26 KB
+packages/nub build: ESM dist/keys/types.js.map     71.00 B
+packages/nub build: ESM dist/chunk-4VFFUOOW.js.map 6.78 KB
+packages/nub build: ESM dist/keys/shim.js.map      71.00 B
+packages/nub build: ESM dist/chunk-QP7S37IP.js.map 4.02 KB
+packages/nub build: ESM dist/relay/index.js.map    1.95 KB
+packages/nub build: ESM dist/keys/sdk.js.map       71.00 B
+packages/nub build: ESM dist/relay/types.js.map    71.00 B
+packages/nub build: ESM dist/relay/shim.js.map     71.00 B
+packages/nub build: ESM dist/chunk-2GE57WLT.js.map 11.62 KB
+packages/nub build: ESM dist/chunk-ZNPUIQRI.js.map 7.60 KB
+packages/nub build: ESM dist/chunk-7TJOBUK4.js.map 11.82 KB
+packages/nub build: ESM dist/chunk-ZU7E2UUK.js.map 4.44 KB
+packages/nub build: ESM dist/storage/index.js.map  1.86 KB
+packages/nub build: ESM dist/relay/sdk.js.map      71.00 B
+packages/nub build: ESM dist/storage/types.js.map  71.00 B
+packages/nub build: ESM dist/chunk-FI2C5RBZ.js.map 4.48 KB
+packages/nub build: ESM dist/chunk-L22KRMXO.js.map 6.76 KB
+packages/nub build: ESM dist/storage/sdk.js.map    71.00 B
+packages/nub build: ESM dist/chunk-A3OPVR4U.js.map 2.63 KB
+packages/nub build: ESM dist/storage/shim.js.map   71.00 B
+packages/nub build: ESM ⚡️ Build success in 23ms
+packages/nub build: DTS Build start
+packages/nub build: DTS ⚡️ Build success in 2205ms
+packages/nub build: DTS dist/relay/index.d.ts    575.00 B
+packages/nub build: DTS dist/storage/index.d.ts  480.00 B
+packages/nub build: DTS dist/ifc/index.d.ts      608.00 B
+packages/nub build: DTS dist/keys/index.d.ts     519.00 B
+packages/nub build: DTS dist/media/index.d.ts    722.00 B
+packages/nub build: DTS dist/notify/index.d.ts   841.00 B
+packages/nub build: DTS dist/identity/index.d.ts 1.06 KB
+packages/nub build: DTS dist/config/index.d.ts   624.00 B
+packages/nub build: DTS dist/relay/types.d.ts    7.22 KB
+packages/nub build: DTS dist/relay/shim.d.ts     3.64 KB
+packages/nub build: DTS dist/relay/sdk.d.ts      2.87 KB
+packages/nub build: DTS dist/storage/types.d.ts  4.11 KB
+packages/nub build: DTS dist/storage/shim.d.ts   1.98 KB
+packages/nub build: DTS dist/storage/sdk.d.ts    1.52 KB
+packages/nub build: DTS dist/ifc/shim.d.ts       1.74 KB
+packages/nub build: DTS dist/ifc/types.d.ts      6.75 KB
+packages/nub build: DTS dist/ifc/sdk.d.ts        1.35 KB
+packages/nub build: DTS dist/keys/types.d.ts     6.24 KB
+packages/nub build: DTS dist/keys/shim.d.ts      1.10 KB
+packages/nub build: DTS dist/keys/sdk.d.ts       2.58 KB
+packages/nub build: DTS dist/media/shim.d.ts     2.92 KB
+packages/nub build: DTS dist/media/sdk.d.ts      3.73 KB
+packages/nub build: DTS dist/media/types.d.ts    8.33 KB
+packages/nub build: DTS dist/notify/shim.d.ts    3.54 KB
+packages/nub build: DTS dist/notify/sdk.d.ts     4.75 KB
+packages/nub build: DTS dist/notify/types.d.ts   9.52 KB
+packages/nub build: DTS dist/identity/shim.d.ts  2.17 KB
+packages/nub build: DTS dist/identity/sdk.d.ts   3.31 KB
+packages/nub build: DTS dist/identity/types.d.ts 12.02 KB
+packages/nub build: DTS dist/config/types.d.ts   9.68 KB
+packages/nub build: DTS dist/config/shim.d.ts    4.00 KB
+packages/nub build: DTS dist/config/sdk.d.ts     3.27 KB
+packages/nub build: DTS dist/theme/types.d.ts    3.25 KB
+packages/nub build: DTS dist/theme/index.d.ts    242.00 B
+packages/nub build: Done
+packages/nubs/config build$ tsup
+packages/nubs/identity build$ tsup
+packages/nubs/ifc build$ tsup
+packages/nubs/keys build$ tsup
+packages/nubs/identity build: CLI Building entry: src/index.ts
+packages/nubs/identity build: CLI Using tsconfig: tsconfig.json
+packages/nubs/identity build: CLI tsup v8.5.1
+packages/nubs/identity build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/identity/tsup.config.ts
+packages/nubs/keys build: CLI Building entry: src/index.ts
+packages/nubs/keys build: CLI Using tsconfig: tsconfig.json
+packages/nubs/keys build: CLI tsup v8.5.1
+packages/nubs/keys build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/keys/tsup.config.ts
+packages/nubs/ifc build: CLI Building entry: src/index.ts
+packages/nubs/ifc build: CLI Using tsconfig: tsconfig.json
+packages/nubs/ifc build: CLI tsup v8.5.1
+packages/nubs/ifc build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/ifc/tsup.config.ts
+packages/nubs/identity build: CLI Target: es2022
+packages/nubs/identity build: CLI Cleaning output folder
+packages/nubs/identity build: ESM Build start
+packages/nubs/keys build: CLI Target: es2022
+packages/nubs/ifc build: CLI Target: es2022
+packages/nubs/keys build: CLI Cleaning output folder
+packages/nubs/keys build: ESM Build start
+packages/nubs/config build: CLI Building entry: src/index.ts
+packages/nubs/config build: CLI Using tsconfig: tsconfig.json
+packages/nubs/config build: CLI tsup v8.5.1
+packages/nubs/config build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/config/tsup.config.ts
+packages/nubs/ifc build: CLI Cleaning output folder
+packages/nubs/ifc build: ESM Build start
+packages/nubs/identity build: ESM dist/index.js     88.00 B
+packages/nubs/identity build: ESM dist/index.js.map 394.00 B
+packages/nubs/identity build: ESM ⚡️ Build success in 8ms
+packages/nubs/config build: CLI Target: es2022
+packages/nubs/config build: CLI Cleaning output folder
+packages/nubs/keys build: ESM dist/index.js     84.00 B
+packages/nubs/keys build: ESM dist/index.js.map 382.00 B
+packages/nubs/keys build: ESM ⚡️ Build success in 7ms
+packages/nubs/config build: ESM Build start
+packages/nubs/ifc build: ESM dist/index.js     83.00 B
+packages/nubs/ifc build: ESM dist/index.js.map 379.00 B
+packages/nubs/ifc build: ESM ⚡️ Build success in 7ms
+packages/nubs/config build: ESM dist/index.js     86.00 B
+packages/nubs/config build: ESM dist/index.js.map 388.00 B
+packages/nubs/config build: ESM ⚡️ Build success in 7ms
+packages/nubs/identity build: DTS Build start
+packages/nubs/ifc build: DTS Build start
+packages/nubs/keys build: DTS Build start
+packages/nubs/config build: DTS Build start
+packages/nubs/identity build: DTS ⚡️ Build success in 467ms
+packages/nubs/identity build: DTS dist/index.d.ts 39.00 B
+packages/nubs/ifc build: DTS ⚡️ Build success in 482ms
+packages/nubs/ifc build: DTS dist/index.d.ts 34.00 B
+packages/nubs/identity build: Done
+packages/nubs/ifc build: Done
+packages/nubs/media build$ tsup
+packages/nubs/notify build$ tsup
+packages/nubs/keys build: DTS ⚡️ Build success in 504ms
+packages/nubs/keys build: DTS dist/index.d.ts 35.00 B
+packages/nubs/config build: DTS ⚡️ Build success in 497ms
+packages/nubs/config build: DTS dist/index.d.ts 37.00 B
+packages/nubs/config build: Done
+packages/nubs/relay build$ tsup
+packages/nubs/keys build: Done
+packages/nubs/storage build$ tsup
+packages/nubs/media build: CLI Building entry: src/index.ts
+packages/nubs/media build: CLI Using tsconfig: tsconfig.json
+packages/nubs/media build: CLI tsup v8.5.1
+packages/nubs/media build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/media/tsup.config.ts
+packages/nubs/notify build: CLI Building entry: src/index.ts
+packages/nubs/notify build: CLI Using tsconfig: tsconfig.json
+packages/nubs/notify build: CLI tsup v8.5.1
+packages/nubs/notify build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/notify/tsup.config.ts
+packages/nubs/media build: CLI Target: es2022
+packages/nubs/media build: CLI Cleaning output folder
+packages/nubs/notify build: CLI Target: es2022
+packages/nubs/media build: ESM Build start
+packages/nubs/notify build: CLI Cleaning output folder
+packages/nubs/notify build: ESM Build start
+packages/nubs/media build: ESM dist/index.js     85.00 B
+packages/nubs/media build: ESM dist/index.js.map 385.00 B
+packages/nubs/media build: ESM ⚡️ Build success in 7ms
+packages/nubs/notify build: ESM dist/index.js     86.00 B
+packages/nubs/notify build: ESM dist/index.js.map 388.00 B
+packages/nubs/notify build: ESM ⚡️ Build success in 6ms
+packages/nubs/storage build: CLI Building entry: src/index.ts
+packages/nubs/storage build: CLI Using tsconfig: tsconfig.json
+packages/nubs/storage build: CLI tsup v8.5.1
+packages/nubs/storage build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/storage/tsup.config.ts
+packages/nubs/relay build: CLI Building entry: src/index.ts
+packages/nubs/relay build: CLI Using tsconfig: tsconfig.json
+packages/nubs/relay build: CLI tsup v8.5.1
+packages/nubs/relay build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/relay/tsup.config.ts
+packages/nubs/storage build: CLI Target: es2022
+packages/nubs/storage build: CLI Cleaning output folder
+packages/nubs/relay build: CLI Target: es2022
+packages/nubs/storage build: ESM Build start
+packages/nubs/relay build: CLI Cleaning output folder
+packages/nubs/relay build: ESM Build start
+packages/nubs/storage build: ESM dist/index.js     87.00 B
+packages/nubs/storage build: ESM dist/index.js.map 391.00 B
+packages/nubs/storage build: ESM ⚡️ Build success in 7ms
+packages/nubs/relay build: ESM dist/index.js     85.00 B
+packages/nubs/relay build: ESM dist/index.js.map 385.00 B
+packages/nubs/relay build: ESM ⚡️ Build success in 5ms
+packages/nubs/media build: DTS Build start
+packages/nubs/notify build: DTS Build start
+packages/nubs/relay build: DTS Build start
+packages/nubs/storage build: DTS Build start
+packages/nubs/notify build: DTS ⚡️ Build success in 469ms
+packages/nubs/notify build: DTS dist/index.d.ts 37.00 B
+packages/nubs/media build: DTS ⚡️ Build success in 477ms
+packages/nubs/media build: DTS dist/index.d.ts 36.00 B
+packages/nubs/notify build: Done
+packages/nubs/theme build$ tsup
+packages/nubs/storage build: DTS ⚡️ Build success in 477ms
+packages/nubs/storage build: DTS dist/index.d.ts 38.00 B
+packages/nubs/relay build: DTS ⚡️ Build success in 486ms
+packages/nubs/relay build: DTS dist/index.d.ts 36.00 B
+packages/nubs/media build: Done
+packages/sdk build$ tsup
+packages/nubs/storage build: Done
+packages/shim build$ tsup
+packages/nubs/relay build: Done
+packages/shim build: CLI Building entry: src/index.ts
+packages/sdk build: CLI Building entry: src/index.ts
+packages/sdk build: CLI Using tsconfig: tsconfig.json
+packages/nubs/theme build: CLI Building entry: src/index.ts
+packages/nubs/theme build: CLI Using tsconfig: tsconfig.json
+packages/sdk build: CLI tsup v8.5.1
+packages/sdk build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/sdk/tsup.config.ts
+packages/nubs/theme build: CLI tsup v8.5.1
+packages/nubs/theme build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/nubs/theme/tsup.config.ts
+packages/shim build: CLI Using tsconfig: tsconfig.json
+packages/shim build: CLI tsup v8.5.1
+packages/shim build: CLI Using tsup config: /home/sandwich/Develop/napplet/packages/shim/tsup.config.ts
+packages/sdk build: CLI Target: es2022
+packages/nubs/theme build: CLI Target: es2022
+packages/shim build: CLI Target: es2022
+packages/sdk build: CLI Cleaning output folder
+packages/nubs/theme build: CLI Cleaning output folder
+packages/sdk build: ESM Build start
+packages/nubs/theme build: ESM Build start
+packages/shim build: CLI Cleaning output folder
+packages/shim build: ESM Build start
+packages/nubs/theme build: ESM dist/index.js     85.00 B
+packages/nubs/theme build: ESM dist/index.js.map 385.00 B
+packages/nubs/theme build: ESM ⚡️ Build success in 7ms
+packages/sdk build: ESM dist/index.js     15.86 KB
+packages/sdk build: ESM dist/index.js.map 34.95 KB
+packages/sdk build: ESM ⚡️ Build success in 10ms
+packages/shim build: ESM dist/index.js     7.88 KB
+packages/shim build: ESM dist/index.js.map 18.38 KB
+packages/shim build: ESM ⚡️ Build success in 8ms
+packages/sdk build: DTS Build start
+packages/shim build: DTS Build start
+packages/nubs/theme build: DTS Build start
+packages/nubs/theme build: DTS ⚡️ Build success in 443ms
+packages/nubs/theme build: DTS dist/index.d.ts 36.00 B
+packages/nubs/theme build: Done
+packages/shim build: DTS ⚡️ Build success in 544ms
+packages/shim build: DTS dist/index.d.ts 128.00 B
+packages/shim build: Done
+packages/sdk build: DTS ⚡️ Build success in 574ms
+packages/sdk build: DTS dist/index.d.ts 22.72 KB
+packages/sdk build: Done
+
+--- end stdout+stderr ---
+
+EXIT_CODE: 0
+=== VER-01 Part 1 complete ===

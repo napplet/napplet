@@ -45,6 +45,12 @@ import {
   openSettings as configOpenSettings,
   onSchemaError as configOnSchemaError,
 } from '@napplet/nub/config/shim';
+import {
+  installResourceShim,
+  handleResourceMessage,
+  bytes as resourceBytes,
+  bytesAsObjectURL as resourceBytesAsObjectURL,
+} from '@napplet/nub/resource/shim';
 import type { NappletGlobal } from '@napplet/core';
 import type { IfcEventMessage } from '@napplet/nub/ifc/types';
 
@@ -88,6 +94,12 @@ function handleEnvelopeMessage(event: MessageEvent): void {
     return;
   }
 
+  // Route resource.* messages to resource shim (covers resource.bytes.result + resource.bytes.error)
+  if (type.startsWith('resource.')) {
+    handleResourceMessage(msg as { type: string; [key: string]: unknown });
+    return;
+  }
+
   // Route identity.* result and error messages to identity shim
   if (type.startsWith('identity.') && (type.endsWith('.result') || type.endsWith('.error'))) {
     handleIdentityMessage(msg as { type: string; [key: string]: unknown });
@@ -122,7 +134,7 @@ installIfcShim();
     publishEncrypted,
     query,
   },
-  ipc: {
+  ifc: {
     emit,
     on,
   },
@@ -176,6 +188,10 @@ installIfcShim();
     onSchemaError: configOnSchemaError,
     schema: null,
   },
+  resource: {
+    bytes: resourceBytes,
+    bytesAsObjectURL: resourceBytesAsObjectURL,
+  },
   shell: {
     supports(_capability: string): boolean {
       // TODO: Shell populates supported capabilities at iframe creation
@@ -209,3 +225,6 @@ installIdentityShim();
 
 // Install config shim (manifest-meta schema read + window.napplet.config mount with readonly `schema` getter)
 installConfigShim();
+
+// Install resource shim (single-flight cache for byte fetches; no install-time work)
+installResourceShim();

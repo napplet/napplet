@@ -1,7 +1,7 @@
 {
   "name": "@napplet/nub",
   "version": "0.2.1",
-  "description": "All 9 napplet NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config) as layered subpath exports",
+  "description": "All 10 napplet NUB domains (relay, storage, ifc, keys, theme, media, notify, identity, config, resource) as layered subpath exports",
   "type": "module",
   "exports": {
     "./relay": {
@@ -139,6 +139,22 @@
     "./config/sdk": {
       "types": "./dist/config/sdk.d.ts",
       "import": "./dist/config/sdk.js"
+    },
+    "./resource": {
+      "types": "./dist/resource/index.d.ts",
+      "import": "./dist/resource/index.js"
+    },
+    "./resource/types": {
+      "types": "./dist/resource/types.d.ts",
+      "import": "./dist/resource/types.js"
+    },
+    "./resource/shim": {
+      "types": "./dist/resource/shim.d.ts",
+      "import": "./dist/resource/shim.js"
+    },
+    "./resource/sdk": {
+      "types": "./dist/resource/sdk.d.ts",
+      "import": "./dist/resource/sdk.js"
     }
   },
   "files": [

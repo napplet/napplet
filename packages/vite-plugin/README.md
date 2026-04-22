@@ -182,6 +182,65 @@ The plugin validates the resolved schema against the NUB-CONFIG Core Subset at `
 
 The walk recurses into `properties`, `items`, `additionalProperties`, `patternProperties`, `oneOf`, `anyOf`, `allOf`, `not`, `definitions`, and `$defs` -- the guard is wide even though the Core Subset is narrow.
 
+#### strictCsp (optional, v0.28.0+)
+
+**Type:** `boolean | StrictCspOptions`
+
+When set, the plugin emits a strict Content-Security-Policy `<meta http-equiv="Content-Security-Policy">` tag as the **literal first child of `<head>`** in the napplet's `index.html`. Strict CSP turns the iframe sandbox into browser-enforced resource isolation: napplets cannot `fetch()`, cannot `<img src=externalUrl>`, cannot `XMLHttpRequest`. All external bytes must flow through `napplet.resource.bytes(url)`.
+
+**Quick start:**
+
+```ts
+import { defineConfig } from 'vite';
+import { nip5aManifest } from '@napplet/vite-plugin';
+
+export default defineConfig({
+  plugins: [
+    nip5aManifest({
+      nappletType: 'my-napp',
+      strictCsp: true,   // enable v0.28.0 baseline
+    }),
+  ],
+});
+```
+
+**10-directive baseline (when `strictCsp: true`):**
+
+| Directive | Value (prod) | Value (dev) |
+|-----------|--------------|-------------|
+| `default-src` | `'none'` | `'none'` |
+| `script-src` | `'nonce-<random>' 'self'` | `'nonce-<random>' 'self'` |
+| `style-src` | `'self'` | `'self'` |
+| `img-src` | `blob: data:` | `blob: data:` |
+| `font-src` | `blob: data:` | `blob: data:` |
+| `connect-src` | `'none'` | `'self' ws://localhost:* wss://localhost:*` |
+| `worker-src` | `'none'` | `'none'` |
+| `object-src` | `'none'` | `'none'` |
+| `base-uri` | `'none'` | `'none'` |
+| `form-action` | `'none'` | `'none'` |
+
+**What the build will REJECT:**
+
+| Pitfall | What fails the build |
+|---------|----------------------|
+| Pitfall 1 — meta not first head child | Build fails if any `<script>`, `<style>`, or `<link>` precedes the CSP meta in `<head>`. |
+| Pitfall 2 — header-only directives in meta | Build fails if the configured policy contains `frame-ancestors`, `sandbox`, `report-uri`, or `report-to` (these are silently ignored by browsers in meta delivery). |
+| Pitfall 18 — dev relaxation leaks into prod | Build fails if the production manifest contains any of `'unsafe-inline'`, `'unsafe-eval'`, `ws://`, or `wss://`. |
+| Pitfall 19 — single-quote-bearing values | Hand-rolled CSP extractor anchors on `"` delimiters so `'none'` / `'self'` survive correctly. |
+
+**Capability advertisement:**
+
+Shells that enforce this CSP advertise it via `shell.supports('perm:strict-csp')`. The capability is **orthogonal to `nub:resource`** — a permissive dev shell can implement the resource NUB without enforcing strict CSP, and a production shell can enforce CSP whether or not the napplet actually uses the resource NUB.
+
+**Disable for legacy / migration napplets:**
+
+```ts
+nip5aManifest({ nappletType: 'my-old-napp', strictCsp: false });   // explicit opt-out
+nip5aManifest({ nappletType: 'my-old-napp' });                     // default (off — strict CSP requires explicit opt-in)
+```
+
+See [NUB-RESOURCE](https://github.com/napplet/nubs) and [NIP-5D Security Considerations](../../specs/NIP-5D.md) for the wire-side contract that strict CSP enforces in tandem with the iframe sandbox model.
+
 ### Environment Variables
 
 #### VITE_DEV_PRIVKEY_HEX
@@ -307,12 +366,20 @@ interface Nip5aManifestOptions {
    * discovery when omitted.
    */
   configSchema?: JSONSchema7 | string;
+  /**
+   * Emit a strict Content-Security-Policy meta as the first <head> child.
+   * Pairs with the resource NUB to enforce browser-level resource isolation.
+   * Boolean true uses the 10-directive baseline; pass StrictCspOptions to customize.
+   * Disabled by default for back-compat with pre-v0.28.0 napplets.
+   */
+  strictCsp?: boolean | StrictCspOptions;
 }
 ```
 
 ## Protocol Reference
 
 - [NUB-CONFIG spec (PR #13)](https://github.com/napplet/nubs/pull/13) -- per-napplet declarative configuration
+- [NUB-RESOURCE (PR pending)](https://github.com/napplet/nubs) — sandboxed byte fetching primitive that strict CSP enforces against
 - [NIP-5D](../../specs/NIP-5D.md) -- Napplet-shell protocol specification
 - [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md) -- Nsite specification
 - [Aggregate Hash PR](https://github.com/nostr-protocol/nips/pull/2287) -- NIP-5A aggregate hash extension (not yet merged)

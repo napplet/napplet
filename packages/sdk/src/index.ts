@@ -1,12 +1,12 @@
 /**
  * @napplet/sdk -- Typed named exports wrapping window.napplet.
  *
- * Provides `relay`, `ipc`, `storage`, and `keys` objects that delegate
+ * Provides `relay`, `ifc`, `storage`, and `keys` objects that delegate
  * to `window.napplet.*` at call time. Developers using a bundler can import
  * individual namespaces without depending on the shim's side-effect install:
  *
  * ```ts
- * import { relay, ipc } from '@napplet/sdk';
+ * import { relay, ifc } from '@napplet/sdk';
  * ```
  *
  * The shim must still be imported somewhere in the application to install
@@ -131,35 +131,35 @@ export const relay = {
   },
 };
 
-// ─── IPC namespace ──────────────────────────────────────────────────────────
+// ─── IFC namespace ──────────────────────────────────────────────────────────
 
 /**
- * Inter-napplet pubsub: broadcast and receive IPC-PEER events through the shell.
+ * Inter-frame pubsub: broadcast and receive IFC-PEER events through the shell.
  *
  * @example
  * ```ts
- * import { ipc } from '@napplet/sdk';
+ * import { ifc } from '@napplet/sdk';
  *
- * ipc.emit('profile:open', [], JSON.stringify({ pubkey: '...' }));
+ * ifc.emit('profile:open', [], JSON.stringify({ pubkey: '...' }));
  *
- * const sub = ipc.on('profile:open', (payload) => {
+ * const sub = ifc.on('profile:open', (payload) => {
  *   console.log('Profile requested:', payload);
  * });
  * ```
  */
-export const ipc = {
+export const ifc = {
   /**
-   * Broadcast an IPC-PEER event to other napplets via the shell.
+   * Broadcast an IFC-PEER event to other napplets via the shell.
    * @param topic      The 't' tag value (e.g., 'profile:open')
    * @param extraTags  Additional NIP-01 tags beyond the 't' tag (default: [])
    * @param content    Event content (default: empty string)
    */
   emit(topic: string, extraTags?: string[][], content?: string): void {
-    requireNapplet().ipc.emit(topic, extraTags, content);
+    requireNapplet().ifc.emit(topic, extraTags, content);
   },
 
   /**
-   * Subscribe to IPC-PEER events on a specific topic.
+   * Subscribe to IFC-PEER events on a specific topic.
    * @param topic     The 't' tag value to listen for
    * @param callback  Called with `(payload, event)` for each matching event
    * @returns A Subscription handle with a `close()` method
@@ -168,7 +168,7 @@ export const ipc = {
     topic: string,
     callback: (payload: unknown, event: NostrEvent) => void,
   ): Subscription {
-    return requireNapplet().ipc.on(topic, callback);
+    return requireNapplet().ifc.on(topic, callback);
   },
 };
 
@@ -738,6 +738,44 @@ export const config = {
   },
 };
 
+// ─── Resource namespace ────────────────────────────────────────────────────
+
+/**
+ * Browser-enforced byte-fetching primitive: napplets request bytes by URL,
+ * shell fetches and returns a Blob. URL space is scheme-pluggable
+ * (`data:`, `https:`, `blossom:`, `nostr:`).
+ *
+ * @example
+ * ```ts
+ * import { resource } from '@napplet/sdk';
+ *
+ * const blob = await resource.bytes('https://example.com/avatar.png');
+ * const handle = resource.bytesAsObjectURL('blossom:abc123...');
+ * imgEl.src = handle.url;
+ * imgEl.onload = () => handle.revoke();
+ * ```
+ */
+export const resource = {
+  /**
+   * Fetch bytes for a URL through the shell's resource pipeline.
+   * @param url  URL identifying the resource (any registered scheme).
+   * @returns Promise resolving to the fetched bytes as a Blob.
+   */
+  bytes(url: string): Promise<Blob> {
+    return requireNapplet().resource.bytes(url);
+  },
+
+  /**
+   * Fetch bytes and return a managed object URL handle.
+   * Call `revoke()` to release the underlying Blob URL.
+   * @param url  URL identifying the resource.
+   * @returns Synchronous handle `{ url, revoke }`.
+   */
+  bytesAsObjectURL(url: string): { url: string; revoke: () => void } {
+    return requireNapplet().resource.bytesAsObjectURL(url);
+  },
+};
+
 // ─── Type re-exports from @napplet/core ─────────────────────────────────────
 
 export type { NostrEvent } from '@napplet/core';
@@ -939,6 +977,21 @@ export type {
   ConfigNubMessage,
 } from '@napplet/nub/config';
 
+// Resource NUB
+export type {
+  ResourceErrorCode,
+  ResourceScheme,
+  ResourceMessage,
+  ResourceBytesMessage,
+  ResourceCancelMessage,
+  ResourceBytesResultMessage,
+  ResourceBytesErrorMessage,
+  ResourceSidecarEntry,
+  ResourceRequestMessage,
+  ResourceResultMessage,
+  ResourceNubMessage,
+} from '@napplet/nub/resource';
+
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub/relay';
@@ -950,6 +1003,7 @@ export { DOMAIN as KEYS_DOMAIN } from '@napplet/nub/keys';
 export { DOMAIN as MEDIA_DOMAIN } from '@napplet/nub/media';
 export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub/notify';
 export { DOMAIN as CONFIG_DOMAIN } from '@napplet/nub/config';
+export { DOMAIN as RESOURCE_DOMAIN } from '@napplet/nub/resource';
 
 // ─── NUB Shim Installer Re-exports ─────────────────────────────────────────
 // Allow consumers to cherry-pick shim installers per domain.
@@ -962,6 +1016,7 @@ export { installKeysShim } from '@napplet/nub/keys';
 export { installMediaShim } from '@napplet/nub/media';
 export { installNotifyShim } from '@napplet/nub/notify';
 export { installConfigShim } from '@napplet/nub/config';
+export { installResourceShim } from '@napplet/nub/resource';
 
 // ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
@@ -973,3 +1028,4 @@ export { ifcEmit, ifcOn } from '@napplet/nub/ifc';
 export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub/keys';
 export { mediaCreateSession, mediaUpdateSession, mediaDestroySession, mediaReportState, mediaReportCapabilities, mediaOnCommand, mediaOnControls } from '@napplet/nub/media';
 export { notifySend, notifyDismiss, notifyBadge, notifyRegisterChannel, notifyRequestPermission, notifyOnAction, notifyOnClicked, notifyOnDismissed, notifyOnControls } from '@napplet/nub/notify';
+export { resourceBytes, resourceBytesAsObjectURL } from '@napplet/nub/resource';

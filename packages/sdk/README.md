@@ -12,7 +12,7 @@
 ### How It Works
 
 1. Import `@napplet/shim` in your entry point to install the `window.napplet` global
-2. Import named exports from `@napplet/sdk` -- `relay`, `ipc`, `storage`, `keys`
+2. Import named exports from `@napplet/sdk` -- `relay`, `ifc`, `storage`, `keys`
 3. Each SDK method delegates to its `window.napplet.*` counterpart at call time
 4. If `window.napplet` is not installed when a method is called, a descriptive error is thrown
 
@@ -26,7 +26,7 @@ npm install @napplet/sdk @napplet/shim
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys, media, notify, config, type NostrEvent } from '@napplet/sdk';
+import { relay, ifc, storage, keys, media, notify, config, resource, type NostrEvent } from '@napplet/sdk';
 
 // Subscribe to kind 1 notes
 const sub = relay.subscribe(
@@ -43,9 +43,9 @@ const signed = await relay.publish({
   created_at: Math.floor(Date.now() / 1000),
 });
 
-// Inter-pane messaging
-ipc.emit('chat:message', [], JSON.stringify({ text: 'hi' }));
-const ipcSub = ipc.on('bot:response', (payload) => {
+// Inter-frame messaging
+ifc.emit('chat:message', [], JSON.stringify({ text: 'hi' }));
+const ifcSub = ifc.on('bot:response', (payload) => {
   console.log('Bot says:', payload);
 });
 
@@ -87,9 +87,15 @@ const configSub = config.subscribe((v) => {
 // Deep-link settings UI
 config.openSettings({ section: 'appearance' });
 
+// Fetch external bytes via the shell (the iframe sandbox + strict CSP block direct fetch)
+const avatarBlob = await resource.bytes('https://example.com/avatar.png');
+const handle = resource.bytesAsObjectURL('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+imgEl.src = handle.url;
+// handle.revoke() when done
+
 // Clean up
 sub.close();
-ipcSub.close();
+ifcSub.close();
 keySub.close();
 configSub.close();
 ```
@@ -107,9 +113,9 @@ Relay operations through the shell's relay pool. Mirrors `window.napplet.relay`.
 | `publishEncrypted(template, recipient, encryption?)` | `Promise<NostrEvent>` | Send event template for encryption, signing, and broadcast |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: subscribe, collect until EOSE, resolve |
 
-### `ipc`
+### `ifc`
 
-Inter-napplet communication between napplets. Mirrors `window.napplet.ipc`.
+Inter-frame communication between napplets. Mirrors `window.napplet.ifc`.
 
 Messages are sent as JSON envelope objects (`{ type: 'ifc.emit', topic, payload }`) and received as
 (`{ type: 'ifc.event', topic, payload, sender }`).
@@ -201,6 +207,26 @@ Install the peer when you want typed callbacks:
 
 ```bash
 npm install --save-dev json-schema-to-ts
+```
+
+### `resource`
+
+Sandboxed byte fetching (NUB-RESOURCE). Mirrors `window.napplet.resource`. Required because the iframe sandbox + strict CSP block direct `fetch()` / `<img src=externalUrl>` / `XMLHttpRequest`.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `bytes(url, opts?)` | `Promise<Blob>` | Fetch bytes through the shell. `opts.signal` accepts an `AbortSignal`. |
+| `bytesAsObjectURL(url)` | `{ url: string; revoke: () => void }` | Synchronous handle whose `url` resolves to a blob URL once the fetch completes. |
+
+Four canonical schemes: `data:` (in-shim), `https:` (shell-side under policy), `blossom:sha256:<hex>` (hash-verified), `nostr:<bech32>` (single-hop NIP-19).
+
+Bare helper aliases are also re-exported for consumers that prefer functional imports:
+
+```ts
+import { resourceBytes, resourceBytesAsObjectURL } from '@napplet/sdk';
+
+const blob = await resourceBytes('https://example.com/avatar.png');
+const handle = resourceBytesAsObjectURL('blossom:sha256:...');
 ```
 
 ### `keys`
@@ -301,6 +327,7 @@ handlers in shell implementations or protocol-aware code.
 | `MediaNubMessage` | `@napplet/nub/media` | Discriminated union of all media domain messages |
 | `NotifyNubMessage` | `@napplet/nub/notify` | Discriminated union of all notify domain messages |
 | `ConfigNubMessage` | `@napplet/nub/config` | Discriminated union of all config domain messages |
+| `ResourceNubMessage` | `@napplet/nub/resource` | Discriminated union of all resource domain messages |
 
 Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMessage`) are also re-exported from
 `@napplet/sdk` for fine-grained typing.
@@ -310,8 +337,8 @@ Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMe
 Each NUB domain has a string constant re-exported from its package:
 
 ```ts
-import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN, CONFIG_DOMAIN } from '@napplet/sdk';
-// Values: 'relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config'
+import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, IFC_DOMAIN, THEME_DOMAIN, KEYS_DOMAIN, MEDIA_DOMAIN, NOTIFY_DOMAIN, CONFIG_DOMAIN, RESOURCE_DOMAIN } from '@napplet/sdk';
+// Values: 'relay', 'identity', 'storage', 'ifc', 'theme', 'keys', 'media', 'notify', 'config', 'resource'
 ```
 
 These constants are re-exported from the individual NUB packages. Use them with the shell capability query
@@ -328,6 +355,11 @@ if (window.napplet.shell.supports('nub:identity')) {
 
 if (window.napplet.shell.supports('nub:config')) {
   // NUB-CONFIG is available -- schema registration and subscribe()
+}
+
+if (window.napplet.shell.supports('nub:resource')) {
+  // resource.bytes(url) is available; check per-scheme too:
+  if (window.napplet.shell.supports('resource:scheme:blossom')) { /* ... */ }
 }
 ```
 
@@ -355,7 +387,7 @@ This protects against importing `@napplet/sdk` without the side-effect shim impo
 
 ```ts
 import '@napplet/shim';                                                  // required: installs window.napplet
-import { relay, ipc, storage, keys, media, notify } from '@napplet/sdk';  // optional: typed API
+import { relay, ifc, storage, keys, media, notify } from '@napplet/sdk';  // optional: typed API
 ```
 
 If you are writing a vanilla napplet with no build step, use `window.napplet.*` directly after importing the shim -- the SDK is not required.

@@ -12,7 +12,7 @@
 
 1. Import `@napplet/shim` in your napplet's entry point (side-effect only -- no named exports)
 2. The shim registers with the shell via postMessage -- the shell assigns identity based on the iframe's `message.source` Window reference
-3. Once registered, `window.napplet` is populated with relay, ipc, storage, keys, media, notify, identity, config, and shell sub-objects
+3. Once registered, `window.napplet` is populated with relay, ifc, storage, keys, media, notify, identity, config, resource, and shell sub-objects
 4. No `window.nostr` is installed -- signing and encryption are mediated by the shell via `relay.publish()` and `relay.publishEncrypted()`
 
 ### Installation
@@ -42,8 +42,8 @@ const signed = await window.napplet.relay.publish({
   created_at: Math.floor(Date.now() / 1000),
 });
 
-// Listen for inter-pane events from other napplets
-const ipcSub = window.napplet.ipc.on('profile:open', (payload) => {
+// Listen for inter-frame events from other napplets
+const ifcSub = window.napplet.ifc.on('profile:open', (payload) => {
   console.log('Profile requested:', payload);
 });
 
@@ -102,9 +102,15 @@ const configSub = window.napplet.config.subscribe((values) => {
 // Deep-link the shell's settings UI to a named section
 window.napplet.config.openSettings({ section: 'appearance' });
 
+// Fetch external bytes via the shell (CSP blocks direct <img src=externalUrl> / fetch())
+const avatarBlob = await window.napplet.resource.bytes('https://example.com/avatar.png');
+const handle = window.napplet.resource.bytesAsObjectURL('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+imgEl.src = handle.url;
+// later: handle.revoke();
+
 // Clean up
 sub.close();
-ipcSub.close();
+ifcSub.close();
 keySub.close();
 mediaSub.close();
 notifySub.close();
@@ -166,6 +172,9 @@ Messages sent via `window.parent.postMessage(msg, '*')`:
 { type: 'config.subscribe' }
 { type: 'config.unsubscribe' }
 { type: 'config.openSettings', section?: string }
+
+{ type: 'resource.bytes', id: string, url: string }
+{ type: 'resource.cancel', id: string }
 ```
 
 ### Inbound (shell → napplet)
@@ -214,6 +223,9 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'config.registerSchema.result', id: string, ok: boolean, code?: string, error?: string }
 { type: 'config.values', id?: string, values: object }
 { type: 'config.schemaError', code: string, error: string }
+
+{ type: 'resource.bytes.result', id: string, blob: Blob, mime: string }
+{ type: 'resource.bytes.error', id: string, error: 'not-found' | 'blocked-by-policy' | 'timeout' | 'too-large' | 'unsupported-scheme' | 'decode-failed' | 'network-error' | 'quota-exceeded', message?: string }
 ```
 
 All request/response pairs are correlated by the `id` field. Identity request timeouts after 30 seconds.
@@ -230,7 +242,7 @@ window.napplet = {
     publishEncrypted(template, recipient, encryption?): Promise<NostrEvent>;
     query(filters): Promise<NostrEvent[]>;
   },
-  ipc: {
+  ifc: {
     emit(topic, extraTags?, content?): void;
     on(topic, callback): { close(): void };
   },
@@ -284,6 +296,10 @@ window.napplet = {
     onSchemaError(callback): () => void;
     readonly schema: Record<string, unknown> | null;
   },
+  resource: {
+    bytes(url, opts?): Promise<Blob>;
+    bytesAsObjectURL(url): { url: string; revoke: () => void };
+  },
   shell: {
     supports(capability: NamespacedCapability): boolean;
   },
@@ -301,9 +317,9 @@ Relay operations through the shell's relay pool via JSON envelope (relay.subscri
 | `publishEncrypted(template, recipient, encryption?)` | `Promise<NostrEvent>` | Send an event template to the shell for encryption, signing, and broadcast. NIP-44 default. |
 | `query(filters)` | `Promise<NostrEvent[]>` | One-shot query: sends a relay.query envelope, resolves when results arrive. |
 
-### `window.napplet.ipc`
+### `window.napplet.ifc`
 
-Inter-pane communication between napplets via the shell.
+Inter-frame communication between napplets via the shell.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -382,6 +398,27 @@ Per-napplet declarative configuration (NUB-CONFIG). The shell is the sole writer
 | `onSchemaError(callback)` | `() => void` | Listen for uncorrelated `config.schemaError` pushes (returns a plain teardown fn). |
 | `schema` (accessor) | `Record<string, unknown> \| null` | Readonly current schema snapshot (manifest-declared or last-accepted runtime registration). |
 
+### `window.napplet.resource`
+
+Sandboxed byte fetching. The iframe sandbox (no `allow-same-origin`) plus strict CSP (no `connect-src`) means napplets cannot fetch external URLs directly — `<img src="https://...">`, `fetch()`, and `XMLHttpRequest` are all blocked by the browser. Use `resource.bytes(url)` to fetch any external resource through the shell.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `bytes(url, opts?)` | `Promise<Blob>` | Fetch bytes for a URL via the shell. `opts.signal` accepts an `AbortSignal` for cancellation. |
+| `bytesAsObjectURL(url)` | `{ url: string; revoke: () => void }` | Synchronous handle whose `url` resolves to a blob URL once the underlying fetch completes. Caller MUST `revoke()` when done. |
+
+Four canonical schemes: `data:` (decoded in-shim), `https:` (shell-side network with policy), `blossom:sha256:<hex>` (hash-verified), `nostr:<bech32>` (single-hop NIP-19 resolution).
+
+Errors reject the Promise with one of 8 codes: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`.
+
+Capability detection:
+
+```ts
+if (window.napplet.shell.supports('nub:resource')) { /* ... */ }
+if (window.napplet.shell.supports('resource:scheme:blossom')) { /* ... */ }
+if (window.napplet.shell.supports('perm:strict-csp')) { /* shell enforces strict CSP */ }
+```
+
 ### `window.napplet.shell`
 
 Namespaced capability query. `supports()` checks whether the shell declared support for a NUB domain or permission.
@@ -405,7 +442,7 @@ Importing `@napplet/shim` activates a global Window type augmentation:
 // This side-effect import gives TypeScript full autocompletion for window.napplet.*
 import '@napplet/shim';
 
-// TypeScript knows about window.napplet.relay, .ipc, .storage, .keys, .media, .notify, .identity, .shell
+// TypeScript knows about window.napplet.relay, .ifc, .storage, .keys, .media, .notify, .identity, .resource, .shell
 window.napplet.relay.subscribe({ kinds: [1] }, (event) => {
   // event is typed as NostrEvent
 });
@@ -421,17 +458,17 @@ The `NappletGlobal` interface is defined in `@napplet/core` and augmented onto `
 
 | | `@napplet/shim` | `@napplet/sdk` |
 |---|---|---|
-| **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ipc } from '@napplet/sdk'` |
+| **Import style** | `import '@napplet/shim'` (side-effect) | `import { relay, ifc } from '@napplet/sdk'` |
 | **What it does** | Installs `window.napplet` global + shell registration | Named exports wrapping `window.napplet` |
 | **Dependencies** | `@napplet/nub` (uses `@napplet/nub/<domain>/shim` subpaths internally) | `@napplet/core` (types only) |
 | **When to use** | Always -- required to install the runtime | When you want typed imports in a bundler |
-| **Named exports** | None | `relay`, `ipc`, `storage`, `keys`, `identity`, plus types |
+| **Named exports** | None | `relay`, `ifc`, `storage`, `keys`, `identity`, plus types |
 
 **Typical usage:** Import both -- shim for window installation, SDK for typed API access:
 
 ```ts
 import '@napplet/shim';
-import { relay, ipc, storage, keys, identity } from '@napplet/sdk';
+import { relay, ifc, storage, keys, identity } from '@napplet/sdk';
 ```
 
 ## Protocol Reference

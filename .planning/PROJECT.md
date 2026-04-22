@@ -1,5 +1,35 @@
 # Napplet Protocol SDK
 
+## Current Milestone: v0.28.0 Browser-Enforced Resource Isolation
+
+**Goal:** Convert napplet iframe security from ambient trust ("napplets shouldn't fetch directly") to browser-enforced isolation ("napplets cannot fetch directly, the browser blocks it"). Make the shell the sole resource broker for all network-sourced content, with a single scheme-pluggable primitive on the napplet side.
+
+**Target features:**
+- New NUB defining `resource.bytes(url) → blob` primitive with scheme-pluggable URL space (`https:`, `blossom:`, `nostr:`, `data:`)
+- Strict CSP enforcement on napplet iframes (`connect-src 'none'` minimum) with shell-controlled delivery
+- NIP-5D Security Considerations amendment for strict-CSP posture
+- NUB-RELAY amendment: optional sidecar field on `relay.event` for shell-pre-resolved resources
+- NUB-IDENTITY + NUB-MEDIA clarifications: profile pictures and artwork URLs flow through the resource primitive
+- vite-plugin updates: emit CSP-aware napplet HTML in dev so napplets are developed under the same constraints they ship under
+- Demo napplets exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer)
+- Shell-side SVG rasterization (napplets never receive scriptable XML)
+- Default shell resource policy guidance (private-IP blocks, size caps, timeouts, rate limits, MIME classification)
+
+**Key context:**
+- Audio/video EXPLICITLY OUT OF SCOPE — deferred to a separate later milestone using a shell-composited compositor model
+- Backwards compatibility is not a concern — single user, active design, break freely
+- Hashes stay shell-internal; napplets address resources by URL only
+- Sidecar pre-resolution is an invisible optimization, not a separate API path
+- Shell-as-fetch-proxy attack surface accepted as irreducible; bounded by policy defaults
+
+**Demo coordination (v0.28.0):**
+
+This monorepo ships only the **wire + SDK surface** for v0.28.0 — `@napplet/nub/resource`, the `@napplet/shim` integration, the `@napplet/sdk` re-exports, the `@napplet/vite-plugin` `strictCsp` option, the `specs/NIP-5D.md` Security Considerations amendment, and the four cross-repo PRs to `napplet/nubs`. **Demo napplets** exercising the model end-to-end (profile viewer, feed napplet with inline images, scheme-mixed consumer) are explicitly delegated to the **downstream shell repo** for v0.28.0 (Option B per milestone scoping). The downstream shell hosts the demo napplets because demos require a complete shell implementation including the resource NUB handler, default policy enforcement, SVG rasterizer, and strict CSP — all of which are shell-side responsibilities living outside this monorepo since the v0.13.0 extraction. Direct contributors to v0.28.0 demo work to the downstream shell repo, not here.
+
+## Shipped: v0.27.0 IFC Terminology Lock-In
+
+Completed the `ipc` → `ifc` rename end-to-end. Hard break with no backward-compat alias: `window.napplet.ipc` renamed to `window.napplet.ifc` in `@napplet/core`, `@napplet/shim`, `@napplet/sdk`, and `@napplet/nub/ifc`; the `@napplet/sdk` `ipc` named export deleted and replaced with `ifc`; every JSDoc / section comment updated to `IFC-PEER` / "inter-frame" phrasing. Public docs aligned: root README + four package READMEs + `skills/build-napplet/SKILL.md` + active `.planning/` docs swept to IFC terminology with historical changelog bullets preserved as records. Acceptance gate passed: `pnpm -r build` + `pnpm -r type-check` green across all 14 workspace packages; first-party-surface zero-grep across `packages/`, `specs/`, `skills/`, root README, and `.planning/codebase/` returns zero matches (with one documented `INTEGRATIONS.md:168` `INTER_PANE` historical-constant exception). 3 phases, 5 plans shipped 2026-04-19. See [archive](milestones/v0.27.0-ROADMAP.md).
+
 ## Shipped: v0.26.0 Better Packages
 
 Consolidated the 9 separate `@napplet/nub-<domain>` packages into a single tree-shakable `@napplet/nub` with 34 subpath entry points (9 barrel + 9 types + 8 shim + 8 sdk — theme is types-only). The 9 old packages became 1-line `export * from '@napplet/nub/<domain>'` re-export shims with `[DEPRECATED]` metadata + README banners (one-release deprecation cycle; removal deferred to a future milestone via `REMOVE-01..03`). `@napplet/shim` migrated to `/shim` granular subpaths; `@napplet/sdk` migrated to `/<domain>` barrels; 0 `@napplet/nub-` specifiers remain in first-party source. Root + 4 package READMEs rewritten; defunct `@napplet/nub-signer` references purged. Tree-shaking contract proven (39-byte bundle for types-only consumer, 0 `registerNub`, 0 cross-domain leakage). 5 phases, 12 plans shipped 2026-04-19. See [archive](milestones/v0.26.0-ROADMAP.md).
@@ -245,9 +275,18 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 - ✓ New `@napplet/nub` README + root + core + shim + sdk READMEs updated; defunct `@napplet/nub-signer` references purged; spec/skills sweep clean — v0.26.0 Phase 120 (DOC-01..04)
 - ✓ Monorepo build + type-check green across 14 packages; tree-shaking bundle = 39 bytes with 0 cross-domain leakage; 9 pinned-consumer type-check smokes green — v0.26.0 Phase 121 (VER-01..03)
 
+- ✓ `window.napplet.ipc` renamed to `window.napplet.ifc` across `@napplet/core` types + `@napplet/shim` installer, no backward-compat alias — v0.27.0 Phase 122 (API-01)
+- ✓ `@napplet/sdk` named export renamed `ipc` → `ifc` with JSDoc + section header updates — v0.27.0 Phase 122 (API-02)
+- ✓ `@napplet/core` JSDoc + `packages/nub/src/ifc/sdk.ts` identifiers and JSDoc aligned to IFC-PEER / "inter-frame"; `requireIpc` → `requireIfc` — v0.27.0 Phase 122 (SRC-01)
+- ✓ Root README + `@napplet/{core,shim,sdk}` READMEs swept to IFC terminology in current-API sections with historical changelog bullets preserved — v0.27.0 Phase 123 (DOC-01)
+- ✓ `skills/build-napplet/SKILL.md` frontmatter, body prose, and code samples aligned with IFC / "inter-frame" terminology — v0.27.0 Phase 123 (DOC-02)
+- ✓ Active `.planning/codebase/*.md` + research docs swept to IFC / accurate transport terminology; `TESTING.md` lines 83/152 rewritten to `postMessage`; 7 dated files preserved byte-identical — v0.27.0 Phase 123 (PLAN-01)
+- ✓ `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 workspace packages with renamed API surface — v0.27.0 Phase 124 (VER-01)
+- ✓ Repo-wide first-party-surface zero-grep clean (`packages/`, `specs/`, `skills/`, root README, `.planning/codebase/`) with `INTEGRATIONS.md:168` historical-constant exception and Option (a) path-exclusion for self-describing planning docs — v0.27.0 Phase 124 (VER-02)
+
 ### Active
 
-(No active milestone — ready for `/gsd:new-milestone`)
+v0.28.0 Browser-Enforced Resource Isolation — see Current Milestone section above. Specific REQ-IDs landed in REQUIREMENTS.md after milestone scoping.
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -270,7 +309,7 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ## Context
 
-- **Current state**: v0.26.0 shipped (Better Packages). 14 packages: 4 core SDK (core, shim, sdk, vite-plugin) + consolidated `@napplet/nub` with 34 subpath entry points + 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for removal in a future milestone). 26 milestones shipped.
+- **Current state**: v0.27.0 shipped (IFC Terminology Lock-In). 14 packages: 4 core SDK (core, shim, sdk, vite-plugin) + consolidated `@napplet/nub` with 34 subpath entry points + 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for removal in a future milestone). Runtime API surface is IFC-named end-to-end: `window.napplet.ifc`, `@napplet/sdk` `ifc` export, `IFC-PEER` / "inter-frame" JSDoc — hard break, no backward-compat alias. 27 milestones shipped.
 - **Package architecture**: @napplet: core(0 deps) | nub(core) | shim(core+nub) | sdk(core+nub) | vite-plugin. Deprecated `@napplet/nub-<domain>` (×9) re-export `@napplet/nub/<domain>` and are kept for one release cycle. Shell runtime packages in a separate repo.
 - **Spec status**: NIP-5D v2 at 199 lines covers AUTH handshake, relay proxy, capability discovery, and NUB extension reference. Ready for PR submission to nostr-protocol/nips.
 - **NUB specs**: 6 interface specs drafted in `specs/nubs/` (RELAY, STORAGE, SIGNER, NOSTRDB, IPC, PIPES). Governance framework defined but not formalized (NUB-01/02/03 deferred).
@@ -359,4 +398,4 @@ Likely next candidates:
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-19 after v0.26.0 Better Packages milestone*
+*Last updated: 2026-04-20 — v0.28.0 Browser-Enforced Resource Isolation milestone started*

@@ -1,374 +1,296 @@
-# Feature Landscape: NUB-CONFIG
+# Feature Research — v0.28.0 Browser-Enforced Resource Isolation
 
-**Domain:** Declarative per-extension configuration in sandboxed/hosted extension ecosystems
-**Researched:** 2026-04-17
-**Confidence:** HIGH (5 precedent ecosystems with first-party docs; consistent cross-ecosystem patterns)
+**Domain:** Sandboxed-iframe app + shell-mediated resource fetching layer (napplet protocol)
+**Researched:** 2026-04-20
+**Confidence:** HIGH on table stakes / anti-features (multiple peer systems converge); MEDIUM on transform-hint and sidecar shapes (WebSearch-only, no spec authority for our exact use case)
 
-## Precedent Survey
+## Scope Anchor
 
-Five ecosystems were examined. Each has a different stance on "who owns the UI" and "who owns the schema," which directly informs what NUB-CONFIG can borrow, skip, or reject.
+This milestone introduces ONE new napplet-side primitive — `resource.bytes(url) → blob` — backed by a scheme-pluggable shell broker, and tightens the browser-enforced perimeter (CSP `connect-src 'none'`, no `allow-same-origin`) so napplets *cannot* fetch directly even if they try.
 
-| Ecosystem | Schema declared where | UI owner | Schema format | Secrets model | Deep-link to settings | Change notifications |
-|-----------|----------------------|----------|---------------|---------------|-----------------------|----------------------|
-| **VSCode** | `contributes.configuration` in `package.json` | Host (Settings editor) | JSON Schema subset (no `$ref`) | Separate `SecretStorage` API (OS keychain) | `workbench.action.openSettings` with `@ext:publisher.name` filter | `workspace.onDidChangeConfiguration` live events |
-| **Chrome MV3 `options_ui`** | n/a — HTML page | Extension (extension-rendered) | n/a — freeform HTML | Extension's own problem | `chrome.runtime.openOptionsPage()` | `chrome.storage.onChanged` live events |
-| **Chrome MV3 `managed_schema`** | `storage.managed_schema` → JSON file | Admin/policy (no end-user UI) | JSON Schema (object, `properties`, `$ref`, `additionalProperties`) | N/A (admin-supplied) | N/A | `chrome.storage.onChanged` |
-| **Raycast** | `preferences[]` in `package.json` | Host (Preferences editor) | Bespoke type enum (`textfield`, `password`, `checkbox`, `dropdown`, `appPicker`, `file`, `directory`) | `password` type → system Keychain on macOS | `openExtensionPreferences()` / `openCommandPreferences()` | **Snapshot only** — `getPreferenceValues()` at command launch |
-| **Figma** | `parameters[]` (quick-action args only) | Extension for settings; Host for quick-action args | Bespoke (`name`, `key`, `description`, `optional`, `allowFreeform`, `data`) | Extension's own problem | None documented | N/A (no persistent settings mechanism) |
-| **JetBrains** | `ConfigurableEP` extension point in `plugin.xml` | Host (Settings dialog) | Code-backed (plugin constructs UI component) | Plugin's own problem (`PasswordSafe` API separate) | `ShowSettingsUtil.showSettingsDialog(project, Configurable.class)` | Plugin implements `Configurable.apply()` |
+**EXPLICIT SCOPE-OUT (must remain out):** Audio and video playback. The streaming/seek/codec model is fundamentally different from byte-blob delivery and demands a shell-composited compositor approach. Forcing that into `resource.bytes()` would either bloat this NUB or build the wrong abstraction. Defer to a later compositor milestone.
 
-**Only VSCode and Chrome's `managed_schema` use JSON Schema as the wire contract.** Raycast uses a bespoke type enum; Figma has no declarative settings UI at all; JetBrains is code-first. This matches our decision to use JSON Schema — it's the most cross-ecosystem-portable choice and the two precedents that use it agree on structure.
+## Feature Landscape
 
-**Raycast is the closest structural match to NUB-CONFIG** (host-rendered UI, declarative-from-manifest, sandboxed extensions, `openExtensionPreferences` deep-link), but with a bespoke type enum instead of JSON Schema. We get the best of both: JSON Schema's ecosystem + Raycast's sandbox-host-UI-owns pattern.
+### Table Stakes (Users Expect These)
 
-**Figma is the counter-example.** It deliberately has no settings mechanism; plugins render their own UI if needed. This confirms that "just let the napplet render a config iframe" is a coherent design choice — but it's the one we're explicitly rejecting because the whole point of NUB-CONFIG is consistency across napplets (users find settings in one place).
+Without these, the napplet UX is visibly broken or insecure. Drawn from convergent practice across Electron `protocol.handle`, Tauri custom protocols, Figma plugin networking, and Slack Block Kit hosted images.
 
-## Consensus Across Ecosystems
+| # | Feature | Why Expected | Complexity | Notes |
+|---|---------|--------------|------------|-------|
+| TS-1 | `resource.bytes(url) → Blob` request/result envelope (`resource.bytes` / `resource.bytes.result`) with correlation `id` | The primitive itself. Without it, no images, no inline assets, nothing the napplet can render from network. | S | Mirrors `identity.getProfile` request/result shape. |
+| TS-2 | At least 4 schemes plumbed: `https:`, `data:`, `blossom:`, `nostr:` | Stated milestone target. `data:` is mandatory because it's the only zero-network fallback (placeholders, embedded SVG-as-data after rasterization, BlurHash-style decoded payloads). `blossom:` and `nostr:` are the Nostr-native ones. | M | `data:` is technically resolved entirely client-side but MUST flow through the same primitive so the napplet has one code path. Otherwise napplets bifurcate. |
+| TS-3 | Distinguished failure modes in the result envelope (not a single boolean) | "Image broken" with no reason is the single most common DX complaint about sandboxed plugin systems. Need at minimum: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`. | S | Strongly typed `error` discriminator. Lets napplet show "blocked by shell" vs "404" vs "still loading". |
+| TS-4 | MIME / content-type returned alongside bytes | Napplets need to know whether to render as `<img>`, `<embed>`, or refuse. `Blob.type` alone is insufficient because napplets can't trust napplet-side sniffing under sandbox. | S | Shell sniffs once, classifies, returns canonical MIME string. |
+| TS-5 | Cancellation semantics (napplet can abandon a pending request) | Standard `AbortController` ergonomics. Without it, scrolling feeds leak shell-side fetches and burn shell rate-limit budget. Universal precedent — `fetch()`, GraphQL clients, RPC libraries all expect this. | S | Either a `resource.cancel { id }` envelope or a fire-and-forget on the napplet that drops the result. Shell SHOULD propagate to upstream `AbortController`. |
+| TS-6 | Strict CSP delivered to the iframe at creation time, with `connect-src 'none'`, `script-src 'self' blob: data:` (or similar), `frame-ancestors 'self'` | This is THE security gate. If it's not browser-enforced, "shell mediation" is just a polite request the napplet can ignore. Must be delivered via mechanism that survives `srcdoc` and opaque-origin contexts. | M | HTTP header is most robust; meta tag does NOT support `sandbox` and inherits parent CSP issues; `srcdoc` requires careful inheritance handling. See ARCHITECTURE research for the delivery decision. |
+| TS-7 | Default shell resource policy with hard SSRF guards | Industry consensus (OWASP, Wiz, Stytch 2025): block private-IP ranges (127/8, 10/8, 172.16/12, 192.168/16, 169.254/16, ::1/128, fc00::/7, fe80::/10) at resolution time, not just at URL parse time (DNS rebinding). Plus per-request size cap, per-napplet rate limit, per-request timeout. | M | Documented as default policy in spec. Shell host can override. Must run after DNS resolution to defeat rebinding — see PITFALLS. |
+| TS-8 | SVG handling that NEVER hands scriptable XML to the napplet | Documented XSS vector across every web platform that ships SVG (Angular CVE-2025-66412, sanitize-svg CVE-2023-22461, recurring `<animate>`/`<foreignObject>` bypasses). Sanitize-by-stripping is fragile; rasterize-by-default is the safe stance. Milestone explicitly calls for shell-side rasterization. | M | Shell rasterizes SVG → PNG; napplet receives `image/png` Blob with original URL preserved. Napplet never sees raw SVG bytes. |
+| TS-9 | `shell.supports('resource')` (NUB capability check) and `shell.supports('resource:scheme:blossom')`-style scheme-level capability check | Existing `shell.supports()` precedent. Napplets must be able to ask "can you do `nostr:` URLs?" before rendering a `nostr:` URL link. | S | Use existing namespace; add scheme-level sub-capability (new pattern but consistent with existing `nub:`/`perm:` precedent). |
+| TS-10 | Vite-plugin emits CSP-aware napplet HTML in dev (matches production posture) | Stated milestone target. Without it, napplets work in dev and break on deploy because dev iframe has no CSP. The single most common "works on my machine" pattern in plugin systems. | M | Vite plugin already exists; add CSP middleware/transform. Mirror the headers the shell will set. |
+| TS-11 | NIP-5D Security Considerations amendment documenting the strict-CSP posture and `resource.bytes` contract | Spec hygiene. Shells implementing NIP-5D must know to set CSP and provide the `resource` NUB or napplets can't ship images. | S | Documentation only; ties to TS-1, TS-6. |
+| TS-12 | Single Blob delivery (not chunked, not streaming) for v0.28.0 | Matches the explicit scope-out of audio/video. Streaming requires backpressure, partial-failure handling, range requests — all of which are properly the compositor milestone's problem. Whole-blob is what every comparable system uses for static assets (Electron `protocol.handle` returns Response, Tauri custom-protocol returns Vec<u8>, Figma plugins receive whole responses). | S | Document the cap (e.g., 25 MiB default). Napplets that need bigger are a future milestone. |
 
-Fields that appear in every ecosystem that declares schemas (VSCode, Raycast, Chrome `managed_schema`). These are the irreducible core of "declarative config":
+### Differentiators (Worth Having for v0.28)
 
-| Field | VSCode | Raycast | Chrome `managed_schema` | Verdict |
-|-------|:------:|:-------:|:----------------------:|---------|
-| **type** (string/number/boolean/object/array) | ✓ | ✓ (via `type` enum) | ✓ | **Table stake** |
-| **default** | ✓ | ✓ | ✓ (via `description` convention) | **Table stake** |
-| **title / name / label** | ✓ | ✓ (`title`) | ✓ (`title`) | **Table stake** |
-| **description** | ✓ | ✓ | ✓ | **Table stake** |
-| **enum / dropdown options** | ✓ | ✓ (`dropdown.data`) | ✓ | **Table stake** |
-| **required** | implicit (default means optional) | ✓ | ✓ | **Table stake** |
+These are not strictly required for the protocol to be usable, but each materially improves either DX or shell efficiency, and each is small enough to land in v0.28 without dragging the milestone.
 
-Fields that appear in two-of-three:
+| # | Feature | Value Proposition | Complexity | Notes |
+|---|---------|-------------------|------------|-------|
+| DF-1 | Optional `sidecar` field on `relay.event` envelopes carrying pre-resolved resources `{ url → { mime, blob, error? } }` | Eliminates a double-roundtrip when the napplet immediately renders an image referenced in the event (the dominant case for feed napplets and profile viewers). The shell already knows the napplet has the event; pre-resolving the obvious URLs (profile picture in kind 0, image in kind 1, artwork in kind 30002, etc.) is invisible win. Milestone explicitly calls for this. | M | Pattern parallel: GraphQL `@defer` (multipart payload with later-arriving fragments) and ActivityPub attachments embedded in the activity. We embed up-front instead of deferring because the shell already paid the fetch cost; deferring would re-cost. **Amends NUB-RELAY** — sidecar is additive; old napplets ignore. |
+| DF-2 | Scheme registry is shell-pluggable (host can register additional handlers at runtime) | Future-proofs without further protocol changes. Enables `ipfs:`, `arweave:`, `magnet:`, custom enterprise schemes without a NUB amendment. Tauri and Electron both expose this; absence in our protocol would be a notable regression vs. the desktop precedents. | S | Shell-internal API, not part of the wire protocol. NUB-RESOURCE spec says "shell MAY support additional schemes; napplets discover via `shell.supports('resource:scheme:foo')`". |
+| DF-3 | Optional `hint` field on `resource.bytes` request: `{ purpose?: 'thumbnail'\|'full', maxWidth?: number, maxHeight?: number, preferFormat?: 'webp'\|'avif'\|'png'\|'jpeg' }` | Lets the shell short-circuit large fetches when the napplet only needs a thumbnail (avatar grid, message previews). Imgix/Cloudinary precedent: clients send `auto=format`, `max-w=`, `q=` parameters. Imgix's automatic content negotiation is the closest peer. **Hints, not commands** — shell may ignore. | M | Shell satisfies hint either by transforming locally (likely a future enhancement) or by rewriting the URL when fetching from a transform-aware backend (Imgix/Cloudinary). v0.28 ships the hint surface; behavior can be no-op-passes-through and still be valuable as a forward-compatible API. |
+| DF-4 | Optional `priority: 'high' \| 'low' \| 'auto'` on `resource.bytes` request | Mirrors browser `fetchpriority` attribute (Chrome 101+, in spec). Lets feed napplets say "hero image now, off-screen avatars later" without inventing custom orchestration. Shell uses this to order its fetch queue and to prefer cached results for low-priority. | S | Three-state enum, `auto` default. Shell MAY ignore. Surface lands in v0.28 even if shell behavior is naive. |
+| DF-5 | `resource.bytes.progress { id, fetched, total? }` push messages for in-flight large fetches | Lets napplets show real progress on multi-MB images instead of "loading…" forever. Optional — napplets without progress UI ignore. | M | Borderline — could defer. Include only if cost is small in shim/SDK. **Amend** NUB-RESOURCE if added; do not add to v0.28 result envelope shape. |
+| DF-6 | Speculative `resource.preload(url, { priority: 'low' })` envelope (fire-and-forget warm-up) | Pattern from `<link rel=prefetch>` and IntersectionObserver-driven prefetch. Napplet about to scroll into view of an image can warm shell cache. Shell MAY ignore entirely. | S | Useful for feed napplets. Cheap to add — same handler, just no result. |
+| DF-7 | Cache-key transparency: result envelope includes a stable `cacheKey` string the napplet can use to short-circuit its own re-renders | Napplet doesn't need to manage cache (shell does), but knowing whether two URL responses are byte-identical lets it skip re-decoding. Minor DX win. | S | Hash of `(scheme, normalized URL, hint)`. |
+| DF-8 | NUB-IDENTITY clarifying note: profile `picture` field is a URL the napplet MUST resolve via `resource.bytes(url)` (not direct `<img src=>`) | Existing NUB-IDENTITY just hands back a URL string. Without explicit guidance, napplet authors will write `<img src={profile.picture}>` and it will be CSP-blocked. Clarification in the spec + SDK helper. | S | **Amends NUB-IDENTITY** documentation only, no wire change. |
+| DF-9 | NUB-MEDIA clarifying note: `MediaArtwork.url` MUST resolve via `resource.bytes()`; `MediaArtwork.hash` is a `blossom:` shorthand the shell MAY auto-resolve | Same DX trap as DF-8 but for media artwork. The existing `MediaArtwork` type already anticipates Blossom, so this is mostly aligning the existing intent with the new primitive. | S | **Amends NUB-MEDIA** documentation only, no wire change. |
+| DF-10 | Demo napplets exercising the model end-to-end: profile viewer (NUB-IDENTITY → `resource.bytes`), feed napplet with inline images, scheme-mixed consumer (https + blossom + data on one screen) | Stated milestone target. Demos are the contract test for "did we actually make this usable". A profile picture failing to render in the demo is the canary that the milestone is incomplete. | M | Three demo napplets minimum. Each must be obviously broken if any TS-* feature is missing. |
 
-| Field | VSCode | Raycast | Chrome | Verdict |
-|-------|:------:|:-------:|:------:|---------|
-| **min / max** (numeric bounds) | ✓ (`minimum`/`maximum`) | — | ✓ | Differentiator |
-| **minLength / maxLength / pattern** | ✓ | — | ✓ | Differentiator |
-| **format** (email, uri, date-time) | ✓ | — | ✓ | Differentiator |
-| **order** (display ordering) | ✓ (`order`) | ✓ (array order) | — | Differentiator (and trivial to implement) |
-| **deprecation message** | ✓ (`deprecationMessage`) | — | — | Differentiator (VSCode-specific, but highly valued per search results) |
-| **placeholder** | — | ✓ | — | Idiosyncratic |
-| **markdownDescription** | ✓ | — | — | Idiosyncratic |
-| **platform-specific defaults** | — | ✓ (`{ macOS: ..., Windows: ... }`) | — | Idiosyncratic (not our problem — napplets are web) |
+### Anti-Features (Tempting; Do NOT Add)
 
-Sources: [VSCode contribution-points](https://code.visualstudio.com/api/references/contribution-points) · [Raycast manifest preferences](https://developers.raycast.com/information/manifest#preferences) · [Chrome managed_schema manifest](https://developer.chrome.com/docs/extensions/reference/manifest/storage)
+Each of these will get suggested ("just one more thing…"). Each is a trap. The reasons are documented so they don't get re-litigated mid-milestone.
 
-## Table Stakes
-
-Features users expect. Missing = NUB-CONFIG feels incomplete or broken.
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|:----------:|-------|
-| **Declare schema in NIP-5A manifest** | Already decided. VSCode `package.json`, Raycast `package.json`, Chrome `managed_schema` all declare config at build time. Manifest-declared is the authoritative path. | LOW | vite-plugin injects schema into manifest JSON at build. |
-| **Runtime schema declaration (escape hatch)** | Already decided. Napplets built without the vite-plugin (or hand-rolled) need a runtime call. No precedent has this — they're all manifest-only — but sandboxed iframe apps need the escape hatch because "run the napplet author's build tooling" is not always possible. | LOW | `config.registerSchema({ schema })` — shell validates and merges. |
-| **Core JSON Schema types: `string`, `number`, `boolean`, `object`, `array`** | Every schema-driven ecosystem supports all five. `integer` is treated as a special `number`. | LOW | JSON Schema draft-07 natively. Shell must validate each type before delivery (spec MUST). |
-| **`default` per property** | Every ecosystem. Without defaults, napplets ship in broken state until user visits settings. Shell MUST apply declared defaults (already a locked decision). | LOW | Pure JSON Schema. Shell fills in missing keys with declared defaults. |
-| **`title` + `description`** | Every ecosystem. Title is the UI label; description is the hover/tooltip. Without these, the settings UI is unlabeled squares. | LOW | Standard JSON Schema keywords. |
-| **`enum` with labels for dropdowns** | Every ecosystem. Users don't type `"foo-bar-baz"` — they pick from a list. `enum: ["a", "b"]` + `enumDescriptions: ["Option A", "Option B"]` is the VSCode convention. | LOW | JSON Schema `enum` + VSCode-style `enumDescriptions`. Optional: `enumItemLabels` for display-distinct-from-description. |
-| **Shell validates values BEFORE delivering to napplet** | Already a locked MUST. Every precedent does this — VSCode rejects settings that fail schema, Chrome excludes non-conforming policy values, Raycast won't deliver until required fields are filled. Napplet should never receive an unvalidated value. | MED | Shell runs schema validator (ajv or similar) on each value before `config.values` push. |
-| **Defaults applied by shell** | Already a locked MUST. Napplet receives fully-populated config object — missing keys filled from `default`, user overrides merged on top. | LOW | Standard defaulting semantics. |
-| **Storage scoped by (dTag, aggregateHash)** | Already a locked MUST. Matches NUB-STORAGE scoping. Different napplet types and versions have isolated config. | LOW | Shell concern; existing scoping infrastructure. |
-| **Shell is sole writer; napplet reads only** | Already a locked decision. Raycast, VSCode, JetBrains all enforce this — extension code cannot directly write to settings; only the user via the Settings UI. Napplets cannot mutate config over the wire. | LOW | Wire surface has no `config.set` message. Only `config.get`, `config.subscribe`, `config.openSettings`. |
-| **`config.get()` — initial snapshot** | Raycast's `getPreferenceValues()` pattern. Sometimes napplets need a one-shot read (e.g., during a compute, not as a live subscription). | LOW | Correlation-ID request/result. Returns validated, defaulted config object. |
-| **`config.subscribe()` — live updates (snapshot + push)** | Already a locked decision. VSCode's `onDidChangeConfiguration`, Chrome's `storage.onChanged`. Without live updates, a user changing a setting requires a napplet reload, which is ugly in a sandboxed iframe. | MED | Subscription on napplet side; shell pushes `config.values` on any change. |
-| **`config.values` — shell→napplet push envelope** | The push half of subscribe-live. Shell delivers full validated config object (not diffs) on any change. | LOW | One message type. Matches theme NUB inverse-push pattern. |
-| **`config.openSettings({ section? })` — deep-link** | Raycast (`openExtensionPreferences`), Chrome (`chrome.runtime.openOptionsPage`), VSCode (`workbench.action.openSettings @ext:id`), JetBrains (`showSettingsDialog`). **Every schema-driven precedent has this.** Napplet can say "you need to configure X" and take the user to the right place. | LOW | One wire message. Shell opens its own settings UI, optionally focused on a named section. |
-| **`shell.supports('config')` capability probe** | All NUBs. Napplet checks before depending on config. Shells without NUB-CONFIG must signal absence, so napplet can fall back to built-in defaults. | LOW | Existing `shell.supports()` infra. |
-
-## Differentiators
-
-Features that set NUB-CONFIG apart from ad-hoc per-napplet settings. Not expected, but high value. Candidates for MAY/SHOULD (potentialities) in the spec.
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|:----------:|-------|
-| **`x-napplet-secret: true` property marker** | Password-type preferences in Raycast map to system Keychain on macOS. VSCode has a completely separate `SecretStorage` API (OS keychain — macOS Keychain, Windows Credential Manager, Linux Keyring). **We cannot use OS keychain from a web shell** — browsers don't have that access — but we CAN: (a) mark the field as secret in the UI (password input, never echoed), (b) keep the value out of `config.values` pushes unless the napplet explicitly requests it via a correlated `config.getSecret(key)` call, (c) redact from logs. Already a locked potentiality. | MED | JSON Schema extension (already decided). Shell decides storage strength; spec mandates UI masking + log redaction minimum. See "Secret Strength Gradient" section below. |
-| **`x-napplet-section: "name"` for grouping** | VSCode has implicit sectioning via dotted setting keys (`editor.fontSize` → "Editor" group). Raycast just renders flat. For napplets with many settings, grouping is UX-critical. Already a locked potentiality. | LOW | Extension that the shell uses to render section headers. Napplet references the same section name in `openSettings({ section })`. |
-| **`x-napplet-order: N` for explicit ordering** | VSCode has `order`. Array-declaration order is ambiguous once schemas are merged/split. Already a locked potentiality. | LOW | Trivial. |
-| **`$version` field for migration signaling** | VSCode has no migration API — best practice is "read old setting, migrate, `deprecationMessage` the old one". Migration is hard and bespoke everywhere. Our locked decision is: napplet declares `$version` in schema; shell resolves migration entirely (reads old values, transforms, writes new, napplet never sees the old shape). Already a locked potentiality. | MED | Wire surface exposes `$version` in the schema; migration UX is shell-resolved. Shell's problem — spec only defines the signal. |
-| **`format` keyword (email, uri, date-time, regex)** | VSCode supports. Chrome `managed_schema` supports. JSON Schema draft-07 native. Lets the shell render richer inputs (date picker vs text, email field with @-validation). Shell MAY render richer inputs; MUST at least accept standard JSON Schema validation. | MED | Shell renders best-effort UI; validation is on shell. |
-| **`minimum`/`maximum`/`minLength`/`maxLength`/`pattern`** | Standard JSON Schema. Shell MUST enforce these before delivery (same validation pass as type check). | LOW | Trivial — validator handles it. |
-| **`deprecationMessage` on properties** | VSCode has this. Community search results flag it as "your friend" for migration. Not strictly needed for v1 since `$version` handles shape migrations, but useful for soft-deprecating options the napplet author wants to phase out. | LOW | Add as a SHOULD in spec — shells SHOULD display the deprecation message next to the field. |
-| **`markdownDescription` (vs plain `description`)** | VSCode has both. Lets schemas embed links to docs, code snippets. Shell MAY render markdown; MUST fall back to plain text. | LOW | Idiosyncratic to VSCode but cheap to support. |
-| **Per-section titles (not just keys)** | `x-napplet-section: "advanced"` is just a key; UX wants "Advanced Settings". One approach: `x-napplet-section: { id: "advanced", title: "Advanced Settings" }`. Alternative: derive the title from the first property in the section, or let the shell generate titles from the ID. | LOW | Spec decision. Simplest: section is a bare string ID; shell title-cases or napplet supplies full object. |
-| **Batch schema registration (one message)** | Already covered by the single manifest or single `registerSchema` call — not N individual calls. Whole-schema replace semantics. | LOW | No separate message needed; the register call IS the batch. |
-| **`config.get(key)` — single-key read** | Some precedents (Raycast) return the whole object. VSCode lets you `get('editor.fontSize')` for a single value. For napplets, fetching the whole config and picking one key is cheap (configs are small), so single-key read is convenience, not necessity. | LOW | Spec could require either "return whole object" or allow "return key or whole object"; recommend whole-object for simplicity. |
-| **Context/when-clause visibility (conditional fields)** | VSCode `menus` have `when` clauses; **VSCode `configuration` entries do NOT.** Idea: field A is visible only when field B has a certain value. None of the precedents support this for configuration. Too complex for v1. | HIGH | Defer — none of the precedents we studied actually support this for config. |
-
-## Secret Strength Gradient
-
-NUB-CONFIG lives in a web shell (browser), not a native app. This limits our secret-handling options compared to Raycast/VSCode. Strength tiers, from weakest to strongest, that a shell implementation could offer:
-
-| Tier | Mechanism | Strength | Feasibility in web shell |
-|------|-----------|----------|------------------------|
-| **0: Just-masked** | UI renders `<input type="password">`; value still in normal shell storage. Not echoed in settings UI after entry. | Weakest | Trivially feasible. **Spec floor — MUST.** |
-| **1: Kept out of logs** | Shell's debug/inspect views redact secret fields. Napplet never sees the secret in bulk `config.values` pushes — must request via `config.getSecret(key)` (correlated, one-off). | Weak+ | Feasible. **Spec SHOULD.** |
-| **2: Encrypted at rest** | Shell encrypts the value in localStorage/IndexedDB with a user-derived key (passphrase, WebAuthn, etc.). | Medium | Feasible but requires shell-level key management. **Spec MAY.** |
-| **3: OS-keychain-backed** | Value lives in macOS Keychain / Windows Credential Manager / Linux Keyring. Web shells cannot access these directly. | Strong | **Not feasible for browser-only shells.** A native host shell (Electron, Tauri, Rust binary) could offer this; a pure-web shell cannot. **Spec MAY for shells that can.** |
-
-**Recommendation for v1:** Spec mandates Tier 0 (masked UI) as floor. Recommends Tier 1 (redacted logs, napplet must opt in to receiving secret via getSecret). Tiers 2 and 3 are shell-implementation choices. `x-napplet-secret: true` is the signal; strength is shell-decided.
-
-Sources: [Raycast security](https://developers.raycast.com/information/security) · [VSCode SecretStorage](https://vscode-api.js.org/interfaces/vscode.SecretStorage.html) · [How to use SecretStorage in VSCode extensions](https://dev.to/kompotkot/how-to-use-secretstorage-in-your-vscode-extensions-2hco)
-
-## Anti-Features
-
-Features to explicitly NOT build. Tempting but wrong for this protocol.
-
-| Anti-Feature | Why Requested | Why Problematic | Alternative |
-|--------------|---------------|-----------------|-------------|
-| **Napplet-rendered settings iframe** | Figma's model — plugins own their settings UI. "Flexible", "each napplet can theme/brand/layout however they want." | Violates the entire value proposition of NUB-CONFIG: users have ONE place to find settings, with consistent UX. Also puts the settings UI behind the same sandboxed iframe that napplets draw in, meaning secrets flow to the napplet. Spec becomes pointless — there's no wire contract to validate. | Shell renders the UI from the schema. Napplet calls `openSettings` to deep-link. |
-| **Napplet-writable config (`config.set`)** | "It's annoying to tell users to open settings for a simple change." | Already a locked decision (shell is sole writer). If napplets can write, the schema becomes advisory, not enforced. Napplets can bypass validation, trigger storage quota attacks, write secrets into non-secret fields. | Napplet calls `config.openSettings({ section })`. User makes the change. Napplet receives update via `config.values` push. |
-| **`$ref` / `definitions` (schema references)** | "JSON Schema supports it." Some big schemas reuse types. | Chrome `managed_schema` allows it, but VSCode explicitly bans it: "configuration schemas must be self-contained." Spec complexity explodes — $ref resolution, cycle detection, cross-schema references. Every shell implementation needs a full JSON Schema $ref resolver. | Napplet inlines types. Schemas are small (dozens of fields, not hundreds). |
-| **Full JSON Schema draft 2020-12 support** | "We should support the latest spec." | Features like `if`/`then`/`else`, `unevaluatedProperties`, `dependentSchemas`, `$dynamicRef` add enormous validator complexity and UI-generation complexity. No precedent uses them for extension config. | Draft-07 subset. Specifically call out what IS supported (types, default, enum, format, min/max, minLength/maxLength, pattern, `$version`, `x-napplet-*`); everything else is best-effort or ignored. |
-| **Arbitrary nested `object` / `array` depth** | "Users might want structured config." | UI generation for deeply-nested schemas is a research problem (how do you render `array<object<array<object>>>`?). VSCode gives up and shows JSON for complex types. Raycast doesn't allow nesting at all. | Spec allows top-level primitives + one level of `object` or `array`. Shell MAY render deep nesting but MUST render JSON fallback. |
-| **Napplet-specified UI widget hints (`ui:widget: "color-picker"`)** | react-jsonschema-form pattern. "I want my color field to render as a color picker, not a text input." | Turns the spec into a UI framework. Shell implementations then have to support (or ignore) every widget name napplets ship. Becomes an ecosystem liability. | Use JSON Schema `format: "color"` (draft-07 doesn't have it, but we can add as a SHOULD convention). Shell picks the widget. Napplets don't dictate UI. |
-| **Live two-way binding between napplet and settings UI** | "I want to see my typing in the settings UI reflected live in the napplet." | This already happens via `config.values` push after commit. Streaming uncommitted keystrokes creates validation flicker (shell would push invalid intermediate states) and storage churn. | Shell commits on blur / enter / debounce; pushes `config.values` once per commit. |
-| **Napplet-defined validation functions (JS code in schema)** | "JSON Schema can't express my custom validation." | Executing napplet-supplied validation code ON THE SHELL is a sandbox violation (shell is trusted; napplet is not). Executing on the napplet means shell can't validate before delivery. Breaks the sole-writer model. | Napplet describes validation with JSON Schema primitives. If truly impossible, napplet validates its own inputs and presents an error in the settings UI via `openSettings` + its own logic — out of scope for v1. |
-| **Config inheritance / layering (user > workspace > machine)** | VSCode has this (application/machine/window/resource/language scopes). Useful for "workspace-specific napplet config." | No "workspace" concept in Nostr-sandboxed iframes. Our scope is `(dTag, aggregateHash)` — per napplet instance. Adding layering now designs for a multi-dimensional space we don't have. | Single scope per napplet. If layering is ever needed, add a `scope` potentiality later. |
-| **OS-keychain as MUST for secret fields** | "Secrets should be encrypted at rest in hardened storage." | Unimplementable in browser-only shells. Would block web-shell conformance. | Tiered strength: Tier 0 (masked) MUST, Tier 1 (redacted) SHOULD, Tier 2/3 MAY. See Secret Strength Gradient. |
-| **Migration-as-napplet-code (shell invokes napplet's migrate fn)** | "Napplet knows best how to migrate its own data." | Shell would have to invoke napplet code, wait for response, then commit. Slow, fragile, creates a trust-inversion (shell depends on napplet behavior). Already decided: migration is shell-resolved from `$version` signal. | `$version` in schema + shell-defined migration hooks. Napplet never sees old-shape values. |
+| # | Anti-Feature | Why Tempted | Why Problematic | Alternative |
+|---|---|---|---|---|
+| AF-1 | Raw `fetch` passthrough (`resource.fetch(url, init)` with method/headers/body) | Looks like obvious convenience; "what if napplet needs POST?" | Reintroduces every problem the milestone is solving. POST + custom headers means napplets can exfiltrate (POST to attacker-controlled URL with stolen state in body). Method/header surface is the SSRF amplifier in every audited proxy. The whole point is a *narrow* primitive — bytes in, bytes out, no side effects. | If a napplet needs to POST, that's a NUB. Build it as a typed message in the appropriate domain (e.g., `relay.publish` for Nostr writes, future `nip96.upload` for media writes). |
+| AF-2 | Napplet-controlled cache invalidation (`resource.invalidate(url)` or cache headers passed in) | "What if the avatar changed?" | Caching strategy is a shell concern. Letting napplets invalidate is a DoS vector (force shell to re-fetch on every render) and a privacy leak (napplet can probe "did you have this URL cached recently?"). | Shell decides cache TTL per scheme/MIME. Content-addressed schemes (`blossom:`, `nostr:`) are immutable so the question doesn't arise. For `https:` rely on shell's own cache headers handling. |
+| AF-3 | OAuth / cookie-bearing requests | "What if the napplet needs to fetch from a service the user is logged into?" | This is the entire reason the iframe is opaque-origin. Bearing user credentials into napplet-requested fetches is a credential-laundering attack surface and turns the shell into a confused deputy. | Auth'd APIs belong behind a NUB that mediates the auth (shell holds token, exposes typed methods). Napplet never gets credentials directly. |
+| AF-4 | Lightning-paid resources (L402, payment-required URLs) | Nostr ecosystem will request this within months | Conflates two separate concerns: payment authorization and byte fetching. Belongs in a separate NUB (e.g., NUB-PAY), with `resource.bytes` consuming a payment-token if needed. Adding payment to v0.28 doubles the surface. | Defer. Land NUB-RESOURCE clean; build NUB-PAY later; let `resource.bytes` accept an optional opaque `paymentToken` argument when NUB-PAY ships. |
+| AF-5 | Audio/video streaming, range requests, MediaSource integration | "We have media artwork already; let's just stream the audio too." | Streaming is fundamentally different: backpressure, partial failure, codec negotiation, gap-filling, seek. Trying to express this through `resource.bytes(url) → Blob` either bloats the primitive into a streaming protocol or ships a lie that doesn't actually stream. The compositor model (shell renders the video element, napplet sees a placeholder/handle) is the correct abstraction. | Explicitly defer to a later "shell-composited compositor" milestone. Document this scope-out in the NUB-RESOURCE spec. |
+| AF-6 | WebSocket proxy (`resource.socket(url)`) | Real-time data not delivered via Nostr relays | The whole proxy surface for streams is huge. Existing NUB-RELAY already handles the Nostr-flavored streaming case. Anything else is a special-purpose NUB. | Build a specific NUB if/when needed. Don't pre-build a generic socket bridge. |
+| AF-7 | Napplet-supplied custom MIME sniffing or trust-the-Content-Type-header | "Just pass the server's Content-Type through" | The shell *must* sniff and classify because `Content-Type` is attacker-controlled when fetching arbitrary URLs. Mis-classified bytes are how SVG-XSS and HTML-injection-via-image happen. | Shell sniffs (magic bytes), normalizes to a canonical MIME, refuses anything in a denylist (`text/html`, `application/javascript`, raw `image/svg+xml` pre-rasterization). |
+| AF-8 | Napplet-controlled CSP (loosen the policy from inside the iframe) | "My napplet needs to inline some JS / use eval / load a font from CDN" | The whole milestone's premise. CSP is the trust gate; making it negotiable defeats it. | Shell sets CSP. Napplets that need fonts/styles bundle them or resolve them via `resource.bytes()` and inject as `data:` URLs (which the policy explicitly allows). |
+| AF-9 | Hash exposure to napplets ("here's the SHA-256 of what you got") | "Useful for content-addressing within napplet logic" | Stated PROJECT.md decision: **hashes stay shell-internal; napplets address resources by URL only**. Exposing hashes leaks shell internals and lets napplets probe shell cache state. | Napplet uses URLs (including `blossom:<hash>` and `nostr:<nevent>`) as identifiers. Shell handles hash verification internally. |
+| AF-10 | Synchronous `resource.bytes` (block-on-result API in shim) | "Easier mental model for napplet authors" | postMessage is fundamentally async; faking sync via `Atomics.wait` requires SharedArrayBuffer (cross-origin-isolated only) which conflicts with the opaque-origin sandbox. Trying to fake it via spinning is broken. | Promise-returning SDK helper. Standard async/await. Same pattern every other NUB uses. |
+| AF-11 | "Just fetch through `<img src=blossom://...>`" by intercepting `<img>` requests inside the iframe | Looks magical | Requires either same-origin iframe (defeats sandbox) or a Service Worker registered in the iframe (not possible under opaque origin) or browser-level scheme handlers (don't exist). The sandbox literally precludes this. | Napplets use `URL.createObjectURL(blob)` from the result of `resource.bytes()` and assign that to `<img src=>`. This is the standard pattern; document it in SDK and demos. |
 
 ## Feature Dependencies
 
 ```
-Schema declaration (manifest OR runtime register)
-    │
-    ├──> Shell-side validator (must type-check, range-check, pattern-check)
-    │       │
-    │       └──> Validation-before-delivery (MUST guarantee)
-    │               │
-    │               ├──> config.get — one-shot request
-    │               │
-    │               └──> config.subscribe + config.values — live push
-    │
-    ├──> x-napplet-secret marker
-    │       │
-    │       └──> Secret strength tiers (requires schema to know WHICH fields are secret)
-    │               │
-    │               └──> Optional: config.getSecret(key) correlated read
-    │                       (gated by: shell chose not to include secrets in config.values)
-    │
-    ├──> x-napplet-section / x-napplet-order
-    │       │
-    │       └──> config.openSettings({ section }) — deep-link uses section IDs
-    │
-    ├──> $version in schema
-    │       │
-    │       └──> Shell-resolved migration (napplet never sees old values)
-    │
-    └──> Defaults applied (MUST guarantee)
-            │
-            └──> Napplet always receives a fully-populated validated config
+TS-6 (Strict CSP delivered)
+    └──enables──> TS-1 (resource.bytes is the ONLY way bytes get in)
+                       └──requires──> TS-2 (at least 4 schemes)
+                                            ├── https:  → TS-7 (SSRF policy)
+                                            ├── blossom: → existing Nostr infra
+                                            ├── nostr:   → NUB-RELAY (existing)
+                                            └── data:    → pure napplet-side, no fetch
+                       └──requires──> TS-3 (typed failures)
+                       └──requires──> TS-4 (MIME on result)
+                       └──requires──> TS-5 (cancellation)
+                       └──requires──> TS-12 (single Blob, not chunked)
 
-shell.supports('config') ──> (independent; gate for napplet opt-in)
+TS-1 ──enables──> TS-9  (capability check)
+TS-1 ──enables──> TS-11 (NIP-5D amendment documents TS-1's contract)
+TS-6 ──enables──> TS-10 (vite-plugin emits matching CSP)
 
-Vite-plugin schema injection ──> (depends on: schema in napplet source)
-    │
-    └──> NIP-5A manifest has `config` field
-            │
-            └──> Shell reads from manifest at napplet load (authoritative)
+TS-8 (SVG rasterization) ──depends-on──> TS-4 (MIME classification triggers it)
 
-Runtime config.registerSchema ──> (escape hatch; replaces or augments manifest schema)
+DF-1 (sidecar on relay.event) ──depends-on──> TS-1 + TS-3 (uses same bytes/error shape)
+                              ──amends──>  NUB-RELAY (additive field)
+DF-2 (pluggable schemes)      ──depends-on──> TS-2 (four schemes prove the registry works)
+DF-3 (transform hints)        ──depends-on──> TS-1 (additive on request envelope)
+DF-4 (priority)               ──depends-on──> TS-1 (additive on request envelope)
+DF-5 (progress events)        ──depends-on──> TS-1 (additional message type)
+DF-6 (preload)                ──depends-on──> TS-1 (separate fire-and-forget envelope)
+DF-7 (cacheKey on result)     ──depends-on──> TS-1 + TS-4
+DF-8 (NUB-IDENTITY note)      ──depends-on──> TS-1
+DF-9 (NUB-MEDIA note)         ──depends-on──> TS-1
+DF-10 (demo napplets)         ──depends-on──> all of TS-* (demos are the contract test)
+
+AF-* ──conflicts-with──> the entire TS-* set (each anti-feature, if added, breaks the security model that TS-6/TS-7 rely on)
 ```
 
 ### Dependency Notes
 
-- **Secret marker → secret strength:** `x-napplet-secret: true` is useless without at least Tier 0 UI masking. Shell must know which fields are secret to redact them, mask the input, and (optionally) exclude them from `config.values` pushes.
-- **Section marker → openSettings deep-link:** Without `x-napplet-section`, `openSettings({ section })` has nothing to scroll/focus to. If we ship section support, we ship deep-link section support.
-- **Validation → delivery:** The MUST-guarantee that napplet receives validated values is impossible without a schema validator running on the shell before the `config.values` push. This is the biggest implementation cost on the shell side.
-- **$version → migration:** The signal has no teeth without shell-side migration logic. Spec says "napplet never sees old-shape values"; if shell doesn't implement migration, a version bump would deliver broken values. Shell MAY keep old values in storage; MUST NOT push un-migrated values to napplet.
-- **Vite-plugin is not required:** Runtime `config.registerSchema` is the escape hatch. But manifest-declared is faster (schema known at napplet load, not after first message) and is the intended primary path.
+- **TS-6 is the load-bearing feature.** Without browser-enforced CSP, every other table-stake collapses to "the shell asks the napplet politely not to fetch." The whole milestone hinges on this being correct first.
+- **DF-1 (sidecar) must use the same envelope shape as TS-1** so the napplet has one code path — the sidecar is just a pre-arrived `resource.bytes.result` keyed by URL. Inventing a separate sidecar shape is a documented anti-pattern (see GraphQL `@defer` — incremental payloads use the same data shape as the initial response). Otherwise napplets bifurcate to handle "URL I asked about" and "URL the shell pre-resolved" differently.
+- **TS-2 ordering matters.** Implement `data:` first (zero policy surface, validates the dispatch path), then `https:` (validates SSRF policy), then `blossom:` and `nostr:` (validate Nostr-native paths). This sequencing is for execution; all four ship together in v0.28.
+- **AF-1 (raw fetch) and AF-3 (OAuth) are the anti-features most likely to be re-requested.** Document them prominently.
+
+## NUB Amendment Inventory
+
+Existing NUBs that get touched by this milestone:
+
+| Existing NUB | Touch | Wire Change? | Notes |
+|---|---|---|---|
+| NUB-RELAY (`packages/nub/src/relay/`) | DF-1 sidecar field on `RelayEventMessage` | YES (additive) | New optional `sidecar?: Record<string, { mime: string; blob: Blob; error?: string }>` field. Old napplets ignore. Shell only populates if napplet manifest declares `requires: ['resource']`. |
+| NUB-IDENTITY (`packages/nub/src/identity/`) | DF-8 documentation only | NO | `ProfileData.picture` (and `banner`) are URLs the napplet must resolve via `resource.bytes()`. Update JSDoc + spec. SDK helper `resolveProfilePicture(profile)` is a nice-to-have. |
+| NUB-MEDIA (`packages/nub/src/media/`) | DF-9 documentation only | NO | `MediaArtwork.url` flows through `resource.bytes()`; `MediaArtwork.hash` is `blossom:<hash>` shorthand. Already shaped for this. |
+| (no other NUB) | — | — | NUB-CONFIG, NUB-NOTIFY, NUB-IFC, NUB-KEYS, NUB-STORAGE, NUB-THEME unaffected. |
+
+New NUB:
+
+| New NUB | Domain | Surface |
+|---|---|---|
+| NUB-RESOURCE | `resource.*` | TS-1 (`resource.bytes` / `.result`), TS-5 (`resource.cancel`), DF-5 (`resource.bytes.progress`), DF-6 (`resource.preload`). Spec lives in the public `napplet/nubs` repo (check existing draft PR convention before assigning a number). |
 
 ## MVP Definition
 
-### Launch With (v1) — spec + package + integration
+### Launch With (v0.28.0 itself)
 
-**Schema wire contract:**
-- [ ] JSON Schema draft-07 (subset)
-- [ ] Types: `string`, `number` (incl. integer), `boolean`, `object` (top-level only), `array` (of primitives)
-- [ ] Keywords: `default`, `title`, `description`, `enum`, `enumDescriptions`
-- [ ] Constraints: `minimum`, `maximum`, `minLength`, `maxLength`, `pattern`
-- [ ] `$version: number` for migration signaling (shell-resolved)
-- [ ] Extensions: `x-napplet-secret`, `x-napplet-section`, `x-napplet-order`
+This *is* the milestone. All TS-* features ship together — they're not independent.
 
-**Wire messages (6 total):**
-- [ ] `config.registerSchema` (napplet → shell, runtime escape hatch) — correlation ID, ACKs with validated-schema result
-- [ ] `config.get` (napplet → shell) — correlation ID, returns current validated+defaulted config
-- [ ] `config.subscribe` (napplet → shell) — no correlation ID, starts the push stream
-- [ ] `config.unsubscribe` (napplet → shell) — no correlation ID, stops the push stream
-- [ ] `config.values` (shell → napplet) — push of full config object on change or after subscribe
-- [ ] `config.openSettings` (napplet → shell) — optional `section` payload
+- [ ] **TS-1** `resource.bytes` request/result envelope (NUB-RESOURCE package: types + shim + sdk)
+- [ ] **TS-2** Four schemes plumbed end-to-end (`https`, `data`, `blossom`, `nostr`)
+- [ ] **TS-3** Typed error discriminator on result
+- [ ] **TS-4** Canonical MIME on result
+- [ ] **TS-5** Cancellation envelope (`resource.cancel`) + AbortSignal-shaped SDK helper
+- [ ] **TS-6** Strict CSP delivered to iframe (HTTP header path; document `srcdoc` and meta-tag escape hatches with their limitations)
+- [ ] **TS-7** Default shell resource policy (private-IP block at resolution time, size cap, timeout, rate limit) — **documented in spec, reference implementation in shell repo**
+- [ ] **TS-8** Shell-side SVG rasterization (refuse raw `image/svg+xml`)
+- [ ] **TS-9** `shell.supports('resource')` and `shell.supports('resource:scheme:<name>')` capability checks
+- [ ] **TS-10** Vite-plugin emits CSP-aware napplet HTML in dev
+- [ ] **TS-11** NIP-5D Security Considerations amendment
+- [ ] **TS-12** Single-Blob delivery (no streaming surface in v0.28)
+- [ ] **DF-1** Sidecar field on `relay.event` (NUB-RELAY amendment) — high value, low surface, ship together
+- [ ] **DF-8** NUB-IDENTITY clarification (doc only)
+- [ ] **DF-9** NUB-MEDIA clarification (doc only)
+- [ ] **DF-10** Three demo napplets (profile viewer, feed-with-images, scheme-mixed)
 
-**Shell guarantees (MUST):**
-- [ ] Values validate before any `config.values` delivery
-- [ ] Declared defaults applied to missing keys
-- [ ] Storage scoped by `(dTag, aggregateHash)`
-- [ ] Napplet cannot mutate config over the wire (no `config.set` message exists)
-- [ ] Tier 0 secret handling: fields with `x-napplet-secret: true` rendered with masked UI
+### Add After Validation (v0.28.x or next milestone)
 
-**Shell SHOULDs:**
-- [ ] Tier 1 secret handling: redact secret-marked fields from logs/debug surfaces
-- [ ] Display `deprecationMessage` next to fields when present
-- [ ] Group fields by `x-napplet-section`
-- [ ] Sort within sections by `x-napplet-order`
-- [ ] `openSettings({ section })` scrolls/focuses to the named section
+Worth shipping in v0.28 if scope holds; if scope tightens, defer to a `v0.28.1`-style follow-up.
 
-**Shell MAYs:**
-- [ ] Tier 2 or Tier 3 secret handling
-- [ ] `markdownDescription` rendered as markdown
-- [ ] `format` hints (email, uri, date-time) rendered as richer input widgets
-- [ ] Nested `object` beyond one level (fall back to JSON input)
-- [ ] Store values using NUB-STORAGE internally (implementation detail)
+- [ ] **DF-2** Pluggable scheme registry exposed to shell hosts — trigger: a third-party shell wants `ipfs:` support
+- [ ] **DF-3** Transform hints on request — trigger: feed napplets are wasting bandwidth on full-size avatars
+- [ ] **DF-4** `priority` hint — trigger: same, plus measured shell-side queue contention
+- [ ] **DF-7** `cacheKey` on result — trigger: napplets are observably re-decoding identical Blobs
 
-**Package surface (`@napplet/nub-config`):**
-- [ ] Types: message interfaces, schema types, `NappletConfigSchema`, `ConfigValues`
-- [ ] Shim installer: `installConfigShim()` — handles `config.values` pushes, manages subscribers
-- [ ] SDK: `config.get()`, `config.subscribe(cb)`, `config.openSettings({ section? })`, `config.registerSchema(schema)`
-- [ ] Vite-plugin extension: reads schema from a conventional location (e.g., `config.schema.json` in napplet root, or `napplet.config.ts` export), injects into NIP-5A manifest
+### Future Consideration (later milestones)
 
-**Core/shim/SDK integration:**
-- [ ] `'config'` added to `NubDomain` union + `NUB_DOMAINS` array
-- [ ] `window.napplet.config` namespace on `NappletGlobal`
-- [ ] `shell.supports('config')` / `shell.supports('nub:config')` probing works
-
-**Docs:**
-- [ ] `nub-config` README
-- [ ] NIP-5D "Known NUBs" table row
-- [ ] Core/shim/SDK README updates
-- [ ] napplet/nubs#13 draft spec
-
-### Add After Validation (v1.x)
-
-Features that make v1 better but aren't required for the protocol to function.
-
-- [ ] **`config.getSecret(key)` one-off correlated read** — trigger: a real napplet needs to retrieve an API key without having it pushed on every `config.values` cycle. Design is straightforward once Tier 1 exists.
-- [ ] **Richer `format` support** — trigger: the first napplet that wants a date picker or color picker.
-- [ ] **Markdown description rendering** — trigger: a napplet author asks for links in descriptions.
-- [ ] **Configuration change diffs** (push only changed keys instead of full object) — trigger: configs grow large enough that full-object pushes are wasteful. Not a concern at v1 scale.
-- [ ] **Per-command / per-instance config layering** (if multi-instance napplets emerge) — trigger: a napplet type that spawns multiple instances with per-instance settings.
-- [ ] **`examples` keyword** (from JSON Schema) — trigger: authors want to show example values without making them defaults.
-
-### Future Consideration (v2+)
-
-Features that require protocol changes or ecosystem maturity.
-
-- [ ] **Encrypted-at-rest secrets (Tier 2)** — requires key management story in the shell (passphrase prompt, WebAuthn?). Non-trivial. Defer until a real use case.
-- [ ] **Native-shell OS-keychain secrets (Tier 3)** — only for shells that can reach system keychains. Not web.
-- [ ] **Schema conditional visibility (`when`-style clauses)** — no precedent supports it for config. Revisit if a napplet author makes a strong case.
-- [ ] **Multi-scope layering** (user/workspace/machine) — only if multi-tenancy or workspaces become a thing.
-- [ ] **Napplet-to-napplet config sharing** — explicitly out of scope; cross-napplet isolation is a security property.
-- [ ] **Schema import / $ref resolution** — explicit anti-feature at v1.
+- [ ] **DF-5** Progress push events — trigger: real complaints about no-feedback-on-large-images
+- [ ] **DF-6** `resource.preload` — trigger: an actual feed napplet author asks for it
+- [ ] **Compositor milestone** for audio/video (replaces what AF-5 would have been)
+- [ ] **NUB-PAY** for L402-style paid resources (replaces what AF-4 would have been)
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
-|---------|:----------:|:-------------------:|:--------:|
-| JSON Schema draft-07 subset | HIGH | LOW | **P1** |
-| `default` + defaults applied | HIGH | LOW | **P1** |
-| `title`, `description`, `enum`, `enumDescriptions` | HIGH | LOW | **P1** |
-| `minimum`/`maximum`/`minLength`/`maxLength`/`pattern` validation | HIGH | LOW | **P1** |
-| Shell validates before delivery | HIGH | MED | **P1** |
-| `config.get` + `config.subscribe` + `config.values` + `config.unsubscribe` | HIGH | MED | **P1** |
-| `config.openSettings({ section? })` | HIGH | LOW | **P1** |
-| `config.registerSchema` (runtime) | MED | LOW | **P1** |
-| `x-napplet-secret` + Tier 0 masking | HIGH | LOW | **P1** |
-| `x-napplet-section` + `x-napplet-order` | MED | LOW | **P1** |
-| `$version` potentiality (spec signal only) | MED | LOW | **P1** |
-| Vite-plugin schema injection | HIGH | MED | **P1** |
-| `deprecationMessage` rendering | LOW | LOW | **P2** |
-| Tier 1 secret (log redaction + `config.getSecret`) | MED | MED | **P2** |
-| `markdownDescription` | LOW | LOW | **P2** |
-| `format: "email"/"uri"/"date-time"` richer widgets | MED | MED | **P2** |
-| Tier 2+ secrets | MED | HIGH | **P3** |
-| Change diffs instead of full pushes | LOW | MED | **P3** |
-| `when`-clause conditional visibility | LOW | HIGH | **P3** |
-| Cross-napplet shared config | LOW | HIGH | **Out** |
-| Napplet-writable config (`config.set`) | "HIGH" | — | **Anti-feature** |
-| `$ref` / `definitions` | LOW | HIGH | **Anti-feature** |
+|---|---|---|---|
+| TS-1 `resource.bytes` envelope | HIGH | LOW | P1 |
+| TS-2 Four schemes | HIGH | MEDIUM | P1 |
+| TS-3 Typed errors | HIGH | LOW | P1 |
+| TS-4 MIME on result | HIGH | LOW | P1 |
+| TS-5 Cancellation | MEDIUM | LOW | P1 |
+| TS-6 Strict CSP delivery | HIGH (security) | MEDIUM | P1 |
+| TS-7 Default SSRF policy | HIGH (security) | MEDIUM | P1 |
+| TS-8 SVG rasterization | HIGH (security) | MEDIUM | P1 |
+| TS-9 `shell.supports('resource:scheme:*')` | MEDIUM | LOW | P1 |
+| TS-10 vite-plugin CSP | HIGH (DX) | MEDIUM | P1 |
+| TS-11 NIP-5D amendment | MEDIUM | LOW | P1 |
+| TS-12 Single-blob delivery | (constraint, not feature) | LOW | P1 |
+| DF-1 Sidecar on relay.event | HIGH | MEDIUM | P1 (ship with milestone) |
+| DF-2 Pluggable scheme registry | MEDIUM | LOW | P2 |
+| DF-3 Transform hints | MEDIUM | MEDIUM | P2 |
+| DF-4 Priority hint | LOW | LOW | P2 |
+| DF-5 Progress events | LOW | MEDIUM | P3 |
+| DF-6 `resource.preload` | LOW | LOW | P3 |
+| DF-7 cacheKey | LOW | LOW | P3 |
+| DF-8 NUB-IDENTITY note | MEDIUM (DX) | LOW | P1 |
+| DF-9 NUB-MEDIA note | MEDIUM (DX) | LOW | P1 |
+| DF-10 Demo napplets | HIGH (validation) | MEDIUM | P1 |
 
 **Priority key:**
-- **P1** — Must have for v1 launch (spec + package + integration)
-- **P2** — Should have, add in v1.x
-- **P3** — Future consideration
-- **Out / Anti-feature** — Explicitly not building
+- P1: Must have for v0.28.0 — these define the milestone
+- P2: Should have, fold into v0.28 if scope holds
+- P3: Defer, future milestone
 
-## Competitor Feature Analysis
+## Peer System Comparison
 
-How NUB-CONFIG compares to its closest precedents:
+Convergent practice from the systems most similar in posture (sandboxed plugin/applet host that brokers resource access).
 
-| Feature | VSCode | Raycast | Chrome `managed_schema` | Figma | **NUB-CONFIG v1** |
-|---------|:------:|:-------:|:----------------------:|:-----:|:--------------------:|
-| Declarative manifest schema | ✓ | ✓ | ✓ | — | **✓** |
-| Runtime register (escape hatch) | — | — | — | — | **✓** (unique — necessary for hand-rolled napplets) |
-| Host-rendered settings UI | ✓ | ✓ | (admin-only) | — | **✓** |
-| JSON Schema format | ✓ (subset) | bespoke | ✓ | — | **✓ (draft-07 subset)** |
-| Live change events | ✓ | snapshot | ✓ | — | **✓ (subscribe-live, locked decision)** |
-| Deep-link to settings | ✓ (`@ext:id`) | ✓ (`openExtensionPreferences`) | — | — | **✓ (`openSettings({ section })`)** |
-| Secret handling | separate `SecretStorage` API | `password` type + Keychain | — | — | **`x-napplet-secret` marker, tiered strength** |
-| Migration mechanism | deprecationMessage (manual) | — | — | — | **`$version` signal, shell-resolved** |
-| Section grouping | implicit (dotted keys) | — | — | — | **`x-napplet-section`** |
-| Host-enforced validation before delivery | ✓ | ✓ | ✓ | — | **✓ (MUST)** |
-| Cross-instance layering | ✓ (application/machine/window/resource) | — | — | — | **— (single scope per napplet)** |
+| Concern | Electron `protocol.handle` | Tauri custom protocol | Figma plugins | Slack Block Kit | Salesforce LWS | **napplet v0.28** |
+|---|---|---|---|---|---|---|
+| Per-scheme handler registration | Yes (`protocol.handle(scheme, handler)`) | Yes (`Builder::register_uri_scheme_protocol`) | N/A — hosted iframe + `allowedDomains` allowlist | N/A — server-side only | Hosted iframe + `connect-src` allowlist | DF-2: shell-internal pluggable registry |
+| Whole-response delivery (not streamed) | Returns `Response` (one-shot) | Returns `Vec<u8>` / `Response` | One-shot fetch via `figma.networkRequest` | N/A | One-shot via shell-mediated `fetch` callout | TS-12: single Blob |
+| Failure typing | HTTP-style `Response.status` | HTTP-style `Response.status` | Throws on CSP violation | N/A | Throws on CSP violation | TS-3: typed error enum |
+| Cancellation | Yes (Web Streams cancellation) | Yes (Tokio cancellation) | AbortSignal on `figma.networkRequest` | N/A | AbortSignal on `fetch` | TS-5: `resource.cancel` envelope |
+| Pre-resolution / sidecar | N/A | N/A | N/A | Manual via `chat.unfurl` | N/A | DF-1: sidecar on `relay.event` (Nostr-flavored) |
+| Transform hints | No (handler does whatever) | No | No | No | No | DF-3 (novel-ish; Imgix/Cloudinary precedent only on the URL-rewrite side) |
+| Priority hint | No (browser handles) | No | No | No | No | DF-4 (novel for IPC; standard for browser fetch) |
+| SVG handling | Up to handler | Up to handler | No special handling — risk on plugin author | No SVG embedding allowed | Sanitized via LWS | TS-8: shell rasterizes |
+| SSRF policy | None (host responsibility) | None (host responsibility) | `allowedDomains` allowlist | Hosted by Slack | `connect-src` allowlist | TS-7: documented default policy |
+| CSP delivery | Per-window via session | Per-window via Wry config | iframe `csp` attribute + Figma headers | Slack-served iframe | Salesforce-served iframe | TS-6: HTTP header (preferred) + meta-tag fallback documented |
 
-**Summary of differentiation:**
-
-1. **Runtime `registerSchema` escape hatch** is unique to NUB-CONFIG — no precedent has it because none of them allow running an extension without their build tooling. Napplets can be hand-rolled; we need the escape hatch.
-2. **Shell-resolved migration** (not extension code, not shell-invokes-extension-code) is cleaner than VSCode's "extension handles it manually" and cleaner than what would otherwise require trusting napplet code. Napplet never sees old-shape values.
-3. **Tiered secret strength with explicit gradient** is more honest than "we have password fields" — we call out what web shells can and cannot do.
-4. **Structural purity: napplet is strictly read-only** is more strict than any precedent. VSCode extensions can write via `configuration.update()`; Raycast cannot (matching us). Our write-free design is the strongest version.
-
-## Edge Cases and Open Questions
-
-### Edge cases (resolved or resolvable in spec)
-
-- **Schema declared in manifest AND at runtime:** Manifest is authoritative; runtime `registerSchema` replaces it entirely (or: shell rejects the runtime call with "schema already declared in manifest"). Spec should pick one. Recommend: runtime register REPLACES manifest schema (latest wins), with a shell warning.
-- **Schema changes while napplet is subscribed:** Trigger a fresh `config.values` push with the new-shape validated object. Napplet's subscribe callback fires with new shape.
-- **Napplet subscribes before registering schema:** Shell defers the push until a schema is available; or returns an empty config object. Recommend: deferred push (matches other NUBs' lazy-init patterns).
-- **Secret field receives a value that fails validation:** Shell rejects the user's input in the settings UI (never persisted, never pushed). The napplet never sees invalid values — this is what validation-before-delivery guarantees.
-- **Storage quota exceeded while saving config:** Shell concern (same as NUB-STORAGE). Shell returns an error to the user at the settings UI level; napplet's existing values continue to push. Spec doesn't need to cover this.
-- **User clears the napplet's config:** Shell reverts all keys to their declared defaults and pushes a new `config.values`. Defaults-applied guarantee handles it.
-
-### Open questions for the requirements phase to resolve
-
-- **Does `config.openSettings` require a section to be declared in the schema, or is the napplet free to request any string?** Trade-off: strict (shell knows all sections from schema, napplet can only reference declared ones) vs. loose (napplet can request any section, shell interprets best-effort). Recommend strict — reduces runtime surprise.
-- **Does the shell push `config.values` on `subscribe` even if nothing has changed, or only on change?** VSCode's `onDidChangeConfiguration` fires only on change; napplet gets initial via `get`. Raycast gives you the snapshot at command launch. Our locked decision says "initial snapshot + push updates" — so `subscribe` MUST include an immediate initial push. Confirm this in requirements.
-- **Does `$version` migration run on every load, or only on version bump?** Version bump is sufficient — shell tracks the last-seen `$version` per `(dTag, aggregateHash)`; if it differs, run migration; otherwise skip. Requirements should lock this.
-- **Do we expose a `config.unregisterSchema` for hot-reload scenarios?** Probably yes for dev ergonomics with vite-plugin HMR. Low cost; add to P1.
-- **How does vite-plugin discover the schema in napplet source?** Options: (a) convention — `config.schema.json` at napplet root, (b) export from `napplet.config.ts`, (c) inline in `vite.config.ts` under the napplet plugin's `nip5aManifest({ configSchema })` option. Recommend (c) — consistent with existing `requires` injection pattern; schema is authored alongside other manifest metadata.
+**Key takeaways from the comparison:**
+1. Whole-blob delivery is universal for static assets. Streaming is always a separate concern. This validates AF-5 (defer audio/video).
+2. Nobody offers transform hints at the IPC layer — DF-3 is a small DX win we can ship cheaply because the field is purely additive.
+3. Nobody but napplet has the relay/sidecar problem because nobody but napplet is event-driven. DF-1 is genuinely novel and worth the small spec work.
+4. Salesforce LWS and Figma both validate that strict CSP + allowlist (or in our case, broker) is the only sustainable model — every system that tried looser models got SSRF'd or XSS'd.
 
 ## Sources
 
-**VSCode:**
-- [VSCode contribution points: configuration](https://code.visualstudio.com/api/references/contribution-points) — schema fields, scopes, unsupported `$ref`
-- [VS Code API reference](https://code.visualstudio.com/api/references/vscode-api) — `workspace.getConfiguration`, `onDidChangeConfiguration`
-- [VSCode deep-link to settings (DevHack)](https://www.eliostruyf.com/devhack-open-vscode-extension-settings-code/) — `workbench.action.openSettings` with `@ext:id`
-- [VSCode discussion: migrating settings](https://github.com/microsoft/vscode-discussions/discussions/862) — no built-in migration, `deprecationMessage` pattern
-- [VSCode SecretStorage API](https://vscode-api.js.org/interfaces/vscode.SecretStorage.html) — separate from `configuration`, OS-keychain backed
-- [How to use SecretStorage in VSCode extensions](https://dev.to/kompotkot/how-to-use-secretstorage-in-your-vscode-extensions-2hco) — implementation detail, platform keychain mapping
+Verified at the listed confidence levels. Most are official docs or standards bodies; WebSearch-only items are flagged in-line.
 
-**Chrome/Chromium MV3:**
-- [Chrome Extension Storage API](https://developer.chrome.com/docs/extensions/reference/api/storage) — `storage.managed`, `storage.onChanged`
-- [Chrome `managed_schema` manifest reference](https://developer.chrome.com/docs/extensions/reference/manifest/storage) — JSON Schema subset (object top-level, properties, items, `$ref`, types)
-- [Chrome options page guide](https://developer.chrome.com/docs/extensions/develop/ui/options-page) — HTML-owned by extension, `options_ui.page`/`open_in_tab`, `storage.sync` persistence pattern
+**Strict-CSP / iframe sandbox / postMessage proxying (HIGH confidence — official docs):**
+- [Content-Security-Policy: connect-src — MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/connect-src)
+- [Content-Security-Policy: sandbox directive — MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/sandbox) (sandbox cannot be set via `<meta>`)
+- [Play safely in sandboxed IFrames — web.dev](https://web.dev/articles/sandboxed-iframes)
+- [w3c/webappsec-csp issue #700 — srcdoc CSP inheritance](https://github.com/w3c/webappsec-csp/issues/700)
 
-**Raycast:**
-- [Raycast manifest: preferences](https://developers.raycast.com/information/manifest#preferences) — types (textfield, password, checkbox, dropdown, appPicker, file, directory), per-extension + per-command scope
-- [Raycast Preferences API](https://developers.raycast.com/api-reference/preferences) — `getPreferenceValues()` snapshot-at-launch, `openExtensionPreferences`, `openCommandPreferences`
-- [Raycast security overview](https://developers.raycast.com/information/security) — local encrypted DB + Keychain integration for passwords
+**Custom protocol / scheme handlers (HIGH confidence — official docs):**
+- [Electron protocol API](https://www.electronjs.org/docs/latest/api/protocol)
+- [Tauri v2 Configuration — assetProtocol](https://v2.tauri.app/reference/config/)
+- [Tauri Wry custom protocols (DeepWiki)](https://deepwiki.com/tauri-apps/wry/4.1-custom-protocols)
+- [web.dev — Registering a custom protocol handler](https://web.dev/registering-a-custom-protocol-handler/)
 
-**Figma:**
-- [Figma plugin manifest](https://developers.figma.com/docs/plugins/manifest/) — `parameters[]` for quick-action args, no declarative settings UI
+**Sandboxed-plugin host comparison (MEDIUM-HIGH; vendor docs):**
+- [Figma — Making Network Requests](https://www.figma.com/plugin-docs/making-network-requests/) (`allowedDomains` allowlist + CSP enforcement)
+- [Figma — How Plugins Run](https://developers.figma.com/docs/plugins/how-plugins-run/)
+- [Salesforce — Working with CORS and CSP to Call APIs from LWC](https://developer.salesforce.com/blogs/2022/03/working-with-cors-and-csp-to-call-apis-from-lwc) (`connect-src` allowlist via CSP Trusted Sites)
+- [Salesforce — Access to iframe Content in LWS](https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-iframes.html)
+- [Slack — Leveraging Private Files for Image Blocks with Block Kit](https://slack.com/blog/developers/uploading-private-images-blockkit) (Slack-mediated image hosting; pattern peer for sidecar/proxy)
+- [Slack — Security best practices](https://docs.slack.dev/security/)
 
-**JetBrains (comparison):**
-- [IntelliJ Platform: Settings Guide](https://plugins.jetbrains.com/docs/intellij/settings-guide.html) — `ConfigurableEP`, host-rendered dialog, plugin-constructed UI component
+**SSRF / shell-mediated fetch threat model (HIGH confidence — OWASP, vendor security teams):**
+- [OWASP SSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html) (block 127/8, 10/8, 172.16/12, 192.168/16, 169.254/16, ::1/128, fc00::/7, fe80::/10)
+- [Wiz — Server-Side Request Forgery: What It Is & How To Fix It (2025)](https://www.wiz.io/academy/application-security/server-side-request-forgery)
+- [Stytch — Securing Identity APIs Against SSRF](https://stytch.com/blog/securing-identity-apis-against-ssrf/)
+- [SSRF DNS Rebinding (2026)](https://aydinnyunus.github.io/2026/03/14/ssrf-dns-rebinding-vulnerability/) (validates "block at resolution time, not URL parse time")
 
-**JSON Schema form UIs (for understanding what's possible):**
-- [react-jsonschema-form widgets](https://rjsf-team.github.io/react-jsonschema-form/docs/usage/widgets/) — `uiSchema` + `ui:widget` pattern (an anti-pattern for NUB-CONFIG)
-- [react-jsonschema-form customization](https://rjsf-team.github.io/react-jsonschema-form/docs/advanced-customization/custom-widgets-fields/) — registered widgets, options merge
+**SVG XSS / rasterization (HIGH confidence — CVEs and mitigation guides):**
+- [Cross-site Scripting Injection Attacks Using SVG Images — Rietta](https://rietta.com/blog/svg-xss-injection-attacks/)
+- [CVE-2025-66412 — Angular Stored XSS via SVG Animation](https://www.telerik.com/kendo-angular-ui/components/knowledge-base/kb-security-angular-stored-xss-svg-mathml-cve-2025-66412)
+- [CVE-2023-22461 — sanitize-svg bypass](https://security.snyk.io/vuln/SNYK-JS-MATTKRICKSANITIZESVG-3225111)
+- [PacketWanderer — Stored XSS Through Malicious SVG Uploads](https://packetwanderer.com/posts/svg-xss/)
+- [DigiNinja — Protecting against XSS in SVG](https://digi.ninja/blog/svg_xss.php)
 
-**Existing codebase:**
-- `.planning/PROJECT.md` — locked v0.25.0 decisions
-- `.planning/STATE.md` — decision log (JSON Schema draft-07+, manifest+runtime registration, `$version`, x-napplet-* extensions, subscribe-live, shell-sole-writer)
-- `packages/nubs/theme/` — inverse-push pattern precedent (shell → napplet values delivery)
-- `packages/nubs/storage/` — `(dTag, aggregateHash)` scoping precedent
+**Sidecar / pre-resolution / incremental delivery (MEDIUM confidence — pattern is generalized from these):**
+- [GraphQL @defer / @stream RFC](https://github.com/graphql/graphql-wg/blob/main/rfcs/DeferStream.md)
+- [GraphQL Incremental Delivery RFC](https://github.com/graphql/graphql-over-http/blob/main/rfcs/IncrementalDelivery.md)
+- [GraphQL @defer / @stream blog](https://graphql.org/blog/2020-12-08-defer-stream/)
+- [Mastodon ActivityPub spec](https://docs.joinmastodon.org/spec/activitypub/) (federated attachment handling — closest peer for pre-resolved-on-the-event pattern)
+
+**Transform hints / fetch priority (HIGH confidence — official):**
+- [Optimize resource loading with the Fetch Priority API — web.dev](https://web.dev/articles/fetch-priority)
+- [HTML attribute: fetchpriority — MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/fetchpriority)
+- [WICG priority-hints EXPLAINER](https://github.com/WICG/priority-hints/blob/main/EXPLAINER.md)
+- [Imgix Rendering API — Automatic / Format / Output Quality](https://docs.imgix.com/en-US/apis/rendering/automatic) (`auto=format`, `q=`, `max-w=` are the canonical transform-hint vocabulary)
+- [Imgix Client Hints](https://docs.imgix.com/en-US/apis/rendering/format/client-hints)
+
+**Cancellation (HIGH confidence — official):**
+- [AbortController — MDN](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
+- [AbortController.abort() — MDN](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort)
+
+**Failure-mode UX / placeholders (MEDIUM confidence — pattern docs):**
+- [ThumbHash](https://evanw.github.io/thumbhash/)
+- [Mux — A clear look at blurry image placeholders on the web](https://www.mux.com/blog/blurry-image-placeholders-on-the-web)
+- [Fastly — Low quality image placeholders](https://www.fastly.com/documentation/solutions/tutorials/low-quality-image-placeholders/)
+
+**Blossom / Nostr-native schemes (HIGH confidence — protocol spec):**
+- [NIP-B7 Blossom media](https://nips.nostr.com/B7)
+- [Blossom (hzrd149/blossom GitHub)](https://github.com/hzrd149/blossom)
+- [NIP-96 HTTP File Storage Integration](https://nips.nostr.com/96)
+
+**Existing project artifacts read for grounding:**
+- `/home/sandwich/Develop/napplet/.planning/PROJECT.md` (milestone scope)
+- `/home/sandwich/Develop/napplet/specs/NIP-5D.md` (current spec)
+- `/home/sandwich/Develop/napplet/packages/nub/src/relay/types.ts` (NUB-RELAY shape — DF-1 amendment target)
+- `/home/sandwich/Develop/napplet/packages/nub/src/identity/types.ts` (`ProfileData.picture`/`banner` URLs — DF-8)
+- `/home/sandwich/Develop/napplet/packages/nub/src/media/types.ts` (`MediaArtwork` already shaped for `blossom:` — DF-9)
 
 ---
-*Feature research for: NUB-CONFIG (v0.25.0 milestone)*
-*Researched: 2026-04-17*
+*Feature research for: napplet v0.28.0 Browser-Enforced Resource Isolation*
+*Researched: 2026-04-20*

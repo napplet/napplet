@@ -1,97 +1,125 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.26.0
-milestone_name: Better Packages
+milestone: v0.28.0
+milestone_name: Browser-Enforced Resource Isolation
 status: verifying
-stopped_at: Completed 121-01-PLAN.md
-last_updated: "2026-04-19T15:05:13.036Z"
-last_activity: 2026-04-19
+stopped_at: Completed 133-01-PLAN.md (DOC-01..07 + DEMO-01; 8 REQ-IDs). 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean (zero @napplet/ in 2 public-destined files; zero kehto/hyprgate everywhere). Workspace pnpm -r type-check green (no source touched). Phase 133 plan-complete; awaiting verification.
+last_updated: "2026-04-20T21:16:54.851Z"
+last_activity: 2026-04-20
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_phases: 10
+  completed_phases: 9
+  total_plans: 9
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-19)
+See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 121 — Verification & Sign-Off
+**Current focus:** Phase 133 — Documentation + Demo Coordination
 
 ## Current Position
 
-Phase: 121
+Phase: 134
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-19
+Last activity: 2026-04-20
 
-Progress: [██████████] 100% (12/12 plans complete: Phase 117 fully shipped; Phase 118 fully shipped; Phase 119 fully shipped; Phase 120 fully shipped; Phase 121 fully shipped — VER-01/02/03 all SATISFIED via /tmp harness runs, zero first-party edits)
+Progress: [█████████░] 90% (9/10 phases plan-complete; awaiting verification. DEF-125-01 closed.)
+
+## Phase Map
+
+v0.28.0 phases (125–134), continuing from v0.27.0 which ended at Phase 124.
+
+| Phase | Name | Requirements | Depends on |
+|-------|------|--------------|------------|
+| 125 | Core Type Surface | CORE-01..03 | — (first phase) |
+| 126 | Resource NUB Scaffold + `data:` Scheme | RES-01..07, SCH-01 | 125 |
+| 127 | NUB-RELAY Sidecar Amendment | SIDE-01..04 | 126 |
+| 128 | Central Shim Integration | SHIM-01..03, CAP-01, CAP-02 | 126 |
+| 129 | Central SDK Integration | SDK-01..03 | 126 |
+| 130 | Vite-Plugin Strict CSP | CSP-01..07, CAP-03 | 125 |
+| 131 | NIP-5D In-Repo Spec Amendment | SPEC-01 | 126, 130 |
+| 132 | Cross-Repo Nubs PRs | SPEC-02..06, SCH-02..04, POL-01..06, SVG-01..03, SIDE-05 | 126 |
+| 133 | Documentation + Demo Coordination | DOC-01..07, DEMO-01 | 126–130 |
+| 134 | Verification & Milestone Close | VER-01..07 | 125–133 |
+
+**Critical path:** 125 → 126 (blocking-sequential); 127–130 independent of each other after 126; 131 waits on 126 + 130; 132 opens drafts after 126 and is gated for final merge by 134; 133 follows in-repo phases; 134 closes milestone.
 
 ## Accumulated Context
 
 ### Decisions (carried from prior milestones)
 
-- v0.25.0: NUB-CONFIG is per-napplet schema-driven config (inverts the dropped v0.19.0 shell:config-* topics)
-- v0.25.0: Schema format = JSON Schema (draft-07+)
-- v0.25.0: Shell is sole writer; napplet reads/subscribes/requests-settings-open only
-- v0.25.0: Value access pattern = subscribe-live (initial snapshot + push updates)
-- v0.25.0: Schema declaration = manifest (authoritative, via vite-plugin) + runtime config.registerSchema (escape hatch)
-- v0.25.0: Standardized JSON Schema extensions as potentialities: `x-napplet-secret`, `x-napplet-section`, `x-napplet-order`
-- v0.25.0: MUST-level guarantees: values validate, defaults apply, storage scoped by (dTag, aggregateHash), shell is sole writer
 - PRINCIPLE: NUBs define protocol surface + potentialities; implementation UX is a shell concern
 - PRINCIPLE: NUB packages own ALL logic (types, shim installers, SDK helpers); central shim/sdk are thin hosts
 - PRINCIPLE: `@napplet/*` is private; never listed as implementations in public specs/docs
-- v0.26.0: Consolidate 9 `@napplet/nub-*` packages into single `@napplet/nub` with 36 subpath exports (9 barrels + 27 granular)
-- v0.26.0: No root `@napplet/nub` import — consumers MUST use a domain subpath (prevents whole-tree imports)
-- v0.26.0: Deprecated packages ship as 1-line re-export shims for one release cycle (removal deferred to later milestone)
-- v0.26.0 (Phase 117-01): Enforce EXP-04 by omitting `.` from exports AND omitting top-level main/module/types fields — belt-and-suspenders making root import unresolvable by design
-- v0.26.0 (Phase 117-01): `@napplet/nub` tsconfig extends `../../tsconfig.json` (2 levels), not `../../../` — packages/nub/ sits directly under packages/, unlike packages/nubs/<domain>/ which is 3 levels deep
-- v0.26.0 (Phase 117-02): Theme NUB is types-only today (index.ts + types.ts only). Total @napplet/nub exports = 34, not 36. Phantom `./theme/shim` and `./theme/sdk` entries removed from Plan 117-01's package.json + tsup.config.ts in the same commit as the 34-file source copy. Option A selected at checkpoint — matches upstream reality, preserves Phase 117 "no behavioral migration" boundary. Supersedes the earlier v0.26.0 "36 subpath exports" decision above.
-- v0.26.0 (Phase 117-02): registerNub asymmetry preserved — 8/9 domain barrels call `registerNub(DOMAIN, ...)` (identity, ifc, keys, media, notify, relay, storage, theme); config stays side-effect-free (integration happens in central shim per @napplet/nub-config pattern). Theme barrel registers normally.
-- v0.26.0 (Phase 117-03): @napplet/nub initial tsup build green — 68 primary emitted files (34 .js + 34 .d.ts) plus 25 shared `chunk-*.js` files from tsup code-splitting. Root `@napplet/nub` import fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` (EXP-04 runtime-verified from a real consumer context, not just by package.json inspection). All 9 `<domain>/types.js` emits are free of runtime `@napplet/core` imports (`import type` erased as expected). registerNub asymmetry preserved at runtime: 8 domains register (identity, ifc, keys, media, notify, relay, storage, theme), config does not. Theme/shim + theme/sdk correctly fail to resolve per Option A. Phase 117 is complete; ready for Phase 118 (deprecation re-export shims).
-- v0.26.0 (Phase 118-01): Deprecated nub-* package src/ trees reduced to single-file index.ts re-export shim (`export * from '@napplet/nub/<domain>'`); 24 stale types/shim/sdk files removed from 8 domains plus theme's sole types.ts; src/ .ts count 34 -> 9. `export *` semantics preserve types, runtime exports, AND the registerNub side effect via the canonical @napplet/nub/<domain> module. Build/type-check verification deferred to Plan 03; package.json + [DEPRECATED] description updates deferred to Plan 02.
-- v0.26.0 (Phase 118-01): Uniform deprecation banner applied to all 9 deprecated package READMEs — prepended above original content for the 4 that shipped a README previously (config, keys, media, notify); 5 new READMEs created with banner + migration snippet (identity, ifc, relay, storage, theme). Every banner names `@napplet/nub/<domain>` as the migration target and cites "a future milestone" as the removal window.
-- v0.26.0 (Phase 118-02): All 9 deprecated `packages/nubs/<domain>/package.json` files carry `[DEPRECATED] Use @napplet/nub/<domain> instead. ` description prefix + sole `@napplet/nub: workspace:*` runtime dep (`@napplet/core` dropped — transitively satisfied). Config special case preserves `json-schema-to-ts` peerDep at `^3.1.1`, `peerDependenciesMeta.json-schema-to-ts.optional: true`, and `@types/json-schema@^7.0.15` devDep byte-identical. Other 8 packages remain free of peerDependencies/peerDependenciesMeta. Version field untouched at 0.2.1 everywhere; `.changeset/deprecate-nub-domain-packages.md` records a `minor` bump (0.2.1 → 0.3.0) across all 9 deprecated packages. Root `@napplet/nub` intentionally excluded from the changeset (frozen this phase). Release-time `pnpm version-packages` applies the bump; Plan 02 only records intent. MIG-01 (runtime wiring) + MIG-03 (@deprecated metadata surface) satisfied; Plan 03 unblocked.
-- v0.26.0 (Phase 118-03): Monorepo build gate GREEN — `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages (@napplet/core, @napplet/nub, @napplet/shim, @napplet/sdk, @napplet/vite-plugin + 9 deprecated @napplet/nub-<domain>). All 9 deprecated packages emit `dist/index.{js,d.ts}` referencing @napplet/nub. Runtime `Object.keys()` shape parity verified 9/9 domains (config 8, identity 21, ifc 7, keys 10, media 17, notify 21, relay 10, storage 7, theme 1 — 102 total named exports identical between `@napplet/nub-<domain>` and `@napplet/nub/<domain>`). Shape-parity smoke harness at `/tmp/napplet-mig01-smoke` with file: deps (plan's fallback env) — packages/shim can't serve as harness because it lacks @napplet/nub in its node_modules until Phase 119. Phase 117 canonical @napplet/nub dist/ unregressed. pnpm-lock.yaml refreshed with 9 @napplet/core→@napplet/nub dep edge swaps (commit 5cc2809 — only artifact produced by Plan 03). Versions still 0.2.1; changeset idle; `pnpm version-packages` / `pnpm publish-packages` NOT run. MIG-01 closed end-to-end (source→manifest→build emit→runtime surface). Phase 118 ships MIG-01, MIG-02, MIG-03 in practice; Phase 119 consumer migration unblocked.
-- v0.26.0 (Phase 119-01): Shim + SDK source-level import migration complete. `packages/shim/src/index.ts` routes 9 specifiers through `@napplet/nub/<domain>/shim` (8 domains: keys, media, notify, storage, relay, identity, ifc, config) plus `@napplet/nub/ifc/types` for the single type-only `IfcEventMessage` import. `packages/sdk/src/index.ts` routes every type re-export block (9), DOMAIN constant re-export (9), installer re-export (8), SDK helper re-export (7), and 2 JSDoc `@example` imports through `@napplet/nub/<domain>` barrels — all 9 domains covered including theme (barrel-only per Option A; zero theme/shim or theme/sdk refs). Runtime namespaces (relay, ipc, storage, media, notify, keys, identity, config) and shim routing logic byte-identical. Zero `@napplet/nub-<domain>` specifiers remain in first-party src under `packages/shim/src/` or `packages/sdk/src/`. `packages/nubs/` (deprecated) and `packages/nub/` (canonical) untouched. Rule 3 auto-fix: added `@napplet/nub: workspace:*` as an additive dep to both `packages/shim/package.json` and `packages/sdk/package.json` — the plan's literal "deps untouched" reading was unachievable because Phase 118 shims resolve old `@napplet/nub-<domain>` names (which were deleted from the src), not the new `@napplet/nub/<domain>` subpaths. All 9 legacy deps retained alongside the new edge; Plan 02 drops them. Build + type-check green for @napplet/shim (ESM 7.88 KB) and @napplet/sdk (ESM 15.86 KB). Task commits: f58c994 (shim), f2f2721 (sdk). CONS-01, CONS-02, CONS-03 satisfied (CONS-03 trivially — no demo/test consumers exist in repo).
-- v0.26.0 (Phase 119-02): Dep-swap complete. `packages/shim/package.json` dependencies 10→2 (removed 8 legacy `@napplet/nub-<domain>` entries — relay, identity, storage, ifc, keys, media, notify, config); `packages/sdk/package.json` 11→2 (removed 9 — same 8 plus theme). Both end at `{@napplet/core: workspace:*, @napplet/nub: workspace:*}`. Non-dep fields byte-identical in both files. `pnpm-lock.yaml` refreshed — shim+sdk importer stanzas each reference `link:../core` + `link:../nub` only (0 legacy edges for those importers). `pnpm -r build` and `pnpm -r type-check` both exit 0 across all 14 workspace packages. `packages/shim/dist/index.js` emits 8 distinct `@napplet/nub/<domain>/shim` refs (1 each for keys/media/notify/storage/relay/identity/ifc/config) + 0 legacy. `packages/sdk/dist/index.js` emits all 9 `@napplet/nub/<domain>` barrels (relay/identity/storage/ifc/theme/keys/media/notify/config — theme barrel-only per Option A) + 0 legacy + 0 theme/shim + 0 theme/sdk. `packages/nub/` (canonical) and `packages/nubs/` (deprecated) source+metadata trees untouched (empty `git diff --stat`). Plan scope reduced vs as-written: the 119-01 Rule-3 auto-fix already added `@napplet/nub`, so this plan was pure deletion — "add" action documented as no-op. No deviations. No changeset (internal refactor; dist-level consumers are unaffected, Phase 118 deprecation changeset untouched). Task commit: 8f83e14 (chore). Phase 119 closes CONS-01, CONS-02, CONS-03 end-to-end (source Plan 01 + manifest/lockfile/emit Plan 02); Phase 120 (documentation migration) unblocked.
-- v0.26.0 (Phase 120-01): Canonical `packages/nub/README.md` created (160 lines) with all 11 required H2 sections (Install, Quick Start, 9 Domains, Subpath Patterns, Tree-Shaking Contract, Theme Exception, Migration, Optional Peer Dependency, Protocol Reference, License + H1 title). 9-domain subpath table uses em-dash U+2014 (14 occurrences; Theme Shim/SDK cells per types-only exception). Four concrete runnable import examples cover every subpath pattern: barrel (`@napplet/nub/relay`), types-only (`@napplet/nub/ifc/types`), shim-only (`@napplet/nub/storage/shim`), sdk-only (`@napplet/nub/notify/sdk`) plus an end-to-end relay example showing napplet-side `relaySubscribe` and shell-side `installRelayShim` together. 9-row migration table maps every deprecated `@napplet/nub-<domain>` → `@napplet/nub/<domain>` (barrel + granular). Relative `../../specs/NIP-5D.md` protocol reference. Optional `json-schema-to-ts@^3.1.1` peerDep documented with a `FromSchema` usage example. Task commit: 0033b4d (docs). DOC-01 closed.
-- v0.26.0 (Phase 120-02): 4 user-facing READMEs migrated off deprecated `@napplet/nub-<domain>` names to the consolidated `@napplet/nub` surface. Root README package table: 5 per-nub rows collapsed to single `[@napplet/nub](packages/nub)` row; 10-box dep graph redrawn to 5-box post-consolidation shape (`@napplet/shim + @napplet/sdk → @napplet/nub → @napplet/core`, with `@napplet/vite-plugin` as independent build-time leaf); all defunct `@napplet/nub-signer` references (removed in v0.24.0) purged. `packages/core/README.md` integration note (line 353) enumerates `@napplet/nub/<domain>` subpaths for the 8 `registerNub` domains with a parenthetical noting `@napplet/nub/theme` is types-only. `packages/shim/README.md` Shim-vs-SDK comparison table deps row (line 426) collapsed to single `@napplet/nub` entry with note about internal `/shim` subpath routing. `packages/sdk/README.md` line 178 peerDep note rewritten to cite `@napplet/nub` scoped to `@napplet/nub/config` domain; lines 296-303 type-to-package mapping table's 8 rows switched to `@napplet/nub/<domain>` barrel subpaths (column header "NUB Package" kept unchanged — values are subpaths of the same `@napplet/nub` package). Cross-file invariant: `grep -c "@napplet/nub-"` returns 0 across all 4 files. Zero deviations. Parallel-executor scope respected (companion agent owns `packages/nub/README.md` — untouched by this plan). Task commits: d29b9f2 (root), 80366cb (core), 6039111 (shim), 24a0289 (sdk). All with --no-verify per parallel-executor protocol. DOC-02 satisfied.
-- v0.26.0 (Phase 120-03): Verify-only plan confirmed DOC-03 + DOC-04 closed. `specs/NIP-5D.md` (118 lines, 6,997 bytes): 0 `@napplet/nub-` grep matches + full file-content read confirms zero deprecated references (spec uses `<nub-name>` placeholder and `foo.bar` example domain only). `skills/build-napplet/SKILL.md` (208 lines, 7,954 bytes): 0 grep matches + full read confirms all `pnpm add` / import blocks reference `@napplet/shim` + `@napplet/vite-plugin` only. Phase-wide acceptance grep across root README + 4 edited package READMEs + `packages/nub/README.md` + `packages/vite-plugin/README.md` + `specs/` + `skills/` returns 0 matches outside two intentional content zones: `packages/nubs/<domain>/` deprecation banners AND `packages/nub/README.md`'s `## Migration` section (lines 110–126; awk-scoped verification: 10 of 10 matches fall inside Migration, 0 leakage elsewhere). Rule 3 deviation documented: Task 3's verify grep command under-specified its exclusion list by omitting `packages/nub/README.md` despite Plan 01's CONTEXT.md non-negotiables requiring that migration table. Adjusted gate clean; zero file modifications; no per-task commits under happy path. Phase 120 functionally complete across DOC-01, DOC-02, DOC-03, DOC-04.
-- v0.26.0 (Phase 121-01): v0.26.0 Better Packages milestone acceptance gate PASSED. VER-01 SATISFIED: `pnpm -r build` and `pnpm -r type-check` both exit 0 across 14 workspace packages (scope "14 of 15 workspace projects" — 15th is repo root with no build script). @napplet/nub dist preserves 34 .js + 34 .d.ts entry points (Phase 117 baseline); all 9 deprecated @napplet/nub-<domain> dist/index.js shims remain 2 lines each (Phase 118 baseline). VER-02 SATISFIED: a types-only consumer importing `RelaySubscribeMessage` from `@napplet/nub/relay/types` bundled via `esbuild --bundle --minify --format=esm` produces a 39-byte output (`var r=e=>e.subId;export{r as handler};`) — well under the 1024-byte ceiling. Zero `registerNub` refs, zero string-literal matches across all 8 non-relay domains, proving Phase 117's `sideEffects: false` contract holds at the bundler level. VER-03 SATISFIED: 9/9 deprecated `@napplet/nub-<domain>` shims type-round-trip cleanly under tsc --noEmit via pinned-name consumers at `/tmp/napplet-pinned-<domain>/` (npm-installed with three file: deps each: nub-<domain>, nub canonical, core; theme harness is barrel-only-types per Option A). Rule 3 Blocking deviation: plan's `npx -y tsc@5.9.3 --noEmit` is non-functional (no tsc package exists on npm at that version; tsc is the CLI within the typescript package); fixed by invoking each harness's local `node_modules/.bin/tsc` (installed via `typescript: "^5.9.3"` devDependency; all 9 confirmed Version 5.9.3 before run). CONTEXT.md-flagged substitutions confirmed: NappletConfigSchema (not NappletConfig) and MediaSessionCreateMessage (not MediaCreateSessionMessage). Zero first-party edits to packages/ or repo root — sole artifact is this SUMMARY. /tmp/napplet-ver01, /tmp/napplet-treeshake-verify, and 9× /tmp/napplet-pinned-<domain> harnesses cleaned up after evidence capture. Milestone v0.26.0 Better Packages is acceptance-verified end-to-end and ready for retrospective.
+- v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
+- v0.27.0: Runtime API surface uses IFC terminology (`window.napplet.ifc`, `@napplet/sdk` `ifc` export); hard break, no backward-compat alias
+
+### Decisions (v0.28.0 — carried into phase plans)
+
+- Convert ambient-trust iframe security ("napplets shouldn't fetch") into browser-enforced isolation ("napplets cannot fetch") via strict CSP delivered by the shell
+- Single napplet-side resource primitive: `resource.bytes(url) → blob`. No per-scheme APIs. URL space is scheme-pluggable; shell registers handlers per scheme
+- Content hashing is a shell-internal cache key only — napplets never see hashes unless a URL scheme makes them visible (e.g., `blossom:`)
+- No protocol-level rewrite of event content into hashes; URLs flow through unchanged on the wire
+- Shell may opportunistically pre-resolve resources via a sidecar field on `relay.event` envelopes; napplet API is unchanged either way
+- SVG resources are rasterized server-side by the shell to PNG/WebP at requested dimensions — napplets never receive SVG bytes
+- Audio/video are explicitly out of scope; reserved for a future shell-composited compositor milestone
+- Backwards compatibility is not a concern — single user, active design, break freely
+- Shell-as-fetch-proxy is an irreducible attack surface; mitigated with policy defaults (private-IP blocks, size caps, timeouts, per-napplet rate limits, MIME classification)
+- NUB naming resolved: `resource` (matches concept, API, and type prefix)
+- Sidecar ownership resolved: `ResourceSidecarEntry` defined in resource NUB; relay NUB imports type-only
+- CSP capability split: `nub:resource` (API) orthogonal to `perm:strict-csp` (posture)
+- Strict CSP normative level in NIP-5D: **SHOULD** (default but waivable by permissive dev shells)
+- Sidecar default: **OFF** (opt-in per shell policy + per event-kind allowlist); privacy rationale required in NUB-RELAY amendment
+- Vite dev CSP relaxation for HMR: dev allows `connect-src ws://localhost:* wss://localhost:*`; build enforces `connect-src 'none'`; build-time assertion prevents leakage
+- Demo napplet scope: **Option B** — downstream shell repo owns v0.28.0 demos; this repo ships only wire + SDK surface (DEMO-01 is a single coordination note)
+- Phase 125: Added DOM lib to `@napplet/core` tsconfig (`lib: ["ES2022", "DOM", "DOM.Iterable"]`) so `Blob` global is in scope without runtime import; aligns `@napplet/core` with `shim`/`sdk`/`nub`/`vite-plugin` which all already enable DOM
+- Phase 125: `NappletGlobal.resource` declared as REQUIRED (not optional); cascade type-check failure in `@napplet/shim` is expected planned breakage until Phase 128 (Central Shim Integration) wires it (DEF-125-01)
+- Phase 126: `bytesAsObjectURL` returns synchronous `{ url, revoke }` handle with non-enumerable `ready` Promise extension (Option C from CONTEXT discretion); preserves locked `NappletGlobal['resource']` return shape while exposing await path. `revoke()` is idempotent; bails ready handler via `revoked` flag if called pre-settle.
+- Phase 126: `data:` scheme decoded inline via `fetch(url).then(r => r.blob())` with zero postMessage round-trip (SCH-01). Establishes the in-shim scheme decoder precedent; future schemes plug in at NUB-RESOURCE spec level (Phase 132).
+- Phase 126: Single-flight cache via `Map<canonicalURL, Promise<Blob>>` with `finally`-delete; N concurrent same-URL calls share 1 work-unit; aborted entries removed for retryability. v0.28.0 uses raw URL string as cache key (canonicalization deferred to NUB-RESOURCE spec).
+- Phase 126: AbortSignal contract — synchronous pre-dispatch reject + post-dispatch `resource.cancel` envelope; both gates use `new DOMException('Aborted', 'AbortError')`. Establishes the cancellation pattern for any future NUB needing AbortController support.
+- Phase 127: Hoisted local `eventMsg` cast in relay shim's `handleMessage` `relay.event` branch (vs. inline double-cast) — single cast, two reads. Source-order pattern: `hydrateResourceCache(eventMsg.resources)` placed BEFORE `onEvent(eventMsg.event)` is load-bearing for SIDE-04 (synchronous `bytes(url)` inside `onEvent` resolves from cache).
+- Phase 127: Established cross-NUB borrow-don't-own pattern — relay NUB type-only-imports `ResourceSidecarEntry` from `../resource/types.js` (sibling relative); ownership stays with resource NUB; no runtime cross-domain dep.
+- Phase 127: Smoke test scaffolding deviation (Rule 3) — Node 18+ `globalThis.crypto` is non-configurable getter; plan's literal assignment crashed; replaced with guarded `Object.defineProperty` in `/tmp` test only. Source code unchanged. Future smoke tests should use the guarded form.
+- Phase 127: tsup chunk-splitting splits the relay shim runtime into shared chunks (`chunk-RHDDLJ3D.js` / `chunk-OV3R23GE.js`); literal grep on `dist/relay/shim.js` for `hydrateResourceCache` returns 0 (the call is in the chunk). End-to-end smoke test (PASS, 0 postMessages) is the load-bearing acceptance criterion. Future verification scripts should target shared chunks too, or rely on smoke tests over literal dist greps.
+- Phase 128: 10-NUB central shim integration pattern locked — 4 surgical edits (import block → handleEnvelopeMessage routing branch → window.napplet global mount property → installXShim() in init sequence). Used aliased imports (`resourceBytes`/`resourceBytesAsObjectURL`) over bare names matching `notifySend`/`configRegisterSchema` precedent; bare names risk collisions with future NUB additions in the central shim file.
+- Phase 128: DEF-125-01 cascade CLOSED — workspace-wide `pnpm -r type-check` exits 0 across all 14 packages for the first time since Phase 125 introduced the planned breakage. `pnpm -r build` also green. Pattern locked: introduce required type slot in Phase N, wire runtime population in Phase N+M, workspace-wide type-check is the load-bearing acceptance criterion.
+- Phase 128: Smoke-test scaffolding pattern extended — Node-side tests against the built `@napplet/shim` must stub `globalThis.document` (querySelector + addEventListener) alongside `globalThis.window` because keys-shim and config-shim access `document` at install time. Source code unchanged; stub lives in `/tmp` test only and is cleaned up post-pass.
+- Phase 129: 10-NUB central SDK integration pattern locked — 4 surgical edits (namespace const → type-reexport block → DOMAIN const re-export → shim installer + SDK helper re-exports), all sourced from `@napplet/nub/<domain>` barrel. Used prefixed SDK helpers (`resourceBytes`/`resourceBytesAsObjectURL`) over bare names, matching `notifySend`/`configRegisterSchema` precedent. `installResourceShim` re-exported alongside other 8 `install*Shim` functions. `hydrateResourceCache` deliberately NOT re-exported (relay-shim-internal helper for sidecar cache seeding, cross-NUB borrow-don't-own per Phase 127). Type-only consumer round-trip verified via temporary `__type-check__.ts` fixture (deleted pre-commit). Workspace-wide `pnpm -r type-check` + `pnpm -r build` stay green across all 14 packages — DEF-125-01 remains closed.
+- Phase 130: Strict CSP enforcement shipped — 4 project-killer pitfalls (1/2/18/19) now fail the build with prefixed `[nip5a-manifest]` diagnostics. 10-directive baseline + nonce-based script-src + dev/prod connect-src split + meta-must-be-first-head-child assertion all enforced via hand-rolled regex (zero new runtime deps per STACK.md). `Nip5aManifestOptions.strictCsp?: boolean | StrictCspOptions` is opt-in; back-compat preserved when omitted. CAP-03 closure is JSDoc-only (capability identifier `perm:strict-csp` is shell-side advertisement, vite-plugin only documents the pairing).
+- Phase 130: closeBundle CSP-extraction regex Rule 1 bug fix — original `[^"']` capture group truncated CSP values at first single quote (CSP values legitimately contain `'none'`/`'self'`), defeating CSP-05/Pitfall 18 dev-leak detection. Fix: pin to double-quote delimiters, accept any non-double-quote in capture. Caught by Task 3's 7-case smoke test. Pattern: when extracting attribute values that themselves contain single quotes, anchor the regex on double-quote delimiters specifically — `[^"']` is wrong because the capture should permit single quotes.
+- Phase 130: closeBundle restructure — strict-CSP assertion moved to TOP of `closeBundle()` (before the `VITE_DEV_PRIVKEY_HEX` early-return) so strict CSP enforcement is INDEPENDENT of manifest signing. Plan placement would have been after the privkey gate, skipping the assertion when no privkey is configured. Pattern locked: load-bearing security checks must run regardless of optional features (privkey, schema discovery, etc.).
+- Phase 130: tsup config — `src/csp.ts` added as a separate entry alongside `src/index.ts`. Without this, tsup chunk-splits csp.ts into a hashed shared chunk and `dist/csp.js` is not produced; with this, `dist/csp.js` becomes a small re-export shim importable standalone by Node-side validation scripts. Pattern: when a sibling module's exports need to be Node-importable from `dist/<name>.js` directly (for verification scripts, third-party consumers), add it as a tsup entry — cost is minimal (the shim re-uses the same chunk, no code duplication).
+- Phase 133: Documentation phase pattern locked — per-task atomic commits (one commit per modifying task; verification gate task is non-committing), automated grep verification after each edit, workspace `pnpm -r type-check` as the load-bearing acceptance gate. Public-repo hygiene split for mixed-audience phases: per-file `@napplet/` grep checks (clean on public-destined files; expected on first-party docs) rather than a single repo-wide rule.
+- Phase 133: TS-vs-spec error envelope drift surfaced for future resolution — NUB-RESOURCE draft uses `code: ResourceErrorCode` and `error?: string` for `resource.bytes.error`; shipped TypeScript in `packages/nub/src/resource/types.ts` uses `error: ResourceErrorCode` and `message?: string`. Documentation now matches the TS wire shape in `packages/shim/README.md` (since READMEs document on-the-wire reality); spec/skill text follows the plan/spec convention. Resolution scoped to a future phase, NOT a docs-only sweep.
+
+### Pending Todos
+
+- Phase 126 (Resource NUB Scaffold + `data:` Scheme) — PLAN-COMPLETE; awaiting verification
+- Phase 127 (NUB-RELAY Sidecar Amendment) — PLAN-COMPLETE; awaiting verification
+- Phase 128 (Central Shim Integration) — PLAN-COMPLETE; awaiting verification. DEF-125-01 closed.
+- Phase 129 (Central SDK Integration) — PLAN-COMPLETE; awaiting verification. SDK seam closed. DEF-125-01 stays closed.
+- Phase 130 (Vite-Plugin Strict CSP) — PLAN-COMPLETE; awaiting verification. CSP-01..07 + CAP-03 satisfied. 4 project-killer pitfalls fail the build. Workspace-wide green; DEF-125-01 stays closed.
+- Phase 131 (NIP-5D In-Repo Spec Amendment) — UNBLOCKED by Phase 130; resource wire envelopes locked at v0.28.0 contract; `perm:strict-csp` capability identifier ready to be referenced from spec text
+- Phase 132 (Cross-Repo Nubs PRs) — PLAN-COMPLETE; 4 drafts at .planning/phases/132-cross-repo-nubs-prs/drafts/; awaiting verification. Cross-repo zero-grep clean. SPEC-02..06 + SCH-02..04 + POL-01..06 + SVG-01..03 + SIDE-05 satisfied. Manual git ops on ~/Develop/nubs deferred per CONTEXT.md (user creates branches, commits, pushes drafts, opens 4 PRs to napplet/nubs).
+- Phase 133 (Documentation + Demo Coordination) — PLAN-COMPLETE; awaiting verification. DOC-01..07 + DEMO-01 satisfied. 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean. Workspace pnpm -r type-check green (no source touched).
 
 ### Blockers/Concerns
 
 - CARRIED: npm publish blocked on human npm auth (PUB-04).
-- CARRIED: NIP number conflict with Scrolls PR#2281 (RES-01) — unresolved.
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260419-i6c | Republish napplet packages as 0.2.1 with resolved workspace:* deps | 2026-04-19 | ec677fb | [260419-i6c-republish-napplet-packages-as-0-2-1-with](./quick/260419-i6c-republish-napplet-packages-as-0-2-1-with/) |
-
-## Performance Metrics
-
-| Phase | Plan | Duration | Tasks | Files |
-|-------|------|----------|-------|-------|
-| 118   | 01   | 2 min    | 2     | 22    |
-| 118   | 02   | 2 min    | 2     | 10    |
-| Phase 118 P03 | 3 min | 2 tasks | 1 files |
-| Phase 119 P01 | 3 min | 2 tasks | 5 files |
-| Phase 119 P02 | 3 min | 2 tasks | 3 files |
-| Phase 120 P02 | 2min | 4 tasks | 4 files |
-| Phase 120 P01 | 2 min | 1 tasks | 1 files |
-| Phase 120 P03 | 3 min | 3 tasks | 1 files |
-| Phase 121 P01 | 3 min | 3 tasks | 1 files |
+- CARRIED: NIP number conflict with Scrolls PR#2281 (RES-01 from v0.12.0 era — not related to v0.28.0's RES-* IDs).
+- NEW (informational): REQUIREMENTS.md originally reported "56 total" REQ-IDs; actual enumerated REQ-ID count is 65. Traceability updated to 65/65 mapped. No coverage gap.
+- CLOSED 2026-04-20: DEF-125-01 — Workspace-wide `pnpm -r type-check` is now green across all 14 packages. Phase 128 (Central Shim Integration) wired `window.napplet.resource = { bytes, bytesAsObjectURL }` satisfying the `NappletGlobal['resource']` shape locked in Phase 125. TS2741 on `packages/shim/src/index.ts` is gone. Workspace-wide type-check is the gating signal again (instead of per-package).
 
 ## Session Continuity
 
-Last session: 2026-04-19T14:55:46.106Z
-Stopped at: Completed 121-01-PLAN.md
-Resume: Phase 121 complete (Plan 01 shipped). VER-01/02/03 all SATISFIED. Zero first-party edits. v0.26.0 Better Packages milestone is feature-complete and acceptance-verified end-to-end. Next: `/gsd:verify-work 121` to run phase verification, then `/gsd:complete-milestone` to archive v0.26.0.
+Last session: 2026-04-20T21:11:32.320Z
+Stopped at: Completed 133-01-PLAN.md (DOC-01..07 + DEMO-01; 8 REQ-IDs). 5 README updates + skills/build-napplet/SKILL.md + new specs/SHELL-RESOURCE-POLICY.md (195 lines) + PROJECT.md/NUB-RESOURCE coordination notes. Public-repo hygiene clean (zero @napplet/ in 2 public-destined files; zero kehto/hyprgate everywhere). Workspace pnpm -r type-check green (no source touched). Phase 133 plan-complete; awaiting verification.
+Resume: Run `/gsd:verify-phase 132` to verify Phase 132 deliverables (and 126/127/128/129/130/131 if any remain unverified), then `/gsd:plan-phase 133` (Documentation + Demo Coordination) to begin the next executable phase.
