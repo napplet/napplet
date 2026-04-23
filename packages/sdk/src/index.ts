@@ -25,6 +25,7 @@ import type {
   NappletGlobal,
   NostrEvent,
   NostrFilter,
+  Rumor,
   Subscription,
   EventTemplate,
 } from '@napplet/core';
@@ -650,6 +651,19 @@ export const identity = {
   }[]> {
     return requireNapplet().identity.getBadges();
   },
+
+  /**
+   * Decrypt a received Nostr event (NIP-04 / direct NIP-44 / NIP-17 gift-wrap).
+   *
+   * Shape is auto-detected by the shell; napplets do NOT select encryption mode.
+   * Only legal for napplets assigned class: 1 per NUB-CLASS-1 (shell-enforced).
+   *
+   * @param event  The received event (outer wrap for NIP-17, kind-4 for NIP-04, etc.)
+   * @returns Promise resolving to { rumor, sender }; rejects with Error on failure.
+   */
+  decrypt(event: NostrEvent): Promise<{ rumor: Rumor; sender: string }> {
+    return requireNapplet().identity.decrypt(event);
+  },
 };
 
 // ─── Config namespace ──────────────────────────────────────────────────────
@@ -782,6 +796,8 @@ export type { NostrEvent } from '@napplet/core';
 export type { NostrFilter } from '@napplet/core';
 export type { Subscription } from '@napplet/core';
 export type { EventTemplate } from '@napplet/core';
+export type { Rumor } from '@napplet/core';
+export type { UnsignedEvent } from '@napplet/core';
 
 // ─── Core envelope types ───────────────────────────────────────────────────
 
@@ -839,6 +855,10 @@ export type {
   IdentityRequestMessage,
   IdentityResultMessage,
   IdentityNubMessage,
+  IdentityDecryptMessage,
+  IdentityDecryptResultMessage,
+  IdentityDecryptErrorMessage,
+  IdentityDecryptErrorCode,
 } from '@napplet/nub/identity';
 
 // Storage NUB
@@ -1022,7 +1042,7 @@ export { installResourceShim } from '@napplet/nub/resource';
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
 
 export { relaySubscribe, relayPublish, relayPublishEncrypted, relayQuery } from '@napplet/nub/relay';
-export { identityGetPublicKey, identityGetRelays, identityGetProfile, identityGetFollows, identityGetList, identityGetZaps, identityGetMutes, identityGetBlocked, identityGetBadges } from '@napplet/nub/identity';
+export { identityGetPublicKey, identityGetRelays, identityGetProfile, identityGetFollows, identityGetList, identityGetZaps, identityGetMutes, identityGetBlocked, identityGetBadges, identityDecrypt } from '@napplet/nub/identity';
 export { storageGetItem, storageSetItem, storageRemoveItem, storageKeys } from '@napplet/nub/storage';
 export { ifcEmit, ifcOn } from '@napplet/nub/ifc';
 export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } from '@napplet/nub/keys';
