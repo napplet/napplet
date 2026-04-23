@@ -112,7 +112,7 @@ Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 s
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. First-Party Types + SDK Plumbing | 5/5 | Complete   | 2026-04-23 |
+| 135. First-Party Types + SDK Plumbing | 5/5 | Complete    | 2026-04-23 |
 | 136. Empirical CSP Injection-Block Verification | 0/TBD | Not started | - |
 | 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 0/TBD | Not started | - |
 | 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 0/TBD | Not started | - |

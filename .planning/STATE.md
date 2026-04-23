@@ -4,14 +4,14 @@ milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: verifying
 stopped_at: Completed 135-05-PLAN.md — gap closure. Gap 1 (Rumor re-export) + Gap 2 (assertNever exhaustiveness) both closed. VER-01 + VER-05 regression-clean across 14 packages. Phase 135 ready for re-verification (gaps_found → verified).
-last_updated: "2026-04-23T13:10:58.850Z"
+last_updated: "2026-04-23T13:15:33.176Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
   completed_plans: 5
-  percent: 0
+  percent: 100
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 135 (first-party-types-sdk-plumbing) — EXECUTING
-Plan: 5 of 5
+Phase: 136
+Plan: Not started
 Status: Phase complete (gap closure done) — ready for re-verification
 Last activity: 2026-04-23
 
