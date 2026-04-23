@@ -90,6 +90,66 @@ export interface EventTemplate {
 }
 
 /**
+ * Unsigned Nostr event — the canonical "rumor" shape from nostr-tools.
+ *
+ * Extends EventTemplate-like fields (kind/content/tags/created_at) with `pubkey` — the author
+ * whose key signs the wrapping seal/wrap in NIP-17 / NIP-59 flows. NO `sig` field:
+ * this shape is intentionally unsigned. Attempting to treat it as signed is a bug.
+ *
+ * @example
+ * ```ts
+ * const unsigned: UnsignedEvent = {
+ *   kind: 14,
+ *   pubkey: 'ab12...',
+ *   content: 'hello',
+ *   tags: [['p', 'cd34...']],
+ *   created_at: 1234567890,
+ * };
+ * ```
+ */
+export interface UnsignedEvent {
+  /** Nostr event kind number */
+  kind: number;
+  /** Hex-encoded public key of the author */
+  pubkey: string;
+  /** Event content (plaintext after decrypt in NIP-17 flows) */
+  content: string;
+  /** Event tags (NIP-01 tag arrays) */
+  tags: string[][];
+  /** Unix timestamp (seconds since epoch) — NOT the outer gift-wrap randomized value */
+  created_at: number;
+}
+
+/**
+ * A NIP-17 / NIP-59 rumor — an unsigned event decrypted from a gift-wrap seal
+ * with a deterministic `id` derived from its NIP-01 serialization.
+ *
+ * Shape: UnsignedEvent & { id: string } — the nostr-tools canonical rumor type.
+ * Intentionally has NO `sig` field: the rumor is never signed; only the outer
+ * wrap and seal carry signatures. Treating a rumor as a signed event is a bug.
+ *
+ * The `sender` returned alongside a rumor by `identity.decrypt` is shell-authenticated
+ * from the seal pubkey post-validation — never derived by the napplet from `rumor.pubkey`
+ * (unsigned → attacker-controlled impersonation surface).
+ *
+ * @example
+ * ```ts
+ * const rumor: Rumor = {
+ *   id: 'abc123...',
+ *   kind: 14,
+ *   pubkey: 'ab12...',
+ *   content: 'hello',
+ *   tags: [['p', 'cd34...']],
+ *   created_at: 1234567890,
+ * };
+ * ```
+ */
+export interface Rumor extends UnsignedEvent {
+  /** Deterministic event id (NIP-01 serialization hash of the unsigned event) */
+  id: string;
+}
+
+/**
  * The window.napplet global installed by @napplet/shim.
  *
  * Activated by a side-effect import:
@@ -467,6 +527,20 @@ export interface NappletGlobal {
       thumbs?: string[];
       awardedBy: string;
     }[]>;
+    /**
+     * Decrypt a received Nostr event (NIP-04 / direct NIP-44 / NIP-17 gift-wrap).
+     *
+     * Shape is auto-detected by the shell; napplets do NOT select the encryption mode.
+     * Only legal for napplets assigned `class: 1` per NUB-CLASS-1; shell rejects
+     * from any other class with `class-forbidden`.
+     *
+     * @param event  The received event (outer wrap for NIP-17, kind-4 for NIP-04, etc.)
+     * @returns Promise resolving to { rumor, sender } where `sender` is the
+     *   shell-authenticated seal-pubkey (NOT derived from rumor.pubkey). Outer
+     *   `created_at` is NOT surfaced (NIP-59 randomizes it ±2 days).
+     *   Rejects with a typed `IdentityDecryptErrorCode` on failure.
+     */
+    decrypt(event: NostrEvent): Promise<{ rumor: Rumor; sender: string }>;
   };
   /**
    * Per-napplet declarative configuration (NUB-CONFIG).
