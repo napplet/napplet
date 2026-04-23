@@ -64,6 +64,7 @@ export {
   getMutes,
   getBlocked,
   getBadges,
+  decrypt,
 } from './shim.js';
 
 // ─── SDK Exports ──────────────────────────────────────────────────────────
