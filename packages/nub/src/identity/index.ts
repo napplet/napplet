@@ -44,6 +44,10 @@ export type {
   IdentityRequestMessage,
   IdentityResultMessage,
   IdentityNubMessage,
+  IdentityDecryptMessage,
+  IdentityDecryptResultMessage,
+  IdentityDecryptErrorMessage,
+  IdentityDecryptErrorCode,
 } from './types.js';
 
 // ─── Shim Exports ─────────────────────────────────────────────────────────
