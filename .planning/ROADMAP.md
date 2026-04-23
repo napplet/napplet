@@ -44,7 +44,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 **Milestone Goal:** Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt(event) → Rumor` to NUB-IDENTITY, gated shell-side to napplets assigned `class: 1` per NUB-CLASS-1. Plaintext decrypt is only safe where the posture guarantees zero direct network egress; NUB-CLASS-2 napplets (approved direct-origin access via NUB-CONNECT) MUST be refused at the shell boundary. Same milestone establishes shell-enforced detection of NIP-07 extension `window.nostr` injection via CSP `report-to`. All enforcement is shell-side; napplets are untrusted.
 
-- [x] **Phase 135: First-Party Types + SDK Plumbing** — Ship `@napplet/nub/identity` type additions (`IdentityDecryptMessage` / `.result` / `.error` + `IdentityDecryptErrorCode` + `Rumor` + `NappletIdentity.decrypt` method type), shim handler + `decrypt()` binding, SDK `identityDecrypt()` helper + re-exports, and gate on `pnpm -r build` + `pnpm -r type-check` green across all 14 packages. Prove the tree-shake contract still holds. (completed 2026-04-23)
+- [x] **Phase 135: First-Party Types + SDK Plumbing** — Ship `@napplet/nub/identity` type additions (`IdentityDecryptMessage` / `.result` / `.error` + `IdentityDecryptErrorCode` + `Rumor` + `NappletIdentity.decrypt` method type), shim handler + `decrypt()` binding, SDK `identityDecrypt()` helper + re-exports, and gate on `pnpm -r build` + `pnpm -r type-check` green across all 14 packages. Prove the tree-shake contract still holds. (verification found 2 gaps — plan 135-05 closes them) (completed 2026-04-23)
 - [ ] **Phase 136: Empirical CSP Injection-Block Verification** — Serve a test napplet under NUB-CLASS-1 posture (`connect-src 'none'`; `script-src 'nonce-XXX'`) with Playwright, simulate legacy `<script>`-tag content-script injection, and observe CSP blocking + `securitypolicyviolation` event firing. Document the `world: 'MAIN'` extension-API residual honestly. Locks the empirical shape of the DETECT-01..04 surface before the amendment PR cites it.
 - [ ] **Phase 137: Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled)** — Draft the NUB-IDENTITY amendment adding `identity.decrypt` envelope triad with full conformance table (4 MUSTs: class-gating, outer-sig-verify, impersonation-check, outer-created_at-hiding), 8-code error vocabulary, class-gating cite of `NUB-CLASS-1.md` by filename, and Security Considerations subsection. Bundle the NUB-CLASS-1 amendment (`report-to` SHOULD + violation-correlation MUST) into the same PR per CLASS1-03's "bundle if review convenience prevails" clause. Public-repo hygiene verified: zero `@napplet/*`, zero `kehto`, zero `hyprgate` in diff/commits/PR body.
 - [ ] **Phase 138: In-Repo NIP-5D Amendment + Docs + Final Verification** — Sync local `specs/NIP-5D.md` against `napplet/nubs` master post-PR-15; add Security Considerations subsection documenting NIP-07 `all_frames: true` injection vector, CSP nonce-based `script-src` mitigation for legacy injection, `world: 'MAIN'` residual, NUB-CLASS-1 `connect-src 'none'` as structural mitigation; cite `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename. Update `packages/nub/README.md`, `packages/sdk/README.md`, root `README.md`, and `skills/build-napplet/SKILL.md` for the `identity.decrypt` surface. Run VER-06 grep gate.
@@ -61,11 +61,12 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `import { identityDecrypt } from '@napplet/sdk'` resolves the bare-name helper wrapping `window.napplet.identity.decrypt` with a `requireNapplet()` guard; `@napplet/sdk` re-exports the 3 new identity types via the 4-surgical-edit pattern (namespace, type re-exports, DOMAIN const unchanged, helper re-export).
   4. `pnpm -r build` and `pnpm -r type-check` exit 0 across all 14 workspace packages (VER-01 shipping gate).
   5. A consumer importing only `@napplet/nub/identity/types` produces a tree-shaken bundle that does NOT pull shim/sdk runtime symbols, and the relay-types-only tree-shake bundle remains ≤ 100 bytes (matching v0.28.0 VER-07 74-byte precedent).
-**Plans:** 4/4 plans complete
+**Plans:** 5/5 plans complete
 - [x] 135-01-PLAN.md — Types in @napplet/core + @napplet/nub/identity (TYPES-01..05)
 - [x] 135-02-PLAN.md — Shim runtime (decrypt function + handler branch) + central shim mount (SHIM-01..03)
 - [x] 135-03-PLAN.md — SDK identityDecrypt helper + central SDK 4-surgical-edits (SDK-01..02)
 - [x] 135-04-PLAN.md — Verification: workspace build+type-check + identity-types-only tree-shake (TYPES-06, VER-01, VER-05)
+- [x] 135-05-PLAN.md — Gap closure: Rumor re-export from @napplet/nub/identity + never-fallback exhaustiveness in shim handler (TYPES-01, TYPES-03, TYPES-05)
 
 ### Phase 136: Empirical CSP Injection-Block Verification
 **Goal**: Empirically prove on Chromium that a test napplet served under the NUB-CLASS-1 CSP posture (`connect-src 'none'`; `script-src 'nonce-XXX'`; `report-to` directive) blocks a simulated legacy `<script>`-tag content-script injection AND fires a `securitypolicyviolation` event the shell can receive. Lock the observed-shape of `world: 'MAIN'` extension-API residual honestly (no browser-layer block possible from page side). The empirical result backs DETECT-01..04's spec language in Phase 137's amendment — the PR cites behavior we've actually observed, not assumed.
@@ -111,7 +112,7 @@ Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 s
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. First-Party Types + SDK Plumbing | 4/4 | Complete   | 2026-04-23 |
+| 135. First-Party Types + SDK Plumbing | 5/5 | Complete   | 2026-04-23 |
 | 136. Empirical CSP Injection-Block Verification | 0/TBD | Not started | - |
 | 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 0/TBD | Not started | - |
 | 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 0/TBD | Not started | - |

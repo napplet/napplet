@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: verifying
-stopped_at: Completed 135-04-PLAN.md — Phase 135 shipping-gate verification. VER-01 + TYPES-06 + VER-05 all stamped pass. Workspace (14 pkgs) green; identity-types-only tree-shake bundle 129 bytes with 7-symbol absence. Phase 135 ready for Phase 137 consumption; Phase 136 unblocked for parallel execution.
-last_updated: "2026-04-23T11:54:39.684Z"
+stopped_at: Completed 135-05-PLAN.md — gap closure. Gap 1 (Rumor re-export) + Gap 2 (assertNever exhaustiveness) both closed. VER-01 + VER-05 regression-clean across 14 packages. Phase 135 ready for re-verification (gaps_found → verified).
+last_updated: "2026-04-23T13:10:58.850Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 5
+  completed_plans: 5
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 ## Current Position
 
 Phase: 135 (first-party-types-sdk-plumbing) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
+Plan: 5 of 5
+Status: Phase complete (gap closure done) — ready for re-verification
 Last activity: 2026-04-23
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Phase Map
 
@@ -82,6 +82,10 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 135]: Plan 04: Regression canary (identityGetPublicKey: 0) confirms pre-Plan-01 existing identity surface still tree-shakes cleanly — Plan 01 type additions did NOT accidentally couple existing types to sdk
 - [Phase 135]: Plan 04: Phase 135 is ready for Phase 137 consumption; Phase 136 may proceed in parallel; Phase 137 blocks on both 135 + 136 per STATE.md dependency graph
 - [Phase 135]: Plan 04: Verification-only plan — all evidence under /tmp/napplet-135-* per AGENTS.md; zero repo source changes; zero home-directory pollution
+- [Phase 135]: Plan 05: Gap closure — Rumor + UnsignedEvent re-exported from @napplet/nub/identity; assertNever exhaustiveness gate added to handleIdentityMessage over 21-member IdentityNubMessage union
+- [Phase 135]: Plan 05: Loose external signature preserved on handleIdentityMessage; internal narrowing via  delivers compile-time exhaustiveness without breaking central shim's generic identity.* routing contract
+- [Phase 135]: Plan 05: VER-01 + VER-05 regression-clean — workspace-wide pnpm -r build + type-check exit 0 across 14 packages; tree-shake bundle 129B with 8/8 runtime symbols absent (including new assertNever helper)
+- [Phase 135]: Plan 05: Empirical exhaustiveness proof captured at /tmp/napplet-135-05-exhaustiveness-proof.log — deliberately adding a bogus union member triggers TS2345 at the assertNever call site (shim.ts:114)
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -112,6 +116,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T11:54:39.682Z
-Stopped at: Completed 135-04-PLAN.md — Phase 135 shipping-gate verification. VER-01 + TYPES-06 + VER-05 all stamped pass. Workspace (14 pkgs) green; identity-types-only tree-shake bundle 129 bytes with 7-symbol absence. Phase 135 ready for Phase 137 consumption; Phase 136 unblocked for parallel execution.
+Last session: 2026-04-23T13:10:58.847Z
+Stopped at: Completed 135-05-PLAN.md — gap closure. Gap 1 (Rumor re-export) + Gap 2 (assertNever exhaustiveness) both closed. VER-01 + VER-05 regression-clean across 14 packages. Phase 135 ready for re-verification (gaps_found → verified).
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.
