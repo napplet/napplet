@@ -9,21 +9,21 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ### `identity.decrypt` Primitive (NUB-IDENTITY)
 
-- [ ] **DEC-01**: New wire message `identity.decrypt` on NUB-IDENTITY with payload `{ id: string, event: NostrEvent }` — one-shot request/result shape mirroring `relay.publishEncrypted` (not a subscription)
-- [ ] **DEC-02**: Result envelope `identity.decrypt.result` with payload `{ id, rumor: Rumor, sender: string }` where `Rumor = UnsignedEvent & { id: string }` (nostr-tools canonical type) and `sender` is shell-authenticated from seal signature (NOT derived by napplet from `rumor.pubkey`)
-- [ ] **DEC-03**: Error envelope `identity.decrypt.error` with payload `{ id, error: IdentityDecryptErrorCode, message?: string }` — typed discriminator, never throws
-- [ ] **DEC-04**: `IdentityDecryptErrorCode` vocabulary: `class-forbidden`, `signer-denied`, `signer-unavailable`, `decrypt-failed`, `malformed-wrap`, `impersonation`, `unsupported-encryption`, `policy-denied` (8 codes)
-- [ ] **DEC-05**: Shape auto-detection inside shell's handler — accepts NIP-04 (kind-4 content), direct NIP-44 (kind-44 or other with NIP-44 payload shape), and NIP-17 gift-wrap (kind-1059 → kind-13 seal → rumor) — single entry point; napplet does NOT select encryption mode
-- [ ] **DEC-06**: Outer `created_at` MUST NOT be surfaced to napplet on `identity.decrypt.result` — gift-wrap randomizes outer `created_at` ±2 days intentionally for sender-anonymity; exposing undoes the privacy floor. Rumor carries its own real `created_at`
-- [ ] **DEC-07**: Seal-pubkey / rumor-pubkey impersonation check is a shell MUST — shell MUST verify `seal.pubkey === rumor.pubkey` for NIP-17 flows before delivering rumor; mismatch returns `impersonation` error
-- [ ] **DEC-08**: Outer wrap signature validation is a shell MUST — shell MUST verify outer event signature before attempting seal decrypt; bad sig returns `malformed-wrap`
+- [x] **DEC-01**: New wire message `identity.decrypt` on NUB-IDENTITY with payload `{ id: string, event: NostrEvent }` — one-shot request/result shape mirroring `relay.publishEncrypted` (not a subscription)
+- [x] **DEC-02**: Result envelope `identity.decrypt.result` with payload `{ id, rumor: Rumor, sender: string }` where `Rumor = UnsignedEvent & { id: string }` (nostr-tools canonical type) and `sender` is shell-authenticated from seal signature (NOT derived by napplet from `rumor.pubkey`)
+- [x] **DEC-03**: Error envelope `identity.decrypt.error` with payload `{ id, error: IdentityDecryptErrorCode, message?: string }` — typed discriminator, never throws
+- [x] **DEC-04**: `IdentityDecryptErrorCode` vocabulary: `class-forbidden`, `signer-denied`, `signer-unavailable`, `decrypt-failed`, `malformed-wrap`, `impersonation`, `unsupported-encryption`, `policy-denied` (8 codes)
+- [x] **DEC-05**: Shape auto-detection inside shell's handler — accepts NIP-04 (kind-4 content), direct NIP-44 (kind-44 or other with NIP-44 payload shape), and NIP-17 gift-wrap (kind-1059 → kind-13 seal → rumor) — single entry point; napplet does NOT select encryption mode
+- [x] **DEC-06**: Outer `created_at` MUST NOT be surfaced to napplet on `identity.decrypt.result` — gift-wrap randomizes outer `created_at` ±2 days intentionally for sender-anonymity; exposing undoes the privacy floor. Rumor carries its own real `created_at`
+- [x] **DEC-07**: Seal-pubkey / rumor-pubkey impersonation check is a shell MUST — shell MUST verify `seal.pubkey === rumor.pubkey` for NIP-17 flows before delivering rumor; mismatch returns `impersonation` error
+- [x] **DEC-08**: Outer wrap signature validation is a shell MUST — shell MUST verify outer event signature before attempting seal decrypt; bad sig returns `malformed-wrap`
 
 ### Shell-Enforced Class Gating
 
-- [ ] **GATE-01**: `identity.decrypt` is legal only for napplets where the shell has assigned `class: 1` per NUB-CLASS-1. Shell MUST reject the envelope from any other class (`undefined`, `2`, or any future class) with error code `class-forbidden`
-- [ ] **GATE-02**: Enforcement is at shell message-handling time, using class state the shell already determined at iframe-ready. Shell MUST NOT re-derive class per-envelope — use the single `class.assigned` value from the napplet's lifecycle
-- [ ] **GATE-03**: Class-forbidden error MUST NOT leak napplet-internal details — error payload is `{ error: 'class-forbidden' }` only; optional `message?` field may name the current class integer for debugging but MUST NOT name other napplets or environmental details
-- [ ] **GATE-04**: Shim-side defense-in-depth: if `window.napplet.class !== 1`, the SDK's `decrypt()` helper MAY short-circuit with a local rejection WITHOUT sending the envelope. This is observability for napplet authors, NEVER the trust boundary. Shell still enforces authoritatively
+- [x] **GATE-01**: `identity.decrypt` is legal only for napplets where the shell has assigned `class: 1` per NUB-CLASS-1. Shell MUST reject the envelope from any other class (`undefined`, `2`, or any future class) with error code `class-forbidden`
+- [x] **GATE-02**: Enforcement is at shell message-handling time, using class state the shell already determined at iframe-ready. Shell MUST NOT re-derive class per-envelope — use the single `class.assigned` value from the napplet's lifecycle
+- [x] **GATE-03**: Class-forbidden error MUST NOT leak napplet-internal details — error payload is `{ error: 'class-forbidden' }` only; optional `message?` field may name the current class integer for debugging but MUST NOT name other napplets or environmental details
+- [x] **GATE-04**: Shim-side defense-in-depth: if `window.napplet.class !== 1`, the SDK's `decrypt()` helper MAY short-circuit with a local rejection WITHOUT sending the envelope. This is observability for napplet authors, NEVER the trust boundary. Shell still enforces authoritatively
 
 ### Shell-Enforced NIP-07 Extension Injection Detection
 
@@ -48,11 +48,11 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ### Spec: NUB-IDENTITY Amendment (Public `napplet/nubs`)
 
-- [ ] **NUB-IDENTITY-01**: Draft amendment to `NUB-IDENTITY.md` on `napplet/nubs` adding `identity.decrypt` request / result / error envelope triad with full payload shapes
-- [ ] **NUB-IDENTITY-02**: Conformance table rows added for the 3 new envelopes + shell responsibilities (class gating MUST, outer-sig-verify MUST, impersonation-check MUST, outer-created_at-hiding MUST)
-- [ ] **NUB-IDENTITY-03**: `IdentityDecryptErrorCode` enumerated in amendment with one sentence per code naming the failure surface it represents
-- [ ] **NUB-IDENTITY-04**: Class-gating MUST row cites `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation discipline); amendment text says "napplets assigned `class: 1`" or "NUB-CLASS-1 napplets", never "Class 1" as primary reference
-- [ ] **NUB-IDENTITY-05**: Security Considerations subsection explicitly names: (a) NIP-17/59 gift-wrap flow and the spec MUSTs that prevent impersonation, (b) NIP-07 extension `all_frames: true` injection and the fact that NUB-CLASS-1 strict-CSP nonce-based `script-src` blocks legacy `<script>` injection, (c) `world: 'MAIN'` extension-API residual with NUB-CLASS-1 `connect-src 'none'` as structural mitigation
+- [x] **NUB-IDENTITY-01**: Draft amendment to `NUB-IDENTITY.md` on `napplet/nubs` adding `identity.decrypt` request / result / error envelope triad with full payload shapes
+- [x] **NUB-IDENTITY-02**: Conformance table rows added for the 3 new envelopes + shell responsibilities (class gating MUST, outer-sig-verify MUST, impersonation-check MUST, outer-created_at-hiding MUST)
+- [x] **NUB-IDENTITY-03**: `IdentityDecryptErrorCode` enumerated in amendment with one sentence per code naming the failure surface it represents
+- [x] **NUB-IDENTITY-04**: Class-gating MUST row cites `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation discipline); amendment text says "napplets assigned `class: 1`" or "NUB-CLASS-1 napplets", never "Class 1" as primary reference
+- [x] **NUB-IDENTITY-05**: Security Considerations subsection explicitly names: (a) NIP-17/59 gift-wrap flow and the spec MUSTs that prevent impersonation, (b) NIP-07 extension `all_frames: true` injection and the fact that NUB-CLASS-1 strict-CSP nonce-based `script-src` blocks legacy `<script>` injection, (c) `world: 'MAIN'` extension-API residual with NUB-CLASS-1 `connect-src 'none'` as structural mitigation
 - [ ] **NUB-IDENTITY-06**: Public-repo hygiene clean — zero `@napplet/*`, zero `kehto`, zero `hyprgate`, zero first-party package names in the amendment diff, commit messages, or PR description
 - [x] **NUB-IDENTITY-07**: PR opened against `napplet/nubs` on a new branch `nub-identity-decrypt` (or similar), based on the existing `nub-identity` branch. Per in-repo convention, the user opens the PR; this milestone authors the diff
 
@@ -109,18 +109,18 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| DEC-01 | Phase 137 | Pending |
-| DEC-02 | Phase 137 | Pending |
-| DEC-03 | Phase 137 | Pending |
-| DEC-04 | Phase 137 | Pending |
-| DEC-05 | Phase 137 | Pending |
-| DEC-06 | Phase 137 | Pending |
-| DEC-07 | Phase 137 | Pending |
-| DEC-08 | Phase 137 | Pending |
-| GATE-01 | Phase 137 | Pending |
-| GATE-02 | Phase 137 | Pending |
-| GATE-03 | Phase 137 | Pending |
-| GATE-04 | Phase 137 | Pending |
+| DEC-01 | Phase 137 | Complete |
+| DEC-02 | Phase 137 | Complete |
+| DEC-03 | Phase 137 | Complete |
+| DEC-04 | Phase 137 | Complete |
+| DEC-05 | Phase 137 | Complete |
+| DEC-06 | Phase 137 | Complete |
+| DEC-07 | Phase 137 | Complete |
+| DEC-08 | Phase 137 | Complete |
+| GATE-01 | Phase 137 | Complete |
+| GATE-02 | Phase 137 | Complete |
+| GATE-03 | Phase 137 | Complete |
+| GATE-04 | Phase 137 | Complete |
 | DETECT-01 | Phase 136 | Complete |
 | DETECT-02 | Phase 136 | Complete |
 | DETECT-03 | Phase 136 | Complete |
@@ -136,11 +136,11 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | SHIM-03 | Phase 135 | Complete |
 | SDK-01 | Phase 135 | Complete |
 | SDK-02 | Phase 135 | Complete |
-| NUB-IDENTITY-01 | Phase 137 | Pending |
-| NUB-IDENTITY-02 | Phase 137 | Pending |
-| NUB-IDENTITY-03 | Phase 137 | Pending |
-| NUB-IDENTITY-04 | Phase 137 | Pending |
-| NUB-IDENTITY-05 | Phase 137 | Pending |
+| NUB-IDENTITY-01 | Phase 137 | Complete |
+| NUB-IDENTITY-02 | Phase 137 | Complete |
+| NUB-IDENTITY-03 | Phase 137 | Complete |
+| NUB-IDENTITY-04 | Phase 137 | Complete |
+| NUB-IDENTITY-05 | Phase 137 | Complete |
 | NUB-IDENTITY-06 | Phase 137 | Pending |
 | NUB-IDENTITY-07 | Phase 137 | Complete |
 | CLASS1-01 | Phase 137 | Complete |

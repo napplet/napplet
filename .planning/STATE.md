@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: executing
-stopped_at: Completed 137-02-PLAN.md (NUB-CLASS-1 amendment body)
-last_updated: "2026-04-23T14:29:42.478Z"
+stopped_at: Completed 137-03-PLAN.md
+last_updated: "2026-04-23T14:41:16.166Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 86
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 ## Current Position
 
 Phase: 137 (public-napplet-nubs-amendments-nub-identity-nub-class-1-bundled) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-23
 
@@ -97,6 +97,8 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 137]: Plan 01 — Zero-push / zero-PR discipline verified: `git config --get branch.nub-identity-decrypt.remote` returns NO_REMOTE_CONFIGURED and `gh pr list --head nub-identity-decrypt --repo napplet/nubs --state all` is empty; human gates both per feedback_no_private_refs_commits
 - [Phase 137]: Plan 01 — Hygiene pre-verified on baseline: zero `@napplet/`, `kehto`, `hyprgate` matches across 6 commits ahead of master AND across the 3-file diff (NUB-CLASS-1.md + NUB-IDENTITY.md + README.md). Baseline is hygiene-clean; wave 2+ amendment content must preserve
 - [Phase 137]: Plan 137-02 — NUB-CLASS-1.md amended on nub-identity-decrypt with report-to SHOULD + violation-correlation MUST rows + observability-not-enforcement security subsection; commit c020479, 8 insertions 0 deletions, verbatim phrases 'MAY refuse-to-serve' and 'shell MAY reject' present for VER-03 Group E
+- [Phase 137]: Single commit (not 2-commit split) for full NUB-IDENTITY amendment preserves spec-coherence at every reachable point
+- [Phase 137]: Example envelope fencing matched existing file style (single triple-backtick fences, no language hint)
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -127,6 +129,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T14:29:42.476Z
-Stopped at: Completed 137-02-PLAN.md (NUB-CLASS-1 amendment body)
+Last session: 2026-04-23T14:41:16.163Z
+Stopped at: Completed 137-03-PLAN.md
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.
