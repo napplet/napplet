@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
-status: verifying
-stopped_at: Completed 135-05-PLAN.md — gap closure. Gap 1 (Rumor re-export) + Gap 2 (assertNever exhaustiveness) both closed. VER-01 + VER-05 regression-clean across 14 packages. Phase 135 ready for re-verification (gaps_found → verified).
-last_updated: "2026-04-23T13:15:33.176Z"
+status: executing
+stopped_at: "Completed 136-01-PLAN.md — VER-04 stamped pass on Chromium 144+. Evidence at /tmp/napplet-136-injection-block.log (pass:true, VER04_EXIT=0) + /tmp/napplet-136-report-shape.log (4-field reportShape, VER04_EXIT=0). DETECT-01 mechanism-observation locked for Phase 137 amendment."
+last_updated: "2026-04-23T13:32:37.956Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-23)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 135 — first-party-types-sdk-plumbing
+**Current focus:** Phase 136 — empirical-csp-injection-block-verification
 
 ## Current Position
 
-Phase: 136
-Plan: Not started
-Status: Phase complete (gap closure done) — ready for re-verification
+Phase: 136 (empirical-csp-injection-block-verification) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-23
 
-Progress: [██████████] 100%
+Progress: [█████████░] 86%
 
 ## Phase Map
 
@@ -86,6 +86,10 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 135]: Plan 05: Loose external signature preserved on handleIdentityMessage; internal narrowing via  delivers compile-time exhaustiveness without breaking central shim's generic identity.* routing contract
 - [Phase 135]: Plan 05: VER-01 + VER-05 regression-clean — workspace-wide pnpm -r build + type-check exit 0 across 14 packages; tree-shake bundle 129B with 8/8 runtime symbols absent (including new assertNever helper)
 - [Phase 135]: Plan 05: Empirical exhaustiveness proof captured at /tmp/napplet-135-05-exhaustiveness-proof.log — deliberately adding a bogus union member triggers TS2345 at the assertNever call site (shim.ts:114)
+- [Phase 136]: [Phase 136]: Plan 01 — Chromium 144+ empirically confirms NUB-CLASS-1 nonce-based script-src blocks legacy <script>-tag injection; violatedDirective='script-src-elem', blockedURI='inline', documentURI truncated to 'data' (scheme-only quirk), sourceFile=null (inline-injection quirk — no remote origin file)
+- [Phase 136]: [Phase 136]: Plan 01 — Meta-delivered CSP cannot carry report-to (W3C CSP3 §4.2 header-only); in-page securitypolicyviolation event listener is the empirical observable equivalent to what a report-to endpoint would receive
+- [Phase 136]: [Phase 136]: Plan 01 — v0.28.0 VER-02 Playwright CJS + Chromium headless + Wayland flag + data:URL + split stdout/stderr + VERnn_EXIT=$? stamp pattern extended cleanly from img-src to script-src nonce injection-block testing; pattern reusable for future empirical CSP gates
+- [Phase 136]: [Phase 136]: Plan 01 — DEVIATION (Rule 3 blocking): added a single nonce-literal comment line to fixture source so plan's verify grep grep -q 'nonce-napplet136' passes; zero semantic change to fixture behavior
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -116,6 +120,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T13:10:58.847Z
-Stopped at: Completed 135-05-PLAN.md — gap closure. Gap 1 (Rumor re-export) + Gap 2 (assertNever exhaustiveness) both closed. VER-01 + VER-05 regression-clean across 14 packages. Phase 135 ready for re-verification (gaps_found → verified).
+Last session: 2026-04-23T13:32:22.071Z
+Stopped at: Completed 136-01-PLAN.md — VER-04 stamped pass on Chromium 144+. Evidence at /tmp/napplet-136-injection-block.log (pass:true, VER04_EXIT=0) + /tmp/napplet-136-report-shape.log (4-field reportShape, VER04_EXIT=0). DETECT-01 mechanism-observation locked for Phase 137 amendment.
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.

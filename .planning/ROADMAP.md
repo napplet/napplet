@@ -77,8 +77,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   2. The same fixture records the shape of the violation report that would be POSTed to the `report-to` endpoint (directive, blocked URI, document URL, source file); the observed shape is documented as the input the shell MUST process per DETECT-02, correlating to napplet identity via `(dTag, aggregateHash)` through the napplet HTML URL path.
   3. The `world: 'MAIN'` extension-API residual is documented honestly in the phase artifact: extensions using `chrome.scripting.executeScript({world:'MAIN'})` bypass page CSP entirely → no `securitypolicyviolation` fires → no report to the shell. The structural mitigation is NUB-CLASS-1's `connect-src 'none'` trapping any plaintext inside the frame regardless of how it was obtained.
   4. The phase artifact names the shell's policy latitude explicitly: shell MAY (not MUST) refuse-to-serve subsequent loads of an offending napplet, reject subsequent `identity.decrypt` envelopes from it, or surface the event to the user — spec defines the mechanism, not the response (DETECT-03).
-**Plans:** 2 plans
-- [ ] 136-01-PLAN.md — Playwright CJS fixture: empirical CSP legacy-injection block + violation-report shape capture (DETECT-01, VER-04)
+**Plans:** 1/2 plans executed
+- [x] 136-01-PLAN.md — Playwright CJS fixture: empirical CSP legacy-injection block + violation-report shape capture (DETECT-01, VER-04)
 - [ ] 136-02-PLAN.md — Synthesize 136-PHASE-NOTES.md from Plan 01 evidence + DETECT-02/03/04 documentation gates (DETECT-02, DETECT-03, DETECT-04)
 
 ### Phase 137: Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled)
@@ -115,6 +115,6 @@ Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 s
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 135. First-Party Types + SDK Plumbing | 5/5 | Complete    | 2026-04-23 |
-| 136. Empirical CSP Injection-Block Verification | 0/2 | Not started | - |
+| 136. Empirical CSP Injection-Block Verification | 1/2 | In Progress|  |
 | 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 0/TBD | Not started | - |
 | 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 0/TBD | Not started | - |
