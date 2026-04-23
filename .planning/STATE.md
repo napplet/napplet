@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
-status: executing
-stopped_at: "Completed 136-01-PLAN.md — VER-04 stamped pass on Chromium 144+. Evidence at /tmp/napplet-136-injection-block.log (pass:true, VER04_EXIT=0) + /tmp/napplet-136-report-shape.log (4-field reportShape, VER04_EXIT=0). DETECT-01 mechanism-observation locked for Phase 137 amendment."
-last_updated: "2026-04-23T13:32:37.956Z"
+status: verifying
+stopped_at: "Completed 136-02-PLAN.md — Phase 136 COMPLETE. 136-PHASE-NOTES.md synthesized (93 lines) with all 7 required literal strings grep-verified (GREP_EXIT=0); DETECT-02/03/04 documentation gates locked for Phase 137 amendment author. Phases 135 + 136 done (v0.29.0 wave 1 parallel-eligible); Phase 137 NUB-IDENTITY + NUB-CLASS-1 bundled amendment can begin (/gsd:plan-phase 137)."
+last_updated: "2026-04-23T13:38:50.405Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 86
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 Phase: 136 (empirical-csp-injection-block-verification) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-23
 
 Progress: [█████████░] 86%
@@ -90,6 +90,9 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 136]: [Phase 136]: Plan 01 — Meta-delivered CSP cannot carry report-to (W3C CSP3 §4.2 header-only); in-page securitypolicyviolation event listener is the empirical observable equivalent to what a report-to endpoint would receive
 - [Phase 136]: [Phase 136]: Plan 01 — v0.28.0 VER-02 Playwright CJS + Chromium headless + Wayland flag + data:URL + split stdout/stderr + VERnn_EXIT=$? stamp pattern extended cleanly from img-src to script-src nonce injection-block testing; pattern reusable for future empirical CSP gates
 - [Phase 136]: [Phase 136]: Plan 01 — DEVIATION (Rule 3 blocking): added a single nonce-literal comment line to fixture source so plan's verify grep grep -q 'nonce-napplet136' passes; zero semantic change to fixture behavior
+- [Phase 136]: Plan 02 — 136-PHASE-NOTES.md (93 lines) synthesizes Plan 01 evidence into Phase 137 consumable: 5 sections, 7 literal strings grep-verified present, Section 1 cites observed violatedDirective='script-src-elem' verbatim, Section 2 flags Chromium quirks documentURI='data' (scheme-only truncation) + sourceFile=null (inline-injection has no remote origin file) for Phase 137's report-to-endpoint MUST row
+- [Phase 136]: Plan 02 — Phase boundary honored: 136-PHASE-NOTES.md records observations + documentation gates ONLY, does NOT author spec-amendment prose (no MUST/SHOULD tables, no 'Proposed Amendment Text' section); Phase 137 owns the amendment authoring. 3 MAY statements for DETECT-03 enumerated verbatim without ranking; DETECT-04 world:'MAIN' residual acknowledged HONESTLY with 'do NOT claim a fix' framing
+- [Phase 136]: Plan 02 — Task 2 grep-sweep is a read-only verification producing /tmp/napplet-136-phase-notes-grep.log; no per-task commit per AGENTS.md no-home-pollution + Plan 01 precedent. Only Task 1 (PHASE-NOTES.md synthesis) lands a commit (707a412)
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -120,6 +123,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T13:32:22.071Z
-Stopped at: Completed 136-01-PLAN.md — VER-04 stamped pass on Chromium 144+. Evidence at /tmp/napplet-136-injection-block.log (pass:true, VER04_EXIT=0) + /tmp/napplet-136-report-shape.log (4-field reportShape, VER04_EXIT=0). DETECT-01 mechanism-observation locked for Phase 137 amendment.
+Last session: 2026-04-23T13:38:50.402Z
+Stopped at: Completed 136-02-PLAN.md — Phase 136 COMPLETE. 136-PHASE-NOTES.md synthesized (93 lines) with all 7 required literal strings grep-verified (GREP_EXIT=0); DETECT-02/03/04 documentation gates locked for Phase 137 amendment author. Phases 135 + 136 done (v0.29.0 wave 1 parallel-eligible); Phase 137 NUB-IDENTITY + NUB-CLASS-1 bundled amendment can begin (/gsd:plan-phase 137).
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.

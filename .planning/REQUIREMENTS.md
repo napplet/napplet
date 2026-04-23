@@ -28,9 +28,9 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 ### Shell-Enforced NIP-07 Extension Injection Detection
 
 - [x] **DETECT-01**: NUB-CLASS-1 CSP gains a `report-to` directive (alongside `Report-To` response header) pointing at a shell-owned reporting endpoint. Endpoint URL is shell-chosen; NUB-CLASS-1 amendment specifies shape as a SHOULD (MUSTing it would impose deployment complexity on shells without a reporting infrastructure)
-- [ ] **DETECT-02**: Shell MUST process received `securitypolicyviolation` reports: correlate to napplet identity via `(dTag, aggregateHash)` via the napplet HTML URL path; log the violation; expose it to user surfaces at shell discretion
-- [ ] **DETECT-03**: Shell MAY (not MUST) refuse-to-serve subsequent loads of an offending napplet, reject subsequent `identity.decrypt` envelopes from it, or surface the event to the user. Policy detail is shell-side UX concern — spec defines the mechanism, not the response
-- [ ] **DETECT-04**: `world: 'MAIN'` extension-API bypass residual documented honestly — no page-side CSP mechanism exists to block extensions using `chrome.scripting.executeScript({world:'MAIN'})`. Structural mitigation is NUB-CLASS-1's `connect-src 'none'` trapping any plaintext inside the frame
+- [x] **DETECT-02**: Shell MUST process received `securitypolicyviolation` reports: correlate to napplet identity via `(dTag, aggregateHash)` via the napplet HTML URL path; log the violation; expose it to user surfaces at shell discretion
+- [x] **DETECT-03**: Shell MAY (not MUST) refuse-to-serve subsequent loads of an offending napplet, reject subsequent `identity.decrypt` envelopes from it, or surface the event to the user. Policy detail is shell-side UX concern — spec defines the mechanism, not the response
+- [x] **DETECT-04**: `world: 'MAIN'` extension-API bypass residual documented honestly — no page-side CSP mechanism exists to block extensions using `chrome.scripting.executeScript({world:'MAIN'})`. Structural mitigation is NUB-CLASS-1's `connect-src 'none'` trapping any plaintext inside the frame
 
 ### `@napplet/nub/identity` Types + SDK (First-Party)
 
@@ -122,9 +122,9 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | GATE-03 | Phase 137 | Pending |
 | GATE-04 | Phase 137 | Pending |
 | DETECT-01 | Phase 136 | Complete |
-| DETECT-02 | Phase 136 | Pending |
-| DETECT-03 | Phase 136 | Pending |
-| DETECT-04 | Phase 136 | Pending |
+| DETECT-02 | Phase 136 | Complete |
+| DETECT-03 | Phase 136 | Complete |
+| DETECT-04 | Phase 136 | Complete |
 | TYPES-01 | Phase 135 | Complete |
 | TYPES-02 | Phase 135 | Complete |
 | TYPES-03 | Phase 135 | Complete |
