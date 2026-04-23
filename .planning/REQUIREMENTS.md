@@ -58,8 +58,8 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ### Spec: NUB-CLASS-1 Amendment (Public `napplet/nubs`)
 
-- [ ] **CLASS1-01**: Draft amendment to `NUB-CLASS-1.md` on `napplet/nubs` adding a Shell Responsibilities SHOULD row: shells SHOULD emit `report-to` / `Report-To` pointing at a shell-owned reporting endpoint alongside the `connect-src 'none'` baseline
-- [ ] **CLASS1-02**: Shell MUST process received CSP violation reports by correlating to napplet identity via `(dTag, aggregateHash)` — enumerated MUST/SHOULD rows in the amendment
+- [x] **CLASS1-01**: Draft amendment to `NUB-CLASS-1.md` on `napplet/nubs` adding a Shell Responsibilities SHOULD row: shells SHOULD emit `report-to` / `Report-To` pointing at a shell-owned reporting endpoint alongside the `connect-src 'none'` baseline
+- [x] **CLASS1-02**: Shell MUST process received CSP violation reports by correlating to napplet identity via `(dTag, aggregateHash)` — enumerated MUST/SHOULD rows in the amendment
 - [x] **CLASS1-03**: Amendment MAY be merged into NUB-IDENTITY amendment PR if review convenience prevails, OR opened as its own PR. Roadmap decides; both paths produce the same spec surface. Coordinate with human PR-open step
 
 ### Spec: NIP-5D In-Repo Amendment
@@ -143,8 +143,8 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | NUB-IDENTITY-05 | Phase 137 | Pending |
 | NUB-IDENTITY-06 | Phase 137 | Pending |
 | NUB-IDENTITY-07 | Phase 137 | Complete |
-| CLASS1-01 | Phase 137 | Pending |
-| CLASS1-02 | Phase 137 | Pending |
+| CLASS1-01 | Phase 137 | Complete |
+| CLASS1-02 | Phase 137 | Complete |
 | CLASS1-03 | Phase 137 | Complete |
 | NIP5D-01 | Phase 138 | Pending |
 | NIP5D-02 | Phase 138 | Pending |

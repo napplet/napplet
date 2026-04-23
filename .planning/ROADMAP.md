@@ -93,9 +93,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   5. Cross-repo public-hygiene grep is clean across the amendment diff, commit messages, and PR description: zero matches for `@napplet/*`, zero matches for `kehto`, zero matches for `hyprgate` (NUB-IDENTITY-06, VER-02; matches v0.28.0 VER-06 pattern).
   6. The shim-side defense-in-depth behavior is documented in the amendment as OBSERVABILITY not trust boundary: shell still enforces `class-forbidden` authoritatively per GATE-01..03 regardless of whether the shim short-circuits locally (GATE-04).
   7. The PR is branched from the existing `nub-identity` branch as `nub-identity-decrypt` (or similar); per in-repo convention, the user opens the PR — this phase's ship gate is "diff authored and hygiene-clean on branch" (NUB-IDENTITY-07, CLASS1-03).
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 - [x] 137-01-PLAN.md — Branch setup: create nub-identity-decrypt from nub-identity + merge nub-class-1 (NUB-IDENTITY-07, CLASS1-03)
-- [ ] 137-02-PLAN.md — NUB-CLASS-1 amendment: report-to SHOULD + violation-correlation MUST + Security Considerations subsection (CLASS1-01, CLASS1-02)
+- [x] 137-02-PLAN.md — NUB-CLASS-1 amendment: report-to SHOULD + violation-correlation MUST + Security Considerations subsection (CLASS1-01, CLASS1-02)
 - [ ] 137-03-PLAN.md — NUB-IDENTITY amendment: identity.decrypt envelope triad + error vocabulary + 4 shell MUSTs + Security Considerations (DEC-01..08, GATE-01..04, NUB-IDENTITY-01..05)
 - [ ] 137-04-PLAN.md — Verification: VER-02 hygiene grep + VER-03 conformance grep + 137-PHASE-NOTES.md synthesis (NUB-IDENTITY-06, NUB-IDENTITY-07, VER-02, VER-03)
 
@@ -120,5 +120,5 @@ Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 s
 |-------|----------------|--------|-----------|
 | 135. First-Party Types + SDK Plumbing | 5/5 | Complete    | 2026-04-23 |
 | 136. Empirical CSP Injection-Block Verification | 2/2 | Complete    | 2026-04-23 |
-| 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 1/4 | In Progress|  |
+| 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 2/4 | In Progress|  |
 | 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 0/TBD | Not started | - |
