@@ -275,24 +275,33 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-## Current Milestone: v0.29.0 Receive-Side Decrypt Surface
+## Current Milestone: v0.29.0 Class-Gated Decrypt Surface
 
-**Goal:** Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `relay.subscribeEncrypted` to NUB-RELAY — napplets receive plaintext rumors without touching the user's signer, plugging the NIP-07 `all_frames: true` content-script leak that defeats iframe isolation today.
+**Goal:** Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt(event) → rumor` to NUB-IDENTITY, gated by shell enforcement to napplets assigned `class: 1` (NUB-CLASS-1). Plaintext decrypt is only safe where the posture guarantees zero direct network egress; NUB-CLASS-2 napplets (approved direct-origin network access via NUB-CONNECT) MUST be refused at the shell boundary. Same milestone establishes shell-enforced detection of NIP-07 extension `window.nostr` injection via CSP `report-to`.
 
 **Target features:**
-- `relay.subscribeEncrypted` message surface on NUB-RELAY (+ `.event` / `.eose` / `.closed` / `.error` result envelopes)
-- Type additions + SDK helper `subscribeEncrypted(filters, opts)` in `@napplet/nub/relay` mirroring existing `subscribe()` ergonomics
-- NUB-RELAY spec amendment PR on public `napplet/nubs` repo with conformance table + security considerations
-- NIP-5D Security Considerations amendment documenting the NIP-07 extension `all_frames: true` leak as a known non-mitigation
+- `identity.decrypt(event) → Promise<Rumor>` on NUB-IDENTITY — auto-detects NIP-04 / direct NIP-44 / NIP-17 gift-wrap shape inside shell's handler; returns validated plaintext rumor
+- Shell-enforced class gating: shell MUST reject `identity.decrypt` from napplets not assigned `class: 1` with `class-forbidden` error envelope
+- Shell-enforced NIP-07 injection detection: NUB-CLASS-1 CSP directive gains `report-to` pointing at shell-owned endpoint; shell processes violation reports, MAY refuse-to-serve on repeat offenders
+- `@napplet/nub/identity` type additions + SDK helper + shim handler (napplet-side plumbing; zero crypto runs here)
+- NUB-IDENTITY spec amendment PR on napplet/nubs with conformance table, class-gating MUST, error vocabulary
+- NIP-5D in-repo amendment: Security Considerations subsection documenting NIP-07 `all_frames: true` injection vector, strict-CSP-nonce blocking of legacy `<script>` injection, `world: 'MAIN'` extension-API residual, structural mitigation (NUB-CLASS-1 `connect-src 'none'` traps plaintext)
 
-**Source:** SEED-002 (planted during v0.28.0 Phase 134; direction Option A locked 2026-04-23; tracks napplet/napplet#3). See `.planning/seeds/SEED-002-receive-side-decrypt-surface.md`.
+**Source:** SEED-002 (planted during v0.28.0 Phase 134; original Option A direction pivoted 2026-04-23 to identity.decrypt per user direction once napplet/nubs NUB-CLASS framework landed). See `.planning/seeds/SEED-002-receive-side-decrypt-surface.md`.
 
-**Scope:** Medium — expected 2–3 phases, following the v0.22–v0.25 NUB-amendment pattern. Phase numbering continues from v0.28.0 (starting at Phase 135).
+**Trust model:** Shell-enforced, not shim-enforced. Napplets are untrusted code per NIP-5D. Class gating, CSP injection detection, and report-to processing all run in shell space. Shim code never makes policy decisions; it only forwards.
+
+**Scope:** Medium-Large — expected 3–4 phases, straddling @napplet types + SDK, one public NUB-IDENTITY amendment PR, one in-repo NIP-5D amendment, and empirical CSP+extension validation. Phase numbering continues from v0.28.0 (starting at Phase 135).
 
 **Explicitly out of scope (for this milestone):**
-- Shell implementation of subscribe/unwrap (downstream repo concern, tracked separately)
-- Demo napplets exercising NIP-17 DMs (shell-repo concern, like v0.28.0 DEMO-01)
-- NIP-07 extension hardening itself (browser/extension ecosystem concern)
+- Shell implementation of `identity.decrypt` handler / class-gating enforcer / report-to endpoint (downstream shell repo concern, same pattern as v0.28.0 DEMO-01)
+- Demo napplets exercising NIP-17 DMs (shell-repo concern)
+- `relay.subscribeEncrypted` (Option A direction — explicitly rejected; wire-level ambient receive channel conflicts with per-call class-gated decrypt)
+- Ambient pipeline auto-decrypt (Option 1 — explicitly rejected; cannot enforce per-class policy in a delivery-time transform)
+- `relay.publishEncrypted` rewording per PR #15's deferred debt (separate milestone; Do Not Bundle)
+- NIP-07 extension hardening itself (browser/extension ecosystem concern; spec documents residual, doesn't fix)
+
+**Filename citation discipline:** Per NUB-CLASS §Citation, the amendment MUST cite class documents by file name (`NUB-CLASS-1.md`). Prose MUST say "napplets assigned `class: 1`" or "NUB-CLASS-1 napplets", never "Class 1" as primary reference.
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -415,4 +424,4 @@ Likely next candidates (ordered by current signal strength):
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-23 — v0.29.0 Receive-Side Decrypt Surface milestone started (SEED-002)*
+*Last updated: 2026-04-23 — v0.29.0 Class-Gated Decrypt Surface milestone started (SEED-002, pivoted to identity.decrypt direction)*
