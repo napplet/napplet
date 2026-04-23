@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: executing
 stopped_at: Completed 138-02-PLAN.md (parallel wave 1)
-last_updated: "2026-04-23T15:19:18.665Z"
+last_updated: "2026-04-23T15:23:04.163Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 138 (in-repo-nip-5d-amendment-docs-final-verification) — EXECUTING
-Plan: 2 of 2
+Phase: 138
+Plan: Not started
 Status: Ready to execute
 Last activity: 2026-04-23
 
