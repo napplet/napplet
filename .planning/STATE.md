@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: executing
-stopped_at: Completed 135-01-PLAN.md — first-party types for identity.decrypt (3 tasks, 4 files, +199 LOC, 3 commits). Plan 02 is unblocked; workspace-wide type-check intentionally RED until 135-02+135-03 land runtime binding.
-last_updated: "2026-04-23T11:36:56.887Z"
+stopped_at: Completed 135-02-PLAN.md — shim runtime for identity.decrypt (3 tasks, 3 files, +43 LOC, 3 commits). window.napplet.identity.decrypt is now live. Plan 03 (SDK bare-name helper + central sdk re-exports) is unblocked.
+last_updated: "2026-04-23T11:43:11.235Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 ## Current Position
 
 Phase: 135 (first-party-types-sdk-plumbing) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-23
 
@@ -69,6 +69,9 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 135]: TYPES-LOCK: Rumor = UnsignedEvent & { id: string } (nostr-tools canonical; NO sig field) locked into @napplet/core public surface
 - [Phase 135]: TYPES-LOCK: IdentityDecryptErrorCode 8-value string-literal union (class-forbidden, signer-denied, signer-unavailable, decrypt-failed, malformed-wrap, impersonation, unsupported-encryption, policy-denied) shipped as public wire vocabulary
 - [Phase 135]: DEVIATION: Added UnsignedEvent + Rumor to @napplet/core barrel (src/index.ts) — Rule 2 (required for cross-package consumption; plan's must-haves trued)
+- [Phase 135]: SHIM-03 surgical-edit count: TWO textual edits in central shim (import + mount), both within identity-NUB hosting lines; existing prefix+suffix routing absorbs new envelope types
+- [Phase 135]: GATE-04 shim-side class-short-circuit DEFERRED — window.napplet.class slot not yet on NappletGlobal in v0.29.0 milestone; shell enforcement authoritative
+- [Phase 135]: Plan 02 workspace-wide type-check went fully green (stronger than plan predicted) — SDK identity namespace is a partial proxy; missing decrypt proxy doesn't fail type-check
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -99,6 +102,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T11:36:56.884Z
-Stopped at: Completed 135-01-PLAN.md — first-party types for identity.decrypt (3 tasks, 4 files, +199 LOC, 3 commits). Plan 02 is unblocked; workspace-wide type-check intentionally RED until 135-02+135-03 land runtime binding.
+Last session: 2026-04-23T11:43:11.233Z
+Stopped at: Completed 135-02-PLAN.md — shim runtime for identity.decrypt (3 tasks, 3 files, +43 LOC, 3 commits). window.napplet.identity.decrypt is now live. Plan 03 (SDK bare-name helper + central sdk re-exports) is unblocked.
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.
