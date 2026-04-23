@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: verifying
 stopped_at: Completed 137-04-PLAN.md
-last_updated: "2026-04-23T14:51:55.973Z"
+last_updated: "2026-04-23T14:58:37.497Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 137 (public-napplet-nubs-amendments-nub-identity-nub-class-1-bundled) — EXECUTING
-Plan: 4 of 4
+Phase: 138
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-23
 
