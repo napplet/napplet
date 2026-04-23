@@ -34,11 +34,11 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ### `@napplet/nub/identity` Types + SDK (First-Party)
 
-- [ ] **TYPES-01**: `IdentityDecryptMessage`, `IdentityDecryptResultMessage`, `IdentityDecryptErrorMessage` interfaces added to `packages/nub/src/identity/types.ts` with correct discriminated-union membership
-- [ ] **TYPES-02**: `IdentityDecryptErrorCode` exported string-literal-union type with 8 codes from DEC-04
-- [ ] **TYPES-03**: `Rumor` type either added to `@napplet/core` or imported from a minimal internal helper — `UnsignedEvent & { id: string }` shape; no fake `sig` field
-- [ ] **TYPES-04**: `NappletIdentity.decrypt(event)` method type added to `@napplet/core` `NappletGlobal['identity']` surface with signature `(event: NostrEvent) => Promise<{ rumor: Rumor, sender: string }>`
-- [ ] **TYPES-05**: Discriminated-union exhaustiveness preserved: existing `IdentityMessage` / `IdentityInbound` / `IdentityOutbound` unions extended to include the 3 new message types; `never`-fallback assertion in shim handler enforces
+- [x] **TYPES-01**: `IdentityDecryptMessage`, `IdentityDecryptResultMessage`, `IdentityDecryptErrorMessage` interfaces added to `packages/nub/src/identity/types.ts` with correct discriminated-union membership
+- [x] **TYPES-02**: `IdentityDecryptErrorCode` exported string-literal-union type with 8 codes from DEC-04
+- [x] **TYPES-03**: `Rumor` type either added to `@napplet/core` or imported from a minimal internal helper — `UnsignedEvent & { id: string }` shape; no fake `sig` field
+- [x] **TYPES-04**: `NappletIdentity.decrypt(event)` method type added to `@napplet/core` `NappletGlobal['identity']` surface with signature `(event: NostrEvent) => Promise<{ rumor: Rumor, sender: string }>`
+- [x] **TYPES-05**: Discriminated-union exhaustiveness preserved: existing `IdentityMessage` / `IdentityInbound` / `IdentityOutbound` unions extended to include the 3 new message types; `never`-fallback assertion in shim handler enforces
 - [ ] **SHIM-01**: `packages/nub/src/identity/shim.ts` handler routes `identity.decrypt.result` and `identity.decrypt.error` to the correct pending Promise via correlation id; pending map cleanup on resolve/reject
 - [ ] **SHIM-02**: `packages/nub/src/identity/shim.ts` exposes a `decrypt(event)` function bound to `window.napplet.identity.decrypt` via the central shim's install function; returns a `Promise<{ rumor, sender }>` that rejects with a typed `IdentityDecryptError` on `identity.decrypt.error`
 - [ ] **SDK-01**: `packages/nub/src/identity/sdk.ts` exports a bare-name `identityDecrypt(event)` helper wrapping `window.napplet.identity.decrypt` with a `requireNapplet()` guard (mirrors existing identity helpers)
@@ -125,11 +125,11 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | DETECT-02 | Phase 136 | Pending |
 | DETECT-03 | Phase 136 | Pending |
 | DETECT-04 | Phase 136 | Pending |
-| TYPES-01 | Phase 135 | Pending |
-| TYPES-02 | Phase 135 | Pending |
-| TYPES-03 | Phase 135 | Pending |
-| TYPES-04 | Phase 135 | Pending |
-| TYPES-05 | Phase 135 | Pending |
+| TYPES-01 | Phase 135 | Complete |
+| TYPES-02 | Phase 135 | Complete |
+| TYPES-03 | Phase 135 | Complete |
+| TYPES-04 | Phase 135 | Complete |
+| TYPES-05 | Phase 135 | Complete |
 | TYPES-06 | Phase 135 | Pending |
 | SHIM-01 | Phase 135 | Pending |
 | SHIM-02 | Phase 135 | Pending |

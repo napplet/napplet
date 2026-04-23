@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
-status: Roadmap created — ready to plan Phase 135
-stopped_at: "Roadmap for v0.29.0 authored 2026-04-23. 4 phases (135–138) derived from 51 REQ-IDs across 11 categories. 100% requirement coverage verified. Phase 135 and 136 are parallel-eligible; 137 blocks on both; 138 blocks on 135+137."
-last_updated: "2026-04-23T00:00:00.000Z"
+status: executing
+stopped_at: Completed 135-01-PLAN.md — first-party types for identity.decrypt (3 tasks, 4 files, +199 LOC, 3 commits). Plan 02 is unblocked; workspace-wide type-check intentionally RED until 135-02+135-03 land runtime binding.
+last_updated: "2026-04-23T11:36:56.887Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-23)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Milestone v0.29.0 Class-Gated Decrypt Surface — Phase 135 ready to plan
+**Current focus:** Phase 135 — first-party-types-sdk-plumbing
 
 ## Current Position
 
-Phase: 135 of 138 (First-Party Types + SDK Plumbing)
-Plan: — (roadmap created; plans TBD)
-Status: Ready to plan Phase 135
-Last activity: 2026-04-23 — ROADMAP.md authored; 51/51 REQ-IDs mapped
+Phase: 135 (first-party-types-sdk-plumbing) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-04-23
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -66,6 +66,9 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - v0.28.0: Strict CSP capability `perm:strict-csp` raises the attacker's bar for exfiltration. Does NOT on its own block NIP-07 extension content-scripts injected via `chrome.scripting.executeScript({world:'MAIN'})`; DOES block legacy `<script>`-tag injection when `script-src` is nonce-based
 - v0.24.0: `window.nostr` removed from napplets; no signer access in the sandboxed iframe
 - v0.24.0: `relay.publishEncrypted` established the send-side shell-mediated crypto pattern (v0.29.0 mirrors the one-shot request/result shape on receive-side)
+- [Phase 135]: TYPES-LOCK: Rumor = UnsignedEvent & { id: string } (nostr-tools canonical; NO sig field) locked into @napplet/core public surface
+- [Phase 135]: TYPES-LOCK: IdentityDecryptErrorCode 8-value string-literal union (class-forbidden, signer-denied, signer-unavailable, decrypt-failed, malformed-wrap, impersonation, unsupported-encryption, policy-denied) shipped as public wire vocabulary
+- [Phase 135]: DEVIATION: Added UnsignedEvent + Rumor to @napplet/core barrel (src/index.ts) — Rule 2 (required for cross-package consumption; plan's must-haves trued)
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -96,6 +99,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T00:00:00.000Z
-Stopped at: Roadmap authored with 4 phases (135–138) covering 51 REQ-IDs at 100% coverage; STATE.md phase-map populated; REQUIREMENTS.md traceability table populated.
+Last session: 2026-04-23T11:36:56.884Z
+Stopped at: Completed 135-01-PLAN.md — first-party types for identity.decrypt (3 tasks, 4 files, +199 LOC, 3 commits). Plan 02 is unblocked; workspace-wide type-check intentionally RED until 135-02+135-03 land runtime binding.
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.
