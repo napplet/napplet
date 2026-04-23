@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.28.0
 milestone_name: Browser-Enforced Resource Isolation
-status: ready-for-audit
-stopped_at: Phase 134 plan-complete — all 7 VER-IDs (VER-01..07) verified PASS. NUB-RESOURCE.md spec drift was resolved pre-plan in 2f80342 (code→error/message?), verified as no-op at task 4. 134-VERIFICATION.md authored with per-gate evidence. STATE/PROJECT/REQUIREMENTS flipped for milestone audit. Ready for `/gsd:audit-milestone v0.28.0`.
-last_updated: "2026-04-23T09:34:00.000Z"
-last_activity: 2026-04-23 -- Phase 134 plan-complete; milestone ready for audit
+status: Milestone ready for audit
+stopped_at: "Phase 134 plan-complete — all 7 VER-IDs (VER-01..07) verified PASS with /tmp log evidence per AGENTS.md. NUB-RESOURCE.md spec drift was resolved pre-plan in 2f80342 (Task 4 PRE-WORK confirmed as no-op). 134-VERIFICATION.md authored at `.planning/phases/134-verification-milestone-close/134-VERIFICATION.md`. STATE flipped to `status: ready-for-audit`. PROJECT.md v0.28.0 moved from Current Milestone to Shipped. REQUIREMENTS.md VER-01..07 rows flipped Pending → Complete. Milestone v0.28.0 Browser-Enforced Resource Isolation ready for audit."
+last_updated: "2026-04-23T07:53:38.626Z"
+last_activity: 2026-04-23
 progress:
   total_phases: 10
   completed_phases: 10
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 Phase: 134 (verification-milestone-close) — PLAN-COMPLETE
 Plan: 1 of 1 (134-01-PLAN.md) — complete
 Status: Milestone ready for audit
-Last activity: 2026-04-23 -- Phase 134 plan-complete; all 7 VER-IDs verified PASS
+Last activity: 2026-04-23
 
 Progress: [██████████] 100% (10/10 phases plan-complete; v0.28.0 ready for `/gsd:audit-milestone`.)
 

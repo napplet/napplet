@@ -185,6 +185,74 @@
 
 ---
 
+## Milestone: v0.28.0 — Browser-Enforced Resource Isolation
+
+**Shipped:** 2026-04-23
+**Phases:** 10 (125–134) | **Plans:** 10 | **Tasks:** 32
+
+### What Was Built
+
+- **Phase 125 — Core Type Surface:** `NubDomain` extended with `'resource'` (10th domain), `NappletGlobal.resource` required slot with `bytes(url, opts?)` and `bytesAsObjectURL(url, opts?)` types. `@napplet/core` tsconfig adds `DOM`/`DOM.Iterable` lib so `Blob` is in scope. Intentional mid-milestone breakage (DEF-125-01) — shim type-check cascade red until Phase 128 wires the runtime.
+- **Phase 126 — Resource NUB Scaffold + `data:` Scheme:** `@napplet/nub/resource` subpath ships full request/result/cancel/cache/lifecycle dispatch path. Single-flight `Map<URL, Promise<Blob>>` with finally-delete; `data:` decoded inline via `fetch(url).then(r=>r.blob())` with zero postMessage; `AbortSignal` → `resource.cancel` envelope + DOMException; `bytesAsObjectURL` returns synchronous `{ url, revoke }` with non-enumerable `ready` Promise extension (Option C).
+- **Phase 127 — NUB-RELAY Sidecar Amendment:** Optional `resources?: ResourceSidecarEntry[]` field on `RelayEventMessage`. Relay shim invokes `hydrateResourceCache()` BEFORE `onEvent()` — ordering load-bearing for SIDE-04 (synchronous `bytes(sidecarUrl)` inside onEvent resolves from cache with zero round-trips). Type-only borrow pattern: relay NUB imports `ResourceSidecarEntry` from `../resource/types.js` (sibling relative) — ownership stays with resource NUB.
+- **Phase 128 — Central Shim Integration:** `window.napplet.resource = { bytes, bytesAsObjectURL }` mounted via 4 surgical edits (import block / routing branch / global mount / install call). Aliased imports (`resourceBytes`/`resourceBytesAsObjectURL`) matching existing `notifySend`/`configRegisterSchema` precedent. DEF-125-01 closed — workspace-wide type-check green across 14 packages for the first time since Phase 125.
+- **Phase 129 — Central SDK Integration:** `@napplet/sdk` exposes resource namespace via 4 surgical edits (namespace const / type re-exports / DOMAIN const / shim installer + SDK helper re-exports), all sourced from `@napplet/nub/resource` barrel. `hydrateResourceCache` deliberately NOT re-exported (relay-shim-internal borrow-don't-own per Phase 127).
+- **Phase 130 — Vite-Plugin Strict CSP:** 10-directive CSP baseline, nonce-based script-src, dev/prod connect-src split (HMR-relaxed vs `'none'`), meta-must-be-first-head-child assertion. 4 project-killer pitfalls (1/2/18/19) fail the build with prefixed `[nip5a-manifest]` diagnostics. Hand-rolled regex (zero new runtime deps). `Nip5aManifestOptions.strictCsp?: boolean | StrictCspOptions` is opt-in; back-compat preserved.
+- **Phase 131 — NIP-5D In-Repo Spec Amendment:** Added `### Browser-Enforced Resource Isolation` subsection documenting strict-CSP SHOULD posture, `perm:strict-csp` capability identifier, NUB-RESOURCE cross-reference, `allow-same-origin` prohibition reasoning.
+- **Phase 132 — Cross-Repo Nubs PRs:** Four draft PRs authored at `.planning/phases/132-cross-repo-nubs-prs/drafts/`: NUB-RESOURCE (new spec, 300 lines, 4 schemes / 8-code error vocabulary / SSRF-at-DNS-resolution-time MUSTs / SVG sandboxed-Worker-no-network rasterization MUST); NUB-RELAY amendment (135 lines, default-OFF sidecar + per-event-kind allowlist); NUB-IDENTITY clarification (41 lines, doc-only); NUB-MEDIA clarification (40 lines, doc-only). Zero `@napplet/`, zero `kehto`, zero `hyprgate` across all 4 drafts. Manual git ops (branches, pushes, 4 PRs) deferred as a human follow-up.
+- **Phase 133 — Documentation + Demo Coordination:** 5 package READMEs + `skills/build-napplet/SKILL.md` + new `specs/SHELL-RESOURCE-POLICY.md` (195 lines) + root README + PROJECT.md + NUB-RESOURCE draft Implementation Note all reflect v0.28.0 surface. Per-task atomic commits + automated grep verification + workspace `pnpm -r type-check` as gating signal. Public-repo hygiene split for mixed-audience phases (per-file grep).
+- **Phase 134 — Verification & Milestone Close:** VER-01..07 all PASS. Workspace build+type-check green across 14 packages (VER-01); Playwright positive-CSP-block `{cspViolation:true, requestFailedForBlocked:true}` (VER-02); SVG rejection spec conformance 3/3/3 (VER-03); single-flight stampede N=10 → envelopeCount=1 all-same-Blob (VER-04); sidecar default-OFF + privacy rationale + per-event-kind allowlist (VER-05); cross-repo zero-grep 0/0/0/0 (VER-06); tree-shake relay-types-only bundle 74 bytes with 0 resource-shim symbols (VER-07).
+
+### What Worked
+
+- **Planned-breakage pattern (DEF-125-01)** — Phase 125 introduced the required type slot knowing Phase 128 would wire the runtime. Workspace-wide type-check was the gating signal rather than per-package. Pattern now locked: "introduce required type slot in Phase N, wire runtime in Phase N+M, workspace-wide type-check is the load-bearing acceptance criterion."
+- **10-NUB central-shim integration pattern** — 4 surgical edits (import, routing, mount, install) scaled perfectly from the 9-NUB precedent. Zero structural rewrites; each new NUB costs exactly 4 edits.
+- **Single-flight cache with raw URL key** — N=10 stampede proven (1 envelope, all-same-Blob). Canonicalization deferred to NUB-RESOURCE spec without gating the v0.28.0 ship.
+- **Cross-NUB borrow-don't-own** — `ResourceSidecarEntry` defined once in resource NUB, type-only imported by relay NUB via sibling relative. No runtime cross-domain dep; ownership is unambiguous. Pattern now applies to any future sidecar-style composition.
+- **Hand-rolled regex for CSP extraction** — zero new runtime deps per STACK.md. Rule 1 bug fix caught by smoke test (`[^"']` capture broke on CSP single-quoted values like `'none'`/`'self'`; fix: pin to double-quote delimiters).
+- **closeBundle restructure (CSP assertion FIRST)** — strict-CSP enforcement moved above the `VITE_DEV_PRIVKEY_HEX` early-return so security is INDEPENDENT of optional features. Pattern locked: load-bearing security checks must run regardless of optional features.
+- **Single-plan phases** — every phase had exactly 1 plan. Kept the wave graph trivial (10 waves of 1 plan each); zero plan-level dependencies within a phase; perfect for the autonomous workflow.
+- **Per-task atomic commits in documentation phase (133)** — automated grep verification after each edit + workspace type-check as load-bearing gate made the 8-task doc sweep safe and reviewable. Public-repo hygiene handled per-file (clean on public-destined; expected on first-party) rather than single repo-wide rule.
+
+### What Was Inefficient
+
+- **Phase 128 smoke-test scaffolding** — required Node-side `globalThis.document` stub (querySelector + addEventListener) alongside `globalThis.window` because keys-shim and config-shim access `document` at install time. First-time tax for this milestone; future smoke tests should reuse the stub pattern.
+- **Phase 127 smoke test scaffolding** — Node 18+ `globalThis.crypto` is a non-configurable getter; plan's literal assignment crashed. Fix: guarded `Object.defineProperty` in `/tmp` test only. Future smoke tests default to the guarded form.
+- **Phase 130 tsup entry for csp.ts** — tsup chunk-splits sibling modules into hashed shared chunks by default; `dist/csp.js` only emits if listed as a separate entry. Cost was a few minutes of re-investigation; pattern now: add a tsup entry when sibling modules need Node-importable `dist/<name>.js` for verification scripts.
+- **Phase 133 spec-vs-TS drift** — NUB-RESOURCE.md draft's error envelope used `code:` + `error?:` while shipped `packages/nub/src/resource/types.ts` uses `error:` + `message?:`. Caught post-Phase-133, resolved in commit `2f80342` pre-Phase-134. Root cause: draft was authored independently of TypeScript source; add a cross-reference lint in a future phase-by-phase drift-check skill.
+- **Playwright CJS-only forced `.mjs` → `.cjs`** — system Playwright install (pacman) ships CJS only; VER-02 smoke script had to be rewritten. Logged for test-harness tooling notes; no product impact.
+- **No VALIDATION.md for any phase** — Nyquist validation consistently missing. Continues the pattern observed in v0.4.0/v0.5.0/v0.9.0. Audit flagged as discovery-only, non-blocking.
+
+### Patterns Established
+
+- **Planned-breakage milestones** — introduce required type slots with expected cascade red; workspace-wide type-check is the gating signal; downstream phases close the cascade.
+- **Cross-NUB type-borrow** — type-only imports via sibling relative (`../<sibling>/types.js`) with `verbatimModuleSyntax` compliance. Ownership stays with defining NUB; consumers don't create runtime cross-domain deps.
+- **Inline scheme decoders in shim** — `data:` precedent; future schemes plug in at NUB-RESOURCE spec level without postMessage cost for trivially-derivable bytes.
+- **Synchronous-handle-with-Promise-extension** (Option C) — `bytesAsObjectURL` returns `{ url, revoke }` with non-enumerable `ready` Promise extension. Preserves locked return shape while exposing await path. Pattern for any future lifecycle-managed resource handle.
+- **Opt-in security posture via build-plugin** — `strictCsp?: boolean | StrictCspOptions`; back-compat when omitted; build-time hard-failure for known pitfalls. Contrasts with runtime capability negotiation (`perm:strict-csp`) — two independent decisions.
+- **Per-task atomic commits with grep verification** — documentation phase pattern. Each edit → commit → automated grep → workspace type-check as load-bearing gate.
+- **Cross-repo drafts as first-class artifacts** — when a milestone's protocol surface lands upstream, author drafts in `.planning/phases/N-cross-repo-nubs-prs/drafts/` with strict public-repo hygiene (zero `@napplet/*`, zero private-repo refs). Manual git ops explicitly deferred to a human follow-up.
+
+### Key Lessons
+
+- **DEF markers for intentional mid-milestone breakage are load-bearing.** Without DEF-125-01 documenting "Phase 125 cascade-reds shim type-check until Phase 128 wires it", the next person would mistake planned breakage for a real regression.
+- **Workspace-wide `pnpm -r type-check` is a better gate than per-package** for cross-package integration milestones. Per-package green can hide a shim-level cascade.
+- **Cross-repo drafts need their own public-repo hygiene lint.** Grep for `@napplet/`, `kehto`, `hyprgate`, `packages/(nub|shim|sdk|vite-plugin)` per-file. Repo-wide rules are too blunt for mixed-audience phases.
+- **Tree-shake verification must target shared chunks too.** tsup chunk-splits runtime across hashed shared chunks (`chunk-RHDDLJ3D.js` / `chunk-OV3R23GE.js`); literal grep on `dist/<file>.js` will miss code that lives in chunks. End-to-end smoke tests are the load-bearing acceptance criterion.
+- **CSP `[^"']` capture is wrong.** CSP values legitimately contain single quotes (`'none'`/`'self'`); extraction regex must pin to double-quote delimiters.
+- **Demo delegation (Option B) is a first-class milestone option.** When demos require shell-side code living in another repo, explicit delegation + coordination note keeps the milestone shippable without downstream repo work.
+
+### Cost Observations
+
+- Timeline: 2026-04-20 → 2026-04-23 (~3 days, including ~1 day of pause between Phase 133 completion and Phase 134 execution)
+- 24 files changed (packages + specs + skills + root README), +1,695 / −69 lines
+- 10 phases executed sequentially (no parallelism; each phase single-plan with hard deps on previous phase in many cases)
+- Executor model: opus; Verifier model: sonnet (consistent with model profile `quality`)
+- 2 subagent spawns for the autonomous close: 1 executor (134-01) + 1 integration checker
+- Retrospective coverage: every phase has SUMMARY.md + VERIFICATION.md; zero VALIDATION.md (Nyquist gap continues)
+
+---
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | Plans | Tests | LOC (TS) | Duration |
@@ -199,12 +267,16 @@
 | v0.8.0 Shim/SDK Split | 4 | 10 | 220+ | — | 1 day |
 | v0.9.0 Identity & Trust | 3 | 7 | 220+ | +6,226 | 2 days |
 | v0.11.0 Clean up Side Panel | 3 | 4 | 220+ | +1,937 | 1 day |
+| v0.28.0 Browser-Enforced Resource Isolation | 10 | 10 | (unchanged) | +1,695/−69 | 3 days |
 
 ### Observations
 
 - **Consistent short milestones** — each milestone ships in 1-2 focused sessions. v0.11.0 was the smallest yet (3 phases, 4 plans).
-- **Test count stable** — no new automated tests since v0.4.0. 220+ tests remain the baseline.
-- **Integration checker is essential** — found real issues in every milestone it has run: argument order bugs (v0.5.0), SPEC divergences (v0.9.0), hidden demo TS errors (v0.9.0).
-- **Nyquist validation consistently incomplete** — v0.4.0, v0.5.0, and v0.9.0 all had missing or incomplete VALIDATION.md files. This is the most persistent process gap.
-- **SUMMARY frontmatter quality varies** — `requirements_completed` field is populated inconsistently. The 3-source cross-reference degrades when summaries omit it.
+- **v0.28.0 is the widest milestone** — 10 phases. Justified by single-plan phases with hard inter-phase deps (type scaffold → wire runtime → amend spec → cross-repo drafts → doc sweep → verify). Pattern: deep-dependency milestones benefit from many small phases rather than fewer big ones.
+- **Test count stable** — no new automated tests since v0.4.0. 220+ tests remain the baseline. v0.28.0 added 3 smoke tests (in `/tmp`, not shipped) + 1 Playwright positive-block simulation (VER-02) — none committed.
+- **Integration checker is essential** — found real issues in every milestone it has run: argument order bugs (v0.5.0), SPEC divergences (v0.9.0), hidden demo TS errors (v0.9.0). v0.28.0: all 9 handoffs WIRED, all 5 flows WIRED — clean report.
+- **Nyquist validation consistently incomplete** — v0.4.0, v0.5.0, v0.9.0, and now v0.28.0 all had missing or incomplete VALIDATION.md files. Four consecutive milestones. Most persistent process gap. Discovery-only treatment in the audit workflow means this never becomes a blocker on its own.
+- **SUMMARY frontmatter quality varies** — `requirements_completed` field is populated inconsistently. The 3-source cross-reference degrades when summaries omit it. v0.28.0 was better but still patchy (Phase 125/126/127 missing, Phase 129/132/133 present).
 - **Small milestones can skip formal audit** — v0.11.0 shipped cleanly without a milestone audit, suggesting the overhead isn't justified for 3-phase milestones with complete requirements.
+- **Cross-repo work is a distinct milestone shape** — v0.28.0 introduced drafts-in-repo + manual-PR-follow-up pattern. Trackers (`kehto#9`, issue `napplet/napplet#3`) live in other repos; drafts live here; upstream PRs are a human follow-up. Pattern worth repeating for spec-heavy milestones.
+- **Planned-breakage milestones need explicit DEF markers** — v0.28.0 was the first to formalize this via DEF-125-01. Workspace-wide type-check became the load-bearing gate rather than per-package. Pattern worth keeping for milestones that introduce required type slots before wiring them.
