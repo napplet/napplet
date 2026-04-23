@@ -253,6 +253,58 @@
 
 ---
 
+## Milestone: v0.29.0 — Class-Gated Decrypt Surface
+
+**Shipped:** 2026-04-23
+**Phases:** 4 | **Plans:** 13 (one Rule 3 gap-closure iteration) | **Tasks:** 33
+
+### What Was Built
+
+- `identity.decrypt(event) → Promise<{ rumor, sender }>` on NUB-IDENTITY — shell-mediated NIP-04 / direct NIP-44 / NIP-17 gift-wrap auto-detect decrypt. 8-code `IdentityDecryptErrorCode` vocabulary, 4 shell MUSTs (class-gating, outer-sig-verify, impersonation-check, outer-`created_at` hiding), `Rumor = UnsignedEvent & { id: string }` (nostr-tools canonical).
+- Shell-enforced class gating: `identity.decrypt` rejected for napplets not assigned `class: 1` per NUB-CLASS-1, with `class-forbidden` error.
+- Shell-enforced NIP-07 injection detection: CSP `report-to` directive correlated to `(dTag, aggregateHash)`; Chromium 144+ empirically proven to block legacy `<script>`-tag injection and fire `securitypolicyviolation` with `violatedDirective: "script-src-elem"`. `world: 'MAIN'` extension-API bypass documented as honest residual with NUB-CLASS-1 `connect-src 'none'` as structural mitigation.
+- First-party surface: `@napplet/nub/identity` types + shim + SDK; `@napplet/core` adds `Rumor` + `UnsignedEvent`; `@napplet/sdk` re-exports via 4-surgical-edit pattern; workspace `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 packages.
+- Cross-repo NUB-IDENTITY + NUB-CLASS-1 amendments authored on napplet/nubs branch `nub-identity-decrypt` (human opens PR); zero `@napplet/*` / `kehto` / `hyprgate` leaks; filename citation discipline (`NUB-CLASS-1.md` 7×, zero "Class 1" primary references).
+- In-repo `specs/NIP-5D.md` `### NIP-07 Extension Injection Residual` Security Considerations subsection; 4 docs surfaces updated.
+
+### What Worked
+
+- **Seed-driven direction + mid-milestone pivot.** SEED-002 locked Option A (`relay.subscribeEncrypted`) at planting. When the user pushed back during requirements, consulting napplet/nubs current state (PR #15 merged, PRs #16/#17/#18 introducing NUB-CLASS authority framework) produced a fundamentally cleaner direction — Option 2 (`identity.decrypt`) with shell-side class gating. Seeds are checkpoints, not contracts.
+- **Empirical pre-verification of spec language.** Phase 136 ran the Playwright CSP-block simulation BEFORE Phase 137 authored the amendment. The spec now cites observed Chromium 144+ behavior (`script-src-elem` variant) rather than assumed behavior.
+- **Shell-enforcement invariant as a cross-phase discipline.** Recorded in STATE.md decisions immediately after the pivot. Every phase honored it.
+- **Filename citation discipline caught by plan-checker.** Planner's first draft said "MAY refuse-to-serve" in prose that didn't match VER-03 Group E's exact grep targets. Checker caught it; revision added the exact phrases to both amendments.
+- **Parallel execution where file boundaries permit.** Phase 138's two plans touched disjoint files; executor ran in parallel. Phase 137's amendment plans edited disjoint files but serialized on git working tree — planner initially put them in Wave 2 concurrent; plan-checker caught the race; revision serialized them.
+
+### What Was Inefficient
+
+- **SEED direction pre-lock was misleading.** Inherited "Option A locked" context made me skip the pivot question during milestone kickoff — requirements went into research based on Option A, which then had to be archived as `v0.29.0-option-a-research-superseded/` when the user pushed back. Lesson: seed direction statements should carry an explicit confirm-on-surface clause.
+- **Gap closure surfaced via verifier, not planner.** Phase 135's two gaps (Rumor not re-exported from `@napplet/nub/identity`; no `never`-fallback exhaustiveness) were both identifiable from ROADMAP SC1 literal text. Lesson: when ROADMAP success criteria name specific import paths or assertion patterns, plans must grep-match those names in their acceptance criteria.
+
+### Patterns Established
+
+- **Pivot-mid-milestone → archive-superseded-research.** `.planning/milestones/v{X.Y}-option-{N}-research-superseded/` with README explaining what survives as substrate and what's wrong. Requirements drafters read the README before inheriting substrate.
+- **Empirical verification phase as spec input.** Phase 136 produced `136-PHASE-NOTES.md` with 7 grep-verifiable literal strings Phase 137 cites verbatim.
+- **Bundled cross-repo amendment under one branch.** Phase 137 bundled both NUB amendments into branch `nub-identity-decrypt`. One PR, one hygiene-grep gate.
+- **3-channel public-hygiene grep.** VER-02 grepped branch diff + commit log + PR body preview.
+- **Shell-enforced mechanism + honest-residual pattern.** Name what's enforceable, name what's residual, don't blur the line.
+
+### Key Lessons
+
+- **Check upstream state (napplet/nubs PRs) before milestone kickoff.** When the milestone touches cross-repo spec surface, the nubs repo state can shift direction significantly. A 30-second `gh pr list --repo napplet/nubs` at milestone start would have surfaced NUB-CLASS availability and triggered the pivot before research spawned.
+- **Plan-check is worth the overhead for spec-authoring phases.** Plan-checker caught 2 issues in Phase 137 that would have produced single-pass failure in Plan 04's VER-03 gate.
+- **Class-gated-decrypt is the right trust-boundary shape for shell-mediated crypto.** Plaintext containment tied to posture ("`connect-src 'none'` = plaintext trapped") creates a single invariant easy to reason about and test. NUB-CLASS-2 napplets silently exfiltrating decrypted DMs to user-approved origins was the clarifying failure mode.
+
+### Cost Observations
+
+- Timeline: 2026-04-23 start → 2026-04-23 ship (same-day autonomous run)
+- 4 phases, 13 plans, 33 tasks
+- One gap-closure iteration (Phase 135-05); one plan-check revision (Phase 137)
+- Executor: opus; Verifier/Plan-checker: sonnet
+- ~20 subagent spawns (4 planners + 4 plan-checkers + ~10 executors + 4 phase-verifiers + 1 integration-checker)
+- Every phase has SUMMARY.md + VERIFICATION.md. Zero VALIDATION.md (Nyquist gap continues — fifth consecutive milestone)
+
+---
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | Plans | Tests | LOC (TS) | Duration |
@@ -268,6 +320,7 @@
 | v0.9.0 Identity & Trust | 3 | 7 | 220+ | +6,226 | 2 days |
 | v0.11.0 Clean up Side Panel | 3 | 4 | 220+ | +1,937 | 1 day |
 | v0.28.0 Browser-Enforced Resource Isolation | 10 | 10 | (unchanged) | +1,695/−69 | 3 days |
+| v0.29.0 Class-Gated Decrypt Surface | 4 | 13 | (unchanged) | +~600 | 1 day |
 
 ### Observations
 
