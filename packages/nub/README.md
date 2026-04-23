@@ -139,6 +139,60 @@ Errors arrive as one of 8 typed codes: `not-found`, `blocked-by-policy`, `timeou
 See [NUB-RESOURCE](https://github.com/napplet/nubs) for the normative spec, the
 default shell resource policy, and the SVG rasterization MUSTs.
 
+## Identity NUB (v0.29.0)
+
+The `identity` domain gains a class-gated receive-side decrypt primitive in v0.29.0 —
+`identity.decrypt(event)` — closing the NIP-17 / NIP-59 gift-wrap gap. The shell
+owns NIP-04 / direct NIP-44 / NIP-17 gift-wrap unwrap logic; napplets receive a
+validated `{ rumor, sender }` shape where `sender` is shell-authenticated from the
+seal signature (not napplet-derived from `rumor.pubkey`).
+
+```ts
+import '@napplet/shim';
+import type { Rumor } from '@napplet/nub/identity';
+
+// Given an incoming NIP-17 kind-1059 gift-wrap, NIP-44 ciphertext, or NIP-04 event:
+const { rumor, sender } = await window.napplet.identity.decrypt(giftWrapEvent);
+
+// `rumor` is UnsignedEvent & { id: string } — nostr-tools canonical type, no sig field
+// `sender` is the shell-authenticated pubkey from the seal signature
+console.log(`${sender} says: ${rumor.content}`);
+```
+
+**Shape auto-detection.** The shell accepts NIP-04 (kind-4 content), direct NIP-44
+(kind-44 or other with NIP-44 payload shape), and NIP-17 / NIP-59 gift-wrap (kind-1059
+→ kind-13 seal → rumor). Napplets do NOT select the encryption mode — a single entry
+point serves all three.
+
+**Class gating (shell-enforced).** `identity.decrypt` is legal only for napplets
+assigned `class: 1` per `NUB-CLASS-1.md` (strict baseline posture: `connect-src 'none'`,
+zero direct network egress, so plaintext is trapped in the frame). Napplets of other
+classes — including undefined-class napplets and NUB-CLASS-2 napplets with approved
+direct-origin access — are refused at the shell boundary with a `class-forbidden`
+error. Enforcement runs shell-side; shim-side class observability is defense-in-depth
+only, never the trust boundary.
+
+**Errors** (typed `IdentityDecryptErrorCode` discriminator, 8 values):
+
+| Code | Meaning |
+|------|---------|
+| `class-forbidden` | Calling napplet is not assigned class: 1 per NUB-CLASS-1 |
+| `signer-denied` | User declined the decrypt operation at the shell prompt |
+| `signer-unavailable` | Shell signer is not available (no signed-in identity) |
+| `decrypt-failed` | Cryptographic decrypt failed (wrong key, corrupted payload) |
+| `malformed-wrap` | Outer wrap signature failed validation or payload shape is invalid |
+| `impersonation` | NIP-17 seal.pubkey !== rumor.pubkey (spec MUST per NUB-IDENTITY) |
+| `unsupported-encryption` | Event's encryption shape is not NIP-04 / NIP-44 / NIP-17 |
+| `policy-denied` | Shell policy rejects this napplet's subsequent decrypt requests |
+
+Napplets MUST NOT attempt to call `window.nostr.*` for decrypt — even if a NIP-07
+browser extension injects `window.nostr` into the iframe (see NIP-5D §Security
+Considerations), that path is architecturally forbidden and the shell enforces the
+ban at the `identity.decrypt` boundary.
+
+See the [NUB-IDENTITY](https://github.com/napplet/nubs) draft spec on `napplet/nubs`
+for the full envelope + conformance table + shell MUSTs.
+
 ## Migration
 
 Every deprecated `@napplet/nub-<domain>` package is now a 1-line re-export shim of the corresponding `@napplet/nub/<domain>` subpath. Pinned consumers keep working; new code SHOULD use the new path.

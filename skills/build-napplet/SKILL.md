@@ -255,6 +255,61 @@ if (window.napplet.shell.supports('perm:strict-csp')) {
 
 SVG inputs are silently rasterized server-side to PNG/WebP — napplets never receive `image/svg+xml` bytes (the shell rasterizes in a sandboxed Worker with no network access). The `mime` returned to the napplet is shell-classified via byte-sniffing, never the upstream `Content-Type` header.
 
+## Step 11 — Decrypt NIP-17 / NIP-44 / NIP-04 events (NUB-IDENTITY, v0.29.0+)
+
+Napplets receive NIP-17 gift-wrap events (`kind: 1059`) and direct NIP-44 / NIP-04
+ciphertext via `window.napplet.relay.subscribe`. To decrypt to plaintext, call
+`await window.napplet.identity.decrypt(event)` — the shell auto-detects the
+encryption shape and returns `{ rumor, sender }` where `sender` is
+shell-authenticated (from the seal signature for NIP-17, or from the event pubkey
+for NIP-44 / NIP-04). Napplets do NOT choose the encryption mode; a single entry
+point serves all three.
+
+```ts
+import '@napplet/shim';
+
+const sub = window.napplet.relay.subscribe(
+  [{ kinds: [1059], '#p': [myPubkey], limit: 20 }],
+  async (giftWrap) => {
+    try {
+      const { rumor, sender } = await window.napplet.identity.decrypt(giftWrap);
+      console.log(`${sender} says: ${rumor.content}`);
+    } catch (err) {
+      // err.code is one of: class-forbidden | signer-denied | signer-unavailable |
+      //                      decrypt-failed | malformed-wrap | impersonation |
+      //                      unsupported-encryption | policy-denied
+      console.warn('decrypt failed:', (err as { code?: string }).code);
+    }
+  },
+);
+```
+
+**Class gating.** `identity.decrypt` is available ONLY to napplets assigned
+`class: 1` per `NUB-CLASS-1` (strict baseline posture: `default-src 'none'`,
+`connect-src 'none'`, nonce-based `script-src`, zero direct network egress).
+Napplets of any other class — including napplets with no class assignment and
+NUB-CLASS-2 napplets that hold user-granted direct-origin access — receive a
+`class-forbidden` error at the shell boundary. The class is a deployment-time
+shell decision keyed on your manifest's `(dTag, aggregateHash)`; napplets can
+observe it at runtime via `window.napplet.class` where implemented.
+
+**Do NOT attempt `window.nostr.*` for decrypt.** Even if a NIP-07 browser
+extension injects `window.nostr` into the iframe via a content script (see
+NIP-5D §Security Considerations for the injection vector), that path is
+forbidden by spec. Shells MUST NOT route signing or encryption primitives
+through `window.nostr`; if you observe `window.nostr` inside your napplet,
+treat it as an extension residual and ignore it. The `connect-src 'none'`
+directive ensures any plaintext obtained via either path is trapped inside the
+frame regardless of origin.
+
+**Capability detection.** Check for both NUB support and the strict-CSP posture
+before depending on class-1 features:
+
+```ts
+if (!window.napplet.shell.supports('nub:identity')) { /* no identity NUB */ }
+if (!window.napplet.shell.supports('perm:strict-csp')) { /* not NUB-CLASS-1 */ }
+```
+
 ## Common pitfalls
 
 - Do not call `window.nostr` before `@napplet/shim` is imported — it is installed synchronously at module load, but all signer calls are async and require the AUTH handshake to complete first.

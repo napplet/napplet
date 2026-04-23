@@ -14,6 +14,10 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 | [@napplet/nub](packages/nub) | `@napplet/nub` | Consolidated NUB package. 10 domain subpaths (relay, storage, ifc, keys, theme, media, notify, identity, config, resource) with barrel + granular (types/shim/sdk) exports. Tree-shakable (`sideEffects: false`). Includes the v0.28.0 `resource` NUB for sandboxed byte fetching. See [packages/nub/README.md](packages/nub/README.md) for the full subpath reference. |
 | [@napplet/vite-plugin](packages/vite-plugin) | `@napplet/vite-plugin` | Vite plugin for NIP-5D manifest generation. Computes per-file SHA-256 hashes, signs a kind 35128 manifest event at build time, and injects `requires` meta tags. v0.28.0+ ships a `strictCsp` option for 10-directive browser-enforced CSP. |
 
+## Changelog
+
+- **v0.29.0** — Class-Gated Decrypt Surface. `identity.decrypt(event)` ships on NUB-IDENTITY: NIP-04 / NIP-44 / NIP-17 auto-detect decrypt returning `{ rumor, sender }` where `sender` is shell-authenticated. Gated shell-side to napplets assigned `class: 1` per NUB-CLASS-1 (strict baseline posture with `connect-src 'none'`). See `packages/nub/README.md` and [NIP-5D §Security Considerations](specs/NIP-5D.md#security-considerations) for details.
+
 ## Architecture
 
 ### Package Dependency Graph

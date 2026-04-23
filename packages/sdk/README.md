@@ -239,6 +239,33 @@ Keyboard forwarding and action keybindings. Mirrors `window.napplet.keys`.
 | `unregisterAction(actionId)` | `void` | Remove a previously registered action |
 | `onAction(actionId, callback)` | `{ close(): void }` | Register a local handler for a bound key (zero-latency, not a wire message) |
 
+### `identity`
+
+Read-only user queries and class-gated decrypt (NUB-IDENTITY). The identity namespace
+is NOT exported as a top-level SDK object — use `window.napplet.identity.*` directly
+after importing `@napplet/shim`, or use the bare-name helpers below.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `window.napplet.identity.getPublicKey()` | `Promise<string>` | Shell-owned user pubkey; never the napplet's own key |
+| `window.napplet.identity.decrypt(event)` | `Promise<{ rumor: Rumor; sender: string }>` | Class-gated decrypt (NIP-04 / NIP-44 / NIP-17 auto-detect); `sender` is shell-authenticated |
+
+Bare helper aliases are also re-exported for consumers that prefer functional imports:
+
+```ts
+import { identityGetPublicKey, identityDecrypt } from '@napplet/sdk';
+import type { Rumor } from '@napplet/sdk';
+
+const pubkey = await identityGetPublicKey();
+const { rumor, sender } = await identityDecrypt(giftWrapEvent);
+```
+
+`identity.decrypt` is legal only for napplets assigned `class: 1` per NUB-CLASS-1
+(strict baseline posture with `connect-src 'none'`). Other classes receive a
+`class-forbidden` error. See the [@napplet/nub identity section](../nub/README.md#identity-nub-v0290)
+for the 8-code error vocabulary, auto-detect behavior, and the rationale for
+class-gating this API.
+
 ### `shell`
 
 Namespaced capability query. Access via `window.napplet.shell.supports()` after importing `@napplet/shim`.
