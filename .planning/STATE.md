@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
-status: verifying
-stopped_at: "Completed 136-02-PLAN.md — Phase 136 COMPLETE. 136-PHASE-NOTES.md synthesized (93 lines) with all 7 required literal strings grep-verified (GREP_EXIT=0); DETECT-02/03/04 documentation gates locked for Phase 137 amendment author. Phases 135 + 136 done (v0.29.0 wave 1 parallel-eligible); Phase 137 NUB-IDENTITY + NUB-CLASS-1 bundled amendment can begin (/gsd:plan-phase 137)."
-last_updated: "2026-04-23T13:42:22.091Z"
+status: executing
+stopped_at: Completed 137-01-PLAN.md — nub-identity-decrypt branch created on ~/Develop/nubs with both NUB files present (merge commit 031c7fa); zero push, zero PR; hygiene clean. Ready for 137-02 (NUB-IDENTITY amendment body) + 137-03 (NUB-CLASS-1 amendment body) on the same branch.
+last_updated: "2026-04-23T14:23:07.499Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 11
+  completed_plans: 8
   percent: 86
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-23)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 136 — empirical-csp-injection-block-verification
+**Current focus:** Phase 137 — public-napplet-nubs-amendments-nub-identity-nub-class-1-bundled
 
 ## Current Position
 
-Phase: 137
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 137 (public-napplet-nubs-amendments-nub-identity-nub-class-1-bundled) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-04-23
 
 Progress: [█████████░] 86%
@@ -93,6 +93,9 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 136]: Plan 02 — 136-PHASE-NOTES.md (93 lines) synthesizes Plan 01 evidence into Phase 137 consumable: 5 sections, 7 literal strings grep-verified present, Section 1 cites observed violatedDirective='script-src-elem' verbatim, Section 2 flags Chromium quirks documentURI='data' (scheme-only truncation) + sourceFile=null (inline-injection has no remote origin file) for Phase 137's report-to-endpoint MUST row
 - [Phase 136]: Plan 02 — Phase boundary honored: 136-PHASE-NOTES.md records observations + documentation gates ONLY, does NOT author spec-amendment prose (no MUST/SHOULD tables, no 'Proposed Amendment Text' section); Phase 137 owns the amendment authoring. 3 MAY statements for DETECT-03 enumerated verbatim without ranking; DETECT-04 world:'MAIN' residual acknowledged HONESTLY with 'do NOT claim a fix' framing
 - [Phase 136]: Plan 02 — Task 2 grep-sweep is a read-only verification producing /tmp/napplet-136-phase-notes-grep.log; no per-task commit per AGENTS.md no-home-pollution + Plan 01 precedent. Only Task 1 (PHASE-NOTES.md synthesis) lands a commit (707a412)
+- [Phase 137]: Plan 01 — Bundle strategy executed via merge-based approach: `git checkout -b nub-identity-decrypt nub-identity` + `git merge --no-ff nub-class-1` (merge commit 031c7fa). Preserves both draft branches as reachable parents so the eventual PR reads as 'amendment to both specs'
+- [Phase 137]: Plan 01 — Zero-push / zero-PR discipline verified: `git config --get branch.nub-identity-decrypt.remote` returns NO_REMOTE_CONFIGURED and `gh pr list --head nub-identity-decrypt --repo napplet/nubs --state all` is empty; human gates both per feedback_no_private_refs_commits
+- [Phase 137]: Plan 01 — Hygiene pre-verified on baseline: zero `@napplet/`, `kehto`, `hyprgate` matches across 6 commits ahead of master AND across the 3-file diff (NUB-CLASS-1.md + NUB-IDENTITY.md + README.md). Baseline is hygiene-clean; wave 2+ amendment content must preserve
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -123,6 +126,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T13:38:50.402Z
-Stopped at: Completed 136-02-PLAN.md — Phase 136 COMPLETE. 136-PHASE-NOTES.md synthesized (93 lines) with all 7 required literal strings grep-verified (GREP_EXIT=0); DETECT-02/03/04 documentation gates locked for Phase 137 amendment author. Phases 135 + 136 done (v0.29.0 wave 1 parallel-eligible); Phase 137 NUB-IDENTITY + NUB-CLASS-1 bundled amendment can begin (/gsd:plan-phase 137).
+Last session: 2026-04-23T14:23:07.497Z
+Stopped at: Completed 137-01-PLAN.md — nub-identity-decrypt branch created on ~/Develop/nubs with both NUB files present (merge commit 031c7fa); zero push, zero PR; hygiene clean. Ready for 137-02 (NUB-IDENTITY amendment body) + 137-03 (NUB-CLASS-1 amendment body) on the same branch.
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.

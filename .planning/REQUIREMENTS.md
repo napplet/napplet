@@ -54,13 +54,13 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 - [ ] **NUB-IDENTITY-04**: Class-gating MUST row cites `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation discipline); amendment text says "napplets assigned `class: 1`" or "NUB-CLASS-1 napplets", never "Class 1" as primary reference
 - [ ] **NUB-IDENTITY-05**: Security Considerations subsection explicitly names: (a) NIP-17/59 gift-wrap flow and the spec MUSTs that prevent impersonation, (b) NIP-07 extension `all_frames: true` injection and the fact that NUB-CLASS-1 strict-CSP nonce-based `script-src` blocks legacy `<script>` injection, (c) `world: 'MAIN'` extension-API residual with NUB-CLASS-1 `connect-src 'none'` as structural mitigation
 - [ ] **NUB-IDENTITY-06**: Public-repo hygiene clean — zero `@napplet/*`, zero `kehto`, zero `hyprgate`, zero first-party package names in the amendment diff, commit messages, or PR description
-- [ ] **NUB-IDENTITY-07**: PR opened against `napplet/nubs` on a new branch `nub-identity-decrypt` (or similar), based on the existing `nub-identity` branch. Per in-repo convention, the user opens the PR; this milestone authors the diff
+- [x] **NUB-IDENTITY-07**: PR opened against `napplet/nubs` on a new branch `nub-identity-decrypt` (or similar), based on the existing `nub-identity` branch. Per in-repo convention, the user opens the PR; this milestone authors the diff
 
 ### Spec: NUB-CLASS-1 Amendment (Public `napplet/nubs`)
 
 - [ ] **CLASS1-01**: Draft amendment to `NUB-CLASS-1.md` on `napplet/nubs` adding a Shell Responsibilities SHOULD row: shells SHOULD emit `report-to` / `Report-To` pointing at a shell-owned reporting endpoint alongside the `connect-src 'none'` baseline
 - [ ] **CLASS1-02**: Shell MUST process received CSP violation reports by correlating to napplet identity via `(dTag, aggregateHash)` — enumerated MUST/SHOULD rows in the amendment
-- [ ] **CLASS1-03**: Amendment MAY be merged into NUB-IDENTITY amendment PR if review convenience prevails, OR opened as its own PR. Roadmap decides; both paths produce the same spec surface. Coordinate with human PR-open step
+- [x] **CLASS1-03**: Amendment MAY be merged into NUB-IDENTITY amendment PR if review convenience prevails, OR opened as its own PR. Roadmap decides; both paths produce the same spec surface. Coordinate with human PR-open step
 
 ### Spec: NIP-5D In-Repo Amendment
 
@@ -142,10 +142,10 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | NUB-IDENTITY-04 | Phase 137 | Pending |
 | NUB-IDENTITY-05 | Phase 137 | Pending |
 | NUB-IDENTITY-06 | Phase 137 | Pending |
-| NUB-IDENTITY-07 | Phase 137 | Pending |
+| NUB-IDENTITY-07 | Phase 137 | Complete |
 | CLASS1-01 | Phase 137 | Pending |
 | CLASS1-02 | Phase 137 | Pending |
-| CLASS1-03 | Phase 137 | Pending |
+| CLASS1-03 | Phase 137 | Complete |
 | NIP5D-01 | Phase 138 | Pending |
 | NIP5D-02 | Phase 138 | Pending |
 | NIP5D-03 | Phase 138 | Pending |
