@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: executing
-stopped_at: Completed 135-02-PLAN.md — shim runtime for identity.decrypt (3 tasks, 3 files, +43 LOC, 3 commits). window.napplet.identity.decrypt is now live. Plan 03 (SDK bare-name helper + central sdk re-exports) is unblocked.
-last_updated: "2026-04-23T11:43:11.235Z"
+stopped_at: Completed 135-03-PLAN.md — SDK runtime for identity.decrypt (2 tasks, 3 files, +43 LOC, 2 commits). identityDecrypt bare-name + identity.decrypt namespace method + 6 type re-exports live on @napplet/sdk. Workspace-wide pnpm -r type-check + build both exit 0 across 14 packages. Plan 04 (VER-01/VER-05 verification) unblocked.
+last_updated: "2026-04-23T11:49:15.731Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 ## Current Position
 
 Phase: 135 (first-party-types-sdk-plumbing) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-23
 
@@ -72,6 +72,10 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 135]: SHIM-03 surgical-edit count: TWO textual edits in central shim (import + mount), both within identity-NUB hosting lines; existing prefix+suffix routing absorbs new envelope types
 - [Phase 135]: GATE-04 shim-side class-short-circuit DEFERRED — window.napplet.class slot not yet on NappletGlobal in v0.29.0 milestone; shell enforcement authoritative
 - [Phase 135]: Plan 02 workspace-wide type-check went fully green (stronger than plan predicted) — SDK identity namespace is a partial proxy; missing decrypt proxy doesn't fail type-check
+- [Phase 135]: Plan 03: Named-import form chosen for decrypt return type (Promise<{ rumor: Rumor; sender: string }>) over inline expansion; Rumor added to top-of-file @napplet/core import in @napplet/sdk
+- [Phase 135]: Plan 03: Rumor + UnsignedEvent @napplet/core re-exports on @napplet/sdk use one-line-per-type pattern (matching existing NostrEvent/NostrFilter/Subscription/EventTemplate lines at 781-784) rather than combined-list line
+- [Phase 135]: Plan 03: 4-surgical-edit pattern collapses cleanly for identity NUB method extensions (DOMAIN unchanged; no installShim change); future identity method adds can reuse this template
+- [Phase 135]: Plan 03: Workspace-wide pnpm -r type-check + pnpm -r build both exit 0 across 14 packages after SDK layer lands — VER-01 effectively satisfied up-front; Plan 04 only documents the pass and executes VER-05 tree-shake
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -102,6 +106,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T11:43:11.233Z
-Stopped at: Completed 135-02-PLAN.md — shim runtime for identity.decrypt (3 tasks, 3 files, +43 LOC, 3 commits). window.napplet.identity.decrypt is now live. Plan 03 (SDK bare-name helper + central sdk re-exports) is unblocked.
+Last session: 2026-04-23T11:49:04.268Z
+Stopped at: Completed 135-03-PLAN.md — SDK runtime for identity.decrypt (2 tasks, 3 files, +43 LOC, 2 commits). identityDecrypt bare-name + identity.decrypt namespace method + 6 type re-exports live on @napplet/sdk. Workspace-wide pnpm -r type-check + build both exit 0 across 14 packages. Plan 04 (VER-01/VER-05 verification) unblocked.
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.

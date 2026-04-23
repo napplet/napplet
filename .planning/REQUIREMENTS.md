@@ -41,8 +41,8 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 - [x] **TYPES-05**: Discriminated-union exhaustiveness preserved: existing `IdentityMessage` / `IdentityInbound` / `IdentityOutbound` unions extended to include the 3 new message types; `never`-fallback assertion in shim handler enforces
 - [x] **SHIM-01**: `packages/nub/src/identity/shim.ts` handler routes `identity.decrypt.result` and `identity.decrypt.error` to the correct pending Promise via correlation id; pending map cleanup on resolve/reject
 - [x] **SHIM-02**: `packages/nub/src/identity/shim.ts` exposes a `decrypt(event)` function bound to `window.napplet.identity.decrypt` via the central shim's install function; returns a `Promise<{ rumor, sender }>` that rejects with a typed `IdentityDecryptError` on `identity.decrypt.error`
-- [ ] **SDK-01**: `packages/nub/src/identity/sdk.ts` exports a bare-name `identityDecrypt(event)` helper wrapping `window.napplet.identity.decrypt` with a `requireNapplet()` guard (mirrors existing identity helpers)
-- [ ] **SDK-02**: `@napplet/sdk` central package re-exports identity types + `identityDecrypt` helper via the 4-surgical-edit pattern (namespace, type re-exports, DOMAIN const unchanged, helper re-export)
+- [x] **SDK-01**: `packages/nub/src/identity/sdk.ts` exports a bare-name `identityDecrypt(event)` helper wrapping `window.napplet.identity.decrypt` with a `requireNapplet()` guard (mirrors existing identity helpers)
+- [x] **SDK-02**: `@napplet/sdk` central package re-exports identity types + `identityDecrypt` helper via the 4-surgical-edit pattern (namespace, type re-exports, DOMAIN const unchanged, helper re-export)
 - [x] **SHIM-03**: `@napplet/shim` central package no changes — identity shim install is already registered; new handler branch is internal to `packages/nub/src/identity/shim.ts`. Verify no central-shim edit required; document if surgical edit IS required
 - [ ] **TYPES-06**: Workspace-wide `pnpm -r type-check` green across all 14 packages after all type additions land (blocking gate; matches v0.28.0 VER-01 precedent)
 
@@ -134,8 +134,8 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | SHIM-01 | Phase 135 | Complete |
 | SHIM-02 | Phase 135 | Complete |
 | SHIM-03 | Phase 135 | Complete |
-| SDK-01 | Phase 135 | Pending |
-| SDK-02 | Phase 135 | Pending |
+| SDK-01 | Phase 135 | Complete |
+| SDK-02 | Phase 135 | Complete |
 | NUB-IDENTITY-01 | Phase 137 | Pending |
 | NUB-IDENTITY-02 | Phase 137 | Pending |
 | NUB-IDENTITY-03 | Phase 137 | Pending |
