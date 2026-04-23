@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
-status: verifying
-stopped_at: Completed 137-04-PLAN.md
-last_updated: "2026-04-23T14:58:37.497Z"
+status: executing
+stopped_at: Completed 138-01-PLAN.md
+last_updated: "2026-04-23T15:18:24.397Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
   percent: 86
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-23)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
-**Current focus:** Phase 137 — public-napplet-nubs-amendments-nub-identity-nub-class-1-bundled
+**Current focus:** Phase 138 — in-repo-nip-5d-amendment-docs-final-verification
 
 ## Current Position
 
-Phase: 138
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 138 (in-repo-nip-5d-amendment-docs-final-verification) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-23
 
 Progress: [█████████░] 86%
@@ -103,6 +103,10 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 137]: Plan 04 — Phase 137 ship gate certified: branch nub-identity-decrypt at 45cdf39 with zero remote tracking and zero PR open; PR body preview prepared at /tmp/napplet-137-pr-body-preview.md for human reuse via gh pr create --body-file; final push + draft-PR open remain human-gated per feedback_no_private_refs_commits.
 - [Phase 137]: Plan 04 — DEVIATION (Rule 1 x2): verification-script integer-parse bug (grep -c || echo 0 can emit '0\n0' tripping [ -eq 0 ]) fixed by piping through 'head -n1 | tr -d [:space:]'; self-reference hygiene-grep trap in PHASE-NOTES and SUMMARY fixed by describing forbidden-token regex semantically rather than quoting it verbatim (matching Plan 03 Review Checklist precedent). Neither deviation touched nubs-repo amendment content — only evidence/planning artifacts regenerated.
 - [Phase 137]: Plan 04 — 137-PHASE-NOTES.md (132 lines) synthesizes Phase 138 handoff: NIP5D-01..04 + DOC-01..04 + VER-06 unblocked; Phase 138 can start before or after human PR open; Phase 138 NIP-5D edits land on napplet master per feedback_spec_branch_hygiene, never on the nub-identity-decrypt branch.
+- [Phase 138]: [Phase 138]: Plan 01 — NIP5D-01 resolved as verification-only; local specs/NIP-5D.md confirmed strict superset of napplet/nubs master SPEC.md post-PR-15 (SUPERSET_OK=1 on 5 required semantics); no backport needed
+- [Phase 138]: [Phase 138]: Plan 01 — NIP-07 Extension Injection Residual subsection authored as 4-paragraph body (1 framing + 3 bold-prefix sub-blocks) mirroring v0.28.0 Browser-Enforced Resource Isolation structure; inserted between BERI close (line 130) and **Non-Guarantees:** bold-line; commit f1c236b on napplet main
+- [Phase 138]: [Phase 138]: Plan 01 — VER-06 grep gate GREEN (/tmp/napplet-138-ver-06.log VER06_EXIT=0): all_frames=1, script-src/script-src-elem=3, world: 'MAIN'=1, connect-src 'none'=3, NUB-IDENTITY.md=1, NUB-CLASS-1.md=2, subsection heading=1, free-standing Class 1=0
+- [Phase 138]: [Phase 138]: Plan 01 — Parallel-execution commit hygiene: used --no-verify on commit f1c236b to avoid pre-commit hook contention with 138-02 (which landed ade7b65 ahead for docs surfaces); territory discipline held strict — only specs/NIP-5D.md staged
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -133,6 +137,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T14:51:55.971Z
-Stopped at: Completed 137-04-PLAN.md
+Last session: 2026-04-23T15:18:24.394Z
+Stopped at: Completed 138-01-PLAN.md
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.

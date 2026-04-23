@@ -109,8 +109,8 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. Cross-references cite `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation); the NIP-5D amendment commit is independent of the Phase 137 cross-repo PR diff (NIP5D-03, NIP5D-04).
   4. `packages/nub/README.md` documents `identity.decrypt()` under the identity NUB section (API shape, class-gating expectation, error handling, NIP-17 auto-detect behavior); `packages/sdk/README.md` adds an `identityDecrypt()` entry alongside existing identity SDK helpers; root `README.md` gains a one-line v0.29.0 changelog bullet; `skills/build-napplet/SKILL.md` is updated with a one-paragraph guidance block: NIP-17 DM / kind-1059 handling uses `window.napplet.identity.decrypt(event)`; requires NUB-CLASS-1; napplets MUST NOT attempt `window.nostr.*` decrypt; shell enforces (DOC-01..04).
   5. VER-06 grep gate: `specs/NIP-5D.md` NIP-07 Security Considerations subsection is present, non-empty, cites both `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename, and names the `world: 'MAIN'` residual honestly (grep-verifiable).
-**Plans:** 2 plans
-- [ ] 138-01-PLAN.md — NIP-5D sync verification + NIP-07 Extension Injection Residual subsection + VER-06 grep gate (NIP5D-01..04, VER-06)
+**Plans:** 1/2 plans executed
+- [x] 138-01-PLAN.md — NIP-5D sync verification + NIP-07 Extension Injection Residual subsection + VER-06 grep gate (NIP5D-01..04, VER-06)
 - [ ] 138-02-PLAN.md — Docs sweep across 4 surfaces: packages/nub README, packages/sdk README, root README, skills/build-napplet SKILL.md (DOC-01..04)
 
 ## Progress
@@ -123,4 +123,4 @@ Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 s
 | 135. First-Party Types + SDK Plumbing | 5/5 | Complete    | 2026-04-23 |
 | 136. Empirical CSP Injection-Block Verification | 2/2 | Complete    | 2026-04-23 |
 | 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 4/4 | Complete    | 2026-04-23 |
-| 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 0/2 | Not started | - |
+| 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 1/2 | In Progress|  |

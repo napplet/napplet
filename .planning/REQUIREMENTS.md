@@ -64,10 +64,10 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ### Spec: NIP-5D In-Repo Amendment
 
-- [ ] **NIP5D-01**: Check local `specs/NIP-5D.md` against napplet/nubs master post-PR-15 (`window.nostr` removal merged 2026-04-21) — sync any missing prose before layering v0.29.0 amendment
-- [ ] **NIP5D-02**: Security Considerations subsection added to `specs/NIP-5D.md` documenting the NIP-07 extension `all_frames: true` content-script injection vector — names the vector, names the CSP nonce-based `script-src` mitigation for legacy injection, names the `world: 'MAIN'` residual, names NUB-CLASS-1 `connect-src 'none'` as structural mitigation, points at `identity.decrypt` on NUB-IDENTITY as the spec-legal receive-side decrypt path for NUB-CLASS-1 napplets
-- [ ] **NIP5D-03**: Cross-references added: NIP-5D Security Considerations cites `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation)
-- [ ] **NIP5D-04**: Local `specs/NIP-5D.md` amendment commit is independent of the public napplet/nubs PR diff — the in-repo file is a reference copy, not the authoritative spec; changes land on master (or an own PR) per `feedback_spec_branch_hygiene`
+- [x] **NIP5D-01**: Check local `specs/NIP-5D.md` against napplet/nubs master post-PR-15 (`window.nostr` removal merged 2026-04-21) — sync any missing prose before layering v0.29.0 amendment
+- [x] **NIP5D-02**: Security Considerations subsection added to `specs/NIP-5D.md` documenting the NIP-07 extension `all_frames: true` content-script injection vector — names the vector, names the CSP nonce-based `script-src` mitigation for legacy injection, names the `world: 'MAIN'` residual, names NUB-CLASS-1 `connect-src 'none'` as structural mitigation, points at `identity.decrypt` on NUB-IDENTITY as the spec-legal receive-side decrypt path for NUB-CLASS-1 napplets
+- [x] **NIP5D-03**: Cross-references added: NIP-5D Security Considerations cites `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation)
+- [x] **NIP5D-04**: Local `specs/NIP-5D.md` amendment commit is independent of the public napplet/nubs PR diff — the in-repo file is a reference copy, not the authoritative spec; changes land on master (or an own PR) per `feedback_spec_branch_hygiene`
 
 ### Documentation
 
@@ -83,7 +83,7 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 - [x] **VER-03**: Spec conformance grep: NUB-IDENTITY amendment draft contains all 8 `IdentityDecryptErrorCode` codes, all 4 MUSTs (class-gating, outer-sig-verify, impersonation-check, outer-created_at-hiding), filename citation (`NUB-CLASS-1.md` appears at least once; abstract phrase "Class 1" does NOT appear as primary reference)
 - [x] **VER-04**: Empirical strict-CSP-nonce injection blocking: a test napplet served with NUB-CLASS-1 posture (`connect-src 'none'`; `script-src 'nonce-XXX'`) running Playwright with a mock legacy-injection script (simulates `<script>`-tag-via-content-script injection) observes CSP blocking the injection AND firing a `securitypolicyviolation` event — validates the DETECT-01 mechanism on Chromium
 - [x] **VER-05**: Tree-shake contract preserved — relay-types-only consumer bundle remains ≤ 100 bytes (matches v0.28.0 VER-07 74-byte precedent); identity-types-only consumer does not pull shim/sdk runtime symbols
-- [ ] **VER-06**: `specs/NIP-5D.md` NIP-07 Security Considerations subsection is present, non-empty, cites both `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename, and names the `world: 'MAIN'` residual honestly (grep-verifiable)
+- [x] **VER-06**: `specs/NIP-5D.md` NIP-07 Security Considerations subsection is present, non-empty, cites both `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename, and names the `world: 'MAIN'` residual honestly (grep-verifiable)
 
 ## Future Requirements (deferred)
 
@@ -146,10 +146,10 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | CLASS1-01 | Phase 137 | Complete |
 | CLASS1-02 | Phase 137 | Complete |
 | CLASS1-03 | Phase 137 | Complete |
-| NIP5D-01 | Phase 138 | Pending |
-| NIP5D-02 | Phase 138 | Pending |
-| NIP5D-03 | Phase 138 | Pending |
-| NIP5D-04 | Phase 138 | Pending |
+| NIP5D-01 | Phase 138 | Complete |
+| NIP5D-02 | Phase 138 | Complete |
+| NIP5D-03 | Phase 138 | Complete |
+| NIP5D-04 | Phase 138 | Complete |
 | DOC-01 | Phase 138 | Pending |
 | DOC-02 | Phase 138 | Pending |
 | DOC-03 | Phase 138 | Pending |
@@ -159,7 +159,7 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | VER-03 | Phase 137 | Complete |
 | VER-04 | Phase 136 | Complete |
 | VER-05 | Phase 135 | Complete |
-| VER-06 | Phase 138 | Pending |
+| VER-06 | Phase 138 | Complete |
 
 ### Coverage Summary
 
