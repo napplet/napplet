@@ -275,7 +275,24 @@ The demo is now an architecture-accurate teaching and testing surface. 7 phases,
 
 ### Active
 
-No active milestone. v0.28.0 Browser-Enforced Resource Isolation shipped 2026-04-23 — see Shipped section above. Next milestone: SEED-002 (receive-side NIP-44 decrypt surface on NUB-RELAY, tracking napplet/napplet#3) queued for `/gsd:new-milestone`; see Future Milestone Candidates.
+## Current Milestone: v0.29.0 Receive-Side Decrypt Surface
+
+**Goal:** Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `relay.subscribeEncrypted` to NUB-RELAY — napplets receive plaintext rumors without touching the user's signer, plugging the NIP-07 `all_frames: true` content-script leak that defeats iframe isolation today.
+
+**Target features:**
+- `relay.subscribeEncrypted` message surface on NUB-RELAY (+ `.event` / `.eose` / `.closed` / `.error` result envelopes)
+- Type additions + SDK helper `subscribeEncrypted(filters, opts)` in `@napplet/nub/relay` mirroring existing `subscribe()` ergonomics
+- NUB-RELAY spec amendment PR on public `napplet/nubs` repo with conformance table + security considerations
+- NIP-5D Security Considerations amendment documenting the NIP-07 extension `all_frames: true` leak as a known non-mitigation
+
+**Source:** SEED-002 (planted during v0.28.0 Phase 134; direction Option A locked 2026-04-23; tracks napplet/napplet#3). See `.planning/seeds/SEED-002-receive-side-decrypt-surface.md`.
+
+**Scope:** Medium — expected 2–3 phases, following the v0.22–v0.25 NUB-amendment pattern. Phase numbering continues from v0.28.0 (starting at Phase 135).
+
+**Explicitly out of scope (for this milestone):**
+- Shell implementation of subscribe/unwrap (downstream repo concern, tracked separately)
+- Demo napplets exercising NIP-17 DMs (shell-repo concern, like v0.28.0 DEMO-01)
+- NIP-07 extension hardening itself (browser/extension ecosystem concern)
 
 ### Future Requirements (deferred from v0.26.0)
 
@@ -387,7 +404,6 @@ This document evolves at phase transitions and milestone boundaries.
 ## Future Milestone Candidates
 
 Likely next candidates (ordered by current signal strength):
-- **SEED-002 — NIP-5D receive-side NIP-44 decrypt surface** (`relay.subscribeEncrypted` on NUB-RELAY). Tracks `napplet/napplet#3`. Closes the NIP-17/NIP-59 gift-wrap gap: napplets subscribing to kind 1059 have no spec-legal way to get plaintext without calling `window.nostr.nip44.decrypt` directly (NIP-07 `all_frames: true` extension leak defeats iframe isolation). Medium scope, 2–3 phases mirroring existing `relay.publishEncrypted` send-side pattern. Queued for `/gsd:new-milestone` — see `.planning/seeds/SEED-002-receive-side-decrypt-surface.md`.
 - Submit NIP-5D PR to nostr-protocol/nips
 - Formalize NUB governance (NUB-01/02/03) and create napplets org/repo
 - Publish all @napplet/* packages to npm (blocked on human npm auth)
@@ -399,4 +415,4 @@ Likely next candidates (ordered by current signal strength):
 - Automated e2e tests for REGISTER/IDENTITY handshake step
 
 ---
-*Last updated: 2026-04-23 — v0.28.0 Browser-Enforced Resource Isolation milestone shipped*
+*Last updated: 2026-04-23 — v0.29.0 Receive-Side Decrypt Surface milestone started (SEED-002)*
