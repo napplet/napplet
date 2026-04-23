@@ -105,10 +105,71 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ## Traceability
 
-_To be filled by roadmap phase assignment; empty until `/gsd:plan-phase` starts mapping REQ-IDs to phases._
+All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
+| DEC-01 | Phase 137 | Pending |
+| DEC-02 | Phase 137 | Pending |
+| DEC-03 | Phase 137 | Pending |
+| DEC-04 | Phase 137 | Pending |
+| DEC-05 | Phase 137 | Pending |
+| DEC-06 | Phase 137 | Pending |
+| DEC-07 | Phase 137 | Pending |
+| DEC-08 | Phase 137 | Pending |
+| GATE-01 | Phase 137 | Pending |
+| GATE-02 | Phase 137 | Pending |
+| GATE-03 | Phase 137 | Pending |
+| GATE-04 | Phase 137 | Pending |
+| DETECT-01 | Phase 136 | Pending |
+| DETECT-02 | Phase 136 | Pending |
+| DETECT-03 | Phase 136 | Pending |
+| DETECT-04 | Phase 136 | Pending |
+| TYPES-01 | Phase 135 | Pending |
+| TYPES-02 | Phase 135 | Pending |
+| TYPES-03 | Phase 135 | Pending |
+| TYPES-04 | Phase 135 | Pending |
+| TYPES-05 | Phase 135 | Pending |
+| TYPES-06 | Phase 135 | Pending |
+| SHIM-01 | Phase 135 | Pending |
+| SHIM-02 | Phase 135 | Pending |
+| SHIM-03 | Phase 135 | Pending |
+| SDK-01 | Phase 135 | Pending |
+| SDK-02 | Phase 135 | Pending |
+| NUB-IDENTITY-01 | Phase 137 | Pending |
+| NUB-IDENTITY-02 | Phase 137 | Pending |
+| NUB-IDENTITY-03 | Phase 137 | Pending |
+| NUB-IDENTITY-04 | Phase 137 | Pending |
+| NUB-IDENTITY-05 | Phase 137 | Pending |
+| NUB-IDENTITY-06 | Phase 137 | Pending |
+| NUB-IDENTITY-07 | Phase 137 | Pending |
+| CLASS1-01 | Phase 137 | Pending |
+| CLASS1-02 | Phase 137 | Pending |
+| CLASS1-03 | Phase 137 | Pending |
+| NIP5D-01 | Phase 138 | Pending |
+| NIP5D-02 | Phase 138 | Pending |
+| NIP5D-03 | Phase 138 | Pending |
+| NIP5D-04 | Phase 138 | Pending |
+| DOC-01 | Phase 138 | Pending |
+| DOC-02 | Phase 138 | Pending |
+| DOC-03 | Phase 138 | Pending |
+| DOC-04 | Phase 138 | Pending |
+| VER-01 | Phase 135 | Pending |
+| VER-02 | Phase 137 | Pending |
+| VER-03 | Phase 137 | Pending |
+| VER-04 | Phase 136 | Pending |
+| VER-05 | Phase 135 | Pending |
+| VER-06 | Phase 138 | Pending |
+
+### Coverage Summary
+
+| Phase | REQ Count | REQ-IDs |
+|-------|-----------|---------|
+| 135 | 13 | TYPES-01..06, SHIM-01..03, SDK-01..02, VER-01, VER-05 |
+| 136 | 5 | DETECT-01..04, VER-04 |
+| 137 | 24 | DEC-01..08, GATE-01..04, NUB-IDENTITY-01..07, CLASS1-01..03, VER-02, VER-03 |
+| 138 | 9 | NIP5D-01..04, DOC-01..04, VER-06 |
+| **Total** | **51** | **All 51 mapped; no orphans, no duplicates** |
 
 ---
-*Defined 2026-04-23. 36 REQ-IDs across 8 categories. Phase numbering continues from v0.28.0 (phases start at 135).*
+*Defined 2026-04-23. 51 REQ-IDs across 11 categories (DEC, GATE, DETECT, TYPES, SHIM, SDK, NUB-IDENTITY, CLASS1, NIP5D, DOC, VER). Phase numbering continues from v0.28.0 (phases 135–138). Roadmap authored 2026-04-23; traceability populated at 100% coverage.*
