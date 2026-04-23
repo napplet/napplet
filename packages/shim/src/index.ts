@@ -34,6 +34,7 @@ import {
   getMutes,
   getBlocked,
   getBadges,
+  decrypt,
 } from '@napplet/nub/identity/shim';
 import { installIfcShim, emit, on, handleIfcEvent } from '@napplet/nub/ifc/shim';
 import {
@@ -179,6 +180,7 @@ installIfcShim();
     getMutes,
     getBlocked,
     getBadges,
+    decrypt,
   },
   config: {
     registerSchema: configRegisterSchema,
