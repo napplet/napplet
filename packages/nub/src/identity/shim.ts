@@ -23,8 +23,11 @@ import type {
   IdentityGetZapsResultMessage,
   IdentityGetMutesResultMessage,
   IdentityGetBlockedResultMessage,
+  IdentityDecryptMessage,
+  IdentityDecryptResultMessage,
   IdentityGetBadgesResultMessage,
 } from './types.js';
+import type { NostrEvent, Rumor } from '@napplet/core';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -89,6 +92,9 @@ export function handleIdentityMessage(msg: { type: string; [key: string]: unknow
   } else if (type === 'identity.getBadges.result') {
     const result = msg as unknown as IdentityGetBadgesResultMessage;
     resolveOrReject(result.id, result.badges, result.error);
+  } else if (type === 'identity.decrypt.result') {
+    const result = msg as unknown as IdentityDecryptResultMessage;
+    resolvePending(result.id, { rumor: result.rumor, sender: result.sender });
   }
 }
 
@@ -256,6 +262,40 @@ export function getBadges(): Promise<Badge[]> {
     id: crypto.randomUUID(),
   };
   return sendRequest<Badge[]>(msg);
+}
+
+/**
+ * Decrypt a received Nostr event (NIP-04 / direct NIP-44 / NIP-17 gift-wrap).
+ *
+ * The shell auto-detects encryption shape and routes to the correct handler;
+ * napplets do NOT select the encryption mode. Only legal for napplets assigned
+ * `class: 1` per NUB-CLASS-1 — the shell rejects from any other class with
+ * error code `class-forbidden`.
+ *
+ * `sender` is shell-authenticated from the seal pubkey (NIP-17 flows) — never
+ * derived from rumor.pubkey. Outer gift-wrap `created_at` is intentionally not
+ * surfaced (NIP-59 randomizes it ±2 days for sender-anonymity).
+ *
+ * GATE-04 note: shim-side class-short-circuit deferred — window.napplet.class slot
+ * is not yet part of NappletGlobal in this milestone. Shell enforcement is authoritative.
+ *
+ * @param event  The received event (outer wrap for NIP-17, kind-4 for NIP-04, etc.)
+ * @returns Promise resolving to { rumor, sender }; rejects with Error carrying
+ *   an IdentityDecryptErrorCode as message on failure.
+ *
+ * @example
+ * ```ts
+ * const { rumor, sender } = await window.napplet.identity.decrypt(wrappedEvent);
+ * console.log(`Message from ${sender}: ${rumor.content}`);
+ * ```
+ */
+export function decrypt(event: NostrEvent): Promise<{ rumor: Rumor; sender: string }> {
+  const msg: IdentityDecryptMessage = {
+    type: 'identity.decrypt',
+    id: crypto.randomUUID(),
+    event,
+  };
+  return sendRequest<{ rumor: Rumor; sender: string }>(msg);
 }
 
 // ─── Install / cleanup ──────────────────────────────────────────────────────
