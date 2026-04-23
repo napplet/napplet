@@ -61,7 +61,11 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. `import { identityDecrypt } from '@napplet/sdk'` resolves the bare-name helper wrapping `window.napplet.identity.decrypt` with a `requireNapplet()` guard; `@napplet/sdk` re-exports the 3 new identity types via the 4-surgical-edit pattern (namespace, type re-exports, DOMAIN const unchanged, helper re-export).
   4. `pnpm -r build` and `pnpm -r type-check` exit 0 across all 14 workspace packages (VER-01 shipping gate).
   5. A consumer importing only `@napplet/nub/identity/types` produces a tree-shaken bundle that does NOT pull shim/sdk runtime symbols, and the relay-types-only tree-shake bundle remains ≤ 100 bytes (matching v0.28.0 VER-07 74-byte precedent).
-**Plans**: TBD
+**Plans:** 4 plans in 4 waves (strict sequential — barrel conflict forces order):
+- [ ] 135-01-PLAN.md — Types in @napplet/core + @napplet/nub/identity (TYPES-01..05)
+- [ ] 135-02-PLAN.md — Shim runtime (decrypt function + handler branch) + central shim mount (SHIM-01..03)
+- [ ] 135-03-PLAN.md — SDK identityDecrypt helper + central SDK 4-surgical-edits (SDK-01..02)
+- [ ] 135-04-PLAN.md — Verification: workspace build+type-check + identity-types-only tree-shake (TYPES-06, VER-01, VER-05)
 
 ### Phase 136: Empirical CSP Injection-Block Verification
 **Goal**: Empirically prove on Chromium that a test napplet served under the NUB-CLASS-1 CSP posture (`connect-src 'none'`; `script-src 'nonce-XXX'`; `report-to` directive) blocks a simulated legacy `<script>`-tag content-script injection AND fires a `securitypolicyviolation` event the shell can receive. Lock the observed-shape of `world: 'MAIN'` extension-API residual honestly (no browser-layer block possible from page side). The empirical result backs DETECT-01..04's spec language in Phase 137's amendment — the PR cites behavior we've actually observed, not assumed.
@@ -107,7 +111,7 @@ Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 s
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 135. First-Party Types + SDK Plumbing | 0/TBD | Not started | - |
+| 135. First-Party Types + SDK Plumbing | 0/4 | Planned | - |
 | 136. Empirical CSP Injection-Block Verification | 0/TBD | Not started | - |
 | 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 0/TBD | Not started | - |
 | 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 0/TBD | Not started | - |
