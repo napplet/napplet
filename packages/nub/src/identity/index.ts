@@ -50,6 +50,13 @@ export type {
   IdentityDecryptErrorCode,
 } from './types.js';
 
+// ─── Cross-Package Type Re-Exports (from @napplet/core) ────────────────────
+
+export type {
+  Rumor,
+  UnsignedEvent,
+} from '@napplet/core';
+
 // ─── Shim Exports ─────────────────────────────────────────────────────────
 
 export {
