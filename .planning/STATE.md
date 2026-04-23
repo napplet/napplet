@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
-status: executing
-stopped_at: Completed 137-03-PLAN.md
-last_updated: "2026-04-23T14:41:16.166Z"
+status: verifying
+stopped_at: Completed 137-04-PLAN.md
+last_updated: "2026-04-23T14:51:55.973Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 86
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 Phase: 137 (public-napplet-nubs-amendments-nub-identity-nub-class-1-bundled) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-23
 
 Progress: [█████████░] 86%
@@ -99,6 +99,10 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 137]: Plan 137-02 — NUB-CLASS-1.md amended on nub-identity-decrypt with report-to SHOULD + violation-correlation MUST rows + observability-not-enforcement security subsection; commit c020479, 8 insertions 0 deletions, verbatim phrases 'MAY refuse-to-serve' and 'shell MAY reject' present for VER-03 Group E
 - [Phase 137]: Single commit (not 2-commit split) for full NUB-IDENTITY amendment preserves spec-coherence at every reachable point
 - [Phase 137]: Example envelope fencing matched existing file style (single triple-backtick fences, no language hint)
+- [Phase 137]: Plan 04 — VER-02 3-channel hygiene grep stamps PASS (VER02_EXIT=0) across branch diff + commit log + PR body preview; VER-03 7-group conformance grep stamps PASS (VER03_EXIT=0, TOTAL_FAIL_COUNT=0) with all 8 error codes, 4 shell MUSTs, filename-citation discipline, 3 Security Considerations concerns, 7 Phase 136 substrate literals, NUB-CLASS-1 amendment literals, and GATE-04 observability framing all grep-verified. NUB-IDENTITY-06, NUB-IDENTITY-07, VER-02, VER-03 close here.
+- [Phase 137]: Plan 04 — Phase 137 ship gate certified: branch nub-identity-decrypt at 45cdf39 with zero remote tracking and zero PR open; PR body preview prepared at /tmp/napplet-137-pr-body-preview.md for human reuse via gh pr create --body-file; final push + draft-PR open remain human-gated per feedback_no_private_refs_commits.
+- [Phase 137]: Plan 04 — DEVIATION (Rule 1 x2): verification-script integer-parse bug (grep -c || echo 0 can emit '0\n0' tripping [ -eq 0 ]) fixed by piping through 'head -n1 | tr -d [:space:]'; self-reference hygiene-grep trap in PHASE-NOTES and SUMMARY fixed by describing forbidden-token regex semantically rather than quoting it verbatim (matching Plan 03 Review Checklist precedent). Neither deviation touched nubs-repo amendment content — only evidence/planning artifacts regenerated.
+- [Phase 137]: Plan 04 — 137-PHASE-NOTES.md (132 lines) synthesizes Phase 138 handoff: NIP5D-01..04 + DOC-01..04 + VER-06 unblocked; Phase 138 can start before or after human PR open; Phase 138 NIP-5D edits land on napplet master per feedback_spec_branch_hygiene, never on the nub-identity-decrypt branch.
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -129,6 +133,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T14:41:16.163Z
-Stopped at: Completed 137-03-PLAN.md
+Last session: 2026-04-23T14:51:55.971Z
+Stopped at: Completed 137-04-PLAN.md
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.

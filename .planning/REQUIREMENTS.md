@@ -53,7 +53,7 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 - [x] **NUB-IDENTITY-03**: `IdentityDecryptErrorCode` enumerated in amendment with one sentence per code naming the failure surface it represents
 - [x] **NUB-IDENTITY-04**: Class-gating MUST row cites `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation discipline); amendment text says "napplets assigned `class: 1`" or "NUB-CLASS-1 napplets", never "Class 1" as primary reference
 - [x] **NUB-IDENTITY-05**: Security Considerations subsection explicitly names: (a) NIP-17/59 gift-wrap flow and the spec MUSTs that prevent impersonation, (b) NIP-07 extension `all_frames: true` injection and the fact that NUB-CLASS-1 strict-CSP nonce-based `script-src` blocks legacy `<script>` injection, (c) `world: 'MAIN'` extension-API residual with NUB-CLASS-1 `connect-src 'none'` as structural mitigation
-- [ ] **NUB-IDENTITY-06**: Public-repo hygiene clean — zero `@napplet/*`, zero `kehto`, zero `hyprgate`, zero first-party package names in the amendment diff, commit messages, or PR description
+- [x] **NUB-IDENTITY-06**: Public-repo hygiene clean — zero `@napplet/*`, zero `kehto`, zero `hyprgate`, zero first-party package names in the amendment diff, commit messages, or PR description
 - [x] **NUB-IDENTITY-07**: PR opened against `napplet/nubs` on a new branch `nub-identity-decrypt` (or similar), based on the existing `nub-identity` branch. Per in-repo convention, the user opens the PR; this milestone authors the diff
 
 ### Spec: NUB-CLASS-1 Amendment (Public `napplet/nubs`)
@@ -79,8 +79,8 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 ### Verification
 
 - [x] **VER-01**: Workspace `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 packages after all type additions land (primary shipping gate, matches v0.28.0 VER-01 precedent)
-- [ ] **VER-02**: Cross-repo public-hygiene grep: zero matches for `@napplet/*`, `kehto`, `hyprgate` across NUB-IDENTITY amendment + NUB-CLASS-1 amendment drafts at `~/Develop/nubs/` (matches v0.28.0 VER-06 pattern)
-- [ ] **VER-03**: Spec conformance grep: NUB-IDENTITY amendment draft contains all 8 `IdentityDecryptErrorCode` codes, all 4 MUSTs (class-gating, outer-sig-verify, impersonation-check, outer-created_at-hiding), filename citation (`NUB-CLASS-1.md` appears at least once; abstract phrase "Class 1" does NOT appear as primary reference)
+- [x] **VER-02**: Cross-repo public-hygiene grep: zero matches for `@napplet/*`, `kehto`, `hyprgate` across NUB-IDENTITY amendment + NUB-CLASS-1 amendment drafts at `~/Develop/nubs/` (matches v0.28.0 VER-06 pattern)
+- [x] **VER-03**: Spec conformance grep: NUB-IDENTITY amendment draft contains all 8 `IdentityDecryptErrorCode` codes, all 4 MUSTs (class-gating, outer-sig-verify, impersonation-check, outer-created_at-hiding), filename citation (`NUB-CLASS-1.md` appears at least once; abstract phrase "Class 1" does NOT appear as primary reference)
 - [x] **VER-04**: Empirical strict-CSP-nonce injection blocking: a test napplet served with NUB-CLASS-1 posture (`connect-src 'none'`; `script-src 'nonce-XXX'`) running Playwright with a mock legacy-injection script (simulates `<script>`-tag-via-content-script injection) observes CSP blocking the injection AND firing a `securitypolicyviolation` event — validates the DETECT-01 mechanism on Chromium
 - [x] **VER-05**: Tree-shake contract preserved — relay-types-only consumer bundle remains ≤ 100 bytes (matches v0.28.0 VER-07 74-byte precedent); identity-types-only consumer does not pull shim/sdk runtime symbols
 - [ ] **VER-06**: `specs/NIP-5D.md` NIP-07 Security Considerations subsection is present, non-empty, cites both `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename, and names the `world: 'MAIN'` residual honestly (grep-verifiable)
@@ -141,7 +141,7 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | NUB-IDENTITY-03 | Phase 137 | Complete |
 | NUB-IDENTITY-04 | Phase 137 | Complete |
 | NUB-IDENTITY-05 | Phase 137 | Complete |
-| NUB-IDENTITY-06 | Phase 137 | Pending |
+| NUB-IDENTITY-06 | Phase 137 | Complete |
 | NUB-IDENTITY-07 | Phase 137 | Complete |
 | CLASS1-01 | Phase 137 | Complete |
 | CLASS1-02 | Phase 137 | Complete |
@@ -155,8 +155,8 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | DOC-03 | Phase 138 | Pending |
 | DOC-04 | Phase 138 | Pending |
 | VER-01 | Phase 135 | Complete |
-| VER-02 | Phase 137 | Pending |
-| VER-03 | Phase 137 | Pending |
+| VER-02 | Phase 137 | Complete |
+| VER-03 | Phase 137 | Complete |
 | VER-04 | Phase 136 | Complete |
 | VER-05 | Phase 135 | Complete |
 | VER-06 | Phase 138 | Pending |
