@@ -129,6 +129,16 @@ Example minimal meta delivery:
 
 Strict CSP, the resource NUB as canonical fetch path, and `sandbox="allow-scripts"` (without `allow-same-origin`) compose to convert ambient trust into browser-enforced isolation: the napplet *cannot* perform a network fetch the shell did not mediate.
 
+### NIP-07 Extension Injection Residual
+
+The Browser-Enforced Resource Isolation posture above closes direct network egress for honest napplet code. A separate threat is a NIP-07 signer extension the user has installed — such extensions commonly run content scripts with `all_frames: true`, causing the browser to inject the extension's page-world script into every frame including sandboxed napplet iframes. The resulting `window.nostr` surface, if exercised, would route signing and encryption around the shell — the same primitive this NIP's Transport section requires to be shell-mediated.
+
+**Legacy `<script>`-tag injection.** Shells advertising `perm:strict-csp` (see the Browser-Enforced Resource Isolation subsection) serve napplet HTML under a nonce-based `script-src` directive. An extension that injects via the common `document.createElement('script'); s.textContent = '...'; head.appendChild(s)` pattern cannot know the per-load nonce. The browser rejects script execution and fires a `securitypolicyviolation` event whose `violatedDirective` begins with `script-src` (Chromium 144+ observed as `script-src-elem`, the element-level sub-directive; older Chromium and other browsers may emit the parent `script-src`). Shells MAY observe these violations via a `report-to` / `Report-To` endpoint and correlate offenders to napplet identity per the rules in `NUB-CLASS-1.md`.
+
+**`world: 'MAIN'` extension-API residual.** Extensions using `chrome.scripting.executeScript({world: 'MAIN'})` (and equivalent main-world injection paths) bypass page CSP entirely per the WebExtension specification. No `securitypolicyviolation` event fires; no page-side detection mechanism exists. As of this writing no known NIP-07 extension ships this injection style, but the architecture cannot prevent future migration. This is documented honestly as a residual — not a fix.
+
+**Structural mitigation and the spec-legal alternative.** The `connect-src 'none'` directive in the NUB-CLASS-1 baseline ensures that plaintext obtained inside a napplet — whether via an injected `window.nostr` or via the legitimate shell-mediated path — is trapped in the frame: the napplet has no direct network egress. Exfiltration requires calling a shell-mediated NUB (the shell observes and policies) or escaping the browser sandbox (architecturally forbidden). Napplets that need to decrypt NIP-04, NIP-44, or NIP-17 / NIP-59 events MUST call `identity.decrypt(event)` on NUB-IDENTITY (see `NUB-IDENTITY.md`). Shells MUST gate this call to napplets assigned `class: 1` per `NUB-CLASS-1.md`; receive-side decrypt for other classes is refused with a `class-forbidden` error.
+
 **Non-Guarantees:** The protocol does NOT protect against a compromised browser, a malicious shell, side-channel attacks, or social engineering.
 
 ## References
