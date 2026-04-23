@@ -38,6 +38,8 @@ export type {
   NostrFilter,
   Subscription,
   EventTemplate,
+  UnsignedEvent,
+  Rumor,
   NappletGlobal,
 } from './types.js';
 
