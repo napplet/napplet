@@ -26,6 +26,7 @@ import type {
   IdentityDecryptMessage,
   IdentityDecryptResultMessage,
   IdentityGetBadgesResultMessage,
+  IdentityNubMessage,
 } from './types.js';
 import type { NostrEvent, Rumor } from '@napplet/core';
 
@@ -51,50 +52,67 @@ let installed = false;
  * Handle identity.* result messages from the shell via the central message listener.
  */
 export function handleIdentityMessage(msg: { type: string; [key: string]: unknown }): void {
-  const type = msg.type;
+  // Narrow to the full discriminated union for compile-time exhaustiveness (TYPES-05).
+  // The central shim's generic `identity.*` routing passes anything matching the prefix;
+  // narrowing here lets the switch below use a `never`-fallback via assertNever.
+  const narrowed = msg as unknown as IdentityNubMessage;
 
-  // Handle .error message types — reject the pending promise.
-  // The runtime sends identity.*.error when the action fails (e.g., no signer configured).
-  // The central shim router now routes both .result AND .error types to this handler.
-  if (type.endsWith('.error')) {
-    const id = msg.id as string | undefined;
-    const error = msg.error as string | undefined;
-    if (id && error) {
-      rejectPending(id, new Error(error));
-    }
-    return;
-  }
+  switch (narrowed.type) {
+    // ─── Shell → Napplet result messages (processed) ────────────────────
+    case 'identity.getPublicKey.result':
+      resolvePending(narrowed.id, narrowed.pubkey);
+      return;
+    case 'identity.getRelays.result':
+      resolveOrReject(narrowed.id, narrowed.relays, narrowed.error);
+      return;
+    case 'identity.getProfile.result':
+      resolveOrReject(narrowed.id, narrowed.profile, narrowed.error);
+      return;
+    case 'identity.getFollows.result':
+      resolveOrReject(narrowed.id, narrowed.pubkeys, narrowed.error);
+      return;
+    case 'identity.getList.result':
+      resolveOrReject(narrowed.id, narrowed.entries, narrowed.error);
+      return;
+    case 'identity.getZaps.result':
+      resolveOrReject(narrowed.id, narrowed.zaps, narrowed.error);
+      return;
+    case 'identity.getMutes.result':
+      resolveOrReject(narrowed.id, narrowed.pubkeys, narrowed.error);
+      return;
+    case 'identity.getBlocked.result':
+      resolveOrReject(narrowed.id, narrowed.pubkeys, narrowed.error);
+      return;
+    case 'identity.getBadges.result':
+      resolveOrReject(narrowed.id, narrowed.badges, narrowed.error);
+      return;
+    case 'identity.decrypt.result':
+      resolvePending(narrowed.id, { rumor: narrowed.rumor, sender: narrowed.sender });
+      return;
+    case 'identity.decrypt.error':
+      rejectPending(narrowed.id, new Error(narrowed.error));
+      return;
 
-  if (type === 'identity.getPublicKey.result') {
-    const result = msg as unknown as IdentityGetPublicKeyResultMessage;
-    resolvePending(result.id, result.pubkey);
-  } else if (type === 'identity.getRelays.result') {
-    const result = msg as unknown as IdentityGetRelaysResultMessage;
-    resolveOrReject(result.id, result.relays, result.error);
-  } else if (type === 'identity.getProfile.result') {
-    const result = msg as unknown as IdentityGetProfileResultMessage;
-    resolveOrReject(result.id, result.profile, result.error);
-  } else if (type === 'identity.getFollows.result') {
-    const result = msg as unknown as IdentityGetFollowsResultMessage;
-    resolveOrReject(result.id, result.pubkeys, result.error);
-  } else if (type === 'identity.getList.result') {
-    const result = msg as unknown as IdentityGetListResultMessage;
-    resolveOrReject(result.id, result.entries, result.error);
-  } else if (type === 'identity.getZaps.result') {
-    const result = msg as unknown as IdentityGetZapsResultMessage;
-    resolveOrReject(result.id, result.zaps, result.error);
-  } else if (type === 'identity.getMutes.result') {
-    const result = msg as unknown as IdentityGetMutesResultMessage;
-    resolveOrReject(result.id, result.pubkeys, result.error);
-  } else if (type === 'identity.getBlocked.result') {
-    const result = msg as unknown as IdentityGetBlockedResultMessage;
-    resolveOrReject(result.id, result.pubkeys, result.error);
-  } else if (type === 'identity.getBadges.result') {
-    const result = msg as unknown as IdentityGetBadgesResultMessage;
-    resolveOrReject(result.id, result.badges, result.error);
-  } else if (type === 'identity.decrypt.result') {
-    const result = msg as unknown as IdentityDecryptResultMessage;
-    resolvePending(result.id, { rumor: result.rumor, sender: result.sender });
+    // ─── Napplet → Shell request messages (defensive — never received here) ──
+    case 'identity.getPublicKey':
+    case 'identity.getRelays':
+    case 'identity.getProfile':
+    case 'identity.getFollows':
+    case 'identity.getList':
+    case 'identity.getZaps':
+    case 'identity.getMutes':
+    case 'identity.getBlocked':
+    case 'identity.getBadges':
+    case 'identity.decrypt':
+      // Request-side envelopes are sent napplet → shell; the handler should
+      // never receive one. Exhaustiveness requires coverage; defensive no-op.
+      return;
+
+    default:
+      // Compile-time exhaustiveness assertion (TYPES-05).
+      // Adding a new member to IdentityNubMessage without a case here fails type-check.
+      assertNever(narrowed);
+      return;
   }
 }
 
@@ -140,6 +158,20 @@ function sendRequest<T>(msg: { type: string; id: string }): Promise<T> {
       }
     }, REQUEST_TIMEOUT_MS);
   });
+}
+
+/**
+ * Compile-time exhaustiveness assertion for discriminated-union switches.
+ *
+ * If a new member is added to `IdentityNubMessage` and the switch in
+ * `handleIdentityMessage` does not add a matching case, TypeScript fails
+ * type-check at this call site with "Argument of type 'X' is not assignable
+ * to parameter of type 'never'". This enforces TYPES-05 at compile time.
+ *
+ * @param _msg  Never-narrowed value (the switch default branch); unused at runtime.
+ */
+function assertNever(_msg: never): void {
+  /* compile-time only — unreachable at runtime if the switch is exhaustive */
 }
 
 // ─── Public API (installed on window.napplet.identity) ─────────────────────
