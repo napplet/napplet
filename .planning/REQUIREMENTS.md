@@ -44,7 +44,7 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 - [x] **SDK-01**: `packages/nub/src/identity/sdk.ts` exports a bare-name `identityDecrypt(event)` helper wrapping `window.napplet.identity.decrypt` with a `requireNapplet()` guard (mirrors existing identity helpers)
 - [x] **SDK-02**: `@napplet/sdk` central package re-exports identity types + `identityDecrypt` helper via the 4-surgical-edit pattern (namespace, type re-exports, DOMAIN const unchanged, helper re-export)
 - [x] **SHIM-03**: `@napplet/shim` central package no changes — identity shim install is already registered; new handler branch is internal to `packages/nub/src/identity/shim.ts`. Verify no central-shim edit required; document if surgical edit IS required
-- [ ] **TYPES-06**: Workspace-wide `pnpm -r type-check` green across all 14 packages after all type additions land (blocking gate; matches v0.28.0 VER-01 precedent)
+- [x] **TYPES-06**: Workspace-wide `pnpm -r type-check` green across all 14 packages after all type additions land (blocking gate; matches v0.28.0 VER-01 precedent)
 
 ### Spec: NUB-IDENTITY Amendment (Public `napplet/nubs`)
 
@@ -78,11 +78,11 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ### Verification
 
-- [ ] **VER-01**: Workspace `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 packages after all type additions land (primary shipping gate, matches v0.28.0 VER-01 precedent)
+- [x] **VER-01**: Workspace `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 packages after all type additions land (primary shipping gate, matches v0.28.0 VER-01 precedent)
 - [ ] **VER-02**: Cross-repo public-hygiene grep: zero matches for `@napplet/*`, `kehto`, `hyprgate` across NUB-IDENTITY amendment + NUB-CLASS-1 amendment drafts at `~/Develop/nubs/` (matches v0.28.0 VER-06 pattern)
 - [ ] **VER-03**: Spec conformance grep: NUB-IDENTITY amendment draft contains all 8 `IdentityDecryptErrorCode` codes, all 4 MUSTs (class-gating, outer-sig-verify, impersonation-check, outer-created_at-hiding), filename citation (`NUB-CLASS-1.md` appears at least once; abstract phrase "Class 1" does NOT appear as primary reference)
 - [ ] **VER-04**: Empirical strict-CSP-nonce injection blocking: a test napplet served with NUB-CLASS-1 posture (`connect-src 'none'`; `script-src 'nonce-XXX'`) running Playwright with a mock legacy-injection script (simulates `<script>`-tag-via-content-script injection) observes CSP blocking the injection AND firing a `securitypolicyviolation` event — validates the DETECT-01 mechanism on Chromium
-- [ ] **VER-05**: Tree-shake contract preserved — relay-types-only consumer bundle remains ≤ 100 bytes (matches v0.28.0 VER-07 74-byte precedent); identity-types-only consumer does not pull shim/sdk runtime symbols
+- [x] **VER-05**: Tree-shake contract preserved — relay-types-only consumer bundle remains ≤ 100 bytes (matches v0.28.0 VER-07 74-byte precedent); identity-types-only consumer does not pull shim/sdk runtime symbols
 - [ ] **VER-06**: `specs/NIP-5D.md` NIP-07 Security Considerations subsection is present, non-empty, cites both `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename, and names the `world: 'MAIN'` residual honestly (grep-verifiable)
 
 ## Future Requirements (deferred)
@@ -130,7 +130,7 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | TYPES-03 | Phase 135 | Complete |
 | TYPES-04 | Phase 135 | Complete |
 | TYPES-05 | Phase 135 | Complete |
-| TYPES-06 | Phase 135 | Pending |
+| TYPES-06 | Phase 135 | Complete |
 | SHIM-01 | Phase 135 | Complete |
 | SHIM-02 | Phase 135 | Complete |
 | SHIM-03 | Phase 135 | Complete |
@@ -154,11 +154,11 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | DOC-02 | Phase 138 | Pending |
 | DOC-03 | Phase 138 | Pending |
 | DOC-04 | Phase 138 | Pending |
-| VER-01 | Phase 135 | Pending |
+| VER-01 | Phase 135 | Complete |
 | VER-02 | Phase 137 | Pending |
 | VER-03 | Phase 137 | Pending |
 | VER-04 | Phase 136 | Pending |
-| VER-05 | Phase 135 | Pending |
+| VER-05 | Phase 135 | Complete |
 | VER-06 | Phase 138 | Pending |
 
 ### Coverage Summary

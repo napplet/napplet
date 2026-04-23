@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
-status: executing
-stopped_at: Completed 135-03-PLAN.md — SDK runtime for identity.decrypt (2 tasks, 3 files, +43 LOC, 2 commits). identityDecrypt bare-name + identity.decrypt namespace method + 6 type re-exports live on @napplet/sdk. Workspace-wide pnpm -r type-check + build both exit 0 across 14 packages. Plan 04 (VER-01/VER-05 verification) unblocked.
-last_updated: "2026-04-23T11:49:15.731Z"
+status: verifying
+stopped_at: Completed 135-04-PLAN.md — Phase 135 shipping-gate verification. VER-01 + TYPES-06 + VER-05 all stamped pass. Workspace (14 pkgs) green; identity-types-only tree-shake bundle 129 bytes with 7-symbol absence. Phase 135 ready for Phase 137 consumption; Phase 136 unblocked for parallel execution.
+last_updated: "2026-04-23T11:54:39.684Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 Phase: 135 (first-party-types-sdk-plumbing) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-23
 
 Progress: [░░░░░░░░░░] 0%
@@ -76,6 +76,12 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 135]: Plan 03: Rumor + UnsignedEvent @napplet/core re-exports on @napplet/sdk use one-line-per-type pattern (matching existing NostrEvent/NostrFilter/Subscription/EventTemplate lines at 781-784) rather than combined-list line
 - [Phase 135]: Plan 03: 4-surgical-edit pattern collapses cleanly for identity NUB method extensions (DOMAIN unchanged; no installShim change); future identity method adds can reuse this template
 - [Phase 135]: Plan 03: Workspace-wide pnpm -r type-check + pnpm -r build both exit 0 across 14 packages after SDK layer lands — VER-01 effectively satisfied up-front; Plan 04 only documents the pass and executes VER-05 tree-shake
+- [Phase 135]: Plan 04: VER-01 + TYPES-06 stamped pass — pnpm -r build + pnpm -r type-check both exit 0 across 14 packages
+- [Phase 135]: Plan 04: VER-05 stamped pass — identity-types-only esbuild tree-shake bundle is 129 bytes with ZERO occurrences of 7 forbidden runtime symbols (handleIdentityMessage, installIdentityShim, identityDecrypt, identityGetPublicKey, sendRequest, requireIdentity, pendingRequests)
+- [Phase 135]: Plan 04: Symbol-absence (not byte-count) is the load-bearing VER-05 signal; v0.29.0 129-byte identity-types-only bundle vs v0.28.0 74-byte relay-types-only precedent reflects 2 stubs vs 1 stub, not a regression
+- [Phase 135]: Plan 04: Regression canary (identityGetPublicKey: 0) confirms pre-Plan-01 existing identity surface still tree-shakes cleanly — Plan 01 type additions did NOT accidentally couple existing types to sdk
+- [Phase 135]: Plan 04: Phase 135 is ready for Phase 137 consumption; Phase 136 may proceed in parallel; Phase 137 blocks on both 135 + 136 per STATE.md dependency graph
+- [Phase 135]: Plan 04: Verification-only plan — all evidence under /tmp/napplet-135-* per AGENTS.md; zero repo source changes; zero home-directory pollution
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -106,6 +112,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T11:49:04.268Z
-Stopped at: Completed 135-03-PLAN.md — SDK runtime for identity.decrypt (2 tasks, 3 files, +43 LOC, 2 commits). identityDecrypt bare-name + identity.decrypt namespace method + 6 type re-exports live on @napplet/sdk. Workspace-wide pnpm -r type-check + build both exit 0 across 14 packages. Plan 04 (VER-01/VER-05 verification) unblocked.
+Last session: 2026-04-23T11:54:39.682Z
+Stopped at: Completed 135-04-PLAN.md — Phase 135 shipping-gate verification. VER-01 + TYPES-06 + VER-05 all stamped pass. Workspace (14 pkgs) green; identity-types-only tree-shake bundle 129 bytes with 7-symbol absence. Phase 135 ready for Phase 137 consumption; Phase 136 unblocked for parallel execution.
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.
