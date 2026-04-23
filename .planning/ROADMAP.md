@@ -47,7 +47,7 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 - [x] **Phase 135: First-Party Types + SDK Plumbing** — Ship `@napplet/nub/identity` type additions (`IdentityDecryptMessage` / `.result` / `.error` + `IdentityDecryptErrorCode` + `Rumor` + `NappletIdentity.decrypt` method type), shim handler + `decrypt()` binding, SDK `identityDecrypt()` helper + re-exports, and gate on `pnpm -r build` + `pnpm -r type-check` green across all 14 packages. Prove the tree-shake contract still holds. (verification found 2 gaps — plan 135-05 closes them) (completed 2026-04-23)
 - [x] **Phase 136: Empirical CSP Injection-Block Verification** — Serve a test napplet under NUB-CLASS-1 posture (`connect-src 'none'`; `script-src 'nonce-XXX'`) with Playwright, simulate legacy `<script>`-tag content-script injection, and observe CSP blocking + `securitypolicyviolation` event firing. Document the `world: 'MAIN'` extension-API residual honestly. Locks the empirical shape of the DETECT-01..04 surface before the amendment PR cites it. (completed 2026-04-23)
 - [x] **Phase 137: Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled)** — Draft the NUB-IDENTITY amendment adding `identity.decrypt` envelope triad with full conformance table (4 MUSTs: class-gating, outer-sig-verify, impersonation-check, outer-created_at-hiding), 8-code error vocabulary, class-gating cite of `NUB-CLASS-1.md` by filename, and Security Considerations subsection. Bundle the NUB-CLASS-1 amendment (`report-to` SHOULD + violation-correlation MUST) into the same PR per CLASS1-03's "bundle if review convenience prevails" clause. Public-repo hygiene verified: zero `@napplet/*`, zero `kehto`, zero `hyprgate` in diff/commits/PR body. (completed 2026-04-23)
-- [ ] **Phase 138: In-Repo NIP-5D Amendment + Docs + Final Verification** — Sync local `specs/NIP-5D.md` against `napplet/nubs` master post-PR-15; add Security Considerations subsection documenting NIP-07 `all_frames: true` injection vector, CSP nonce-based `script-src` mitigation for legacy injection, `world: 'MAIN'` residual, NUB-CLASS-1 `connect-src 'none'` as structural mitigation; cite `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename. Update `packages/nub/README.md`, `packages/sdk/README.md`, root `README.md`, and `skills/build-napplet/SKILL.md` for the `identity.decrypt` surface. Run VER-06 grep gate.
+- [x] **Phase 138: In-Repo NIP-5D Amendment + Docs + Final Verification** — Sync local `specs/NIP-5D.md` against `napplet/nubs` master post-PR-15; add Security Considerations subsection documenting NIP-07 `all_frames: true` injection vector, CSP nonce-based `script-src` mitigation for legacy injection, `world: 'MAIN'` residual, NUB-CLASS-1 `connect-src 'none'` as structural mitigation; cite `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename. Update `packages/nub/README.md`, `packages/sdk/README.md`, root `README.md`, and `skills/build-napplet/SKILL.md` for the `identity.decrypt` surface. Run VER-06 grep gate. (completed 2026-04-23)
 
 ## Phase Details
 
@@ -109,9 +109,9 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
   3. Cross-references cite `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation); the NIP-5D amendment commit is independent of the Phase 137 cross-repo PR diff (NIP5D-03, NIP5D-04).
   4. `packages/nub/README.md` documents `identity.decrypt()` under the identity NUB section (API shape, class-gating expectation, error handling, NIP-17 auto-detect behavior); `packages/sdk/README.md` adds an `identityDecrypt()` entry alongside existing identity SDK helpers; root `README.md` gains a one-line v0.29.0 changelog bullet; `skills/build-napplet/SKILL.md` is updated with a one-paragraph guidance block: NIP-17 DM / kind-1059 handling uses `window.napplet.identity.decrypt(event)`; requires NUB-CLASS-1; napplets MUST NOT attempt `window.nostr.*` decrypt; shell enforces (DOC-01..04).
   5. VER-06 grep gate: `specs/NIP-5D.md` NIP-07 Security Considerations subsection is present, non-empty, cites both `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename, and names the `world: 'MAIN'` residual honestly (grep-verifiable).
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 - [x] 138-01-PLAN.md — NIP-5D sync verification + NIP-07 Extension Injection Residual subsection + VER-06 grep gate (NIP5D-01..04, VER-06)
-- [ ] 138-02-PLAN.md — Docs sweep across 4 surfaces: packages/nub README, packages/sdk README, root README, skills/build-napplet SKILL.md (DOC-01..04)
+- [x] 138-02-PLAN.md — Docs sweep across 4 surfaces: packages/nub README, packages/sdk README, root README, skills/build-napplet SKILL.md (DOC-01..04)
 
 ## Progress
 
@@ -123,4 +123,4 @@ Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 s
 | 135. First-Party Types + SDK Plumbing | 5/5 | Complete    | 2026-04-23 |
 | 136. Empirical CSP Injection-Block Verification | 2/2 | Complete    | 2026-04-23 |
 | 137. Public `napplet/nubs` Amendments (NUB-IDENTITY + NUB-CLASS-1 bundled) | 4/4 | Complete    | 2026-04-23 |
-| 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 1/2 | In Progress|  |
+| 138. In-Repo NIP-5D Amendment + Docs + Final Verification | 2/2 | Complete   | 2026-04-23 |

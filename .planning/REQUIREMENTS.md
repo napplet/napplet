@@ -71,10 +71,10 @@ Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt
 
 ### Documentation
 
-- [ ] **DOC-01**: `packages/nub/README.md` gains documentation for `identity.decrypt()` under the identity NUB section — API shape, class-gating expectation, error handling, NIP-17 auto-detect behavior
-- [ ] **DOC-02**: `packages/sdk/README.md` gains an `identityDecrypt()` entry alongside existing identity SDK helpers
-- [ ] **DOC-03**: Root `README.md` changelog bullet for v0.29.0 — one line; no deep content
-- [ ] **DOC-04**: `skills/build-napplet/SKILL.md` updated with one-paragraph guidance: NIP-17 DM / kind-1059 handling for napplets uses `window.napplet.identity.decrypt(event)`; requires NUB-CLASS-1; napplets MUST NOT attempt `window.nostr.*` decrypt; shell enforces
+- [x] **DOC-01**: `packages/nub/README.md` gains documentation for `identity.decrypt()` under the identity NUB section — API shape, class-gating expectation, error handling, NIP-17 auto-detect behavior
+- [x] **DOC-02**: `packages/sdk/README.md` gains an `identityDecrypt()` entry alongside existing identity SDK helpers
+- [x] **DOC-03**: Root `README.md` changelog bullet for v0.29.0 — one line; no deep content
+- [x] **DOC-04**: `skills/build-napplet/SKILL.md` updated with one-paragraph guidance: NIP-17 DM / kind-1059 handling for napplets uses `window.napplet.identity.decrypt(event)`; requires NUB-CLASS-1; napplets MUST NOT attempt `window.nostr.*` decrypt; shell enforces
 
 ### Verification
 
@@ -150,10 +150,10 @@ All 51 REQ-IDs mapped to exactly one phase. 100% coverage verified 2026-04-23.
 | NIP5D-02 | Phase 138 | Complete |
 | NIP5D-03 | Phase 138 | Complete |
 | NIP5D-04 | Phase 138 | Complete |
-| DOC-01 | Phase 138 | Pending |
-| DOC-02 | Phase 138 | Pending |
-| DOC-03 | Phase 138 | Pending |
-| DOC-04 | Phase 138 | Pending |
+| DOC-01 | Phase 138 | Complete |
+| DOC-02 | Phase 138 | Complete |
+| DOC-03 | Phase 138 | Complete |
+| DOC-04 | Phase 138 | Complete |
 | VER-01 | Phase 135 | Complete |
 | VER-02 | Phase 137 | Complete |
 | VER-03 | Phase 137 | Complete |

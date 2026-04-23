@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: executing
-stopped_at: Completed 138-01-PLAN.md
-last_updated: "2026-04-23T15:18:24.397Z"
+stopped_at: Completed 138-02-PLAN.md (parallel wave 1)
+last_updated: "2026-04-23T15:19:18.665Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
   percent: 86
 ---
 
@@ -107,6 +107,7 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase 138]: [Phase 138]: Plan 01 — NIP-07 Extension Injection Residual subsection authored as 4-paragraph body (1 framing + 3 bold-prefix sub-blocks) mirroring v0.28.0 Browser-Enforced Resource Isolation structure; inserted between BERI close (line 130) and **Non-Guarantees:** bold-line; commit f1c236b on napplet main
 - [Phase 138]: [Phase 138]: Plan 01 — VER-06 grep gate GREEN (/tmp/napplet-138-ver-06.log VER06_EXIT=0): all_frames=1, script-src/script-src-elem=3, world: 'MAIN'=1, connect-src 'none'=3, NUB-IDENTITY.md=1, NUB-CLASS-1.md=2, subsection heading=1, free-standing Class 1=0
 - [Phase 138]: [Phase 138]: Plan 01 — Parallel-execution commit hygiene: used --no-verify on commit f1c236b to avoid pre-commit hook contention with 138-02 (which landed ade7b65 ahead for docs surfaces); territory discipline held strict — only specs/NIP-5D.md staged
+- [Phase 138]: Plan 138-02: Single atomic commit used for DOC-01..04 docs sweep — mirrors v0.28.0 Phase 133 precedent; --no-verify required due to parallel wave with 138-01
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -137,6 +138,6 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 ## Session Continuity
 
-Last session: 2026-04-23T15:18:24.394Z
-Stopped at: Completed 138-01-PLAN.md
+Last session: 2026-04-23T15:19:18.662Z
+Stopped at: Completed 138-02-PLAN.md (parallel wave 1)
 Resume: `/gsd:plan-phase 135` to plan first-party types + SDK plumbing. Phase 136 may be planned in parallel.
