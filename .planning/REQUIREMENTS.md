@@ -106,13 +106,13 @@ Convert napplet iframe security from ambient trust to browser-enforced isolation
 
 ### Verification
 
-- [ ] **VER-01**: `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 workspace packages
-- [ ] **VER-02**: Playwright CSP-block assertion test using positive blocking pattern (`page.on('console')` + `page.on('requestfailed')` correlation; assert specific blocked URL — not just "request didn't happen")
-- [ ] **VER-03**: SVG bomb / `foreignObject` / recursive-`<use>` rejection tests (rasterizer enforces caps)
-- [ ] **VER-04**: Single-flight cache stampede test (N concurrent `resource.bytes(sameUrl)` calls produce 1 fetch)
-- [ ] **VER-05**: Sidecar opt-in default-OFF test (relay event with `resources` field is ignored unless shell explicitly opts in)
-- [ ] **VER-06**: Cross-repo zero-grep CI/manual sweep: no `@napplet/*` private references in any `napplet/nubs` PR body or commit message
-- [ ] **VER-07**: Bundle size: `@napplet/nub/resource` tree-shakes cleanly; consumer importing only `relay` types pays zero bytes for resource code
+- [x] **VER-01**: `pnpm -r build` + `pnpm -r type-check` exit 0 across all 14 workspace packages
+- [x] **VER-02**: Playwright CSP-block assertion test using positive blocking pattern (`page.on('console')` + `page.on('requestfailed')` correlation; assert specific blocked URL — not just "request didn't happen")
+- [x] **VER-03**: SVG bomb / `foreignObject` / recursive-`<use>` rejection tests (rasterizer enforces caps)
+- [x] **VER-04**: Single-flight cache stampede test (N concurrent `resource.bytes(sameUrl)` calls produce 1 fetch)
+- [x] **VER-05**: Sidecar opt-in default-OFF test (relay event with `resources` field is ignored unless shell explicitly opts in)
+- [x] **VER-06**: Cross-repo zero-grep CI/manual sweep: no `@napplet/*` private references in any `napplet/nubs` PR body or commit message
+- [x] **VER-07**: Bundle size: `@napplet/nub/resource` tree-shakes cleanly; consumer importing only `relay` types pays zero bytes for resource code
 
 ## Out of Scope
 
@@ -207,13 +207,13 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 | DOC-06 | Phase 133 | Complete |
 | DOC-07 | Phase 133 | Complete |
 | DEMO-01 | Phase 133 | Complete |
-| VER-01 | Phase 134 | Pending |
-| VER-02 | Phase 134 | Pending |
-| VER-03 | Phase 134 | Pending |
-| VER-04 | Phase 134 | Pending |
-| VER-05 | Phase 134 | Pending |
-| VER-06 | Phase 134 | Pending |
-| VER-07 | Phase 134 | Pending |
+| VER-01 | Phase 134 | Complete |
+| VER-02 | Phase 134 | Complete |
+| VER-03 | Phase 134 | Complete |
+| VER-04 | Phase 134 | Complete |
+| VER-05 | Phase 134 | Complete |
+| VER-06 | Phase 134 | Complete |
+| VER-07 | Phase 134 | Complete |
 
 **Coverage:**
 - v0.28.0 requirements: 65 total (RES×7 + SCH×4 + POL×6 + SVG×3 + CORE×3 + CSP×7 + CAP×3 + SIDE×5 + SHIM×3 + SDK×3 + SPEC×6 + DOC×7 + DEMO×1 + VER×7)
@@ -240,4 +240,4 @@ Mapped 2026-04-20 by gsd-roadmapper. Every v0.28.0 REQ-ID maps to exactly one ph
 
 ---
 *Requirements defined: 2026-04-20*
-*Last updated: 2026-04-20 — traceability mapped to 10 phases (125–134) by gsd-roadmapper*
+*Last updated: 2026-04-23 — VER-01..07 verified Complete; all 65/65 requirements shipped. Milestone v0.28.0 ready for audit.*
