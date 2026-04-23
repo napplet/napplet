@@ -4,7 +4,7 @@ milestone: v0.29.0
 milestone_name: Class-Gated Decrypt Surface
 status: verifying
 stopped_at: "Completed 136-02-PLAN.md — Phase 136 COMPLETE. 136-PHASE-NOTES.md synthesized (93 lines) with all 7 required literal strings grep-verified (GREP_EXIT=0); DETECT-02/03/04 documentation gates locked for Phase 137 amendment author. Phases 135 + 136 done (v0.29.0 wave 1 parallel-eligible); Phase 137 NUB-IDENTITY + NUB-CLASS-1 bundled amendment can begin (/gsd:plan-phase 137)."
-last_updated: "2026-04-23T13:38:50.405Z"
+last_updated: "2026-04-23T13:42:22.091Z"
 last_activity: 2026-04-23
 progress:
   total_phases: 4
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 136 (empirical-csp-injection-block-verification) — EXECUTING
-Plan: 2 of 2
+Phase: 137
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-23
 
