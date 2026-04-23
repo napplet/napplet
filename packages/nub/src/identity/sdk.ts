@@ -5,7 +5,7 @@
  * The shim must be imported somewhere to install the global.
  */
 
-import type { NappletGlobal } from '@napplet/core';
+import type { NappletGlobal, NostrEvent, Rumor } from '@napplet/core';
 import type { ProfileData, ZapReceipt, Badge, RelayPermission } from './types.js';
 
 // ─── Runtime guard ──────────────────────────────────────────────────────────
@@ -164,4 +164,26 @@ export function identityGetBlocked(): Promise<string[]> {
  */
 export function identityGetBadges(): Promise<Badge[]> {
   return requireIdentity().getBadges();
+}
+
+/**
+ * Decrypt a received Nostr event (NIP-04 / direct NIP-44 / NIP-17 gift-wrap).
+ *
+ * Shape auto-detected by the shell; napplets do NOT select encryption mode.
+ * Only legal for napplets assigned class: 1 per NUB-CLASS-1 (shell-enforced).
+ *
+ * @param event  The received event (outer wrap for NIP-17, kind-4 for NIP-04, etc.)
+ * @returns Promise resolving to { rumor, sender }; rejects with Error carrying
+ *   an IdentityDecryptErrorCode as message on failure.
+ *
+ * @example
+ * ```ts
+ * import { identityDecrypt } from '@napplet/nub-identity';
+ *
+ * const { rumor, sender } = await identityDecrypt(wrappedEvent);
+ * console.log(`Message from ${sender}: ${rumor.content}`);
+ * ```
+ */
+export function identityDecrypt(event: NostrEvent): Promise<{ rumor: Rumor; sender: string }> {
+  return requireIdentity().decrypt(event);
 }

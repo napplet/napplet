@@ -79,6 +79,7 @@ export {
   identityGetMutes,
   identityGetBlocked,
   identityGetBadges,
+  identityDecrypt,
 } from './sdk.js';
 
 // ─── Domain Registration ───────────────────────────────────────────────────
