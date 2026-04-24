@@ -16,13 +16,22 @@ import type { JSONSchema7 } from 'json-schema';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  buildBaselineCsp,
-  validateStrictCspOptions,
-  assertNoDevLeakage,
-  assertMetaIsFirstHeadChild,
-  type StrictCspOptions,
-} from './csp.js';
+import { normalizeConnectOrigin } from '@napplet/nub/connect/types';
+
+/**
+ * Synthetic xTag paths — folded into `aggregateHash` but excluded from the
+ * `['x', ...]` tag projection on the signed manifest. Each entry is a pseudo
+ * path in `<nub>:<kind>` format; the colon prevents collision with real
+ * dist-relative file paths on all platforms.
+ *
+ * Exported for testability and as the single extension point: future synthetic
+ * xTags (new NUBs folding bytes into aggregateHash) MUST add their pseudo-path
+ * here rather than adding a sibling hardcoded filter. (Mitigates BUILD-P3 drift.)
+ */
+export const SYNTHETIC_XTAG_PATHS: ReadonlySet<string> = new Set([
+  'config:schema',
+  'connect:origins',
+]);
 
 /** Configuration options for the NIP-5A manifest plugin. */
 export interface Nip5aManifestOptions {
@@ -54,39 +63,61 @@ export interface Nip5aManifestOptions {
   configSchema?: JSONSchema7 | string;
 
   /**
-   * Strict CSP enforcement (CSP-01). When `true`, emits a 10-directive baseline
-   * policy via `<meta http-equiv="Content-Security-Policy">` injected as the
-   * LITERAL first child of `<head>`. When set to a `StrictCspOptions` object,
-   * allows per-directive source-expression appends to the baseline (extend, not
-   * relax).
+   * @deprecated v0.29.0 — the shell is now the sole CSP authority. This option has NO effect
+   * and will be hard-removed in v0.30.0 (tracked as REMOVE-STRICTCSP). The plugin emits a
+   * one-shot `console.warn` per build when this field is set so existing v0.28.0 consumers
+   * discover the deprecation on upgrade without their `vite.config.ts` breaking.
    *
-   * Baseline (production): default-src 'none'; script-src 'nonce-...' 'self';
-   * connect-src 'none'; img-src blob: data:; font-src blob: data:; style-src 'self';
-   * worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'.
-   *
-   * Dev mode (Vite serve): connect-src is relaxed to
-   * `'self' ws://localhost:* wss://localhost:*` for HMR. Build-time assertion
-   * guarantees the dev relaxation never appears in the production manifest
-   * (Pitfall 18 mitigation).
-   *
-   * Build FAILS if:
-   * - Any `<script>`, `<style>`, or `<link>` element precedes the CSP meta in
-   *   `<head>` (Pitfall 1 — meta CSP only binds elements parsed AFTER it)
-   * - User-supplied options include header-only directives (`frame-ancestors`,
-   *   `sandbox`, `report-uri`, `report-to`) — silently ignored by browsers in
-   *   meta delivery per W3C CSP3 §4.2 (Pitfall 2)
-   * - `script-src` contains `'unsafe-inline'` or `'unsafe-eval'` (Pitfall 19)
-   *
-   * Pairs with shells advertising `shell.supports('perm:strict-csp')` (CAP-03).
-   * The capability identifier is shell-side; this option is napplet-author-side.
-   * Setting this option does NOT itself negotiate the capability — it only
-   * ensures the napplet ships with a policy the browser will enforce when the
-   * shell honors it.
-   *
-   * @see NUB-RESOURCE spec (forthcoming napplet/nubs PR — Phase 132)
-   * @see NIP-5D §Security Considerations (forthcoming — Phase 131)
+   * Typed as `unknown` to remain assignment-compatible with the removed
+   * `boolean | object` shape — any prior value parses cleanly; no branch reads it.
    */
-  strictCsp?: boolean | StrictCspOptions;
+  strictCsp?: unknown;
+
+  /**
+   * Direct-network-access origins this napplet intends to reach from the sandbox
+   * (NUB-CONNECT). Each entry is an **origin** — scheme + host + optional
+   * non-default port — validated against the NUB-CONNECT Origin Format rules
+   * and emitted as one `['connect', <origin>]` tag per origin on the signed
+   * NIP-5A manifest.
+   *
+   * **Origin format rules** (delegated to the shared
+   * {@link normalizeConnectOrigin} validator from `@napplet/nub/connect/types`):
+   * - Scheme MUST be one of `https:` / `wss:` / `http:` / `ws:` (lowercase).
+   * - Host MUST be lowercase. Wildcards (`*`) are not permitted.
+   * - Default ports MUST be omitted (`:443` on `https:`/`wss:`, `:80` on `http:`/`ws:`).
+   * - IDN hosts MUST be Punycode-encoded before emission (`xn--` form, lowercase).
+   *   IPv4 literals are accepted; IPv6 literals are out of v1 scope.
+   * - Path / query / fragment MUST NOT appear.
+   *
+   * **Build-time behaviors:**
+   * 1. Each origin is normalized through the shared validator in `configResolved`;
+   *    violations throw a `[nip5a-manifest]`-prefixed error that chains the
+   *    nub's diagnostic so authors see exactly which origin failed and why.
+   * 2. Normalized origins are folded into `aggregateHash` via the NUB-CONNECT
+   *    canonical fold (lowercase → ASCII-ascending sort → LF-join → UTF-8 →
+   *    SHA-256 → lowercase hex) and pushed as the synthetic xTag entry
+   *    `[<hash>, 'connect:origins']`. Any origin-list change flips
+   *    `aggregateHash`, which auto-invalidates shell grants keyed on
+   *    `(dTag, aggregateHash)`.
+   * 3. One `['connect', <normalized-origin>]` manifest tag is emitted per
+   *    origin in author-declared order, placed between `['x', ...]` tags and
+   *    `['config', ...]` tags on the signed event.
+   * 4. Cleartext origins (`http:` / `ws:`) trigger an informational
+   *    `console.warn` describing browser mixed-content rules. Non-blocking.
+   * 5. When Vite is running in dev mode (`vite serve`), an optional
+   *    `<meta name="napplet-connect-requires" content="...">` tag is injected
+   *    for shell-less local preview. This `requires` name is **distinct**
+   *    from the shell-authoritative `...-granted` meta defined in NUB-CONNECT
+   *    §Runtime API — the plugin MUST NEVER emit the `granted` variant; the
+   *    shell is the sole writer of that name.
+   *
+   * When omitted or empty, the plugin emits no `connect` tags, performs no
+   * fold, and the napplet is treated as NUB-CLASS-1 (strict / no-user-declared-
+   * origins) by conformant shells.
+   *
+   * @see NUB-CONNECT spec — napplet/nubs#NUB-CONNECT
+   */
+  connect?: string[];
 }
 
 /** Walk a directory recursively and return all file paths (relative to root). */
@@ -372,6 +403,141 @@ function walk(node: unknown, path: string, errors: string[]): void {
 }
 
 /**
+ * Scan production HTML for forbidden inline `<script>` elements.
+ *
+ * Under the v0.29.0 shell-as-CSP-authority model, shells emit
+ * `script-src 'self'` which blocks inline scripts at runtime. We fail the
+ * build here so authors discover the violation at `pnpm build` rather than
+ * as a silent runtime CSP block. (Locked decision Q4 — hard error.)
+ *
+ * Allow-list (accepted as NOT inline):
+ *   - `<script src="...">` with any non-empty `src` (externally-loaded)
+ *   - `<script type="application/json">...</script>` (non-executing data)
+ *   - `<script type="application/ld+json">...</script>` (non-executing JSON-LD)
+ *   - `<script type="importmap">...</script>` (browser-recognized, non-executing-JS)
+ *   - `<script type="speculationrules">...</script>` (browser-recognized, non-executing-JS)
+ *   - Content inside HTML comments — stripped before scanning
+ *
+ * Rejected (throws):
+ *   - `<script>inline content</script>`
+ *   - `<script src="">...</script>` (empty src = inline fallback per W3C)
+ *   - `<script type="module">inline</script>`
+ *   - `<script type="text/javascript">inline</script>`
+ *
+ * @param html - Contents of `dist/index.html` to scan.
+ * @throws Error with `[nip5a-manifest]` prefix listing every offending tag.
+ */
+function assertNoInlineScripts(html: string): void {
+  // Strip HTML comments (non-greedy, multi-line) so commented-out scripts
+  // don't produce false positives.
+  const stripped = html.replace(/<!--[\s\S]*?-->/g, '');
+
+  // Find every <script ...> opening tag. Attribute section may contain
+  // whitespace and newlines; [\s\S]*? handles both, non-greedy halts at
+  // the first >.
+  const scriptTagRe = /<script\b([\s\S]*?)>/gi;
+  const offenders: string[] = [];
+
+  let m: RegExpExecArray | null;
+  while ((m = scriptTagRe.exec(stripped)) !== null) {
+    const attrsBlob = m[1];
+
+    // src="..." with at least one non-whitespace char — valid external load.
+    const srcMatch = /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrsBlob);
+    if (srcMatch) {
+      const srcValue = (srcMatch[1] ?? srcMatch[2] ?? '').trim();
+      if (srcValue.length > 0) continue;
+      // src="" — treat as inline (empty src executes inline fallback per W3C).
+      const tag = m[0].length > 80 ? m[0].slice(0, 80) + '...' : m[0];
+      offenders.push(`${tag}  (empty src attribute)`);
+      continue;
+    }
+
+    // No src — check type= for allow-listed non-executing values.
+    const typeMatch = /\btype\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrsBlob);
+    if (typeMatch) {
+      const typeValue = (typeMatch[1] ?? typeMatch[2] ?? '').trim().toLowerCase();
+      const NON_EXECUTING_TYPES = new Set([
+        'application/json',
+        'application/ld+json',
+        'importmap',
+        'speculationrules',
+      ]);
+      if (NON_EXECUTING_TYPES.has(typeValue)) continue;
+    }
+
+    const tag = m[0].length > 80 ? m[0].slice(0, 80) + '...' : m[0];
+    offenders.push(`${tag}  (inline <script> without src)`);
+  }
+
+  if (offenders.length > 0) {
+    const list = offenders.map((o) => `  - ${o}`).join('\n');
+    throw new Error(
+      `[nip5a-manifest] Inline <script> elements are not allowed in napplet HTML under the v0.29.0 shell-as-CSP-authority model. The shell emits \`script-src 'self'\` which blocks inline scripts at runtime. Move inline JS to a file and reference it via \`<script src="..."></script>\`. Offending elements (${offenders.length}):\n${list}`,
+    );
+  }
+}
+
+/**
+ * Build-time conformance self-check for the NUB-CONNECT `connect:origins`
+ * aggregateHash fold.
+ *
+ * Re-invokes the fold logic (lowercase → ASCII sort → LF-join no trailing →
+ * UTF-8 → SHA-256 → lowercase hex) on the three-origin normative fixture from
+ * NUB-CONNECT.md §Conformance Fixture and asserts the output equals the spec's
+ * expected digest. Any drift in the plugin's fold implementation (join
+ * delimiter, sort order, encoding, hash algorithm) throws at module load,
+ * giving napplet authors an immediate loud failure instead of a silent
+ * grant-invalidation mismatch at shell-side later.
+ *
+ * Cost: one SHA-256 over 80 bytes per plugin-factory invocation. Negligible.
+ *
+ * Runs module-top-level so even plugins that never invoke the fold at runtime
+ * (e.g. napplets with zero `connect` origins) still benefit from the guardrail.
+ *
+ * @see NUB-CONNECT.md §Canonical `connect:origins` aggregateHash Fold
+ * @see NUB-CONNECT.md §Conformance Fixture
+ * @see .planning/research/PITFALLS.md SPEC-P1 (hash-determinism drift)
+ */
+function assertConnectFoldMatchesSpecFixture(): void {
+  // Fixture from NUB-CONNECT.md §Conformance Fixture — order intentionally
+  // scrambled to exercise the sort step (api < xn-- < wss happens to be the
+  // already-sorted form, but passing scrambled guards against someone removing
+  // the sort).
+  const fixtureOrigins = [
+    'wss://events.example.com',
+    'https://api.example.com',
+    'https://xn--caf-dma.example.com',
+  ];
+  const EXPECTED = 'cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742';
+
+  // Re-invoke the SAME fold logic used in closeBundle. If this logic and the
+  // closeBundle logic ever diverge (e.g. one gets refactored, the other
+  // forgotten), update BOTH — or refactor into a shared helper. For now the
+  // 5-line fold is small enough that byte-identical duplication is clearer
+  // than factoring.
+  const sorted = [...fixtureOrigins].sort();
+  const canonical = sorted.join('\n');
+  const actual = crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
+
+  if (actual !== EXPECTED) {
+    throw new Error(
+      `[nip5a-manifest] FATAL: connect:origins fold implementation drift detected. ` +
+      `The plugin's fold on the NUB-CONNECT.md §Conformance Fixture inputs produced ` +
+      `hash ${actual} but the spec requires ${EXPECTED}. This means a build-time ` +
+      `change broke fold-determinism with shells — any napplet built with this plugin ` +
+      `would produce grant-invalidation mismatches. Restore the canonical fold ` +
+      `(lowercase → ASCII sort → LF-join no trailing → UTF-8 → SHA-256 → lowercase hex) ` +
+      `or update NUB-CONNECT.md + all shell implementations in lockstep.`,
+    );
+  }
+}
+
+// Module-load self-check: fires once per process that imports this plugin.
+// Throws at module load if the fold has drifted from NUB-CONNECT.md spec.
+assertConnectFoldMatchesSpecFixture();
+
+/**
  * Vite plugin for NIP-5A manifest generation.
  *
  * Computes per-file SHA-256 hashes, an aggregate hash, and optionally signs
@@ -386,14 +552,7 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
   let projectRoot: string = process.cwd();
   let resolvedSchema: JSONSchema7 | null = null;
   let resolvedSchemaSource: string | null = null;
-
-  // Strict CSP runtime state (CSP-01..07). When `options.strictCsp` is undefined
-  // or false, all CSP-related code paths are inert and the plugin's HTML output
-  // is byte-identical to pre-phase-130 — back-compat for napplets not opting in.
-  let cspNonce: string | null = null;
-  let cspMode: 'dev' | 'prod' = 'prod';
-  let strictCspOptions: StrictCspOptions | undefined = undefined;
-  const strictCspEnabled = options.strictCsp !== undefined && options.strictCsp !== false;
+  let normalizedConnect: string[] = [];
 
   return {
     name: 'vite-plugin-nip5a-manifest',
@@ -422,116 +581,127 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         );
       }
 
-      // CSP-04 / CSP-07 — fail-fast validation of user-supplied StrictCspOptions.
-      // Runs in configResolved (earliest hook with full config) so the build
-      // aborts before any HTML emission if the user supplied an invalid policy
-      // override.
-      if (strictCspEnabled) {
-        strictCspOptions = typeof options.strictCsp === 'object' ? options.strictCsp : {};
-        validateStrictCspOptions(strictCspOptions); // throws on header-only or unsafe-*
-        cspMode = config.command === 'serve' ? 'dev' : 'prod';
-        // Generate fresh nonce per build. crypto.randomBytes(16).toString('base64url')
-        // yields 128 bits of entropy (>= W3C CSP3 § Nonce-source minimum). Use
-        // the explicit override if provided (StrictCspOptions.nonce — for tests
-        // / reproducible builds).
-        cspNonce = strictCspOptions.nonce ?? crypto.randomBytes(16).toString('base64url');
-        console.log(`[nip5a-manifest] ${options.nappletType}: strict CSP enabled (mode: ${cspMode})`);
+      // v0.29.0 deprecation shim: `strictCsp` option is @deprecated and has no effect.
+      // Shell is now the sole CSP authority. Warn once per build so upgrading consumers
+      // discover the deprecation without their v0.28.0 vite.config.ts breaking on type-check
+      // or build. Hard removal tracked as REMOVE-STRICTCSP in REQUIREMENTS.md for v0.30.0.
+      // configResolved is called exactly once per plugin invocation by Vite, so this
+      // is effectively once-per-build with no external guard variable needed.
+      if (options.strictCsp !== undefined) {
+        console.warn(
+          '[nip5a-manifest] strictCsp is deprecated in v0.29.0 and has no effect — the shell is now the sole CSP authority. Remove this option from your vite.config.ts. See v0.29.0 changelog for migration. (REMOVE-STRICTCSP tracks hard removal in v0.30.0.)',
+        );
+      }
+
+      // VITE-03 / VITE-04 / VITE-09: NUB-CONNECT origin declaration.
+      //
+      // Validate each origin through the shared `normalizeConnectOrigin()` from
+      // `@napplet/nub/connect/types` — this is the single source of truth used
+      // on BOTH the build side (here) and the shell side (at manifest-load
+      // time) per NUB-CONNECT §Origin Format. Chaining the nub's diagnostic
+      // into a `[nip5a-manifest]`-prefixed error keeps the plugin's namespace
+      // visible to authors while preserving the specific reason.
+      //
+      // Cleartext origins (http:/ws:) are legal for localhost dev but warrant
+      // an informational warning because browser mixed-content rules silently
+      // block them from HTTPS shells unless they're localhost/127.0.0.1 (the
+      // secure-context exception). Non-blocking per RUNTIME-P2 mitigation.
+      if (options.connect !== undefined) {
+        if (!Array.isArray(options.connect)) {
+          throw new Error(
+            '[nip5a-manifest] connect option must be an array of origin strings',
+          );
+        }
+        const normalized: string[] = [];
+        for (const origin of options.connect) {
+          try {
+            normalized.push(normalizeConnectOrigin(origin));
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            throw new Error(`[nip5a-manifest] invalid connect origin: ${msg}`);
+          }
+        }
+        normalizedConnect = normalized;
+
+        const cleartext = normalizedConnect.filter(
+          (o) => o.startsWith('http://') || o.startsWith('ws://'),
+        );
+        if (cleartext.length > 0) {
+          console.warn(
+            `[@napplet/vite-plugin] connect includes cleartext origin(s): ${cleartext.join(', ')} — browser mixed-content rules will silently block http:/ws: fetches from HTTPS shells unless the origin is http://localhost or http://127.0.0.1. Some shells refuse cleartext entirely (check \`shell.supports('connect:scheme:http')\`). See NUB-CONNECT for details.`,
+          );
+        }
       }
     },
 
-    transformIndexHtml: {
-      order: 'pre' as const, // Pitfall 1: run BEFORE Vite's HMR client injection
-      handler(_html: string, ctx: { server?: unknown }): IndexHtmlTransformResult {
-        // dev vs prod fallback — configResolved already set cspMode, but
-        // ctx.server is the authoritative runtime signal (test harnesses may
-        // not call configResolved).
-        const isDev = !!ctx.server;
-        const tags: IndexHtmlTransformResult = [];
+    transformIndexHtml(_html: string, ctx?: { server?: unknown }): IndexHtmlTransformResult {
+      const tags: IndexHtmlTransformResult = [];
+      const isDev = !!ctx?.server;
 
-        // CSP META — MUST be first head child (Pitfall 1 / CSP-02).
-        // injectTo: 'head-prepend' ensures Vite places this BEFORE any other
-        // plugin's head injections, AND combined with order: 'pre' on the hook
-        // itself ensures THIS plugin's head-prepend runs before Vite's own HMR
-        // client head-prepend. closeBundle does the post-build assert.
-        if (strictCspEnabled && cspNonce) {
-          const policyValue = buildBaselineCsp(isDev ? 'dev' : 'prod', cspNonce, strictCspOptions);
-          tags.push({
-            tag: 'meta',
-            attrs: {
-              'http-equiv': 'Content-Security-Policy',
-              content: policyValue,
-            },
-            injectTo: 'head-prepend' as const, // FIRST in head
-          });
-        }
+      // Existing meta tags — preserve byte-identical output for backward
+      // compat with pre-v0.29.0 consumers (minus the now-removed CSP meta).
+      tags.push({
+        tag: 'meta',
+        attrs: { name: 'napplet-aggregate-hash', content: '' },
+        injectTo: 'head' as const,
+      });
+      tags.push({
+        tag: 'meta',
+        attrs: { name: 'napplet-type', content: options.nappletType },
+        injectTo: 'head' as const,
+      });
 
-        // Existing meta tags — preserve byte-identical output for backward
-        // compat. These remain injectTo: 'head' (append, not prepend) so they
-        // land AFTER the CSP meta. The CSP meta MUST be first; everything else
-        // is fine after.
+      if (options.requires && options.requires.length > 0) {
         tags.push({
           tag: 'meta',
-          attrs: { name: 'napplet-aggregate-hash', content: '' },
+          attrs: { name: 'napplet-requires', content: options.requires.join(',') },
           injectTo: 'head' as const,
         });
+      }
+
+      if (resolvedSchema !== null) {
         tags.push({
           tag: 'meta',
-          attrs: { name: 'napplet-type', content: options.nappletType },
+          attrs: { name: 'napplet-config-schema', content: JSON.stringify(resolvedSchema) },
           injectTo: 'head' as const,
         });
+      }
 
-        if (options.requires && options.requires.length > 0) {
-          tags.push({
-            tag: 'meta',
-            attrs: { name: 'napplet-requires', content: options.requires.join(',') },
-            injectTo: 'head' as const,
-          });
-        }
+      // VITE-10: dev-mode-only `napplet-connect-requires` meta for shell-less
+      // `vite serve` preview. Distinct from the shell-authoritative
+      // `...-granted` name defined in NUB-CONNECT §Runtime API — the plugin
+      // MUST NEVER emit the `granted` variant; the shell is the sole writer
+      // of that name. This `requires` name signals build-time intent ONLY
+      // and is stripped from production output (the guard below is `isDev`
+      // strict).
+      if (isDev && normalizedConnect.length > 0) {
+        tags.push({
+          tag: 'meta',
+          attrs: {
+            name: 'napplet-connect-requires',
+            content: normalizedConnect.join(' '),
+          },
+          injectTo: 'head' as const,
+        });
+      }
 
-        if (resolvedSchema !== null) {
-          tags.push({
-            tag: 'meta',
-            attrs: { name: 'napplet-config-schema', content: JSON.stringify(resolvedSchema) },
-            injectTo: 'head' as const,
-          });
-        }
-
-        return tags;
-      },
+      return tags;
     },
 
     async closeBundle() {
       const distPath = path.resolve(outDir);
 
-      // CSP-03 / Pitfall 1 — post-build assertion that the CSP meta is the
-      // literal first child of <head>. Runs BEFORE the manifest-signing branch
-      // (which gates on VITE_DEV_PRIVKEY_HEX) because strict CSP enforcement
-      // is independent of manifest signing — a napplet author may opt into
-      // strict CSP without configuring a manifest privkey, and the build-time
-      // gates MUST still fire. The transformIndexHtml hook with `order: 'pre'`
-      // + `injectTo: 'head-prepend'` SHOULD have placed the meta correctly,
-      // but we MUST verify on disk because plugin-order interactions with
-      // other plugins are not contractually guaranteed by Vite. This is the
-      // load-bearing build-time gate: if any other plugin sneaks something in
-      // before our CSP meta, the browser would silently parse-and-execute the
-      // early element WITHOUT the policy in force (project-killer per
-      // Pitfall 1).
-      const indexPathForCsp = path.join(distPath, 'index.html');
-      if (strictCspEnabled && fs.existsSync(indexPathForCsp)) {
-        const finalHtml = fs.readFileSync(indexPathForCsp, 'utf-8');
-        assertMetaIsFirstHeadChild(finalHtml); // throws on Pitfall 1 violation
-        // CSP-05 / Pitfall 18 — production manifest MUST NOT contain ws:// or
-        // wss:// anywhere in the CSP. Extract the policy from the meta tag
-        // and check. The content attribute is double-quoted (Vite-emitted)
-        // and itself contains single quotes (e.g. 'none', 'self'), so the
-        // capture group accepts any non-double-quote character — using
-        // [^"'] would truncate at the first single quote and miss ws:// in
-        // the tail (Rule 1 bug fix found via Phase 130 smoke test Case 3).
-        const cspMatch = /<meta\s+http-equiv\s*=\s*"Content-Security-Policy"\s+content\s*=\s*"([^"]+)"/i.exec(finalHtml);
-        if (cspMatch) {
-          assertNoDevLeakage(cspMatch[1], cspMode); // throws if prod policy contains ws://
-        }
-        console.log(`[nip5a-manifest] ${options.nappletType}: strict CSP verified (meta-first + no-dev-leak)`);
+      // VITE-08 / BUILD-P1: fail-loud inline-script diagnostic.
+      //
+      // Scan dist/index.html BEFORE any signing / manifest-generation work so
+      // the build aborts on an inline-script violation regardless of whether
+      // a signing privkey is configured. Inline scripts are a hard-fail per
+      // locked decision Q4 — the shell emits `script-src 'self'` at runtime
+      // and silent CSP blocks would be harder to diagnose than a build error.
+      const indexPathForInlineScan = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPathForInlineScan)) {
+        const html = fs.readFileSync(indexPathForInlineScan, 'utf-8');
+        assertNoInlineScripts(html);
       }
 
       const privkeyHex = process.env.VITE_DEV_PRIVKEY_HEX;
@@ -570,21 +740,61 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
         xTags.push([schemaHash, 'config:schema']);
       }
 
-      // Compute aggregate hash (includes synthetic config:schema entry when
-      // a schema is declared)
+      // VITE-06: NUB-CONNECT aggregateHash fold. Canonical procedure per
+      // NUB-CONNECT.md §Canonical `connect:origins` aggregateHash Fold:
+      //   1. lowercase (idempotent after normalizeConnectOrigin)
+      //   2. ASCII-ascending sort (JS default .sort() is code-unit order,
+      //      byte-equivalent for ASCII origins — all conformant origins are
+      //      ASCII post-Punycode; no comparator needed)
+      //   3. LF-join with NO trailing newline
+      //   4. UTF-8 encode
+      //   5. SHA-256 → lowercase hex
+      //
+      // Independently verifiable against the NUB-CONNECT conformance fixture:
+      //   input origins: https://api.example.com, https://xn--caf-dma.example.com, wss://events.example.com
+      //   expected hash: cc7c1b1903fb23ecb909d2427e1dccd7d398a5c63dd65160edb0bb8b231aa742
+      // Plan 138-03 asserts this equivalence at build time.
+      //
+      // The synthetic xTag participates in aggregateHash so origin-list drift
+      // invalidates prior grants on the (dTag, aggregateHash) composite key.
+      // The projection filter (`!SYNTHETIC_XTAG_PATHS.has(p)`) keeps it out of
+      // the manifest's ['x', ...] tag list — origins surface as their own
+      // ['connect', origin] tags below.
+      if (normalizedConnect.length > 0) {
+        const sortedOrigins = [...normalizedConnect].sort();
+        const canonical = sortedOrigins.join('\n');
+        const originsHash = crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
+        xTags.push([originsHash, 'connect:origins']);
+      }
+
+      // Compute aggregate hash (includes synthetic config:schema and
+      // connect:origins entries when present)
       const aggregateHash = computeAggregateHash(xTags);
 
       // Build requires tags from plugin options
       const requiresTags = (options.requires ?? []).map((name) => ['requires', name]);
 
-      // Filter the synthetic config:schema entry out of the ['x', ...] tag
-      // projection — the schema participates in aggregateHash but is NOT a
-      // real dist/ file, so emitting it as an x-tag would leak a misleading
-      // file-hash record. The schema is instead surfaced via its dedicated
-      // ['config', ...] tag below.
+      // Filter synthetic xTag entries out of the ['x', ...] tag projection —
+      // these entries participate in aggregateHash but are NOT real dist/
+      // files, so emitting them as x-tags would leak misleading file-hash
+      // records. Synthetic paths live in SYNTHETIC_XTAG_PATHS (module scope)
+      // so adding a new NUB fold doesn't require patching the filter twice.
+      // (VITE-07 / BUILD-P3 mitigation.)
+      //
+      // Each synthetic entry surfaces on the manifest via its own dedicated
+      // tag: `config:schema` → `['config', ...]`, `connect:origins` →
+      // `['connect', ...]` (one per origin).
       const manifestXTags = xTags
-        .filter(([, p]) => p !== 'config:schema')
+        .filter(([, p]) => !SYNTHETIC_XTAG_PATHS.has(p))
         .map(([hash, p]) => ['x', hash, p]);
+
+      // VITE-05: connect manifest tags. One ['connect', <normalized-origin>]
+      // per origin. Author's declared array order is preserved (not the sorted
+      // order used for the aggregate-hash fold above) — matches NUB-CONNECT
+      // §Manifest Tag Shape which emits tags in declaration order for human
+      // readability. The hash is order-insensitive via sort; the manifest
+      // tags are author-ordered.
+      const connectTags: string[][] = normalizedConnect.map((origin) => ['connect', origin]);
 
       // NUB-CONFIG: dedicated ['config', JSON.stringify(schema)] manifest tag.
       // Placed between x-tags and requires-tags per phase 114 context
@@ -594,13 +804,16 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       const configTags: string[][] =
         resolvedSchema !== null ? [['config', JSON.stringify(resolvedSchema)]] : [];
 
-      // Build kind 35128 manifest event (unsigned template)
+      // Build kind 35128 manifest event (unsigned template).
+      // Tag order (VITE-05 normative per ARCHITECTURE.md data flow):
+      //   d → x-tags (real files) → connect-tags → config-tag → requires-tags
       const manifest = {
         kind: 35128,
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ['d', options.nappletType],
           ...manifestXTags,
+          ...connectTags,
           ...configTags,
           ...requiresTags,
         ],

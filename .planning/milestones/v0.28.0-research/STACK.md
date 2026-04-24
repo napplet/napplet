@@ -1,239 +1,313 @@
-# Stack Research — v0.28.0 Browser-Enforced Resource Isolation
+# Stack Research — v0.29.0 NUB-CONNECT + Shell as CSP Authority
 
-**Domain:** Browser-enforced iframe resource isolation + scheme-pluggable shell-mediated fetch
-**Researched:** 2026-04-20
-**Confidence:** HIGH (web-platform APIs verified via MDN/W3C; library versions verified via npm/GitHub)
-**Scope:** STACK ADDITIONS only. Existing validated stack (TS 5.9.3, tsup 8.5, turborepo 2.5, pnpm 10.8, Vitest 4, Playwright, nostr-tools 2.23.3, 14 packages at v0.2.x) is NOT re-researched.
+**Domain:** TypeScript monorepo / build-time Vite plugin + runtime shim type surface
+**Researched:** 2026-04-21
+**Confidence:** HIGH (for existing stack — already validated); HIGH (for new needs — verified against Node stdlib + current docs)
+**Scope:** Subtractive + additive milestone. No new runtime frameworks, no rewrite.
 
-## Headline Verdict
+## TL;DR
 
-**The milestone needs zero new runtime dependencies.** Every required capability — CSP enforcement, CSP violation reporting, Blob transfer over postMessage, WHATWG URL parsing, scheme dispatch, SHA-256 hashing, OffscreenCanvas/ImageBitmap rasterization — is a built-in browser API. The only optional addition worth considering is **`@resvg/resvg-wasm`** for shell-side SVG rasterization, and only if `OffscreenCanvas.drawImage(<img src=blob:svg>)` proves insufficient (e.g., for headless server rasterization or font fidelity). That dep belongs in the *shell* repo, **never** in `@napplet/*`.
+**Zero new runtime dependencies.** Every need for v0.29.0 is satisfiable by:
+- Node 20+ stdlib (`node:url`, `node:crypto`) for origin normalization and hashing.
+- The existing hand-rolled regex parser pattern in `csp.ts` for inline-script detection.
+- Existing Playwright + Vitest for tests (shell-emitted CSP is simulated via `page.route()` response-header rewrite and/or test-server fixtures; no new test library).
 
-**For Playwright tests**, no new packages — built-in `page.on('console')`, `page.on('response')`, `page.route()`, and the W3C `securitypolicyviolation` event surface everything you need.
+The only package-level changes are **removals** from `@napplet/vite-plugin` and an **additive `/connect` subpath** on the existing consolidated `@napplet/nub` package.
 
-**For Vite dev-mode CSP**, no third-party plugin is recommended. Build a small custom `transformIndexHtml` hook inside `@napplet/vite-plugin` that mirrors what the production shell will inject. The popular `vite-plugin-csp-guard` solves a different problem (full-app SPA CSP) and pulls in subresource-integrity machinery this project does not need.
+## Current Stack (validated — DO NOT re-research)
 
-This is consistent with the project's "zero framework deps" constraint and the existing pattern where `@napplet/core` is zero-deps and `@napplet/vite-plugin` keeps its single runtime dep (`nostr-tools`) tightly scoped.
+| Technology | Version | Role | Notes |
+|------------|---------|------|-------|
+| TypeScript | 5.9.3 | Language | strict, ESM-only, ES2022 |
+| tsup | 8.5.0 | Package bundling | per-package builds |
+| turborepo | 2.5.0 | Monorepo orchestration | `pnpm -r build` |
+| pnpm | 10.8.0 | Workspaces / install | |
+| changesets | 2.30.0 | Versioning / publish | |
+| Vite | ^6.3.0 (peer) | Consumer build tool | `@napplet/vite-plugin` peer dep |
+| Vitest | 4.x | Unit / integration tests | existing |
+| Playwright | (existing) | e2e / CSP-bound tests | existing harness |
+| nostr-tools | 2.23.3 | Direct dep of vite-plugin only | dynamic-imported for signing |
+| `@napplet/nub` | 0.2.x | Consolidated NUB package | 38 subpath exports today |
+| 4-package SDK | 0.2.x | core / shim / sdk / vite-plugin | unchanged shape |
 
----
+Everything above is already in `packages/vite-plugin/package.json` and root `pnpm-lock.yaml`. No version bumps required for v0.29.0.
 
-## Recommended Stack
+## Proposed Additions
 
-### Core Technologies — All Built-In Web APIs
+### 1. `@napplet/nub/connect` subpath (NEW — additive only)
 
-| Technology | Availability | Purpose in v0.28.0 | Why It's the Right Choice |
-|------------|--------------|---------------------|---------------------------|
-| **CSP `Content-Security-Policy` header / `<meta http-equiv>`** | All evergreen browsers (W3C CSP3) | Strict isolation: `default-src 'none'; connect-src 'none'; script-src 'self'; img-src blob:` etc. | The whole milestone goal *is* "browser-enforced". CSP is the enforcer. |
-| **`securitypolicyviolation` DOM event** | All evergreen browsers (W3C CSP3 §6) | Dev-mode visibility into what a napplet tried to fetch behind the shell's back; hookable by the shell to log/alert violations. | Native, zero overhead. `document.addEventListener('securitypolicyviolation', e => …)` exposes `blockedURI`, `violatedDirective`, `effectiveDirective`, `disposition`, `sample`. |
-| **`Content-Security-Policy-Report-Only` header** | All evergreen browsers | A second policy that shell can serve in dev to *observe without blocking*, alongside the enforced one. Both fire `securitypolicyviolation` events. | Built-in. The two-policy pattern is the standard "tighten safely" workflow. |
-| **`postMessage` with `Transferable`** | All evergreen browsers | Hand a `Blob` (or `ArrayBuffer`) from shell to napplet without a copy: napplet receives a `blob:` URL or a transferred `ArrayBuffer`. | `Blob`s are structured-cloneable (cheap because the underlying bytes are refcounted, not copied). `ArrayBuffer`s are transferable. `MessagePort`s are transferable. No library needed. |
-| **`URL` (WHATWG)** | All evergreen browsers | Parse arbitrary URLs napplets pass to `resource.bytes(url)` and dispatch on `url.protocol`. | Built-in. Handles `https:`, `data:`, custom schemes (`blossom:`, `nostr:`) — all yield a parsed `URL` with `protocol` ending in `:`. |
-| **`crypto.subtle.digest('SHA-256', bytes)`** | All evergreen browsers (W3C WebCrypto) | Content-addressed cache keys for shell-internal dedup of fetched bytes. | Built-in. **Streaming digest is NOT in the spec yet** ([proposal-webcrypto-streams](https://github.com/WinterTC55/proposal-webcrypto-streams), [w3c/webcrypto#73](https://github.com/w3c/webcrypto/issues/73)) — buffer-then-digest is the only browser-native option, which is fine because the byte-cap policy makes in-memory hashing safe. |
-| **`OffscreenCanvas` + `ImageBitmap`** | All evergreen browsers | Shell-side resize / re-encode of fetched bitmap content before handing the napplet a `blob:`. Worker-friendly. | Built-in. `createImageBitmap(blob, { resizeWidth, resizeHeight })` is the one-liner. `OffscreenCanvas.convertToBlob({ type: 'image/webp', quality }) → Promise<Blob>` closes the loop. |
-| **`<img src="blob:…svg…">` → `drawImage` → `convertToBlob`** | All evergreen browsers | The default SVG-rasterization path: load SVG into an `<img>` (which strictly disables script execution per HTML spec — "secure static mode"), draw to canvas, export raster. | Built-in, zero deps. **This is the recommended path** for v0.28.0 unless font/feature fidelity gaps emerge. |
+**What:** New subpath on the existing `@napplet/nub` package mirroring the structure of `@napplet/nub/resource` shipped in v0.28.0:
 
-### Optional Supporting Library — One Candidate, Conditional
-
-| Library | Latest Version | Size | License | Conditional Use |
-|---------|----------------|------|---------|-----------------|
-| **`@resvg/resvg-wasm`** | `2.6.2` (verified via npm/Bundlephobia, [resvg-js GitHub](https://github.com/thx/resvg-js)) | ~560 KB on-the-wire (the WASM artifact dominates) | MPL-2.0 | **Add ONLY if** the shell needs to rasterize SVG outside a DOM (e.g., a Worker without `<img>` access, or a future headless shell), OR if `<img>`-based rasterization shows fidelity gaps (custom fonts, filters). |
-
-**Default position: do NOT add it for v0.28.0.** The `<img src=blob:svg>` → canvas pipeline runs in the shell's browsing context (which has DOM access), preserves all native SVG features the browser supports, and weighs zero KB. `@resvg/resvg-wasm` is the right fallback to *document* in PITFALLS, not a default dep.
-
-If it's added later, the integration point is a separate optional package in the *shell* repo (e.g., `@napplet-shell/resvg`), **never** in `@napplet/*` — the SDK stays WASM-free.
-
-### What `@napplet/nub` Gets
-
-A new `resource` subdomain following the established NUB pattern (`packages/nub/src/resource/{index.ts,types.ts,shim.ts,sdk.ts}` plus matching `exports` entries in `packages/nub/package.json`). Zero new dependencies; rides on `@napplet/core` only. Mirrors the structural precedent of `packages/nub/src/identity/` (request/result RPC shape with timeout) — concrete shape lives in REQUIREMENTS.
-
-Pseudo-shape:
-
-- `packages/nub/src/resource/types.ts` — message envelopes (`resource.bytes`, `resource.bytes.result`)
-- `packages/nub/src/resource/shim.ts` — `installResourceShim()` that wires `window.napplet.resource.bytes(url)` → postMessage → `Promise<Blob>`
-- `packages/nub/src/resource/sdk.ts` — typed wrapper for bundler consumers
-- 4 new `exports` entries on `@napplet/nub/package.json` (`./resource`, `./resource/types`, `./resource/shim`, `./resource/sdk`)
-- 1 new `'resource'` member of `NubDomain` in `@napplet/core`
-
-### What `@napplet/vite-plugin` Gets
-
-One new option (`csp?: { policy: string | CspBuilder; reportOnly?: string }`) and one new code path: a `transformIndexHtml` hook that injects the policy into the served napplet HTML in dev. **No new runtime deps.** `vite` itself already exposes everything needed.
-
-Optional: a tiny `CspBuilder` helper type living in `packages/vite-plugin/src/csp.ts` that produces the canonical strict-default policy as a string. **Don't import a library** — CSP is a small grammar and a hand-rolled builder is ~30 lines.
-
-### Development Tools — Already Present
-
-| Tool | Role | Notes |
-|------|------|-------|
-| **Playwright** (already pinned) | CSP-violation assertions in e2e tests | Use `page.on('console', …)` to catch CSP violation messages, OR `page.evaluate(() => new Promise(r => addEventListener('securitypolicyviolation', r, { once: true })))` for direct event assertion. **Do NOT enable `bypassCSP`** in v0.28.0 test contexts — that disables exactly what this milestone is testing. (Reserve `bypassCSP: true` only for unrelated suites.) Verified via [Playwright TestOptions](https://playwright.dev/docs/api/class-testoptions). |
-| **Vitest 4** (already pinned) | Unit tests for `CspBuilder`, scheme-dispatch table | jsdom does not implement CSP enforcement; reserve CSP behavioral tests for Playwright. |
-| **tsup 8.5** (already pinned) | Build the new `nub/resource` subpath | No config change beyond adding the entry; `nub/tsup.config.ts` already iterates subdomains. |
-
----
-
-## Question-by-Question Answers
-
-### 1. CSP Reporting / Enforcement
-
-- **Browser API, no library.** `document.addEventListener('securitypolicyviolation', e => …)` per W3C CSP3 ([MDN: SecurityPolicyViolationEvent](https://developer.mozilla.org/en-US/docs/Web/API/SecurityPolicyViolationEvent)). The event has `blockedURI`, `violatedDirective`, `effectiveDirective`, `disposition` (`"enforce"` vs `"report"`), `documentURI`, `sample`, `sourceFile`, `lineNumber`, `columnNumber`.
-- **Pair `Content-Security-Policy` with `Content-Security-Policy-Report-Only`** to observe violations of a tighter candidate policy without blocking, before tightening for real. Both fire the same event.
-- **Cross-frame caveat**: violations in a child iframe target *that iframe's document*. The shell can either install a listener inside the napplet via the bootstrap script it already injects, or rely on browser DevTools console for dev-time visibility. Per [chromium issue 41491434](https://issues.chromium.org/issues/41491434), `frame-ancestors` violations notably do *not* fire in the embedded frame — design accordingly.
-- **Do NOT add**: `csp-report-handler`, `csp-evaluator`, or any "CSP report endpoint" library. Endpoint reporting (`report-to` / `report-uri`) is for production telemetry to a server — out of scope for this single-shell, single-user project.
-
-### 2. Blob Handling Across postMessage
-
-- **Built-in: `Blob` is structured-cloneable.** Pass a `Blob` directly to `iframe.contentWindow.postMessage(blob, '*')`. Underlying bytes are refcounted by the browser; the napplet receives a usable `Blob` reference without a memory copy.
-- **Alternative: transfer `ArrayBuffer`** with the second `postMessage(message, [transfer])` argument when you want to relinquish ownership and avoid even the bookkeeping cost.
-- **Alternative: hand a `blob:` URL.** Shell calls `URL.createObjectURL(blob)` and posts the string. Napplet uses it as `<img src>` / `<video src>` / `fetch(blobUrl)`. **Caveat**: the napplet must be allowed `blob:` in the relevant CSP directive (`img-src blob:`, `media-src blob:`, etc.). Document this in the default policy template.
-- **`OffscreenCanvas` + `ImageBitmap` for shell-side resize**: built-in. `createImageBitmap(blob, { resizeWidth: 256, resizeHeight: 256, resizeQuality: 'high' })` then `new OffscreenCanvas(...).getContext('2d').drawImage(bitmap, 0, 0)` then `canvas.convertToBlob({ type: 'image/webp', quality: 0.85 })`. **Zero deps.** Works in a Worker if the shell pushes resize off the main thread (recommended for large images).
-- **Do NOT add**: `pica`, `browser-image-compression`, `blob-util`. They wrap exactly the above APIs. The shell repo can add them later if a specific quality-tuning need emerges; the SDK does not need them.
-
-### 3. URL Parsing / Scheme Dispatch
-
-- **Built-in: WHATWG `URL`.** `new URL('blossom://abc/xyz').protocol === 'blossom:'`. Custom schemes parse fine; what they don't get is "special scheme" treatment (no automatic relative-URL resolution, no enforced authority structure) — which is exactly what you want for opaque-scheme dispatch.
-- **Pattern: a `Map<string, SchemeHandler>` keyed on `url.protocol`.** This is the same shape Service Workers use internally for `fetch` event dispatch and the same shape Tauri's `register_uri_scheme_protocol` and Electron's `protocol.handle` use. There is no widely-adopted browser library for this because the dispatch is a one-liner.
-- **Reference to mention in ARCHITECTURE.md**: Service Worker `fetch` handlers, Electron `protocol.handle` (built-in 2024+), and Android `WebViewAssetLoader` all share this shape. None ship as an npm package; they're 5–10 lines of registry + lookup.
-- **Do NOT add**: `url-parse`, `whatwg-url`. The platform's `URL` is the spec implementation. `whatwg-url` is for Node-side parity with the same spec and not needed in browsers.
-
-### 4. Vite Dev-Mode CSP
-
-**Recommendation: build a small in-house `transformIndexHtml` hook inside `@napplet/vite-plugin`.** Reasons:
-
-- The existing plugin already uses `transformIndexHtml` for the NIP-5A meta-tag and aggregate-hash injection — adding one more line to inject `<meta http-equiv="Content-Security-Policy" content="…">` (or to set the response header in the `configureServer` middleware hook) is trivial and stays inside the plugin's existing surface.
-- The third-party options exist but mismatch this project's needs:
-  - **`vite-plugin-csp-guard`** ([npm](https://www.npmjs.com/package/vite-plugin-csp-guard), [docs](https://vite-csp.tsotne.co.uk/)) — well-engineered, ~16K weekly downloads, but it solves the *full-app SPA* problem (hash all top-level inline scripts, hash all Vite-generated app code, add SRI). Napplets are deliberately *not* full SPAs in this sense — they're small sandboxed iframes whose scripts come from a manifest. Its hashing pipeline would fight rather than help.
-  - **`Coreoz/vite-plugin-content-security-policy`** ([repo](https://github.com/Coreoz/vite-plugin-content-security-policy)) — focused on generating Nginx/Apache config. Wrong target.
-  - **`vite-plugin-csp`** ([npm](https://www.npmjs.com/package/vite-plugin-csp)) — uses `csp-typed-directives`. Pulls in a typed-CSP dep for a 30-line problem.
-- **Vite's own `html.cspNonce`** ([docs / issues](https://github.com/vitejs/vite/issues/16749)) injects a nonce attribute on Vite-emitted `<script>`/`<style>` tags but **does not generate or serve the policy itself** — you still need either a header or a `<meta>` injection step.
-
-**Concrete plan**: extend `Nip5aManifestOptions` with `csp?: NappletCspOptions` (string policy or builder); inject as `<meta http-equiv="Content-Security-Policy">` in dev mode via the existing `transformIndexHtml`; document that production shells deliver the same policy via response header.
-
-### 5. Content-Addressed Cache Primitives
-
-- **Built-in: `crypto.subtle.digest('SHA-256', bytes)`** returns `Promise<ArrayBuffer>` ([MDN: SubtleCrypto.digest](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest)).
-- **Streaming digest**: NOT in the platform spec yet. Active proposal at [WinterTC55/proposal-webcrypto-streams](https://github.com/WinterTC55/proposal-webcrypto-streams) and W3C webcrypto issue [#73](https://github.com/w3c/webcrypto/issues/73) — both still open as of April 2026. This means the shell must `await response.arrayBuffer()` (or `blob.arrayBuffer()`) before hashing. **This is fine** for v0.28.0 because the milestone explicitly enforces a size cap on shell-fetched resources — buffer-then-hash within a known max is safe and doesn't motivate a polyfill.
-- **Hash-to-key encoding**: convert the `ArrayBuffer` to hex (one-line: `Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')`) or base64url. No library needed.
-- **Do NOT add**: `js-sha256`, `hash-wasm`, `multiformats`. WebCrypto's native implementation is faster than any JS/WASM alternative and ships with the browser. `multiformats` (CID encoding) is right *if and only if* the shell exposes hashes to napplets — which the milestone explicitly does NOT do ("hashes stay shell-internal").
-
-### 6. Testing Strict-CSP Iframes in Playwright
-
-- **Pattern A — Console assertion**: CSP violations log to the console as `Refused to <verb> because it violates the following Content Security Policy directive…`. Use `page.on('console', msg => …)` and assert. Cheap, works for any browser engine.
-- **Pattern B — `securitypolicyviolation` event**: inside the iframe, install a listener with `page.evaluate` and resolve a Promise on first fire; assert directive/blockedURI shape. Strongest assertion when you want to verify *which* directive blocked.
-- **Pattern C — Network observation**: `page.on('response', …)` or `context.on('response', …)`. If CSP successfully blocks a request, the request never hits the network — so the *absence* of a response is the proof. Pair with a positive assertion that the *shell-mediated* fetch *did* hit the network for the same URL.
-- **Pattern D — `page.route()` interception** to assert the napplet didn't even attempt the request (`route.continue()` or fail with assertion-tracking).
-- **Critical: do NOT enable `bypassCSP: true`** for v0.28.0 suites — that's the option that exists for testing apps *under* CSP without dealing with it; we want to test *that CSP is in place*. Keep `bypassCSP` opt-in per-suite if it's needed elsewhere. Verified via [Playwright TestOptions](https://playwright.dev/docs/api/class-testoptions).
-- **No new packages.** All built-in.
-
-### 7. SVG Sanitization / Rasterization
-
-The threat model: napplets must never receive scriptable XML (SVG can carry `<script>`, `on*` handlers, `xlink:href` to JS, `<foreignObject>` HTML). Solution per the milestone scope: shell rasterizes shell-side and hands napplet a non-scriptable raster (PNG/WebP/AVIF).
-
-**Three rasterization paths, ranked:**
-
-1. **`<img src="blob:…svg…">` → `drawImage` → `convertToBlob`** *(recommended default)*. Native browser SVG renderer; CRITICAL spec property: `<img>`-loaded SVG runs in *secure static mode* — scripts disabled, external loads blocked, no animation events. Per HTML spec and verified MDN behavior. Zero dependencies. Drawback: the shell needs a DOM context (true for the current target architecture).
-2. **`@resvg/resvg-wasm@2.6.2`** *(MPL-2.0, ~560 KB WASM)*. Pure-WASM Rust renderer. Use *only if* the shell needs to rasterize from a Worker without DOM, or from a future Node/server shell, or if path 1 has fidelity issues. Sources: [thx/resvg-js](https://github.com/thx/resvg-js), [npm](https://www.npmjs.com/package/@resvg/resvg-wasm), [Bundlephobia](https://bundlephobia.com/package/@resvg/resvg-wasm). MPL-2.0 is permissive enough for MIT-licensed consumers.
-3. **`canvg`** — DOM-based SVG-to-canvas in JS. Older, less faithful than the browser's native renderer, larger than path 1. Not recommended.
-
-**Sanitization vs rasterization**: do not bother with `DOMPurify`-style sanitization here. The whole point of rasterization is that the *output* (PNG/WebP) is fundamentally non-scriptable, so any SVG-level malice is neutralized by the rendering boundary. Sanitization would be belt-and-braces *before* rendering; for the threat model ("napplet never sees scriptable XML"), rasterization alone suffices.
-
-**Do NOT add**: `DOMPurify`, `svg-sanitizer`, `xss-filters`. Wrong layer for this milestone.
-
----
-
-## Installation
-
-```bash
-# NO new runtime dependencies are required for v0.28.0.
-
-# Optional, only if path-1 SVG rasterization proves insufficient (deferred decision):
-# pnpm add @resvg/resvg-wasm   # add to the SHELL repo, NOT @napplet/*
+```
+packages/nub/src/connect/
+  index.ts    — barrel re-exports types.ts + shim.ts + sdk.ts
+  types.ts    — NappletConnect interface (granted, origins)
+  shim.ts     — installConnectShim(window, { granted, origins })
+  sdk.ts      — named-export helpers wrapping window.napplet.connect
 ```
 
-## Alternatives Considered
+**Dependencies:** none. Types-only for `types.ts`; shim is ~20 lines that read a handshake message or a `<meta name="napplet-connect-granted">` injected by the shell; SDK is thin wrappers.
 
-| Recommended (Built-in) | Alternative | When the Alternative Wins |
-|------------------------|-------------|----------------------------|
-| `<img src=blob:svg>` rasterization | `@resvg/resvg-wasm@2.6.2` | DOM-less shell context (Worker without DOM access, Node/server shell), or measurable fidelity issues with native renderer |
-| Custom `transformIndexHtml` CSP injection | `vite-plugin-csp-guard@^1` | Full-app SPA where every inline script needs hashing — explicitly NOT this project |
-| `crypto.subtle.digest` (buffer-then-hash) | `hash-wasm` streaming SHA-256 | Only if size caps are removed and gigabyte-scale streaming hashing becomes a real workload — not v0.28.0 |
-| `URL` + `Map<protocol, handler>` dispatch | `whatwg-url` package | Never needed in browsers; only relevant for cross-runtime parity work |
-| `Content-Security-Policy-Report-Only` + `securitypolicyviolation` listener | `csp-report-handler` + `report-to` endpoint | Only when shipping a multi-user production shell with telemetry — out of scope for single-user dev |
-| `createImageBitmap` + `OffscreenCanvas` | `pica`, `browser-image-compression` | Specific quality-tuning needs (e.g., Lanczos resampling for thumbnails) — defer to shell repo if ever needed |
+**Why:** The consolidated-package architecture established in v0.26.0 (34 subpaths), extended in v0.28.0 to 38 (resource × 4), is the proven pattern. Adding 4 more subpaths (connect × 4) brings it to 42. No new package — that would fragment the tree-shake contract.
 
-## What NOT to Use
+**Integration point:** Parallels resource wiring. Central shim (`packages/shim/src/index.ts`) imports `@napplet/nub/connect/shim` and calls `installConnectShim(...)` with values populated from the shim-bootstrap handshake. Central SDK (`packages/sdk/src/index.ts`) re-exports from `@napplet/nub/connect/sdk`.
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| `vite-plugin-csp-guard` (or any SPA-CSP plugin) | Designed for full-app SPAs with hash-all-inline-scripts; pulls in SRI machinery; fights the napplet sandbox model where scripts come from a manifest | Custom `transformIndexHtml` hook in `@napplet/vite-plugin` |
-| `csp-typed-directives` / `csp-builder` | Tiny problem (a CSP string is a deterministic concatenation); a typed builder is fine but doesn't justify a dep | Hand-rolled `CspBuilder` helper (~30 LOC) inside `packages/vite-plugin/src/csp.ts` |
-| `DOMPurify` for SVG sanitization | Wrong layer — rasterization neutralizes XML; sanitization adds maintenance burden for no incremental security in this threat model | Rasterization-only (path 1 above) |
-| `js-sha256`, `hash-wasm`, `crypto-js` | Slower than `crypto.subtle.digest`, larger bundle, redundant with platform | `crypto.subtle.digest('SHA-256', bytes)` |
-| `multiformats` (CID encoding) | Hashes are explicitly shell-internal in this milestone; napplets never see them; CID is wrong abstraction | Hex or base64url string, internal only |
-| `whatwg-url` | Browsers ship the spec implementation as `URL` | `new URL(input)` |
-| `pica`, `browser-image-compression` | Wrap `createImageBitmap` / `OffscreenCanvas` with extra surface | Direct platform APIs |
-| `csp-report-handler` | Endpoint reporting is for production telemetry to a server | `securitypolicyviolation` event listener for dev-mode visibility |
-| Service Worker as a fetch interceptor for napplets | Service Workers are scoped to origin; napplets-as-iframes have a different security model; SW would violate the "no `allow-same-origin`" sandbox posture | `postMessage`-based `resource.bytes(url)` primitive |
-| `bypassCSP: true` in Playwright **for v0.28.0 suites** | That's the option that hides exactly what this milestone tests | Test under enforced CSP; assert via console / `securitypolicyviolation` / network observation |
+### 2. `node:url` for origin normalization (stdlib, NO new dep)
 
-## Stack Patterns by Variant
+**Need:** The new `connect?: string[]` vite-plugin option must normalize + validate origins per NUB-CONNECT spec §"Origin Format (strict)":
+- Scheme ∈ `{https, wss, http, ws}`
+- Lowercase host
+- Punycode (xn--…) for IDN
+- No default ports (`:443` for `https`, `:80` for `http`, etc.)
+- No path / query / fragment / wildcards
 
-**If the shell stays browser-resident (current case):**
-- Use `<img src=blob:svg>` for SVG rasterization. No `@resvg/*`.
-- Inject CSP via `<meta http-equiv>` in dev (Vite plugin) and via response header in production shell.
-- Use `crypto.subtle.digest` directly with size-capped buffers.
+**Tool:** `node:url` module — already available in Node 20+ which every maintainer already runs.
 
-**If the shell ever moves off-DOM (future Worker-only or server-side variant):**
-- Add `@resvg/resvg-wasm@^2.6` for SVG rasterization in the *shell* repo (not in `@napplet/*`).
-- Streaming digest: revisit then; the [WinterTC55 proposal](https://github.com/WinterTC55/proposal-webcrypto-streams) may have shipped, or a `hash-wasm` add becomes justified by an explicit non-buffered workload.
+```typescript
+import { URL, domainToASCII } from 'node:url';
 
-**If multi-shell production deployment ever happens (deferred):**
-- Add a CSP report endpoint and `report-to` directive support. `csp-report-handler` becomes worth evaluating then. Out of scope for v0.28.0.
+function normalizeConnectOrigin(raw: string): string {
+  const u = new URL(raw);                     // throws on malformed
+  if (!/^(https?|wss?):$/.test(u.protocol)) throw ...;
+  if (u.pathname !== '/' && u.pathname !== '') throw ...;
+  if (u.search || u.hash) throw ...;
+  if (u.username || u.password) throw ...;
+  const asciiHost = domainToASCII(u.hostname); // Punycode conversion
+  if (!asciiHost) throw new Error(`invalid IDN: ${u.hostname}`);
+  if (asciiHost !== u.hostname.toLowerCase()) throw ...; // require authors to ship Punycode pre-normalized, or normalize silently — decide in plan
+  const defaultPort = { 'https:': '443', 'http:': '80', 'wss:': '443', 'ws:': '80' }[u.protocol];
+  if (u.port && u.port === defaultPort) throw ...;
+  return `${u.protocol}//${asciiHost}${u.port ? `:${u.port}` : ''}`;
+}
+```
 
-## Version Compatibility & Conflicts With Existing Stack
+**Why `node:url`, not `punycode`:** The userland `punycode` npm module is an orphaned userland fork of the deprecated Node builtin. `node:url`'s `domainToASCII` wraps the current WHATWG URL IDN toolchain (ICU-backed in recent Node versions) and is what Node itself steers you toward. Zero new dep, zero deprecation warning, correctness delegated to the runtime.
 
-**No conflicts.** Reviewed the existing dependency surface (`nostr-tools@^2.23.3`, `tsup@^8.5`, `turbo@^2.5`, `vite@^6.3`, `vitest@^4.1`, `typescript@^5.9.3`, `@types/json-schema@^7.0.15`, `json-schema-to-ts@^3.1.1` peer in `@napplet/nub`):
+**Why not `tr46`:** Adds a dep (~100KB with tables) for a feature `node:url` already provides. We're a build-time plugin running in Node; this is exactly the case `domainToASCII` is for.
 
-- None of these dependencies execute network fetches at runtime in a way that strict CSP would break. `nostr-tools` is data-types and signing utilities (no `fetch` in the parts re-exported by `@napplet/vite-plugin`). The build-time tools (tsup, vite, vitest) run in Node, not under napplet CSP.
-- **Vite 6.3** — `transformIndexHtml` API stable. `html.cspNonce` exists if needed (we likely won't need it; napplet scripts come from a manifest, not Vite-injected `<script>` tags inside the napplet HTML).
-- **Vitest 4** — jsdom does not enforce CSP. Keep CSP behavioral tests in Playwright; reserve Vitest for unit tests of `CspBuilder` string output and the scheme dispatch table.
-- **Playwright** — `bypassCSP` exists ([TestOptions](https://playwright.dev/docs/api/class-testoptions)) but **must be left at default `false`** for v0.28.0 suites.
-- **`@napplet/core` zero-dep contract** — preserved. The new `resource` NUB types live in `@napplet/nub/resource` (which already only depends on `@napplet/core`).
-- **`sideEffects: false` on `@napplet/nub`** — preserved. New subpath exports are tree-shakable per the existing pattern.
+**Confidence:** HIGH. Verified against [Node.js URL docs](https://nodejs.org/api/url.html) and [punycode deprecation guidance](https://nodejs.org/api/punycode.html) — both explicitly direct domain-workflow consumers to `url.domainToASCII`.
 
-## Anything to REMOVE or Change
+### 3. `node:crypto` for `connect:origins` aggregate-hash fold (existing, NO new dep)
 
-**Nothing structural to remove.** Audit findings:
+**Need:** Per spec §"Content-Addressing Consequences", the normalized origin set is hashed and pushed as a synthetic `[originsHash, 'connect:origins']` xTag entry before `computeAggregateHash(...)` runs. Exactly mirrors the `config:schema` pattern already in `packages/vite-plugin/src/index.ts` around lines 568–571.
 
-- The shim does not currently fetch external resources directly — it's a postMessage shim. No existing code conflicts with strict CSP.
-- The `@napplet/vite-plugin` `nostr-tools` dependency is build-time only and unaffected.
-- The 9 deprecated `@napplet/nub-<domain>` re-export shims (slated for `REMOVE-01..03` in a future milestone) need a corresponding `@napplet/nub-resource` re-export shim **only if** the project decides to keep the deprecation pattern consistent. **Recommendation: skip it** — `nub-resource` is brand-new, was never published as a separate package, has no existing consumers. The deprecation shims exist for backward compat; there's nothing to be backward-compat with. Surface `resource` exclusively via `@napplet/nub/resource`.
+**Tool:** `crypto.createHash('sha256')` — already imported at line 17 of `index.ts`.
 
-One **inconsistency to flag** (not a removal, but worth noting in REQUIREMENTS): the `relay.publishEncrypted` precedent (v0.24.0) means the shell already has a "do crypto on behalf of napplet" pattern. The new `resource.bytes` should follow the same envelope/timeout/error conventions — no new infra needed, just consistency in the new NUB's message-shape design.
+```typescript
+if (connectOrigins.length > 0) {
+  const canonical = [...connectOrigins].sort().join('\n');
+  const h = crypto.createHash('sha256').update(canonical).digest('hex');
+  xTags.push([h, 'connect:origins']);
+}
+// Filtered out of the ['x', ...] manifest projection just like 'config:schema' (line 586).
+```
+
+**Canonical serialization choice:** sorted origins joined with `\n`. Matches the pattern used for the file-set aggregate hash (lines 113–119). Reject alternatives: JSON.stringify of an array is order-sensitive and brittle; sorted newline-joined is already the house pattern.
+
+### 4. Inline-script build-time diagnostic (NEW — regex-only, NO new dep)
+
+**Need:** Per spec §"Responsibility Split / Napplet author / no inline scripts" + §"Open Questions → lean hard error", fail the production build if `dist/index.html` contains any `<script>` without `src=`. This is a DX guard so authors see the error here, not as a silent runtime CSP violation in the browser.
+
+**Tool:** Same regex-parser pattern as existing `csp.ts` (`assertMetaIsFirstHeadChild` at lines 244–276). A single regex walk over the HTML source, matching `<script[^>]*>` and checking for the presence of `src=` attr.
+
+```typescript
+export function assertNoInlineScripts(html: string): void {
+  const scriptOpen = /<script\b([^>]*)>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = scriptOpen.exec(html)) !== null) {
+    const attrs = m[1];
+    if (!/\bsrc\s*=/i.test(attrs)) {
+      throw new Error(
+        `[nip5a-manifest] inline <script> detected in dist/index.html — forbidden under shell-authoritative CSP (script-src 'self'). Move JS to an external file and load via <script src="...">.`,
+      );
+    }
+  }
+}
+```
+
+**Why no HTML parser:** Spec note in existing `csp.ts` header says it outright — "Per STACK.md 'What NOT to Use', htmlparser2/parse5/csp-typed-directives are NOT needed for a 10-directive deterministic grammar." Same logic applies here: Vite emits a well-formed HTML document with its own emitter; we are scanning for a specific element shape. A regex is appropriate, auditable, zero-dep, and the code is short enough to read in one screen.
+
+**Edge cases handled by the pattern:**
+- `<script type="module" src="...">` — has `src=`, passes.
+- `<script async src="...">` — has `src=`, passes.
+- `<script>/* inline */</script>` — no `src=`, fails.
+- `<script src="">` — has `src=` attr (rendered as such by all HTML emitters); we could tighten to reject empty values, but YAGNI — Vite never emits this.
+- Script tags inside comments / CDATA — not supported in HTML5, irrelevant.
+- HTML-escaped `&lt;script&gt;` — not a script element, skipped (regex matches `<`, not `&lt;`).
+
+**Integration point:** Add as a new exported function in `packages/vite-plugin/src/csp.ts` (the file is being repurposed as "build-time CSP-adjacent guards" — see §Proposed Removals), called from `closeBundle` in `packages/vite-plugin/src/index.ts` after the existing `assertMetaIsFirstHeadChild` line is removed or gated.
+
+### 5. Shell-side HTML delivery mechanisms (NORMATIVE REFERENCE ONLY — spec text, no SDK code)
+
+**Scope clarification:** Per milestone context, "Shell-side HTML serving — not implemented in this repo (shell is downstream)." The SDK does not ship server code. The NUB-CONNECT spec (in `napplet/nubs` repo) and the in-repo `specs/SHELL-CONNECT-POLICY.md` checklist MUST enumerate acceptable delivery mechanisms so downstream shell implementors have a canonical list.
+
+**Canonical delivery options (for spec prose):**
+
+| Mechanism | Where CSP lives | Origin model | Notes |
+|-----------|-----------------|--------------|-------|
+| **HTTP proxy** | Response header on proxied napplet HTML | Shell's origin or any origin the shell proxies | Most flexible. The shell acts as a reverse proxy for `dist/index.html` and its static assets, stripping any residual meta CSP and attaching the computed CSP header. Works with any static host upstream. |
+| **Direct serving from shell origin** | Response header | Shell's origin | Shell is itself a server; napplet HTML lives alongside shell routes. Same-origin implications: `sandbox="allow-scripts"` (no `allow-same-origin`) makes this still opaque to the shell origin. |
+| **`blob:` URL with HTML rewrite** | Meta CSP AFTER HTML rewrite (header CSP not available on `blob:`) | Opaque origin per iframe | Shell fetches HTML, rewrites to inject CSP meta as first head child, creates `Blob({type:'text/html'})`, iframe `src=URL.createObjectURL(blob)`. **Caveat:** `blob:` URLs cannot have HTTP headers, so CSP must be delivered via meta — which means the residual-meta-CSP scan (§Edge Case 1) doesn't apply the same way; shells using this mechanism MUST still strip any author-shipped meta CSP and inject the shell's meta as first head child. |
+| **`srcdoc=`** | Meta CSP inside the srcdoc HTML string | Opaque origin | iframe `srcdoc` takes a full HTML document as an attribute. Same meta-CSP-delivery constraint as `blob:`. Practical payload-size limit (browsers enforce URI-length limits in some cases; `srcdoc` does not hit those, but memory considerations for large napplet bundles apply). |
+| **Service Worker on a separate origin** | Response header from the SW's synthesized response | Shell-controlled subdomain or path | Requires the shell to register a SW for a distinct origin (can't be the napplet's sandboxed opaque origin). Heavy — probably over-engineering. Mentioned for completeness; spec should flag as "possible but not recommended for v1." |
+
+**What the spec should say (informative text for SHELL-CONNECT-POLICY.md):**
+> Preferred delivery is HTTP proxy or direct serving, where CSP is an HTTP response header and residual meta-CSP on the napplet document can be strictly scanned + rejected pre-serve. `blob:` and `srcdoc` are supported but require the shell to rewrite HTML to inject its own meta CSP as the first `<head>` child, and to strip any author-shipped meta CSP beforehand. Service Worker is out of scope for v1.
+
+**Why this goes in spec prose, not SDK code:** Downstream shell implementors choose their architecture. The SDK's job is to produce napplet HTML that doesn't fight any of these mechanisms (no inline scripts, no meta CSP in prod, all assets via `<script src>` / `<link href>` relative paths). That's the sum total of the SDK's contribution to shell-side delivery.
+
+**Confidence:** HIGH. All four mechanisms are present-day browser features; `blob:` and `srcdoc` opaque-origin + meta-CSP interaction documented on MDN.
+
+### 6. Playwright CSP test strategy (existing stack, NEW pattern)
+
+**Need:** Per spec §"Testing Posture", integration tests verify:
+- Class 2 + approved grant → fetch to granted URL succeeds, fetch to other URL is CSP-blocked
+- Class 2 + denied grant → `connect-src 'none'` in emitted CSP, `window.napplet.connect.granted === false`
+- Residual meta CSP on Class 2 napplet → shell refuses to serve with prescribed diagnostic
+- Aggregate-hash flip on origin list change → re-prompt triggered
+
+**Tool:** Existing Playwright harness + two orthogonal techniques:
+
+**Technique A — `page.route()` to inject CSP header** (canonical Playwright pattern for response-header manipulation):
+
+```typescript
+await page.route('**/napplet-fixture.html', async (route) => {
+  const response = await route.fetch();
+  const body = await response.body();
+  await route.fulfill({
+    response,
+    body,
+    headers: {
+      ...response.headers(),
+      'content-security-policy': "default-src 'none'; script-src 'self'; connect-src https://approved.example; ...",
+    },
+  });
+});
+```
+
+This simulates the shell emitting CSP via HTTP header on a fixture HTML page that the test serves statically. Zero new dependencies — `page.route` is a first-party Playwright API.
+
+**Technique B — listen for `securitypolicyviolation` events** via `page.evaluate`:
+
+```typescript
+await page.evaluate(() => {
+  (window as any).__cspViolations = [];
+  document.addEventListener('securitypolicyviolation', (e) => {
+    (window as any).__cspViolations.push({
+      violatedDirective: e.violatedDirective,
+      blockedURI: e.blockedURI,
+    });
+  });
+});
+
+// ... perform fetch that should be blocked ...
+
+const violations = await page.evaluate(() => (window as any).__cspViolations);
+expect(violations).toContainEqual(expect.objectContaining({
+  violatedDirective: 'connect-src',
+  blockedURI: expect.stringContaining('https://other.example'),
+}));
+```
+
+[`SecurityPolicyViolationEvent`](https://developer.mozilla.org/en-US/docs/Web/API/SecurityPolicyViolationEvent) is a standard DOM event fired by the browser when CSP is violated. Subscribing to it in `page.evaluate` is the cleanest way to assert positive-blocking in Playwright. This is the pattern v0.28.0 already uses for CSP positive-blocking simulation; we extend it here.
+
+**Why not `bypassCSP: true`:** That's for the opposite use case (running agent code on a CSP-locked site). We WANT the CSP to apply and fire violations. Leave `bypassCSP` at the default `false`.
+
+**Confidence:** HIGH. `page.route()` header manipulation is stable Playwright API; `securitypolicyviolation` is W3C-standard and implemented in Chromium/Firefox/WebKit.
+
+## Proposed Removals
+
+All removals are from `@napplet/vite-plugin`. The CSP module (`packages/vite-plugin/src/csp.ts`) becomes lean.
+
+| File / Export | Current Role | Action in v0.29.0 |
+|---------------|--------------|-------------------|
+| `buildBaselineCsp()` | 10-directive string builder | **Remove in prod path**, keep ONLY a dev-mode minimal wrapper OR delete entirely. Recommendation: keep a trimmed `buildDevCspMeta(mode, nonce)` dev-only helper behind a `if (mode === 'dev')` gate, drop prod paths. |
+| `validateStrictCspOptions()` | Rejects header-only + unsafe-* | **Remove.** No `StrictCspOptions` option surface in v0.29.0. |
+| `assertNoDevLeakage()` | Fail if ws:// in prod CSP | **Remove.** No prod CSP emitted. |
+| `assertMetaIsFirstHeadChild()` | First-child invariant | **Remove from prod path.** Keep in dev-mode path only if we retain dev meta CSP (lean: remove entirely; dev shell-less preview can ship without strict meta-first enforcement — it's a development convenience, not a security gate). |
+| `HEADER_ONLY_DIRECTIVES` const | Directive reject list | **Remove.** |
+| `BASELINE_DIRECTIVE_ORDER` const | Canonical ordering | **Remove.** |
+| `StrictCspOptions` interface | Public option type | **Remove from public API.** Breaking change for anyone who imported it; acceptable per v0.29.0 breaking-change posture. |
+| `nonce` generation (`crypto.randomBytes(16).toString('base64url')`) in `index.ts` line 437 | Per-build nonce | **Remove.** No nonce needed — shell CSP uses `script-src 'self'`, inline scripts forbidden. |
+| `strictCsp?: boolean \| StrictCspOptions` option on `Nip5aManifestOptions` | Opt-in CSP emission | **Remove from type** OR mark as no-op with `@deprecated` JSDoc for one release if we want a soft break. Recommendation: **hard remove**, matches v0.29.0 "breaking change" posture in PROJECT.md line 19. |
+| `transformIndexHtml` CSP-meta injection block (`index.ts` lines 456–466) | Emits meta CSP | **Remove entirely.** No meta CSP in prod; dev meta is optional and, if retained, should be a single-line injection gated on `isDev`. |
+| `closeBundle` CSP post-build assertion block (`index.ts` lines 519–535) | Post-build verification | **Remove entirely.** |
+
+**Resulting `csp.ts` shape:** File either (a) shrinks to ~20 lines containing only `assertNoInlineScripts()`, renamed to a more accurate filename like `guards.ts`; or (b) is split: `guards.ts` with the inline-script check + a new `connect.ts` with `normalizeConnectOrigin()` + `hashConnectOrigins()`. Preference: **(b) split by concern** — matches the existing file-per-concern convention captured in memory.
+
+**Net LOC delta in vite-plugin:** roughly −250 lines (remove CSP machinery) + +80 lines (connect normalization, inline-script guard, aggregateHash fold) ≈ −170 net. This is a simplification, not a rewrite.
+
+## Integration Points
+
+| Change | File | Shape |
+|--------|------|-------|
+| New `connect?: string[]` option | `packages/vite-plugin/src/index.ts` — `Nip5aManifestOptions` interface | Optional string array of raw origins; plugin normalizes before emitting. |
+| Origin normalization | `packages/vite-plugin/src/connect.ts` (new) | `normalizeConnectOrigin(raw: string): string` + `normalizeAll(origins: string[]): string[]` with deterministic throw messages. |
+| Aggregate-hash fold | `packages/vite-plugin/src/index.ts` — `closeBundle` | After file walk, before `computeAggregateHash`, push `[originsHash, 'connect:origins']` mirroring lines 568–571. |
+| Manifest `['connect', origin]` tags | `packages/vite-plugin/src/index.ts` — `manifest.tags` construction (around lines 601–606) | Append one tag per normalized origin, placed between `x-tags` and `config-tags` per existing ordering convention. Filter `connect:origins` out of `['x', ...]` projection same way `config:schema` is filtered (line 586). |
+| Inline-script guard | `packages/vite-plugin/src/guards.ts` (new) + call site in `closeBundle` | `assertNoInlineScripts(html)` called post-build, replacing the removed CSP block. |
+| Optional `<meta name="napplet-connect">` HTML attribute | `packages/vite-plugin/src/index.ts` — `transformIndexHtml` tags list | Surfaces the declared origin set into `index.html` for devtools inspection; not load-bearing (shell reads from manifest). **Lean: don't ship this in v0.29.0**, can be added in a follow-up if shells ask for it. |
+| `@napplet/nub/connect` subpath | `packages/nub/src/connect/{index,types,shim,sdk}.ts` | Four files, mirroring `packages/nub/src/resource/` layout. |
+| `@napplet/nub/package.json` exports | `packages/nub/package.json` | Add 4 new subpath entries: `./connect`, `./connect/types`, `./connect/shim`, `./connect/sdk`. |
+| Central shim wiring | `packages/shim/src/index.ts` | Import `installConnectShim` and call at bootstrap with values read from shell handshake — parallels resource wiring landed in v0.28.0. |
+| Central SDK wiring | `packages/sdk/src/index.ts` | `export * from '@napplet/nub/connect/sdk'` — one line. |
+| `NubDomain` type | `packages/core/src/types.ts` (existing) | Add `'connect'` to the `NubDomain` union. |
+| `NappletGlobal` type | `packages/core/src/types.ts` | Add `connect: NappletConnect` property. |
+| `shell.supports()` namespace | `packages/core/src/types.ts` + downstream-shell advertising | Add `'nub:connect'`, `'connect:scheme:http'`, `'connect:scheme:ws'` to the namespaced `shell.supports()` key union. |
+
+## What NOT to Add
+
+| Rejected | Why | Use Instead |
+|----------|-----|-------------|
+| `parse5` / `htmlparser2` / `node-html-parser` | We scan Vite-emitted HTML for one element shape. A full DOM parser is over-engineering and adds ~300KB of deps for a 10-line check. The existing regex pattern in `csp.ts` is proven and auditable. | Hand-rolled regex in `guards.ts`. |
+| `csp-typed-directives` / `csp-header` / `csp-builder` packages | We are NOT building CSP strings in the SDK anymore — that's the shell's job. All CSP-emission code is being removed. A CSP library would be the wrong direction. | Deletion. The shell owns CSP composition. |
+| `tr46` / `idna-uts46-hx` / `punycode` (userland npm) | `node:url`'s `domainToASCII` is ICU-backed, standards-current, zero-dep, and what Node docs direct domain workflows to. The userland `punycode` npm is orphaned. | `import { domainToASCII } from 'node:url'`. |
+| `valid-url` / `is-url-superb` | We need strict NUB-CONNECT-specific validation (reject paths, reject default ports, reject wildcards); generic URL-validity packages are too permissive and we'd still need custom rules on top. Just use `new URL()` + explicit rules. | `new URL(...)` with explicit rule checks. |
+| XML schema or JSON-schema validator for `connect` manifest tag shape | The manifest tag shape is trivial: `['connect', string]`. No nested structure to validate. A schema validator is overkill. | Inline TypeScript type guard + explicit rule checks. |
+| Runtime CSP-building framework (e.g., something that composes CSP in the shim) | The shim does not emit CSP. Period. CSP comes from the shell. The shim exposes `window.napplet.connect.{granted, origins}` — a two-field read-only interface. No CSP logic in SDK runtime code. | Two-field read-only interface, populated at bootstrap. |
+| Service Worker for post-grant traffic inspection | Spec §"Non-Goals" forbids this. `sandbox="allow-scripts"` also forbids it. | Accept post-grant opacity as the documented tradeoff. |
+| New test runner / CSP-test library | Playwright's `page.route()` + `securitypolicyviolation` listener cover every test case in spec §"Testing Posture". The v0.28.0 suite already uses this pattern. | Extend existing Playwright fixtures. |
+| `undici` / `node-fetch` for test HTTP | Playwright's `page.route` + fulfill cover response-header manipulation. If we need a real HTTP server for a fixture, Node 20's built-in `node:http` is sufficient (same pattern used elsewhere in the repo's tests). | stdlib or existing harness. |
+| New package `@napplet/nub-connect` (separate workspace) | v0.26.0 consolidated all NUBs into a single `@napplet/nub` package with subpaths explicitly to avoid package-fragmentation. Opening a new `@napplet/nub-connect` package would invert that decision. The NUB-CONNECT spec §"Open Questions" leans toward "surface through existing structure" — this research resolves that: use a subpath. | `@napplet/nub/connect` subpath. |
+| `@deprecated` soft-deprecate of `strictCsp` option | v0.29.0 is explicitly a breaking-change milestone (PROJECT.md line 19). A soft-deprecate path means keeping 250 LOC of dead code for a release. Hard-remove is cleaner. | Hard-remove, document in CHANGELOG + migration note. |
+| A second "dev-only CSP" code path | Spec §"Open Questions" leans "retain for shell-less local preview only, but with clearly deprecated path." Research verdict: retain a minimal ≤30-line dev-mode inline meta CSP helper with `connect-src 'self' ws://localhost:* wss://localhost:*` + `script-src 'self' 'unsafe-inline'` (for Vite HMR) behind a `mode === 'dev'` gate, nothing fancy. Fully document that it is NOT normative and is NOT inspected by any shell. Final decision on keep-vs-remove belongs in phase planning, not research. | Phase plan decides. Research leans keep-minimal to preserve `vite dev` DX for authors with no shell running. |
+
+## Version Compatibility
+
+| Constraint | Already satisfied by existing stack |
+|------------|------------------------------------|
+| Node ≥ 18 for `domainToASCII` | Yes — repo targets Node 20+; `domainToASCII` has been stable since Node 14. |
+| Vite ≥ 5 for `transformIndexHtml` return array shape | Yes — peer dep is already `>=5.0.0`. |
+| Playwright ≥ 1.40 for `page.route().fulfill({ response, body, headers })` | Yes — existing harness; API stable. |
+| `SecurityPolicyViolationEvent` in Playwright-driven Chromium | Yes — W3C standard, Chromium has supported it since 2016. |
+
+No version bumps required.
 
 ## Sources
 
-- **MDN: SecurityPolicyViolationEvent** — https://developer.mozilla.org/en-US/docs/Web/API/SecurityPolicyViolationEvent — HIGH confidence (W3C-tracking authoritative reference)
-- **MDN: Document securitypolicyviolation event** — https://developer.mozilla.org/en-US/docs/Web/API/Document/securitypolicyviolation_event — HIGH confidence
-- **MDN: SubtleCrypto.digest()** — https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest — HIGH confidence
-- **W3C webcrypto issue #73 (streaming digest)** — https://github.com/w3c/webcrypto/issues/73 — HIGH confidence; verified the streaming-digest gap
-- **WinterTC55 webcrypto-streams proposal** — https://github.com/WinterTC55/proposal-webcrypto-streams — HIGH confidence; verified proposal status
-- **Playwright TestOptions (bypassCSP)** — https://playwright.dev/docs/api/class-testoptions — HIGH confidence
-- **Vite issue #16749 (strict CSP in production)** — https://github.com/vitejs/vite/issues/16749 — MEDIUM (Vite team statements, evolving)
-- **Vite issue #11862 (strict CSP in dev)** — https://github.com/vitejs/vite/issues/11862 — MEDIUM
-- **vite-plugin-csp-guard** — https://www.npmjs.com/package/vite-plugin-csp-guard, https://vite-csp.tsotne.co.uk/ — MEDIUM (third-party plugin, evaluated and rejected with rationale)
-- **Coreoz/vite-plugin-content-security-policy** — https://github.com/Coreoz/vite-plugin-content-security-policy — MEDIUM (evaluated and rejected)
-- **vite-plugin-csp** — https://www.npmjs.com/package/vite-plugin-csp — MEDIUM (evaluated and rejected)
-- **resvg-js / @resvg/resvg-wasm** — https://github.com/thx/resvg-js, https://www.npmjs.com/package/@resvg/resvg-wasm — HIGH confidence; v2.6.2 verified via npm + Bundlephobia
-- **Bundlephobia: @resvg/resvg-wasm@2.6.2** — https://bundlephobia.com/package/@resvg/resvg-wasm — HIGH confidence on size (~560 KB)
-- **Chromium issue 41491434 (`securitypolicyviolation` cross-frame quirks)** — https://issues.chromium.org/issues/41491434 — MEDIUM (browser bug tracker; relevant caveat)
-- **content-security-policy.com quick reference** — https://content-security-policy.com/ — MEDIUM (community reference, cross-checked against MDN)
-- **OWASP CSP Cheat Sheet** — https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html — HIGH for general CSP guidance
-- **Existing repo source (verified by reading)**:
-  - `/home/sandwich/Develop/napplet/package.json` — root devDeps inventory
-  - `/home/sandwich/Develop/napplet/packages/vite-plugin/package.json` — vite-plugin dep surface (sole runtime dep: `nostr-tools`)
-  - `/home/sandwich/Develop/napplet/packages/core/package.json` — confirmed zero runtime deps
-  - `/home/sandwich/Develop/napplet/packages/nub/package.json` — confirmed subpath-export pattern; resource subdomain to follow
+- [Node.js `node:url` documentation](https://nodejs.org/api/url.html) — verified `domainToASCII` API shape and IDN handling (HIGH confidence).
+- [Node.js `punycode` deprecation notice](https://nodejs.org/api/punycode.html) — verified that userland alternatives are orphaned and `url.domainToASCII` is the canonical replacement (HIGH confidence).
+- [MDN `SecurityPolicyViolationEvent`](https://developer.mozilla.org/en-US/docs/Web/API/SecurityPolicyViolationEvent) — verified event name, interface shape, cross-browser support (HIGH confidence).
+- [Playwright `TestOptions`](https://playwright.dev/docs/api/class-testoptions) and `page.route()` documentation — verified response-header rewrite pattern (HIGH confidence).
+- `packages/vite-plugin/src/csp.ts` (lines 1–277) — ground-truth read of existing strict-CSP code slated for removal (HIGH confidence).
+- `packages/vite-plugin/src/index.ts` (lines 1–660) — ground-truth read of current plugin integration surface (HIGH confidence).
+- `docs/superpowers/specs/2026-04-21-napplet-network-permission-design.md` — full design spec authored by project maintainer (HIGH confidence — this is the authority for v0.29.0 scope).
+- `.planning/PROJECT.md` (lines 1–399) — confirms existing stack + v0.29.0 scope (HIGH confidence).
+- Project memory: NUB packages own ALL logic; file-per-concern convention — confirms subpath-on-`@napplet/nub` pattern and filename convention.
+
+## Risks
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| Removing `StrictCspOptions` breaks downstream importers | LOW — the type was added in v0.28.0, two weeks ago, likely zero external importers yet | Document in CHANGELOG as intentional breaking change. Downstream shell repo is the primary consumer and is already in the coordination loop per PROJECT.md line 20. |
+| `domainToASCII` normalizes IDN to Punycode silently instead of erroring on raw Unicode input | LOW — matches spec intent (require Punycode in output) but may surprise authors who pass raw Unicode | Decide in phase plan: either auto-normalize (friendlier) or hard-error on input-differs-from-output (stricter per spec). Lean auto-normalize + emit a build-log info message. |
+| Regex inline-script detection misses an exotic edge case (e.g., SVG `<script>` inside an inline SVG) | LOW — Vite-emitted napplet HTML doesn't include inline SVGs with scripts; if an author adds one, the shell CSP will still block it at runtime (defense in depth) | Accept. The build-time check is DX — the shell CSP is the security control. Spec explicitly notes this split. |
+| Playwright `page.route()` response-header rewrite doesn't update `document.contentSecurityPolicy` in some edge cases | LOW — this is a well-established pattern; v0.28.0 suite already uses it | If issues emerge in a specific test case, fall back to a real Node test server fixture using stdlib `node:http`. |
+| Dev-mode meta CSP retention causes confusion ("why does my napplet have a meta CSP when I'm told not to?") | MEDIUM — if retained poorly, authors may copy-paste dev CSP into prod | Either (a) delete dev CSP entirely (simplest), or (b) add a clear `<!-- dev-only, NOT inspected by any shell -->` comment above the injected meta. Phase plan decides. |
+| `node:url` behavior differences across Node minor versions for edge-case IDN inputs | LOW — ICU is bundled with Node; stable across Node 20.x | Pin Node version in CI; tests cover the canonical origin shapes. |
+| Shell implementors choose `blob:`/`srcdoc` delivery and fail to strip author-shipped meta CSP, causing silent intersection with header-less delivery | MEDIUM — cross-repo concern, not SDK-side | SHELL-CONNECT-POLICY.md MUST include a "strip any incoming meta CSP before injecting shell's meta CSP" checklist item. Already implied by spec §Edge Case 1 but should be explicit in the checklist. |
+| Authors rebuild with new `connect` origins and forget that aggregateHash flips → all storage re-scoped → appears as "data loss" | MEDIUM — not new to v0.29.0 (config schema changes already do this) | Document prominently in NUB-CONNECT spec §Content-Addressing Consequences + migration note. Mirrors NUB-CONFIG wording. |
 
 ---
-*Stack research for: v0.28.0 Browser-Enforced Resource Isolation*
-*Researched: 2026-04-20*
-*Confidence: HIGH overall. Web platform APIs cited from MDN/W3C are normative. Library version pins (`@resvg/resvg-wasm@2.6.2`, third-party Vite CSP plugins) verified via npm; recommendations to NOT add them documented with rationale.*
+*Stack research for: v0.29.0 NUB-CONNECT + Shell as CSP Authority*
+*Researched: 2026-04-21*

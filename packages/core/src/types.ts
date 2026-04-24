@@ -661,6 +661,82 @@ export interface NappletGlobal {
     bytesAsObjectURL(url: string): { url: string; revoke: () => void };
   };
   /**
+   * User-gated direct network access: napplet declares desired `connect` origins
+   * at build time via `@napplet/vite-plugin`'s `connect` option; shell prompts the
+   * user at first load per `(dTag, aggregateHash)`; shell emits an explicit
+   * `connect-src <origin1> <origin2> …` CSP header on approval. The browser
+   * enforces network access at the CSP layer — shell has zero visibility into
+   * post-grant traffic. Napplet reads its own grant state via this namespace;
+   * both fields are populated synchronously at shim install from the
+   * `<meta name="napplet-connect-granted">` tag injected by the shell.
+   *
+   * Graceful degradation: `{ granted: false, origins: [] }` when shell does not
+   * advertise `nub:connect`, does not inject the meta tag, or denies the grant.
+   * This object is NEVER `undefined`.
+   *
+   * @example
+   * ```ts
+   * // Check grant state before firing cross-origin fetches:
+   * if (window.napplet.connect.granted) {
+   *   // CSP allows connect-src to these origins:
+   *   const allowed = window.napplet.connect.origins;
+   *   // fetch() will succeed for allowed origins, throw CSP violations otherwise.
+   *   const resp = await fetch('https://api.example.com/me');
+   * }
+   *
+   * // Capability-check the shell for the NUB itself:
+   * if (window.napplet.shell.supports('nub:connect')) { ... }
+   * ```
+   */
+  connect: {
+    /**
+     * True when the shell has granted the napplet direct network access to at
+     * least one origin declared in its manifest `connect` tags. False when
+     * denied, ungranted, or when the shell does not implement `nub:connect`.
+     */
+    readonly granted: boolean;
+    /**
+     * Readonly list of origins for which the shell emitted `connect-src` entries.
+     * Empty when `granted` is false. Origin format matches CSP source-expression
+     * rules: scheme + host + optional non-default port, no path/query/fragment,
+     * lowercase host, Punycode for IDN. See NUB-CONNECT spec for normalization.
+     */
+    readonly origins: readonly string[];
+  };
+  /**
+   * Shell-assigned napplet class (abstract security-posture identifier).
+   *
+   * Populated by the NUB-CLASS wire message `class.assigned` (shell → napplet,
+   * one terminal envelope per lifecycle) after iframe ready. The runtime value
+   * is a plain `number`, not a literal union — the class space is extensible
+   * as new NUB-CLASS-$N sub-track members are defined. Current canonical
+   * classes (defined in the NUB-CLASS track): `1` (strict baseline, no
+   * user-declared origins) and `2` (user-approved explicit-origin CSP).
+   *
+   * `undefined` in three distinct states, all of which napplets MUST handle
+   * gracefully:
+   * 1. Before the shell has sent `class.assigned` (early bootstrap).
+   * 2. When the shell does not implement `nub:class` (capability missing).
+   * 3. When the shell implements the NUB but intentionally withholds assignment.
+   *
+   * Cross-NUB invariant (in shells implementing both NUB-CONNECT and NUB-CLASS):
+   * `class === 2` iff `window.napplet.connect.granted === true`. See
+   * `specs/SHELL-CLASS-POLICY.md` (Phase 140) for the full shell-responsibility
+   * matrix.
+   *
+   * @example
+   * ```ts
+   * // Capability-check before branching on class:
+   * if (window.napplet.shell.supports('nub:class') && window.napplet.class !== undefined) {
+   *   console.log(`napplet running as class ${window.napplet.class}`);
+   * } else {
+   *   // Shell does not implement nub:class or assignment has not arrived;
+   *   // fall back to feature detection (e.g., window.napplet.connect.granted).
+   * }
+   * ```
+   */
+  class?: number;
+  /**
    * Shell capability queries. Check whether the shell supports a NUB
    * or permission.
    *

@@ -1012,6 +1012,19 @@ export type {
   ResourceNubMessage,
 } from '@napplet/nub/resource';
 
+// Connect NUB
+export type {
+  NappletConnect,
+} from '@napplet/nub/connect';
+
+// Class NUB
+export type {
+  ClassMessage,
+  ClassAssignedMessage,
+  NappletClass,
+  ClassNubMessage,
+} from '@napplet/nub/class';
+
 // ─── NUB Domain Constants ──────────────────────────────────────────────────
 
 export { DOMAIN as RELAY_DOMAIN } from '@napplet/nub/relay';
@@ -1024,6 +1037,8 @@ export { DOMAIN as MEDIA_DOMAIN } from '@napplet/nub/media';
 export { DOMAIN as NOTIFY_DOMAIN } from '@napplet/nub/notify';
 export { DOMAIN as CONFIG_DOMAIN } from '@napplet/nub/config';
 export { DOMAIN as RESOURCE_DOMAIN } from '@napplet/nub/resource';
+export { DOMAIN as CONNECT_DOMAIN } from '@napplet/nub/connect';
+export { DOMAIN as CLASS_DOMAIN } from '@napplet/nub/class';
 
 // ─── NUB Shim Installer Re-exports ─────────────────────────────────────────
 // Allow consumers to cherry-pick shim installers per domain.
@@ -1037,6 +1052,8 @@ export { installMediaShim } from '@napplet/nub/media';
 export { installNotifyShim } from '@napplet/nub/notify';
 export { installConfigShim } from '@napplet/nub/config';
 export { installResourceShim } from '@napplet/nub/resource';
+export { installConnectShim } from '@napplet/nub/connect';
+export { installClassShim } from '@napplet/nub/class';
 
 // ─── NUB SDK Helper Re-exports ──────────────────────────────────────────────
 // Allow consumers to use domain-specific SDK functions from @napplet/sdk.
@@ -1049,3 +1066,5 @@ export { keysRegisterAction, keysUnregisterAction, keysOnAction, keysRegister } 
 export { mediaCreateSession, mediaUpdateSession, mediaDestroySession, mediaReportState, mediaReportCapabilities, mediaOnCommand, mediaOnControls } from '@napplet/nub/media';
 export { notifySend, notifyDismiss, notifyBadge, notifyRegisterChannel, notifyRequestPermission, notifyOnAction, notifyOnClicked, notifyOnDismissed, notifyOnControls } from '@napplet/nub/notify';
 export { resourceBytes, resourceBytesAsObjectURL } from '@napplet/nub/resource';
+export { connectGranted, connectOrigins, normalizeConnectOrigin } from '@napplet/nub/connect';
+export { getClass } from '@napplet/nub/class';

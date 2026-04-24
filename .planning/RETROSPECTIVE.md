@@ -253,7 +253,61 @@
 
 ---
 
-## Milestone: v0.29.0 — Class-Gated Decrypt Surface
+## Milestone: v0.29.0 — NUB-CONNECT + Shell as CSP Authority
+
+**Shipped:** 2026-04-21
+**Phases:** 8 (135-142) | **Plans:** 19 | **Tasks:** 47
+
+### What Was Built
+
+- **Phase 135**: 4 cross-repo spec drafts in `napplet/nubs` (NUB-CONNECT + NUB-CLASS + NUB-CLASS-1 + NUB-CLASS-2); NIP-5D amended to NUB-neutral transport-only
+- **Phase 136**: `'connect'` + `'class'` added to `NubDomain`/`NUB_DOMAINS`; `NappletGlobal` gains `connect: NappletConnect` + optional `class?: number`; `perm:strict-csp` `@deprecated`
+- **Phase 137**: `@napplet/nub/connect` + `@napplet/nub/class` subpath scaffolds with shared `normalizeConnectOrigin()` + `ClassAssignedMessage` wire type; 8 new entry points; tree-shake contract
+- **Phase 138**: `@napplet/vite-plugin` strictCsp production path removed; `connect?: string[]` option with aggregateHash fold + fail-loud inline-script diagnostic + module-load conformance self-check
+- **Phase 139**: Central shim + SDK integration — `window.napplet.connect` + `window.napplet.class` with graceful-degradation defaults; `class.assigned` dispatcher routing
+- **Phase 140**: `specs/SHELL-CONNECT-POLICY.md` + `specs/SHELL-CLASS-POLICY.md` — non-normative shell-deployer checklists
+- **Phase 141**: Root README + 4 package READMEs + SKILL.md updated for two-class posture + NUB-RESOURCE-first guidance
+- **Phase 142**: 13 VER gates green across 14 packages; 54 new vitest tests; 3 documented Playwright fixtures exportable to downstream shell repo
+
+### What Worked
+
+- **Module-load conformance-fixture self-check** — binding the plugin's `connect:origins` fold to the NUB-CONNECT spec digest at ESM-init catches drift instantly; perturbation experiment confirmed the guardrail fires. Best guarantee against silent grant-invalidation in the industry.
+- **Shared `normalizeConnectOrigin()` as single source of truth** — importing from `@napplet/nub/connect/types` means build-side and shell-side validators cannot drift. Eliminates an entire class of "grants look right but silently auto-invalidate" bugs.
+- **NUB-CLASS sub-track (NUB-CLASS-$N)** — keeping class definitions as composable sub-track documents preserves NUB independence. NUB-CONNECT cites NUB-CLASS-2 by name without redefining class semantics internally.
+- **NUB-CONNECT with no postMessage wire** — grants flow through HTTP response CSP + `<meta name="napplet-connect-granted">`. Trivially implementable, removes round-trips from the hot path.
+- **Phase 142 Wave-1/Wave-2 terminal-plan parallelization** — Plans 01 + 02 disjoint-file parallel, Plan 03 Wave-2 converges + authors close-out docs. Evolved from v0.28.0's single-plan terminal to 3 plans for better parallelism.
+- **Table-driven policy scenario testing** via `describe.each` for SHELL-CLASS-POLICY's 7-row cross-NUB invariant scenario table — keeps policy prose and test surface synchronized.
+- **Anti-tests for documented non-conformant states** (class:2 ∧ granted:false; class:1 ∧ granted:true) make the policy intent explicit at the test-file level.
+
+### What Was Inefficient
+
+- **v0.28.0 `strictCsp` machinery was built and shipped only to be ripped out in v0.29.0** — the authority-location decision (build-time vs shell-time) should have surfaced at v0.28.0 design. Net outcome is fine (strictCsp still deprecation-shimmed for one release, downstream shells inherit clean semantics), but 376 LOC of plugin code was churn.
+- **Integration-checker found a blocker during milestone audit** — VER-02 type-check failure in `@napplet/nub` because `@types/node` was in root-level devDependencies but not the package-local ones. Resolved during audit via commit `a93c2ef`, but should have been caught at Phase 142's `pnpm -r type-check` gate. The gate ran green in that session because `pnpm install` had root-level types visible.
+- **MILESTONES.md auto-extraction picked up markdown header fragments** ("Created files exist on disk:", "One-liner:", "Found during:") as accomplishments — the summary-extract tool grabs raw prose after certain headings without filtering stubs. Minor noise, hand-corrected post-archive.
+
+### Patterns Established
+
+- **Module-load conformance-fixture self-checks** for any fold procedure that MUST produce byte-identical output across consumers (build-time plugin + shell-time validator). Catches drift at import, not at runtime silent mismatch.
+- **Sub-track document pattern** (NUB-$NAME-$N) for protocol surfaces that define multiple coordinated postures without collapsing NUB independence.
+- **Documented fixture pattern for cross-repo test delegation** — SDK repo owns the fixture shape + preconditions + assertion vocabulary; downstream shell repo owns the test runner + real shell under test. Fixtures self-contained enough that a downstream engineer translates with minimal cross-referencing.
+- **VER-gate in-repo test files named by semantic, not VER-NN** (`shim.test.ts`, `aggregate-hash.test.ts`, `cross-nub-invariant.test.ts`) — tests read as permanent protection rather than one-shot milestone work.
+
+### Key Lessons
+
+- **Shell authority decisions belong at milestone design, not milestone-after-next.** The "who owns CSP" question was knowable at v0.28.0 — shipping strictCsp in vite-plugin then ripping it out in v0.29.0 was churn that a 30-minute design conversation earlier would have prevented.
+- **Package-local devDependencies matter even when root has them.** Monorepo root-level `@types/node` was sufficient for local builds but hid the package-boundary error until milestone audit. Lesson: `pnpm -r type-check` catches transitive-visibility bugs; run it after every dep change.
+- **Conformance fixtures bind implementations to specs at the byte level.** NUB-CONNECT's canonical fold would have been vulnerable to silent drift without the `cc7c1b19…1aa742` digest acting as a tripwire. Spec + fixture + module-load check is a composable pattern worth replicating for future fold procedures.
+
+### Cost Observations
+
+- Timeline: single day (2026-04-21, all 8 phases + audit + close)
+- 156 files changed, +22,131 / -14,950 lines (large swing due to spec drafts + vite-plugin LOC churn + 54 new vitest tests)
+- 2,018 insertions / 435 deletions in `packages/**/*.ts` (signal-to-noise after excluding planning/spec churn)
+- 89 commits between v0.28.0 and v0.29.0 tag
+- 8 phases sequenced with parallel-safe markers where dependency graph allowed (Phases 136/137/138 parallel-safe; 139 blocked on 137; 140 parallel-safe with 136-139)
+
+<!-- v0.30.0 PLACEHOLDER — originally written as v0.29.0 on main; relabel to v0.30.0 in the post-merge split -->
+## Milestone: v0.30.0 — Class-Gated Decrypt Surface (PRE-MIGRATION)
 
 **Shipped:** 2026-04-23
 **Phases:** 4 | **Plans:** 13 (one Rule 3 gap-closure iteration) | **Tasks:** 33
@@ -303,6 +357,7 @@
 - ~20 subagent spawns (4 planners + 4 plan-checkers + ~10 executors + 4 phase-verifiers + 1 integration-checker)
 - Every phase has SUMMARY.md + VERIFICATION.md. Zero VALIDATION.md (Nyquist gap continues — fifth consecutive milestone)
 
+
 ---
 
 ## Cross-Milestone Trends
@@ -320,7 +375,8 @@
 | v0.9.0 Identity & Trust | 3 | 7 | 220+ | +6,226 | 2 days |
 | v0.11.0 Clean up Side Panel | 3 | 4 | 220+ | +1,937 | 1 day |
 | v0.28.0 Browser-Enforced Resource Isolation | 10 | 10 | (unchanged) | +1,695/−69 | 3 days |
-| v0.29.0 Class-Gated Decrypt Surface | 4 | 13 | (unchanged) | +~600 | 1 day |
+| v0.29.0 NUB-CONNECT | 8 | 19 | 220+ vitest (+54 new) | +22,131/-14,950 | 1 day |
+| v0.30.0 Class-Gated Decrypt Surface (PRE-MIGRATION) | 4 | 13 | (unchanged) | +~600 | 1 day |
 
 ### Observations
 

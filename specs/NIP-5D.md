@@ -103,7 +103,7 @@ NUB specs MUST:
 Napplets are untrusted code. The shell is trusted. The browser enforces iframe sandbox boundaries. `MessageEvent.source` provides unforgeable sender identity.
 
 **Mitigations:**
-1. Iframe sandbox: `allow-scripts` is the only required token -- shells MUST NOT add `allow-same-origin`.
+1. Iframe sandbox: `allow-scripts` is the only required token -- shells MUST NOT add `allow-same-origin`. Adding `allow-same-origin` would grant the napplet a real origin, allowing it to register a service worker, read shell `localStorage`, and bypass shell mediation entirely -- this prohibition is the load-bearing precondition for browser-enforced isolation of any kind.
 2. postMessage `'*'` origin is required for opaque-origin iframes; sender identification uses `MessageEvent.source`, NOT `event.origin`.
 3. Identity binding: the shell maps `MessageEvent.source` to napplet identity at iframe creation. The browser's `MessageEvent.source` is unforgeable within the same browsing context.
 4. Aggregate hash verification against [NIP-5A](5A.md) manifests; mismatch MAY result in napplet rejection.
@@ -112,22 +112,7 @@ Napplets are untrusted code. The shell is trusted. The browser enforces iframe s
 
 Storage isolation, relay access control, and ACL enforcement are defined by their respective NUB specs.
 
-### Browser-Enforced Resource Isolation
-
-The mitigations above describe ambient trust ("napplets shouldn't fetch directly"). Shells SHOULD additionally enforce browser-level isolation so that napplets *cannot* fetch directly even if their code attempts to.
-
-**Strict Content Security Policy.** Shells SHOULD deliver napplet HTML under a strict Content Security Policy that disallows `'unsafe-inline'` and `'unsafe-eval'` in `script-src`, sets `connect-src 'none'` in production builds, sets `default-src 'none'`, and uses nonce-based `script-src` for any inline scripts. The CSP SHOULD be delivered as the first child of `<head>` so that no element is parsed before the policy binds. Shells that enforce this posture SHOULD advertise the `perm:strict-csp` capability via `window.napplet.shell.supports('perm:strict-csp')` so napplets can detect the posture at runtime.
-
-Example minimal meta delivery:
-
-    <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-...' 'self'; connect-src 'none'; img-src blob: data:; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-
-**Canonical fetch path.** Network-sourced bytes (avatars, banners, media artwork, blossom blobs, `data:` payloads, etc.) SHOULD reach napplets only through the resource NUB. The shell mediates the fetch, applies its policy (private-IP block, response size cap, timeouts, MIME byte-sniffing, SVG rasterization), and returns a `Blob` to the napplet. See the napplet/nubs registry NUB-RESOURCE specification for the message catalog, scheme handlers, and shell behavior contract.
-
-**Sandbox reaffirmation.** As stated in the Transport section, napplet iframes MUST use `sandbox="allow-scripts"` and MUST NOT add `allow-same-origin`. Adding `allow-same-origin` would grant the napplet a real origin, allowing it to register a service worker, read shell `localStorage`, and bypass the resource NUB entirely. This prohibition is the load-bearing precondition for browser-enforced isolation; the strict-CSP posture above relies on the napplet remaining at an opaque origin.
-
-Strict CSP, the resource NUB as canonical fetch path, and `sandbox="allow-scripts"` (without `allow-same-origin`) compose to convert ambient trust into browser-enforced isolation: the napplet *cannot* perform a network fetch the shell did not mediate.
+**Class-posture delegation.** NUBs MAY define napplet classes with different security postures delivered through shell-controlled HTTP response headers. Class taxonomy, the mechanism for assigning a class to a napplet, and the wire or header shapes used to express a class are out of scope for this NIP. NUB specs that define class-contributing capabilities document their own posture and their own shell responsibilities; NIP-5D provides only the transport, identity, manifest-negotiation, and capability-query primitives on which such NUB-level machinery can layer.
 
 ### NIP-07 Extension Injection Residual
 

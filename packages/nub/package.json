@@ -155,6 +155,38 @@
     "./resource/sdk": {
       "types": "./dist/resource/sdk.d.ts",
       "import": "./dist/resource/sdk.js"
+    },
+    "./connect": {
+      "types": "./dist/connect/index.d.ts",
+      "import": "./dist/connect/index.js"
+    },
+    "./connect/types": {
+      "types": "./dist/connect/types.d.ts",
+      "import": "./dist/connect/types.js"
+    },
+    "./connect/shim": {
+      "types": "./dist/connect/shim.d.ts",
+      "import": "./dist/connect/shim.js"
+    },
+    "./connect/sdk": {
+      "types": "./dist/connect/sdk.d.ts",
+      "import": "./dist/connect/sdk.js"
+    },
+    "./class": {
+      "types": "./dist/class/index.d.ts",
+      "import": "./dist/class/index.js"
+    },
+    "./class/types": {
+      "types": "./dist/class/types.d.ts",
+      "import": "./dist/class/types.js"
+    },
+    "./class/shim": {
+      "types": "./dist/class/shim.d.ts",
+      "import": "./dist/class/shim.js"
+    },
+    "./class/sdk": {
+      "types": "./dist/class/sdk.d.ts",
+      "import": "./dist/class/sdk.js"
     }
   },
   "files": [
@@ -169,6 +201,7 @@
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",
+    "@types/node": "^22.15.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3"
   },

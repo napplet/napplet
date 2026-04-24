@@ -1,296 +1,469 @@
-# Feature Research — v0.28.0 Browser-Enforced Resource Isolation
+# Feature Research — v0.29.0 NUB-CONNECT + Shell as CSP Authority
 
-**Domain:** Sandboxed-iframe app + shell-mediated resource fetching layer (napplet protocol)
-**Researched:** 2026-04-20
-**Confidence:** HIGH on table stakes / anti-features (multiple peer systems converge); MEDIUM on transform-hint and sidecar shapes (WebSearch-only, no spec authority for our exact use case)
+**Domain:** Napplet protocol SDK — sandboxed Nostr mini-app iframes delegating network capabilities to a host shell via NIP-5D JSON envelopes + NIP-5A manifests. This milestone adds a new NUB (`connect`) for user-gated direct `fetch`/`WebSocket`/`SSE` access to pre-declared origins, and shifts CSP emission from build-time (strict-CSP meta-tag) to runtime (shell-emitted HTTP header) for every napplet.
+**Researched:** 2026-04-21
+**Confidence:** HIGH — design doc is authoritative and committed (`9f77c29`); every feature below is traceable to a specific passage in `docs/superpowers/specs/2026-04-21-napplet-network-permission-design.md`.
 
-## Scope Anchor
+## Scope Summary
 
-This milestone introduces ONE new napplet-side primitive — `resource.bytes(url) → blob` — backed by a scheme-pluggable shell broker, and tightens the browser-enforced perimeter (CSP `connect-src 'none'`, no `allow-same-origin`) so napplets *cannot* fetch directly even if they try.
+v0.29.0 is a **subtractive + additive** milestone across seven categories:
 
-**EXPLICIT SCOPE-OUT (must remain out):** Audio and video playback. The streaming/seek/codec model is fundamentally different from byte-blob delivery and demands a shell-composited compositor approach. Forcing that into `resource.bytes()` would either bloat this NUB or build the wrong abstraction. Defer to a later compositor milestone.
+1. **NUB-CONNECT spec** (in `napplet/nubs` public repo, new file)
+2. **NIP-5D amendment** (delegate class taxonomy to NUBs track)
+3. **`@napplet/nub/connect` subpath** (new subpath inside the consolidated `@napplet/nub`)
+4. **`@napplet/vite-plugin` changes** (subtractive: drop strict-CSP production path; additive: `connect?: string[]` option + origin normalization + aggregateHash fold + manifest tag emission + discovery meta + fail-loud inline-script diagnostic)
+5. **Central `@napplet/shim` + `@napplet/sdk` integration** (mount `window.napplet.connect`, wire `shell.supports('nub:connect')`)
+6. **`specs/SHELL-CONNECT-POLICY.md`** (shell-deployer checklist parallel to `SHELL-RESOURCE-POLICY.md`)
+7. **Documentation sweep** (4 package READMEs + root README + `skills/build-napplet/SKILL.md`)
 
-## Feature Landscape
+No demo work (deferred to downstream shell repo, Option B pattern inherited from v0.28.0).
 
-### Table Stakes (Users Expect These)
+---
 
-Without these, the napplet UX is visibly broken or insecure. Drawn from convergent practice across Electron `protocol.handle`, Tauri custom protocols, Figma plugin networking, and Slack Block Kit hosted images.
+## 1. NUB-CONNECT Spec (`napplet/nubs` public repo)
 
-| # | Feature | Why Expected | Complexity | Notes |
-|---|---------|--------------|------------|-------|
-| TS-1 | `resource.bytes(url) → Blob` request/result envelope (`resource.bytes` / `resource.bytes.result`) with correlation `id` | The primitive itself. Without it, no images, no inline assets, nothing the napplet can render from network. | S | Mirrors `identity.getProfile` request/result shape. |
-| TS-2 | At least 4 schemes plumbed: `https:`, `data:`, `blossom:`, `nostr:` | Stated milestone target. `data:` is mandatory because it's the only zero-network fallback (placeholders, embedded SVG-as-data after rasterization, BlurHash-style decoded payloads). `blossom:` and `nostr:` are the Nostr-native ones. | M | `data:` is technically resolved entirely client-side but MUST flow through the same primitive so the napplet has one code path. Otherwise napplets bifurcate. |
-| TS-3 | Distinguished failure modes in the result envelope (not a single boolean) | "Image broken" with no reason is the single most common DX complaint about sandboxed plugin systems. Need at minimum: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`. | S | Strongly typed `error` discriminator. Lets napplet show "blocked by shell" vs "404" vs "still loading". |
-| TS-4 | MIME / content-type returned alongside bytes | Napplets need to know whether to render as `<img>`, `<embed>`, or refuse. `Blob.type` alone is insufficient because napplets can't trust napplet-side sniffing under sandbox. | S | Shell sniffs once, classifies, returns canonical MIME string. |
-| TS-5 | Cancellation semantics (napplet can abandon a pending request) | Standard `AbortController` ergonomics. Without it, scrolling feeds leak shell-side fetches and burn shell rate-limit budget. Universal precedent — `fetch()`, GraphQL clients, RPC libraries all expect this. | S | Either a `resource.cancel { id }` envelope or a fire-and-forget on the napplet that drops the result. Shell SHOULD propagate to upstream `AbortController`. |
-| TS-6 | Strict CSP delivered to the iframe at creation time, with `connect-src 'none'`, `script-src 'self' blob: data:` (or similar), `frame-ancestors 'self'` | This is THE security gate. If it's not browser-enforced, "shell mediation" is just a polite request the napplet can ignore. Must be delivered via mechanism that survives `srcdoc` and opaque-origin contexts. | M | HTTP header is most robust; meta tag does NOT support `sandbox` and inherits parent CSP issues; `srcdoc` requires careful inheritance handling. See ARCHITECTURE research for the delivery decision. |
-| TS-7 | Default shell resource policy with hard SSRF guards | Industry consensus (OWASP, Wiz, Stytch 2025): block private-IP ranges (127/8, 10/8, 172.16/12, 192.168/16, 169.254/16, ::1/128, fc00::/7, fe80::/10) at resolution time, not just at URL parse time (DNS rebinding). Plus per-request size cap, per-napplet rate limit, per-request timeout. | M | Documented as default policy in spec. Shell host can override. Must run after DNS resolution to defeat rebinding — see PITFALLS. |
-| TS-8 | SVG handling that NEVER hands scriptable XML to the napplet | Documented XSS vector across every web platform that ships SVG (Angular CVE-2025-66412, sanitize-svg CVE-2023-22461, recurring `<animate>`/`<foreignObject>` bypasses). Sanitize-by-stripping is fragile; rasterize-by-default is the safe stance. Milestone explicitly calls for shell-side rasterization. | M | Shell rasterizes SVG → PNG; napplet receives `image/png` Blob with original URL preserved. Napplet never sees raw SVG bytes. |
-| TS-9 | `shell.supports('resource')` (NUB capability check) and `shell.supports('resource:scheme:blossom')`-style scheme-level capability check | Existing `shell.supports()` precedent. Napplets must be able to ask "can you do `nostr:` URLs?" before rendering a `nostr:` URL link. | S | Use existing namespace; add scheme-level sub-capability (new pattern but consistent with existing `nub:`/`perm:` precedent). |
-| TS-10 | Vite-plugin emits CSP-aware napplet HTML in dev (matches production posture) | Stated milestone target. Without it, napplets work in dev and break on deploy because dev iframe has no CSP. The single most common "works on my machine" pattern in plugin systems. | M | Vite plugin already exists; add CSP middleware/transform. Mirror the headers the shell will set. |
-| TS-11 | NIP-5D Security Considerations amendment documenting the strict-CSP posture and `resource.bytes` contract | Spec hygiene. Shells implementing NIP-5D must know to set CSP and provide the `resource` NUB or napplets can't ship images. | S | Documentation only; ties to TS-1, TS-6. |
-| TS-12 | Single Blob delivery (not chunked, not streaming) for v0.28.0 | Matches the explicit scope-out of audio/video. Streaming requires backpressure, partial-failure handling, range requests — all of which are properly the compositor milestone's problem. Whole-blob is what every comparable system uses for static assets (Electron `protocol.handle` returns Response, Tauri custom-protocol returns Vec<u8>, Figma plugins receive whole responses). | S | Document the cap (e.g., 25 MiB default). Napplets that need bigger are a future milestone. |
+### Table Stakes (MUST ship in spec)
 
-### Differentiators (Worth Having for v0.28)
+| Feature | Why Expected | Complexity | Notes / Source passage |
+|---------|--------------|------------|------------------------|
+| Motivation section (gap between NUB-RESOURCE and nothing) | Readers need to understand why a second fetch NUB exists | S | Design doc "Motivation" §1 |
+| Non-Goals section (6 explicit exclusions) | Prevent scope creep in v2 discussions | S | Design doc "Non-Goals" §2 |
+| Architecture Overview (3 moving parts: manifest / shell CSP / runtime discovery) | Readers need the mental model up front | S | Design doc "Architecture Overview" §3 |
+| Class 1 / Class 2 taxonomy | Foundational concept threaded through every other section | S | Design doc "Napplet Classes" §4; class is determined solely by presence of `connect` tags — no opt-in flag |
+| Responsibility Split table (author / shell / vite-plugin) | Implementers need to know who owns what | S | Design doc "Responsibility Split" §5 |
+| `["connect", "<origin>"]` manifest tag shape (one tag per origin) | Wire-level contract | S | Design doc "Manifest Tag Shape" §6 |
+| Origin-format rules: scheme whitelist (https/wss/http/ws), no wildcards, Punycode IDN, lowercase host, no default ports, no path/query/fragment | Unambiguous author guidance + shell validation contract | M | Design doc "Origin Format (strict)" §6; CSP origin-match is scheme+host+port only |
+| Shell-side validation at manifest-load time | Refuse malformed manifests with a diagnostic | S | Design doc "Validation" §6 |
+| Cleartext (http/ws) marked "permitted but warned" + operator-policy escape hatch | Many local-dev scenarios; must be honest about confidentiality loss | S | Design doc "Validation" §6 + "Security Considerations → Cleartext confidentiality" §10 |
+| `connect` tags MUST participate in aggregateHash via synthetic entry | Load-bearing: prevents silent origin additions post-approval | M | Design doc "Content-Addressing Consequences" §6; matches `config:schema` precedent at vite-plugin/src/index.ts:568 |
+| Runtime Discovery API: `window.napplet.connect.{granted: boolean, origins: readonly string[]}` | Napplet-side API surface | S | Design doc "Runtime Discovery API" §7 |
+| **No wire protocol** — explicitly stated | NUB-CONNECT has zero postMessage types; readers need to hear this loudly or they'll look for one | S | Design doc "Architecture Overview" §3 + "Non-Goals" §2 last bullet |
+| Shell consent flow 6-step sequence | Normative shell behavior on every iframe load | M | Design doc "Shell Consent Flow" §8 |
+| Prompt requirements (napplet name + dTag + origin list + cleartext warning + trust language + Approve/Deny buttons) | UX floor for any conformant shell | M | Design doc "Prompt Requirements" §8 |
+| Grant persistence keyed on `(dTag, aggregateHash)` | Rebuild → new hash → re-prompt; content-addressed identity | S | Design doc "Prompt Requirements" §8 persistence clause |
+| Re-prompt on origin change with diff UI ("previously approved X; now requesting Y") | Transparent version migration | M | Design doc "Re-prompt on Origin Change" §8 |
+| Revocation UI (MUST expose) + DENIED state retention (not deletion) so re-approve is offerable | Users need a way out of a grant they regret | M | Design doc "Revocation" §8 |
+| Shell-emitted 10-directive baseline CSP with `connect-src` as sole variable | Authoritative wire-level CSP contract | M | Design doc "Shell-Emitted CSP (Authoritative)" §9; identical baseline to v0.28.0 minus nonce |
+| Edge Case 1: residual meta CSP on legacy napplets → shell MUST scan Class-2 napplet HTML and refuse with diagnostic | CSP intersection would silently suppress granted origins | M | Design doc "Edge Case 1" §10.1 |
+| Edge Case 2: port/IDN normalization contract | Prevents origin-string mismatches that look equivalent but aren't CSP-equal | S | Design doc "Edge Case 2" §10.2 |
+| Edge Case 3: no subdomain implicit match | Users must hear that `example.com` does NOT cover `api.example.com` | S | Design doc "Edge Case 3" §10.3 |
+| Edge Case 4: `fetch()` against non-granted URL → browser CSP violation, shell has no visibility | Author guidance for degradation | S | Design doc "Edge Case 4" §10.4 |
+| Edge Case 5: NUB-CONNECT vs NUB-RELAY distinction (relay URL in `connect` tag is direct socket, bypasses NUB-RELAY event-level ACL) | Subtle; MUST be explicit | S | Design doc "Edge Case 5" §10.5 |
+| Edge Case 6: mixed-content rule (https shell cannot fetch http) + localhost/loopback secure-context exception | Operator sanity | S | Design doc "Edge Case 6" §10.6 |
+| Security Considerations: posture-vs-NUB-RESOURCE comparison table (8 rows) | Readers must see how much weaker NUB-CONNECT is vs the shell-proxied path | M | Design doc "Posture vs. NUB-RESOURCE" §11.1; 8 rows: Model / Methods / Streaming / Shell-visibility / Origin-scope / Private-IP-block / User-grant / Attack-surface |
+| "Default to NUB-RESOURCE; reach for NUB-CONNECT only when you need POST/WS/SSE/custom-headers/streaming" prose | Architectural north-star for napplet authors | S | Design doc "Posture vs. NUB-RESOURCE" §11.1 closing paragraph |
+| Grant-bypass attempt analysis (meta CSP cannot loosen header CSP; browser intersection is authoritative) | Explain why the design is safe even if napplets try to cheat | S | Design doc "Grant-bypass attempts" §11.3 |
+| Sandbox preservation note (opaque-origin invariant unaffected by connect grants) | Prevents confusion that grants might relax sandbox | S | Design doc "Sandbox preservation" §11.4 |
+| Post-grant opacity statement ("shell has zero visibility once approved") | Fundamental tradeoff; must not be hidden | S | Design doc "Post-grant opacity (the fundamental tradeoff)" §11.5 |
+| Capability advertisement: `shell.supports('nub:connect')` primary + `shell.supports('connect:scheme:http')` + `shell.supports('connect:scheme:ws')` secondary | Runtime discovery contract | S | Design doc "Capability Advertisement" §12 |
+| `perm:strict-csp` superseded-not-removed note | Back-compat clause — napplets checking it still work | S | Design doc "Superseded: perm:strict-csp" §12.1 |
+| Graceful Degradation 4-state priority ladder (granted / denied-but-RESOURCE / denied-and-no-RESOURCE / no-NUB-CONNECT) | Author guidance for runtime branching | S | Design doc "Graceful Degradation (Napplet Author Guidance)" §13 |
+| Test vectors for origin normalization (accept, reject, normalize cases) | Unambiguous interop | M | Design doc "Testing Posture" §15 — unit tests for tag parsing / origin normalization / cleartext / IDN / default ports |
+| Test vectors for integration flows (granted / denied / aggregateHash-change / origin-list-change-but-dist-unchanged / Class-2-meta-CSP-scan / Class-1-meta-CSP-harmless / cleartext-UX / diff-UX) | Reference test matrix | M | Design doc "Testing Posture" §15 |
+| Deferred-to-v2 section (partial grants, wildcards, quota, per-request audit) | Manage expectations | S | Design doc "Deferred to v2" §16 |
 
-These are not strictly required for the protocol to be usable, but each materially improves either DX or shell efficiency, and each is small enough to land in v0.28 without dragging the milestone.
+### Differentiators (SHOULD ship)
 
-| # | Feature | Value Proposition | Complexity | Notes |
-|---|---------|-------------------|------------|-------|
-| DF-1 | Optional `sidecar` field on `relay.event` envelopes carrying pre-resolved resources `{ url → { mime, blob, error? } }` | Eliminates a double-roundtrip when the napplet immediately renders an image referenced in the event (the dominant case for feed napplets and profile viewers). The shell already knows the napplet has the event; pre-resolving the obvious URLs (profile picture in kind 0, image in kind 1, artwork in kind 30002, etc.) is invisible win. Milestone explicitly calls for this. | M | Pattern parallel: GraphQL `@defer` (multipart payload with later-arriving fragments) and ActivityPub attachments embedded in the activity. We embed up-front instead of deferring because the shell already paid the fetch cost; deferring would re-cost. **Amends NUB-RELAY** — sidecar is additive; old napplets ignore. |
-| DF-2 | Scheme registry is shell-pluggable (host can register additional handlers at runtime) | Future-proofs without further protocol changes. Enables `ipfs:`, `arweave:`, `magnet:`, custom enterprise schemes without a NUB amendment. Tauri and Electron both expose this; absence in our protocol would be a notable regression vs. the desktop precedents. | S | Shell-internal API, not part of the wire protocol. NUB-RESOURCE spec says "shell MAY support additional schemes; napplets discover via `shell.supports('resource:scheme:foo')`". |
-| DF-3 | Optional `hint` field on `resource.bytes` request: `{ purpose?: 'thumbnail'\|'full', maxWidth?: number, maxHeight?: number, preferFormat?: 'webp'\|'avif'\|'png'\|'jpeg' }` | Lets the shell short-circuit large fetches when the napplet only needs a thumbnail (avatar grid, message previews). Imgix/Cloudinary precedent: clients send `auto=format`, `max-w=`, `q=` parameters. Imgix's automatic content negotiation is the closest peer. **Hints, not commands** — shell may ignore. | M | Shell satisfies hint either by transforming locally (likely a future enhancement) or by rewriting the URL when fetching from a transform-aware backend (Imgix/Cloudinary). v0.28 ships the hint surface; behavior can be no-op-passes-through and still be valuable as a forward-compatible API. |
-| DF-4 | Optional `priority: 'high' \| 'low' \| 'auto'` on `resource.bytes` request | Mirrors browser `fetchpriority` attribute (Chrome 101+, in spec). Lets feed napplets say "hero image now, off-screen avatars later" without inventing custom orchestration. Shell uses this to order its fetch queue and to prefer cached results for low-priority. | S | Three-state enum, `auto` default. Shell MAY ignore. Surface lands in v0.28 even if shell behavior is naive. |
-| DF-5 | `resource.bytes.progress { id, fetched, total? }` push messages for in-flight large fetches | Lets napplets show real progress on multi-MB images instead of "loading…" forever. Optional — napplets without progress UI ignore. | M | Borderline — could defer. Include only if cost is small in shim/SDK. **Amend** NUB-RESOURCE if added; do not add to v0.28 result envelope shape. |
-| DF-6 | Speculative `resource.preload(url, { priority: 'low' })` envelope (fire-and-forget warm-up) | Pattern from `<link rel=prefetch>` and IntersectionObserver-driven prefetch. Napplet about to scroll into view of an image can warm shell cache. Shell MAY ignore entirely. | S | Useful for feed napplets. Cheap to add — same handler, just no result. |
-| DF-7 | Cache-key transparency: result envelope includes a stable `cacheKey` string the napplet can use to short-circuit its own re-renders | Napplet doesn't need to manage cache (shell does), but knowing whether two URL responses are byte-identical lets it skip re-decoding. Minor DX win. | S | Hash of `(scheme, normalized URL, hint)`. |
-| DF-8 | NUB-IDENTITY clarifying note: profile `picture` field is a URL the napplet MUST resolve via `resource.bytes(url)` (not direct `<img src=>`) | Existing NUB-IDENTITY just hands back a URL string. Without explicit guidance, napplet authors will write `<img src={profile.picture}>` and it will be CSP-blocked. Clarification in the spec + SDK helper. | S | **Amends NUB-IDENTITY** documentation only, no wire change. |
-| DF-9 | NUB-MEDIA clarifying note: `MediaArtwork.url` MUST resolve via `resource.bytes()`; `MediaArtwork.hash` is a `blossom:` shorthand the shell MAY auto-resolve | Same DX trap as DF-8 but for media artwork. The existing `MediaArtwork` type already anticipates Blossom, so this is mostly aligning the existing intent with the new primitive. | S | **Amends NUB-MEDIA** documentation only, no wire change. |
-| DF-10 | Demo napplets exercising the model end-to-end: profile viewer (NUB-IDENTITY → `resource.bytes`), feed napplet with inline images, scheme-mixed consumer (https + blossom + data on one screen) | Stated milestone target. Demos are the contract test for "did we actually make this usable". A profile picture failing to render in the demo is the canary that the milestone is incomplete. | M | Three demo napplets minimum. Each must be obviously broken if any TS-* feature is missing. |
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Explicit statement that shell MUST be the HTTP responder for napplet HTML | Load-bearing precondition — deployers who can't control response headers cannot implement NUB-CONNECT | S | Design doc "Shell (runtime)" §5; acceptable delivery mechanisms listed (direct serve / HTTP proxy / `blob:` URL / `srcdoc` on iframe). Open question §17 leans "NUB-CONNECT prose, not NIP-5D amendment" — research confirms this placement |
+| Inline-script build diagnostic guidance as hard-error (not warning) | Fail-loud aligns with "shell CSP will reject it anyway at runtime" | S | Design doc "Open Questions" §17 bullet 2 leans hard-error |
+| Dev-mode `vite serve` minimal meta CSP retention with deprecated label | Convenience for shell-less local preview without encouraging the pattern | S | Design doc "Open Questions" §17 bullet 3 leans retain-deprecated |
 
-### Anti-Features (Tempting; Do NOT Add)
+### Anti-Features (Explicit Exclusions)
 
-Each of these will get suggested ("just one more thing…"). Each is a trap. The reasons are documented so they don't get re-litigated mid-milestone.
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Per-origin partial grants | "Let users approve 2 of 4 origins" | Requires multi-toggle prompt + origins-subset state model; multiplies UX and edge cases | Deferred to v2 explicitly (design doc §16) |
+| Wildcard subdomains (`https://*.example.com`) | "Writing every subdomain is tedious" | Defeats the informed-consent point of the prompt | Deferred to v2 pending threat-model re-exam (design doc §16) |
+| Shell visibility into post-grant traffic (proxy / logging / filtering) | "Security teams want audit logs" | Browser enforces CSP transparently to shell; no hook exists without a service worker, which `sandbox="allow-scripts"` forbids | Documented fundamental tradeoff (design doc §11.5) |
+| Quota / rate-limiting on granted traffic | "Prevent runaway napplets" | Same reason — no browser hook | Deferred to v2 (design doc §16) |
+| Audit logging of individual network calls | "Compliance" | Same reason | Deferred to v2 (design doc §16) |
+| A new postMessage wire protocol | "All other NUBs have one" | Grants are expressed via CSP, not messages; a wire protocol would be ceremonial and confusing | Explicit Non-Goal (design doc §2); NUB-CONNECT is wholly expressed through manifest tags + CSP + state-query API |
 
-| # | Anti-Feature | Why Tempted | Why Problematic | Alternative |
-|---|---|---|---|---|
-| AF-1 | Raw `fetch` passthrough (`resource.fetch(url, init)` with method/headers/body) | Looks like obvious convenience; "what if napplet needs POST?" | Reintroduces every problem the milestone is solving. POST + custom headers means napplets can exfiltrate (POST to attacker-controlled URL with stolen state in body). Method/header surface is the SSRF amplifier in every audited proxy. The whole point is a *narrow* primitive — bytes in, bytes out, no side effects. | If a napplet needs to POST, that's a NUB. Build it as a typed message in the appropriate domain (e.g., `relay.publish` for Nostr writes, future `nip96.upload` for media writes). |
-| AF-2 | Napplet-controlled cache invalidation (`resource.invalidate(url)` or cache headers passed in) | "What if the avatar changed?" | Caching strategy is a shell concern. Letting napplets invalidate is a DoS vector (force shell to re-fetch on every render) and a privacy leak (napplet can probe "did you have this URL cached recently?"). | Shell decides cache TTL per scheme/MIME. Content-addressed schemes (`blossom:`, `nostr:`) are immutable so the question doesn't arise. For `https:` rely on shell's own cache headers handling. |
-| AF-3 | OAuth / cookie-bearing requests | "What if the napplet needs to fetch from a service the user is logged into?" | This is the entire reason the iframe is opaque-origin. Bearing user credentials into napplet-requested fetches is a credential-laundering attack surface and turns the shell into a confused deputy. | Auth'd APIs belong behind a NUB that mediates the auth (shell holds token, exposes typed methods). Napplet never gets credentials directly. |
-| AF-4 | Lightning-paid resources (L402, payment-required URLs) | Nostr ecosystem will request this within months | Conflates two separate concerns: payment authorization and byte fetching. Belongs in a separate NUB (e.g., NUB-PAY), with `resource.bytes` consuming a payment-token if needed. Adding payment to v0.28 doubles the surface. | Defer. Land NUB-RESOURCE clean; build NUB-PAY later; let `resource.bytes` accept an optional opaque `paymentToken` argument when NUB-PAY ships. |
-| AF-5 | Audio/video streaming, range requests, MediaSource integration | "We have media artwork already; let's just stream the audio too." | Streaming is fundamentally different: backpressure, partial failure, codec negotiation, gap-filling, seek. Trying to express this through `resource.bytes(url) → Blob` either bloats the primitive into a streaming protocol or ships a lie that doesn't actually stream. The compositor model (shell renders the video element, napplet sees a placeholder/handle) is the correct abstraction. | Explicitly defer to a later "shell-composited compositor" milestone. Document this scope-out in the NUB-RESOURCE spec. |
-| AF-6 | WebSocket proxy (`resource.socket(url)`) | Real-time data not delivered via Nostr relays | The whole proxy surface for streams is huge. Existing NUB-RELAY already handles the Nostr-flavored streaming case. Anything else is a special-purpose NUB. | Build a specific NUB if/when needed. Don't pre-build a generic socket bridge. |
-| AF-7 | Napplet-supplied custom MIME sniffing or trust-the-Content-Type-header | "Just pass the server's Content-Type through" | The shell *must* sniff and classify because `Content-Type` is attacker-controlled when fetching arbitrary URLs. Mis-classified bytes are how SVG-XSS and HTML-injection-via-image happen. | Shell sniffs (magic bytes), normalizes to a canonical MIME, refuses anything in a denylist (`text/html`, `application/javascript`, raw `image/svg+xml` pre-rasterization). |
-| AF-8 | Napplet-controlled CSP (loosen the policy from inside the iframe) | "My napplet needs to inline some JS / use eval / load a font from CDN" | The whole milestone's premise. CSP is the trust gate; making it negotiable defeats it. | Shell sets CSP. Napplets that need fonts/styles bundle them or resolve them via `resource.bytes()` and inject as `data:` URLs (which the policy explicitly allows). |
-| AF-9 | Hash exposure to napplets ("here's the SHA-256 of what you got") | "Useful for content-addressing within napplet logic" | Stated PROJECT.md decision: **hashes stay shell-internal; napplets address resources by URL only**. Exposing hashes leaks shell internals and lets napplets probe shell cache state. | Napplet uses URLs (including `blossom:<hash>` and `nostr:<nevent>`) as identifiers. Shell handles hash verification internally. |
-| AF-10 | Synchronous `resource.bytes` (block-on-result API in shim) | "Easier mental model for napplet authors" | postMessage is fundamentally async; faking sync via `Atomics.wait` requires SharedArrayBuffer (cross-origin-isolated only) which conflicts with the opaque-origin sandbox. Trying to fake it via spinning is broken. | Promise-returning SDK helper. Standard async/await. Same pattern every other NUB uses. |
-| AF-11 | "Just fetch through `<img src=blossom://...>`" by intercepting `<img>` requests inside the iframe | Looks magical | Requires either same-origin iframe (defeats sandbox) or a Service Worker registered in the iframe (not possible under opaque origin) or browser-level scheme handlers (don't exist). The sandbox literally precludes this. | Napplets use `URL.createObjectURL(blob)` from the result of `resource.bytes()` and assign that to `<img src=>`. This is the standard pattern; document it in SDK and demos. |
+---
 
-## Feature Dependencies
+## 2. NIP-5D Amendment (class delegation)
+
+### Table Stakes (MUST)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Remove "Browser-Enforced Resource Isolation" strict-CSP prescription from NIP-5D §Security Considerations | Currently NIP-5D dictates the `perm:strict-csp` mechanism and a specific meta-CSP posture (line 115-130 of current spec); under v0.29.0 this shifts to shell-emitted header CSP and moves to NUB tracks | S | Current NIP-5D §"Browser-Enforced Resource Isolation" must soften to a forward pointer |
+| Add prose that class distinctions (Class 1 / Class 2 and any future classes) are NOT a NIP-5D concern — they are defined by NUB specs layered on the existing manifest tag + `requires` + `shell.supports()` mechanisms | NIP-5D is transport + identity + manifest + NUB-negotiation only; keeping class definitions in NIP-5D would pollute the envelope spec | S | Aligns with existing NIP-5D philosophy (line 9: "Protocol messages are defined by NUB extension specs") |
+| Keep `sandbox="allow-scripts"` reaffirmation intact (load-bearing for opaque-origin invariant) | Already correct and not changed by v0.29.0 | S | Current NIP-5D line 128-130 |
+| Keep capability-query documentation (`shell.supports('foo')` + `perm:popups` example) unchanged | Runtime capability query is still NIP-5D's job | S | Current NIP-5D §"Runtime Capability Query" |
+| Update `perm:strict-csp` status to "deprecated — still returns true for back-compat" (if mentioned at all in NIP-5D) | Spec churn transparency | S | Design doc §12.1 |
+
+### Differentiators (SHOULD)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| NUBs-track advisory document: "How to define napplet classes on top of existing NUB specs" | Sets the pattern for future class taxonomies (e.g., content-type classes, API-shape classes) without polluting NIP-5D with a classification framework | M | Called out in PROJECT.md target features bullet 3: "NUBs-track advisory on how to define napplet classes on top of existing NUB specs" — lives in `napplet/nubs` repo alongside the NUB-CONNECT spec |
+| Cross-link from NIP-5D Security Considerations to NUB-CONNECT spec URL | Readers following the strict-CSP breadcrumb under v0.28.0 should land on the current-posture document | S | Short edit — link to `https://github.com/napplet/nubs` NUB-CONNECT entry |
+
+### Anti-Features (Explicit Exclusions)
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Embedding Class 1 / Class 2 taxonomy text directly into NIP-5D | "Readers are here anyway" | NIP-5D must stay transport-only; adding classifications invites future class proliferation inside the envelope spec | Advisory lives in NUBs track (design doc §3 + open question §17 bullet 4 confirms NUB-CONNECT-prose placement) |
+| Normative language in NIP-5D prescribing HTTP-responder behavior | "Class 2 napplets need the shell to serve the HTML" | NIP-5D doesn't currently specify how HTML is served, only how it's addressed (NIP-5A) and sandboxed | Design doc §17 bullet 4: "lean NUB-CONNECT prose — NIP-5D doesn't currently specify how HTML is served, only how it's addressed and sandboxed" |
+
+---
+
+## 3. `@napplet/nub/connect` Subpath
+
+### Table Stakes (MUST)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| New subpath `packages/nub/src/connect/` with canonical 4-file layout (`index.ts`, `types.ts`, `shim.ts`, `sdk.ts`) | Follows established NUB-per-subpath pattern from v0.26.0 (resource, identity, ifc, keys, media, notify, storage, theme all follow this shape) | S | See existing `packages/nub/src/resource/` as a template |
+| `types.ts`: `NappletConnect` interface with `granted: boolean` + `origins: readonly string[]` (both `readonly`) | Matches design doc §7 TypeScript block verbatim | S | Design doc §7 |
+| `types.ts`: `DOMAIN = 'connect' as const` export for dispatch registration symmetry | Even though NUB-CONNECT has no wire messages, the domain identifier is still needed for `shell.supports('nub:connect')` bare-form and for cap-namespace consistency | S | Matches `DOMAIN` export pattern in all other NUB subpaths |
+| `types.ts`: `ConnectManifestTag` type (tuple `['connect', string]`) | Type-level contract for authors constructing manifest tags manually | S | New public type; simple literal tuple |
+| `types.ts`: re-export `['connect', string]` shape for vite-plugin consumption | vite-plugin synthesizes these tags from the `connect?: string[]` option | S | Shared source of truth |
+| `shim.ts`: `installConnectShim(win: Window)` — mounts `window.napplet.connect` with values read from a shell-injected meta tag (`<meta name="napplet-connect" content="...">`) | Since there's no wire protocol, the shim must get its state from DOM injection at iframe-HTML-serve time (parallels how `configSchema` is surfaced via `<meta name="napplet-config-schema">` under NUB-CONFIG v0.25.0) | M | New pattern — design doc §7 says "Surfaced as `window.napplet.connect` by the shim. Shim is installed into the iframe document by the shell at bootstrap (existing pattern)." — but the **source** of `granted`/`origins` is the shell-emitted meta tag since no postMessage handshake exists |
+| `shim.ts`: parse meta-tag content into `{granted, origins}` with defensive defaults (missing meta → `granted=false, origins=[]`; malformed → same fallback + console warning) | Shell-absence graceful degradation per design doc §13 states 3-4 | S | Mirrors NUB-CONFIG meta-tag read pattern |
+| `shim.ts`: `Object.freeze` on the `origins` array and the `window.napplet.connect` object | `readonly` in types is compile-time only; runtime-freeze prevents napplet tampering | S | Defense-in-depth (napplets are untrusted code) |
+| `sdk.ts`: named-export helpers matching shim state (`getConnectGranted()`, `getConnectOrigins()`) | Bundler-consumer ergonomics parallel to all other NUB SDK layers | S | Pattern: every NUB has `shim.ts` installers + `sdk.ts` convenience wrappers |
+| `index.ts`: barrel re-exports of types + shim + sdk; `registerNub(DOMAIN, noop)` for dispatch singleton presence | Matches every existing NUB's `index.ts` shape | S | Even no-wire NUBs register — dispatch listing must include `'connect'` |
+
+### Differentiators (SHOULD)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| `sdk.ts`: `requireConnect()` helper that throws if `granted === false` | Common napplet pattern: "fail fast if network was denied; let the calling code catch and downgrade to NUB-RESOURCE" | S | Matches the `requireIfc` pattern from v0.27.0 |
+| `shim.ts`: second meta-tag source — `<meta name="napplet-aggregate-hash">` read (if not already injected elsewhere) | Per design doc, the shell knows the aggregateHash; napplets can read it for their own introspection/analytics | S | Optional — no other NUB needs this so it could wait for v0.30.0 |
+
+### Anti-Features (Explicit Exclusions)
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| A `connect.request(origin)` runtime method | "Let napplets dynamically request origins after load" | Breaks the content-addressed identity model: every origin set change must change aggregateHash; dynamic requests would split the grant state off the hash | All origins declared at build time via manifest; rebuild to add origins |
+| Post-grant origin list mutation | "What if user approves additional origins later?" | Same reason; grants are keyed on `(dTag, aggregateHash)` and v1 is all-or-nothing | Rebuild with new origins → new hash → re-prompt |
+| A `ConnectGranted` interface (originally named in question) | Question phrased "ConnectGranted interface" — but the design doc uses `NappletConnect` | Naming consistency with the design doc | Use `NappletConnect` as the interface name |
+
+---
+
+## 4. `@napplet/vite-plugin` Changes
+
+### Table Stakes: Subtractive (MUST remove/move)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Drop production `strictCsp` meta-CSP emission entirely | Shell is now the sole runtime CSP authority; build tool baking a meta CSP is redundant-and-harmful under the new posture | M | Design doc §5 "@napplet/vite-plugin"; removes `buildBaselineCsp`, `validateStrictCspOptions`, `assertMetaIsFirstHeadChild`, `assertNoDevLeakage` from the production code path |
+| Move (or remove) `buildBaselineCsp` + nonce generator | Either delete outright or gate behind a dev-only flag; design leans dev-only retention | S | Design doc §5 + §17 bullet 3; `packages/vite-plugin/src/csp.ts` (276 lines) substantially shrinks or becomes dev-only |
+| Remove `connect-src` dev/prod split for production — dev-only retention is fine | The entire CSP emission moves out of production builds | S | Consequence of first bullet |
+| Remove the 4 CSP assertions from production path (header-only directive rejection, meta-first-head-child, no-dev-leakage, baseline conformance) | Same — they were guards against build-time mistakes; no build-time CSP emission means no build-time assertions | S | Design doc §5 third bullet: "All of `buildBaselineCsp`, `validateStrictCspOptions`, `assertMetaIsFirstHeadChild`, `assertNoDevLeakage` move into a dev-only code path or are removed." |
+| Remove `strictCsp` option from `Nip5aManifestOptions` (or mark deprecated no-op for one release) | API surface cleanup | S | Breaking-change vs deprecation-cycle is a plan-time decision; design doc implies removal from production code path but is not specific on the TS surface |
+
+### Table Stakes: Additive (MUST add)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| New `connect?: string[]` option on `Nip5aManifestOptions` | Author-facing declaration of required origins | S | Design doc §18 "v0.29.0 (breaking)" third bullet sub-a |
+| Origin normalization + validation at plugin-build time (Punycode IDN, lowercase host, no wildcard, no path/query/fragment, no default ports, scheme whitelist) | Fail-loud build errors before napplets ship a broken manifest | M | Design doc §6 "Origin Format (strict)" — normalization logic mirrors the shell-side validation but runs at build time |
+| Emit `['connect', origin]` manifest tags (one per normalized origin) | Wire-level contract | S | Design doc §6 "Manifest Tag Shape" |
+| Fold origin set into aggregateHash via synthetic `connect:origins` xTag entry (sorted origins, newline-joined, SHA-256) | Content-addressed identity must reflect origin changes | M | Design doc §6 "Content-Addressing Consequences" — follows the exact `config:schema` pattern at `packages/vite-plugin/src/index.ts:568-571` |
+| Filter `connect:origins` synthetic entry out of `['x', ...]` tag projection | Matches `config:schema` precedent — synthetic entries participate in hash but don't surface as pseudo-file x-tags | S | Precedent at `packages/vite-plugin/src/index.ts:585-587` |
+| Emit `<meta name="napplet-connect" content="<json-serialized-origins>">` in index.html for shim discovery | Shim needs a reliable source to read `origins` from; follows NUB-CONFIG `<meta name="napplet-config-schema">` precedent | S | Parallels NUB-CONFIG meta-tag pattern; shell can overwrite with grant-state meta at serve time, OR (preferable) shell appends its own `<meta name="napplet-connect-granted" content="true|false">` since origins are build-time-fixed and grant is runtime |
+| Fail-loud inline-script diagnostic: HTML containing any `<script>` without `src=` → build fails with actionable error | Prevent runtime CSP violations that would block the napplet silently | S | Design doc §5 second bullet: "Production builds: new fail-loud diagnostic — if the napplet's HTML contains any `<script>` element without a `src` attribute, fail the build with a clear error. This is a developer-experience guard, not a security control (the shell CSP also blocks it)." |
+| Build fails if `connect` option contains duplicate origins after normalization | Unambiguous author intent | S | Standard manifest-tag hygiene |
+
+### Differentiators (SHOULD)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| `connect` option accepts either `string[]` or a sidecar file path (`./connect.txt` line-per-origin) | Large origin lists become unwieldy in `vite.config.ts` | S | Pattern parallel to `configSchema` 3-path discovery; nice-to-have |
+| Origin-list canonicalization helper exported from the plugin for testing | Third-party tooling (lint rules, CI guards) benefits | S | Exported helper function `normalizeConnectOrigin(raw: string): string \| { error: string }` |
+| Dev-mode `vite serve` minimal meta CSP retained with deprecated comment | Shell-less local preview convenience without encouraging the pattern | S | Design doc §17 bullet 3 leans "retain for shell-less local preview only" |
+
+### Anti-Features (Explicit Exclusions)
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Keep `strictCsp` emitting meta CSP as a supported production path | "Back-compat for v0.28.0 napplets" | Under shell-emitted CSP, meta and header intersection can silently suppress granted origins (Edge Case 1); supporting both is architecturally incoherent | Shell refuses Class-2 napplets that ship meta CSP; Class-1 napplets with residual meta CSP are harmless (both say `connect-src 'none'`) |
+| Wildcard origin acceptance in `connect` option | "Writing every subdomain is tedious" | Shell rejects at manifest-load; build tool must reject too | Hard build error on wildcards |
+| Nonce generation for any purpose | "Future inline-script support" | Inline scripts are forbidden under the shell-emitted CSP (`script-src 'self'`, no nonce); nonce generation is dead code under the new posture | Dropped entirely |
+
+---
+
+## 5. Central `@napplet/shim` + `@napplet/sdk` Integration
+
+### Table Stakes (MUST)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| `@napplet/shim` imports `@napplet/nub/connect` and calls `installConnectShim(window)` at bootstrap | Every other NUB follows this pattern | S | Parallel to resource NUB wiring from v0.28.0 (Phase 128) |
+| `window.napplet.connect` surface is present after shim load (even if granted=false) | Napplets can always read the API; its values tell the story | S | Design doc §7 |
+| `NappletGlobal` in `@napplet/core` gains `connect: NappletConnect` property | Type-safe window surface | S | Mirrors every prior NUB addition (media, notify, identity, config, resource) |
+| `'connect'` added to the `NubDomain` string-literal union in `@napplet/core` | Runtime dispatch / `shell.supports('nub:connect')` consistency | S | Required even though no wire messages — keeps the domain enumeration correct for tooling |
+| `@napplet/sdk` re-exports the connect SDK (`getConnectGranted`, `getConnectOrigins`, `requireConnect`) | Bundler-consumer surface | S | Mirrors every prior NUB (`identity`, `media`, `notify`, `config`, `resource`) |
+| `shell.supports('nub:connect')` returns `true` when shim is installed and (preferably) a handshake/meta confirms shell is NUB-CONNECT-aware | Runtime capability query contract | S | For design consistency — the shim's presence is necessary-but-not-sufficient; the shell injects a confirmation |
+
+### Differentiators (SHOULD)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| `shell.supports('connect:scheme:http')` + `shell.supports('connect:scheme:ws')` secondary flags plumbed through | Operator-policy-aware napplets can degrade cleartext-dependent flows | S | Design doc §12; SDK + type-union update |
+| `perm:strict-csp` kept-but-marked-deprecated in `NamespacedCapability` string-union | Explicit back-compat gesture | S | Type-level deprecation JSDoc tag |
+
+### Anti-Features (Explicit Exclusions)
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| A runtime `connect.request(origin)` method on the shim | "Dynamic origin requests" | Breaks content-addressing | Only build-time origin declarations (see §3 anti-features) |
+| A `connect.onGrantChange(callback)` subscription | "React to revocation mid-session" | Revocation invalidates the iframe — next load emits new CSP; reactive updates inside a still-open iframe would require reload-in-place, which is out of scope | Napplet reload is the correct response; shells SHOULD reload the iframe on revocation |
+
+---
+
+## 6. `specs/SHELL-CONNECT-POLICY.md` (Shell-Deployer Checklist)
+
+### Table Stakes (MUST — structure parallels SHELL-RESOURCE-POLICY.md)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Status + "Why this exists" preamble | Orient shell deployers; name the NUB-CONNECT shell-as-CSP-authority posture | S | Exact structural parallel to `SHELL-RESOURCE-POLICY.md` §Status + §"Why this exists" |
+| **Explicit N/A note on private-IP block** | NUB-RESOURCE's flagship policy does NOT apply — browser enforces origin-match on URL string, not resolved IP. Deployers coming from NUB-RESOURCE will expect this policy and need to hear it's absent | S | Design doc §11.1 "Posture vs NUB-RESOURCE" table row "Private-IP block at DNS resolution: Yes / No" |
+| **HTTP-responder precondition checklist** | The load-bearing requirement: shell MUST own the HTTP response for napplet HTML. Enumerate acceptable delivery mechanisms | M | Design doc §5: "Acceptable delivery mechanisms: direct serving from the shell's origin, HTTP proxy, `blob:` URL with HTML transform, or `srcdoc` on the iframe." |
+| **10-directive baseline CSP contract with `connect-src` as the only variable** | Deployers need the exact string to emit | M | Design doc §9 — emit verbatim as a copy-paste-able template |
+| **Residual meta-CSP scan for Class-2 napplets (Edge Case 1)** | Shells MUST scan served HTML for `<meta http-equiv="Content-Security-Policy">` and refuse with diagnostic if the napplet is Class 2 | M | Design doc §10.1; illustrative diagnostic wording provided |
+| **Class-1 passthrough note** (meta-CSP in Class-1 napplet is harmless) | Deployers need to know the scan is Class-2-only | S | Design doc §10.1 last paragraph |
+| **Cleartext (http/ws) policy decision checklist**: enable? warn only? refuse entirely? | Operator choice; each has consent-UI consequences | S | Design doc §6 validation + §11.2 |
+| **Mixed-content reality check**: https shell cannot fetch http origins regardless of CSP grant; localhost/loopback secure-context exception | Deployers serving over https will get confusing failures without this | S | Design doc §10.6 |
+| **Consent UI requirements checklist**: napplet name + dTag + origin list + cleartext warning + trust-language ("shell cannot see or filter this traffic") + Approve/Deny buttons | Normative floor | M | Design doc §8 "Prompt Requirements" |
+| **Grant persistence semantics checklist**: keyed on `(dTag, aggregateHash)`; rebuild → new hash → auto-invalidate; origin list change → new hash → auto-invalidate | Content-addressed identity must be preserved | M | Design doc §8 + §6 "Content-Addressing Consequences" |
+| **Re-prompt diff UX checklist**: show "previously approved X; now requesting Y" when a new `aggregateHash` of the same `dTag` appears | UX floor for informed re-consent | S | Design doc §8 "Re-prompt on Origin Change" |
+| **Revocation UI checklist**: MUST expose; revocation → DENIED state (not deletion); re-approve affordance; iframe reload behavior | User control over their own grants | M | Design doc §8 "Revocation" |
+| **Capability advertisement wiring checklist**: `shell.supports('nub:connect')`, `connect:scheme:http`, `connect:scheme:ws`, deprecated `perm:strict-csp` return value | Runtime discovery honesty | S | Design doc §12 |
+| **"Shell sees zero post-grant traffic" deployment notice language** | Deployers SHOULD document this in their user-facing privacy notice | S | Design doc §11.5 + parallel to SHELL-RESOURCE-POLICY.md bottom of sidecar section ("Operators document any deviation from default-OFF in the shell's user-facing privacy notice") |
+| **Audit checklist (one-page summary)** | Deployment sign-off — same format as SHELL-RESOURCE-POLICY.md's audit checklist | M | All MUST bullets above condensed into a one-page sign-off list |
+| **References section** | Link to NUB-CONNECT spec URL + NIP-5D + (optionally) WHATWG mixed-content spec | S | Exact parallel to SHELL-RESOURCE-POLICY.md References section |
+
+### Differentiators (SHOULD)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Decision matrix**: "When does my shell need NUB-CONNECT?" (shell serves blobs of napplet HTML → yes; shell iframes third-party URLs → no) | Not every shell needs this NUB; help deployers self-select | S | Unique to this spec — SHELL-RESOURCE-POLICY doesn't have this because NUB-RESOURCE is close to universally needed |
+| **Grant-storage recommendations** (`localStorage`? shell-side DB? encrypted at rest?) | Grants are long-lived privacy-relevant state | S | Not normative but implementer-valuable |
+| **Revocation-triggers-iframe-reload recommendation** | Napplets don't get a runtime grant-change signal; reload is the intended path | S | Design consistency with §5 anti-features (no `onGrantChange`) |
+| **Deployment policy examples** (community-default / enterprise / cleartext-permitting local-dev) | Give deployers starting points | M | Non-normative; three concrete profiles |
+
+### Anti-Features (Explicit Exclusions)
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Private-IP block list | "NUB-RESOURCE has it; should NUB-CONNECT?" | Browser enforces CSP on URL string, not resolved IP; a block list on the URL string is trivially bypassed by DNS rebinding and is not a real control | Documented N/A (design doc §11.1 table row) |
+| Post-grant request proxying / logging | "Audit what napplets actually send" | Impossible without a service worker (forbidden by sandbox); documented post-grant opacity tradeoff | Shell-deployer user notice; no technical mitigation |
+| MIME sniffing / SVG rasterization caps | "SHELL-RESOURCE-POLICY has these" | Those apply to shell-proxied bytes; under NUB-CONNECT the shell sees no bytes | Not applicable; do not include |
+| Redirect chain limits | Same rationale | Same reason | Not applicable |
+| Scheme whitelist for the *payload* fetch | "NUB-RESOURCE whitelists schemes" | CSP `connect-src` already constrains schemes to the 4-scheme whitelist at origin-declaration time; no runtime scheme-dispatch | Not applicable — scheme enforcement happens at manifest-validation time, not per-request |
+
+---
+
+## 7. Documentation Sweep
+
+### Table Stakes (MUST)
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Root `README.md` updated: package inventory (add `nub/connect` subpath), API surface (add `window.napplet.connect`), class taxonomy blurb | Root README is the entry point for every reader | M | Same sweep pattern as v0.28.0 Phase 129 / v0.27.0 Phase 123 |
+| `packages/core/README.md`: `NubDomain` gains `'connect'`; `NamespacedCapability` gains `'nub:connect'`, `'connect:scheme:http'`, `'connect:scheme:ws'`; `perm:strict-csp` marked deprecated | Core is the type-authoritative surface | S | Standard NUB-addition doc edit |
+| `packages/shim/README.md`: `window.napplet.connect.{granted, origins}` surface documented; dependency row gains `@napplet/nub/connect` subpath | Shim doc is the runtime surface reference | S | Standard NUB-addition doc edit |
+| `packages/sdk/README.md`: named exports section adds `getConnectGranted`, `getConnectOrigins`, `requireConnect` | SDK doc is the bundler-consumer reference | S | Standard NUB-addition doc edit |
+| `packages/vite-plugin/README.md`: new `connect?: string[]` option documented; **strictCsp option removed/deprecated section**; new inline-script diagnostic documented; new `<meta name="napplet-connect">` injection noted | Breaking-change surface — vite-plugin README is especially load-bearing | L | Subtractive + additive — larger edit than other READMEs |
+| `skills/build-napplet/SKILL.md`: frontmatter + body update for Class 1 / Class 2 posture; new "default to NUB-RESOURCE, reach for NUB-CONNECT only when necessary" prose; code sample showing `connect` option in `vite.config.ts` + `window.napplet.connect.granted` runtime branching | SKILL.md is the agentskills.io surface that other agents load to write napplets — wrong guidance here cascades | L | Design doc §13 Graceful Degradation is the exact 4-state ladder to document |
+
+### Differentiators (SHOULD)
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Changelog entries (changesets) across all 4 affected packages with clear breaking-change markers | Consumers parsing changelogs need to see "strictCsp production emission dropped" loud and clear | M | `changesets` workflow already in place |
+| `packages/nub/README.md` (if exists) updated to list the new `/connect` subpath | Nub barrel-package doc | S | Follows v0.26.0 subpath-pattern docs |
+| Cross-link between `SHELL-RESOURCE-POLICY.md` and `SHELL-CONNECT-POLICY.md` in both directions (in References sections) | Deployers implementing one often want the other | S | Two-line edit in each file |
+| A short "NUB-RESOURCE vs NUB-CONNECT decision guide" in the root README (one paragraph + decision table) | Users will ask; answer prominently | S | Based on design doc §11.1 table — 8 rows compressed to 3-4 decision criteria |
+
+### Anti-Features (Explicit Exclusions)
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| README mentions of downstream shell repo's demo napplets | "Show users an example" | Design doc Option B: demo napplets are downstream-shell-repo's concern (PROJECT.md v0.28.0 archive + v0.29.0 target-features bullet 4) | Defer examples to the shell repo's docs; link out if needed |
+| Rewriting historical changelog bullets for IFC/NUB-CONFIG/etc. to mention NUB-CONNECT | "Context sweep" | v0.27.0 precedent: "historical changelog bullets preserved as records" — do not rewrite history | Preserve historical bullets byte-identical |
+
+---
+
+## Cross-Category Dependencies
 
 ```
-TS-6 (Strict CSP delivered)
-    └──enables──> TS-1 (resource.bytes is the ONLY way bytes get in)
-                       └──requires──> TS-2 (at least 4 schemes)
-                                            ├── https:  → TS-7 (SSRF policy)
-                                            ├── blossom: → existing Nostr infra
-                                            ├── nostr:   → NUB-RELAY (existing)
-                                            └── data:    → pure napplet-side, no fetch
-                       └──requires──> TS-3 (typed failures)
-                       └──requires──> TS-4 (MIME on result)
-                       └──requires──> TS-5 (cancellation)
-                       └──requires──> TS-12 (single Blob, not chunked)
+[1. NUB-CONNECT spec (napplet/nubs)]
+    │
+    ├──blocks──> [3. @napplet/nub/connect subpath]
+    │               └──reason: types must match spec field names + shim behavior follows consent-flow contract
+    │
+    ├──blocks──> [4. @napplet/vite-plugin additive]
+    │               └──reason: origin normalization rules + aggregateHash fold + manifest tag shape all come from spec
+    │
+    ├──blocks──> [6. SHELL-CONNECT-POLICY.md]
+    │               └──reason: policy checklist maps normative MUSTs from spec to deployer actions
+    │
+    └──enhances──> [7. Documentation sweep]
+                   └──reason: README prose cites spec; link targets needed before doc writes land
 
-TS-1 ──enables──> TS-9  (capability check)
-TS-1 ──enables──> TS-11 (NIP-5D amendment documents TS-1's contract)
-TS-6 ──enables──> TS-10 (vite-plugin emits matching CSP)
+[2. NIP-5D amendment]
+    │
+    └──independent──> (can ship in parallel with 1)
+       └──reason: NIP-5D amendment is subtractive (remove strict-CSP prose) + add forward pointer;
+                  doesn't depend on NUB-CONNECT spec language
 
-TS-8 (SVG rasterization) ──depends-on──> TS-4 (MIME classification triggers it)
+[3. @napplet/nub/connect subpath]
+    │
+    └──blocks──> [5. @napplet/shim + @napplet/sdk integration]
+                  └──reason: shim imports installConnectShim from the subpath; sdk re-exports from it
 
-DF-1 (sidecar on relay.event) ──depends-on──> TS-1 + TS-3 (uses same bytes/error shape)
-                              ──amends──>  NUB-RELAY (additive field)
-DF-2 (pluggable schemes)      ──depends-on──> TS-2 (four schemes prove the registry works)
-DF-3 (transform hints)        ──depends-on──> TS-1 (additive on request envelope)
-DF-4 (priority)               ──depends-on──> TS-1 (additive on request envelope)
-DF-5 (progress events)        ──depends-on──> TS-1 (additional message type)
-DF-6 (preload)                ──depends-on──> TS-1 (separate fire-and-forget envelope)
-DF-7 (cacheKey on result)     ──depends-on──> TS-1 + TS-4
-DF-8 (NUB-IDENTITY note)      ──depends-on──> TS-1
-DF-9 (NUB-MEDIA note)         ──depends-on──> TS-1
-DF-10 (demo napplets)         ──depends-on──> all of TS-* (demos are the contract test)
+[4. @napplet/vite-plugin subtractive]
+    │
+    └──independent──> (can ship before or in parallel with the additive half)
+       └──reason: removing strictCsp emission is an isolated change; additive `connect` option is additive
 
-AF-* ──conflicts-with──> the entire TS-* set (each anti-feature, if added, breaks the security model that TS-6/TS-7 rely on)
+[4. @napplet/vite-plugin additive]
+    │
+    ├──depends on──> [1. NUB-CONNECT spec] (for normalization rules)
+    │
+    └──enhances──> [5. @napplet/shim integration]
+                   └──reason: shim reads <meta name="napplet-connect"> injected by vite-plugin
+
+[5. @napplet/shim + @napplet/sdk integration]
+    │
+    └──blocks──> [7. Documentation sweep (packages/shim/README, packages/sdk/README, root README)]
+                  └──reason: doc sweep cites the exact named exports + window surface
+
+[6. SHELL-CONNECT-POLICY.md]
+    │
+    └──independent of 3/4/5──> (can ship in parallel — it's a shell-side doc)
+       └──reason: SHELL-CONNECT-POLICY describes what shells must do; SDK work is napplet-side
+
+[7. Documentation sweep]
+    │
+    └──depends on──> [3, 4, 5] (final shapes must be known)
+       └──reason: README prose cites exact API names, option names, meta-tag names
 ```
 
-### Dependency Notes
+### Dependency Summary for Roadmap Phase Ordering
 
-- **TS-6 is the load-bearing feature.** Without browser-enforced CSP, every other table-stake collapses to "the shell asks the napplet politely not to fetch." The whole milestone hinges on this being correct first.
-- **DF-1 (sidecar) must use the same envelope shape as TS-1** so the napplet has one code path — the sidecar is just a pre-arrived `resource.bytes.result` keyed by URL. Inventing a separate sidecar shape is a documented anti-pattern (see GraphQL `@defer` — incremental payloads use the same data shape as the initial response). Otherwise napplets bifurcate to handle "URL I asked about" and "URL the shell pre-resolved" differently.
-- **TS-2 ordering matters.** Implement `data:` first (zero policy surface, validates the dispatch path), then `https:` (validates SSRF policy), then `blossom:` and `nostr:` (validate Nostr-native paths). This sequencing is for execution; all four ship together in v0.28.
-- **AF-1 (raw fetch) and AF-3 (OAuth) are the anti-features most likely to be re-requested.** Document them prominently.
+- **Spec-first chain:** `1. NUB-CONNECT spec` and `2. NIP-5D amendment` are both foundational and can ship in parallel. NIP-5D amendment is lighter (subtractive + forward pointer) and can land early.
+- **Two independent lanes after spec:** (a) `3. @napplet/nub/connect subpath` → `5. shim/sdk integration`, and (b) `4. @napplet/vite-plugin` (subtractive half independent; additive half depends on spec).
+- **Convergence lane:** `6. SHELL-CONNECT-POLICY.md` can ship any time after spec lands (it's a shell-side doc, not code).
+- **Terminal lane:** `7. Documentation sweep` is last — needs all code/API shapes stable before doc edits.
 
-## NUB Amendment Inventory
+**Natural phase ordering suggestion (for roadmapper, not prescriptive):**
 
-Existing NUBs that get touched by this milestone:
+1. NIP-5D amendment (independent, small, unblocks cross-repo messaging)
+2. NUB-CONNECT spec in napplet/nubs (draft PR, blocking for everything else code-wise)
+3. `@napplet/nub/connect` subpath (types + shim + sdk scaffolding)
+4. `@napplet/vite-plugin` subtractive (drop strictCsp production emission)
+5. `@napplet/vite-plugin` additive (`connect` option + origin validation + aggregateHash fold + meta injection + inline-script diagnostic)
+6. `@napplet/shim` + `@napplet/sdk` central integration
+7. `SHELL-CONNECT-POLICY.md`
+8. Documentation sweep (root + 4 package READMEs + SKILL.md)
+9. Verification gate + milestone close
 
-| Existing NUB | Touch | Wire Change? | Notes |
-|---|---|---|---|
-| NUB-RELAY (`packages/nub/src/relay/`) | DF-1 sidecar field on `RelayEventMessage` | YES (additive) | New optional `sidecar?: Record<string, { mime: string; blob: Blob; error?: string }>` field. Old napplets ignore. Shell only populates if napplet manifest declares `requires: ['resource']`. |
-| NUB-IDENTITY (`packages/nub/src/identity/`) | DF-8 documentation only | NO | `ProfileData.picture` (and `banner`) are URLs the napplet must resolve via `resource.bytes()`. Update JSDoc + spec. SDK helper `resolveProfilePicture(profile)` is a nice-to-have. |
-| NUB-MEDIA (`packages/nub/src/media/`) | DF-9 documentation only | NO | `MediaArtwork.url` flows through `resource.bytes()`; `MediaArtwork.hash` is `blossom:<hash>` shorthand. Already shaped for this. |
-| (no other NUB) | — | — | NUB-CONFIG, NUB-NOTIFY, NUB-IFC, NUB-KEYS, NUB-STORAGE, NUB-THEME unaffected. |
+(Exact phase granularity is a roadmapper decision; steps 4-5 may merge, steps 3-6 may interleave.)
 
-New NUB:
-
-| New NUB | Domain | Surface |
-|---|---|---|
-| NUB-RESOURCE | `resource.*` | TS-1 (`resource.bytes` / `.result`), TS-5 (`resource.cancel`), DF-5 (`resource.bytes.progress`), DF-6 (`resource.preload`). Spec lives in the public `napplet/nubs` repo (check existing draft PR convention before assigning a number). |
+---
 
 ## MVP Definition
 
-### Launch With (v0.28.0 itself)
+### Launch With (v0.29.0)
 
-This *is* the milestone. All TS-* features ship together — they're not independent.
+All entries marked "Table Stakes (MUST)" across the 7 categories above. Specifically:
 
-- [ ] **TS-1** `resource.bytes` request/result envelope (NUB-RESOURCE package: types + shim + sdk)
-- [ ] **TS-2** Four schemes plumbed end-to-end (`https`, `data`, `blossom`, `nostr`)
-- [ ] **TS-3** Typed error discriminator on result
-- [ ] **TS-4** Canonical MIME on result
-- [ ] **TS-5** Cancellation envelope (`resource.cancel`) + AbortSignal-shaped SDK helper
-- [ ] **TS-6** Strict CSP delivered to iframe (HTTP header path; document `srcdoc` and meta-tag escape hatches with their limitations)
-- [ ] **TS-7** Default shell resource policy (private-IP block at resolution time, size cap, timeout, rate limit) — **documented in spec, reference implementation in shell repo**
-- [ ] **TS-8** Shell-side SVG rasterization (refuse raw `image/svg+xml`)
-- [ ] **TS-9** `shell.supports('resource')` and `shell.supports('resource:scheme:<name>')` capability checks
-- [ ] **TS-10** Vite-plugin emits CSP-aware napplet HTML in dev
-- [ ] **TS-11** NIP-5D Security Considerations amendment
-- [ ] **TS-12** Single-Blob delivery (no streaming surface in v0.28)
-- [ ] **DF-1** Sidecar field on `relay.event` (NUB-RELAY amendment) — high value, low surface, ship together
-- [ ] **DF-8** NUB-IDENTITY clarification (doc only)
-- [ ] **DF-9** NUB-MEDIA clarification (doc only)
-- [ ] **DF-10** Three demo napplets (profile viewer, feed-with-images, scheme-mixed)
+- [ ] NUB-CONNECT spec drafted in napplet/nubs (all 27 table-stakes spec items from §1)
+- [ ] NIP-5D amendment (5 subtractive + cross-reference items from §2)
+- [ ] `@napplet/nub/connect` subpath with 4 canonical files + `NappletConnect` interface + meta-tag-read shim + SDK helpers (10 items from §3)
+- [ ] `@napplet/vite-plugin`: strictCsp production emission dropped (5 subtractive items from §4) + `connect` option + origin validation + aggregateHash fold + manifest tag emission + meta injection + inline-script diagnostic (8 additive items from §4)
+- [ ] `@napplet/shim` + `@napplet/sdk` central integration (6 items from §5)
+- [ ] `specs/SHELL-CONNECT-POLICY.md` (15 items from §6)
+- [ ] Documentation sweep: root + 4 package READMEs + SKILL.md (6 items from §7)
+- [ ] `pnpm -r build` + `pnpm -r type-check` green across all 14 packages
+- [ ] Changesets landed with clear breaking-change notation
 
-### Add After Validation (v0.28.x or next milestone)
+### Add Shortly After (v0.29.x patch)
 
-Worth shipping in v0.28 if scope holds; if scope tightens, defer to a `v0.28.1`-style follow-up.
+Differentiators that don't block release but add polish:
 
-- [ ] **DF-2** Pluggable scheme registry exposed to shell hosts — trigger: a third-party shell wants `ipfs:` support
-- [ ] **DF-3** Transform hints on request — trigger: feed napplets are wasting bandwidth on full-size avatars
-- [ ] **DF-4** `priority` hint — trigger: same, plus measured shell-side queue contention
-- [ ] **DF-7** `cacheKey` on result — trigger: napplets are observably re-decoding identical Blobs
+- [ ] `requireConnect()` SDK helper
+- [ ] `connect` option accepting sidecar file path for large origin lists
+- [ ] "NUB-RESOURCE vs NUB-CONNECT decision guide" section in root README
+- [ ] Deployment-profile examples in SHELL-CONNECT-POLICY.md
 
-### Future Consideration (later milestones)
+### Future Consideration (v0.30.0+)
 
-- [ ] **DF-5** Progress push events — trigger: real complaints about no-feedback-on-large-images
-- [ ] **DF-6** `resource.preload` — trigger: an actual feed napplet author asks for it
-- [ ] **Compositor milestone** for audio/video (replaces what AF-5 would have been)
-- [ ] **NUB-PAY** for L402-style paid resources (replaces what AF-4 would have been)
+Explicit v2 deferrals from design doc §16:
+
+- [ ] Per-origin partial grants
+- [ ] Wildcard subdomains
+- [ ] Quota / rate-limiting on granted traffic (requires browser platform change or service worker, blocked)
+- [ ] Audit logging of individual network calls (same blocker)
+- [ ] Removal of deprecated `perm:strict-csp` capability (separate deprecation-removal milestone)
+
+---
 
 ## Feature Prioritization Matrix
 
-| Feature | User Value | Implementation Cost | Priority |
-|---|---|---|---|
-| TS-1 `resource.bytes` envelope | HIGH | LOW | P1 |
-| TS-2 Four schemes | HIGH | MEDIUM | P1 |
-| TS-3 Typed errors | HIGH | LOW | P1 |
-| TS-4 MIME on result | HIGH | LOW | P1 |
-| TS-5 Cancellation | MEDIUM | LOW | P1 |
-| TS-6 Strict CSP delivery | HIGH (security) | MEDIUM | P1 |
-| TS-7 Default SSRF policy | HIGH (security) | MEDIUM | P1 |
-| TS-8 SVG rasterization | HIGH (security) | MEDIUM | P1 |
-| TS-9 `shell.supports('resource:scheme:*')` | MEDIUM | LOW | P1 |
-| TS-10 vite-plugin CSP | HIGH (DX) | MEDIUM | P1 |
-| TS-11 NIP-5D amendment | MEDIUM | LOW | P1 |
-| TS-12 Single-blob delivery | (constraint, not feature) | LOW | P1 |
-| DF-1 Sidecar on relay.event | HIGH | MEDIUM | P1 (ship with milestone) |
-| DF-2 Pluggable scheme registry | MEDIUM | LOW | P2 |
-| DF-3 Transform hints | MEDIUM | MEDIUM | P2 |
-| DF-4 Priority hint | LOW | LOW | P2 |
-| DF-5 Progress events | LOW | MEDIUM | P3 |
-| DF-6 `resource.preload` | LOW | LOW | P3 |
-| DF-7 cacheKey | LOW | LOW | P3 |
-| DF-8 NUB-IDENTITY note | MEDIUM (DX) | LOW | P1 |
-| DF-9 NUB-MEDIA note | MEDIUM (DX) | LOW | P1 |
-| DF-10 Demo napplets | HIGH (validation) | MEDIUM | P1 |
+| Feature category | User/Consumer Value | Implementation Cost | Priority |
+|------------------|---------------------|---------------------|----------|
+| NUB-CONNECT spec in napplet/nubs | HIGH (cross-repo reference for every implementer) | MEDIUM | P1 |
+| NIP-5D class-delegation amendment | MEDIUM (taxonomy hygiene, not user-facing) | LOW | P1 |
+| `@napplet/nub/connect` subpath | HIGH (napplet authors need the API) | MEDIUM | P1 |
+| vite-plugin subtractive (drop strictCsp) | HIGH (removes broken posture under new model) | LOW-MEDIUM | P1 |
+| vite-plugin additive (`connect` option + fold + diagnostic) | HIGH (author-facing primary interface) | MEDIUM-HIGH | P1 |
+| shim/sdk central integration | HIGH (runtime API surface) | LOW | P1 |
+| SHELL-CONNECT-POLICY.md | HIGH (shell deployers cannot ship without it) | MEDIUM-HIGH | P1 |
+| Documentation sweep | HIGH (adoption friction without it) | MEDIUM | P1 |
+| `requireConnect()` helper | MEDIUM | LOW | P2 |
+| Sidecar-file `connect` option | MEDIUM | LOW | P2 |
+| Decision-guide README paragraph | MEDIUM | LOW | P2 |
+| Deployment profile examples | MEDIUM | MEDIUM | P2 |
 
 **Priority key:**
-- P1: Must have for v0.28.0 — these define the milestone
-- P2: Should have, fold into v0.28 if scope holds
-- P3: Defer, future milestone
+- P1: Must have for v0.29.0 launch
+- P2: Should have, land during v0.29.x patch window
+- P3: Deferred to v0.30.0+
 
-## Peer System Comparison
+---
 
-Convergent practice from the systems most similar in posture (sandboxed plugin/applet host that brokers resource access).
+## Complexity Legend & Rationale
 
-| Concern | Electron `protocol.handle` | Tauri custom protocol | Figma plugins | Slack Block Kit | Salesforce LWS | **napplet v0.28** |
-|---|---|---|---|---|---|---|
-| Per-scheme handler registration | Yes (`protocol.handle(scheme, handler)`) | Yes (`Builder::register_uri_scheme_protocol`) | N/A — hosted iframe + `allowedDomains` allowlist | N/A — server-side only | Hosted iframe + `connect-src` allowlist | DF-2: shell-internal pluggable registry |
-| Whole-response delivery (not streamed) | Returns `Response` (one-shot) | Returns `Vec<u8>` / `Response` | One-shot fetch via `figma.networkRequest` | N/A | One-shot via shell-mediated `fetch` callout | TS-12: single Blob |
-| Failure typing | HTTP-style `Response.status` | HTTP-style `Response.status` | Throws on CSP violation | N/A | Throws on CSP violation | TS-3: typed error enum |
-| Cancellation | Yes (Web Streams cancellation) | Yes (Tokio cancellation) | AbortSignal on `figma.networkRequest` | N/A | AbortSignal on `fetch` | TS-5: `resource.cancel` envelope |
-| Pre-resolution / sidecar | N/A | N/A | N/A | Manual via `chat.unfurl` | N/A | DF-1: sidecar on `relay.event` (Nostr-flavored) |
-| Transform hints | No (handler does whatever) | No | No | No | No | DF-3 (novel-ish; Imgix/Cloudinary precedent only on the URL-rewrite side) |
-| Priority hint | No (browser handles) | No | No | No | No | DF-4 (novel for IPC; standard for browser fetch) |
-| SVG handling | Up to handler | Up to handler | No special handling — risk on plugin author | No SVG embedding allowed | Sanitized via LWS | TS-8: shell rasterizes |
-| SSRF policy | None (host responsibility) | None (host responsibility) | `allowedDomains` allowlist | Hosted by Slack | `connect-src` allowlist | TS-7: documented default policy |
-| CSP delivery | Per-window via session | Per-window via Wry config | iframe `csp` attribute + Figma headers | Slack-served iframe | Salesforce-served iframe | TS-6: HTTP header (preferred) + meta-tag fallback documented |
+**S (Small, ~hours):** Single-file edit, well-established pattern in the codebase, no new concepts. Examples: add `'connect'` to `NubDomain` union, re-export SDK helpers, short README edit.
 
-**Key takeaways from the comparison:**
-1. Whole-blob delivery is universal for static assets. Streaming is always a separate concern. This validates AF-5 (defer audio/video).
-2. Nobody offers transform hints at the IPC layer — DF-3 is a small DX win we can ship cheaply because the field is purely additive.
-3. Nobody but napplet has the relay/sidecar problem because nobody but napplet is event-driven. DF-1 is genuinely novel and worth the small spec work.
-4. Salesforce LWS and Figma both validate that strict CSP + allowlist (or in our case, broker) is the only sustainable model — every system that tried looser models got SSRF'd or XSS'd.
+**M (Medium, ~half-day to day):** Multi-file coordination, new logic, follows a pattern from prior milestones. Examples: origin normalization + validation + aggregateHash fold in vite-plugin (parallel to NUB-CONFIG's `configSchema` at v0.25.0), meta-tag-read shim installer, spec prose sections.
+
+**L (Large, ~1-2 days):** Coordinated multi-package changes, subtractive work removing live code with back-compat considerations, or substantial new spec/doc authoring. Examples: vite-plugin README rewrite covering both subtractive and additive changes, SKILL.md sweep including the new class taxonomy prose and code samples, full SHELL-CONNECT-POLICY.md authoring.
+
+Total estimated effort split across categories:
+
+- §1 Spec: mostly S items, ~15 S + ~10 M + 0 L → cross-repo human-driven, authored-and-reviewed
+- §2 NIP-5D: all S → single-session edit
+- §3 nub/connect: 8 S + 2 M → one phase, likely S-day scale
+- §4 vite-plugin: 4 S + 4 M subtractive; 4 S + 4 M additive → two phases or one large phase
+- §5 shim/sdk: all S/M → one phase
+- §6 SHELL-CONNECT-POLICY: 6 S + 7 M + 2 L → one phase, L-day scale
+- §7 docs: 3 S + 2 M + 2 L → one phase, L-day scale
+- Verification gate: 0-day, just exit-code checks
+
+---
 
 ## Sources
 
-Verified at the listed confidence levels. Most are official docs or standards bodies; WebSearch-only items are flagged in-line.
-
-**Strict-CSP / iframe sandbox / postMessage proxying (HIGH confidence — official docs):**
-- [Content-Security-Policy: connect-src — MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/connect-src)
-- [Content-Security-Policy: sandbox directive — MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/sandbox) (sandbox cannot be set via `<meta>`)
-- [Play safely in sandboxed IFrames — web.dev](https://web.dev/articles/sandboxed-iframes)
-- [w3c/webappsec-csp issue #700 — srcdoc CSP inheritance](https://github.com/w3c/webappsec-csp/issues/700)
-
-**Custom protocol / scheme handlers (HIGH confidence — official docs):**
-- [Electron protocol API](https://www.electronjs.org/docs/latest/api/protocol)
-- [Tauri v2 Configuration — assetProtocol](https://v2.tauri.app/reference/config/)
-- [Tauri Wry custom protocols (DeepWiki)](https://deepwiki.com/tauri-apps/wry/4.1-custom-protocols)
-- [web.dev — Registering a custom protocol handler](https://web.dev/registering-a-custom-protocol-handler/)
-
-**Sandboxed-plugin host comparison (MEDIUM-HIGH; vendor docs):**
-- [Figma — Making Network Requests](https://www.figma.com/plugin-docs/making-network-requests/) (`allowedDomains` allowlist + CSP enforcement)
-- [Figma — How Plugins Run](https://developers.figma.com/docs/plugins/how-plugins-run/)
-- [Salesforce — Working with CORS and CSP to Call APIs from LWC](https://developer.salesforce.com/blogs/2022/03/working-with-cors-and-csp-to-call-apis-from-lwc) (`connect-src` allowlist via CSP Trusted Sites)
-- [Salesforce — Access to iframe Content in LWS](https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-iframes.html)
-- [Slack — Leveraging Private Files for Image Blocks with Block Kit](https://slack.com/blog/developers/uploading-private-images-blockkit) (Slack-mediated image hosting; pattern peer for sidecar/proxy)
-- [Slack — Security best practices](https://docs.slack.dev/security/)
-
-**SSRF / shell-mediated fetch threat model (HIGH confidence — OWASP, vendor security teams):**
-- [OWASP SSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html) (block 127/8, 10/8, 172.16/12, 192.168/16, 169.254/16, ::1/128, fc00::/7, fe80::/10)
-- [Wiz — Server-Side Request Forgery: What It Is & How To Fix It (2025)](https://www.wiz.io/academy/application-security/server-side-request-forgery)
-- [Stytch — Securing Identity APIs Against SSRF](https://stytch.com/blog/securing-identity-apis-against-ssrf/)
-- [SSRF DNS Rebinding (2026)](https://aydinnyunus.github.io/2026/03/14/ssrf-dns-rebinding-vulnerability/) (validates "block at resolution time, not URL parse time")
-
-**SVG XSS / rasterization (HIGH confidence — CVEs and mitigation guides):**
-- [Cross-site Scripting Injection Attacks Using SVG Images — Rietta](https://rietta.com/blog/svg-xss-injection-attacks/)
-- [CVE-2025-66412 — Angular Stored XSS via SVG Animation](https://www.telerik.com/kendo-angular-ui/components/knowledge-base/kb-security-angular-stored-xss-svg-mathml-cve-2025-66412)
-- [CVE-2023-22461 — sanitize-svg bypass](https://security.snyk.io/vuln/SNYK-JS-MATTKRICKSANITIZESVG-3225111)
-- [PacketWanderer — Stored XSS Through Malicious SVG Uploads](https://packetwanderer.com/posts/svg-xss/)
-- [DigiNinja — Protecting against XSS in SVG](https://digi.ninja/blog/svg_xss.php)
-
-**Sidecar / pre-resolution / incremental delivery (MEDIUM confidence — pattern is generalized from these):**
-- [GraphQL @defer / @stream RFC](https://github.com/graphql/graphql-wg/blob/main/rfcs/DeferStream.md)
-- [GraphQL Incremental Delivery RFC](https://github.com/graphql/graphql-over-http/blob/main/rfcs/IncrementalDelivery.md)
-- [GraphQL @defer / @stream blog](https://graphql.org/blog/2020-12-08-defer-stream/)
-- [Mastodon ActivityPub spec](https://docs.joinmastodon.org/spec/activitypub/) (federated attachment handling — closest peer for pre-resolved-on-the-event pattern)
-
-**Transform hints / fetch priority (HIGH confidence — official):**
-- [Optimize resource loading with the Fetch Priority API — web.dev](https://web.dev/articles/fetch-priority)
-- [HTML attribute: fetchpriority — MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/fetchpriority)
-- [WICG priority-hints EXPLAINER](https://github.com/WICG/priority-hints/blob/main/EXPLAINER.md)
-- [Imgix Rendering API — Automatic / Format / Output Quality](https://docs.imgix.com/en-US/apis/rendering/automatic) (`auto=format`, `q=`, `max-w=` are the canonical transform-hint vocabulary)
-- [Imgix Client Hints](https://docs.imgix.com/en-US/apis/rendering/format/client-hints)
-
-**Cancellation (HIGH confidence — official):**
-- [AbortController — MDN](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
-- [AbortController.abort() — MDN](https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort)
-
-**Failure-mode UX / placeholders (MEDIUM confidence — pattern docs):**
-- [ThumbHash](https://evanw.github.io/thumbhash/)
-- [Mux — A clear look at blurry image placeholders on the web](https://www.mux.com/blog/blurry-image-placeholders-on-the-web)
-- [Fastly — Low quality image placeholders](https://www.fastly.com/documentation/solutions/tutorials/low-quality-image-placeholders/)
-
-**Blossom / Nostr-native schemes (HIGH confidence — protocol spec):**
-- [NIP-B7 Blossom media](https://nips.nostr.com/B7)
-- [Blossom (hzrd149/blossom GitHub)](https://github.com/hzrd149/blossom)
-- [NIP-96 HTTP File Storage Integration](https://nips.nostr.com/96)
-
-**Existing project artifacts read for grounding:**
-- `/home/sandwich/Develop/napplet/.planning/PROJECT.md` (milestone scope)
-- `/home/sandwich/Develop/napplet/specs/NIP-5D.md` (current spec)
-- `/home/sandwich/Develop/napplet/packages/nub/src/relay/types.ts` (NUB-RELAY shape — DF-1 amendment target)
-- `/home/sandwich/Develop/napplet/packages/nub/src/identity/types.ts` (`ProfileData.picture`/`banner` URLs — DF-8)
-- `/home/sandwich/Develop/napplet/packages/nub/src/media/types.ts` (`MediaArtwork` already shaped for `blossom:` — DF-9)
+- **Primary design doc** (authoritative, committed `9f77c29`):
+  `docs/superpowers/specs/2026-04-21-napplet-network-permission-design.md` — full NUB-CONNECT design including manifest shape, origin-format rules, shell consent flow, CSP contract, edge cases, security considerations, migration path, testing posture, deferred v2 features, and open implementation-plan questions.
+- **Current NIP-5D** (to amend): `specs/NIP-5D.md` — current "Browser-Enforced Resource Isolation" subsection at lines 115-130 describes the v0.28.0 strict-CSP posture that v0.29.0 replaces.
+- **SHELL-RESOURCE-POLICY.md template**: `specs/SHELL-RESOURCE-POLICY.md` — structural parallel for SHELL-CONNECT-POLICY.md authoring (Status → Why-this-exists → per-policy-checklists → Audit-checklist → References pattern).
+- **NUB-CONFIG precedent** (synthetic aggregateHash entry pattern): `packages/vite-plugin/src/index.ts:559-587` — `config:schema` synthetic xTag entry with filter-from-x-tags projection; NUB-CONNECT `connect:origins` entry follows this exactly.
+- **Resource NUB subpath template**: `packages/nub/src/resource/{index,types,shim,sdk}.ts` — canonical 4-file NUB subpath layout that `packages/nub/src/connect/` will mirror.
+- **PROJECT.md active section**: `.planning/PROJECT.md` lines 3-22 — target-features bullet list serves as the milestone scope north-star.
+- **v0.28.0 archive** (resource NUB precedent): PROJECT.md line 25 — "central integration of the connect NUB (parallel to resource NUB wiring in v0.28.0)" establishes that the shim/sdk integration phase structure already has a proven template.
 
 ---
-*Feature research for: napplet v0.28.0 Browser-Enforced Resource Isolation*
-*Researched: 2026-04-20*
+*Feature research for: v0.29.0 NUB-CONNECT + Shell as CSP Authority*
+*Researched: 2026-04-21*
