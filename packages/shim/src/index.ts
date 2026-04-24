@@ -54,7 +54,8 @@ import {
 } from '@napplet/nub/resource/shim';
 import { installConnectShim } from '@napplet/nub/connect/shim';
 import { installClassShim, handleClassMessage } from '@napplet/nub/class/shim';
-import type { NappletGlobal } from '@napplet/core';
+import { NUB_DOMAINS } from '@napplet/core';
+import type { NappletGlobal, NamespacedCapability } from '@napplet/core';
 import type { IfcEventMessage } from '@napplet/nub/ifc/types';
 
 // ─── Global type augmentation ────────────────────────────────────────────────
@@ -134,6 +135,27 @@ function handleEnvelopeMessage(event: MessageEvent): void {
 // Install IFC shim
 installIfcShim();
 
+// ─── Default shell.supports() ────────────────────────────────────────────────
+// Fallback for napplets running without a shell parent (or before a shell has
+// overwritten window.napplet.shell). Reports `true` for every NUB domain the
+// shim itself installs (bare shorthand or `nub:`-prefixed) and `false` for
+// permissions and unknown strings — the shim cannot grant permissions.
+// A shell is free to replace window.napplet.shell.supports at runtime.
+
+function defaultShellSupports(capability: NamespacedCapability): boolean {
+  // perm:* — shell-granted only; nothing for the shim to assert.
+  if (typeof capability === 'string' && capability.startsWith('perm:')) return false;
+
+  // 'nub:<domain>' — strip the prefix and check the domain list.
+  if (typeof capability === 'string' && capability.startsWith('nub:')) {
+    const domain = capability.slice(4);
+    return (NUB_DOMAINS as readonly string[]).includes(domain);
+  }
+
+  // Bare NUB shorthand (e.g. 'relay').
+  return (NUB_DOMAINS as readonly string[]).includes(capability);
+}
+
 // ─── window.napplet global installation ──────────────────────────────────────
 
 (window as unknown as { napplet: NappletGlobal }).napplet = {
@@ -207,10 +229,7 @@ installIfcShim();
     origins: [],
   },
   shell: {
-    supports(_capability: string): boolean {
-      // TODO: Shell populates supported capabilities at iframe creation
-      return false;
-    },
+    supports: defaultShellSupports,
   },
 };
 
