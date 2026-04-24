@@ -4,8 +4,8 @@ milestone: <none>
 milestone_name: <none>
 status: Shipped — planning next milestone
 stopped_at: Merged feat/strict-model (v0.29.0 NUB-CONNECT, shipped 2026-04-21) into main; main's Class-Gated Decrypt Surface (originally self-labeled v0.29.0, shipped 2026-04-23) was renumbered to v0.30.0 during a post-merge version split.
-last_updated: "2026-04-24T00:00:00.000Z"
-last_activity: 2026-04-24
+last_updated: "2026-04-24T15:18:41.118Z"
+last_activity: 2026-04-24 - Completed quick task 260424-o1k: Implement default shell.supports() in shim so napplets can be tested without a shell
 progress:
 ---
 
@@ -163,6 +163,7 @@ Surfaced by research (informational — each belongs to a specific phase plan):
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260421-u87 | Create cross-repo PRs in napplet/nubs from the 4 v0.29.0 drafts | 2026-04-21 | c28d8e4 | [260421-u87-create-cross-repo-prs-in-napplet-nubs-fr](./quick/260421-u87-create-cross-repo-prs-in-napplet-nubs-fr/) |
+| 260424-o1k | Implement default shell.supports() in shim so napplets can be tested without a shell | 2026-04-24 | 5ad9cdb | [260424-o1k-implement-default-shell-supports-in-shim](./quick/260424-o1k-implement-default-shell-supports-in-shim/) |
 
 
 Last session: 2026-04-21T20:46:00.000Z
