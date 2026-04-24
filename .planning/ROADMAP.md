@@ -31,7 +31,7 @@
 - ✅ **v0.27.0 IFC Terminology Lock-In** — Phases 122-124 (shipped 2026-04-19) — [Archive](milestones/v0.27.0-ROADMAP.md)
 - ✅ **v0.28.0 Browser-Enforced Resource Isolation** — Phases 125-134 (shipped 2026-04-23) — [Archive](milestones/v0.28.0-ROADMAP.md)
 - ✅ **v0.29.0 NUB-CONNECT + Shell as CSP Authority** — Phases 135-142 (shipped 2026-04-21) — [Archive](milestones/v0.29.0-ROADMAP.md)
-- ✅ **v0.30.0 Class-Gated Decrypt Surface (PRE-MIGRATION; originally v0.29.0 on main)** — Phases 135-138 (shipped 2026-04-23) — [Archive](milestones/v0.30.0-ROADMAP.md)
+- ✅ **v0.30.0 Class-Gated Decrypt Surface** — Phases 135-138 (shipped 2026-04-23) — [Archive](milestones/v0.30.0-ROADMAP.md)
 
 ## Phases
 
@@ -43,12 +43,12 @@ Note: Phase 45 (IPC terminology cleanup) was completed as a quick task during v0
 
 ### 📋 Next Milestone (Planned)
 
-Run `/gsd:new-milestone` to define v0.30.0+.
+Run `/gsd:new-milestone` to define v0.31.0.
 
 _All shipped milestones are collapsed below. Next milestone entries will be added here when planning begins._
 
 <details>
-<summary>✅ v0.29.0 Class-Gated Decrypt Surface (Phases 135-138) — SHIPPED 2026-04-23</summary>
+<summary>✅ v0.30.0 Class-Gated Decrypt Surface (Phases 135-138) — SHIPPED 2026-04-23</summary>
 
 **Milestone Goal:** Close the NIP-17 / NIP-59 gift-wrap receive-side gap by adding `identity.decrypt(event) → Rumor` to NUB-IDENTITY, gated shell-side to napplets assigned `class: 1` per NUB-CLASS-1. Plaintext decrypt is only safe where the posture guarantees zero direct network egress; NUB-CLASS-2 napplets (approved direct-origin access via NUB-CONNECT) MUST be refused at the shell boundary. Same milestone establishes shell-enforced detection of NIP-07 extension `window.nostr` injection via CSP `report-to`. All enforcement is shell-side; napplets are untrusted.
 
@@ -360,12 +360,11 @@ _All shipped milestones are collapsed below. Next milestone entries will be adde
 </details>
 
 
-<!-- v0.30.0 PHASE DETAILS PLACEHOLDER (originally written as v0.29.0 on main; phase numbers 135-138 collide with v0.29.0 above; to be split out and renumbered to v0.30.0 phases in a follow-up) -->
-## v0.30.0 Phase Details (PRE-MIGRATION)
+## v0.30.0 Phase Details
 
 
 <details>
-<summary>v0.29.0 phase details (archived — see milestones/v0.29.0-ROADMAP.md for canonical)</summary>
+<summary>v0.30.0 phase details (archived — see milestones/v0.30.0-ROADMAP.md for canonical)</summary>
 
 ### Phase 135: First-Party Types + SDK Plumbing
 **Goal**: The `@napplet/nub/identity` package ships the complete wire + SDK surface for `identity.decrypt` — type additions, shim handler, SDK helper, and central re-exports — so the public amendment PR in Phase 137 can cite a shipped (not hypothetical) first-party surface. Workspace type-check stays green and the identity-types-only tree-shake contract is preserved.
@@ -416,14 +415,14 @@ _All shipped milestones are collapsed below. Next milestone entries will be adde
 - [x] 137-04-PLAN.md — Verification: VER-02 hygiene grep + VER-03 conformance grep + 137-PHASE-NOTES.md synthesis (NUB-IDENTITY-06, NUB-IDENTITY-07, VER-02, VER-03)
 
 ### Phase 138: In-Repo NIP-5D Amendment + Docs + Final Verification
-**Goal**: Sync local `specs/NIP-5D.md` against `napplet/nubs` master post-PR-15 (`window.nostr` removal merged 2026-04-21), then layer the v0.29.0 NIP-07 Security Considerations subsection referencing the Phase 137 amendment. Update package READMEs + root README + napplet-author skill for the `identity.decrypt` surface. Run the final VER-06 grep gate. Spec branch hygiene observed per `feedback_spec_branch_hygiene`: in-repo `specs/NIP-5D.md` changes land on master (or their own PR) — never bundled into a NUB-WORD branch.
+**Goal**: Sync local `specs/NIP-5D.md` against `napplet/nubs` master post-PR-15 (`window.nostr` removal merged 2026-04-21), then layer the v0.30.0 NIP-07 Security Considerations subsection referencing the Phase 137 amendment. Update package READMEs + root README + napplet-author skill for the `identity.decrypt` surface. Run the final VER-06 grep gate. Spec branch hygiene observed per `feedback_spec_branch_hygiene`: in-repo `specs/NIP-5D.md` changes land on master (or their own PR) — never bundled into a NUB-WORD branch.
 **Depends on**: Phase 135 (SDK surface to document), Phase 137 (amendment drafts to cite by filename)
 **Requirements**: NIP5D-01, NIP5D-02, NIP5D-03, NIP5D-04, DOC-01, DOC-02, DOC-03, DOC-04, VER-06
 **Success Criteria** (what must be TRUE):
-  1. Local `specs/NIP-5D.md` is synced against `napplet/nubs` master post-PR-15: any stale prose about `window.nostr` or napplet-performed encryption that drifted before the 2026-04-21 merge is reconciled before the v0.29.0 amendment layers on top (NIP5D-01).
+  1. Local `specs/NIP-5D.md` is synced against `napplet/nubs` master post-PR-15: any stale prose about `window.nostr` or napplet-performed encryption that drifted before the 2026-04-21 merge is reconciled before the v0.30.0 amendment layers on top (NIP5D-01).
   2. `specs/NIP-5D.md` Security Considerations gains a NIP-07 subsection naming: the `all_frames: true` content-script injection vector; CSP nonce-based `script-src` as the mitigation for legacy `<script>` injection; the `world: 'MAIN'` extension-API residual documented honestly (no page-side block); NUB-CLASS-1 `connect-src 'none'` as the structural mitigation trapping plaintext inside the frame; `identity.decrypt` on NUB-IDENTITY as the spec-legal receive-side decrypt path for NUB-CLASS-1 napplets (NIP5D-02).
   3. Cross-references cite `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename (per NUB-CLASS §Citation); the NIP-5D amendment commit is independent of the Phase 137 cross-repo PR diff (NIP5D-03, NIP5D-04).
-  4. `packages/nub/README.md` documents `identity.decrypt()` under the identity NUB section (API shape, class-gating expectation, error handling, NIP-17 auto-detect behavior); `packages/sdk/README.md` adds an `identityDecrypt()` entry alongside existing identity SDK helpers; root `README.md` gains a one-line v0.29.0 changelog bullet; `skills/build-napplet/SKILL.md` is updated with a one-paragraph guidance block: NIP-17 DM / kind-1059 handling uses `window.napplet.identity.decrypt(event)`; requires NUB-CLASS-1; napplets MUST NOT attempt `window.nostr.*` decrypt; shell enforces (DOC-01..04).
+  4. `packages/nub/README.md` documents `identity.decrypt()` under the identity NUB section (API shape, class-gating expectation, error handling, NIP-17 auto-detect behavior); `packages/sdk/README.md` adds an `identityDecrypt()` entry alongside existing identity SDK helpers; root `README.md` gains a one-line v0.30.0 changelog bullet; `skills/build-napplet/SKILL.md` is updated with a one-paragraph guidance block: NIP-17 DM / kind-1059 handling uses `window.napplet.identity.decrypt(event)`; requires NUB-CLASS-1; napplets MUST NOT attempt `window.nostr.*` decrypt; shell enforces (DOC-01..04).
   5. VER-06 grep gate: `specs/NIP-5D.md` NIP-07 Security Considerations subsection is present, non-empty, cites both `NUB-IDENTITY.md` and `NUB-CLASS-1.md` by filename, and names the `world: 'MAIN'` residual honestly (grep-verifiable).
 **Plans:** 2/2 plans complete
 - [x] 138-01-PLAN.md — NIP-5D sync verification + NIP-07 Extension Injection Residual subsection + VER-06 grep gate (NIP5D-01..04, VER-06)
@@ -434,7 +433,7 @@ _All shipped milestones are collapsed below. Next milestone entries will be adde
 ## Progress
 
 **Execution Order:**
-Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 ships first-party types/SDK; Phase 136 runs an empirical Playwright fixture — no shared artifact). Phase 137 blocks on BOTH (amendment cites the shipped surface from 135 and the observed CSP-block shape from 136). Phase 138 blocks on 135 (SDK surface to document) and 137 (amendment drafts to cite by filename). All v0.29.0 enforcement invariants (shell-side enforcement, filename citation discipline, public-repo hygiene) are cross-phase invariants and NOT optional per-phase add-ons.
+Phase 135 and Phase 136 are independent and MAY execute in parallel (Phase 135 ships first-party types/SDK; Phase 136 runs an empirical Playwright fixture — no shared artifact). Phase 137 blocks on BOTH (amendment cites the shipped surface from 135 and the observed CSP-block shape from 136). Phase 138 blocks on 135 (SDK surface to document) and 137 (amendment drafts to cite by filename). All v0.30.0 enforcement invariants (shell-side enforcement, filename citation discipline, public-repo hygiene) are cross-phase invariants and NOT optional per-phase add-ons.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|

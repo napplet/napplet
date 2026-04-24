@@ -64,7 +64,7 @@ export interface Nip5aManifestOptions {
 
   /**
    * @deprecated v0.29.0 — the shell is now the sole CSP authority. This option has NO effect
-   * and will be hard-removed in v0.30.0 (tracked as REMOVE-STRICTCSP). The plugin emits a
+   * and will be hard-removed in a future milestone (tracked as REMOVE-STRICTCSP). The plugin emits a
    * one-shot `console.warn` per build when this field is set so existing v0.28.0 consumers
    * discover the deprecation on upgrade without their `vite.config.ts` breaking.
    *
@@ -584,12 +584,12 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
       // v0.29.0 deprecation shim: `strictCsp` option is @deprecated and has no effect.
       // Shell is now the sole CSP authority. Warn once per build so upgrading consumers
       // discover the deprecation without their v0.28.0 vite.config.ts breaking on type-check
-      // or build. Hard removal tracked as REMOVE-STRICTCSP in REQUIREMENTS.md for v0.30.0.
+      // or build. Hard removal tracked as REMOVE-STRICTCSP in REQUIREMENTS.md for a future milestone (originally scheduled v0.30.0, deferred when v0.30.0 shipped Class-Gated Decrypt).
       // configResolved is called exactly once per plugin invocation by Vite, so this
       // is effectively once-per-build with no external guard variable needed.
       if (options.strictCsp !== undefined) {
         console.warn(
-          '[nip5a-manifest] strictCsp is deprecated in v0.29.0 and has no effect — the shell is now the sole CSP authority. Remove this option from your vite.config.ts. See v0.29.0 changelog for migration. (REMOVE-STRICTCSP tracks hard removal in v0.30.0.)',
+          '[nip5a-manifest] strictCsp is deprecated in v0.29.0 and has no effect — the shell is now the sole CSP authority. Remove this option from your vite.config.ts. See v0.29.0 changelog for migration. (REMOVE-STRICTCSP tracks hard removal in a future milestone.)',
         );
       }
 

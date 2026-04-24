@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.29.0
+milestone: <none>
 milestone_name: <none>
-status: Shipped — planning next milestone (post-merge)
-stopped_at: Merged feat/strict-model (v0.29.0 NUB-CONNECT, shipped 2026-04-21) into main (which independently shipped Class-Gated Decrypt as v0.29.0 on 2026-04-23; pending split to v0.30.0)
+status: Shipped — planning next milestone
+stopped_at: Merged feat/strict-model (v0.29.0 NUB-CONNECT, shipped 2026-04-21) into main; main's Class-Gated Decrypt Surface (originally self-labeled v0.29.0, shipped 2026-04-23) was renumbered to v0.30.0 during a post-merge version split.
 last_updated: "2026-04-24T00:00:00.000Z"
 last_activity: 2026-04-24
 progress:
@@ -17,7 +17,9 @@ See: .planning/PROJECT.md (updated 2026-04-24 post-merge)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-**Current focus:** None — both v0.29.0 NUB-CONNECT (feat/strict-model, 2026-04-21) and v0.30.0-pending Class-Gated Decrypt Surface (originally written as v0.29.0 on main, 2026-04-23) are merged; version split + planning-doc reconciliation in progress as a quick task.
+**Current focus:** None. Both v0.29.0 NUB-CONNECT (feat/strict-model, shipped 2026-04-21) and v0.30.0 Class-Gated Decrypt Surface (originally self-labeled v0.29.0 on main, shipped 2026-04-23, renumbered to v0.30.0 during the post-merge version split) are now in main. Run `/gsd:new-milestone` to define v0.31.0.
+
+> **Provenance note:** The "Accumulated Context" section below preserves bullet records from BOTH branches' STATE.md histories. Records tagged "v0.29.0" from main's lineage refer to the milestone NOW renumbered as v0.30.0 (Class-Gated Decrypt — Phases 135-138). Records tagged "v0.29.0" from feat/strict-model refer to NUB-CONNECT (Phases 135-142). Phase number alone is not a unique identifier across the two; cross-reference the topic (decrypt/identity/NIP-07 → v0.30.0; connect/class/CSP-authority → v0.29.0).
 
 ## Current Position
 

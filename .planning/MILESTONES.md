@@ -25,8 +25,7 @@
 
 ---
 
-<!-- v0.30.0 PLACEHOLDER (from main branch's "Class-Gated Decrypt Surface" milestone, formerly self-labeled v0.29.0; full content union'd here for the merge, to be split out to v0.30.0 in a follow-up) -->
-## v0.30.0 Class-Gated Decrypt Surface (PRE-MIGRATION, originally Shipped: 2026-04-23 as v0.29.0 on main)
+## v0.30.0 Class-Gated Decrypt Surface (Shipped: 2026-04-23)
 
 **Phases completed:** 4 phases, 13 plans, 33 tasks
 

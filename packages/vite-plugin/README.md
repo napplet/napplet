@@ -191,7 +191,7 @@ As of v0.29.0, the shell is the sole runtime CSP authority — every napplet rec
 For back-compat with pre-v0.29.0 `vite.config.ts` files, the option is still accepted at the type level (typed as `unknown`) and emits exactly one `console.warn` per build from `configResolved`:
 
 ```
-[nip5a-manifest] `strictCsp` is deprecated and has no effect (v0.29.0+). The shell is now the sole runtime CSP authority. Remove this option from your vite.config.ts to silence this warning. Scheduled for hard-remove in v0.30.0 (REMOVE-STRICTCSP).
+[nip5a-manifest] `strictCsp` is deprecated and has no effect (v0.29.0+). The shell is now the sole runtime CSP authority. Remove this option from your vite.config.ts to silence this warning. Scheduled for hard-remove in a future milestone (REMOVE-STRICTCSP).
 ```
 
 Migration:

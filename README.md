@@ -16,9 +16,8 @@ A **napplet** is a sandboxed web app that runs inside a **shell** (window manage
 
 ## Changelog
 
-- **v0.29.0** — Two complementary tracks in one milestone:
-  - **NUB-CONNECT + NUB-CLASS** — shell-assigned class integer (`window.napplet.class`), user-gated direct-network origins via manifest `connect` tags (`window.napplet.connect`), shell as sole runtime CSP authority, `@napplet/vite-plugin` `strictCsp` option deprecated in favor of shell-emitted CSP.
-  - **Class-Gated Decrypt Surface** — `identity.decrypt(event)` on NUB-IDENTITY: NIP-04 / NIP-44 / NIP-17 auto-detect decrypt returning `{ rumor, sender }` where `sender` is shell-authenticated. Gated shell-side to napplets assigned `class: 1` per NUB-CLASS-1 (strict baseline posture with `connect-src 'none'` — plaintext trapped inside the frame). See `packages/nub/README.md` and [NIP-5D §Security Considerations](specs/NIP-5D.md#security-considerations) for details.
+- **v0.30.0 — Class-Gated Decrypt Surface** — `identity.decrypt(event)` on NUB-IDENTITY: NIP-04 / NIP-44 / NIP-17 auto-detect decrypt returning `{ rumor, sender }` where `sender` is shell-authenticated. Gated shell-side to napplets assigned `class: 1` per NUB-CLASS-1 (strict baseline posture with `connect-src 'none'` — plaintext trapped inside the frame). See `packages/nub/README.md` and [NIP-5D §Security Considerations](specs/NIP-5D.md#security-considerations) for details.
+- **v0.29.0 — NUB-CONNECT + Shell as CSP Authority** — shell-assigned class integer (`window.napplet.class`), user-gated direct-network origins via manifest `connect` tags (`window.napplet.connect`), shell as sole runtime CSP authority, `@napplet/vite-plugin` `strictCsp` option deprecated in favor of shell-emitted CSP.
 
 ## Architecture
 
@@ -86,9 +85,9 @@ Declaring a `connect` origin is a tax (user-facing prompt, full trust vote) — 
 - **Specs:** `NUB-CLASS.md`, `NUB-CLASS-1.md`, `NUB-CLASS-2.md`, and `NUB-CONNECT.md` are drafted at `napplet/nubs`; `specs/NIP-5D.md` carries a generic class-delegation paragraph.
 - **Shell-deployer guides:** [`specs/SHELL-CONNECT-POLICY.md`](specs/SHELL-CONNECT-POLICY.md) + [`specs/SHELL-CLASS-POLICY.md`](specs/SHELL-CLASS-POLICY.md) checklist the HTTP-responder precondition, residual meta-CSP refuse-to-serve requirement, consent-prompt MUSTs, grant-persistence key, revocation UX, class-determination authority, wire timing, and the cross-NUB invariant (`class === 2` iff `connect.granted === true`).
 
-### Class-Gated Decrypt Surface (companion track)
+## v0.30.0 — Class-Gated Decrypt Surface
 
-The v0.29.0 milestone also ships `identity.decrypt(event)` on NUB-IDENTITY — a shell-mediated NIP-04 / NIP-44 / NIP-17 gift-wrap auto-detect decrypt primitive. Napplets call `window.napplet.identity.decrypt(event)` and receive `{ rumor, sender }` where `rumor = UnsignedEvent & { id }` (nostr-tools canonical) and `sender` is shell-authenticated from the outer seal signature (never napplet-derived from `rumor.pubkey`, which is attacker-controlled on unsigned rumors).
+v0.30.0 ships `identity.decrypt(event)` on NUB-IDENTITY — a shell-mediated NIP-04 / NIP-44 / NIP-17 gift-wrap auto-detect decrypt primitive. Napplets call `window.napplet.identity.decrypt(event)` and receive `{ rumor, sender }` where `rumor = UnsignedEvent & { id }` (nostr-tools canonical) and `sender` is shell-authenticated from the outer seal signature (never napplet-derived from `rumor.pubkey`, which is attacker-controlled on unsigned rumors).
 
 - **Class-gated shell-side:** `identity.decrypt` is legal only for napplets assigned `class: 1` per `NUB-CLASS-1.md`. Napplets under `NUB-CLASS-2` (user-approved direct-network posture) receive a `class-forbidden` error — plaintext could exfiltrate to approved origins with zero shell visibility otherwise.
 - **8 error codes:** `class-forbidden`, `signer-denied`, `signer-unavailable`, `decrypt-failed`, `malformed-wrap`, `impersonation`, `unsupported-encryption`, `policy-denied`.

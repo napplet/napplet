@@ -306,8 +306,7 @@
 - 89 commits between v0.28.0 and v0.29.0 tag
 - 8 phases sequenced with parallel-safe markers where dependency graph allowed (Phases 136/137/138 parallel-safe; 139 blocked on 137; 140 parallel-safe with 136-139)
 
-<!-- v0.30.0 PLACEHOLDER — originally written as v0.29.0 on main; relabel to v0.30.0 in the post-merge split -->
-## Milestone: v0.30.0 — Class-Gated Decrypt Surface (PRE-MIGRATION)
+## Milestone: v0.30.0 — Class-Gated Decrypt Surface
 
 **Shipped:** 2026-04-23
 **Phases:** 4 | **Plans:** 13 (one Rule 3 gap-closure iteration) | **Tasks:** 33
@@ -376,7 +375,7 @@
 | v0.11.0 Clean up Side Panel | 3 | 4 | 220+ | +1,937 | 1 day |
 | v0.28.0 Browser-Enforced Resource Isolation | 10 | 10 | (unchanged) | +1,695/−69 | 3 days |
 | v0.29.0 NUB-CONNECT | 8 | 19 | 220+ vitest (+54 new) | +22,131/-14,950 | 1 day |
-| v0.30.0 Class-Gated Decrypt Surface (PRE-MIGRATION) | 4 | 13 | (unchanged) | +~600 | 1 day |
+| v0.30.0 Class-Gated Decrypt Surface | 4 | 13 | (unchanged) | +~600 | 1 day |
 
 ### Observations
 
