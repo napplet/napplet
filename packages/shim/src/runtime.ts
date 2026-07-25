@@ -151,13 +151,29 @@ import type { IncEventMessage } from '@napplet/nap/inc/types';
 
 export interface NappletShimInstallOptions {
   /** Domains the runtime exposes to this napplet. Omit to install every bundled domain. */
-  domains?: readonly NapDomain[];
+  domains?: readonly string[];
+  /** Runtime-local experimental NAP domains to inject alongside bundled domains. */
+  extensions?: readonly NappletShimExtension[];
 }
 
 type DomainHandler = (msg: { type: string; [key: string]: unknown }) => void;
 
-const DEFAULT_DOMAINS = new Set<NapDomain>(NAP_DOMAINS);
-const installedDomainShims = new Set<NapDomain>();
+export interface NappletShimExtension {
+  /** Bare experimental domain name, e.g. "foo" for `foo.*` envelopes. */
+  domain: string;
+  /** API object mounted at `window.napplet.<domain>` when the domain is exposed. */
+  api?: unknown;
+  /** Optional handler for shell -> napplet messages in this domain. */
+  handleMessage?: DomainHandler;
+  /** Optional one-time installer for napplet-side listeners/state. */
+  install?: () => void;
+}
+
+const DEFAULT_DOMAINS = new Set<string>(NAP_DOMAINS);
+const installedDomainShims = new Set<string>();
+const extensionApis = new Map<string, unknown>();
+const extensionRouters = new Map<string, DomainHandler>();
+const extensionInstallers = new Map<string, () => void>();
 let messageListenerInstalled = false;
 
 const DOMAIN_ROUTERS: ReadonlyArray<readonly [string, DomainHandler]> = [
@@ -201,9 +217,14 @@ function handleEnvelopeMessage(event: MessageEvent): void {
       return;
     }
   }
+
+  const dotIndex = type.indexOf('.');
+  if (dotIndex <= 0) return;
+  const route = extensionRouters.get(type.slice(0, dotIndex));
+  if (route) route(typed);
 }
 
-function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
+function createNappletGlobal(domains: ReadonlySet<string>): NappletGlobal {
   const napplet: Partial<NappletGlobal> = {};
 
   if (domains.has('relay')) {
@@ -440,17 +461,48 @@ function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
     };
   }
 
-  return napplet as NappletGlobal;
+  const customNapplet = napplet as Partial<NappletGlobal> & Record<string, unknown>;
+  for (const domain of domains) {
+    if (DEFAULT_DOMAINS.has(domain)) continue;
+    if (extensionApis.has(domain)) customNapplet[domain] = extensionApis.get(domain);
+  }
+
+  return customNapplet as NappletGlobal;
 }
 
-function normalizeDomains(domains?: readonly NapDomain[]): Set<NapDomain> {
+function normalizeDomains(domains?: readonly string[]): Set<string> {
   if (!domains) return new Set(DEFAULT_DOMAINS);
-  return new Set(domains.filter((domain) => DEFAULT_DOMAINS.has(domain)));
+  return new Set(domains.map((domain) => domain.trim()).filter(isAllowedDomain));
 }
 
-function installDomainShim(domain: NapDomain): void {
+function isAllowedDomain(domain: string): boolean {
+  return DEFAULT_DOMAINS.has(domain) || extensionApis.has(domain) || extensionRouters.has(domain) || extensionInstallers.has(domain);
+}
+
+function registerExtensions(extensions?: readonly NappletShimExtension[]): void {
+  for (const extension of extensions ?? []) {
+    const domain = extension.domain.trim();
+    if (!domain || DEFAULT_DOMAINS.has(domain)) continue;
+    if (extension.api !== undefined) extensionApis.set(domain, extension.api);
+    if (extension.handleMessage) extensionRouters.set(domain, extension.handleMessage);
+    if (extension.install) extensionInstallers.set(domain, extension.install);
+  }
+}
+
+/** Register a runtime-local experimental NAP extension for later installation. */
+export function registerNappletExtension(extension: NappletShimExtension): void {
+  registerExtensions([extension]);
+}
+
+function installDomainShim(domain: string): void {
   if (installedDomainShims.has(domain)) return;
   installedDomainShims.add(domain);
+
+  const extensionInstaller = extensionInstallers.get(domain);
+  if (extensionInstaller) {
+    extensionInstaller();
+    return;
+  }
 
   switch (domain) {
     case 'relay':
@@ -528,6 +580,7 @@ function installDomainShim(domain: NapDomain): void {
  * only present when the runtime exposes that NAP to the napplet.
  */
 export function installNappletGlobal(options: NappletShimInstallOptions = {}): NappletGlobal {
+  registerExtensions(options.extensions);
   const domains = normalizeDomains(options.domains);
   const napplet = createNappletGlobal(domains);
 

@@ -44,6 +44,8 @@ export interface BootOptions {
   runDegraded?: boolean;
   /** Debug only: also grant `allow-same-origin` (a conformant load must NOT need it). Default false. */
   allowSameOrigin?: boolean;
+  /** Runtime-local experimental domains to inject during the primary boot. */
+  customDomains?: readonly string[];
   /** Document to create the iframe in. Defaults to the global `document`. */
   document?: Document;
   /** Window to listen on. Defaults to the global `window`. */
@@ -180,11 +182,11 @@ async function loadHtml(url: string): Promise<string> {
 /** Boot the napplet once with the given injected domain set and collect what's observable. */
 async function bootOnce(
   domains: readonly string[],
-  opts: Required<Pick<BootOptions, 'url' | 'readyTimeoutMs' | 'settleMs' | 'allowSameOrigin'>>,
+  opts: Required<Pick<BootOptions, 'url' | 'readyTimeoutMs' | 'settleMs' | 'allowSameOrigin' | 'customDomains'>>,
   doc: Document,
   win: Window,
 ): Promise<SingleBoot> {
-  const shell = createReferenceShell();
+  const shell = createReferenceShell({ validation: { customDomains: opts.customDomains } });
   const iframe = doc.createElement('iframe');
   iframe.setAttribute('sandbox', opts.allowSameOrigin ? 'allow-scripts allow-same-origin' : 'allow-scripts');
   iframe.setAttribute('aria-hidden', 'true');
@@ -255,9 +257,11 @@ export async function bootAndCollect(options: BootOptions): Promise<BootCollecti
     readyTimeoutMs: options.readyTimeoutMs ?? 5000,
     settleMs: options.settleMs ?? 600,
     allowSameOrigin: options.allowSameOrigin ?? false,
+    customDomains: options.customDomains ?? [],
   };
 
-  const primary = await bootOnce(NAP_DOMAINS, resolved, doc, win);
+  const primaryDomains = [...NAP_DOMAINS, ...(options.customDomains ?? []).map((domain) => domain.trim()).filter(Boolean)];
+  const primary = await bootOnce(primaryDomains, resolved, doc, win);
 
   let degraded: BootObservation | null = null;
   if (options.runDegraded ?? true) {

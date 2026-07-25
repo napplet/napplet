@@ -34,8 +34,8 @@
  * @packageDocumentation
  */
 
-export type { NappletShimInstallOptions } from './runtime.js';
-export { installNappletGlobal } from './runtime.js';
+export type { NappletShimExtension, NappletShimInstallOptions } from './runtime.js';
+export { installNappletGlobal, registerNappletExtension } from './runtime.js';
 
 import { installNappletGlobal } from './runtime.js';
 

@@ -23,4 +23,22 @@ describe('@napplet/shim — runtime injection', () => {
     expect(installed.identity).toBeUndefined();
     expect((installed as { shell?: unknown }).shell).toBeUndefined();
   });
+
+  it('can install runtime-local custom domains when an extension is registered', () => {
+    const api = { doThing: () => 'ok' };
+    const installed = installNappletGlobal({
+      domains: ['foo'],
+      extensions: [{ domain: 'foo', api }],
+    }) as NappletGlobal & { foo?: typeof api };
+
+    expect(installed.relay).toBeUndefined();
+    expect(installed.foo).toBe(api);
+    expect(installed.foo?.doThing()).toBe('ok');
+  });
+
+  it('does not expose unknown custom domains without a registered extension', () => {
+    const installed = installNappletGlobal({ domains: ['missing-custom'] }) as NappletGlobal & { ['missing-custom']?: unknown };
+
+    expect(installed['missing-custom']).toBeUndefined();
+  });
 });

@@ -77,7 +77,7 @@ export function buildIndexHtmlTags(
     },
   ];
 
-  const requires = resolvedRequirements(options.requires, state);
+  const requires = resolvedRequirements(options.requires, state, options.customDomains);
   if (requires.length > 0) {
     tags.push({
       tag: 'meta',
@@ -150,7 +150,7 @@ function buildManifestTemplate(
   const pathTags = pathPairs.map(([hash, absPath]) => ['path', absPath, hash]);
   const configTags =
     state.resolvedSchema !== null ? [['config', JSON.stringify(state.resolvedSchema)]] : [];
-  const requiresTags = resolvedRequirements(options.requires, state).map((name) => ['requires', name]);
+  const requiresTags = resolvedRequirements(options.requires, state, options.customDomains).map((name) => ['requires', name]);
   // Archetype tags (NAAT, napplet/naps `ARCHETYPES.md`): one
   // `['archetype', slug, protocol, ...constraints]` per contract. Like
   // config/requires they are NOT passed to computeAggregateHash — only pathPairs

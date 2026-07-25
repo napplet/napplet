@@ -27,6 +27,27 @@ describe('validateEnvelope — structural guards', () => {
     expect(v.errors[0].code).toBe('unknown-domain');
   });
 
+  it('accepts explicitly configured custom domains', () => {
+    const v = validateEnvelope({ type: 'foo.doThing', value: 1 }, { customDomains: ['foo'] });
+    expect(v.ok).toBe(true);
+    expect(v.domain).toBe('foo');
+  });
+
+  it('validates custom envelopes when a custom spec is provided', () => {
+    const valid = validateEnvelope(
+      { type: 'foo.doThing', id: 'a', value: 1 },
+      { customDomains: ['foo'], customEnvelopeSpecs: { 'foo.doThing': { dir: 'out', fields: { id: 'string', value: 'number' } } } },
+    );
+    const invalid = validateEnvelope(
+      { type: 'foo.doThing', id: 'a', value: 'wrong' },
+      { customDomains: ['foo'], customEnvelopeSpecs: { 'foo.doThing': { dir: 'out', fields: { id: 'string', value: 'number' } } } },
+    );
+
+    expect(valid.ok).toBe(true);
+    expect(invalid.ok).toBe(false);
+    expect(invalid.errors[0].code).toBe('wrong-type');
+  });
+
   it('rejects an unknown action within a known domain', () => {
     const v = validateEnvelope({ type: 'relay.teleport', id: 'x' });
     expect(v.ok).toBe(false);

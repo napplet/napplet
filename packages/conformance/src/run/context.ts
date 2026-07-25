@@ -48,6 +48,8 @@ export interface ConformanceContext {
   emitted: RecordedEnvelope[];
   /** Forbidden globals the napplet tried to access, e.g. `['window.nostr']`. */
   forbiddenGlobals: string[];
+  /** Runtime-local experimental domains accepted for this run. */
+  customDomains: string[];
   /**
    * Observation from a second boot with no domains injected. `null` when the
    * host did not run the degraded pass.
@@ -77,6 +79,8 @@ export interface BuildContextInput {
   boot: BootCollectionLike;
   /** Forbidden globals found by static analysis (e.g. `['window.nostr']`). */
   forbiddenGlobals?: string[];
+  /** Runtime-local experimental domains accepted for this run. */
+  customDomains?: readonly string[];
   /** Sandbox attributes the host used. Defaults to the conformant `allow-scripts` only. */
   sandbox?: SandboxState;
   /** Best-effort lifecycle observation. */
@@ -96,6 +100,7 @@ export function buildContext(input: BuildContextInput): ConformanceContext {
     bootError: input.boot.bootError,
     emitted: input.boot.emitted,
     forbiddenGlobals: input.forbiddenGlobals ?? [],
+    customDomains: [...(input.customDomains ?? [])],
     degraded: input.boot.degraded,
     lifecycle: input.lifecycle ?? null,
   };
@@ -114,6 +119,7 @@ export function makeContext(overrides: Partial<ConformanceContext> = {}): Confor
     bootError: null,
     emitted: [],
     forbiddenGlobals: [],
+    customDomains: [],
     degraded: null,
     lifecycle: null,
     ...overrides,

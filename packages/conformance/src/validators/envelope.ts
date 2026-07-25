@@ -36,6 +36,14 @@ export interface EnvelopeSpec {
   fields?: Record<string, FieldKind>;
 }
 
+/** Options for runtime envelope validation. */
+export interface ValidateEnvelopeOptions {
+  /** Runtime-local experimental domains accepted by domain name. */
+  customDomains?: readonly string[];
+  /** Optional validators for experimental `domain.action` message types. */
+  customEnvelopeSpecs?: Record<string, EnvelopeSpec>;
+}
+
 const ID = { id: 'string' } as const;
 
 /**
@@ -360,8 +368,9 @@ function matchesKind(value: unknown, kind: FieldKind): boolean {
  * validateEnvelope({ type: 'relay.event', subId: 'b' }).ok;  // false (inbound type emitted)
  * ```
  */
-export function validateEnvelope(message: unknown): EnvelopeVerdict {
+export function validateEnvelope(message: unknown, options: ValidateEnvelopeOptions = {}): EnvelopeVerdict {
   const errors: EnvelopeError[] = [];
+  const customEnvelopeSpecs = options.customEnvelopeSpecs ?? {};
 
   if (typeof message !== 'object' || message === null || Array.isArray(message)) {
     return { ok: false, errors: [{ code: 'not-an-object', message: 'Envelope must be a non-null object' }] };
@@ -380,11 +389,15 @@ export function validateEnvelope(message: unknown): EnvelopeVerdict {
 
   const domain = type.slice(0, dotIndex);
   const isKnownDomain = (NAP_DOMAINS as readonly string[]).includes(domain);
-  if (!isKnownDomain) {
+  const isCustomDomain = (options.customDomains ?? []).map((name) => name.trim()).includes(domain);
+  if (!isKnownDomain && !isCustomDomain) {
     return { ok: false, type, domain, errors: [{ code: 'unknown-domain', message: `"${domain}" is not a known NAP domain` }] };
   }
 
-  const spec = ENVELOPE_SPECS[type];
+  const spec = ENVELOPE_SPECS[type] ?? customEnvelopeSpecs[type];
+  if (!spec && isCustomDomain) {
+    return { ok: true, type, domain, direction: 'out', errors };
+  }
   if (!spec) {
     return { ok: false, type, domain, errors: [{ code: 'unknown-type', message: `"${type}" is not a known ${domain} message type` }] };
   }

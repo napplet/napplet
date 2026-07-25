@@ -100,8 +100,8 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
     },
 
     transform(code: string, id: string) {
-      addInferredRequirements(state, inferRequirementsFromSource(code, id));
-      reportRequirementDiagnostics(options.requires, state, (message) => this.warn(message));
+      addInferredRequirements(state, inferRequirementsFromSource(code, id, options.customDomains));
+      reportRequirementDiagnostics(options.requires, state, (message) => this.warn(message), options.customDomains);
       return null;
     },
 
@@ -120,7 +120,7 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
     },
 
     async closeBundle() {
-      reportRequirementDiagnostics(options.requires, state, (message) => this.warn(message));
+      reportRequirementDiagnostics(options.requires, state, (message) => this.warn(message), options.customDomains);
       await writeBundleManifest(options, state);
     },
   };
