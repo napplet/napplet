@@ -49,10 +49,10 @@ if (!published.ok || !published.event) throw new Error(published.error ?? 'publi
 // Common social actions keep consent, event construction, signing, and relay routing in the shell
 await common.react(published.event.id, '+');
 
-// Inter-napplet messaging
-inc.emit('chat:message', [], JSON.stringify({ text: 'hi' }));
-const incSub = inc.on('bot:response', (payload) => {
-  console.log('Bot says:', payload);
+// Inter-napplet messaging. The payload is this application's local choice.
+inc.emit('napplet:note/open', { targetId: 'local-note-id' });
+const incSub = inc.on('napplet:note/open', (payload) => {
+  console.log('Local note-open payload:', payload);
 });
 
 // Scoped storage
@@ -126,10 +126,7 @@ configSub.close();
 
 ### `relay`
 
-Low-level relay operations through the shell's relay pool. Mirrors `window.napplet.relay`.
-Use this for explicit relay-local behavior such as group relays, diagnostics,
-and protocol tooling. For normal social reads/publishes, prefer `outbox` or a
-higher-level domain such as `common`, `lists`, `count`, or `dm`.
+Low-level relay operations through the shell's relay pool. Mirrors `window.napplet.relay`. Use this for explicit relay-local behavior such as group relays, diagnostics, and protocol tooling. For normal social reads/publishes, prefer `outbox` or a higher-level domain such as `common`, `lists`, `count`, or `dm`.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -140,9 +137,7 @@ higher-level domain such as `common`, `lists`, `count`, or `dm`.
 
 ### `outbox`
 
-Outbox-aware relay routing. Mirrors `window.napplet.outbox`. The napplet supplies
-filters, event ids, templates, and intent; the shell owns NIP-65 relay discovery,
-fallback, deduplication, signature validation, signing, and publish fanout.
+Outbox-aware relay routing. Mirrors `window.napplet.outbox`. The napplet supplies filters, event ids, templates, and intent; the shell owns NIP-65 relay discovery, fallback, deduplication, signature validation, signing, and publish fanout.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -154,27 +149,53 @@ fallback, deduplication, signature validation, signing, and publish fanout.
 
 ### `common`
 
-Common social actions. Mirrors `window.napplet.common`. Use it for NIP-19
-helpers, profile lookup, follows, follow/unfollow, reactions, and reports so the
-shell owns consent, event construction, signing, publishing, and lookup policy.
+Common social actions. Mirrors `window.napplet.common`. Use it for NIP-19 helpers, profile lookup, follows, follow/unfollow, reactions, and reports so the shell owns consent, event construction, signing, publishing, and lookup policy.
 
 ### `inc`
 
 Inter-napplet communication between napplets. Mirrors `window.napplet.inc`.
 
-Messages are sent as JSON envelope objects (`{ type: 'inc.emit', topic, payload }`) and received as
-(`{ type: 'inc.event', topic, payload, sender }`).
+Messages are sent as JSON envelope objects (`{ type: 'inc.emit', topic, payload }`) and received as (`{ type: 'inc.event', topic, payload, sender }`). Topics are opaque strings: a sender and subscriber use the same complete value. The package does not prescribe convention payload schemas, wildcard, prefix, or canonicalization behavior.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `emit(topic, extraTags?, content?)` | `void` | Broadcast an INC event to other napplets via the shell |
+| `emit(topic, payload?)` | `void` | Broadcast an INC event to other napplets via the shell |
 | `on(topic, callback)` | `{ close(): void }` | Subscribe to INC events on a topic |
 
-Deprecated IFC compatibility exports are available as migration aliases:
-`ifc`, `ifcEmit`, `ifcOn`, `IFC_DOMAIN`, `installIfcShim`, and the `Ifc*`
-message types. They forward to the INC implementation and resolve to the
-canonical `inc` domain; new code should use `inc`, `incEmit`, `incOn`,
-`INC_DOMAIN`, `installIncShim`, and `Inc*` names.
+This non-normative SDK reference follows [NAP-INC draft PR #89 at its adopted head](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md). For outbound INC only, a queried convention URI is runtime shorthand for a stable topic plus a shallow text payload:
+
+```ts
+inc.emit('napplet:profile/open?pubkey=abc123');
+// -> { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }
+
+inc.on('napplet:profile/open', (payload) => {
+  console.log(payload);
+});
+```
+
+The runtime percent-decodes the query text (`+` remains `+`) before exact topic routing. A fragment, malformed percent encoding, repeated decoded name, or a query paired with an explicit payload throws before emission. Pass structured or non-text data through `emit`'s explicit payload with a queryless topic. This is an INC `emit` input rule; subscriptions and shell routing do not parse queries or perform wildcard, prefix, or normalization matching.
+
+Deprecated IFC compatibility exports are available as migration aliases: `ifc`, `ifcEmit`, `ifcOn`, `IFC_DOMAIN`, `installIfcShim`, and the `Ifc*` message types. They forward to the INC implementation and resolve to the canonical `inc` domain; new code should use `inc`, `incEmit`, `incOn`, `INC_DOMAIN`, `installIncShim`, and `Inc*` names.
+
+### `intent`
+
+Archetype intent dispatch. Mirrors `window.napplet.intent`. The URI passed to `invoke`/`open` is authoritative: that binding derives a queryless convention, archetype, action, and any shallow text query payload. Queryless manifest contracts and exact INC subscriptions do not normalize URI queries.
+
+```ts
+import { intent } from '@napplet/sdk';
+
+// Register this during target startup. `sender` is runtime-attested provenance;
+// validate the opaque payload before using it.
+intent.onDelivery((delivery) => {
+  showProfile(delivery.payload);
+});
+
+const result = await intent.open('napplet:profile/open?pubkey=abc123');
+if (!result.ok) throw new Error(result.error);
+console.log(`Runtime accepted delivery for ${result.handler}`);
+```
+
+`ok: true` means the runtime accepted responsibility to deliver, not that a target is running or has received the payload. Delivery is a separate target-only push, and runtime policy controls target lifecycle, retries, and persistence. Do not assume source/target overlap. `available()` and `handlers()` expose queryless `IntentContract` entries with optional same-contract `eventKinds` metadata; kinds are never inferred from payloads. NAP-INTENT has no public NAP-INC dependency. This non-normative reference follows [NAP-INTENT draft PR #91 at its adopted head](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
 
 ### `storage`
 
@@ -299,9 +320,7 @@ Keyboard forwarding and action keybindings. Mirrors `window.napplet.keys`.
 
 ### `identity`
 
-Read-only user identity queries (NAP-IDENTITY). Use the exported `identity`
-object, `window.napplet.identity.*` directly after runtime injection, or the
-bare-name helpers below.
+Read-only user identity queries (NAP-IDENTITY). Use the exported `identity` object, `window.napplet.identity.*` directly after runtime injection, or the bare-name helpers below.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -319,16 +338,11 @@ const sub = identityOnChanged((nextPubkey) => {
 });
 ```
 
-NAP-IDENTITY is strictly read-only. Signing remains delegated through
-`outbox.publish()` or higher-level action domains (`common`, `lists`, `dm`).
-Use `relay.publish()` only for explicit low-level relay escape hatches.
-Identity changes arrive through `identity.changed` rather than polling.
+NAP-IDENTITY is strictly read-only. Signing remains delegated through `outbox.publish()` or higher-level action domains (`common`, `lists`, `dm`). Use `relay.publish()` only for explicit low-level relay escape hatches. Identity changes arrive through `identity.changed` rather than polling.
 
 ### Runtime-Injected Domains
 
-NIP-5D runtimes inject `window.napplet` before napplet code runs. Available NAP
-domains are present as properties; unavailable domains are absent. Gate optional
-behavior with property presence:
+NIP-5D runtimes inject `window.napplet` before napplet code runs. Available NAP domains are present as properties; unavailable domains are absent. Gate optional behavior with property presence:
 
 ```ts
 if (window.napplet?.outbox) { /* outbox API is available */ }
@@ -387,8 +401,7 @@ import type {
 
 ### NAP Message Types
 
-These are discriminated union types covering all messages in each NAP domain. Useful for writing typed message
-handlers in shell implementations or protocol-aware code.
+These are discriminated union types covering all messages in each NAP domain. Useful for writing typed message handlers in shell implementations or protocol-aware code.
 
 | Type | NAP Package | Description |
 |------|-------------|-------------|
@@ -407,8 +420,7 @@ handlers in shell implementations or protocol-aware code.
 | `CommonNapMessage` | `@napplet/nap/common` | Discriminated union of all common domain messages |
 | `SerialNapMessage` | `@napplet/nap/serial` | Discriminated union of all serial domain messages |
 
-Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMessage`) are also re-exported from
-`@napplet/sdk` for fine-grained typing.
+Individual message types (e.g., `RelaySubscribeMessage`, `IdentityGetPublicKeyMessage`) are also re-exported from `@napplet/sdk` for fine-grained typing.
 
 ## NAP Domain Constants
 
@@ -419,8 +431,7 @@ import { RELAY_DOMAIN, IDENTITY_DOMAIN, STORAGE_DOMAIN, INC_DOMAIN, THEME_DOMAIN
 // Values: 'relay', 'identity', 'storage', 'inc', 'theme', 'keys', 'media', 'notify', 'config', 'resource', 'cvm', 'outbox', 'upload', 'intent', 'ble', 'webrtc', 'link', 'count', 'lists', 'common', 'serial', 'dm'
 ```
 
-These constants are re-exported from the individual domain packages. Use
-property presence for type-safe conditional logic:
+These constants are re-exported from the individual domain packages. Use property presence for type-safe conditional logic:
 
 ```ts
 if (window.napplet?.relay) {
@@ -442,8 +453,7 @@ if (window.napplet?.resource) {
 
 ## Runtime Guard
 
-If `window.napplet` or a requested domain is unavailable when an SDK method is
-called, a clear error is thrown:
+If `window.napplet` or a requested domain is unavailable when an SDK method is called, a clear error is thrown:
 
 ```
 Error: window.napplet.relay is unavailable -- runtime did not inject this domain
@@ -467,8 +477,7 @@ This protects napplets from assuming optional domains are always present.
 import { relay, inc, storage, keys, media, notify } from '@napplet/sdk';
 ```
 
-If you are writing a vanilla napplet with no build step, use the injected
-`window.napplet.*` namespace directly -- the SDK is not required.
+If you are writing a vanilla napplet with no build step, use the injected `window.napplet.*` namespace directly -- the SDK is not required.
 
 ## Protocol Reference
 
