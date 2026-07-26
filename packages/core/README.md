@@ -106,9 +106,7 @@ for (const domain of NAP_DOMAINS) {
 
 #### `NappletGlobal`
 
-Type for the runtime-injected `window.napplet` namespace. Domain properties are
-optional: presence means the runtime exposes that NAP, absence means it is
-unavailable.
+Type for the runtime-injected `window.napplet` namespace. Domain properties are optional: presence means the runtime exposes that NAP, absence means it is unavailable.
 
 ```ts
 if (window.napplet?.relay) {
@@ -118,12 +116,7 @@ if (window.napplet?.relay) {
 
 #### `IntentApi`
 
-NAP-INTENT targets an archetype through an authoritative convention URI, not a
-specific running surface. `invoke(uri, options?)` and the `open(uri, options?)`
-sugar normalize URI input at that boundary only: the binding derives the
-archetype, action, and queryless convention. Use `options.payload` for
-structured data with a queryless URI; queryless manifest contracts and exact
-INC topic routing do not parse query text.
+NAP-INTENT targets an archetype through an authoritative convention URI, not a specific running surface. `invoke(uri, options?)` and the `open(uri, options?)` sugar normalize URI input at that boundary only: the binding derives the archetype, action, and queryless convention. Use `options.payload` for structured data with a queryless URI; queryless manifest contracts and exact INC topic routing do not parse query text.
 
 ```ts
 window.napplet.intent?.onDelivery((delivery) => {
@@ -141,18 +134,9 @@ if (result?.ok) {
 }
 ```
 
-`ok: true` reports that the runtime accepted delivery responsibility. It does
-not report target receipt, completion, or a target identity; delivery is the
-later, target-only `onDelivery` push. Register that listener during target startup.
-The runtime may start a target later and owns lifecycle, retry, and persistence
-policy, so callers must not assume source/target overlap or persistence.
+`ok: true` reports that the runtime accepted delivery responsibility. It does not report target receipt, completion, or a target identity; delivery is the later, target-only `onDelivery` push. Register that listener during target startup. The runtime may start a target later and owns lifecycle, retry, and persistence policy, so callers must not assume source/target overlap or persistence.
 
-Handler discovery exposes queryless `IntentContract` entries, each with a
-`convention` and optional `eventKinds` metadata. Event kinds are discovery
-metadata only and are never inferred from payloads. NAP-INTENT has no public
-NAP-INC dependency. See the adopted [NAP-INTENT #91 draft
-head](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md)
-for the living contract.
+Handler discovery exposes queryless `IntentContract` entries, each with a `convention` and optional `eventKinds` metadata. Event kinds are discovery metadata only and are never inferred from payloads. NAP-INTENT has no public NAP-INC dependency. See the adopted [NAP-INTENT #91 draft head](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md) for the living contract.
 
 ---
 
@@ -347,9 +331,7 @@ interface EventTemplate {
 
 ### Topic Constants
 
-The `TOPICS` object contains string constants for INC topic-based routing. Its
-archetype-open entries use the current advisory convention names; topic strings
-are passed directly in `inc.emit` and `inc.subscribe` payloads.
+The `TOPICS` object contains string constants for INC topic-based routing. Its archetype-open entries use the current advisory convention names; topic strings are passed directly in `inc.emit` and `inc.subscribe` payloads.
 
 ```ts
 import { TOPICS } from '@napplet/core';
@@ -361,10 +343,7 @@ TOPICS.WM_FOCUSED_WINDOW_CHANGED // 'wm:focused-window-changed'
 // ... see source for full list
 ```
 
-Convention topic strings are opaque and route only when the sender and subscriber
-use the same string. They do not define a payload schema, Nostr event kind, query,
-wildcard, prefix, or canonicalization rule; receivers validate any local payload
-choice themselves.
+Convention topic strings are opaque and route only when the sender and subscriber use the same string. They do not define a payload schema, Nostr event kind, query, wildcard, prefix, or canonicalization rule; receivers validate any local payload choice themselves.
 
 ---
 
@@ -393,12 +372,7 @@ import type {
 
 ## Boundary Helpers (clone-safety)
 
-NAP shims cross the napplet ⇄ shell boundary by structured-cloning a JSON
-envelope through `postMessage`. Framework reactive values — Svelte 5 `$state`,
-Vue `reactive`, Solid stores — are `Proxy` objects that are **not** structured-
-cloneable, so a naive `postMessage` throws `DataCloneError`, which gets silently
-swallowed in async paths (the envelope never crosses the boundary). These
-helpers make that loud or transparent.
+NAP shims cross the napplet ⇄ shell boundary by structured-cloning a JSON envelope through `postMessage`. Framework reactive values — Svelte 5 `$state`, Vue `reactive`, Solid stores — are `Proxy` objects that are **not** structured- cloneable, so a naive `postMessage` throws `DataCloneError`, which gets silently swallowed in async paths (the envelope never crosses the boundary). These helpers make that loud or transparent.
 
 | Export | Description |
 |--------|-------------|
@@ -417,8 +391,7 @@ napplet.outbox.subscribe(toCloneableSnapshot(filters), { relays });
 setCloneMode('snapshot');
 ```
 
-These are SDK plumbing only — identical plain envelopes reach the wire, so they
-add no protocol surface.
+These are SDK plumbing only — identical plain envelopes reach the wire, so they add no protocol surface.
 
 ## Integration Note
 

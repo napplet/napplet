@@ -68,48 +68,29 @@ The napp type identifier (e.g., `'feed'`, `'chat'`, `'profile'`). This value is:
 
 **Type:** `string[] | { infer?: boolean; explicit?: string[]; mode?: 'warn' | 'error' }`
 
-An array of bare NAP domain names this napplet requires from its host shell
-(e.g., `['outbox', 'storage']`), or an opt-in inference config. When set:
+An array of bare NAP domain names this napplet requires from its host shell (e.g., `['outbox', 'storage']`), or an opt-in inference config. When set:
 
 - Adds `['requires', 'domain']` tags to the kind 35129 manifest event
 
-With inference enabled, the plugin scans statically visible source usage of
-`@napplet/nap/<domain>`, SDK domain subpath imports, and direct
-`window.napplet.<domain>` access. Explicit requirements remain the
-author-controlled declaration; inferred domains are merged as tooling assistance
-and can warn or fail when explicit config is missing a domain.
+With inference enabled, the plugin scans statically visible source usage of `@napplet/nap/<domain>`, SDK domain subpath imports, and direct `window.napplet.<domain>` access. Explicit requirements remain the author-controlled declaration; inferred domains are merged as tooling assistance and can warn or fail when explicit config is missing a domain.
 
-If the shell does not support all required domains, the napplet can detect this
-at runtime via `window.napplet?.domain` presence or the shell can show a
-compatibility warning.
+If the shell does not support all required domains, the napplet can detect this at runtime via `window.napplet?.domain` presence or the shell can show a compatibility warning.
 
 #### title (optional)
 
 **Type:** `string`
 
-Human-readable napplet title. When set, the plugin **sets/overrides** the built
-HTML `<title>` element (inserting one after `<head>` if the document has none),
-replacing any author-written title. This is **plain HTML** — NOT a `napplet-*`
-protocol meta tag. When omitted, the author's existing `<title>` is left
-untouched and no empty tag is emitted.
+Human-readable napplet title. When set, the plugin **sets/overrides** the built HTML `<title>` element (inserting one after `<head>` if the document has none), replacing any author-written title. This is **plain HTML** — NOT a `napplet-*` protocol meta tag. When omitted, the author's existing `<title>` is left untouched and no empty tag is emitted.
 
-The injected value is HTML-escaped for element-text context (`&`, `<`, `>`). At
-deploy time the napplet CLI reads this back out of the built `index.html` and
-emits it as the NIP-5A `["title", …]` manifest tag.
+The injected value is HTML-escaped for element-text context (`&`, `<`, `>`). At deploy time the napplet CLI reads this back out of the built `index.html` and emits it as the NIP-5A `["title", …]` manifest tag.
 
 #### description (optional)
 
 **Type:** `string`
 
-Human-readable napplet description. When set, the plugin **sets/overrides** the
-built HTML `<meta name="description">` element (inserting one after `<head>` if
-absent), replacing any existing description meta. This is **plain HTML** — NOT a
-`napplet-*` protocol meta tag. When omitted, the author's existing description
-meta is left untouched and no empty tag is emitted.
+Human-readable napplet description. When set, the plugin **sets/overrides** the built HTML `<meta name="description">` element (inserting one after `<head>` if absent), replacing any existing description meta. This is **plain HTML** — NOT a `napplet-*` protocol meta tag. When omitted, the author's existing description meta is left untouched and no empty tag is emitted.
 
-The injected value is HTML-escaped for attribute context (`&`, `"`). At deploy
-time the napplet CLI reads this back out of the built `index.html` and emits it
-as the NIP-5A `["description", …]` manifest tag.
+The injected value is HTML-escaped for attribute context (`&`, `"`). At deploy time the napplet CLI reads this back out of the built `index.html` and emits it as the NIP-5A `["description", …]` manifest tag.
 
 ```ts
 nip5aManifest({
@@ -153,13 +134,7 @@ If none of the three paths resolve a schema, manifest emission for the config ta
 
 **Type:** `Array<{ slug: string; convention: string; eventKinds?: number[] }>`
 
-Declares the NAAT archetype roles this napplet fulfills ([living archetype
-registry](https://github.com/napplet/naps/blob/master/ARCHETYPES.md)). Each entry
-emits **one** `['archetype', slug, convention, ...kindFields]` tag on the kind
-35129 manifest event. `convention` is a queryless stable identity and every
-optional `eventKinds` value becomes a trailing same-tag `kind:<number>` field.
-A napplet may declare several archetype roles; a napplet with no archetype tag
-is fully valid.
+Declares the NAAT archetype roles this napplet fulfills ([living archetype registry](https://github.com/napplet/naps/blob/master/ARCHETYPES.md)). Each entry emits **one** `['archetype', slug, convention, ...kindFields]` tag on the kind 35129 manifest event. `convention` is a queryless stable identity and every optional `eventKinds` value becomes a trailing same-tag `kind:<number>` field. A napplet may declare several archetype roles; a napplet with no archetype tag is fully valid.
 
 ```ts
 nip5aManifest({
@@ -175,18 +150,11 @@ nip5aManifest({
 
 Like the `config` tag, archetype tags are **not** folded into `aggregateHash`: per NIP-5D §Identity the aggregate is the NIP-5A hash of the `path` tags alone, so declaring archetypes never changes the napplet's content address. Blank slugs are skipped.
 
-One object always represents one convention contract; repeat objects for several
-conventions. The plugin rejects query-bearing metadata and does not define a
-payload schema or infer an event kind from payload content. `eventKinds` is
-unsigned discovery metadata only. This non-normative guide follows the adopted
-[NAP-INC #89 `4593ce9`](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md),
-[URI terminology #90 `896c32c`](https://github.com/napplet/naps/commit/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT #91 `a718915`](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
+One object always represents one convention contract; repeat objects for several conventions. The plugin rejects query-bearing metadata and does not define a payload schema or infer an event kind from payload content. `eventKinds` is unsigned discovery metadata only. This non-normative guide follows the adopted [NAP-INC #89 `4593ce9`](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md), [URI terminology #90 `896c32c`](https://github.com/napplet/naps/commit/896c32c92deee68dc4d10fc1132b62df20cccb6f), and [NAP-INTENT #91 `a718915`](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
 
 #### artifactMode (optional, v1.11+)
 
-**Type:** `'external-assets' | 'single-file'`
-**Default:** `'external-assets'`
+**Type:** `'external-assets' | 'single-file'` **Default:** `'external-assets'`
 
 Controls the build artifact shape the plugin validates and hashes.
 
@@ -309,8 +277,7 @@ node -e "import('nostr-tools/pure').then(m => console.log(Buffer.from(m.generate
 
 ## NAP Domain Requirements
 
-Use the `requires` option when your napplet needs specific NAP domains to
-function correctly.
+Use the `requires` option when your napplet needs specific NAP domains to function correctly.
 
 ```ts
 // vite.config.ts
@@ -327,8 +294,7 @@ export default defineConfig({
 });
 ```
 
-Inference can be enabled when you want the plugin to check source usage against
-the explicit declaration:
+Inference can be enabled when you want the plugin to check source usage against the explicit declaration:
 
 ```ts
 nip5aManifest({
@@ -343,8 +309,7 @@ nip5aManifest({
 
 ### Manifest capability declaration
 
-With `requires: ['outbox', 'storage']`, the signed manifest event includes
-the corresponding `requires` tags:
+With `requires: ['outbox', 'storage']`, the signed manifest event includes the corresponding `requires` tags:
 
 ```json
 {
@@ -375,28 +340,17 @@ v0.29.0 adds a build-time safeguard enforced in `closeBundle` so misconfiguratio
 
 ### Inline scripts are supported (and expected)
 
-Per NIP-5D a napplet is a single self-contained `/index.html` loaded via
-`iframe.srcdoc` with `sandbox="allow-scripts"` and no `allow-same-origin` — an
-opaque origin with no served URL. Its executable JS therefore lives **inline**;
-there is no origin from which the runtime could fetch an external
-`<script src>`. The plugin does **not** reject inline `<script>` elements. (An
-earlier version did under a loading model that NIP-5D does not define; that was
-removed — see napplet/web#53.)
+Per NIP-5D a napplet is a single self-contained `/index.html` loaded via `iframe.srcdoc` with `sandbox="allow-scripts"` and no `allow-same-origin` — an opaque origin with no served URL. Its executable JS therefore lives **inline**; there is no origin from which the runtime could fetch an external `<script src>`. The plugin does **not** reject inline `<script>` elements. (An earlier version did under a loading model that NIP-5D does not define; that was removed — see napplet/web#53.)
 
-When `artifactMode: 'single-file'` is set, the plugin additionally folds any
-local `<script src>`/`<link rel="stylesheet">` build assets into `index.html`
-and deletes them, so the single file is the only served artifact. Pre-existing
-inline scripts in your built HTML are preserved verbatim.
+When `artifactMode: 'single-file'` is set, the plugin additionally folds any local `<script src>`/`<link rel="stylesheet">` build assets into `index.html` and deletes them, so the single file is the only served artifact. Pre-existing inline scripts in your built HTML are preserved verbatim.
 
 ## How It Works
 
 ### HTML transforms (`transformIndexHtml`)
 
-The plugin leaves protocol metadata out of `index.html`. Its only HTML transforms
-are the optional plain `<title>` and `<meta name="description">` values.
+The plugin leaves protocol metadata out of `index.html`. Its only HTML transforms are the optional plain `<title>` and `<meta name="description">` values.
 
-The shell resolves napplet identity and capability metadata from the signed
-manifest event, not from `index.html` protocol meta tags.
+The shell resolves napplet identity and capability metadata from the signed manifest event, not from `index.html` protocol meta tags.
 
 ### Build Mode (`closeBundle`)
 

@@ -266,6 +266,7 @@ pnpm version-packages
 - ESM-only (no CJS output)
 - Zero framework dependencies (no Svelte, React, etc.)
 - All public API exports have JSDoc with @param, @returns, @example
+- Markdown and README prose must not be manually hard-wrapped. Keep each paragraph on one physical line and let the reader or renderer wrap it for the available device and viewport. Use line breaks only when they carry Markdown structure, such as blank-line paragraph boundaries, headings, lists, blockquotes, tables, and code fences.
 
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project

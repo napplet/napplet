@@ -23,8 +23,7 @@ curl -fsSL https://napplet.run/install.sh | sh
 irm https://napplet.run/install.ps1 | iex
 ```
 
-Run `napplet guide` for the current workflow and links to the relevant docs, or
-follow the same path directly:
+Run `napplet guide` for the current workflow and links to the relevant docs, or follow the same path directly:
 
 ```bash
 napplet create my-napplet
@@ -38,10 +37,7 @@ napplet deploy --dry-run
 napplet deploy
 ```
 
-`napplet create` clones the maintained Vite + TypeScript starter. `napplet init`
-owns deployment name, title, description, archetype roles and conventions, relays,
-and Blossom servers in `.napplet/config.json`. Node.js 20+ is needed by the
-generated project and by the package-backed `create` and `skills` commands.
+`napplet create` clones the maintained Vite + TypeScript starter. `napplet init` owns deployment name, title, description, archetype roles and conventions, relays, and Blossom servers in `.napplet/config.json`. Node.js 20+ is needed by the generated project and by the package-backed `create` and `skills` commands.
 
 ## Packages
 
@@ -61,8 +57,7 @@ generated project and by the package-backed `create` and `skills` commands.
 
 ## Conformance testing
 
-Napplets can verify they conform to the NAP protocol **before** publishing, in two
-scopes that share one engine:
+Napplets can verify they conform to the NAP protocol **before** publishing, in two scopes that share one engine:
 
 ```bash
 # Headless / CI — exits non-zero on any error-severity failure:
@@ -84,11 +79,7 @@ npx napplet-conformance --ui . --exec "vite build --watch"
 }
 ```
 
-The same web runtime ships standalone (`apps/conformance`, deployed at `/conformance`)
-and runs the checks live in the browser with a visual report. v1 is zero-config protocol
-conformance: signed manifest-event validity, boots under `sandbox="allow-scripts"`, receives
-a runtime-injected `window.napplet`, every emitted envelope is well-formed,
-graceful degradation when a domain is absent, and no forbidden globals.
+The same web runtime ships standalone (`apps/conformance`, deployed at `/conformance`) and runs the checks live in the browser with a visual report. v1 is zero-config protocol conformance: signed manifest-event validity, boots under `sandbox="allow-scripts"`, receives a runtime-injected `window.napplet`, every emitted envelope is well-formed, graceful degradation when a domain is absent, and no forbidden globals.
 
 ## Changelog
 
@@ -132,16 +123,9 @@ The iframe sandbox requires only `allow-scripts` -- **no `allow-same-origin`**. 
 
 ### Intent delivery
 
-NAP-INTENT calls use an authoritative convention URI such as
-`napplet:profile/open?pubkey=abc123`. The runtime binding normalizes that URI
-at `intent.invoke`/`intent.open` only: it derives the archetype, action,
-queryless convention, and shallow text payload before requesting acceptance.
-Manifest discovery and INC subscriptions remain queryless/exact; they do not
-parse a URI query.
+NAP-INTENT calls use an authoritative convention URI such as `napplet:profile/open?pubkey=abc123`. The runtime binding normalizes that URI at `intent.invoke`/`intent.open` only: it derives the archetype, action, queryless convention, and shallow text payload before requesting acceptance. Manifest discovery and INC subscriptions remain queryless/exact; they do not parse a URI query.
 
-An accepted invocation means the runtime has accepted delivery responsibility,
-not that a target has started or received the payload. A target should register
-`onDelivery` during startup and validate the payload before using it:
+An accepted invocation means the runtime has accepted delivery responsibility, not that a target has started or received the payload. A target should register `onDelivery` during startup and validate the payload before using it:
 
 ```ts
 window.napplet.intent?.onDelivery((delivery) => {
@@ -155,12 +139,7 @@ const result = await window.napplet.intent?.open(
 if (!result?.ok) throw new Error(result?.error ?? 'intent rejected');
 ```
 
-The target may already be running or start later; the protocol does not promise
-source/target overlap, retries, or persistence. NAP-INTENT has no public
-NAP-INC dependency. This repository's adopted draft references are
-[NAP-INC #89 at `4593ce9`](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md),
-[URI terminology #90 at `896c32c`](https://github.com/napplet/naps/commit/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT #91 at `a718915`](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
+The target may already be running or start later; the protocol does not promise source/target overlap, retries, or persistence. NAP-INTENT has no public NAP-INC dependency. This repository's adopted draft references are [NAP-INC #89 at `4593ce9`](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md), [URI terminology #90 at `896c32c`](https://github.com/napplet/naps/commit/896c32c92deee68dc4d10fc1132b62df20cccb6f), and [NAP-INTENT #91 at `a718915`](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
 
 ## Origin
 
@@ -177,8 +156,7 @@ napplet create my-napplet # Scaffold a new napplet from the template repo
 
 ### Publishing
 
-Publishing runs from GitHub Actions. Prepare release metadata locally, then push
-the branch/tag and let the npm + JSR workflows publish from `main`.
+Publishing runs from GitHub Actions. Prepare release metadata locally, then push the branch/tag and let the npm + JSR workflows publish from `main`.
 
 ```bash
 pnpm version-packages   # Apply changesets, bump versions
@@ -198,9 +176,7 @@ pnpm --filter @napplet/docs dev            # documentation
 pnpm --filter @napplet/conformance-web dev # conformance runtime
 ```
 
-`.github/workflows/deploy-site.yml` builds all three, stitches docs under `/docs`
-and the conformance runtime under `/conformance`, and deploys to Bunny + nsite. Configure deploy secrets with
-`scripts/setup-site-secrets.sh`.
+`.github/workflows/deploy-site.yml` builds all three, stitches docs under `/docs` and the conformance runtime under `/conformance`, and deploys to Bunny + nsite. Configure deploy secrets with `scripts/setup-site-secrets.sh`.
 
 ## Related
 
