@@ -16,7 +16,7 @@ import { result } from './types.js';
 
 /** Codes that fail a given manifest check. */
 function manifestErrors(ctx: Parameters<Check['run']>[0], codes: ManifestError['code'][]): ManifestError[] {
-  return validateManifestEvent(ctx.manifestEvent).errors.filter((e) => codes.includes(e.code));
+  return validateManifestEvent(ctx.manifestEvent, { customDomains: ctx.customDomains }).errors.filter((e) => codes.includes(e.code));
 }
 
 /** Build a NIP-5D manifest-event check. */

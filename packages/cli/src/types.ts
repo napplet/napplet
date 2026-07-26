@@ -39,6 +39,8 @@ export interface NappletConfig {
   bunkerPubkey?: string;
   named?: string[];
   metadata?: NappletDeployMetadata;
+  /** Runtime-local experimental domains accepted in manifest `requires` tags. */
+  customDomains?: string[];
   discover?: {
     enabled: boolean;
     roots: string[];

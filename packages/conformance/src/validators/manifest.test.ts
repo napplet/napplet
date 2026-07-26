@@ -94,4 +94,17 @@ describe('validateManifestEvent — failures', () => {
     expect(v.errors.some((e) => e.code === 'invalid-required-nap')).toBe(true);
     expect(v.errors.some((e) => e.code === 'unknown-required-nap')).toBe(true);
   });
+
+  it('accepts custom requires only when explicitly configured', () => {
+    const custom = event({
+      tags: [
+        ['d', 'demo'],
+        ['path', '/index.html', HASH],
+        ['requires', 'foo'],
+      ],
+    });
+
+    expect(validateManifestEvent(custom).errors.some((e) => e.code === 'unknown-required-nap')).toBe(true);
+    expect(validateManifestEvent(custom, { customDomains: ['foo'] }).ok).toBe(true);
+  });
 });

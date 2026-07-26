@@ -434,6 +434,40 @@ describe('nip5aManifest artifact modes', () => {
     expect(manifest.tags.filter((tag) => tag[0] === 'requires')).toEqual([['requires', 'relay']]);
   });
 
+  it('preserves explicit custom requirements only when allowlisted', async () => {
+    const withoutAllowlist = makeFixture();
+    fs.writeFileSync(path.join(withoutAllowlist.dist, 'index.html'), '<!doctype html>');
+    await runCloseBundle(
+      { nappletType: 'custom-requires-dropped', requires: ['foo'] },
+      withoutAllowlist,
+      {},
+    );
+    expect(readManifest(withoutAllowlist.dist).tags.some((tag) => tag[0] === 'requires')).toBe(false);
+
+    const withAllowlist = makeFixture();
+    fs.writeFileSync(path.join(withAllowlist.dist, 'index.html'), '<!doctype html>');
+    await runCloseBundle(
+      { nappletType: 'custom-requires', requires: ['foo'], customDomains: ['foo'] },
+      withAllowlist,
+      {},
+    );
+    expect(readManifest(withAllowlist.dist).tags).toContainEqual(['requires', 'foo']);
+  });
+
+  it('infers custom requirements only when allowlisted', async () => {
+    const fixture = makeFixture();
+    fs.writeFileSync(path.join(fixture.dist, 'index.html'), '<!doctype html>');
+
+    await runCloseBundle(
+      { nappletType: 'custom-infer', requires: { infer: true }, customDomains: ['foo'] },
+      fixture,
+      {},
+      [{ id: path.join(fixture.root, 'src/main.ts'), code: 'window.napplet.foo.doThing();' }],
+    );
+
+    expect(readManifest(fixture.dist).tags).toContainEqual(['requires', 'foo']);
+  });
+
   it('accepts count as an explicit or inferred requirement', async () => {
     const explicitFixture = makeFixture();
     fs.writeFileSync(path.join(explicitFixture.dist, 'index.html'), '<!doctype html>');

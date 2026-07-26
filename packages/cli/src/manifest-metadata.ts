@@ -32,7 +32,7 @@ export async function readManifestMetadataTags(
   return mergeConfigMetadataTags(
     dedupeTags([
       ...await readIndexHtmlMetadataTags(indexHtmlPath),
-      ...await readPluginManifestMetadataTags(manifestPath),
+      ...await readPluginManifestMetadataTags(manifestPath, config.customDomains),
     ]),
     config,
   );
@@ -40,8 +40,13 @@ export async function readManifestMetadataTags(
 
 async function readPluginManifestMetadataTags(
   manifestPath: string | undefined,
+  customDomains: readonly string[] = [],
 ): Promise<string[][]> {
   if (!manifestPath) return [];
+  const allowedDomains = new Set([
+    ...NAP_DOMAINS,
+    ...customDomains.map((domain) => domain.trim()).filter(Boolean),
+  ]);
   try {
     const raw = await Deno.readTextFile(manifestPath);
     const value = JSON.parse(raw) as { tags?: unknown };
@@ -51,7 +56,7 @@ async function readPluginManifestMetadataTags(
       if (!Array.isArray(tag) || typeof tag[0] !== "string") continue;
       if (tag[0] === "requires" && typeof tag[1] === "string") {
         const domain = tag[1].trim();
-        if (NAP_DOMAINS.has(domain)) tags.push(["requires", domain]);
+        if (allowedDomains.has(domain)) tags.push(["requires", domain]);
       }
       if (isCanonicalArchetypeTag(tag)) {
         tags.push(tag.map((value) => String(value).trim()));

@@ -58,6 +58,8 @@ export interface Nip5aManifestOptions {
   nappletType: string;
   /** NAP domains this napplet requires, optionally inferred from source usage. */
   requires?: Nip5aRequiresOption;
+  /** Runtime-local experimental domains accepted in `requires` and inference. */
+  customDomains?: string[];
   /**
    * Human-readable napplet title. When set, the plugin sets/overrides the built
    * HTML `<title>` element (inserting one after `<head>` if absent). This is

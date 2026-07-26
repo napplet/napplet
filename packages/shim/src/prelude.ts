@@ -4,24 +4,24 @@
  * @module
  */
 
-import { NAP_DOMAINS } from '@napplet/core';
 import type { NapDomain, NappletGlobal } from '@napplet/core';
-import { installNappletGlobal } from './runtime.js';
+import { installNappletGlobal, registerNappletExtension } from './runtime.js';
+import type { NappletShimExtension } from './runtime.js';
 
 /** Options for installing a constrained `window.napplet` runtime prelude. */
 export interface NappletRuntimePreludeOptions {
-  /** Explicit NAP domain allowlist the shell exposes to this napplet. */
-  domains: readonly NapDomain[];
+  /** Explicit domain allowlist the shell exposes to this napplet. */
+  domains: readonly string[];
 }
 
-const KNOWN_DOMAINS = new Set<string>(NAP_DOMAINS);
-
-function normalizePreludeDomains(options: NappletRuntimePreludeOptions): NapDomain[] {
+function normalizePreludeDomains(options: NappletRuntimePreludeOptions): string[] {
   if (!options || !Array.isArray(options.domains)) {
     throw new TypeError('Napplet runtime prelude requires an explicit domains array');
   }
 
-  return options.domains.filter((domain): domain is NapDomain => KNOWN_DOMAINS.has(domain));
+  return options.domains
+    .map((domain) => domain.trim())
+    .filter((domain) => domain.length > 0);
 }
 
 /**
@@ -83,4 +83,11 @@ export function renderNappletRuntimePreludeScript(options: NappletRuntimePrelude
 
 /** Alias for {@link installNappletRuntimePrelude}. */
 export const install: typeof installNappletRuntimePrelude = installNappletRuntimePrelude;
-export type { NapDomain, NappletGlobal };
+/** Alias for registering runtime-local experimental domains before installation. */
+export const registerExtension: typeof registerNappletRuntimeExtension = registerNappletRuntimeExtension;
+export type { NapDomain, NappletGlobal, NappletShimExtension };
+
+/** Register a runtime-local experimental domain for the browser prelude. */
+export function registerNappletRuntimeExtension(extension: NappletShimExtension): void {
+  registerNappletExtension(extension);
+}

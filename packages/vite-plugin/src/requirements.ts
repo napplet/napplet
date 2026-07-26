@@ -37,18 +37,19 @@ const NAP_DOMAIN_SET = new Set<string>(NAP_DOMAINS);
 const IMPORT_RE = /\bimport\s+(type\s+)?(?:(?:[^'";]+?\s+from\s+)?['"]([^'"]+)['"])/g;
 const WINDOW_DOMAIN_RE = /\bwindow\s*\.\s*napplet\s*\.\s*([A-Za-z_$][\w$]*)/g;
 
-export function inferRequirementsFromSource(code: string, id: string): string[] {
+export function inferRequirementsFromSource(code: string, id: string, customDomains: readonly string[] = []): string[] {
   if (!isSourceFile(id)) return [];
 
+  const allowedDomains = allowedDomainSet(customDomains);
   const domains = new Set<string>();
   for (const match of code.matchAll(IMPORT_RE)) {
     if (match[1]) continue;
-    const domain = domainFromSpecifier(match[2]);
+    const domain = domainFromSpecifier(match[2], allowedDomains);
     if (domain) domains.add(domain);
   }
   for (const match of code.matchAll(WINDOW_DOMAIN_RE)) {
     const domain = match[1];
-    if (NAP_DOMAIN_SET.has(domain)) domains.add(domain);
+    if (allowedDomains.has(domain)) domains.add(domain);
   }
   return [...domains].sort();
 }
@@ -60,20 +61,22 @@ export function addInferredRequirements(state: ManifestPluginState, domains: rea
 export function resolvedRequirements(
   option: Nip5aRequiresOption | undefined,
   state: ManifestPluginState,
+  customDomains: readonly string[] = [],
 ): string[] {
   const explicit = explicitRequirements(option);
   const inferred = shouldInfer(option) ? [...state.inferredRequires] : [];
-  return dedupeRequirements([...explicit, ...inferred]);
+  return dedupeRequirements([...explicit, ...inferred], customDomains);
 }
 
 export function reportRequirementDiagnostics(
   option: Nip5aRequiresOption | undefined,
   state: ManifestPluginState,
   warn: (message: string) => void,
+  customDomains: readonly string[] = [],
 ): void {
   if (!option || Array.isArray(option) || !option.infer || !option.explicit) return;
 
-  const explicit = new Set(dedupeRequirements(option.explicit));
+  const explicit = new Set(dedupeRequirements(option.explicit, customDomains));
   const missing = [...state.inferredRequires].filter((domain) => !explicit.has(domain)).sort();
   if (missing.length === 0) return;
 
@@ -93,21 +96,27 @@ function shouldInfer(option: Nip5aRequiresOption | undefined): boolean {
   return !Array.isArray(option) && option?.infer === true;
 }
 
-function dedupeRequirements(domains: readonly string[]): string[] {
-  return [...new Set(domains.map((domain) => domain.trim()).filter(isNapDomain))].sort();
+function dedupeRequirements(domains: readonly string[], customDomains: readonly string[] = []): string[] {
+  const allowedDomains = allowedDomainSet(customDomains);
+  return [...new Set(domains.map((domain) => domain.trim()).filter((domain) => allowedDomains.has(domain)))].sort();
 }
 
-function domainFromSpecifier(specifier: string | undefined): string | null {
+function domainFromSpecifier(specifier: string | undefined, allowedDomains: ReadonlySet<string>): string | null {
   if (!specifier) return null;
   const napMatch = specifier.match(/^@napplet\/nap\/([^/]+)/);
-  if (napMatch && NAP_DOMAIN_SET.has(napMatch[1])) return napMatch[1];
+  if (napMatch && allowedDomains.has(napMatch[1])) return napMatch[1];
   const sdkMatch = specifier.match(/^@napplet\/sdk\/([^/]+)/);
-  if (sdkMatch && NAP_DOMAIN_SET.has(sdkMatch[1])) return sdkMatch[1];
+  if (sdkMatch && allowedDomains.has(sdkMatch[1])) return sdkMatch[1];
   return null;
 }
 
-function isNapDomain(domain: string): boolean {
-  return NAP_DOMAIN_SET.has(domain);
+function allowedDomainSet(customDomains: readonly string[]): Set<string> {
+  const domains = new Set<string>(NAP_DOMAIN_SET);
+  for (const domain of customDomains) {
+    const trimmed = domain.trim();
+    if (trimmed) domains.add(trimmed);
+  }
+  return domains;
 }
 
 function isSourceFile(id: string): boolean {

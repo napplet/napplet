@@ -17,7 +17,7 @@
  * @packageDocumentation
  */
 
-import { validateEnvelope, type EnvelopeVerdict } from '../validators/envelope.js';
+import { validateEnvelope, type EnvelopeVerdict, type ValidateEnvelopeOptions } from '../validators/envelope.js';
 
 /** A 64-hex reference user pubkey the shell reports for identity queries. */
 export const REFERENCE_PUBKEY: string = 'f'.repeat(64);
@@ -39,6 +39,8 @@ export interface RecordedEnvelope {
 export interface ReferenceShellOptions {
   /** Injectable clock for deterministic tests. Defaults to `Date.now`. */
   now?: () => number;
+  /** Runtime-local experimental domain validation options. */
+  validation?: ValidateEnvelopeOptions;
 }
 
 /** A function that produces response envelopes for one outbound request. */
@@ -307,6 +309,7 @@ export interface ReferenceShell {
  */
 export function createReferenceShell(options: ReferenceShellOptions = {}): ReferenceShell {
   const now = options.now ?? (() => Date.now());
+  const validation = options.validation ?? {};
   const records: RecordedEnvelope[] = [];
 
   function handle(envelope: unknown): unknown[] {
@@ -315,7 +318,7 @@ export function createReferenceShell(options: ReferenceShellOptions = {}): Refer
         ? ((envelope as Record<string, unknown>).type as string)
         : undefined;
 
-    records.push({ envelope, verdict: validateEnvelope(envelope), timestamp: now() });
+    records.push({ envelope, verdict: validateEnvelope(envelope, validation), timestamp: now() });
 
     if (!type) return [];
     const responder = RESPONDERS[type];

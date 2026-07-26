@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   installNappletRuntimePrelude,
+  registerNappletRuntimeExtension,
   renderNappletRuntimePreludeCall,
   renderNappletRuntimePreludeScript,
 } from './prelude.js';
@@ -26,14 +27,24 @@ describe('@napplet/shim/prelude', () => {
     expect((window as Window & { napplet?: typeof installed }).napplet).toBe(installed);
   });
 
-  it('filters unknown domains out of rendered activation calls', () => {
+  it('preserves custom domains in rendered activation calls', () => {
     const call = renderNappletRuntimePreludeCall({
-      domains: ['identity', 'not-real' as never, 'storage'],
+      domains: ['identity', 'foo', 'storage'],
     });
 
     expect(call).toBe(
-      'globalThis.NappletShimPrelude.install({"domains":["identity","storage"]});',
+      'globalThis.NappletShimPrelude.install({"domains":["identity","foo","storage"]});',
     );
+  });
+
+  it('installs pre-registered custom domains', () => {
+    const api = { ping: () => 'pong' };
+    registerNappletRuntimeExtension({ domain: 'foo', api });
+
+    const installed = installNappletRuntimePrelude({ domains: ['foo'] }) as unknown as { foo?: typeof api };
+
+    expect(installed.foo).toBe(api);
+    expect(installed.foo?.ping()).toBe('pong');
   });
 
   it('renders a script tag for the IIFE activation call', () => {

@@ -69,8 +69,11 @@ export interface ManifestVerdict {
   nappletType?: string;
 }
 
-/** Options for {@link validateManifest}. Reserved for compatibility. */
-export interface ValidateManifestOptions {}
+/** Options for {@link validateManifestEvent}. */
+export interface ValidateManifestOptions {
+  /** Runtime-local experimental domains accepted in `requires` tags. */
+  customDomains?: readonly string[];
+}
 
 function firstTag(event: NappletManifestEvent, name: string): string[] | undefined {
   return event.tags.find((tag) => tag[0] === name);
@@ -109,7 +112,10 @@ export function manifestDisplayName(event: NappletManifestEvent): string | undef
  * @param event - The resolved Nostr manifest event.
  * @returns A {@link ManifestVerdict}.
  */
-export function validateManifestEvent(event?: NappletManifestEvent | null): ManifestVerdict {
+export function validateManifestEvent(
+  event?: NappletManifestEvent | null,
+  options: ValidateManifestOptions = {},
+): ManifestVerdict {
   const errors: ManifestError[] = [];
   const warnings: ManifestError[] = [];
 
@@ -124,6 +130,10 @@ export function validateManifestEvent(event?: NappletManifestEvent | null): Mani
 
   const dTag = manifestDTag(event);
   const requires = manifestRequires(event);
+  const allowedDomains = new Set([
+    ...(NAP_DOMAINS as readonly string[]),
+    ...(options.customDomains ?? []).map((domain) => domain.trim()).filter(Boolean),
+  ]);
 
   if (!isNappletKind(event.kind)) {
     errors.push({
@@ -165,7 +175,7 @@ export function validateManifestEvent(event?: NappletManifestEvent | null): Mani
       });
       continue;
     }
-    if (!(NAP_DOMAINS as readonly string[]).includes(req)) {
+    if (!allowedDomains.has(req)) {
       errors.push({
         code: 'unknown-required-nap',
         message: `requires tag "${req}" is not a known NAP domain`,
