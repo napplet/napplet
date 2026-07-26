@@ -5,10 +5,10 @@ milestone_name: NIP-5D Runtime Injection
 current_phase: 161
 current_phase_name: ad-hoc-convention-package-contracts
 status: complete
-stopped_at: Phase 161 complete; PR #186 open
-last_updated: "2026-07-23T17:55:49.613Z"
-last_activity: 2026-07-23
-last_activity_desc: Phase 161 verified and published as PR #186
+stopped_at: Quick task 260726-ft1 complete; PR #186 updated
+last_updated: "2026-07-26T10:28:26.000Z"
+last_activity: 2026-07-26
+last_activity_desc: Removed hard-wrapped README prose and documented reader-side wrapping
 progress:
   total_phases: 8
   completed_phases: 4
@@ -34,8 +34,15 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 Phase: 161 (ad-hoc-convention-package-contracts) — COMPLETE
 Plan: 26 of 26
 Status: Verified; PR #186 open
-Last activity: 2026-07-23 — Phase 161 verified and published as PR #186
+Last activity: 2026-07-26 — Quick task 260726-ft1 removed hard-wrapped README prose and documented reader-side wrapping
 community/group-chat invite linked from the SPA and docs.
+
+### Quick task 260726-ft1 — COMPLETE
+
+- Removed manual prose wrapping from all 11 READMEs changed by the current branch while preserving structural Markdown and fenced examples.
+- Added the one-physical-line-per-paragraph convention to `AGENTS.md`.
+- Verification: README content/fence/wrapping audits; `pnpm build`; `pnpm type-check`; `pnpm -r test:unit`; `pnpm lint`; changed-branch AI-slop 87/100 with only pre-existing source warnings; `git diff --check`.
+- Commit: `dbdd0471` (`docs: let readers wrap README prose`).
 
 ### Quick task 260715-ogy — COMPLETE
 
