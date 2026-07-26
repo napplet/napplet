@@ -1,5 +1,25 @@
 # @napplet/cli
 
+## 0.3.0
+
+### Minor Changes
+
+- dd7b3a7: Adopt the draft PR #89-#91 convention and intent contracts across the public
+  types, bindings, runtime injection, manifest tooling, CLI, and reference shell:
+  queryless exact identities with URI-to-text-payload transposition at `emit` and
+  `invoke`/`open`, runtime-attested sender, immediate acceptance followed by
+  source-independent no-ID target delivery, and optional same-tag event-kind
+  discovery metadata.
+
+### Patch Changes
+
+- 4916777: Remove the 13-character upper bound on named napplet `d` tags. Neither NIP-5D nor
+  NIP-5A constrains `d` tag length, so `^[a-z0-9-]{1,13}$` was CLI-invented surface
+  that rejected spec-conformant napplets — `napplet deploy` now accepts any
+  non-empty `[a-z0-9-]` `d` tag (still rejecting trailing `-`), and `napplet deploy
+--all` no longer throws on workspace folders with names longer than 13
+  characters.
+
 ## 0.2.1
 
 ### Patch Changes

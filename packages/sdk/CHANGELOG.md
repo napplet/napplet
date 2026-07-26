@@ -1,5 +1,22 @@
 # @napplet/sdk
 
+## 0.25.0
+
+### Minor Changes
+
+- dd7b3a7: Adopt the draft PR #89-#91 convention and intent contracts across the public
+  types, bindings, runtime injection, manifest tooling, CLI, and reference shell:
+  queryless exact identities with URI-to-text-payload transposition at `emit` and
+  `invoke`/`open`, runtime-attested sender, immediate acceptance followed by
+  source-independent no-ID target delivery, and optional same-tag event-kind
+  discovery metadata.
+
+### Patch Changes
+
+- Updated dependencies [dd7b3a7]
+  - @napplet/core@0.29.0
+  - @napplet/nap@0.29.0
+
 ## 0.24.4
 
 ### Patch Changes

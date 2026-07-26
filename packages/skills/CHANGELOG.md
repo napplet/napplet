@@ -1,5 +1,14 @@
 # @napplet/skills
 
+## 0.2.11
+
+### Patch Changes
+
+- dd7b3a7: Update shipped generator, conformance CLI, and agent-skill guidance for
+  queryless convention identities, optional same-tag event kinds, authoritative
+  intent URIs, acceptance-before-delivery, runtime-attested sender, and
+  carrier-neutral delivery without a public NAP-INC dependency.
+
 ## 0.2.10
 
 ### Patch Changes
