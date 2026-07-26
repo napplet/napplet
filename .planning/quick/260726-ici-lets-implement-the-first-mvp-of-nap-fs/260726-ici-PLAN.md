@@ -102,7 +102,12 @@ CLAUDE.md's "Protocol fidelity — non-negotiable" section binds every task belo
 5. `FsError` is a CLOSED enum in the spec — type it as a string-literal union, never as bare `string`.
 6. If you find a gap between this plan and the canonical text, the SPEC wins. Stop and flag rather than inventing.
 
-**One local-binding note, not protocol:** the JS callback registration name for `fs.changed` pushes (`onChange`) is a package-local ergonomic binding — it constrains nothing on the wire. Use `onChange` as specified below. Existing repo precedent for `<domain>.changed` pushes is `onChanged` (theme, identity, intent); record that naming observation in the task summary for the user, do not silently switch.
+**One local-binding note, not protocol:** the JS callback registration name for `fs.changed` pushes is a package-local ergonomic binding — it constrains nothing on the wire, so it raises no fidelity question. Follow the unanimous repo precedent for `<domain>.changed` pushes, which this plan already encodes:
+- `FsApi` member and shim module-level export: `onChanged` (matches `IdentityApi`/`ThemeApi`/`IntentApi` and `identity`/`theme`/`intent` shims).
+- SDK standalone helper: `fsOnChanged` (matches `identityOnChanged`, `themeOnChanged`, `intentOnChanged`).
+- `packages/shim/src/runtime.ts` import alias: `onChanged as fsOnChanged` (matches the `onChanged as intentOnChanged` line already in that file).
+
+There is no `onChange` spelling anywhere in this repo's domain surface. Do not introduce one.
 </protocol_fidelity_contract>
 
 <wire_surface>
@@ -179,7 +184,7 @@ Then wire it in:
   `move(fromPath: string, toPath: string): Promise<void>`;
   `watch(path: string, options?: FsWatchOptions): Promise<string>` (resolves to the runtime-generated `watchId`);
   `unwatch(watchId: string): Promise<void>`;
-  `onChange(handler: (change: FsChange) => void): Subscription`.
+  `onChanged(handler: (change: FsChange) => void): Subscription`.
   Give the interface a JSDoc `@example` in the same shape as `SerialApi`'s, using a virtual path such as `/shared` — never a host-looking path.
 - `packages/core/src/types/global.ts` — add `FsApi` to the existing `./global/service-api.js` type-import list and add an optional `fs?: FsApi;` property with a JSDoc block matching the neighbours (state that the runtime owns host paths, mounts, policy, and authorization; the napplet sees only virtual paths).
 - `packages/core/src/envelope.ts` — add a `| \`fs\` | Shell-mediated virtual filesystem access |` row to the domain doc table, add `'fs'` to the `NapDomain` union, and add `'fs'` to the `NAP_DOMAINS` array. Insert at the same position in all three (place it after `serial` and before `common`, or pick one consistent position and use it in all three).
@@ -210,7 +215,7 @@ Commit: `feat(core): add the fs NAP domain and NAP-FS schema types`
     - `watch('/shared', { recursive: true })` resolves with the runtime's `watchId` string.
     - `unwatch('watch-1')` posts `{ type: 'fs.unwatch', id, watchId }`.
     - A result carrying `error` rejects with that error string; a result missing its success field rejects rather than resolving `undefined`.
-    - `onChange` fans out every `fs.changed` payload to live handlers and stops delivering after `close()`.
+    - `onChanged` fans out every `fs.changed` payload to live handlers and stops delivering after `close()`.
     - `handleFsMessage({ type: 'unknown.domain' })` and malformed known types are no-ops that do not throw.
   </behavior>
   <action>
@@ -228,11 +233,11 @@ Repeat the deferral comment here (short form, linking the upstream comment) so a
 
 **`shim.ts`** — same file header style as `serial/shim.ts`; imports `postToShell` from `'../boundary.js'` and `Subscription` from `@napplet/core`.
 Because there are 8 correlated operations, do NOT create 8 pending maps. Use ONE module-level `pending` map keyed by request id, holding `{ resolve: (msg: Record<string, unknown>) => void; reject: (reason: Error) => void; timeout: ReturnType<typeof setTimeout> }`, plus a private `request(msg)` helper that generates `crypto.randomUUID()`, arms a `REQUEST_TIMEOUT_MS` (30_000) timer, stores the entry, calls `postToShell`, and returns the raw result envelope. Each public function then narrows its own success field. Rejection rule: if the result carries `error`, reject with `new Error(error)`; if it carries neither `error` nor its declared success field, reject with a descriptive error naming the operation. Omit optional fields from the posted envelope when the caller did not supply them (use the `...(x === undefined ? {} : { x })` spread the serial shim uses) so no `undefined` keys reach the wire.
-Export: `info`, `stat`, `list`, `mkdir`, `remove`, `move`, `watch`, `unwatch`, `onChange`, `handleFsMessage`, `installFsShim`.
+Export: `info`, `stat`, `list`, `mkdir`, `remove`, `move`, `watch`, `unwatch`, `onChanged`, `handleFsMessage`, `installFsShim`.
 `handleFsMessage` routes the 8 `*.result` types into the pending map and `fs.changed` into the change-handler set; anything else returns without throwing.
 `installFsShim` is registration-only and returns a cleanup closure that clears timers, the pending map, the handler set, and the `installed` flag — same shape as `installSerialShim`.
 
-**`sdk.ts`** — `requireFs()` guard in the `requireSerial()` shape (throw when `window.napplet.fs` is absent, with the same "runtime did not inject this domain" wording). Export `fsInfo`, `fsStat`, `fsList`, `fsMkdir`, `fsRemove`, `fsMove`, `fsWatch`, `fsUnwatch`, `fsOnChange`, each delegating to `requireFs().<method>` with full JSDoc.
+**`sdk.ts`** — `requireFs()` guard in the `requireSerial()` shape (throw when `window.napplet.fs` is absent, with the same "runtime did not inject this domain" wording). Export `fsInfo`, `fsStat`, `fsList`, `fsMkdir`, `fsRemove`, `fsMove`, `fsWatch`, `fsUnwatch`, `fsOnChanged`, each delegating to `requireFs().<method>` with full JSDoc. The `fsOnChanged` name follows `identityOnChanged`/`themeOnChanged`/`intentOnChanged`.
 
 **`index.ts`** — mirror `serial/index.ts`: `@packageDocumentation` header with a runnable `@example`, `export { DOMAIN }`, `export type { ... }` for every value type and message type, `export { ... } from './shim.js'`, `export { ... } from './sdk.js'`, then the `registerNap(DOMAIN, ...)` no-op registration at the bottom.
 
@@ -242,7 +247,7 @@ Export: `info`, `stat`, `list`, `mkdir`, `remove`, `move`, `watch`, `unwatch`, `
 - `packages/nap/package.json` — add the four `./fs`, `./fs/types`, `./fs/shim`, `./fs/sdk` export entries in the same `types`/`import` dist shape as `./serial`, and add `fs` to the `description` domain list.
 - `packages/nap/jsr.json` — add the same four subpaths pointing at `./src/fs/*.ts`. These two maps must stay identical or `pnpm check:jsr` fails.
 - `packages/nap/tsup.config.ts` — add the four `fs/index`, `fs/types`, `fs/shim`, `fs/sdk` entries.
-- `packages/nap/README.md` — add `fs` to the domain list in the blurb (line ~3), add a table row for `fs` next to `serial` describing the 8 byte-free operations plus `onChange`, add `@napplet/nap/fs` to the barrel list (line ~226), and add a short, clearly-marked deferral note stating that byte transfer is blocked on the upstream `bstr`-encoding question, with the link.
+- `packages/nap/README.md` — add `fs` to the domain list in the blurb (line ~3), add a table row for `fs` next to `serial` describing the 8 byte-free operations plus `onChanged`, add `@napplet/nap/fs` to the barrel list (line ~226), and add a short, clearly-marked deferral note stating that byte transfer is blocked on the upstream `bstr`-encoding question, with the link.
 
 Commit: `feat(nap): add the @napplet/nap/fs domain subpaths`
   </action>
@@ -261,7 +266,7 @@ Commit: `feat(nap): add the @napplet/nap/fs domain subpaths`
   <files>packages/shim/src/runtime.ts, packages/sdk/src/nap-runtime.ts, packages/sdk/src/nap-types.ts, packages/sdk/src/services.ts, packages/sdk/src/index.ts, packages/conformance/src/validators/envelope.ts, packages/conformance/src/validators/envelope.test.ts, packages/conformance/src/shell/reference-shell.ts, packages/vite-plugin/src/requirements.ts, packages/cli/src/manifest-metadata.ts, packages/skills/src/index.test.ts, apps/docs/naps/index.md, apps/docs/packages/core.md, apps/docs/packages/nap.md, README.md, .changeset/nap-fs-mvp.md</files>
   <action>
 **`packages/shim/src/runtime.ts`** — three edits, each mirroring the `serial` lines:
-1. Import block: `import { installFsShim, handleFsMessage, info as fsInfo, stat as fsStat, list as fsList, mkdir as fsMkdir, remove as fsRemove, move as fsMove, watch as fsWatch, unwatch as fsUnwatch, onChange as fsOnChange } from '@napplet/nap/fs/shim';`
+1. Import block: `import { installFsShim, handleFsMessage, info as fsInfo, stat as fsStat, list as fsList, mkdir as fsMkdir, remove as fsRemove, move as fsMove, watch as fsWatch, unwatch as fsUnwatch, onChanged as fsOnChanged } from '@napplet/nap/fs/shim';`
 2. `DOMAIN_ROUTERS`: add `['fs.', handleFsMessage],`.
 3. The `domains.has('serial')` block's neighbourhood: add a `domains.has('fs')` block assigning all nine members to `napplet.fs`, and add a `case 'fs': installFsShim(); return;` arm to the per-domain installer switch.
 
@@ -357,7 +362,6 @@ Create `.planning/quick/260726-ici-lets-implement-the-first-mvp-of-nap-fs/260726
 
 The summary MUST include, for the user to paste into the eventual PR body:
 1. A prominent **"Deferred: byte transfer (blocked on a spec gap)"** section — the `bstr`-on-JSON-envelope gap, why choosing an encoding would be inventing wire surface, and the link to <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>. Frame it as blocked upstream, not as unfinished.
-2. The `onChange` vs repo-precedent `onChanged` naming observation from the protocol_fidelity_contract.
-3. The verification command output.
-4. A note that push and `gh pr create` were NOT run (no SSH key in this sandbox).
+2. The verification command output.
+3. A note that push and `gh pr create` were NOT run (no SSH key in this sandbox).
 </output>
