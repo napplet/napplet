@@ -121,23 +121,12 @@ napplet paja [--config <file>] [-- <args>]
 
 ### `init`
 
-Creates `.napplet/config.json` unless it already exists. Use `--force` to overwrite it. For named
-deployments, the NIP-5A d-tag must match `^[a-z0-9-]{1,13}$` and cannot end in `-`. Each archetype
-value pairs a role slug with one convention, for example `note:napplet:note/open`; there is no generic
-`type` manifest tag.
+Creates `.napplet/config.json` unless it already exists. Use `--force` to overwrite it. For named deployments, the NIP-5A d-tag must match `^[a-z0-9-]+$` and cannot end in `-`. Each archetype
+value pairs a role slug with one convention, for example `note:napplet:note/open`; there is no generic `type` manifest tag.
 
-The `--archetype` flag and interactive wizard intentionally remain
-`slug:convention` input only; there is no CLI kinds flag or delimiter. Optional
-event-kind discovery metadata belongs in the object-shaped config entry, not in
-the convention URI.
+The `--archetype` flag and interactive wizard intentionally remain `slug:convention` input only; there is no CLI kinds flag or delimiter. Optional event-kind discovery metadata belongs in the object-shaped config entry, not in the convention URI.
 
-In an interactive terminal, `napplet init` guides setup for source directory, root-vs-named target,
-name, title, optional description, archetype roles and conventions, relays, and Blossom servers. Relay suggestions come from best-effort
-[NIP-66](https://nips.nostr.com/66) discovery events on relay discovery relays such as
-`wss://relaypag.es`; curated general-purpose relays are completed first, followed by live discoveries.
-Blossom suggestions come from best-effort [NIP-B7](https://nips.nostr.com/b7) kind `10063`
-server-list events, with bundled defaults when live discovery is unavailable. Suggestions are
-advisory Tab-completion candidates; the written config contains only the values you accept or type.
+In an interactive terminal, `napplet init` guides setup for source directory, root-vs-named target, name, title, optional description, archetype roles and conventions, relays, and Blossom servers. Relay suggestions come from best-effort [NIP-66](https://nips.nostr.com/66) discovery events on relay discovery relays such as `wss://relaypag.es`; curated general-purpose relays are completed first, followed by live discoveries. Blossom suggestions come from best-effort [NIP-B7](https://nips.nostr.com/b7) kind `10063` server-list events, with bundled defaults when live discovery is unavailable. Suggestions are advisory Tab-completion candidates; the written config contains only the values you accept or type.
 
 ```sh
 napplet init
@@ -348,7 +337,7 @@ napplet deploy --all --name feed --sec nsec1...
 Notes for workspace mode:
 
 - `--name` and `config.named` filter discovered folder names.
-- Folder names used as `d` tags must match `^[a-z0-9-]{1,13}$` and must not end in `-`.
+- Folder names used as `d` tags must match `^[a-z0-9-]+$` and must not end in `-`.
 - Discovery skips `.git`, `.napplet`, `.turbo`, `node_modules`, and `coverage`.
 - `--root` is usually the wrong target for `--all` because the root site is singular per pubkey.
 
