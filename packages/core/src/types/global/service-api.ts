@@ -36,6 +36,14 @@ import type {
 } from '../intent.js';
 import type { LinkOpenOptions, LinkOpenResult } from '../link.js';
 import type { SerialEvent, SerialOpenRequest, SerialOpenResult } from '../serial.js';
+import type {
+  FsChange,
+  FsDirectoryEntry,
+  FsInfo,
+  FsMetadata,
+  FsMkdirOptions,
+  FsWatchOptions,
+} from '../fs.js';
 import type { ListItem, ListMutationResult, ListOptions, ListRef, ListSupport } from '../lists.js';
 import type {
   DmConversationPage,
@@ -568,6 +576,90 @@ export interface SerialApi {
    * @returns A Subscription with `close()` to stop listening
    */
   onEvent(handler: (event: SerialEvent) => void): Subscription;
+}
+
+/**
+ * Shell-mediated virtual filesystem access (NAP-FS): the napplet sees only
+ * virtual paths, directory entries, coarse metadata, and advisory change
+ * events. The runtime owns host paths, mounts, backing store, policy, and
+ * authorization of every operation.
+ *
+ * `info()` is advisory discovery, not an authorization token -- permissions can
+ * change mid-session and any operation can still fail, so handle rejections
+ * even when `info()` advertised a matching permission.
+ *
+ * Byte transfer (`read` / `write`) is not available: NAP-FS declares those
+ * payloads as `bstr` without defining a JSON-envelope encoding. Deferred at
+ * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
+ *
+ * @example
+ * ```ts
+ * if (window.napplet.fs) {
+ *   const { roots } = await window.napplet.fs.info();
+ *   const entries = await window.napplet.fs.list('/shared');
+ *   const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
+ *   window.napplet.fs.onChanged((change) => refresh(change.path));
+ * }
+ * ```
+ */
+export interface FsApi {
+  /**
+   * Discover visible roots, coarse root permissions, and runtime limits.
+   * @returns Promise resolving to advisory filesystem discovery data
+   */
+  info(): Promise<FsInfo>;
+  /**
+   * Read coarse metadata for a visible file or directory.
+   * @param path  Virtual absolute path of the entry
+   * @returns Promise resolving to the entry metadata
+   */
+  stat(path: string): Promise<FsMetadata>;
+  /**
+   * List the direct children of a visible directory. Ordering is unspecified.
+   * @param path  Virtual absolute path of the directory
+   * @returns Promise resolving to the directory entries
+   */
+  list(path: string): Promise<FsDirectoryEntry[]>;
+  /**
+   * Create a directory.
+   * @param path     Virtual absolute path of the directory to create
+   * @param options  Optional recursive parent creation
+   * @returns Promise resolving once the runtime acknowledges the creation
+   */
+  mkdir(path: string, options?: FsMkdirOptions): Promise<void>;
+  /**
+   * Remove a file or directory.
+   * @param path       Virtual absolute path of the entry to remove
+   * @param recursive  Remove a non-empty directory and its authorized descendants
+   * @returns Promise resolving once the runtime acknowledges the removal
+   */
+  remove(path: string, recursive?: boolean): Promise<void>;
+  /**
+   * Move or rename a file or directory.
+   * @param fromPath  Virtual absolute source path
+   * @param toPath    Virtual absolute destination path
+   * @returns Promise resolving once the runtime acknowledges the move
+   */
+  move(fromPath: string, toPath: string): Promise<void>;
+  /**
+   * Start an advisory watch on a visible path.
+   * @param path     Virtual absolute path to watch
+   * @param options  Optional recursive descendant coverage
+   * @returns Promise resolving to the runtime-generated watch id
+   */
+  watch(path: string, options?: FsWatchOptions): Promise<string>;
+  /**
+   * Stop a watch. Unknown ids may be treated as successful no-ops.
+   * @param watchId  Runtime-generated watch id
+   * @returns Promise resolving once the runtime acknowledges the request
+   */
+  unwatch(watchId: string): Promise<void>;
+  /**
+   * Register for runtime-pushed filesystem change events.
+   * @param handler  Called with each advisory change
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onChanged(handler: (change: FsChange) => void): Subscription;
 }
 
 /**

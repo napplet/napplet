@@ -17,6 +17,7 @@ export type * from './types/ble.js';
 export type * from './types/webrtc.js';
 export type * from './types/link.js';
 export type * from './types/serial.js';
+export type * from './types/fs.js';
 export type * from './types/lists.js';
 export type * from './types/common.js';
 export type * from './types/dm.js';

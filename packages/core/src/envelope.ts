@@ -59,6 +59,7 @@ export interface NappletMessage {
  * | `count`    | Runtime-mediated event counts                      |
  * | `lists`    | Runtime-mediated NIP-51 list mutations            |
  * | `serial`   | Runtime-mediated serial device access             |
+ * | `fs`       | Shell-mediated virtual filesystem access           |
  * | `common`   | Common social actions                              |
  * | `dm`       | Runtime-mediated direct messages                  |
  *
@@ -68,7 +69,7 @@ export interface NappletMessage {
  * const isValid = NAP_DOMAINS.includes(domain); // true
  * ```
  */
-export type NapDomain = 'relay' | 'identity' | 'storage' | 'inc' | 'theme' | 'keys' | 'media' | 'notify' | 'config' | 'resource' | 'cvm' | 'outbox' | 'upload' | 'intent' | 'ble' | 'webrtc' | 'link' | 'count' | 'lists' | 'serial' | 'common' | 'dm';
+export type NapDomain = 'relay' | 'identity' | 'storage' | 'inc' | 'theme' | 'keys' | 'media' | 'notify' | 'config' | 'resource' | 'cvm' | 'outbox' | 'upload' | 'intent' | 'ble' | 'webrtc' | 'link' | 'count' | 'lists' | 'serial' | 'fs' | 'common' | 'dm';
 
 /**
  * Runtime-accessible constant array of all NAP domain names.
@@ -79,4 +80,4 @@ export type NapDomain = 'relay' | 'identity' | 'storage' | 'inc' | 'theme' | 'ke
  * const selected = NAP_DOMAINS.filter((domain) => domain !== 'ble');
  * ```
  */
-export const NAP_DOMAINS: readonly NapDomain[] = ['relay', 'identity', 'storage', 'inc', 'theme', 'keys', 'media', 'notify', 'config', 'resource', 'cvm', 'outbox', 'upload', 'intent', 'ble', 'webrtc', 'link', 'count', 'lists', 'serial', 'common', 'dm'] as const;
+export const NAP_DOMAINS: readonly NapDomain[] = ['relay', 'identity', 'storage', 'inc', 'theme', 'keys', 'media', 'notify', 'config', 'resource', 'cvm', 'outbox', 'upload', 'intent', 'ble', 'webrtc', 'link', 'count', 'lists', 'serial', 'fs', 'common', 'dm'] as const;

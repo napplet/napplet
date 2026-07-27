@@ -47,6 +47,7 @@ describe('@napplet/core exports', () => {
       expect(NAP_DOMAINS).toContain('webrtc');
       expect(NAP_DOMAINS).toContain('ble');
       expect(NAP_DOMAINS).toContain('serial');
+      expect(NAP_DOMAINS).toContain('fs');
       expect(NAP_DOMAINS).toContain('lists');
       expect(NAP_DOMAINS).toContain('common');
       expect(NAP_DOMAINS).toContain('dm');
