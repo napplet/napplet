@@ -185,6 +185,8 @@ export {
   fsPickSaveFile,
   fsStat,
   fsList,
+  fsRead,
+  fsWrite,
   fsMkdir,
   fsRemove,
   fsMove,

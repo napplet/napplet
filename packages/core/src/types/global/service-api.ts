@@ -44,7 +44,11 @@ import type {
   FsMkdirOptions,
   FsPickOptions,
   FsPickResult,
+  FsReadOptions,
+  FsReadResult,
   FsWatchOptions,
+  FsWriteOptions,
+  FsWriteResult,
 } from '../fs.js';
 import type { ListItem, ListMutationResult, ListOptions, ListRef, ListSupport } from '../lists.js';
 import type {
@@ -590,15 +594,13 @@ export interface SerialApi {
  * change mid-session and any operation can still fail, so handle rejections
  * even when `info()` advertised a matching permission.
  *
- * Byte transfer (`read` / `write`) is not available: NAP-FS declares those
- * payloads as `bstr` without defining a JSON-envelope encoding. Deferred at
- * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
- *
  * @example
  * ```ts
  * if (window.napplet.fs) {
  *   const { roots } = await window.napplet.fs.info();
  *   const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+ *   const bytes = await window.napplet.fs.read(picked.entries[0].path);
+ *   await window.napplet.fs.write('/shared/copy.txt', bytes.data, { mode: 'replace' });
  *   const entries = await window.napplet.fs.list('/shared');
  *   const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
  *   window.napplet.fs.onChanged((change) => refresh(change.path));
@@ -647,6 +649,21 @@ export interface FsApi {
    * @returns Promise resolving to the directory entries
    */
   list(path: string): Promise<FsDirectoryEntry[]>;
+  /**
+   * Read bytes from a visible file. `data` is RFC 4648 standard padded base64 text.
+   * @param path     Virtual absolute path of the file
+   * @param options  Optional range read controls
+   * @returns Promise resolving to the read result
+   */
+  read(path: string, options?: FsReadOptions): Promise<FsReadResult>;
+  /**
+   * Write bytes to a visible file. `data` is RFC 4648 standard padded base64 text.
+   * @param path     Virtual absolute path of the file
+   * @param data     Decoded bytes encoded as standard padded base64 text
+   * @param options  Optional write mode and preconditions
+   * @returns Promise resolving to the write result
+   */
+  write(path: string, data: string, options?: FsWriteOptions): Promise<FsWriteResult>;
   /**
    * Create a directory.
    * @param path     Virtual absolute path of the directory to create

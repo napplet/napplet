@@ -7,10 +7,6 @@
 // @napplet/nap/fs -- Shell-mediated virtual filesystem shim.
 // Correlates fs.* request/result envelopes; routes fs.changed pushes to listeners.
 // The runtime owns host paths, mounts, backing store, policy, and authorization.
-//
-// Byte transfer (read / write) is absent: NAP-FS declares those payloads as
-// bstr but defines no JSON-envelope encoding for them. Deferred upstream at
-// https://github.com/napplet/naps/pull/88#issuecomment-5083402723
 
 import { postToShell } from '../boundary.js';
 import type { Subscription } from '@napplet/core';
@@ -23,7 +19,11 @@ import type {
   FsOutboundMessage,
   FsPickOptions,
   FsPickResult,
+  FsReadOptions,
+  FsReadResult,
   FsWatchOptions,
+  FsWriteOptions,
+  FsWriteResult,
 } from './types.js';
 
 /** Default timeout for fs request-response operations. */
@@ -49,6 +49,8 @@ const RESULT_TYPES = new Set([
   'fs.pickSaveFile.result',
   'fs.stat.result',
   'fs.list.result',
+  'fs.read.result',
+  'fs.write.result',
   'fs.mkdir.result',
   'fs.remove.result',
   'fs.move.result',
@@ -208,6 +210,39 @@ export async function stat(path: string): Promise<FsMetadata> {
 export async function list(path: string): Promise<FsDirectoryEntry[]> {
   const msg = await request('fs.list', { path });
   return expectField<FsDirectoryEntry[]>(msg, 'entries', 'fs.list');
+}
+
+/**
+ * Read bytes from a visible file.
+ *
+ * @param path     Virtual absolute path of the file
+ * @param options  Optional range read controls
+ * @returns Promise resolving to the read result
+ */
+export async function read(path: string, options?: FsReadOptions): Promise<FsReadResult> {
+  const msg = await request('fs.read', { path, ...(options === undefined ? {} : { options }) });
+  return expectField<FsReadResult>(msg, 'result', 'fs.read');
+}
+
+/**
+ * Write bytes to a visible file. `data` is RFC 4648 standard padded base64 text.
+ *
+ * @param path     Virtual absolute path of the file
+ * @param data     Decoded bytes encoded as standard padded base64 text
+ * @param options  Optional write mode and preconditions
+ * @returns Promise resolving to the write result
+ */
+export async function write(
+  path: string,
+  data: string,
+  options?: FsWriteOptions,
+): Promise<FsWriteResult> {
+  const msg = await request('fs.write', {
+    path,
+    data,
+    ...(options === undefined ? {} : { options }),
+  });
+  return expectField<FsWriteResult>(msg, 'result', 'fs.write');
 }
 
 /**

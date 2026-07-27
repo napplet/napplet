@@ -212,13 +212,13 @@ describe('validateEnvelope — no generic shell domain', () => {
 });
 
 describe('ENVELOPE_SPECS invariants', () => {
-  it('has 233 discriminants split 112 outbound / 121 inbound', () => {
+  it('has 237 discriminants split 114 outbound / 123 inbound', () => {
     const all = knownEnvelopeTypes();
-    expect(all).toHaveLength(233);
+    expect(all).toHaveLength(237);
     const out = all.filter((t) => ENVELOPE_SPECS[t].dir === 'out');
     const inbound = all.filter((t) => ENVELOPE_SPECS[t].dir === 'in');
-    expect(out).toHaveLength(112);
-    expect(inbound).toHaveLength(121);
+    expect(out).toHaveLength(114);
+    expect(inbound).toHaveLength(123);
   });
 
   it('declares the adopted inbound carrier fields without delivery identifiers', () => {

@@ -323,6 +323,16 @@ const RESPONDERS: Record<string, Responder> = {
     metadata: { path: e.path, kind: 'file', size: 0 },
   }),
   'fs.list': (e) => ok({ type: 'fs.list.result', id: e.id, entries: [] }),
+  'fs.read': (e) => ok({
+    type: 'fs.read.result',
+    id: e.id,
+    result: { data: '', offset: 0, bytesRead: 0, eof: true, size: 0 },
+  }),
+  'fs.write': (e) => ok({
+    type: 'fs.write.result',
+    id: e.id,
+    result: { bytesWritten: 0, size: 0 },
+  }),
   'fs.mkdir': (e) => ok({ type: 'fs.mkdir.result', id: e.id }),
   'fs.remove': (e) => ok({ type: 'fs.remove.result', id: e.id }),
   'fs.move': (e) => ok({ type: 'fs.move.result', id: e.id }),

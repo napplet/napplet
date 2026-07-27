@@ -368,14 +368,17 @@ export interface NappletGlobal {
   serial?: SerialApi;
   /**
    * Shell-mediated virtual filesystem access (NAP-FS): the napplet sees only
-   * virtual paths, directory entries, coarse metadata, user-mediated picker
-   * results, and advisory change events. The runtime owns host paths, mounts,
-   * backing store, policy, and authorization of every operation.
+   * virtual paths, directory entries, coarse metadata, base64-encoded file
+   * bytes, user-mediated picker results, and advisory change events. The runtime
+   * owns host paths, mounts, backing store, policy, and authorization of every
+   * operation.
    *
    * @example
    * ```ts
    * if (window.napplet.fs) {
    *   const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+   *   const bytes = await window.napplet.fs.read(picked.entries[0].path);
+   *   await window.napplet.fs.write('/shared/copy.md', bytes.data, { mode: 'replace' });
    *   const entries = await window.napplet.fs.list('/shared');
    *   await window.napplet.fs.mkdir('/shared/projects/new', { recursive: true });
    * }

@@ -4,21 +4,8 @@
  * Non-normative note -- the canonical definition lives in napplet/naps#88:
  * <https://github.com/napplet/naps/pull/88>
  *
- * Byte transfer (`read` / `write`) is intentionally absent from this module.
- * NAP-FS declares those payloads as CBOR `bstr`, but does not define how a
- * `bstr` is encoded on NIP-5D's JSON envelope -- the spec's own examples use a
- * `<bytes>` placeholder rather than a concrete encoding. Choosing one here
- * (base64, byte array, or otherwise) would invent wire surface that no other
- * implementation could interoperate with, so the question is deferred upstream:
- * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
- *
- * Picker operations (`pickFile` / `pickFiles` / `pickDirectory` /
- * `pickSaveFile`) use pure JSON payloads and return runtime-exposed virtual
- * paths, so they are implemented here.
- *
- * `FsLimits.maxReadBytes` and `FsLimits.maxWriteBytes` are retained: the spec
- * makes them required fields of `FsInfo`, and they are advisory discovery data
- * rather than operations.
+ * Byte transfer uses RFC 4648 standard padded base64 text on the JSON wire for
+ * `fs.write.data` and `FsReadResult.data`; byte counts refer to decoded bytes.
  */
 
 /** A coarse permission a runtime may advertise for a visible root or entry. */
@@ -30,6 +17,9 @@ export type FsEntryKind = 'file' | 'directory' | 'unknown';
 /** The kind of change reported by an advisory watch event. */
 export type FsChangeKind = 'created' | 'modified' | 'deleted' | 'moved' | 'unknown';
 
+/** File write behavior. */
+export type FsWriteMode = 'replace' | 'append' | 'patch';
+
 /** Closed set of NAP-FS error reasons. Never widen this to `string`. */
 export type FsError =
   | 'not-found'
@@ -37,6 +27,7 @@ export type FsError =
   | 'not-a-file'
   | 'not-a-directory'
   | 'invalid-path'
+  | 'invalid-data'
   | 'permission-denied'
   | 'policy-denied'
   | 'quota-exceeded'
@@ -152,6 +143,48 @@ export interface FsDirectoryEntry {
   size?: number;
   /** Last-modified timestamp, when the runtime discloses it. */
   modifiedAt?: number;
+}
+
+/** Options for reading bytes from a visible file. */
+export interface FsReadOptions {
+  /** Starting byte offset. Defaults to 0. */
+  offset?: number;
+  /** Requested decoded byte count. Defaults to the runtime maximum readable chunk. */
+  length?: number;
+}
+
+/** Result of reading bytes from a visible file. */
+export interface FsReadResult {
+  /** Decoded file bytes encoded as RFC 4648 standard padded base64 text. */
+  data: string;
+  /** Starting byte offset of this result. */
+  offset: number;
+  /** Count of decoded bytes in `data`. */
+  bytesRead: number;
+  /** Whether no more bytes are available after this result. */
+  eof: boolean;
+  /** Total file size in bytes, when the runtime discloses it. */
+  size?: number;
+}
+
+/** Options for writing bytes to a visible file. */
+export interface FsWriteOptions {
+  /** Write mode. Defaults to `replace`. */
+  mode?: FsWriteMode;
+  /** Patch byte offset. Required for `patch`; invalid for `replace` and `append`. */
+  offset?: number;
+  /** Opaque revision precondition. */
+  ifRevision?: string;
+  /** Create-only precondition when true. */
+  ifAbsent?: boolean;
+}
+
+/** Result of writing bytes to a visible file. */
+export interface FsWriteResult {
+  /** Count of decoded bytes committed. */
+  bytesWritten: number;
+  /** Resulting file size in bytes, when the runtime discloses it. */
+  size?: number;
 }
 
 /** Options for directory creation. */

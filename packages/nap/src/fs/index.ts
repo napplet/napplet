@@ -9,23 +9,21 @@
  *
  * A napplet discovers visible roots, asks the runtime to mediate file and
  * directory selection, inspects and lists entries, creates, removes and moves
- * them, and subscribes to advisory change events. The runtime owns host paths,
- * mounts, backing store, normalization, policy, and authorization of every
- * operation -- the napplet sees only virtual paths.
- *
- * Byte transfer (`read` / `write`) is not available. NAP-FS declares those
- * payloads as `bstr` but defines no encoding for them on NIP-5D's JSON
- * envelope, so shipping one would invent wire surface. Tracked upstream at
- * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
+ * them, reads and writes base64-encoded file bytes, and subscribes to advisory
+ * change events. The runtime owns host paths, mounts, backing store,
+ * normalization, policy, and authorization of every operation -- the napplet
+ * sees only virtual paths.
  *
  * Exports typed message definitions for the fs domain, shim installer, SDK
  * helpers, and registers the `fs` domain with core dispatch on import.
  *
  * @example
  * ```ts
- * import { fsPickFile, fsList, fsMkdir, fsWatch, fsOnChanged } from '@napplet/nap/fs';
+ * import { fsPickFile, fsRead, fsWrite, fsList, fsMkdir, fsWatch, fsOnChanged } from '@napplet/nap/fs';
  *
  * const picked = await fsPickFile({ accept: [{ extension: '.md' }] });
+ * const bytes = await fsRead(picked.entries[0].path);
+ * await fsWrite('/shared/copy.txt', bytes.data, { mode: 'replace' });
  * const entries = await fsList('/shared');
  * await fsMkdir('/shared/projects/new', { recursive: true });
  * const watchId = await fsWatch('/shared', { recursive: true });
@@ -41,6 +39,7 @@ export type {
   FsPermission,
   FsEntryKind,
   FsChangeKind,
+  FsWriteMode,
   FsError,
   FsRoot,
   FsLimits,
@@ -51,6 +50,10 @@ export type {
   FsInfo,
   FsMetadata,
   FsDirectoryEntry,
+  FsReadOptions,
+  FsReadResult,
+  FsWriteOptions,
+  FsWriteResult,
   FsMkdirOptions,
   FsWatchOptions,
   FsChange,
@@ -69,6 +72,10 @@ export type {
   FsStatResultMessage,
   FsListMessage,
   FsListResultMessage,
+  FsReadMessage,
+  FsReadResultMessage,
+  FsWriteMessage,
+  FsWriteResultMessage,
   FsMkdirMessage,
   FsMkdirResultMessage,
   FsRemoveMessage,
@@ -95,6 +102,8 @@ export {
   pickSaveFile,
   stat,
   list,
+  read,
+  write,
   mkdir,
   remove,
   move,
@@ -111,6 +120,8 @@ export {
   fsPickSaveFile,
   fsStat,
   fsList,
+  fsRead,
+  fsWrite,
   fsMkdir,
   fsRemove,
   fsMove,

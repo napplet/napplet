@@ -118,8 +118,8 @@ Default social/event boundary:
 - Settings/theme use `config` and `theme`.
 - Native bridge/device/session features use `cvm`, `ble`, `serial`, or `webrtc`
   only when the user story needs that exact shell-mediated boundary.
-- File browsing, directory listing, and change watching use `fs` — shell-mediated
-  virtual filesystem access. Byte transfer (read/write) is not yet available.
+- File browsing, directory listing, byte reads/writes, and change watching use
+  `fs` — shell-mediated virtual filesystem access.
 - External URL opening uses `link`.
 - `relay` is only for an explicit relay-local escape hatch such as group relay
   protocols, diagnostics, or raw relay tooling outside the outbox model.

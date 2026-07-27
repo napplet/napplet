@@ -20,7 +20,11 @@ import type {
   FsMkdirOptions,
   FsPickOptions,
   FsPickResult,
+  FsReadOptions,
+  FsReadResult,
   FsWatchOptions,
+  FsWriteOptions,
+  FsWriteResult,
 } from './types.js';
 
 function requireFs(): NonNullable<NappletGlobal['fs']> {
@@ -98,6 +102,33 @@ export function fsStat(path: string): Promise<FsMetadata> {
  */
 export function fsList(path: string): Promise<FsDirectoryEntry[]> {
   return requireFs().list(path);
+}
+
+/**
+ * Read bytes from a visible file.
+ *
+ * @param path     Virtual absolute path of the file
+ * @param options  Optional range read controls
+ * @returns Promise resolving to the read result
+ */
+export function fsRead(path: string, options?: FsReadOptions): Promise<FsReadResult> {
+  return requireFs().read(path, options);
+}
+
+/**
+ * Write bytes to a visible file. `data` is RFC 4648 standard padded base64 text.
+ *
+ * @param path     Virtual absolute path of the file
+ * @param data     Decoded bytes encoded as standard padded base64 text
+ * @param options  Optional write mode and preconditions
+ * @returns Promise resolving to the write result
+ */
+export function fsWrite(
+  path: string,
+  data: string,
+  options?: FsWriteOptions,
+): Promise<FsWriteResult> {
+  return requireFs().write(path, data, options);
 }
 
 /**

@@ -53,7 +53,11 @@ import type {
   FsMkdirOptions,
   FsPickOptions,
   FsPickResult,
+  FsReadOptions,
+  FsReadResult,
   FsWatchOptions,
+  FsWriteOptions,
+  FsWriteResult,
   Subscription,
 } from '@napplet/core';
 import { requireDomain } from './require-napplet.js';
@@ -406,22 +410,21 @@ export const serial: SdkDomain<'serial'> = {
 /**
  * Shell-mediated virtual filesystem access (NAP-FS): discover visible roots,
  * ask the runtime to mediate file and directory selection, inspect and list
- * entries, create, remove and move them, and subscribe to advisory change
- * events. The runtime owns host paths, mounts, backing store, normalization,
- * policy, and authorization -- the napplet sees only virtual paths.
+ * entries, read and write base64-encoded file bytes, create, remove and move
+ * them, and subscribe to advisory change events. The runtime owns host paths,
+ * mounts, backing store, normalization, policy, and authorization -- the
+ * napplet sees only virtual paths.
  *
  * `info()` is advisory discovery, not an authorization token: handle failures
  * even when it advertised a matching permission.
- *
- * Byte transfer (`read` / `write`) is not available -- NAP-FS declares those
- * payloads as `bstr` without defining a JSON-envelope encoding. Deferred at
- * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
  *
  * @example
  * ```ts
  * import { fs } from '@napplet/sdk';
  *
  * const picked = await fs.pickFile({ accept: [{ extension: '.md' }] });
+ * const bytes = await fs.read(picked.entries[0].path);
+ * await fs.write('/shared/copy.txt', bytes.data, { mode: 'replace' });
  * const entries = await fs.list('/shared');
  * const watchId = await fs.watch('/shared', { recursive: true });
  * fs.onChanged((change) => refresh(change.path));
@@ -488,6 +491,27 @@ export const fs: SdkDomain<'fs'> = {
    */
   list(path: string): Promise<FsDirectoryEntry[]> {
     return requireDomain('fs').list(path);
+  },
+
+  /**
+   * Read bytes from a visible file.
+   * @param path     Virtual absolute path of the file
+   * @param options  Optional range read controls
+   * @returns Promise resolving to the read result
+   */
+  read(path: string, options?: FsReadOptions): Promise<FsReadResult> {
+    return requireDomain('fs').read(path, options);
+  },
+
+  /**
+   * Write bytes to a visible file. `data` is RFC 4648 standard padded base64 text.
+   * @param path     Virtual absolute path of the file
+   * @param data     Decoded bytes encoded as standard padded base64 text
+   * @param options  Optional write mode and preconditions
+   * @returns Promise resolving to the write result
+   */
+  write(path: string, data: string, options?: FsWriteOptions): Promise<FsWriteResult> {
+    return requireDomain('fs').write(path, data, options);
   },
 
   /**

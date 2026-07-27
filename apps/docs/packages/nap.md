@@ -92,13 +92,10 @@ import { notifySend } from '@napplet/nap/notify/sdk';
   `open`/`write`/`close`/`onEvent`; the shell owns permissions, raw port
   handles, streams, OS paths, and lifecycle policy.
 - **fs** — shell-mediated virtual filesystem access: napplets get
-  `info`/`pickFile`/`pickFiles`/`pickDirectory`/`pickSaveFile`/`stat`/`list`/`mkdir`/`remove`/`move`/`watch`/`unwatch`/`onChanged`;
+  `info`/`pickFile`/`pickFiles`/`pickDirectory`/`pickSaveFile`/`stat`/`list`/`read`/`write`/`mkdir`/`remove`/`move`/`watch`/`unwatch`/`onChanged`;
   the runtime owns host paths, mounts, backing store, normalization, policy,
-  and authorization. Byte transfer (`read`/`write`) is not yet available —
-  [NAP-FS](https://github.com/napplet/naps/pull/88) declares those payloads as
-  `bstr` without defining a JSON-envelope encoding for them, so shipping one
-  would invent wire surface. Deferred upstream at
-  <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>.
+  and authorization. Byte payloads use RFC 4648 standard padded base64 text on
+  the JSON wire, and byte limits/counts refer to decoded bytes.
 - **intent** — URI-authoritative invocation with immediate acceptance or
   rejection and separate target-only `onDelivery`; discovery exposes queryless
   manifest contracts and optional per-contract event kinds.

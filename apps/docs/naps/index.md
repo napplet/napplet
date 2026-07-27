@@ -312,20 +312,22 @@ if (window.napplet?.common) {
 
 ### fs
 
-Shell-mediated virtual filesystem access. Napplets discover visible roots, ask the runtime to mediate file and directory selection, inspect and list entries, create, remove and move them, and subscribe to advisory change events. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization — the napplet sees only virtual paths.
+Shell-mediated virtual filesystem access. Napplets discover visible roots, ask the runtime to mediate file and directory selection, inspect and list entries, read and write base64-encoded file bytes, create, remove and move them, and subscribe to advisory change events. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization — the napplet sees only virtual paths.
 
 `info()` is advisory discovery, not an authorization token: permissions can change mid-session and any operation can still fail.
 
 ```ts
 if (window.napplet?.fs) {
   const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+  const bytes = await window.napplet.fs.read(picked.entries[0].path);
+  await window.napplet.fs.write('/shared/copy.md', bytes.data, { mode: 'replace' });
   const entries = await window.napplet.fs.list('/shared');
   const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
   window.napplet.fs.onChanged((change) => refresh(change.path));
 }
 ```
 
-Byte transfer (`read` / `write`) is not yet available. [NAP-FS](https://github.com/napplet/naps/pull/88) declares those payloads as `bstr` but does not define how a `bstr` is encoded on NIP-5D's JSON envelope, so shipping an encoding would invent wire surface. Deferred upstream: <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>.
+`fs.write.data` and `FsReadResult.data` carry bytes as RFC 4648 standard padded base64 text on the JSON wire. Byte limits and result counts are decoded-byte counts.
 
 ## Core domain union
 

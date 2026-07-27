@@ -281,6 +281,115 @@ describe('@napplet/nap/fs shim', () => {
     ]);
   });
 
+  it('reads a byte range from a visible file', async () => {
+    const { handleFsMessage, read } = await import('./shim.js');
+
+    const result = read('/shared/video.bin', { offset: 1048576, length: 65536 });
+
+    expect(postedMessages).toEqual([
+      {
+        msg: {
+          type: 'fs.read',
+          id: 'fs-test-1',
+          path: '/shared/video.bin',
+          options: { offset: 1048576, length: 65536 },
+        },
+        targetOrigin: '*',
+      },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.read.result',
+      id: 'fs-test-1',
+      result: {
+        data: 'SGVsbG8gd29ybGQh',
+        offset: 1048576,
+        bytesRead: 12,
+        eof: false,
+        size: 9000000,
+      },
+    });
+
+    await expect(result).resolves.toEqual({
+      data: 'SGVsbG8gd29ybGQh',
+      offset: 1048576,
+      bytesRead: 12,
+      eof: false,
+      size: 9000000,
+    });
+  });
+
+  it('omits the options key when read options are not supplied', async () => {
+    const { handleFsMessage, read } = await import('./shim.js');
+
+    const result = read('/shared/note.txt');
+
+    expect(postedMessages).toEqual([
+      { msg: { type: 'fs.read', id: 'fs-test-1', path: '/shared/note.txt' }, targetOrigin: '*' },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.read.result',
+      id: 'fs-test-1',
+      result: { data: '', offset: 0, bytesRead: 0, eof: true, size: 0 },
+    });
+
+    await expect(result).resolves.toEqual({ data: '', offset: 0, bytesRead: 0, eof: true, size: 0 });
+  });
+
+  it('writes base64 file bytes with write options', async () => {
+    const { handleFsMessage, write } = await import('./shim.js');
+
+    const result = write('/shared/db.bin', 'AAECAw==', { mode: 'patch', offset: 4096 });
+
+    expect(postedMessages).toEqual([
+      {
+        msg: {
+          type: 'fs.write',
+          id: 'fs-test-1',
+          path: '/shared/db.bin',
+          data: 'AAECAw==',
+          options: { mode: 'patch', offset: 4096 },
+        },
+        targetOrigin: '*',
+      },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.write.result',
+      id: 'fs-test-1',
+      result: { bytesWritten: 4, size: 8192 },
+    });
+
+    await expect(result).resolves.toEqual({ bytesWritten: 4, size: 8192 });
+  });
+
+  it('omits the options key when write options are not supplied', async () => {
+    const { handleFsMessage, write } = await import('./shim.js');
+
+    const result = write('/shared/note.txt', 'SGVsbG8gd29ybGQh');
+
+    expect(postedMessages).toEqual([
+      {
+        msg: {
+          type: 'fs.write',
+          id: 'fs-test-1',
+          path: '/shared/note.txt',
+          data: 'SGVsbG8gd29ybGQh',
+        },
+        targetOrigin: '*',
+      },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.write.result',
+      id: 'fs-test-1',
+      result: { bytesWritten: 12, size: 12 },
+    });
+
+    await expect(result).resolves.toEqual({ bytesWritten: 12, size: 12 });
+  });
+
   it('creates directories with recursive options', async () => {
     const { handleFsMessage, mkdir } = await import('./shim.js');
 
@@ -419,6 +528,20 @@ describe('@napplet/nap/fs shim', () => {
     handleFsMessage({ type: 'fs.list.result', id: 'fs-test-1' });
 
     await expect(result).rejects.toThrow('fs.list returned no entries');
+  });
+
+  it('rejects read and write successes without result fields', async () => {
+    const { handleFsMessage, read, write } = await import('./shim.js');
+
+    const readResult = read('/shared/note.txt');
+    handleFsMessage({ type: 'fs.read.result', id: 'fs-test-1' });
+
+    await expect(readResult).rejects.toThrow('fs.read returned no result');
+
+    const writeResult = write('/shared/note.txt', 'SGVsbG8gd29ybGQh');
+    handleFsMessage({ type: 'fs.write.result', id: 'fs-test-2' });
+
+    await expect(writeResult).rejects.toThrow('fs.write returned no result');
   });
 
   it('fans out runtime-pushed changes until subscriptions close', async () => {

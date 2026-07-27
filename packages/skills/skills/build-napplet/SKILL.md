@@ -502,7 +502,7 @@ their exact boundary:
 | `cvm` | The napplet needs a shell-mediated ContextVM/MCP bridge. |
 | `ble` | The napplet needs Bluetooth LE/GATT access. |
 | `serial` | The napplet needs serial-port access. |
-| `fs` | The napplet needs shell-mediated virtual filesystem access. Byte transfer (read/write) is not yet available. |
+| `fs` | The napplet needs shell-mediated virtual filesystem access, including virtual file selection, metadata, byte reads/writes, directory operations, or change watching. |
 | `webrtc` | The napplet needs shell-mediated WebRTC signaling/session setup. |
 
 Use `window.napplet?.domain` only for optional-domain fallback checks after

@@ -14,13 +14,8 @@
  *
  * Defines the message types exchanged between napplet and shell:
  * - Napplet -> Shell: info, pickFile, pickFiles, pickDirectory, pickSaveFile,
- *   stat, list, mkdir, remove, move, watch, unwatch
+ *   stat, list, read, write, mkdir, remove, move, watch, unwatch
  * - Shell -> Napplet: the matching results plus runtime-pushed changed
- *
- * Byte transfer (`read` / `write`) is absent: NAP-FS declares those payloads as
- * `bstr` but defines no encoding for them on NIP-5D's JSON envelope, so picking
- * one would invent wire surface. Deferred upstream at
- * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
  *
  * All types form a discriminated union on the `type` field.
  */
@@ -36,7 +31,11 @@ import type {
   FsMkdirOptions,
   FsPickOptions,
   FsPickResult,
+  FsReadOptions,
+  FsReadResult,
   FsWatchOptions,
+  FsWriteOptions,
+  FsWriteResult,
 } from '@napplet/core';
 
 /** The NAP domain name for fs messages. */
@@ -47,6 +46,7 @@ export type {
   FsPermission,
   FsEntryKind,
   FsChangeKind,
+  FsWriteMode,
   FsError,
   FsRoot,
   FsLimits,
@@ -57,6 +57,10 @@ export type {
   FsInfo,
   FsMetadata,
   FsDirectoryEntry,
+  FsReadOptions,
+  FsReadResult,
+  FsWriteOptions,
+  FsWriteResult,
   FsMkdirOptions,
   FsWatchOptions,
   FsChange,
@@ -209,6 +213,52 @@ export interface FsListResultMessage extends FsMessage {
   error?: FsError;
 }
 
+/** Read bytes from a visible file. */
+export interface FsReadMessage extends FsMessage {
+  type: 'fs.read';
+  /** Correlation ID for this request. */
+  id: string;
+  /** Virtual absolute path of the file. */
+  path: string;
+  /** Optional range read controls. */
+  options?: FsReadOptions;
+}
+
+/** Result of a `fs.read` request. */
+export interface FsReadResultMessage extends FsMessage {
+  type: 'fs.read.result';
+  /** Correlation ID matching the original request. */
+  id: string;
+  /** Read result. `data` is RFC 4648 standard padded base64 text. Absent when `error` is present. */
+  result?: FsReadResult;
+  /** Error reason when the runtime could not read the file. */
+  error?: FsError;
+}
+
+/** Write bytes to a visible file. */
+export interface FsWriteMessage extends FsMessage {
+  type: 'fs.write';
+  /** Correlation ID for this request. */
+  id: string;
+  /** Virtual absolute path of the file. */
+  path: string;
+  /** Decoded bytes encoded as RFC 4648 standard padded base64 text. */
+  data: string;
+  /** Optional write mode and preconditions. */
+  options?: FsWriteOptions;
+}
+
+/** Result of a `fs.write` request. */
+export interface FsWriteResultMessage extends FsMessage {
+  type: 'fs.write.result';
+  /** Correlation ID matching the original request. */
+  id: string;
+  /** Write result. Absent when `error` is present. */
+  result?: FsWriteResult;
+  /** Error reason when the runtime could not write the file. */
+  error?: FsError;
+}
+
 /** Create a directory. */
 export interface FsMkdirMessage extends FsMessage {
   type: 'fs.mkdir';
@@ -325,6 +375,8 @@ export type FsOutboundMessage =
   | FsPickSaveFileMessage
   | FsStatMessage
   | FsListMessage
+  | FsReadMessage
+  | FsWriteMessage
   | FsMkdirMessage
   | FsRemoveMessage
   | FsMoveMessage
@@ -340,6 +392,8 @@ export type FsInboundMessage =
   | FsPickSaveFileResultMessage
   | FsStatResultMessage
   | FsListResultMessage
+  | FsReadResultMessage
+  | FsWriteResultMessage
   | FsMkdirResultMessage
   | FsRemoveResultMessage
   | FsMoveResultMessage
