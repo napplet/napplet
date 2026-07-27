@@ -34,7 +34,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 Phase: 161 (ad-hoc-convention-package-contracts) — COMPLETE
 Plan: 26 of 26
 Status: Verified; PR #186 open
-Last activity: 2026-07-26 — Quick task 260726-ft1 removed hard-wrapped README prose and documented reader-side wrapping
+Last activity: 2026-07-26 — Quick task 260726-ici shipped the NAP-FS byte-free MVP (8 operations + `fs.changed`); `read`/`write` deferred on an open upstream spec question
 community/group-chat invite linked from the SPA and docs.
 
 ### Quick task 260726-ft1 — COMPLETE
@@ -511,6 +511,7 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 | Quick ID | Task | Date | Commit | Artifacts |
 |----------|------|------|--------|-----------|
+| 260726-ici | Implement the first MVP of NAP-FS — the `fs` domain, 8 byte-free operations (`read`/`write` deferred on an upstream spec gap) | 2026-07-26 | df55c625 | [260726-ici-lets-implement-the-first-mvp-of-nap-fs](./quick/260726-ici-lets-implement-the-first-mvp-of-nap-fs/) |
 | 260723-kgz | Remove the invented 13-character length cap on napplet `d` tags in @napplet/cli | 2026-07-23 | 5d798639 | [260723-kgz-remove-cli-d-tag-length-limit](./quick/260723-kgz-remove-cli-d-tag-length-limit/) |
 | 260715-ogy | Add neutral community and group chat invite links to the SPA and docs | 2026-07-15 | ccc3796b | [260715-ogy-add-neutral-community-and-group-chat-inv](./quick/260715-ogy-add-neutral-community-and-group-chat-inv/) |
 | 260711-hhy | Replace numbered relay/server selection with autocomplete and prompt separately for Nostr Connect bunker relays | 2026-07-11 | be89ec7d | [260711-hhy-replace-napplet-cli-numbered-relay-serve](./quick/260711-hhy-replace-napplet-cli-numbered-relay-serve/) |
