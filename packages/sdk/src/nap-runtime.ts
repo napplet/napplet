@@ -179,6 +179,10 @@ export {
 
 export {
   fsInfo,
+  fsPickFile,
+  fsPickFiles,
+  fsPickDirectory,
+  fsPickSaveFile,
   fsStat,
   fsList,
   fsMkdir,

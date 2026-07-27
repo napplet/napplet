@@ -141,6 +141,10 @@ import {
   installFsShim,
   handleFsMessage,
   info as fsInfo,
+  pickFile as fsPickFile,
+  pickFiles as fsPickFiles,
+  pickDirectory as fsPickDirectory,
+  pickSaveFile as fsPickSaveFile,
   stat as fsStat,
   list as fsList,
   mkdir as fsMkdir,
@@ -447,6 +451,10 @@ function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
   if (domains.has('fs')) {
     napplet.fs = {
       info: fsInfo,
+      pickFile: fsPickFile,
+      pickFiles: fsPickFiles,
+      pickDirectory: fsPickDirectory,
+      pickSaveFile: fsPickSaveFile,
       stat: fsStat,
       list: fsList,
       mkdir: fsMkdir,

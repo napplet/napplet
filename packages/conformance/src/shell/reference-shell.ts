@@ -28,7 +28,7 @@ export interface ReferenceEndpoint {
   dTag: string;
 }
 
-/** Default authenticated source used by the backwards-compatible {@link ReferenceShell.handle} helper. */
+/** Default authenticated source for handle(). */
 export const REFERENCE_ENDPOINT: ReferenceEndpoint = { dTag: 'reference-source' };
 
 /** A placeholder blob URL for canned upload responses. `.invalid` is reserved (RFC 2606) and never resolves. */
@@ -37,6 +37,19 @@ const REFERENCE_HANDLER = 'reference-handler';
 const REFERENCE_SUBSCRIBER = 'reference-subscriber';
 const REFERENCE_CONVENTION = 'napplet:note/open';
 const REFERENCE_CONTRACT = { convention: REFERENCE_CONVENTION, eventKinds: [1, 30023] };
+
+function pickResult(
+  type: 'fs.pickFile.result' | 'fs.pickFiles.result' | 'fs.pickDirectory.result' | 'fs.pickSaveFile.result',
+  id: unknown,
+  entry: {
+    path: string;
+    kind: 'file' | 'directory';
+    name: string;
+    permissions: string[];
+  },
+) {
+  return ok({ type, id, result: { entries: [entry] } });
+}
 
 /** One recorded inbound envelope from the napplet, with its validation verdict. */
 export interface RecordedEnvelope {
@@ -279,6 +292,30 @@ const RESPONDERS: Record<string, Responder> = {
       roots: [{ path: '/shared', name: 'Shared files', permissions: ['read', 'list', 'write', 'create', 'delete', 'watch'] }],
       limits: { maxReadBytes: 1048576, maxWriteBytes: 1048576, maxWatchCount: 16 },
     },
+  }),
+  'fs.pickFile': (e) => pickResult('fs.pickFile.result', e.id, {
+    path: '/picked/file.txt',
+    kind: 'file',
+    name: 'file.txt',
+    permissions: ['read'],
+  }),
+  'fs.pickFiles': (e) => pickResult('fs.pickFiles.result', e.id, {
+    path: '/picked/file.txt',
+    kind: 'file',
+    name: 'file.txt',
+    permissions: ['read'],
+  }),
+  'fs.pickDirectory': (e) => pickResult('fs.pickDirectory.result', e.id, {
+    path: '/picked',
+    kind: 'directory',
+    name: 'picked',
+    permissions: ['read', 'list'],
+  }),
+  'fs.pickSaveFile': (e) => pickResult('fs.pickSaveFile.result', e.id, {
+    path: '/picked/export.json',
+    kind: 'file',
+    name: 'export.json',
+    permissions: ['write', 'create'],
   }),
   'fs.stat': (e) => ok({
     type: 'fs.stat.result',

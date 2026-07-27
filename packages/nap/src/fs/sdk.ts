@@ -18,6 +18,8 @@ import type {
   FsInfo,
   FsMetadata,
   FsMkdirOptions,
+  FsPickOptions,
+  FsPickResult,
   FsWatchOptions,
 } from './types.js';
 
@@ -36,6 +38,46 @@ function requireFs(): NonNullable<NappletGlobal['fs']> {
  */
 export function fsInfo(): Promise<FsInfo> {
   return requireFs().info();
+}
+
+/**
+ * Ask the runtime to let the user select one file.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export function fsPickFile(options?: FsPickOptions): Promise<FsPickResult> {
+  return requireFs().pickFile(options);
+}
+
+/**
+ * Ask the runtime to let the user select one or more files.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export function fsPickFiles(options?: FsPickOptions): Promise<FsPickResult> {
+  return requireFs().pickFiles(options);
+}
+
+/**
+ * Ask the runtime to let the user select one directory.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export function fsPickDirectory(options?: FsPickOptions): Promise<FsPickResult> {
+  return requireFs().pickDirectory(options);
+}
+
+/**
+ * Ask the runtime to let the user select or name one file destination.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export function fsPickSaveFile(options?: FsPickOptions): Promise<FsPickResult> {
+  return requireFs().pickSaveFile(options);
 }
 
 /**

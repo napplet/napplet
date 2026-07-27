@@ -51,6 +51,8 @@ import type {
   FsInfo,
   FsMetadata,
   FsMkdirOptions,
+  FsPickOptions,
+  FsPickResult,
   FsWatchOptions,
   Subscription,
 } from '@napplet/core';
@@ -403,10 +405,10 @@ export const serial: SdkDomain<'serial'> = {
 
 /**
  * Shell-mediated virtual filesystem access (NAP-FS): discover visible roots,
- * inspect and list entries, create, remove and move them, and subscribe to
- * advisory change events. The runtime owns host paths, mounts, backing store,
- * normalization, policy, and authorization -- the napplet sees only virtual
- * paths.
+ * ask the runtime to mediate file and directory selection, inspect and list
+ * entries, create, remove and move them, and subscribe to advisory change
+ * events. The runtime owns host paths, mounts, backing store, normalization,
+ * policy, and authorization -- the napplet sees only virtual paths.
  *
  * `info()` is advisory discovery, not an authorization token: handle failures
  * even when it advertised a matching permission.
@@ -419,6 +421,7 @@ export const serial: SdkDomain<'serial'> = {
  * ```ts
  * import { fs } from '@napplet/sdk';
  *
+ * const picked = await fs.pickFile({ accept: [{ extension: '.md' }] });
  * const entries = await fs.list('/shared');
  * const watchId = await fs.watch('/shared', { recursive: true });
  * fs.onChanged((change) => refresh(change.path));
@@ -431,6 +434,42 @@ export const fs: SdkDomain<'fs'> = {
    */
   info(): Promise<FsInfo> {
     return requireDomain('fs').info();
+  },
+
+  /**
+   * Ask the runtime to let the user select one file.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickFile(options?: FsPickOptions): Promise<FsPickResult> {
+    return requireDomain('fs').pickFile(options);
+  },
+
+  /**
+   * Ask the runtime to let the user select one or more files.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickFiles(options?: FsPickOptions): Promise<FsPickResult> {
+    return requireDomain('fs').pickFiles(options);
+  },
+
+  /**
+   * Ask the runtime to let the user select one directory.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickDirectory(options?: FsPickOptions): Promise<FsPickResult> {
+    return requireDomain('fs').pickDirectory(options);
+  },
+
+  /**
+   * Ask the runtime to let the user select or name one file destination.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickSaveFile(options?: FsPickOptions): Promise<FsPickResult> {
+    return requireDomain('fs').pickSaveFile(options);
   },
 
   /**

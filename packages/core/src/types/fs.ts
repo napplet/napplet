@@ -12,6 +12,10 @@
  * implementation could interoperate with, so the question is deferred upstream:
  * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
  *
+ * Picker operations (`pickFile` / `pickFiles` / `pickDirectory` /
+ * `pickSaveFile`) use pure JSON payloads and return runtime-exposed virtual
+ * paths, so they are implemented here.
+ *
  * `FsLimits.maxReadBytes` and `FsLimits.maxWriteBytes` are retained: the spec
  * makes them required fields of `FsInfo`, and they are advisory discovery data
  * rather than operations.
@@ -39,6 +43,7 @@ export type FsError =
   | 'too-large'
   | 'unsupported'
   | 'conflict'
+  | 'cancelled'
   | 'io-error';
 
 /** A runtime-curated root visible to the napplet. Names and descriptions are safe-to-disclose labels, never host paths. */
@@ -73,6 +78,48 @@ export interface FsInfo {
   roots: FsRoot[];
   /** Runtime-advertised operational limits. */
   limits: FsLimits;
+}
+
+/** Advisory picker filter. Runtimes and napplets must not treat it as content validation. */
+export interface FsAcceptRule {
+  /** MIME type hint such as `text/plain`. */
+  mime?: string;
+  /** Extension hint such as `.md`. */
+  extension?: string;
+}
+
+/** User-mediated picker options. Hints only -- never authority. */
+export interface FsPickOptions {
+  /** Requested permission intent. The runtime decides the actual returned permissions. */
+  permissions?: FsPermission[];
+  /** Advisory UI filters only. */
+  accept?: FsAcceptRule[];
+  /** Suggested destination file name for save pickers. */
+  suggestedName?: string;
+  /** Runtime-displayable description of the picker intent. */
+  description?: string;
+}
+
+/** A file or directory selected by runtime-mediated user choice. */
+export interface FsPickedEntry {
+  /** Virtual absolute path exposed to this napplet. */
+  path: string;
+  /** Selected entry kind. */
+  kind: 'file' | 'directory';
+  /** Entry name within its virtual parent. */
+  name: string;
+  /** Permissions actually granted for the returned virtual path. */
+  permissions: FsPermission[];
+  /** Size in bytes, when the runtime discloses it. */
+  size?: number;
+  /** Last-modified timestamp, when the runtime discloses it. */
+  modifiedAt?: number;
+}
+
+/** Result of a user-mediated picker request. Cancellation is an error, not an empty success. */
+export interface FsPickResult {
+  /** Selected entries exposed as virtual filesystem paths. */
+  entries: FsPickedEntry[];
 }
 
 /** Coarse metadata for a visible file or directory. Omits host-specific identifiers. */

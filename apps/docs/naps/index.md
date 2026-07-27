@@ -312,12 +312,13 @@ if (window.napplet?.common) {
 
 ### fs
 
-Shell-mediated virtual filesystem access. Napplets discover visible roots, inspect and list entries, create, remove and move them, and subscribe to advisory change events. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization — the napplet sees only virtual paths.
+Shell-mediated virtual filesystem access. Napplets discover visible roots, ask the runtime to mediate file and directory selection, inspect and list entries, create, remove and move them, and subscribe to advisory change events. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization — the napplet sees only virtual paths.
 
 `info()` is advisory discovery, not an authorization token: permissions can change mid-session and any operation can still fail.
 
 ```ts
 if (window.napplet?.fs) {
+  const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
   const entries = await window.napplet.fs.list('/shared');
   const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
   window.napplet.fs.onChanged((change) => refresh(change.path));

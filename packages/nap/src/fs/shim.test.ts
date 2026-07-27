@@ -70,6 +70,179 @@ describe('@napplet/nap/fs shim', () => {
     });
   });
 
+  it('asks the runtime to pick one file with advisory options', async () => {
+    const { handleFsMessage, pickFile } = await import('./shim.js');
+
+    const result = pickFile({
+      permissions: ['read'],
+      accept: [{ mime: 'text/plain' }, { extension: '.md' }],
+      description: 'Choose a text file',
+    });
+
+    expect(postedMessages).toEqual([
+      {
+        msg: {
+          type: 'fs.pickFile',
+          id: 'fs-test-1',
+          options: {
+            permissions: ['read'],
+            accept: [{ mime: 'text/plain' }, { extension: '.md' }],
+            description: 'Choose a text file',
+          },
+        },
+        targetOrigin: '*',
+      },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.pickFile.result',
+      id: 'fs-test-1',
+      result: {
+        entries: [{
+          path: '/picked/report.md',
+          kind: 'file',
+          name: 'report.md',
+          permissions: ['read'],
+          size: 1200,
+        }],
+      },
+    });
+
+    await expect(result).resolves.toEqual({
+      entries: [{
+        path: '/picked/report.md',
+        kind: 'file',
+        name: 'report.md',
+        permissions: ['read'],
+        size: 1200,
+      }],
+    });
+  });
+
+  it('asks the runtime to pick multiple files without options', async () => {
+    const { handleFsMessage, pickFiles } = await import('./shim.js');
+
+    const result = pickFiles();
+
+    expect(postedMessages).toEqual([
+      { msg: { type: 'fs.pickFiles', id: 'fs-test-1' }, targetOrigin: '*' },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.pickFiles.result',
+      id: 'fs-test-1',
+      result: {
+        entries: [
+          { path: '/picked/a.txt', kind: 'file', name: 'a.txt', permissions: ['read'] },
+          { path: '/picked/b.txt', kind: 'file', name: 'b.txt', permissions: ['read'] },
+        ],
+      },
+    });
+
+    await expect(result).resolves.toEqual({
+      entries: [
+        { path: '/picked/a.txt', kind: 'file', name: 'a.txt', permissions: ['read'] },
+        { path: '/picked/b.txt', kind: 'file', name: 'b.txt', permissions: ['read'] },
+      ],
+    });
+  });
+
+  it('asks the runtime to pick a directory', async () => {
+    const { handleFsMessage, pickDirectory } = await import('./shim.js');
+
+    const result = pickDirectory({ permissions: ['read', 'list', 'watch'] });
+
+    expect(postedMessages).toEqual([
+      {
+        msg: {
+          type: 'fs.pickDirectory',
+          id: 'fs-test-1',
+          options: { permissions: ['read', 'list', 'watch'] },
+        },
+        targetOrigin: '*',
+      },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.pickDirectory.result',
+      id: 'fs-test-1',
+      result: {
+        entries: [{
+          path: '/picked/media',
+          kind: 'directory',
+          name: 'media',
+          permissions: ['read', 'list'],
+        }],
+      },
+    });
+
+    await expect(result).resolves.toEqual({
+      entries: [{
+        path: '/picked/media',
+        kind: 'directory',
+        name: 'media',
+        permissions: ['read', 'list'],
+      }],
+    });
+  });
+
+  it('asks the runtime to pick a save destination', async () => {
+    const { handleFsMessage, pickSaveFile } = await import('./shim.js');
+
+    const result = pickSaveFile({
+      permissions: ['write', 'create'],
+      suggestedName: 'export.json',
+      accept: [{ mime: 'application/json' }],
+    });
+
+    expect(postedMessages).toEqual([
+      {
+        msg: {
+          type: 'fs.pickSaveFile',
+          id: 'fs-test-1',
+          options: {
+            permissions: ['write', 'create'],
+            suggestedName: 'export.json',
+            accept: [{ mime: 'application/json' }],
+          },
+        },
+        targetOrigin: '*',
+      },
+    ]);
+
+    handleFsMessage({
+      type: 'fs.pickSaveFile.result',
+      id: 'fs-test-1',
+      result: {
+        entries: [{
+          path: '/picked/export.json',
+          kind: 'file',
+          name: 'export.json',
+          permissions: ['write', 'create'],
+        }],
+      },
+    });
+
+    await expect(result).resolves.toEqual({
+      entries: [{
+        path: '/picked/export.json',
+        kind: 'file',
+        name: 'export.json',
+        permissions: ['write', 'create'],
+      }],
+    });
+  });
+
+  it('rejects picker cancellation as an error', async () => {
+    const { handleFsMessage, pickFile } = await import('./shim.js');
+
+    const result = pickFile();
+
+    handleFsMessage({ type: 'fs.pickFile.result', id: 'fs-test-1', error: 'cancelled' });
+
+    await expect(result).rejects.toThrow('cancelled');
+  });
+
   it('stats a visible entry', async () => {
     const { handleFsMessage, stat } = await import('./shim.js');
 

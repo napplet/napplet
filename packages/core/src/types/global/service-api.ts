@@ -42,6 +42,8 @@ import type {
   FsInfo,
   FsMetadata,
   FsMkdirOptions,
+  FsPickOptions,
+  FsPickResult,
   FsWatchOptions,
 } from '../fs.js';
 import type { ListItem, ListMutationResult, ListOptions, ListRef, ListSupport } from '../lists.js';
@@ -580,9 +582,9 @@ export interface SerialApi {
 
 /**
  * Shell-mediated virtual filesystem access (NAP-FS): the napplet sees only
- * virtual paths, directory entries, coarse metadata, and advisory change
- * events. The runtime owns host paths, mounts, backing store, policy, and
- * authorization of every operation.
+ * virtual paths, directory entries, coarse metadata, user-mediated picker
+ * results, and advisory change events. The runtime owns host paths, mounts,
+ * backing store, policy, and authorization of every operation.
  *
  * `info()` is advisory discovery, not an authorization token -- permissions can
  * change mid-session and any operation can still fail, so handle rejections
@@ -596,6 +598,7 @@ export interface SerialApi {
  * ```ts
  * if (window.napplet.fs) {
  *   const { roots } = await window.napplet.fs.info();
+ *   const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
  *   const entries = await window.napplet.fs.list('/shared');
  *   const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
  *   window.napplet.fs.onChanged((change) => refresh(change.path));
@@ -608,6 +611,30 @@ export interface FsApi {
    * @returns Promise resolving to advisory filesystem discovery data
    */
   info(): Promise<FsInfo>;
+  /**
+   * Ask the runtime to let the user select one file.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickFile(options?: FsPickOptions): Promise<FsPickResult>;
+  /**
+   * Ask the runtime to let the user select one or more files.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickFiles(options?: FsPickOptions): Promise<FsPickResult>;
+  /**
+   * Ask the runtime to let the user select one directory.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickDirectory(options?: FsPickOptions): Promise<FsPickResult>;
+  /**
+   * Ask the runtime to let the user select or name one file destination.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickSaveFile(options?: FsPickOptions): Promise<FsPickResult>;
   /**
    * Read coarse metadata for a visible file or directory.
    * @param path  Virtual absolute path of the entry

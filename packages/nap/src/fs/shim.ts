@@ -21,6 +21,8 @@ import type {
   FsMetadata,
   FsMkdirOptions,
   FsOutboundMessage,
+  FsPickOptions,
+  FsPickResult,
   FsWatchOptions,
 } from './types.js';
 
@@ -38,9 +40,13 @@ const changeHandlers = new Set<(change: FsChange) => void>();
 
 let installed = false;
 
-/** The eight result discriminants routed into the pending map. */
+/** The result discriminants routed into the pending map. */
 const RESULT_TYPES = new Set([
   'fs.info.result',
+  'fs.pickFile.result',
+  'fs.pickFiles.result',
+  'fs.pickDirectory.result',
+  'fs.pickSaveFile.result',
   'fs.stat.result',
   'fs.list.result',
   'fs.mkdir.result',
@@ -110,7 +116,7 @@ function handleChanged(msg: { type: string; [key: string]: unknown }): void {
 
 /**
  * Handle fs.* messages from the shell via the central message listener.
- * Covers the eight request results and runtime-pushed fs.changed events.
+ * Covers request results and runtime-pushed fs.changed events.
  *
  * @param msg  The shell envelope to route
  */
@@ -136,6 +142,50 @@ export function handleFsMessage(msg: { type: string; [key: string]: unknown }): 
 export async function info(): Promise<FsInfo> {
   const msg = await request('fs.info');
   return expectField<FsInfo>(msg, 'info', 'fs.info');
+}
+
+/**
+ * Ask the runtime to let the user select one file.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export async function pickFile(options?: FsPickOptions): Promise<FsPickResult> {
+  const msg = await request('fs.pickFile', options === undefined ? {} : { options });
+  return expectField<FsPickResult>(msg, 'result', 'fs.pickFile');
+}
+
+/**
+ * Ask the runtime to let the user select one or more files.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export async function pickFiles(options?: FsPickOptions): Promise<FsPickResult> {
+  const msg = await request('fs.pickFiles', options === undefined ? {} : { options });
+  return expectField<FsPickResult>(msg, 'result', 'fs.pickFiles');
+}
+
+/**
+ * Ask the runtime to let the user select one directory.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export async function pickDirectory(options?: FsPickOptions): Promise<FsPickResult> {
+  const msg = await request('fs.pickDirectory', options === undefined ? {} : { options });
+  return expectField<FsPickResult>(msg, 'result', 'fs.pickDirectory');
+}
+
+/**
+ * Ask the runtime to let the user select or name one file destination.
+ *
+ * @param options  Optional picker hints
+ * @returns Promise resolving to picked virtual filesystem paths
+ */
+export async function pickSaveFile(options?: FsPickOptions): Promise<FsPickResult> {
+  const msg = await request('fs.pickSaveFile', options === undefined ? {} : { options });
+  return expectField<FsPickResult>(msg, 'result', 'fs.pickSaveFile');
 }
 
 /**

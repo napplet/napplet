@@ -7,10 +7,11 @@
 /**
  * @napplet/nap/fs -- Shell-mediated virtual filesystem module (NAP-FS).
  *
- * A napplet discovers visible roots, inspects and lists entries, creates,
- * removes and moves them, and subscribes to advisory change events. The runtime
- * owns host paths, mounts, backing store, normalization, policy, and
- * authorization of every operation -- the napplet sees only virtual paths.
+ * A napplet discovers visible roots, asks the runtime to mediate file and
+ * directory selection, inspects and lists entries, creates, removes and moves
+ * them, and subscribes to advisory change events. The runtime owns host paths,
+ * mounts, backing store, normalization, policy, and authorization of every
+ * operation -- the napplet sees only virtual paths.
  *
  * Byte transfer (`read` / `write`) is not available. NAP-FS declares those
  * payloads as `bstr` but defines no encoding for them on NIP-5D's JSON
@@ -22,8 +23,9 @@
  *
  * @example
  * ```ts
- * import { fsList, fsMkdir, fsWatch, fsOnChanged } from '@napplet/nap/fs';
+ * import { fsPickFile, fsList, fsMkdir, fsWatch, fsOnChanged } from '@napplet/nap/fs';
  *
+ * const picked = await fsPickFile({ accept: [{ extension: '.md' }] });
  * const entries = await fsList('/shared');
  * await fsMkdir('/shared/projects/new', { recursive: true });
  * const watchId = await fsWatch('/shared', { recursive: true });
@@ -42,6 +44,10 @@ export type {
   FsError,
   FsRoot,
   FsLimits,
+  FsAcceptRule,
+  FsPickOptions,
+  FsPickedEntry,
+  FsPickResult,
   FsInfo,
   FsMetadata,
   FsDirectoryEntry,
@@ -51,6 +57,14 @@ export type {
   FsMessage,
   FsInfoMessage,
   FsInfoResultMessage,
+  FsPickFileMessage,
+  FsPickFileResultMessage,
+  FsPickFilesMessage,
+  FsPickFilesResultMessage,
+  FsPickDirectoryMessage,
+  FsPickDirectoryResultMessage,
+  FsPickSaveFileMessage,
+  FsPickSaveFileResultMessage,
   FsStatMessage,
   FsStatResultMessage,
   FsListMessage,
@@ -75,6 +89,10 @@ export {
   installFsShim,
   handleFsMessage,
   info,
+  pickFile,
+  pickFiles,
+  pickDirectory,
+  pickSaveFile,
   stat,
   list,
   mkdir,
@@ -87,6 +105,10 @@ export {
 
 export {
   fsInfo,
+  fsPickFile,
+  fsPickFiles,
+  fsPickDirectory,
+  fsPickSaveFile,
   fsStat,
   fsList,
   fsMkdir,

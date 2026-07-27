@@ -92,7 +92,7 @@ import { notifySend } from '@napplet/nap/notify/sdk';
   `open`/`write`/`close`/`onEvent`; the shell owns permissions, raw port
   handles, streams, OS paths, and lifecycle policy.
 - **fs** — shell-mediated virtual filesystem access: napplets get
-  `info`/`stat`/`list`/`mkdir`/`remove`/`move`/`watch`/`unwatch`/`onChanged`;
+  `info`/`pickFile`/`pickFiles`/`pickDirectory`/`pickSaveFile`/`stat`/`list`/`mkdir`/`remove`/`move`/`watch`/`unwatch`/`onChanged`;
   the runtime owns host paths, mounts, backing store, normalization, policy,
   and authorization. Byte transfer (`read`/`write`) is not yet available —
   [NAP-FS](https://github.com/napplet/naps/pull/88) declares those payloads as

@@ -283,6 +283,10 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
 
   // ── fs ───────────────────────────────────────────────────────────────────
   'fs.info': { dir: 'out', fields: { ...ID } },
+  'fs.pickFile': { dir: 'out', fields: { ...ID } },
+  'fs.pickFiles': { dir: 'out', fields: { ...ID } },
+  'fs.pickDirectory': { dir: 'out', fields: { ...ID } },
+  'fs.pickSaveFile': { dir: 'out', fields: { ...ID } },
   'fs.stat': { dir: 'out', fields: { ...ID, path: 'string' } },
   'fs.list': { dir: 'out', fields: { ...ID, path: 'string' } },
   'fs.mkdir': { dir: 'out', fields: { ...ID, path: 'string' } },
@@ -291,6 +295,10 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
   'fs.watch': { dir: 'out', fields: { ...ID, path: 'string' } },
   'fs.unwatch': { dir: 'out', fields: { ...ID, watchId: 'string' } },
   'fs.info.result': { dir: 'in' },
+  'fs.pickFile.result': { dir: 'in' },
+  'fs.pickFiles.result': { dir: 'in' },
+  'fs.pickDirectory.result': { dir: 'in' },
+  'fs.pickSaveFile.result': { dir: 'in' },
   'fs.stat.result': { dir: 'in' },
   'fs.list.result': { dir: 'in' },
   'fs.mkdir.result': { dir: 'in' },

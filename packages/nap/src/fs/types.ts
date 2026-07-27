@@ -13,8 +13,9 @@
  * normalization, policy, and authorization of every operation.
  *
  * Defines the message types exchanged between napplet and shell:
- * - Napplet -> Shell: info, stat, list, mkdir, remove, move, watch, unwatch
- * - Shell -> Napplet: the eight matching results plus runtime-pushed changed
+ * - Napplet -> Shell: info, pickFile, pickFiles, pickDirectory, pickSaveFile,
+ *   stat, list, mkdir, remove, move, watch, unwatch
+ * - Shell -> Napplet: the matching results plus runtime-pushed changed
  *
  * Byte transfer (`read` / `write`) is absent: NAP-FS declares those payloads as
  * `bstr` but defines no encoding for them on NIP-5D's JSON envelope, so picking
@@ -33,6 +34,8 @@ import type {
   FsInfo,
   FsMetadata,
   FsMkdirOptions,
+  FsPickOptions,
+  FsPickResult,
   FsWatchOptions,
 } from '@napplet/core';
 
@@ -47,6 +50,10 @@ export type {
   FsError,
   FsRoot,
   FsLimits,
+  FsAcceptRule,
+  FsPickOptions,
+  FsPickedEntry,
+  FsPickResult,
   FsInfo,
   FsMetadata,
   FsDirectoryEntry,
@@ -79,6 +86,86 @@ export interface FsInfoResultMessage extends FsMessage {
   /** Advisory discovery data. Absent when `error` is present. */
   info?: FsInfo;
   /** Error reason when the runtime could not answer. */
+  error?: FsError;
+}
+
+/** Ask the runtime to let the user select one file. */
+export interface FsPickFileMessage extends FsMessage {
+  type: 'fs.pickFile';
+  /** Correlation ID for this request. */
+  id: string;
+  /** Optional picker hints. */
+  options?: FsPickOptions;
+}
+
+/** Result of a `fs.pickFile` request. */
+export interface FsPickFileResultMessage extends FsMessage {
+  type: 'fs.pickFile.result';
+  /** Correlation ID matching the original request. */
+  id: string;
+  /** Picked virtual path. Absent when `error` is present. */
+  result?: FsPickResult;
+  /** Error reason, including `cancelled` when the user cancels. */
+  error?: FsError;
+}
+
+/** Ask the runtime to let the user select one or more files. */
+export interface FsPickFilesMessage extends FsMessage {
+  type: 'fs.pickFiles';
+  /** Correlation ID for this request. */
+  id: string;
+  /** Optional picker hints. */
+  options?: FsPickOptions;
+}
+
+/** Result of a `fs.pickFiles` request. */
+export interface FsPickFilesResultMessage extends FsMessage {
+  type: 'fs.pickFiles.result';
+  /** Correlation ID matching the original request. */
+  id: string;
+  /** Picked virtual paths. Absent when `error` is present. */
+  result?: FsPickResult;
+  /** Error reason, including `cancelled` when the user cancels. */
+  error?: FsError;
+}
+
+/** Ask the runtime to let the user select one directory. */
+export interface FsPickDirectoryMessage extends FsMessage {
+  type: 'fs.pickDirectory';
+  /** Correlation ID for this request. */
+  id: string;
+  /** Optional picker hints. */
+  options?: FsPickOptions;
+}
+
+/** Result of a `fs.pickDirectory` request. */
+export interface FsPickDirectoryResultMessage extends FsMessage {
+  type: 'fs.pickDirectory.result';
+  /** Correlation ID matching the original request. */
+  id: string;
+  /** Picked virtual path. Absent when `error` is present. */
+  result?: FsPickResult;
+  /** Error reason, including `cancelled` when the user cancels. */
+  error?: FsError;
+}
+
+/** Ask the runtime to let the user select or name one file destination. */
+export interface FsPickSaveFileMessage extends FsMessage {
+  type: 'fs.pickSaveFile';
+  /** Correlation ID for this request. */
+  id: string;
+  /** Optional picker hints. */
+  options?: FsPickOptions;
+}
+
+/** Result of a `fs.pickSaveFile` request. */
+export interface FsPickSaveFileResultMessage extends FsMessage {
+  type: 'fs.pickSaveFile.result';
+  /** Correlation ID matching the original request. */
+  id: string;
+  /** Picked virtual path. Absent when `error` is present. */
+  result?: FsPickResult;
+  /** Error reason, including `cancelled` when the user cancels. */
   error?: FsError;
 }
 
@@ -232,6 +319,10 @@ export interface FsChangedMessage extends FsMessage {
 /** Napplet -> Shell fs messages. */
 export type FsOutboundMessage =
   | FsInfoMessage
+  | FsPickFileMessage
+  | FsPickFilesMessage
+  | FsPickDirectoryMessage
+  | FsPickSaveFileMessage
   | FsStatMessage
   | FsListMessage
   | FsMkdirMessage
@@ -243,6 +334,10 @@ export type FsOutboundMessage =
 /** Shell -> Napplet fs messages. */
 export type FsInboundMessage =
   | FsInfoResultMessage
+  | FsPickFileResultMessage
+  | FsPickFilesResultMessage
+  | FsPickDirectoryResultMessage
+  | FsPickSaveFileResultMessage
   | FsStatResultMessage
   | FsListResultMessage
   | FsMkdirResultMessage
