@@ -77,6 +77,7 @@ usable API — flag a package/spec gap.
 | ContextVM / MCP-style native tool bridge | `cvm` |
 | Bluetooth LE / GATT access through shell policy | `ble` |
 | Serial-port access through shell policy | `serial` |
+| Virtual filesystem access through shell policy (no byte transfer yet) | `fs` |
 | WebRTC signaling/session mediation | `webrtc` |
 
 The deprecated `ifc` package subpath is an INC compatibility alias; choose

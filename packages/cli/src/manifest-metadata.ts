@@ -20,6 +20,7 @@ const NAP_DOMAINS = new Set([
   "link",
   "lists",
   "serial",
+  "fs",
   "common",
   "dm",
 ]);

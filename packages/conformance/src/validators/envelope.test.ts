@@ -192,6 +192,8 @@ describe('validateEnvelope — outbound field checks', () => {
       },
       common: { type: 'common.react', id: 'a', targetEventId: 'e'.repeat(64), reaction: '+' },
       serial: { type: 'serial.write', id: 'a', sessionId: 's', data: [1, 2, 3] },
+      // `recursive` is a top-level field on fs.remove, never nested in options
+      fs: { type: 'fs.remove', id: 'a', path: '/shared/projects', recursive: true },
     };
     for (const [domain, msg] of Object.entries(samples)) {
       const v = validateEnvelope(msg);
@@ -210,13 +212,13 @@ describe('validateEnvelope — no generic shell domain', () => {
 });
 
 describe('ENVELOPE_SPECS invariants', () => {
-  it('has 208 discriminants split 100 outbound / 108 inbound', () => {
+  it('has 225 discriminants split 108 outbound / 117 inbound', () => {
     const all = knownEnvelopeTypes();
-    expect(all).toHaveLength(208);
+    expect(all).toHaveLength(225);
     const out = all.filter((t) => ENVELOPE_SPECS[t].dir === 'out');
     const inbound = all.filter((t) => ENVELOPE_SPECS[t].dir === 'in');
-    expect(out).toHaveLength(100);
-    expect(inbound).toHaveLength(108);
+    expect(out).toHaveLength(108);
+    expect(inbound).toHaveLength(117);
   });
 
   it('declares the adopted inbound carrier fields without delivery identifiers', () => {

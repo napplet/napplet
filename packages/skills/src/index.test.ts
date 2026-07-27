@@ -32,6 +32,7 @@ describe('skill registry', () => {
       'count',
       'lists',
       'serial',
+      'fs',
       'common',
       'dm',
     ];

@@ -310,12 +310,28 @@ if (window.napplet?.common) {
 }
 ```
 
+### fs
+
+Shell-mediated virtual filesystem access. Napplets discover visible roots, inspect and list entries, create, remove and move them, and subscribe to advisory change events. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization — the napplet sees only virtual paths.
+
+`info()` is advisory discovery, not an authorization token: permissions can change mid-session and any operation can still fail.
+
+```ts
+if (window.napplet?.fs) {
+  const entries = await window.napplet.fs.list('/shared');
+  const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
+  window.napplet.fs.onChanged((change) => refresh(change.path));
+}
+```
+
+Byte transfer (`read` / `write`) is not yet available. [NAP-FS](https://github.com/napplet/naps/pull/88) declares those payloads as `bstr` but does not define how a `bstr` is encoded on NIP-5D's JSON envelope, so shipping an encoding would invent wire surface. Deferred upstream: <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>.
+
 ## Core domain union
 
 [`@napplet/core`](/packages/core) exports a `NapDomain` string union for the
 foundational domains — `relay`, `identity`, `storage`, `inc`, `theme`,
 `keys`, `media`, `notify`, `config`, `resource`, `cvm`, `outbox`,
-`upload`, `intent`, `ble`, `webrtc`, `link`, `lists`, `serial`, `common` — used as the discriminant for envelope routing and
+`upload`, `intent`, `ble`, `webrtc`, `link`, `lists`, `serial`, `fs`, `common` — used as the discriminant for envelope routing and
 domain presence.
 
 ## Where to go next

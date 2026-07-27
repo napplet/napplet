@@ -33,6 +33,7 @@ export { DOMAIN as COUNT_DOMAIN } from '@napplet/nap/count';
 export { DOMAIN as LISTS_DOMAIN } from '@napplet/nap/lists';
 export { DOMAIN as COMMON_DOMAIN } from '@napplet/nap/common';
 export { DOMAIN as SERIAL_DOMAIN } from '@napplet/nap/serial';
+export { DOMAIN as FS_DOMAIN } from '@napplet/nap/fs';
 export { DOMAIN as DM_DOMAIN } from '@napplet/nap/dm';
 
 export { installRelayShim } from '@napplet/nap/relay';
@@ -60,6 +61,7 @@ export { installCountShim } from '@napplet/nap/count';
 export { installListsShim } from '@napplet/nap/lists';
 export { installCommonShim } from '@napplet/nap/common';
 export { installSerialShim } from '@napplet/nap/serial';
+export { installFsShim } from '@napplet/nap/fs';
 export { installDmShim } from '@napplet/nap/dm';
 
 export { relaySubscribe, relayPublish, relayPublishEncrypted, relayQuery } from '@napplet/nap/relay';
@@ -174,6 +176,18 @@ export {
   serialClose,
   serialOnEvent,
 } from '@napplet/nap/serial';
+
+export {
+  fsInfo,
+  fsStat,
+  fsList,
+  fsMkdir,
+  fsRemove,
+  fsMove,
+  fsWatch,
+  fsUnwatch,
+  fsOnChanged,
+} from '@napplet/nap/fs';
 export {
   dmStatus,
   dmConversations,

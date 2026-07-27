@@ -12,7 +12,7 @@ Protocol truth: NIP-5D (<https://github.com/nostr-protocol/nips/pull/2303>) plus
 Use current package exports as the implementation boundary. Implemented package
 domains are `relay`, `identity`, `storage`, `inc`, `theme`, `keys`, `media`,
 `notify`, `config`, `resource`, `cvm`, `outbox`, `upload`, `intent`, `ble`,
-`webrtc`, `link`, `count`, `lists`, `serial`, `common`, and `dm`. If a NAP is
+`webrtc`, `link`, `count`, `lists`, `serial`, `fs`, `common`, and `dm`. If a NAP is
 not exported by the current `@napplet/*` packages, do not treat it as usable API.
 Map a need to an existing shipped NAP only when it faithfully owns the intent;
 otherwise list the feature as blocked/deferred.
@@ -69,6 +69,7 @@ Replace app-owned infrastructure with the highest-level NAP that owns the user i
 | Global shortcuts, editor hotkeys, action keybindings | `keys` |
 | Notifications, badges, notification actions | `notify` |
 | Device/native session bridges | `ble`, `serial`, `webrtc`, or `cvm` only when the current package domain fits |
+| File browsing, directory listing, change watching | `fs` — shell-mediated virtual filesystem access; byte transfer is not yet available |
 
 If the port still contains a relay client, signer, direct storage layer, or direct network layer after this pass, assume the boundary is wrong until proven otherwise.
 

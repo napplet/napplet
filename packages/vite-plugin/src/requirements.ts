@@ -29,6 +29,7 @@ const NAP_DOMAINS = [
   'count',
   'lists',
   'serial',
+  'fs',
   'common',
   'dm',
 ] as const;

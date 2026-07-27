@@ -24,39 +24,36 @@
  * All types form a discriminated union on the `type` field.
  */
 
+// Names the message interfaces below reference.
 import type {
   NappletMessage,
   FsChange,
-  FsChangeKind,
   FsDirectoryEntry,
-  FsEntryKind,
   FsError,
   FsInfo,
-  FsLimits,
   FsMetadata,
   FsMkdirOptions,
-  FsPermission,
-  FsRoot,
   FsWatchOptions,
 } from '@napplet/core';
 
 /** The NAP domain name for fs messages. */
 export const DOMAIN = 'fs' as const;
 
+// The NAP-FS schema types, re-exported so consumers can import them from this subpath.
 export type {
-  FsChange,
-  FsChangeKind,
-  FsDirectoryEntry,
-  FsEntryKind,
-  FsError,
-  FsInfo,
-  FsLimits,
-  FsMetadata,
-  FsMkdirOptions,
   FsPermission,
+  FsEntryKind,
+  FsChangeKind,
+  FsError,
   FsRoot,
+  FsLimits,
+  FsInfo,
+  FsMetadata,
+  FsDirectoryEntry,
+  FsMkdirOptions,
   FsWatchOptions,
-};
+  FsChange,
+} from '@napplet/core';
 
 /**
  * Base interface for all fs NAP messages.

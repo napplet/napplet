@@ -1,5 +1,5 @@
 /**
- * @napplet/sdk -- Link, lists, common, BLE, and serial wrapper objects.
+ * @napplet/sdk -- Link, lists, common, BLE, serial, and fs wrapper objects.
  *
  * @packageDocumentation
  */
@@ -46,6 +46,12 @@ import type {
   SerialEvent,
   SerialOpenRequest,
   SerialOpenResult,
+  FsChange,
+  FsDirectoryEntry,
+  FsInfo,
+  FsMetadata,
+  FsMkdirOptions,
+  FsWatchOptions,
   Subscription,
 } from '@napplet/core';
 import { requireDomain } from './require-napplet.js';
@@ -392,6 +398,115 @@ export const serial: SdkDomain<'serial'> = {
    */
   onEvent(handler: (event: SerialEvent) => void): Subscription {
     return requireDomain('serial').onEvent(handler);
+  },
+};
+
+/**
+ * Shell-mediated virtual filesystem access (NAP-FS): discover visible roots,
+ * inspect and list entries, create, remove and move them, and subscribe to
+ * advisory change events. The runtime owns host paths, mounts, backing store,
+ * normalization, policy, and authorization -- the napplet sees only virtual
+ * paths.
+ *
+ * `info()` is advisory discovery, not an authorization token: handle failures
+ * even when it advertised a matching permission.
+ *
+ * Byte transfer (`read` / `write`) is not available -- NAP-FS declares those
+ * payloads as `bstr` without defining a JSON-envelope encoding. Deferred at
+ * <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>
+ *
+ * @example
+ * ```ts
+ * import { fs } from '@napplet/sdk';
+ *
+ * const entries = await fs.list('/shared');
+ * const watchId = await fs.watch('/shared', { recursive: true });
+ * fs.onChanged((change) => refresh(change.path));
+ * ```
+ */
+export const fs: SdkDomain<'fs'> = {
+  /**
+   * Discover visible roots, coarse root permissions, and runtime limits.
+   * @returns Promise resolving to advisory filesystem discovery data
+   */
+  info(): Promise<FsInfo> {
+    return requireDomain('fs').info();
+  },
+
+  /**
+   * Read coarse metadata for a visible file or directory.
+   * @param path  Virtual absolute path of the entry
+   * @returns Promise resolving to the entry metadata
+   */
+  stat(path: string): Promise<FsMetadata> {
+    return requireDomain('fs').stat(path);
+  },
+
+  /**
+   * List the direct children of a visible directory. Ordering is unspecified.
+   * @param path  Virtual absolute path of the directory
+   * @returns Promise resolving to the directory entries
+   */
+  list(path: string): Promise<FsDirectoryEntry[]> {
+    return requireDomain('fs').list(path);
+  },
+
+  /**
+   * Create a directory.
+   * @param path     Virtual absolute path of the directory to create
+   * @param options  Optional recursive parent creation
+   * @returns Promise resolving once the runtime acknowledges the creation
+   */
+  mkdir(path: string, options?: FsMkdirOptions): Promise<void> {
+    return requireDomain('fs').mkdir(path, options);
+  },
+
+  /**
+   * Remove a file or directory.
+   * @param path       Virtual absolute path of the entry to remove
+   * @param recursive  Remove a non-empty directory and its authorized descendants
+   * @returns Promise resolving once the runtime acknowledges the removal
+   */
+  remove(path: string, recursive?: boolean): Promise<void> {
+    return requireDomain('fs').remove(path, recursive);
+  },
+
+  /**
+   * Move or rename a file or directory.
+   * @param fromPath  Virtual absolute source path
+   * @param toPath    Virtual absolute destination path
+   * @returns Promise resolving once the runtime acknowledges the move
+   */
+  move(fromPath: string, toPath: string): Promise<void> {
+    return requireDomain('fs').move(fromPath, toPath);
+  },
+
+  /**
+   * Start an advisory watch on a visible path.
+   * @param path     Virtual absolute path to watch
+   * @param options  Optional recursive descendant coverage
+   * @returns Promise resolving to the runtime-generated watch id
+   */
+  watch(path: string, options?: FsWatchOptions): Promise<string> {
+    return requireDomain('fs').watch(path, options);
+  },
+
+  /**
+   * Stop a watch. Unknown ids may be treated as successful no-ops.
+   * @param watchId  Runtime-generated watch id
+   * @returns Promise resolving once the runtime acknowledges the request
+   */
+  unwatch(watchId: string): Promise<void> {
+    return requireDomain('fs').unwatch(watchId);
+  },
+
+  /**
+   * Register for runtime-pushed filesystem change events.
+   * @param handler  Called with each advisory change
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onChanged(handler: (change: FsChange) => void): Subscription {
+    return requireDomain('fs').onChanged(handler);
   },
 };
 

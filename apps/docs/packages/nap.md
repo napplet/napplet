@@ -5,7 +5,7 @@
 
 `@napplet/nap` ships every active NAP domain (relay, storage, inc, keys, theme,
 media, notify, identity, config, resource, cvm, outbox, upload, intent, ble,
-webrtc, link, count, lists, common, serial, dm)
+webrtc, link, count, lists, common, serial, fs, dm)
 as independent, tree-shakable subpaths. It sits between the shim/sdk and
 [`@napplet/core`](./core) in the dependency graph.
 
@@ -53,8 +53,8 @@ import { notifySend } from '@napplet/nap/notify/sdk';
 ## Tree-shaking contract
 
 - Published with `sideEffects: false`.
-- The `exports` map declares **92 entry points**: 22 active domain barrels,
-  22 active-domain types entries, 22 shim entries, 22 sdk entries, plus the
+- The `exports` map declares **96 entry points**: 23 active domain barrels,
+  23 active-domain types entries, 23 shim entries, 23 sdk entries, plus the
   `ifc` compatibility wrapper.
 - A bundler importing only `@napplet/nap/relay/types` produces zero bytes from
   the other domains.
@@ -91,6 +91,14 @@ import { notifySend } from '@napplet/nap/notify/sdk';
 - **serial** — runtime-mediated serial device access: napplets get
   `open`/`write`/`close`/`onEvent`; the shell owns permissions, raw port
   handles, streams, OS paths, and lifecycle policy.
+- **fs** — shell-mediated virtual filesystem access: napplets get
+  `info`/`stat`/`list`/`mkdir`/`remove`/`move`/`watch`/`unwatch`/`onChanged`;
+  the runtime owns host paths, mounts, backing store, normalization, policy,
+  and authorization. Byte transfer (`read`/`write`) is not yet available —
+  [NAP-FS](https://github.com/napplet/naps/pull/88) declares those payloads as
+  `bstr` without defining a JSON-envelope encoding for them, so shipping one
+  would invent wire surface. Deferred upstream at
+  <https://github.com/napplet/naps/pull/88#issuecomment-5083402723>.
 - **intent** — URI-authoritative invocation with immediate acceptance or
   rejection and separate target-only `onDelivery`; discovery exposes queryless
   manifest contracts and optional per-contract event kinds.

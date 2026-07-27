@@ -270,6 +270,27 @@ const RESPONDERS: Record<string, Responder> = {
   'serial.open': (e) => ok({ type: 'serial.open.result', id: e.id, session: { id: `serial-${String(e.id)}`, state: 'open' } }),
   'serial.write': (e) => ok({ type: 'serial.write.result', id: e.id }),
   'serial.close': (e) => ok({ type: 'serial.close.result', id: e.id }),
+  // fs -- virtual paths and curated labels only; never a host path, username,
+  // device name, volume, or storage-provider string (NAP-FS info() disclosure rules)
+  'fs.info': (e) => ok({
+    type: 'fs.info.result',
+    id: e.id,
+    info: {
+      roots: [{ path: '/shared', name: 'Shared files', permissions: ['read', 'list', 'write', 'create', 'delete', 'watch'] }],
+      limits: { maxReadBytes: 1048576, maxWriteBytes: 1048576, maxWatchCount: 16 },
+    },
+  }),
+  'fs.stat': (e) => ok({
+    type: 'fs.stat.result',
+    id: e.id,
+    metadata: { path: e.path, kind: 'file', size: 0 },
+  }),
+  'fs.list': (e) => ok({ type: 'fs.list.result', id: e.id, entries: [] }),
+  'fs.mkdir': (e) => ok({ type: 'fs.mkdir.result', id: e.id }),
+  'fs.remove': (e) => ok({ type: 'fs.remove.result', id: e.id }),
+  'fs.move': (e) => ok({ type: 'fs.move.result', id: e.id }),
+  'fs.watch': (e) => ok({ type: 'fs.watch.result', id: e.id, watchId: `watch-${String(e.id)}` }),
+  'fs.unwatch': (e) => ok({ type: 'fs.unwatch.result', id: e.id }),
 };
 
 /** A reference shell instance. */

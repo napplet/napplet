@@ -138,6 +138,19 @@ import {
   onEvent as serialOnEvent,
 } from '@napplet/nap/serial/shim';
 import {
+  installFsShim,
+  handleFsMessage,
+  info as fsInfo,
+  stat as fsStat,
+  list as fsList,
+  mkdir as fsMkdir,
+  remove as fsRemove,
+  move as fsMove,
+  watch as fsWatch,
+  unwatch as fsUnwatch,
+  onChanged as fsOnChanged,
+} from '@napplet/nap/fs/shim';
+import {
   installDmShim,
   handleDmMessage,
   status as dmStatus,
@@ -177,6 +190,7 @@ const DOMAIN_ROUTERS: ReadonlyArray<readonly [string, DomainHandler]> = [
   ['lists.', handleListsMessage],
   ['common.', handleCommonMessage],
   ['serial.', handleSerialMessage],
+  ['fs.', handleFsMessage],
   ['dm.', handleDmMessage],
   ['identity.', identityShim.handleIdentityMessage],
   ['theme.', themeShim.handleThemeMessage],
@@ -430,6 +444,20 @@ function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
     };
   }
 
+  if (domains.has('fs')) {
+    napplet.fs = {
+      info: fsInfo,
+      stat: fsStat,
+      list: fsList,
+      mkdir: fsMkdir,
+      remove: fsRemove,
+      move: fsMove,
+      watch: fsWatch,
+      unwatch: fsUnwatch,
+      onChanged: fsOnChanged,
+    };
+  }
+
   if (domains.has('dm')) {
     napplet.dm = {
       status: dmStatus,
@@ -513,6 +541,9 @@ function installDomainShim(domain: NapDomain): void {
       return;
     case 'serial':
       installSerialShim();
+      return;
+    case 'fs':
+      installFsShim();
       return;
     case 'common':
       installCommonShim();

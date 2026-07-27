@@ -543,6 +543,43 @@ export type {
   SerialNapMessage,
 } from '@napplet/nap/serial';
 
+// FS NAP (shell-mediated virtual filesystem access)
+export type {
+  FsPermission,
+  FsEntryKind,
+  FsChangeKind,
+  FsError,
+  FsRoot,
+  FsLimits,
+  FsInfo,
+  FsMetadata,
+  FsDirectoryEntry,
+  FsMkdirOptions,
+  FsWatchOptions,
+  FsChange,
+  FsMessage,
+  FsInfoMessage,
+  FsInfoResultMessage,
+  FsStatMessage,
+  FsStatResultMessage,
+  FsListMessage,
+  FsListResultMessage,
+  FsMkdirMessage,
+  FsMkdirResultMessage,
+  FsRemoveMessage,
+  FsRemoveResultMessage,
+  FsMoveMessage,
+  FsMoveResultMessage,
+  FsWatchMessage,
+  FsWatchResultMessage,
+  FsUnwatchMessage,
+  FsUnwatchResultMessage,
+  FsChangedMessage,
+  FsOutboundMessage,
+  FsInboundMessage,
+  FsNapMessage,
+} from '@napplet/nap/fs';
+
 // DM NAP (runtime-mediated direct messages)
 export type {
   DmConversation,

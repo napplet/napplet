@@ -28,7 +28,7 @@ export type { MediaContextLink, MediaNostrRef, MediaSessionContext } from './med
 export { keys, identity } from './keys.js';
 export { config, resource } from './config.js';
 export { cvm, outbox, upload, intent, webrtc } from './cvm.js';
-export { link, count, lists, common, ble, serial, dm } from './services.js';
+export { link, count, lists, common, ble, serial, fs, dm } from './services.js';
 
 // Type-only re-exports from @napplet/core and @napplet/nap/*.
 export type * from './nap-types.js';

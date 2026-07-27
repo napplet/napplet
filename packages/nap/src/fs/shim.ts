@@ -16,7 +16,6 @@ import { postToShell } from '../boundary.js';
 import type { Subscription } from '@napplet/core';
 import type {
   FsChange,
-  FsChangedMessage,
   FsDirectoryEntry,
   FsInfo,
   FsMetadata,
@@ -103,9 +102,10 @@ function handleResult(msg: { type: string; [key: string]: unknown }): void {
   entry.resolve(msg);
 }
 
-function handleChanged(msg: FsChangedMessage): void {
-  if (!msg.change) return;
-  for (const handler of changeHandlers) handler(msg.change);
+function handleChanged(msg: { type: string; [key: string]: unknown }): void {
+  const change = msg.change as FsChange | undefined;
+  if (!change) return;
+  for (const handler of changeHandlers) handler(change);
 }
 
 /**
@@ -118,7 +118,7 @@ export function handleFsMessage(msg: { type: string; [key: string]: unknown }): 
   if (RESULT_TYPES.has(msg.type)) {
     handleResult(msg);
   } else if (msg.type === 'fs.changed') {
-    handleChanged(msg as unknown as FsChangedMessage);
+    handleChanged(msg);
   }
 }
 
