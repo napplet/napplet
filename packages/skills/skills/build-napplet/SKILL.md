@@ -151,21 +151,14 @@ The aggregate hash is computed into the manifest (`.nip5a-manifest.json`) and th
 When the napplet fulfills an archetype role, use the current `archetypes` option
 and one stable, queryless convention identity per entry. The convention must use
 `napplet:<archetype>/<intent>` and its archetype segment must match `slug`.
-Optional `eventKinds?: number[]` values produce same-tag `kind:<number>`
-discovery metadata; they do not describe payload data and runtimes must not
-infer a kind from a payload.
 
 ```ts
 archetypes: [
-  { slug: 'note', convention: 'napplet:note/open', eventKinds: [1, 30023] },
+  { slug: 'note', convention: 'napplet:note/open' },
 ]
 ```
 
-This emits `["archetype", "note", "napplet:note/open", "kind:1", "kind:30023"]`.
-The object-shaped Vite and CLI metadata accept `eventKinds`; a CLI string input
-remains convention-only, with no delimiter or extra flag for kinds. Never put a
-query in manifest discovery metadata, add a second archetype tag for a kind, or
-invent payload, version, or negotiation fields.
+This emits `["archetype", "note", "napplet:note/open"]`. Never put a query in manifest discovery metadata or invent payload, version, or negotiation fields.
 
 ## Step 4 — Read And Publish Nostr Events Through Outbox First
 
@@ -291,7 +284,8 @@ Also available: `getProfile()`, `getFollows()`, `getList(type)`, `getRelays()`, 
 
 ## Step 9 — Inter-napplet events and intents
 
-`inc.emit` broadcasts to topic subscribers; `inc.on` subscribes. Use exact,
+`inc.emit` broadcasts to topic subscribers; `inc.on` receives one `IncEvent`
+containing the exact topic, runtime-attested sender, and optional payload. Use exact,
 opaque convention topics such as `napplet:note/open`, `napplet:profile/open`,
 or `napplet:dm/open`. A topic is an identifier, not a payload schema.
 
@@ -301,9 +295,9 @@ import { inc } from '@napplet/sdk';
 inc.emit('napplet:profile/open?pubkey=abc123');
 // Runtime emits { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }.
 
-const sub = inc.on('napplet:profile/open', (payload: unknown, event) => {
-  if (!isValidProfileOpenPayload(payload)) return;
-  openProfile(payload);
+const sub = inc.on('napplet:profile/open', (event) => {
+  if (!isValidProfileOpenPayload(event.payload)) return;
+  openProfile(event.payload);
 });
 sub.close();
 ```
@@ -316,37 +310,31 @@ percent encoding, repeated decoded name, or query plus explicit payload throws
 synchronously; use a queryless topic plus explicit payload for structured or
 non-text data.
 
-NAP-INTENT uses the same URI boundary: `invoke(uri, options?)` and
-`open(uri, options?)` derive the archetype, action, stable, queryless convention
-identity, and optional text payload from the URI. Register `onDelivery` during
-startup, before application work can depend on an incoming intent:
+NAP-INTENT dispatches by archetype through `invoke(request)` or
+`open(archetype, payload?, opts?)`:
 
 ```ts
 import { intent } from '@napplet/sdk';
 
-const deliveries = intent.onDelivery((delivery) => {
-  // delivery.sender is runtime-attested sender provenance, not payload validation.
-  if (delivery.convention !== 'napplet:profile/open') return;
-  if (!isValidProfileOpenPayload(delivery.payload)) return;
-  openProfile(delivery.payload);
-});
-
-const accepted = await intent.open('napplet:profile/open?pubkey=abc123');
-if (!accepted.ok) showIntentError(accepted.error);
+const result = await intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) showIntentError(result.error);
 ```
 
-`ok: true` means the runtime accepted responsibility for delivery, not that a
-target has received or processed it. Delivery is carrier-neutral and does not
-depend on INC, the caller remaining alive, or any source/target overlap. The
-runtime owns retry, replacement, persistence, and lifecycle policy. Do not add
-public intent or delivery identifiers, and never provide `sender` yourself.
+Results contain required `ok`, `archetype`, `action`, and `handled` fields.
+Archetype routing and optional convention-based payload interpretation are
+orthogonal.
 
 Payload choices remain local to a real upstream convention, so validate every
 received value. Subscriptions, manifest discovery, and routing stay exact on the
 stable, queryless convention identity: do not parse queries there or add prefix,
-wildcard, canonicalization, or multi-convention matching. See [NAP-INC draft PR
-#89](https://github.com/napplet/naps/pull/89) and [NAP-INTENT draft PR
-#91](https://github.com/napplet/naps/pull/91) for the living normative contract.
+wildcard, canonicalization, or multi-convention matching. See the living
+[NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and
+[NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md)
+documents for the normative contract.
 
 ## Step 10 — Domain availability
 

@@ -76,7 +76,7 @@ describe('validateEnvelope — outbound field checks', () => {
     }));
   });
 
-  it('accepts a normalized intent request while leaving convention and payload values opaque', () => {
+  it('accepts the merged intent request while leaving convention and payload values opaque', () => {
     const v = validateEnvelope({
       type: 'intent.invoke',
       id: 'intent-1',
@@ -97,16 +97,16 @@ describe('validateEnvelope — outbound field checks', () => {
     }));
   });
 
-  it('rejects malformed or forged normalized intent identities', () => {
+  it('requires archetype, type-checks optional fields, and rejects invented sender data', () => {
     const base = {
       type: 'intent.invoke',
       id: 'intent-3',
-      request: { archetype: 'note', action: 'open', convention: 'napplet:note/open' },
+      request: { archetype: 'note' },
     };
     const invalidRequests = [
-      { ...base.request, convention: 'napplet:note/open?event=abc' },
-      { ...base.request, convention: 'napplet:note/open#preview' },
-      { ...base.request, action: 'edit' },
+      {},
+      { ...base.request, action: 1 },
+      { ...base.request, convention: false },
       { ...base.request, sender: 'forged-source' },
     ];
 
@@ -115,31 +115,7 @@ describe('validateEnvelope — outbound field checks', () => {
     }
   });
 
-  it('records adopted inbound INC and intent delivery carriers without correlation identifiers', () => {
-    const delivered = validateEnvelope({
-      type: 'intent.deliver',
-      delivery: {
-        sender: 'runtime-attested-source',
-        archetype: 'note',
-        action: 'open',
-        convention: 'napplet:note/open',
-        payload: { nested: ['opaque', { values: true }] },
-      },
-    });
-    expect(delivered.ok).toBe(false);
-    expect(delivered.direction).toBe('in');
-    expect(delivered.errors).toContainEqual(expect.objectContaining({ code: 'inbound-type-emitted' }));
-    expect(delivered.errors).not.toContainEqual(expect.objectContaining({
-      code: 'missing-field',
-      field: 'delivery',
-    }));
-
-    const missingDelivery = validateEnvelope({ type: 'intent.deliver' });
-    expect(missingDelivery.errors).toContainEqual(expect.objectContaining({
-      code: 'missing-field',
-      field: 'delivery',
-    }));
-
+  it('requires runtime-attested sender on inbound INC events', () => {
     const missingSender = validateEnvelope({ type: 'inc.event', topic: 'room' });
     expect(missingSender.errors).toContainEqual(expect.objectContaining({
       code: 'missing-field',
@@ -221,14 +197,14 @@ describe('ENVELOPE_SPECS invariants', () => {
     expect(inbound).toHaveLength(123);
   });
 
-  it('declares the adopted inbound carrier fields without delivery identifiers', () => {
+  it('declares canonical inbound INC carrier fields', () => {
     expect(ENVELOPE_SPECS['inc.event']).toEqual({
       dir: 'in',
       fields: { topic: 'string', sender: 'string' },
     });
-    expect(ENVELOPE_SPECS['intent.deliver']).toEqual({
+    expect(ENVELOPE_SPECS['inc.channel.opened']).toEqual({
       dir: 'in',
-      fields: { delivery: 'object' },
+      fields: { channelId: 'string', peer: 'string' },
     });
   });
 });

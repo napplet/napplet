@@ -127,7 +127,7 @@ function buildManifestTemplate(
 
 /**
  * Serialize each archetype contract into one queryless convention tag with
- * optional same-tag `kind:<number>` discovery fields.
+ * one stable queryless convention identity.
  */
 function buildArchetypeTags(
   archetypes: Nip5aManifestOptions['archetypes'],
@@ -153,18 +153,7 @@ function buildArchetypeTags(
     if (conventionMatch[1] !== slug) {
       throw new Error('[nip5a-manifest] archetype slug must match the convention archetype');
     }
-    const eventKinds = entry.eventKinds ?? [];
-    for (const kind of eventKinds) {
-      if (!Number.isSafeInteger(kind) || kind < 0) {
-        throw new Error('[nip5a-manifest] archetype eventKinds must contain unsigned integers');
-      }
-    }
-    tags.push([
-      'archetype',
-      slug,
-      convention,
-      ...eventKinds.map((kind) => `kind:${kind}`),
-    ]);
+    tags.push(['archetype', slug, convention]);
   }
   return tags;
 }

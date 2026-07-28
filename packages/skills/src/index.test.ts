@@ -154,18 +154,16 @@ describe('skill registry', () => {
       expect(markdown).toContain('emit(topic, payload?)');
       expect(markdown).toContain('napplet:profile/open?pubkey=abc123');
       expect(markdown).toMatch(/stable queryless\s+topic/);
-      expect(markdown).toContain('invoke(uri, options?)');
-      expect(markdown).toContain('open(uri, options?)');
-      expect(markdown).toContain('onDelivery');
-      expect(markdown).toContain('ok: true');
-      expect(markdown).toContain('eventKinds?: number[]');
-      expect(markdown).toContain('kind:<number>');
-      expect(markdown).toMatch(/stable, queryless convention identity/);
+      expect(markdown).toContain('invoke(request)');
+      expect(markdown).toContain('open(archetype, payload?, opts?)');
+      expect(markdown).toContain('handled');
+      expect(markdown).toContain('`ok`');
+      expect(markdown).toMatch(/stable, queryless\s+convention\s+identity/);
       expect(markdown).toMatch(/runtime-attested sender/);
       expect(markdown).not.toContain('web#183');
       expect(markdown).not.toContain('do not add query, prefix, wildcard, canonicalization');
       expect(markdown).not.toMatch(/\bNAP-[1-5]\b/);
-      expect(markdown).not.toMatch(/\b(?:handled|windowId|newWindow|intentId|deliveryId)\b/);
+      expect(markdown).not.toMatch(/\b(?:intentId|deliveryId)\b/);
     }
 
     const rootSkills = new URL('../../../skills', import.meta.url);

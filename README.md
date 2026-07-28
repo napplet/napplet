@@ -106,7 +106,7 @@ The same web runtime ships standalone (`apps/conformance`, deployed at `/conform
 ```
 Shell runtime                              @napplet/shim
   ShellBridge                                window.napplet.outbox (query/subscribe/publish)
-  ├── JSON envelope message routing          window.napplet.inc   (emit/on)
+  ├── JSON envelope message routing          window.napplet.inc   (topics/channels)
   ├── Identity via message.source            window.napplet.storage (get/set/remove)
   ├── ACL enforcement                        window.napplet.resource (bytes/bytesMany/bytesAsObjectURL)
   ├── NAP dispatch (outbox/relay/storage)    window.napplet.domain presence
@@ -121,25 +121,23 @@ Shell runtime                              @napplet/shim
 
 The iframe sandbox requires only `allow-scripts` -- **no `allow-same-origin`**. Shells MAY add additional tokens (`allow-forms`, `allow-popups`, etc.) per shell policy. Napplets cannot access the host shell's DOM, cookies, localStorage, or service workers. All persistent state goes through the shell's proxies.
 
-### Intent delivery
+### Intent dispatch
 
-NAP-INTENT calls use an authoritative convention URI such as `napplet:profile/open?pubkey=abc123`. The runtime binding normalizes that URI at `intent.invoke`/`intent.open` only: it derives the archetype, action, queryless convention, and shallow text payload before requesting acceptance. Manifest discovery and INC subscriptions remain queryless/exact; they do not parse a URI query.
-
-An accepted invocation means the runtime has accepted delivery responsibility, not that a target has started or received the payload. A target should register `onDelivery` during startup and validate the payload before using it:
+NAP-INTENT dispatches by archetype. `invoke(request)` accepts an `IntentRequest`; `open(archetype, payload?, opts?)` is sugar for action `"open"`. Archetype routing and optional convention-based payload interpretation are orthogonal.
 
 ```ts
-window.napplet.intent?.onDelivery((delivery) => {
-  // `sender` is runtime-attested provenance; `payload` remains untrusted.
-  renderProfile(delivery.payload);
-});
-
 const result = await window.napplet.intent?.open(
-  'napplet:profile/open?pubkey=abc123',
+  'profile',
+  { pubkey: 'abc123' },
+  {
+    convention: 'napplet:profile/open',
+    behavior: { focus: true, newWindow: true },
+  },
 );
-if (!result?.ok) throw new Error(result?.error ?? 'intent rejected');
+if (!result?.handled) throw new Error(result?.error ?? 'intent not handled');
 ```
 
-The target may already be running or start later; the protocol does not promise source/target overlap, retries, or persistence. NAP-INTENT has no public NAP-INC dependency. This repository's adopted draft references are [NAP-INC #89 at `4593ce9`](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md), [URI terminology #90 at `896c32c`](https://github.com/napplet/naps/commit/896c32c92deee68dc4d10fc1132b62df20cccb6f), and [NAP-INTENT #91 at `a718915`](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
+The runtime resolves installed handlers and reports canonical `ok`, `archetype`, `action`, and `handled` fields, plus optional handler, window, convention, or error details. See the living [NAP-INTENT document](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ## Origin
 

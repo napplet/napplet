@@ -8,6 +8,7 @@ import type {
   NostrEvent,
   NostrFilter,
   NappletGlobal,
+  IncEvent,
   RelayEventResult,
   Subscription,
   EventTemplate,
@@ -98,8 +99,8 @@ export const relay: SdkDomain<'relay'> = {
  *
  * inc.emit('napplet:profile/open', { pubkey: '...' });
  *
- * const sub = inc.on('napplet:profile/open', (payload) => {
- *   console.log('Profile requested:', payload);
+ * const sub = inc.on('napplet:profile/open', (event) => {
+ *   console.log('Profile requested:', event.payload);
  * });
  * ```
  */
@@ -114,16 +115,31 @@ export const inc: SdkDomain<'inc'> = {
   },
 
   /**
-   * Subscribe to INC-PEER events on a specific topic.
-   * @param topic     The 't' tag value to listen for
-   * @param callback  Called with `(payload, event)` for each matching event
+   * Subscribe to INC events on a specific topic.
+   * @param topic     Exact topic value to listen for
+   * @param callback  Called with one runtime-attested INC event
    * @returns A Subscription handle with a `close()` method
    */
   on(
     topic: string,
-    callback: (payload: unknown, event: NostrEvent) => void,
+    callback: (event: IncEvent) => void,
   ): Subscription {
     return requireDomain('inc').on(topic, callback);
+  },
+
+  channel: {
+    open(target) {
+      return requireDomain('inc').channel.open(target);
+    },
+    onOpened(callback) {
+      return requireDomain('inc').channel.onOpened(callback);
+    },
+    list() {
+      return requireDomain('inc').channel.list();
+    },
+    broadcast(payload) {
+      requireDomain('inc').channel.broadcast(payload);
+    },
   },
 };
 

@@ -28,7 +28,7 @@ export interface ReferenceEndpoint {
   dTag: string;
 }
 
-/** Default authenticated source for handle(). */
+/** Default authenticated reference endpoint. */
 export const REFERENCE_ENDPOINT: ReferenceEndpoint = { dTag: 'reference-source' };
 
 /** A placeholder blob URL for canned upload responses. `.invalid` is reserved (RFC 2606) and never resolves. */
@@ -36,7 +36,6 @@ const REFERENCE_BLOB_URL = 'https://reference.invalid/blob';
 const REFERENCE_HANDLER = 'reference-handler';
 const REFERENCE_SUBSCRIBER = 'reference-subscriber';
 const REFERENCE_CONVENTION = 'napplet:note/open';
-const REFERENCE_CONTRACT = { convention: REFERENCE_CONVENTION, eventKinds: [1, 30023] };
 
 function pickResult(
   type: 'fs.pickFile.result' | 'fs.pickFiles.result' | 'fs.pickDirectory.result' | 'fs.pickSaveFile.result',
@@ -391,43 +390,55 @@ export function createReferenceShell(options: ReferenceShellOptions = {}): Refer
     return queue;
   }
 
-  function unavailableIntent(id: unknown, error: string): unknown[] {
-    return ok({ type: 'intent.invoke.result', id, result: { ok: false, error } });
+  function unavailableIntent(
+    id: unknown,
+    archetype: string,
+    action: string,
+    error: string,
+  ): unknown[] {
+    return ok({
+      type: 'intent.invoke.result',
+      id,
+      result: { ok: false, archetype, action, handled: false, error },
+    });
   }
 
-  function handleIntentInvoke(endpoint: ReferenceEndpoint, env: Record<string, unknown>): unknown[] {
+  function handleIntentInvoke(_endpoint: ReferenceEndpoint, env: Record<string, unknown>): unknown[] {
     const request = env.request;
     if (typeof request !== 'object' || request === null || Array.isArray(request)) {
-      return unavailableIntent(env.id, 'invalid intent request');
+      return unavailableIntent(env.id, '', 'open', 'invalid intent request');
     }
 
-    const normalized = request as Record<string, unknown>;
-    const { archetype, action, convention } = normalized;
-    if (typeof archetype !== 'string' || typeof action !== 'string' || typeof convention !== 'string') {
-      return unavailableIntent(env.id, 'intent request must carry normalized identity');
+    const intent = request as Record<string, unknown>;
+    const archetype = typeof intent.archetype === 'string' ? intent.archetype : '';
+    const action = typeof intent.action === 'string' ? intent.action : 'open';
+    if (!archetype) {
+      return unavailableIntent(env.id, archetype, action, 'intent request requires an archetype');
     }
-
-    const parsed = /^napplet:([^/?#\s]+)\/([^/?#\s]+)$/.exec(convention);
-    if (!parsed || parsed[1] !== archetype || parsed[2] !== action) {
-      return unavailableIntent(env.id, 'intent request conflicts with its convention');
+    if (archetype !== 'note') {
+      return unavailableIntent(env.id, archetype, action, 'no handler');
     }
-    if (convention !== REFERENCE_CONVENTION) {
-      return unavailableIntent(env.id, 'no reference handler for convention');
+    if (
+      intent.convention !== undefined
+      && intent.convention !== REFERENCE_CONVENTION
+    ) {
+      return unavailableIntent(env.id, archetype, action, 'unsupported convention');
     }
-
-    const delivery: Record<string, unknown> = {
-      sender: endpoint.dTag,
-      archetype,
-      action,
-      convention,
-    };
-    if ('payload' in normalized) delivery.payload = normalized.payload;
-    queueDelivery(REFERENCE_HANDLER, { type: 'intent.deliver', delivery });
 
     return ok({
       type: 'intent.invoke.result',
       id: env.id,
-      result: { ok: true, archetype, action, convention, handler: REFERENCE_HANDLER },
+      result: {
+        ok: true,
+        archetype,
+        action,
+        handled: true,
+        handler: REFERENCE_HANDLER,
+        windowId: 'reference-window',
+        convention: typeof intent.convention === 'string'
+          ? intent.convention
+          : REFERENCE_CONVENTION,
+      },
     });
   }
 
@@ -442,7 +453,6 @@ export function createReferenceShell(options: ReferenceShellOptions = {}): Refer
         dTag: REFERENCE_HANDLER,
         actions: ['open'],
         conventions: [REFERENCE_CONVENTION],
-        contracts: [REFERENCE_CONTRACT],
         isDefault: true,
       }],
       hasDefault: true,

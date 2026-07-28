@@ -1,6 +1,14 @@
 import type { RelayApi, IncApi, StorageApi, KeysApi } from './global/nostr-api.js';
 
-export type { NappletInstanceStorage } from './global/nostr-api.js';
+export type {
+  ChannelClosed,
+  ChannelEvent,
+  ChannelHandle,
+  ChannelInfo,
+  IncChannelApi,
+  IncEvent,
+  NappletInstanceStorage,
+} from './global/nostr-api.js';
 import type { MediaApi, NotifyApi } from './global/media-api.js';
 import type {
   IdentityApi,
@@ -46,7 +54,7 @@ export interface NappletGlobal {
    */
   relay?: RelayApi;
   /**
-   * Inter-napplet pubsub: broadcast and receive INC-PEER events through the shell.
+   * Inter-napplet topic and channel communication through the runtime.
    */
   inc?: IncApi;
   /**
@@ -274,11 +282,8 @@ export interface NappletGlobal {
    */
   upload?: UploadApi;
   /**
-   * Archetype intent dispatch (NAP-INTENT): the authoritative convention URI
-   * derives handler-resolution identity, while an accepted result only transfers
-   * delivery responsibility to the runtime. Register `onDelivery` early to
-   * receive target-only deliveries with runtime-attested sender provenance.
-   * Handler selection and lifecycle policy remain runtime-controlled.
+   * Archetype intent dispatch (NAP-INTENT): the runtime resolves a role to an
+   * installed handler and owns target lifecycle and payload delivery.
    */
   intent?: IntentApi;
   /**

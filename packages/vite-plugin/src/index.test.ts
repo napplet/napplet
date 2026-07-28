@@ -349,7 +349,7 @@ describe('nip5aManifest artifact modes', () => {
     expect(fs.existsSync(path.join(fixture.dist, '.nip5a-manifest.json'))).toBe(false);
   });
 
-  it('emits optional event kinds on the same tag and keeps contracts isolated', async () => {
+  it('emits one canonical tag for each archetype convention', async () => {
     const fixture = makeFixture();
     fs.writeFileSync(path.join(fixture.dist, 'index.html'), '<!doctype html>');
 
@@ -357,16 +357,8 @@ describe('nip5aManifest artifact modes', () => {
       {
         nappletType: 'contract-archetypes',
         archetypes: [
-          {
-            slug: 'note',
-            convention: 'napplet:note/open',
-            eventKinds: [1, 30023],
-          },
-          {
-            slug: 'note',
-            convention: 'napplet:note/edit',
-            eventKinds: [30023],
-          },
+          { slug: 'note', convention: 'napplet:note/open' },
+          { slug: 'note', convention: 'napplet:note/edit' },
         ],
       },
       fixture,
@@ -374,8 +366,8 @@ describe('nip5aManifest artifact modes', () => {
 
     const archetypeTags = readManifest(fixture.dist).tags.filter((tag) => tag[0] === 'archetype');
     expect(archetypeTags).toEqual([
-      ['archetype', 'note', 'napplet:note/open', 'kind:1', 'kind:30023'],
-      ['archetype', 'note', 'napplet:note/edit', 'kind:30023'],
+      ['archetype', 'note', 'napplet:note/open'],
+      ['archetype', 'note', 'napplet:note/edit'],
     ]);
   });
 
@@ -394,16 +386,6 @@ describe('nip5aManifest artifact modes', () => {
       name: 'convention whose archetype conflicts with the tag slug',
       entry: { slug: 'profile', convention: 'napplet:note/open' },
       error: /must match/i,
-    },
-    {
-      name: 'negative event kind',
-      entry: { slug: 'note', convention: 'napplet:note/open', eventKinds: [-1] },
-      error: /unsigned integer/i,
-    },
-    {
-      name: 'fractional event kind',
-      entry: { slug: 'note', convention: 'napplet:note/open', eventKinds: [1.5] },
-      error: /unsigned integer/i,
     },
   ])('rejects $name', async ({ entry, error }) => {
     const fixture = makeFixture();

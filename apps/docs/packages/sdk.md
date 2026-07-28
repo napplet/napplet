@@ -30,8 +30,7 @@ Top-level namespaced objects that mirror `window.napplet`:
 - **`dm`** — shell-mediated encrypted direct-message helpers
 - **`relay`** — low-level explicit relay proxy; use only for relay-local escape hatches
 - **`inc`** — `emit`, `on` (plus deprecated `ifc*` migration aliases)
-- **`intent`** — `invoke`, `open`, `available`, `handlers`, `onChanged`,
-  `onDelivery`
+- **`intent`** — `invoke`, `open`, `available`, `handlers`, `onChanged`
 - **`storage`** — `getItem`, `setItem`, `removeItem`, `keys`, plus `storage.instance.*` (per-instance scope)
 - **`keys`** — `registerAction`, `unregisterAction`, `onAction`
 - **`media`** — `createSession`, `reportState`, `onCommand`, …
@@ -87,13 +86,12 @@ await common.react(published.event.id, '+');
 // Inter-napplet messaging: payload is a local convention choice.
 inc.emit('chat:message', { text: 'hi' });
 
-// Register this during target startup; delivery is separate from acceptance.
-const intentDeliveries = intent.onDelivery((delivery) => {
-  // The runtime attests sender, but receiving code still validates payload.
-  validateIntentPayload(delivery.convention, delivery.payload);
-});
-const intentResult = await intent.open('napplet:profile/open?pubkey=abc123');
-if (!intentResult.ok) throw new Error(intentResult.error);
+const intentResult = await intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open' },
+);
+if (!intentResult.ok || !intentResult.handled) throw new Error(intentResult.error);
 
 // Scoped storage
 await storage.setItem('theme', 'dark');
@@ -121,8 +119,8 @@ Subscribe using the stable topic, not the queried developer-facing URI:
 
 ```ts
 inc.emit('napplet:profile/open?pubkey=abc123');
-const profileOpen = inc.on('napplet:profile/open', (payload) => {
-  validateProfileOpenPayload(payload);
+const profileOpen = inc.on('napplet:profile/open', (event) => {
+  validateProfileOpenPayload(event.payload);
 });
 ```
 
@@ -131,42 +129,23 @@ wildcard matching. Fragments, malformed percent encoding, repeated decoded
 names, and a query combined with an explicit payload reject before emission.
 Manifest convention values and normalized wire identities stay queryless.
 
-### Intent URI and target delivery
+### Intent dispatch
 
-`intent.invoke(uri, options?)` and `intent.open(uri, options?)` are the separate
-NAP-INTENT URI boundary. The binding derives the normalized identity and turns
-unique decoded query pairs into text payload fields. Use an explicit
-`options.payload` only with a queryless URI.
+Use `intent.invoke(request)` or `intent.open(archetype, payload?, opts?)`.
 
 ```ts
-const deliveries = intent.onDelivery((delivery) => {
-  console.log(delivery.sender, delivery.archetype, delivery.action);
-  validateIntentPayload(delivery.convention, delivery.payload);
-});
-
-const result = await intent.invoke('napplet:profile/open?pubkey=abc123');
-if (result.ok) {
-  // Accepted for delivery; the target may not have received it yet.
-  console.log(result.handler);
-}
+const result = await intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) throw new Error(result.error);
 ```
 
-The emitter cannot supply `delivery.sender`; the runtime derives it from the
-authenticated source endpoint. Delivery is carrier-neutral, has no public
-intent/delivery ID, survives the source lifetime, and has no public NAP-INC
-dependency. Register `onDelivery` during target startup. The host owns
-start/reuse/overlap/close, retry, persistence, and terminal-failure policy.
+Results contain required `ok`, `archetype`, `action`, and `handled` fields plus
+optional handler, window, convention, and error details.
 
-Discovery exposes one queryless `IntentContract` per manifest tag, with optional
-same-tag `eventKinds`; receivers must not infer kinds from payload content.
-
-These APIs follow [NAP-INC PR #89
-(`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
-[the web projection PR #90
-(`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4)
-at those exact draft heads.
+These APIs defer to the living [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) documents.
 
 ### Typed config with `FromSchema`
 

@@ -47,7 +47,6 @@ Deno.test("initConfig persists CLI-owned deploy metadata", async () => {
         archetypes: [{
           slug: "note",
           convention: "napplet:note/open",
-          eventKinds: [1, 30023],
         }],
       },
     });
@@ -61,7 +60,6 @@ Deno.test("initConfig persists CLI-owned deploy metadata", async () => {
       archetypes: [{
         slug: "note",
         convention: "napplet:note/open",
-        eventKinds: [1, 30023],
       }],
     });
   });
@@ -113,50 +111,23 @@ Deno.test("parseArchetypeConventions accepts stable identities and rejects disco
   }
 });
 
-Deno.test("normalizeConfig accepts only unsigned integer contract event kinds", () => {
+Deno.test("normalizeConfig preserves canonical archetype conventions", () => {
   const normalized = normalizeConfig({
     version: 1,
     metadata: {
       archetypes: [
         { slug: "note", convention: "napplet:note/open" },
-        { slug: "article", convention: "napplet:article/open", eventKinds: [] },
-        {
-          slug: "profile",
-          convention: "napplet:profile/open",
-          eventKinds: [0, 30023],
-        },
+        { slug: "article", convention: "napplet:article/open" },
+        { slug: "profile", convention: "napplet:profile/open" },
       ],
     },
   });
 
   assertEquals(normalized.metadata?.archetypes, [
     { slug: "note", convention: "napplet:note/open" },
-    { slug: "article", convention: "napplet:article/open", eventKinds: [] },
-    {
-      slug: "profile",
-      convention: "napplet:profile/open",
-      eventKinds: [0, 30023],
-    },
+    { slug: "article", convention: "napplet:article/open" },
+    { slug: "profile", convention: "napplet:profile/open" },
   ]);
-
-  for (const eventKinds of [[-1], [1.5], [Number.NaN], ["1"], "kind:1"]) {
-    let message = "";
-    try {
-      normalizeConfig({
-        version: 1,
-        metadata: {
-          archetypes: [{
-            slug: "note",
-            convention: "napplet:note/open",
-            eventKinds,
-          }],
-        },
-      });
-    } catch (error) {
-      message = error instanceof Error ? error.message : String(error);
-    }
-    assert(message.includes("eventKinds"));
-  }
 });
 
 Deno.test("initConfig can create a root-target config", async () => {

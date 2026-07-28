@@ -30,8 +30,8 @@ import type {
 import type { UploadInfo, UploadRequest, UploadResult, UploadStatus } from '../upload.js';
 import type {
   IntentAvailability,
-  IntentDelivery,
-  IntentInvokeOptions,
+  IntentOpenOptions,
+  IntentRequest,
   IntentResult,
 } from '../intent.js';
 import type { LinkOpenOptions, LinkOpenResult } from '../link.js';
@@ -311,44 +311,35 @@ export interface UploadApi {
  * authoritative convention URI without addressing it directly. The runtime
  * derives the archetype, action, queryless convention identity, and any
  * query-derived payload before resolving an installed, user-authorized handler.
- * An accepted result means the runtime accepted delivery responsibility; target
- * delivery follows independently once the target is ready. The runtime owns
- * handler selection, lifecycle, retry, persistence, and the trust boundary.
- *
  * @example
  * ```ts
  * if (window.napplet.intent) {
  *   const { available } = await window.napplet.intent.available('note');
  *   if (available) {
- *     window.napplet.intent.onDelivery((delivery) => {
- *       // Validate opaque payload against delivery.convention before use.
- *       showProfile(delivery.payload);
- *     });
- *     await window.napplet.intent.open('napplet:profile/open?pubkey=abc123');
+ *     await window.napplet.intent.open(
+ *       'profile',
+ *       { pubkey: 'abc123' },
+ *       { convention: 'napplet:profile/open' },
+ *     );
  *   }
  * }
  * ```
  */
 export interface IntentApi {
   /**
-   * Normalize a convention URI and ask the runtime to accept delivery
-   * responsibility. `uri` is authoritative: options cannot override its derived
-   * archetype, action, or queryless convention identity. An `ok: true` result
-   * does not mean the target has received or handled the payload.
-   * @param uri  A `napplet:<archetype>/<intent>[...?params]` convention URI
-   * @param options  Optional opaque payload, handler preference, and behavior hints
-   * @returns Promise resolving to immediate acceptance or pre-acceptance rejection
+   * Dispatch an intent request by archetype.
+   * @param request  Archetype, optional action, convention, payload, and hints
+   * @returns Promise resolving to the dispatch result
    */
-  invoke(uri: string, options?: IntentInvokeOptions): Promise<IntentResult>;
+  invoke(request: IntentRequest): Promise<IntentResult>;
   /**
-   * Convenience sugar for `invoke` whose convention URI intent is `open`.
-   * The runtime rejects a URI whose intent is not `open`; options cannot override
-   * identity derived from the URI.
-   * @param uri  An `napplet:<archetype>/open[...?params]` convention URI
-   * @param options  Optional opaque payload, handler preference, and behavior hints
-   * @returns Promise resolving to immediate acceptance or pre-acceptance rejection
+   * Convenience sugar for `invoke({ archetype, action: "open", payload, ...opts })`.
+   * @param archetype  Role slug to open
+   * @param payload  Optional opaque payload
+   * @param opts  Optional convention, handler preference, and behavior hints
+   * @returns Promise resolving to the dispatch result
    */
-  open(uri: string, options?: IntentInvokeOptions): Promise<IntentResult>;
+  open(archetype: string, payload?: unknown, opts?: IntentOpenOptions): Promise<IntentResult>;
   /**
    * Whether the runtime can currently satisfy `archetype`, with candidates and
    * the actions and conventions each supports. Sourced from the installed
@@ -368,15 +359,6 @@ export interface IntentApi {
    * @returns A Subscription with `close()` to stop listening
    */
   onChanged(handler: (availability: IntentAvailability) => void): Subscription;
-  /**
-   * Register for target-only runtime deliveries after the target is ready.
-   * The runtime attests `delivery.sender`; it is provenance rather than proof
-   * that the opaque payload is safe. Incoming deliveries are retained until a
-   * handler is registered. Delivery lifecycle and persistence are runtime policy.
-   * @param handler  Called with each runtime-delivered intent
-   * @returns A Subscription with `close()` to stop listening
-   */
-  onDelivery(handler: (delivery: IntentDelivery) => void): Subscription;
 }
 
 /**

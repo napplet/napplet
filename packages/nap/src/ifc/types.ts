@@ -25,6 +25,7 @@ export type {
   IncEventMessage as IfcEventMessage,
   IncChannelOpenMessage as IfcChannelOpenMessage,
   IncChannelOpenResultMessage as IfcChannelOpenResultMessage,
+  IncChannelOpenedMessage as IfcChannelOpenedMessage,
   IncChannelEmitMessage as IfcChannelEmitMessage,
   IncChannelEventMessage as IfcChannelEventMessage,
   IncChannelBroadcastMessage as IfcChannelBroadcastMessage,
@@ -38,4 +39,3 @@ export type {
   IncInboundMessage as IfcInboundMessage,
   IncNapMessage as IfcNapMessage,
 } from '../inc/types.js';
-

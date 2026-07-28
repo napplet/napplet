@@ -69,7 +69,7 @@ After runtime injection, the global may be populated with these sub-objects:
 | `dm` | Shell-mediated encrypted direct-message helpers |
 | `relay` | Low-level explicit relay proxy for relay-local escape hatches |
 | `inc` | Inter-napplet communication: `emit`, `on` |
-| `intent` | URI-authoritative intent invocation and target-only `onDelivery` |
+| `intent` | Archetype-based intent invocation, discovery, and availability changes |
 | `storage` | Scoped key-value storage: `getItem`, `setItem`, `removeItem`, `keys` (512 KB quota), plus `storage.instance.*` for per-instance scope |
 | `keys` | Keyboard forwarding + action keybindings: `registerAction`, `unregisterAction`, `onAction` |
 | `media` | Ownership-aware media sessions: `createSession`, `reportState`, `onCommand`, … |
@@ -117,16 +117,14 @@ if (!published.ok) throw new Error(published.error ?? 'publish failed');
 // NAP-INC convention URI emission: the runtime sends the stable topic with
 // a shallow text payload. `pubkey` is a local convention choice.
 window.napplet.inc.emit('napplet:profile/open?pubkey=abc123');
-const profileOpen = window.napplet.inc.on('napplet:profile/open', (payload) => {
-  validateProfileOpenPayload(payload);
+const profileOpen = window.napplet.inc.on('napplet:profile/open', (event) => {
+  validateProfileOpenPayload(event.payload);
 });
 
-// Register during target startup. This receives a separate, no-ID delivery.
-const intentDeliveries = window.napplet.intent.onDelivery((delivery) => {
-  validateIntentPayload(delivery.convention, delivery.payload);
-});
 const intentResult = await window.napplet.intent.open(
-  'napplet:profile/open?pubkey=abc123',
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
 );
 
 // Scoped storage, proxied through the shell
@@ -146,7 +144,6 @@ if (window.napplet?.media) {
 
 sub.close();
 profileOpen.close();
-intentDeliveries.close();
 ```
 
 ### INC convention URIs
@@ -161,32 +158,14 @@ Fragments, malformed percent escapes, repeated decoded names, and a queried URI
 with an explicit payload reject before emission. Use a queryless topic and its
 explicit payload for structured data.
 
-### Intent URI and delivery injection
+### Intent dispatch injection
 
-The intent shim normalizes `invoke/open` URI input before sending the queryless
-wire request. An `ok: true` response means only that the runtime accepted
-delivery responsibility. The eventual target delivery is a separate
-`intent.deliver` push exposed through `onDelivery`; it has no request or
-delivery identifier and no public dependency on NAP-INC.
+The intent shim exposes `invoke(request)` and
+`open(archetype, payload?, opts?)`. Results contain required `ok`, `archetype`,
+`action`, and `handled` fields plus optional handler, window, convention, and
+error details.
 
-Incoming target deliveries are retained until a listener registers. Install the
-intent domain and register that listener during target startup; do not infer a
-required source/target overlap or close sequence. The runtime owns delivery and
-lifecycle policy. It also derives `delivery.sender` from the authenticated
-source endpoint. Napplet callers never provide it, and targets still treat the
-payload as untrusted.
-
-Manifest discovery and normalized identities remain queryless and exact.
-Optional same-tag `kind:<number>` values are exposed only as
-`IntentContract.eventKinds`, never inferred from payload content.
-
-This behavior follows [NAP-INC PR #89
-(`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
-[the web projection PR #90
-(`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4)
-at those exact draft heads.
+This behavior defers to the living [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) documents.
 
 ## TypeScript support
 
