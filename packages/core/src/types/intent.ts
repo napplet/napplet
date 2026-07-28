@@ -1,87 +1,78 @@
 /** How the shell should pick the handling napplet for an intent (NAP-INTENT). */
 export type IntentHandlerPreference = 'default' | 'choose' | (string & {});
 
-/** Window behavior hints for an intent invoke. */
+/** Window and focus hints for an intent invocation. */
 export interface IntentBehavior {
+  /** Focus the target surface. */
   focus?: boolean;
+  /** Request a new target window instead of reuse. */
+  newWindow?: boolean;
+  /** Permit reuse of an existing matching window. */
   reuse?: boolean;
 }
 
-/** Optional caller inputs for a convention-URI invocation. */
-export interface IntentInvokeOptions {
-  /** Opaque structured payload for a queryless convention URI. */
-  payload?: unknown;
+/** Optional fields accepted by the `intent.open` convenience operation. */
+export interface IntentOpenOptions {
+  /** Convention that shapes the opaque payload. */
+  convention?: string;
   /** Runtime-authorized handler selection preference. */
   handler?: IntentHandlerPreference;
-  /** Non-authoritative runtime lifecycle hints. */
+  /** Window and focus hints. */
   behavior?: IntentBehavior;
 }
 
-/** A normalized request to dispatch an action to a napplet archetype. */
-export interface IntentRequest extends IntentInvokeOptions {
-  /** Archetype derived from the authoritative convention URI. */
+/** A request to dispatch an action to a napplet archetype. */
+export interface IntentRequest extends IntentOpenOptions {
+  /** Role slug used for handler resolution. */
   archetype: string;
-  /** Action derived from the authoritative convention URI. */
-  action: string;
-  /** Stable queryless convention identity derived from the URI. */
-  convention: string;
-}
-
-/** A queryless convention contract parsed from one manifest archetype tag. */
-export interface IntentContract {
-  /** Stable, queryless convention identity. */
-  convention: string;
-  /** Optional unsigned discovery metadata; never inferred from payloads. */
-  eventKinds?: number[];
+  /** Action to dispatch; defaults to `open`. */
+  action?: string;
+  /** Opaque payload shaped by `convention` when present. */
+  payload?: unknown;
 }
 
 /** A napplet that can fulfill an archetype (from the manifest catalog). */
 export interface IntentCandidate {
+  /** Napplet dTag. */
   dTag: string;
+  /** Optional human-readable handler label. */
   title?: string;
+  /** Actions supported by this candidate. */
   actions: string[];
+  /** Payload conventions supported by this candidate. */
   conventions: string[];
-  /** Manifest-derived contracts supported by this candidate. */
-  contracts: IntentContract[];
+  /** Whether this candidate is the current default. */
   isDefault?: boolean;
 }
 
 /** Availability of an archetype, sourced from the installed-napplet catalog. */
 export interface IntentAvailability {
+  /** Queried archetype. */
   archetype: string;
+  /** Whether at least one candidate is available. */
   available: boolean;
+  /** Candidate napplets. */
   candidates: IntentCandidate[];
+  /** Whether the runtime has a default handler. */
   hasDefault: boolean;
 }
 
-/** Runtime acceptance of responsibility for an eventual target delivery. */
-export interface IntentAcceptedResult {
-  ok: true;
+/** The result of an intent invocation. */
+export interface IntentResult {
+  /** Whether dispatch completed. */
+  ok: boolean;
+  /** Requested archetype. */
   archetype: string;
+  /** Dispatched action. */
   action: string;
-  convention: string;
-  handler: string;
-}
-
-/** A pre-acceptance rejection from the runtime. */
-export interface IntentRejectedResult {
-  ok: false;
-  error: string;
-}
-
-/** The immediate acceptance or rejection result of an intent invocation. */
-export type IntentResult = IntentAcceptedResult | IntentRejectedResult;
-
-/**
- * A target-only runtime delivery after the target is ready.
- *
- * `sender` is runtime-attested provenance. Callers cannot supply or override it,
- * and receivers must treat `payload` as untrusted opaque data.
- */
-export interface IntentDelivery {
-  sender: string;
-  archetype: string;
-  action: string;
-  convention: string;
-  payload?: unknown;
+  /** Whether a handler accepted the dispatch. */
+  handled: boolean;
+  /** dTag of the handling napplet. */
+  handler?: string;
+  /** Runtime-assigned target window identifier. */
+  windowId?: string;
+  /** Convention used for payload delivery. */
+  convention?: string;
+  /** Failure reason. */
+  error?: string;
 }

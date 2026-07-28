@@ -39,8 +39,8 @@ import type {
   UploadResult,
   UploadStatus,
   IntentAvailability,
-  IntentDelivery,
-  IntentInvokeOptions,
+  IntentOpenOptions,
+  IntentRequest,
   IntentResult,
   WebrtcOpenRequest,
   WebrtcOpenResult,
@@ -339,42 +339,41 @@ export const upload: SdkDomain<'upload'> = {
 };
 
 /**
- * Archetype intent dispatch (NAP-INTENT): invoke an authoritative convention
- * URI without addressing a target instance. The runtime resolves an installed
- * handler, accepts delivery responsibility, and later delivers to the target
- * with runtime-attested sender provenance.
+ * Archetype intent dispatch (NAP-INTENT): invoke an installed handler by role
+ * without directly addressing a target instance.
  *
  * @example
  * ```ts
  * import { intent } from '@napplet/sdk';
  *
  * if ((await intent.available('note')).available) {
- *   await intent.open(`napplet:note/open?event=${encodeURIComponent(id)}`);
+ *   await intent.open('note', { event: id }, { convention: 'napplet:note/open' });
  * }
  * ```
  */
 export const intent: SdkDomain<'intent'> = {
   /**
-   * Invoke an authoritative convention URI.
-   * @param uri      `napplet:<archetype>/<intent>[...?params]`
-   * @param options  Optional payload, handler preference, and behavior hints
-   * @returns Promise resolving to immediate acceptance or pre-acceptance rejection
+   * Invoke an archetype request.
+   * @param request Archetype, action, convention, payload, and behavior hints
+   * @returns Promise resolving to the dispatch result
    */
-  invoke(uri: string, options?: IntentInvokeOptions): Promise<IntentResult> {
-    return requireDomain('intent').invoke(uri, options);
+  invoke(request: IntentRequest): Promise<IntentResult> {
+    return requireDomain('intent').invoke(request);
   },
 
   /**
-   * Invoke a convention URI whose intent is `open`.
-   * @param uri      `napplet:<archetype>/open[...?params]`
-   * @param options  Optional payload, handler preference, and behavior hints
-   * @returns Promise resolving to immediate acceptance or pre-acceptance rejection
+   * Open a napplet by archetype.
+   * @param archetype Role slug to open
+   * @param payload Optional opaque payload
+   * @param opts Optional convention, handler preference, and behavior hints
+   * @returns Promise resolving to the dispatch result
    */
   open(
-    uri: string,
-    options?: IntentInvokeOptions,
+    archetype: string,
+    payload?: unknown,
+    opts?: IntentOpenOptions,
   ): Promise<IntentResult> {
-    return requireDomain('intent').open(uri, options);
+    return requireDomain('intent').open(archetype, payload, opts);
   },
 
   /**
@@ -404,14 +403,6 @@ export const intent: SdkDomain<'intent'> = {
     return requireDomain('intent').onChanged(handler);
   },
 
-  /**
-   * Register for target-only runtime deliveries.
-   * @param handler  Called with each runtime-attested delivery
-   * @returns A Subscription with `close()` to stop listening
-   */
-  onDelivery(handler: (delivery: IntentDelivery) => void): Subscription {
-    return requireDomain('intent').onDelivery(handler);
-  },
 };
 
 /**

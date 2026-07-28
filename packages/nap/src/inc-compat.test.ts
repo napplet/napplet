@@ -4,10 +4,14 @@ import {
   DOMAIN as INC_DOMAIN,
   emit,
   handleIncEvent,
+  handleIncMessage,
   incEmit,
   incOn,
   installIncShim,
+  list,
+  onOpened,
   on,
+  open,
 } from './inc/index.js';
 import {
   DOMAIN as IFC_DOMAIN,
@@ -133,11 +137,9 @@ describe('INC topic routing', () => {
   });
 
   it('delivers a byte-identical topic with its payload and sender', () => {
-    const received: Array<{ payload: unknown; sender: string; content: string }> = [];
+    const received: unknown[] = [];
 
-    on('napplet:profile/open', (payload, event) => {
-      received.push({ payload, sender: event.pubkey, content: event.content });
-    });
+    on('napplet:profile/open', (event) => received.push(event));
 
     handleIncEvent({
       type: 'inc.event',
@@ -148,9 +150,9 @@ describe('INC topic routing', () => {
 
     expect(received).toEqual([
       {
+        topic: 'napplet:profile/open',
         payload: { pubkey: 'abc123' },
         sender: 'social-feed',
-        content: JSON.stringify({ pubkey: 'abc123' }),
       },
     ]);
   });
@@ -195,14 +197,106 @@ describe('INC topic routing', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it('retains existing defaults when a matching event omits payload and sender', () => {
-    const received: Array<{ payload: unknown; sender: string; content: string }> = [];
-    on('napplet:dm/open', (payload, event) => {
-      received.push({ payload, sender: event.pubkey, content: event.content });
+  it('does not fabricate omitted optional payload data', () => {
+    const received: unknown[] = [];
+    on('napplet:dm/open', (event) => received.push(event));
+
+    handleIncEvent({
+      type: 'inc.event',
+      topic: 'napplet:dm/open',
+      sender: 'dm-source',
     });
 
-    handleIncEvent({ type: 'inc.event', topic: 'napplet:dm/open' } as never);
+    expect(received).toEqual([{
+      topic: 'napplet:dm/open',
+      sender: 'dm-source',
+    }]);
+  });
+});
 
-    expect(received).toEqual([{ payload: {}, sender: '', content: JSON.stringify({}) }]);
+describe('INC symmetric channels', () => {
+  it('returns canonical channel info snapshots', async () => {
+    const promise = list();
+    const posted = vi.mocked(window.parent.postMessage).mock.calls.at(-1)?.[0] as {
+      id: string;
+    };
+    handleIncMessage({
+      type: 'inc.channel.list.result',
+      id: posted.id,
+      channels: [{ id: 'channel-0', peer: 'profile-viewer' }],
+    });
+
+    await expect(promise).resolves.toEqual([
+      { id: 'channel-0', peer: 'profile-viewer' },
+    ]);
+  });
+
+  it('resolves an outbound open to a symmetric opaque handle', async () => {
+    const promise = open('profile-viewer');
+    const posted = vi.mocked(window.parent.postMessage).mock.calls.at(-1)?.[0] as {
+      id: string;
+    };
+    handleIncMessage({
+      type: 'inc.channel.open.result',
+      id: posted.id,
+      channelId: 'channel-1',
+      peer: 'profile-viewer',
+    });
+
+    const handle = await promise;
+    expect(handle).toMatchObject({
+      id: 'channel-1',
+      peer: 'profile-viewer',
+      emit: expect.any(Function),
+      on: expect.any(Function),
+      onClosed: expect.any(Function),
+      close: expect.any(Function),
+    });
+  });
+
+  it('retains early opened, event, and closed notifications for late handlers', () => {
+    handleIncMessage({
+      type: 'inc.channel.opened',
+      channelId: 'channel-2',
+      peer: 'note-editor',
+    });
+    handleIncMessage({
+      type: 'inc.channel.event',
+      channelId: 'channel-2',
+      sender: 'note-editor',
+      payload: { sequence: 1 },
+    });
+    handleIncMessage({
+      type: 'inc.channel.event',
+      channelId: 'channel-2',
+      sender: 'note-editor',
+      payload: { sequence: 2 },
+    });
+    handleIncMessage({
+      type: 'inc.channel.closed',
+      channelId: 'channel-2',
+      reason: 'peer destroyed',
+    });
+
+    const opened: unknown[] = [];
+    onOpened((handle) => {
+      const events: unknown[] = [];
+      const closed: unknown[] = [];
+      handle.on((event) => events.push(event));
+      handle.onClosed((event) => closed.push(event));
+      opened.push({ id: handle.id, peer: handle.peer, events, closed });
+    });
+
+    expect(opened).toEqual([{
+      id: 'channel-2',
+      peer: 'note-editor',
+      events: [
+        { channelId: 'channel-2', sender: 'note-editor', payload: { sequence: 1 } },
+        { channelId: 'channel-2', sender: 'note-editor', payload: { sequence: 2 } },
+      ],
+      closed: [
+        { channelId: 'channel-2', reason: 'peer destroyed' },
+      ],
+    }]);
   });
 });

@@ -50,23 +50,13 @@ manifest archetype tag advertises one complete queryless
 ["archetype", "profile", "napplet:profile/open"]
 ```
 
-Object-form CLI or Vite configuration may add `eventKinds: [0, 3]`, producing
-same-tag `kind:0` and `kind:3` discovery fields. The flag and wizard remain
-convention-only, and neither the generator nor runtime infers an event kind
-from payload content.
-
-URI queries are per-invocation payload sugar only at INC `emit` and intent
-`invoke/open`. They never appear in manifest discovery, subscriptions, or
-normalized identities. Intent acceptance is separate from later target
-`onDelivery`; sender is runtime-attested, delivery has no public identifier,
-and NAP-INTENT has no public NAP-INC dependency.
+URI queries are per-invocation payload sugar at INC `emit`. They never appear in manifest discovery or subscriptions. Intent dispatch uses `invoke(request)` or `open(archetype, payload?, opts?)` and returns the canonical result with `handled`, handler, and window information.
 
 This guidance follows the exact draft heads of [NAP-INC PR #89
 (`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
 [the governance/web projection PR #90
 (`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4).
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ## See also
 

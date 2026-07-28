@@ -101,6 +101,7 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
   'inc.subscribe.result': { dir: 'in' },
   'inc.event': { dir: 'in', fields: { topic: 'string', sender: 'string' } },
   'inc.channel.open.result': { dir: 'in' },
+  'inc.channel.opened': { dir: 'in', fields: { channelId: 'string', peer: 'string' } },
   'inc.channel.event': { dir: 'in' },
   'inc.channel.list.result': { dir: 'in' },
   'inc.channel.closed': { dir: 'in' },
@@ -214,7 +215,6 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
   'intent.available.result': { dir: 'in' },
   'intent.handlers.result': { dir: 'in' },
   'intent.changed': { dir: 'in' },
-  'intent.deliver': { dir: 'in', fields: { delivery: 'object' } },
 
   // ── ble ──────────────────────────────────────────────────────────────────
   'ble.open': { dir: 'out', fields: { ...ID, request: 'object' } },
@@ -346,20 +346,20 @@ function matchesKind(value: unknown, kind: FieldKind): boolean {
   return kindOf(value) === kind;
 }
 
-/** Validate the adopted normalized wire identity for an outbound intent invoke. */
+/** Validate the merged NAP-INTENT request shape. */
 function validateIntentInvokeRequest(request: unknown, errors: EnvelopeError[]): void {
   if (typeof request !== 'object' || request === null || Array.isArray(request)) return;
 
-  const normalized = request as Record<string, unknown>;
-  for (const field of ['archetype', 'action', 'convention'] as const) {
-    const value = normalized[field];
-    if (value === undefined) {
-      errors.push({
-        code: 'missing-field',
-        message: `Intent request requires a string "${field}" field`,
-        field: `request.${field}`,
-      });
-    } else if (typeof value !== 'string') {
+  const intent = request as Record<string, unknown>;
+  if (typeof intent.archetype !== 'string') {
+    errors.push({
+      code: intent.archetype === undefined ? 'missing-field' : 'wrong-type',
+      message: 'Intent request requires a string "archetype" field',
+      field: 'request.archetype',
+    });
+  }
+  for (const field of ['action', 'convention'] as const) {
+    if (intent[field] !== undefined && typeof intent[field] !== 'string') {
       errors.push({
         code: 'wrong-type',
         message: `Intent request field "${field}" must be a string`,
@@ -368,23 +368,11 @@ function validateIntentInvokeRequest(request: unknown, errors: EnvelopeError[]):
     }
   }
 
-  if ('sender' in normalized) {
+  if ('sender' in intent) {
     errors.push({
       code: 'forbidden-field',
-      message: 'Intent request sender is runtime-derived and cannot be emitted by a napplet',
+      message: 'Intent request does not define a caller-supplied sender field',
       field: 'request.sender',
-    });
-  }
-
-  const { archetype, action, convention } = normalized;
-  if (typeof archetype !== 'string' || typeof action !== 'string' || typeof convention !== 'string') return;
-
-  const parsed = /^napplet:([^/?#\s]+)\/([^/?#\s]+)$/.exec(convention);
-  if (!parsed || parsed[1] !== archetype || parsed[2] !== action) {
-    errors.push({
-      code: 'invalid-intent-request',
-      message: 'Intent convention must be queryless and match request archetype and action',
-      field: 'request.convention',
     });
   }
 }

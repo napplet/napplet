@@ -133,6 +133,15 @@ export interface IncChannelOpenResultMessage extends IncMessage {
   error?: string;
 }
 
+/** Notification that a peer opened a channel to this napplet. */
+export interface IncChannelOpenedMessage extends IncMessage {
+  type: 'inc.channel.opened';
+  /** Shell-assigned opaque channel identifier. */
+  channelId: string;
+  /** Runtime-attested opener dTag. */
+  peer: string;
+}
+
 /**
  * Send a message on an open channel.
  * Sender exclusion: the sending napplet does not receive its own message.
@@ -219,6 +228,7 @@ export type IncTopicMessage =
 export type IncChannelMessage =
   | IncChannelOpenMessage
   | IncChannelOpenResultMessage
+  | IncChannelOpenedMessage
   | IncChannelEmitMessage
   | IncChannelEventMessage
   | IncChannelBroadcastMessage
@@ -243,6 +253,7 @@ export type IncInboundMessage =
   | IncSubscribeResultMessage
   | IncEventMessage
   | IncChannelOpenResultMessage
+  | IncChannelOpenedMessage
   | IncChannelEventMessage
   | IncChannelListResultMessage
   | IncChannelClosedMessage;

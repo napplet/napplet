@@ -19,9 +19,8 @@ describe('@napplet/shim — runtime injection', () => {
     expect((installed as { shell?: unknown }).shell).toBeUndefined();
   });
 
-  it('delivers intent pushes through the authenticated parent path without INC', () => {
+  it('installs the merged INTENT request surface without draft delivery hooks', () => {
     const installed = installNappletGlobal({ domains: ['intent'] });
-    const received: unknown[] = [];
 
     expect(installed.inc).toBeUndefined();
     expect(installed.intent).toMatchObject({
@@ -30,33 +29,22 @@ describe('@napplet/shim — runtime injection', () => {
       available: expect.any(Function),
       handlers: expect.any(Function),
       onChanged: expect.any(Function),
-      onDelivery: expect.any(Function),
     });
+    expect((installed.intent as { onDelivery?: unknown }).onDelivery).toBeUndefined();
+  });
 
-    const subscription = installed.intent!.onDelivery((delivery) => received.push(delivery));
+  it('installs the complete INC topic and channel surface', () => {
+    const installed = installNappletGlobal({ domains: ['inc'] });
 
-    window.dispatchEvent(new MessageEvent('message', {
-      source: window.parent,
-      data: {
-        type: 'intent.deliver',
-        delivery: {
-          sender: 'runtime-attested-source',
-          archetype: 'profile',
-          action: 'open',
-          convention: 'napplet:profile/open',
-          payload: { pubkey: 'abc123' },
-        },
+    expect(installed.inc).toMatchObject({
+      emit: expect.any(Function),
+      on: expect.any(Function),
+      channel: {
+        open: expect.any(Function),
+        onOpened: expect.any(Function),
+        list: expect.any(Function),
+        broadcast: expect.any(Function),
       },
-    }));
-
-    expect(received).toEqual([{
-      sender: 'runtime-attested-source',
-      archetype: 'profile',
-      action: 'open',
-      convention: 'napplet:profile/open',
-      payload: { pubkey: 'abc123' },
-    }]);
-
-    subscription.close();
+    });
   });
 });

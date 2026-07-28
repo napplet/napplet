@@ -51,8 +51,8 @@ await common.react(published.event.id, '+');
 
 // Inter-napplet messaging. The payload is this application's local choice.
 inc.emit('napplet:note/open', { targetId: 'local-note-id' });
-const incSub = inc.on('napplet:note/open', (payload) => {
-  console.log('Local note-open payload:', payload);
+const incSub = inc.on('napplet:note/open', (event) => {
+  console.log('Local note-open payload:', event.payload);
 });
 
 // Scoped storage
@@ -160,7 +160,11 @@ Messages are sent as JSON envelope objects (`{ type: 'inc.emit', topic, payload 
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `emit(topic, payload?)` | `void` | Broadcast an INC event to other napplets via the shell |
-| `on(topic, callback)` | `{ close(): void }` | Subscribe to INC events on a topic |
+| `on(topic, callback)` | `{ close(): void }` | Subscribe to one-object `IncEvent` callbacks |
+| `channel.open(target)` | `Promise<ChannelHandle>` | Open a symmetric point-to-point channel |
+| `channel.onOpened(callback)` | `{ close(): void }` | Receive inbound symmetric channel handles |
+| `channel.list()` | `Promise<ChannelInfo[]>` | List active channel snapshots |
+| `channel.broadcast(payload?)` | `void` | Broadcast to all open channel peers |
 
 This non-normative SDK reference follows [NAP-INC draft PR #89 at its adopted head](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md). For outbound INC only, a queried convention URI is runtime shorthand for a stable topic plus a shallow text payload:
 
@@ -168,8 +172,8 @@ This non-normative SDK reference follows [NAP-INC draft PR #89 at its adopted he
 inc.emit('napplet:profile/open?pubkey=abc123');
 // -> { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }
 
-inc.on('napplet:profile/open', (payload) => {
-  console.log(payload);
+inc.on('napplet:profile/open', (event) => {
+  console.log(event.sender, event.payload);
 });
 ```
 
@@ -179,23 +183,21 @@ Deprecated IFC compatibility exports are available as migration aliases: `ifc`, 
 
 ### `intent`
 
-Archetype intent dispatch. Mirrors `window.napplet.intent`. The URI passed to `invoke`/`open` is authoritative: that binding derives a queryless convention, archetype, action, and any shallow text query payload. Queryless manifest contracts and exact INC subscriptions do not normalize URI queries.
+Archetype intent dispatch. Mirrors `window.napplet.intent`. Use `invoke(request)` or `open(archetype, payload?, opts?)`.
 
 ```ts
 import { intent } from '@napplet/sdk';
 
-// Register this during target startup. `sender` is runtime-attested provenance;
-// validate the opaque payload before using it.
-intent.onDelivery((delivery) => {
-  showProfile(delivery.payload);
-});
-
-const result = await intent.open('napplet:profile/open?pubkey=abc123');
-if (!result.ok) throw new Error(result.error);
-console.log(`Runtime accepted delivery for ${result.handler}`);
+const result = await intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) throw new Error(result.error);
+console.log(`Handled by ${result.handler} in ${result.windowId}`);
 ```
 
-`ok: true` means the runtime accepted responsibility to deliver, not that a target is running or has received the payload. Delivery is a separate target-only push, and runtime policy controls target lifecycle, retries, and persistence. Do not assume source/target overlap. `available()` and `handlers()` expose queryless `IntentContract` entries with optional same-contract `eventKinds` metadata; kinds are never inferred from payloads. NAP-INTENT has no public NAP-INC dependency. This non-normative reference follows [NAP-INTENT draft PR #91 at its adopted head](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
+Results include required `ok`, `archetype`, `action`, and `handled` fields. `IntentBehavior` supports `focus`, `newWindow`, and `reuse`. This non-normative reference follows the living [NAP-INTENT document](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ### `storage`
 

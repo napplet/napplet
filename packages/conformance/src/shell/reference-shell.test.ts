@@ -40,7 +40,7 @@ describe('createReferenceShell — record + respond', () => {
     ]);
   });
 
-  it('advertises the reference intent handler through queryless contracts', () => {
+  it('advertises the reference intent handler through canonical conventions', () => {
     const shell = createReferenceShell();
 
     expect(shell.handle({ type: 'intent.available', id: 'intent-1', archetype: 'note' })).toEqual([
@@ -55,7 +55,6 @@ describe('createReferenceShell — record + respond', () => {
               dTag: 'reference-handler',
               actions: ['open'],
               conventions: ['napplet:note/open'],
-              contracts: [{ convention: 'napplet:note/open', eventKinds: [1, 30023] }],
               isDefault: true,
             },
           ],
@@ -65,7 +64,7 @@ describe('createReferenceShell — record + respond', () => {
     ]);
   });
 
-  it('accepts a normalized invoke before delivering the endpoint-attested target payload', () => {
+  it('returns the canonical handled result for an archetype invoke', () => {
     const shell = createReferenceShell();
     const sourceAtAcceptance: ReferenceEndpoint = { dTag: 'source-at-acceptance' };
 
@@ -87,22 +86,9 @@ describe('createReferenceShell — record + respond', () => {
           archetype: 'note',
           action: 'open',
           convention: 'napplet:note/open',
+          handled: true,
           handler: 'reference-handler',
-        },
-      },
-    ]);
-
-    sourceAtAcceptance.dTag = 'source-after-acceptance';
-
-    expect(shell.takeDeliveries('reference-handler')).toEqual([
-      {
-        type: 'intent.deliver',
-        delivery: {
-          sender: 'source-at-acceptance',
-          archetype: 'note',
-          action: 'open',
-          convention: 'napplet:note/open',
-          payload: { event: 'abc123' },
+          windowId: 'reference-window',
         },
       },
     ]);
@@ -126,7 +112,7 @@ describe('createReferenceShell — record + respond', () => {
     expect(shell.takeDeliveries('reference-handler')).toEqual([]);
   });
 
-  it('rejects normalized intent conflicts before handler resolution or target delivery', () => {
+  it('keeps archetype, action, and convention orthogonal at validation', () => {
     const shell = createReferenceShell();
 
     expect(shell.handleFrom(authenticatedSource, {
@@ -137,8 +123,18 @@ describe('createReferenceShell — record + respond', () => {
         action: 'edit',
         convention: 'napplet:note/open?event=abc123',
       },
-    })).toEqual([]);
-    expect(shell.records.at(-1)?.verdict.ok).toBe(false);
+    })).toEqual([{
+      type: 'intent.invoke.result',
+      id: 'intent-conflict',
+      result: {
+        ok: false,
+        archetype: 'note',
+        action: 'edit',
+        handled: false,
+        error: 'unsupported convention',
+      },
+    }]);
+    expect(shell.records.at(-1)?.verdict.ok).toBe(true);
     expect(shell.takeDeliveries('reference-handler')).toEqual([]);
   });
 

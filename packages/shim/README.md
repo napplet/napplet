@@ -73,14 +73,8 @@ const signed = await window.napplet.relay.publish({
 });
 
 // Listen for a local profile-open convention payload from other napplets
-const incSub = window.napplet.inc.on('napplet:profile/open', (payload) => {
-  console.log('Local profile-open payload:', payload);
-});
-
-// Target startup: delivery is separate from an invoker's accepted result.
-const intentSub = window.napplet.intent.onDelivery((delivery) => {
-  // Sender provenance is runtime-attested. Validate the opaque payload.
-  console.log('Profile delivery:', delivery.payload);
+const incSub = window.napplet.inc.on('napplet:profile/open', (event) => {
+  console.log('Local profile-open payload:', event.payload);
 });
 
 // Use scoped storage (proxied through the shell)
@@ -280,9 +274,9 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'identity.getBadges.result', id: string, badges: object[], error?: string }
 
 { type: 'inc.event', topic: string, payload?: unknown, sender: string }
+{ type: 'inc.channel.opened', channelId: string, peer: string }
 
-{ type: 'intent.invoke.result', id: string, result: { ok: boolean, archetype?: string, action?: string, convention?: string, handler?: string, error?: string } }
-{ type: 'intent.deliver', delivery: { sender: string, archetype: string, action: string, convention: string, payload?: unknown } }
+{ type: 'intent.invoke.result', id: string, result: { ok: boolean, archetype: string, action: string, handled: boolean, convention?: string, handler?: string, windowId?: string, error?: string } }
 
 { type: 'storage.get.result', id: string, value?: string | null, error?: string }
 { type: 'storage.set.result', id: string, error?: string }
@@ -338,14 +332,19 @@ window.napplet = {
   inc: {
     emit(topic, payload?): void;
     on(topic, callback): { close(): void };
+    channel: {
+      open(target): Promise<ChannelHandle>;
+      onOpened(callback): { close(): void };
+      list(): Promise<ChannelInfo[]>;
+      broadcast(payload?): void;
+    };
   },
   intent: {
-    invoke(uri, options?): Promise<IntentResult>;
-    open(uri, options?): Promise<IntentResult>;
+    invoke(request): Promise<IntentResult>;
+    open(archetype, payload?, options?): Promise<IntentResult>;
     available(archetype): Promise<IntentAvailability>;
     handlers(): Promise<IntentAvailability[]>;
     onChanged(callback): { close(): void };
-    onDelivery(callback): { close(): void };
   },
   storage: {
     getItem(key): Promise<string | null>;
@@ -443,7 +442,11 @@ Inter-napplet communication between napplets via the shell. Topics are opaque st
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `emit(topic, payload?)` | `void` | Send an `inc.emit` JSON envelope to the shell for delivery to subscribers using the same topic string. |
-| `on(topic, callback)` | `{ close(): void }` | Subscribe to `inc.event` JSON envelopes on a topic. Callback receives `(payload, event)`. |
+| `on(topic, callback)` | `{ close(): void }` | Subscribe to `inc.event` JSON envelopes. Callback receives one `IncEvent`. |
+| `channel.open(target)` | `Promise<ChannelHandle>` | Open a symmetric point-to-point channel. |
+| `channel.onOpened(callback)` | `{ close(): void }` | Receive inbound channel handles. |
+| `channel.list()` | `Promise<ChannelInfo[]>` | List active channel snapshots. |
+| `channel.broadcast(payload?)` | `void` | Broadcast to every open channel peer. |
 
 This non-normative shim reference follows [NAP-INC draft PR #89 at its adopted head](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md). The injected runtime preprocesses a queried convention URI only when it is sent through `emit`:
 
@@ -451,8 +454,8 @@ This non-normative shim reference follows [NAP-INC draft PR #89 at its adopted h
 window.napplet.inc.emit('napplet:profile/open?pubkey=abc123');
 // -> { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }
 
-window.napplet.inc.on('napplet:profile/open', (payload) => {
-  console.log(payload);
+window.napplet.inc.on('napplet:profile/open', (event) => {
+  console.log(event.sender, event.payload);
 });
 ```
 
@@ -460,22 +463,18 @@ Query values are shallow percent-decoded text (`+` remains a literal plus) befor
 
 ### `window.napplet.intent`
 
-NAP-INTENT normalizes convention URIs at `invoke` and `open`, not in manifest metadata, discovery, or INC routing. A URI such as `napplet:profile/open?pubkey=abc123` produces a queryless convention and a shallow text payload before its `intent.invoke` envelope is posted. Use a queryless URI with `options.payload` for structured data.
+NAP-INTENT dispatches by archetype. Use `invoke(request)` or the `open(archetype, payload?, opts?)` convenience operation.
 
 ```ts
-// Register while the target initializes; retained delivery is then drained.
-window.napplet.intent.onDelivery((delivery) => {
-  // The runtime attests the sender endpoint; payload data is still untrusted.
-  showProfile(delivery.payload);
-});
-
 const result = await window.napplet.intent.open(
-  'napplet:profile/open?pubkey=abc123',
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
 );
-if (!result.ok) throw new Error(result.error);
+if (!result.handled) throw new Error(result.error);
 ```
 
-An accepted result transfers responsibility and includes no target or delivery identifier. The runtime may reuse or start the target later; it owns lifecycle, retry, and persistence policy, so no source/target overlap is promised. Handler discovery uses one queryless `IntentContract` per manifest tag, with optional same-tag `eventKinds` discovery metadata and no payload-kind inference. NAP-INTENT has no public NAP-INC dependency. See [NAP-INTENT draft PR #91 at its adopted head](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md).
+Results include required `ok`, `archetype`, `action`, and `handled` fields and optional handler, window, convention, and error details. See the living [NAP-INTENT document](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ### `window.napplet.storage`
 

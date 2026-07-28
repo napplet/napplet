@@ -53,11 +53,7 @@ napplet init --name my-napplet --title "My Napplet" \
   --relay wss://relay.example --server https://blossom.example
 ```
 
-The CLI validates the documented `slug:convention` shape and deploys the
-complete queryless convention identity. The flag and wizard remain
-convention-only. Object-form configuration may add `eventKinds: [0, 3]`; each
-number is emitted as `kind:<number>` on that convention's own archetype tag.
-These values are discovery metadata, not payload inference.
+The CLI validates the documented `slug:convention` shape and deploys the complete queryless convention identity.
 
 At runtime, INC `emit` and intent `invoke/open` may accept
 `napplet:<archetype>/<intent>?name=value` developer input. Their bindings
@@ -211,17 +207,14 @@ import { outbox, inc, intent, storage } from '@napplet/sdk';
 If you're writing a vanilla napplet with no build step, you can skip the sdk and
 use the injected `window.napplet.*` namespace directly.
 
-For cross-napplet intent, register `intent.onDelivery` during target startup.
-`intent.invoke/open` resolves to immediate acceptance or rejection; acceptance
-does not mean the target already received or handled the request. Delivery is a
+For cross-napplet intent, call `intent.invoke(request)` or `intent.open(archetype, payload?, opts?)`. The returned canonical result reports both dispatch success and whether a handler accepted the request. Delivery is a
 separate no-ID push with runtime-attested sender, independent of the source
 lifetime and with no public NAP-INC dependency. See the exact adopted draft
 heads for [NAP-INC PR #89
 (`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
 [the governance/web projection PR #90
 (`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4).
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ## Running in a shell
 
