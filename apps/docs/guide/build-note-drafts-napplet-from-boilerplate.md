@@ -70,11 +70,11 @@ surface. The napplet app imports `@napplet/sdk`; the shell/runtime injects
     "test:conformance:ui": "napplet-conformance --ui . --exec \"vite build --watch\""
   },
   "dependencies": {
-    "@napplet/sdk": "^0.25.0"
+    "@napplet/sdk": "^0.26.0"
   },
   "devDependencies": {
-    "@napplet/conformance-cli": "^0.2.16",
-    "@napplet/vite-plugin": "^0.12.0",
+    "@napplet/conformance-cli": "^0.2.17",
+    "@napplet/vite-plugin": "^0.13.0",
     "typescript": "^5.9.3",
     "vite": "^6.4.3",
     "vite-plugin-singlefile": "^2.3.3"

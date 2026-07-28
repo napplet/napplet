@@ -27,6 +27,7 @@ import type {
   CountApi,
   ListsApi,
   SerialApi,
+  FsApi,
   CommonApi,
   DmApi,
 } from './global/service-api.js';
@@ -370,6 +371,25 @@ export interface NappletGlobal {
    * ```
    */
   serial?: SerialApi;
+  /**
+   * Shell-mediated virtual filesystem access (NAP-FS): the napplet sees only
+   * virtual paths, directory entries, coarse metadata, base64-encoded file
+   * bytes, user-mediated picker results, and advisory change events. The runtime
+   * owns host paths, mounts, backing store, policy, and authorization of every
+   * operation.
+   *
+   * @example
+   * ```ts
+   * if (window.napplet.fs) {
+   *   const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+   *   const bytes = await window.napplet.fs.read(picked.entries[0].path);
+   *   await window.napplet.fs.write('/shared/copy.md', bytes.data, { mode: 'replace' });
+   *   const entries = await window.napplet.fs.list('/shared');
+   *   await window.napplet.fs.mkdir('/shared/projects/new', { recursive: true });
+   * }
+   * ```
+   */
+  fs?: FsApi;
   /**
    * Runtime-mediated direct messages (NAP-DM): napplets can request DM status,
    * conversations, history, send, and live delivery while the runtime owns

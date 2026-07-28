@@ -5,7 +5,7 @@
 
 `@napplet/nap` ships every active NAP domain (relay, storage, inc, keys, theme,
 media, notify, identity, config, resource, cvm, outbox, upload, intent, ble,
-webrtc, link, count, lists, common, serial, dm)
+webrtc, link, count, lists, common, serial, fs, dm)
 as independent, tree-shakable subpaths. It sits between the shim/sdk and
 [`@napplet/core`](./core) in the dependency graph.
 
@@ -53,8 +53,8 @@ import { notifySend } from '@napplet/nap/notify/sdk';
 ## Tree-shaking contract
 
 - Published with `sideEffects: false`.
-- The `exports` map declares **92 entry points**: 22 active domain barrels,
-  22 active-domain types entries, 22 shim entries, 22 sdk entries, plus the
+- The `exports` map declares **96 entry points**: 23 active domain barrels,
+  23 active-domain types entries, 23 shim entries, 23 sdk entries, plus the
   `ifc` compatibility wrapper.
 - A bundler importing only `@napplet/nap/relay/types` produces zero bytes from
   the other domains.
@@ -91,6 +91,7 @@ import { notifySend } from '@napplet/nap/notify/sdk';
 - **serial** — runtime-mediated serial device access: napplets get
   `open`/`write`/`close`/`onEvent`; the shell owns permissions, raw port
   handles, streams, OS paths, and lifecycle policy.
+- **fs** — shell-mediated virtual filesystem access: napplets get `info`/`pickFile`/`pickFiles`/`pickDirectory`/`pickSaveFile`/`stat`/`list`/`read`/`write`/`mkdir`/`remove`/`move`/`watch`/`unwatch`/`onChanged`; the runtime owns host paths, mounts, backing store, normalization, policy, and authorization. Byte payloads use RFC 4648 standard padded base64 text on the JSON wire, and byte limits/counts refer to decoded bytes.
 - **intent** — archetype-based invocation through `invoke(request)` and `open(archetype, payload?, opts?)`, with canonical structured dispatch results.
 
 ### INC convention URIs

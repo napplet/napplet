@@ -117,6 +117,8 @@ Default social/event boundary:
 - Settings/theme use `config` and `theme`.
 - Native bridge/device/session features use `cvm`, `ble`, `serial`, or `webrtc`
   only when the user story needs that exact shell-mediated boundary.
+- File browsing, directory listing, byte reads/writes, and change watching use
+  `fs` — shell-mediated virtual filesystem access.
 - External URL opening uses `link`.
 - `relay` is only for an explicit relay-local escape hatch such as group relay
   protocols, diagnostics, or raw relay tooling outside the outbox model.
@@ -182,7 +184,7 @@ package domains are:
 
 `relay`, `identity`, `storage`, `inc`, `theme`, `keys`, `media`, `notify`,
 `config`, `resource`, `cvm`, `outbox`, `upload`, `intent`, `ble`, `webrtc`,
-`link`, `count`, `lists`, `serial`, `common`, `dm`.
+`link`, `count`, `lists`, `serial`, `fs`, `common`, `dm`.
 
 The deprecated `ifc` subpath is only an INC compatibility alias; new work uses
 `inc`. If a NAP is not in the package-domain list above, do not implement

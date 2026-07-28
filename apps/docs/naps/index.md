@@ -297,12 +297,31 @@ if (window.napplet?.common) {
 }
 ```
 
+### fs
+
+Shell-mediated virtual filesystem access. Napplets discover visible roots, ask the runtime to mediate file and directory selection, inspect and list entries, read and write base64-encoded file bytes, create, remove and move them, and subscribe to advisory change events. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization — the napplet sees only virtual paths.
+
+`info()` is advisory discovery, not an authorization token: permissions can change mid-session and any operation can still fail.
+
+```ts
+if (window.napplet?.fs) {
+  const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+  const bytes = await window.napplet.fs.read(picked.entries[0].path);
+  await window.napplet.fs.write('/shared/copy.md', bytes.data, { mode: 'replace' });
+  const entries = await window.napplet.fs.list('/shared');
+  const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
+  window.napplet.fs.onChanged((change) => refresh(change.path));
+}
+```
+
+`fs.write.data` and `FsReadResult.data` carry bytes as RFC 4648 standard padded base64 text on the JSON wire. Byte limits and result counts are decoded-byte counts.
+
 ## Core domain union
 
 [`@napplet/core`](/packages/core) exports a `NapDomain` string union for the
 foundational domains — `relay`, `identity`, `storage`, `inc`, `theme`,
 `keys`, `media`, `notify`, `config`, `resource`, `cvm`, `outbox`,
-`upload`, `intent`, `ble`, `webrtc`, `link`, `lists`, `serial`, `common` — used as the discriminant for envelope routing and
+`upload`, `intent`, `ble`, `webrtc`, `link`, `lists`, `serial`, `fs`, `common` — used as the discriminant for envelope routing and
 domain presence.
 
 ## Where to go next

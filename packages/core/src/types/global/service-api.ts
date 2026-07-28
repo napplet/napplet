@@ -36,6 +36,20 @@ import type {
 } from '../intent.js';
 import type { LinkOpenOptions, LinkOpenResult } from '../link.js';
 import type { SerialEvent, SerialOpenRequest, SerialOpenResult } from '../serial.js';
+import type {
+  FsChange,
+  FsDirectoryEntry,
+  FsInfo,
+  FsMetadata,
+  FsMkdirOptions,
+  FsPickOptions,
+  FsPickResult,
+  FsReadOptions,
+  FsReadResult,
+  FsWatchOptions,
+  FsWriteOptions,
+  FsWriteResult,
+} from '../fs.js';
 import type { ListItem, ListMutationResult, ListOptions, ListRef, ListSupport } from '../lists.js';
 import type {
   DmConversationPage,
@@ -550,6 +564,128 @@ export interface SerialApi {
    * @returns A Subscription with `close()` to stop listening
    */
   onEvent(handler: (event: SerialEvent) => void): Subscription;
+}
+
+/**
+ * Shell-mediated virtual filesystem access (NAP-FS): the napplet sees only
+ * virtual paths, directory entries, coarse metadata, user-mediated picker
+ * results, and advisory change events. The runtime owns host paths, mounts,
+ * backing store, policy, and authorization of every operation.
+ *
+ * `info()` is advisory discovery, not an authorization token -- permissions can
+ * change mid-session and any operation can still fail, so handle rejections
+ * even when `info()` advertised a matching permission.
+ *
+ * @example
+ * ```ts
+ * if (window.napplet.fs) {
+ *   const { roots } = await window.napplet.fs.info();
+ *   const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+ *   const bytes = await window.napplet.fs.read(picked.entries[0].path);
+ *   await window.napplet.fs.write('/shared/copy.txt', bytes.data, { mode: 'replace' });
+ *   const entries = await window.napplet.fs.list('/shared');
+ *   const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
+ *   window.napplet.fs.onChanged((change) => refresh(change.path));
+ * }
+ * ```
+ */
+export interface FsApi {
+  /**
+   * Discover visible roots, coarse root permissions, and runtime limits.
+   * @returns Promise resolving to advisory filesystem discovery data
+   */
+  info(): Promise<FsInfo>;
+  /**
+   * Ask the runtime to let the user select one file.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickFile(options?: FsPickOptions): Promise<FsPickResult>;
+  /**
+   * Ask the runtime to let the user select one or more files.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickFiles(options?: FsPickOptions): Promise<FsPickResult>;
+  /**
+   * Ask the runtime to let the user select one directory.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickDirectory(options?: FsPickOptions): Promise<FsPickResult>;
+  /**
+   * Ask the runtime to let the user select or name one file destination.
+   * @param options  Optional picker hints
+   * @returns Promise resolving to picked virtual filesystem paths
+   */
+  pickSaveFile(options?: FsPickOptions): Promise<FsPickResult>;
+  /**
+   * Read coarse metadata for a visible file or directory.
+   * @param path  Virtual absolute path of the entry
+   * @returns Promise resolving to the entry metadata
+   */
+  stat(path: string): Promise<FsMetadata>;
+  /**
+   * List the direct children of a visible directory. Ordering is unspecified.
+   * @param path  Virtual absolute path of the directory
+   * @returns Promise resolving to the directory entries
+   */
+  list(path: string): Promise<FsDirectoryEntry[]>;
+  /**
+   * Read bytes from a visible file. `data` is RFC 4648 standard padded base64 text.
+   * @param path     Virtual absolute path of the file
+   * @param options  Optional range read controls
+   * @returns Promise resolving to the read result
+   */
+  read(path: string, options?: FsReadOptions): Promise<FsReadResult>;
+  /**
+   * Write bytes to a visible file. `data` is RFC 4648 standard padded base64 text.
+   * @param path     Virtual absolute path of the file
+   * @param data     Decoded bytes encoded as standard padded base64 text
+   * @param options  Optional write mode and preconditions
+   * @returns Promise resolving to the write result
+   */
+  write(path: string, data: string, options?: FsWriteOptions): Promise<FsWriteResult>;
+  /**
+   * Create a directory.
+   * @param path     Virtual absolute path of the directory to create
+   * @param options  Optional recursive parent creation
+   * @returns Promise resolving once the runtime acknowledges the creation
+   */
+  mkdir(path: string, options?: FsMkdirOptions): Promise<void>;
+  /**
+   * Remove a file or directory.
+   * @param path       Virtual absolute path of the entry to remove
+   * @param recursive  Remove a non-empty directory and its authorized descendants
+   * @returns Promise resolving once the runtime acknowledges the removal
+   */
+  remove(path: string, recursive?: boolean): Promise<void>;
+  /**
+   * Move or rename a file or directory.
+   * @param fromPath  Virtual absolute source path
+   * @param toPath    Virtual absolute destination path
+   * @returns Promise resolving once the runtime acknowledges the move
+   */
+  move(fromPath: string, toPath: string): Promise<void>;
+  /**
+   * Start an advisory watch on a visible path.
+   * @param path     Virtual absolute path to watch
+   * @param options  Optional recursive descendant coverage
+   * @returns Promise resolving to the runtime-generated watch id
+   */
+  watch(path: string, options?: FsWatchOptions): Promise<string>;
+  /**
+   * Stop a watch. Unknown ids may be treated as successful no-ops.
+   * @param watchId  Runtime-generated watch id
+   * @returns Promise resolving once the runtime acknowledges the request
+   */
+  unwatch(watchId: string): Promise<void>;
+  /**
+   * Register for runtime-pushed filesystem change events.
+   * @param handler  Called with each advisory change
+   * @returns A Subscription with `close()` to stop listening
+   */
+  onChanged(handler: (change: FsChange) => void): Subscription;
 }
 
 /**

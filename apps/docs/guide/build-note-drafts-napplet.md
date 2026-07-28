@@ -41,8 +41,8 @@ napplet init --name notedrafts --title "Note Drafts" \
   --description "Draft and publish short Nostr notes from a sandboxed napplet." \
   --archetype note:napplet:note/open
 pnpm init
-pnpm add @napplet/sdk@^0.25.0
-pnpm add -D @napplet/vite-plugin@^0.12.0 @napplet/conformance-cli@^0.2.16 @kehto/cli@^0.2.11 typescript@^5.9.3 vite@^6.4.3
+pnpm add @napplet/sdk@^0.26.0
+pnpm add -D @napplet/vite-plugin@^0.13.0 @napplet/conformance-cli@^0.2.17 @kehto/cli@^0.2.11 typescript@^5.9.3 vite@^6.4.3
 ```
 
 Replace the generated `package.json` with this:
@@ -62,12 +62,12 @@ Replace the generated `package.json` with this:
     "verify": "pnpm type-check && pnpm test:conformance"
   },
   "dependencies": {
-    "@napplet/sdk": "^0.25.0"
+    "@napplet/sdk": "^0.26.0"
   },
   "devDependencies": {
     "@kehto/cli": "^0.2.11",
-    "@napplet/conformance-cli": "^0.2.16",
-    "@napplet/vite-plugin": "^0.12.0",
+    "@napplet/conformance-cli": "^0.2.17",
+    "@napplet/vite-plugin": "^0.13.0",
     "typescript": "^5.9.3",
     "vite": "^6.4.3"
   }

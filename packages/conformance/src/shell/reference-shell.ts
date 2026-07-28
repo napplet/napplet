@@ -37,6 +37,19 @@ const REFERENCE_HANDLER = 'reference-handler';
 const REFERENCE_SUBSCRIBER = 'reference-subscriber';
 const REFERENCE_CONVENTION = 'napplet:note/open';
 
+function pickResult(
+  type: 'fs.pickFile.result' | 'fs.pickFiles.result' | 'fs.pickDirectory.result' | 'fs.pickSaveFile.result',
+  id: unknown,
+  entry: {
+    path: string;
+    kind: 'file' | 'directory';
+    name: string;
+    permissions: string[];
+  },
+) {
+  return ok({ type, id, result: { entries: [entry] } });
+}
+
 /** One recorded inbound envelope from the napplet, with its validation verdict. */
 export interface RecordedEnvelope {
   /** The raw envelope the napplet posted. */
@@ -269,6 +282,61 @@ const RESPONDERS: Record<string, Responder> = {
   'serial.open': (e) => ok({ type: 'serial.open.result', id: e.id, session: { id: `serial-${String(e.id)}`, state: 'open' } }),
   'serial.write': (e) => ok({ type: 'serial.write.result', id: e.id }),
   'serial.close': (e) => ok({ type: 'serial.close.result', id: e.id }),
+  // fs -- virtual paths and curated labels only; never a host path, username,
+  // device name, volume, or storage-provider string (NAP-FS info() disclosure rules)
+  'fs.info': (e) => ok({
+    type: 'fs.info.result',
+    id: e.id,
+    info: {
+      roots: [{ path: '/shared', name: 'Shared files', permissions: ['read', 'list', 'write', 'create', 'delete', 'watch'] }],
+      limits: { maxReadBytes: 1048576, maxWriteBytes: 1048576, maxWatchCount: 16 },
+    },
+  }),
+  'fs.pickFile': (e) => pickResult('fs.pickFile.result', e.id, {
+    path: '/picked/file.txt',
+    kind: 'file',
+    name: 'file.txt',
+    permissions: ['read'],
+  }),
+  'fs.pickFiles': (e) => pickResult('fs.pickFiles.result', e.id, {
+    path: '/picked/file.txt',
+    kind: 'file',
+    name: 'file.txt',
+    permissions: ['read'],
+  }),
+  'fs.pickDirectory': (e) => pickResult('fs.pickDirectory.result', e.id, {
+    path: '/picked',
+    kind: 'directory',
+    name: 'picked',
+    permissions: ['read', 'list'],
+  }),
+  'fs.pickSaveFile': (e) => pickResult('fs.pickSaveFile.result', e.id, {
+    path: '/picked/export.json',
+    kind: 'file',
+    name: 'export.json',
+    permissions: ['write', 'create'],
+  }),
+  'fs.stat': (e) => ok({
+    type: 'fs.stat.result',
+    id: e.id,
+    metadata: { path: e.path, kind: 'file', size: 0 },
+  }),
+  'fs.list': (e) => ok({ type: 'fs.list.result', id: e.id, entries: [] }),
+  'fs.read': (e) => ok({
+    type: 'fs.read.result',
+    id: e.id,
+    result: { data: '', offset: 0, bytesRead: 0, eof: true, size: 0 },
+  }),
+  'fs.write': (e) => ok({
+    type: 'fs.write.result',
+    id: e.id,
+    result: { bytesWritten: 0, size: 0 },
+  }),
+  'fs.mkdir': (e) => ok({ type: 'fs.mkdir.result', id: e.id }),
+  'fs.remove': (e) => ok({ type: 'fs.remove.result', id: e.id }),
+  'fs.move': (e) => ok({ type: 'fs.move.result', id: e.id }),
+  'fs.watch': (e) => ok({ type: 'fs.watch.result', id: e.id, watchId: `watch-${String(e.id)}` }),
+  'fs.unwatch': (e) => ok({ type: 'fs.unwatch.result', id: e.id }),
 };
 
 /** A reference shell instance. */

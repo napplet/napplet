@@ -36,7 +36,7 @@ domains are:
 
 `relay`, `identity`, `storage`, `inc`, `theme`, `keys`, `media`, `notify`,
 `config`, `resource`, `cvm`, `outbox`, `upload`, `intent`, `ble`, `webrtc`,
-`link`, `count`, `lists`, `serial`, `common`, and `dm`.
+`link`, `count`, `lists`, `serial`, `fs`, `common`, and `dm`.
 
 The deprecated `ifc` subpath is only an INC compatibility alias; new napplets use
 `inc`. If a NAP is not in the list above, do not implement against it as usable
@@ -490,6 +490,7 @@ their exact boundary:
 | `cvm` | The napplet needs a shell-mediated ContextVM/MCP bridge. |
 | `ble` | The napplet needs Bluetooth LE/GATT access. |
 | `serial` | The napplet needs serial-port access. |
+| `fs` | The napplet needs shell-mediated virtual filesystem access, including virtual file selection, metadata, byte reads/writes, directory operations, or change watching. |
 | `webrtc` | The napplet needs shell-mediated WebRTC signaling/session setup. |
 
 Use `window.napplet?.domain` only for optional-domain fallback checks after
