@@ -1,5 +1,24 @@
 # @napplet/sdk
 
+## 0.27.0
+
+### Minor Changes
+
+- d201bd0: Add the `fs` NAP domain — shell-mediated virtual filesystem access ([NAP-FS](https://github.com/napplet/naps/pull/88)).
+
+  Ships the virtual filesystem operations — `info`, `pickFile`, `pickFiles`, `pickDirectory`, `pickSaveFile`, `stat`, `list`, `read`, `write`, `mkdir`, `remove`, `move`, `watch`, `unwatch` — plus the runtime-pushed `fs.changed` event, reachable through `window.napplet.fs`, `@napplet/nap/fs`, and `@napplet/sdk`. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization; the napplet sees only virtual paths.
+
+  Byte transfer uses RFC 4648 standard padded base64 text for `fs.write.data` and `FsReadResult.data` on the JSON wire. `FsLimits.maxReadBytes`, `FsLimits.maxWriteBytes`, byte range options, and read/write result counts refer to decoded bytes.
+
+- d201bd0: Add NAP-FS picker support for `pickFile`, `pickFiles`, `pickDirectory`, and `pickSaveFile`, including typed picker result shapes, shim and SDK helpers, injected `window.napplet.fs` methods, and conformance coverage for the new `fs.pick*` envelopes.
+
+### Patch Changes
+
+- Updated dependencies [d201bd0]
+- Updated dependencies [d201bd0]
+  - @napplet/core@0.31.0
+  - @napplet/nap@0.31.0
+
 ## 0.26.0
 
 ### Minor Changes
