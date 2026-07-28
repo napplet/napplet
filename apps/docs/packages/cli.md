@@ -117,8 +117,7 @@ deploys under its own folder name as the named `d` tag.
 
 Pass each `--archetype` option as `slug:napplet:<archetype>/<intent>`, for
 example `profile:napplet:profile/open`. The resulting configuration preserves
-the queryless convention. Object-form configuration may also declare optional
-unsigned event-kind discovery metadata:
+the queryless convention:
 
 ```json
 {
@@ -126,8 +125,7 @@ unsigned event-kind discovery metadata:
     "archetypes": [
       {
         "slug": "profile",
-        "convention": "napplet:profile/open",
-        "eventKinds": [0, 3]
+        "convention": "napplet:profile/open"
       }
     ]
   }
@@ -135,17 +133,12 @@ unsigned event-kind discovery metadata:
 ```
 
 ```json
-["archetype", "profile", "napplet:profile/open", "kind:0", "kind:3"]
+["archetype", "profile", "napplet:profile/open"]
 ```
 
-Each tag advertises one stable convention identity. Query parameters are
-rejected in metadata, and each trailing `kind:<number>` applies only to its own
-tag. The CLI preserves canonical event-kind fields from an existing template
-when configuration does not replace archetypes. It never inspects payload
-content to infer a kind.
+Each tag advertises one stable convention identity. Query parameters are rejected in metadata.
 
-`--archetype` and the interactive wizard remain convention-only; there is no
-event-kind flag or delimiter. Use object-form `.napplet/config.json` metadata
+`--archetype` and the interactive wizard remain convention-only. Use object-form `.napplet/config.json` metadata
 when event-kind discovery is needed. URI query transposition occurs only in the
 runtime bindings for INC emission and intent invocation, never in manifest
 discovery or handler matching.
@@ -154,8 +147,7 @@ This shape follows [NAP-INC PR #89
 (`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
 [the web projection PR #90
 (`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4)
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md)
 at those exact draft heads.
 
 ## See also

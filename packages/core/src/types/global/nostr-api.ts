@@ -55,12 +55,74 @@ export interface IncApi {
    */
   emit(topic: string, payload?: unknown): void;
   /**
-   * Subscribe to INC-PEER events on a specific topic.
-   * @param topic     The 't' tag value to listen for
-   * @param callback  Called with `(payload, event)` for each matching event
+   * Subscribe to INC events on a specific topic.
+   * @param topic     The exact topic value to listen for
+   * @param callback  Called with one runtime-attested INC event
    * @returns A Subscription handle with a `close()` method
    */
-  on(topic: string, callback: (payload: unknown, event: NostrEvent) => void): Subscription;
+  on(topic: string, callback: (event: IncEvent) => void): Subscription;
+  /** Point-to-point channel operations. */
+  channel: IncChannelApi;
+}
+
+/** A topic event delivered by the runtime. */
+export interface IncEvent {
+  /** Exact subscribed topic. */
+  topic: string;
+  /** Runtime-attested emitting napplet dTag. */
+  sender: string;
+  /** Optional opaque payload. */
+  payload?: unknown;
+}
+
+/** A message delivered through an open INC channel. */
+export interface ChannelEvent {
+  /** Shell-assigned opaque channel identifier. */
+  channelId: string;
+  /** Runtime-attested sender dTag. */
+  sender: string;
+  /** Optional opaque payload. */
+  payload?: unknown;
+}
+
+/** Terminal channel notification retained for late handlers. */
+export interface ChannelClosed {
+  /** Shell-assigned opaque channel identifier. */
+  channelId: string;
+  /** Optional runtime-supplied close reason. */
+  reason?: string;
+}
+
+/** Informational snapshot of an active channel. */
+export interface ChannelInfo {
+  /** Shell-assigned opaque channel identifier. */
+  id: string;
+  /** Peer napplet dTag. */
+  peer: string;
+}
+
+/** Symmetric handle exposed to both endpoints of an INC channel. */
+export interface ChannelHandle extends ChannelInfo {
+  /** Send an opaque payload to the peer. */
+  emit(payload?: unknown): void;
+  /** Receive peer events. */
+  on(callback: (event: ChannelEvent) => void): Subscription;
+  /** Receive the retained terminal close record. */
+  onClosed(callback: (event: ChannelClosed) => void): Subscription;
+  /** Close the channel for both endpoints. */
+  close(): void;
+}
+
+/** Point-to-point INC channel operations. */
+export interface IncChannelApi {
+  /** Open a channel to a target napplet dTag. */
+  open(target: string): Promise<ChannelHandle>;
+  /** Receive inbound channel handles. */
+  onOpened(callback: (handle: ChannelHandle) => void): Subscription;
+  /** List active inbound and outbound channels. */
+  list(): Promise<ChannelInfo[]>;
+  /** Send a payload to all open channel peers. */
+  broadcast(payload?: unknown): void;
 }
 
 /**

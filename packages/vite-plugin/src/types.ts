@@ -106,21 +106,18 @@ export interface Nip5aManifestOptions {
   /**
    * NAAT archetype roles this napplet fulfills (napplet/naps `ARCHETYPES.md`).
    *
-   * Each entry emits one
-   * `["archetype", slug, convention, ...kindFields]` NIP-5A manifest tag,
-   * where `convention` is a stable, queryless convention identity and optional
-   * `eventKinds` become same-tag `kind:<number>` discovery fields. A napplet may
+   * Each entry emits one `["archetype", slug, convention]` manifest tag, where
+   * `convention` is a stable, queryless convention identity. A napplet may
    * declare several archetype roles; a napplet with no archetype tag is valid.
    *
    * Each entry requires both a slug and convention. The convention archetype
-   * must equal the slug. Event kinds are unsigned integer metadata only; the
-   * plugin never inspects payload content to infer them.
+   * must equal the slug.
    *
    * Like the `config` tag, archetype tags are excluded from the aggregate `x`
    * hash (NIP-5D §Identity: the aggregate is recomputed from `path` tags
    * alone). Non-normative summary — defer to `ARCHETYPES.md` (napplet/naps).
    */
-  archetypes?: Array<{ slug: string; convention: string; eventKinds?: number[] }>;
+  archetypes?: Array<{ slug: string; convention: string }>;
 }
 
 /** Internal: resolved per-plugin-instance build state shared across hooks. */

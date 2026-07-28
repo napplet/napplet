@@ -91,9 +91,7 @@ import { notifySend } from '@napplet/nap/notify/sdk';
 - **serial** — runtime-mediated serial device access: napplets get
   `open`/`write`/`close`/`onEvent`; the shell owns permissions, raw port
   handles, streams, OS paths, and lifecycle policy.
-- **intent** — URI-authoritative invocation with immediate acceptance or
-  rejection and separate target-only `onDelivery`; discovery exposes queryless
-  manifest contracts and optional per-contract event kinds.
+- **intent** — archetype-based invocation through `invoke(request)` and `open(archetype, payload?, opts?)`, with canonical structured dispatch results.
 
 ### INC convention URIs
 
@@ -119,49 +117,30 @@ Fragments, malformed percent escapes, repeated decoded names, and a query with
 an explicit payload reject before emission. Structured or non-text data belongs
 in the explicit payload of a queryless topic.
 
-### Intent invocation and delivery
+### Intent invocation
 
-NAP-INTENT accepts the same authoritative URI syntax at its own `invoke` and
-`open` boundary. It derives the archetype, action, queryless convention, and
-optional text payload before posting the normalized request:
+NAP-INTENT accepts `invoke(request)` and `open(archetype, payload?, opts?)`:
 
 ```ts
 import {
   intentAvailable,
-  intentOnDelivery,
   intentOpen,
 } from '@napplet/nap/intent/sdk';
 
-const deliveries = intentOnDelivery((delivery) => {
-  // Runtime-attested provenance is not payload validation.
-  console.log(delivery.sender, delivery.convention);
-  validateProfileOpenPayload(delivery.payload);
-});
-
 if ((await intentAvailable('profile')).available) {
-  const result = await intentOpen('napplet:profile/open?pubkey=abc123');
-  if (!result.ok) console.error(result.error);
+  const result = await intentOpen(
+    'profile',
+    { pubkey: 'abc123' },
+    { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+  );
+  if (!result.handled) console.error(result.error);
 }
 ```
 
-`ok: true` records acceptance of runtime delivery responsibility only. A target
-delivery arrives separately through `onDelivery`, carries no intent or delivery
-identifier, and does not depend on the source remaining alive or on NAP-INC.
-Register the target listener during startup so a retained delivery can be
-drained promptly; runtime overlap, replacement, retry, and persistence remain
-host policy.
+Results contain required `ok`, `archetype`, `action`, and `handled` fields plus
+optional handler, window, convention, and error details.
 
-Manifest discovery stays queryless. Each archetype tag maps to one
-`IntentContract`, with optional same-tag `eventKinds`; payload content never
-selects or infers a kind.
-
-These APIs follow [NAP-INC PR #89
-(`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
-[the web projection PR #90
-(`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4)
-at those exact draft heads.
+These APIs defer to the living [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) documents.
 
 See the [NAP domain reference](/naps/) for the full list with one-line purposes.
 

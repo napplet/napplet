@@ -112,23 +112,14 @@ This is what makes the protocol modular: NAP contracts live in the
 
 The stable convention identity is the complete queryless
 `napplet:<archetype>/<intent>` string. Archetype manifest tags, subscriptions,
-handler discovery, normalized messages, and routing contain that identity and
-use exact equality. Optional same-tag `kind:<number>` fields describe one
-handler contract; payload content never determines an event kind.
+handler discovery, normalized messages, and routing contain that identity and use exact equality.
 
-The web binding normalizes developer-facing URI input before `postMessage` for
-the two operations that accept it: INC `emit(topic, payload?)` and intent
-`invoke/open(uri, options?)`. Unique percent-decoded query pairs become text
-payload fields, literal `+` remains `+`, and the outgoing topic or convention is
-queryless. Fragments, malformed percent encoding, repeated decoded names, and a
+The web binding normalizes developer-facing URI input before `postMessage` for INC `emit(topic, payload?)`. Unique percent-decoded query pairs become text payload fields, literal `+` remains `+`, and the outgoing topic is queryless. Fragments, malformed percent encoding, repeated decoded names, and a
 query combined with explicit payload reject. Structured/non-text data uses a
 queryless URI with an explicit payload.
 
 NAP-INTENT returns an immediate result whose ordinary wire `id` correlates only
-the invocation request and result. `ok: true` means the runtime accepted
-delivery responsibility, not that a target received or handled anything. The
-later target-only `intent.deliver` push has no request, intent, or delivery ID.
-It is carrier-neutral and has no public NAP-INC dependency.
+the invocation request and result. The canonical result reports `ok`, `archetype`, `action`, and `handled`, plus optional handler, window, convention, and error fields.
 
 At this web projection's trust boundary, the host authenticates the source
 iframe with `MessageEvent.source` and derives the NAP-level `sender` from that
@@ -141,8 +132,7 @@ This is non-normative guidance following the exact draft heads of [NAP-INC PR
 (`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
 [the governance/web projection PR #90
 (`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4).
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ## Security model
 

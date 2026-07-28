@@ -341,7 +341,7 @@ Deno.test("createDeployManifestTemplates dedupes title/description and coexists 
   });
 });
 
-Deno.test("config metadata overrides template metadata with same-tag contract kinds", async () => {
+Deno.test("config metadata overrides template archetype metadata", async () => {
   await withTempDir(async (dir) => {
     await Deno.writeTextFile(
       `${dir}/index.html`,
@@ -373,7 +373,6 @@ Deno.test("config metadata overrides template metadata with same-tag contract ki
         archetypes: [{
           slug: "note",
           convention: "napplet:note/open",
-          eventKinds: [1, 30023],
         }],
       },
     });
@@ -391,21 +390,19 @@ Deno.test("config metadata overrides template metadata with same-tag contract ki
       "archetype",
       "note",
       "napplet:note/open",
-      "kind:1",
-      "kind:30023",
     ]]);
     assertEquals(tags.some((tag) => tag[0] === "type"), false);
   });
 });
 
-Deno.test("template metadata preserves only canonical same-tag event kinds", async () => {
+Deno.test("template metadata preserves only canonical archetype tags", async () => {
   await withTempDir(async (dir) => {
     await Deno.writeTextFile(`${dir}/index.html`, "<html></html>");
     await Deno.writeTextFile(
       `${dir}/.nip5a-manifest.json`,
       JSON.stringify({
         tags: [
-          ["archetype", "note", "napplet:note/open", "kind:1", "kind:30023"],
+          ["archetype", "note", "napplet:note/open"],
           ["archetype", "profile", "napplet:profile/open"],
           ["archetype", "note", "napplet:note/open?kind=1", "kind:1"],
           ["archetype", "note", "napplet:note/open", "kind:-1"],
@@ -428,7 +425,7 @@ Deno.test("template metadata preserves only canonical same-tag event kinds", asy
     assertEquals(
       manifests[0].template?.tags.filter((tag) => tag[0] === "archetype"),
       [
-        ["archetype", "note", "napplet:note/open", "kind:1", "kind:30023"],
+        ["archetype", "note", "napplet:note/open"],
         ["archetype", "profile", "napplet:profile/open"],
       ],
     );

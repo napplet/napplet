@@ -88,29 +88,28 @@ NAP-IFC was renamed to NAP-INC because the surface is inter-napplet communicatio
 
 The old `@napplet/nap/ifc`, `@napplet/nap/ifc/types`, `@napplet/nap/ifc/shim`, and `@napplet/nap/ifc/sdk` subpaths remain as deprecated thin wrappers. They re-export the INC implementation and aliases only; they do not define a separate `ifc` domain or `ifc.*` wire protocol.
 
-### Intent and INC conventions
+### Intent and INC
 
-NAP-INTENT routes to an archetype role through an authoritative convention URI. `invoke(uri, options?)` and `open(uri, options?)` derive the archetype, action, and queryless convention at that input boundary; a URI query becomes a shallow text payload. Use a queryless URI plus `options.payload` for structured data. The URI does not name a target instance: the runtime selects an installed, authorized handler.
+NAP-INTENT routes to an archetype role. `invoke(request)` accepts a canonical request object; `open(archetype, payload?, opts?)` supplies the common action-`"open"` form. The runtime selects an installed handler.
 
 ```ts
-import { intentOnDelivery, intentOpen } from '@napplet/nap/intent';
+import { intentOpen } from '@napplet/nap/intent';
 
-// Targets register during startup. Sender is runtime-attested; payload is untrusted.
-intentOnDelivery((delivery) => renderProfile(delivery.payload));
-
-const result = await intentOpen('napplet:profile/open?pubkey=abc123');
-if (!result.ok) throw new Error(result.error);
+const result = await intentOpen(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) throw new Error(result.error);
 ```
 
-An accepted result transfers delivery responsibility to the runtime; it does not mean the target has received the payload. Delivery arrives later through target-only `onDelivery`, whether the runtime reuses or starts a target. Do not assume source/target overlap, retry, or persistence. NAP-INTENT has no public NAP-INC dependency.
-
-Handler discovery remains queryless: every manifest tag yields one `IntentContract` with a `convention` and optional `eventKinds`. Those kinds are same-tag discovery metadata, never payload inference. Exact INC subscription routing remains separate from URI normalization.
+Results include required `ok`, `archetype`, `action`, and `handled` fields and optional handler, window, convention, and error details. Archetype resolution and convention-based payload interpretation remain orthogonal.
 
 NAP-INC topics use the same opaque-string boundary. Use the current advisory open names such as `napplet:note/open`, `napplet:profile/open`, and `napplet:dm/open` when they fit the receiving napplet's documented local choice.
 
 ### NAP-INC convention URI emission
 
-This non-normative package guide follows [NAP-INC draft PR #89 at its adopted head](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md) and [NAP-INTENT draft PR #91 at its adopted head](https://github.com/napplet/naps/blob/a718915ddefa2f03a0126579601f59d8bd86f7c4/naps/NAP-INTENT.md). `emit(topic, payload?)` accepts a stable topic and optional opaque payload. It also accepts a queried `napplet:<archetype>/<intent>` convention URI as developer-facing shorthand:
+This non-normative package guide follows the living [NAP-INC document](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md). `emit(topic, payload?)` accepts a stable topic and optional opaque payload. It also accepts a queried `napplet:<archetype>/<intent>` convention URI as developer-facing shorthand:
 
 ```ts
 import { emit, on } from '@napplet/nap/inc';
@@ -118,8 +117,8 @@ import { emit, on } from '@napplet/nap/inc';
 emit('napplet:profile/open?pubkey=abc123');
 // -> { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }
 
-on('napplet:profile/open', (payload) => {
-  console.log(payload);
+on('napplet:profile/open', (event) => {
+  console.log(event.sender, event.payload);
 });
 ```
 

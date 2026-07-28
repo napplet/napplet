@@ -55,22 +55,14 @@ with `window.napplet?.domain`. Read the full
 [NIP-5D explanation](./nip-5d).
 
 Archetype roles use stable identities such as `napplet:note/open`. Manifest
-discovery, subscriptions, normalized wire identities, and handler routing keep
-that complete queryless string and match it exactly. INC `emit` and intent
-`invoke/open` are the two developer-facing bindings that may transpose URI
-query pairs into a text payload before sending the queryless identity.
+discovery, subscriptions, normalized wire identities, and handler routing keep that complete queryless string and match it exactly. INC `emit` may transpose URI query pairs into a text payload before sending the queryless identity.
 
-Intent invocation reports immediate acceptance or rejection; accepted delivery
-arrives later at the target through `onDelivery`, independently of the source
-lifetime and without a public INC bridge or delivery identifier. The runtime
-attests sender from its authenticated endpoint, while the receiver still treats
-payload as untrusted. This project follows the exact draft heads of [NAP-INC PR
+Intent invocation uses `invoke(request)` or `open(archetype, payload?, opts?)`; its structured result reports both dispatch success and whether a handler accepted it. Payload remains untrusted at the receiving boundary. This project follows [NAP-INC PR
 #89
 (`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
 [the governance/web projection PR #90
 (`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4).
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ## A bigger pool of builders
 

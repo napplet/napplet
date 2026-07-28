@@ -12,8 +12,7 @@ The convention and intent examples on this page adopt the exact draft heads of
 (`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
 [the governance/web projection PR #90
 (`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
-and [NAP-INTENT PR #91
-(`a718915`)](https://github.com/napplet/naps/pull/91/commits/a718915ddefa2f03a0126579601f59d8bd86f7c4).
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 They remain draft upstream contracts.
 
 The protocol is modular by design. A NAP must be **independently implementable**,
@@ -69,9 +68,9 @@ window.napplet.inc.emit('napplet:profile/open?pubkey=abc123');
 
 // The runtime sends topic `napplet:profile/open` with { pubkey: 'abc123' }.
 // Another napplet subscribes to that exact stable topic:
-const sub = window.napplet.inc.on('napplet:profile/open', (payload, sender) => {
-  // `sender` is supplied by the runtime from the authenticated source endpoint.
-  const target = (payload as { pubkey?: string }).pubkey;
+const sub = window.napplet.inc.on('napplet:profile/open', (event) => {
+  // `event.sender` is supplied by the runtime from the authenticated source endpoint.
+  const target = (event.payload as { pubkey?: string }).pubkey;
 });
 ```
 
@@ -224,37 +223,25 @@ if (window.napplet?.upload) {
 
 ### intent
 
-Archetype intent dispatch — invoke an authoritative convention URI. The runtime
-derives the archetype, action, queryless convention, and optional text payload,
-then resolves an authorized manifest contract.
+Archetype intent dispatch. The runtime resolves an installed handler from the
+requested role; convention-based payload interpretation remains orthogonal.
 
 ```ts
 if (window.napplet?.intent) {
-  // Targets register this during startup. Delivery is separate from invocation.
-  const deliveries = window.napplet.intent.onDelivery((delivery) => {
-    // sender is runtime-attested provenance; payload remains untrusted.
-    validateIntentPayload(delivery.convention, delivery.payload);
-  });
-
   const { available } = await window.napplet.intent.available('profile');
   if (available) {
     const result = await window.napplet.intent.open(
-      'napplet:profile/open?pubkey=abc123',
+      'profile',
+      { pubkey: 'abc123' },
+      { convention: 'napplet:profile/open', behavior: { newWindow: true } },
     );
-    if (!result.ok) console.error(result.error);
+    if (!result.handled) console.error(result.error);
   }
 }
 ```
 
-An `ok: true` result means the runtime accepted responsibility for delivery,
-not that the target received or handled it. The eventual `intent.deliver` push
-has no public intent/delivery identifier, does not depend on the source
-remaining alive, and has no public NAP-INC dependency. The runtime may reuse or
-start a target and may overlap or close surfaces according to host policy.
-
-Manifest discovery advertises only complete queryless identities. Each
-archetype tag becomes one `IntentContract`, with optional same-tag
-`eventKinds`; payload content is never inspected to infer a kind.
+Results contain required `ok`, `archetype`, `action`, and `handled` fields plus
+optional handler, window, convention, and error details.
 
 ### ble
 

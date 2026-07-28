@@ -19,7 +19,7 @@ import { installStorageShim, nappletStorage } from '@napplet/nap/storage/shim';
 import { subscribe, publish, publishEncrypted, query } from '@napplet/nap/relay/shim';
 import * as identityShim from '@napplet/nap/identity/shim';
 import * as themeShim from '@napplet/nap/theme/shim';
-import { installIncShim, emit, on, handleIncEvent } from '@napplet/nap/inc/shim';
+import { channel as incChannel, installIncShim, emit, on, handleIncMessage } from '@napplet/nap/inc/shim';
 import {
   installConfigShim,
   handleConfigMessage,
@@ -78,7 +78,6 @@ import {
   available as intentAvailable,
   handlers as intentHandlers,
   onChanged as intentOnChanged,
-  onDelivery as intentOnDelivery,
 } from '@napplet/nap/intent/shim';
 import {
   installWebrtcShim,
@@ -148,8 +147,6 @@ import {
   unsubscribe as dmUnsubscribe,
   onMessage as dmOnMessage,
 } from '@napplet/nap/dm/shim';
-import type { IncEventMessage } from '@napplet/nap/inc/types';
-
 export interface NappletShimInstallOptions {
   /** Domains the runtime exposes to this napplet. Omit to install every bundled domain. */
   domains?: readonly NapDomain[];
@@ -170,6 +167,7 @@ const DOMAIN_ROUTERS: ReadonlyArray<readonly [string, DomainHandler]> = [
   ['outbox.', handleOutboxMessage],
   ['upload.', handleUploadMessage],
   ['intent.', handleIntentMessage],
+  ['inc.', handleIncMessage],
   ['ble.', handleBleMessage],
   ['webrtc.', handleWebrtcMessage],
   ['link.', handleLinkMessage],
@@ -188,14 +186,8 @@ function handleEnvelopeMessage(event: MessageEvent): void {
   const msg = event.data;
   if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
 
-  const type = msg.type as string;
-
-  if (type === 'inc.event') {
-    handleIncEvent(msg as IncEventMessage);
-    return;
-  }
-
   const typed = msg as { type: string; [key: string]: unknown };
+  const type = typed.type;
   for (const [prefix, route] of DOMAIN_ROUTERS) {
     if (type.startsWith(prefix)) {
       route(typed);
@@ -220,6 +212,7 @@ function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
     napplet.inc = {
       emit,
       on,
+      channel: incChannel,
     };
   }
 
@@ -362,7 +355,6 @@ function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
       available: intentAvailable,
       handlers: intentHandlers,
       onChanged: intentOnChanged,
-      onDelivery: intentOnDelivery,
     };
   }
 
