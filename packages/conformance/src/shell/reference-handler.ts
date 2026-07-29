@@ -9,9 +9,13 @@ import {
 } from './reference-responses.js';
 import type { IntentHandlers } from './reference-intents.js';
 
+/** One recorded napplet envelope and its validation verdict. */
 export interface RecordedEnvelope {
+  /** Raw envelope posted by the napplet. */
   envelope: unknown;
+  /** Result from the runtime envelope validator. */
   verdict: EnvelopeVerdict;
+  /** Timestamp captured when the shell received the envelope. */
   timestamp: number;
 }
 

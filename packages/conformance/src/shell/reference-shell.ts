@@ -24,13 +24,22 @@ export interface ReferenceShellOptions {
   now?: () => number;
 }
 
-/** A reference shell instance. */
+/** A reference shell instance for transport-agnostic conformance tests. */
 export interface ReferenceShell {
   /** All envelopes recorded so far, in arrival order. */
   readonly records: readonly RecordedEnvelope[];
-  /** Process one inbound envelope from the napplet. */
+  /**
+   * Process an inbound envelope as the default reference endpoint.
+   * @param envelope Raw message emitted by the napplet.
+   * @returns Response envelopes to deliver to the napplet.
+   */
   handle(envelope: unknown): unknown[];
-  /** Process one inbound envelope from an authenticated source endpoint. */
+  /**
+   * Process an inbound envelope from an authenticated endpoint.
+   * @param endpoint Authenticated source identity.
+   * @param envelope Raw message emitted by the napplet.
+   * @returns Response envelopes to deliver to the napplet.
+   */
   handleFrom(endpoint: ReferenceEndpoint, envelope: unknown): unknown[];
   /** Drain retained target deliveries for one resolved reference target. */
   takeDeliveries(target: string): unknown[];
@@ -38,7 +47,16 @@ export interface ReferenceShell {
   reset(): void;
 }
 
-/** Create a reference shell. */
+/**
+ * Create a reference shell that records envelopes and returns canned responses.
+ * @param options Optional deterministic clock.
+ * @returns A transport-agnostic reference shell.
+ * @example
+ * ```ts
+ * const shell = createReferenceShell();
+ * shell.handle({ type: 'storage.get', id: 'request', key: 'setting' });
+ * ```
+ */
 export function createReferenceShell(options: ReferenceShellOptions = {}): ReferenceShell {
   const records: RecordedEnvelope[] = [];
   const deliveries = createDeliveryQueue();
@@ -95,9 +113,13 @@ export interface PostTargetLike {
 
 /** Options for {@link attachReferenceShell}. */
 export interface AttachOptions {
+  /** Window that receives message events. */
   host: MessageWindowLike;
+  /** Target that receives the reference shell's responses. */
   target: PostTargetLike;
+  /** Optional message source guard. */
   expectedSource?: unknown;
+  /** Authenticated endpoint for accepted messages. */
   endpoint?: ReferenceEndpoint;
 }
 

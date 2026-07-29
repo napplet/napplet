@@ -1,4 +1,11 @@
-/** Built-in topic constants for the napplet INC event bus. */
+/**
+ * Built-in topic constants for the napplet INC event bus.
+ *
+ * @example
+ * ```ts
+ * emit(TOPICS.PROFILE_OPEN);
+ * ```
+ */
 export const TOPICS = {
   STREAM_CHANNEL_SWITCH: 'stream:channel-switch',
   STREAM_CURRENT_CONTEXT_GET: 'stream:current-context-get',
