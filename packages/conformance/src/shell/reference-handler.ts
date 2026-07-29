@@ -1,0 +1,71 @@
+import { validateEnvelope, type EnvelopeVerdict } from '../validators/envelope.js';
+import {
+  REFERENCE_CONVENTION,
+  REFERENCE_ENDPOINT,
+  REFERENCE_SUBSCRIBER,
+  RESPONDERS,
+  ok,
+  type ReferenceEndpoint,
+} from './reference-responses.js';
+import type { IntentHandlers } from './reference-intents.js';
+
+export interface RecordedEnvelope {
+  envelope: unknown;
+  verdict: EnvelopeVerdict;
+  timestamp: number;
+}
+
+export interface ReferenceHandlerOptions {
+  now: () => number;
+  records: RecordedEnvelope[];
+  queueDelivery(target: string, delivery: unknown): void;
+  intents: IntentHandlers;
+}
+
+/** Create the pure request handler for the reference shell. */
+export function createReferenceHandler(options: ReferenceHandlerOptions) {
+  return (endpoint: ReferenceEndpoint, envelope: unknown): unknown[] => {
+    const type = getEnvelopeType(envelope);
+    const verdict = validateEnvelope(envelope);
+    options.records.push({ envelope, verdict, timestamp: options.now() });
+
+    if (!type || !verdict.ok) return [];
+    const env = envelope as Record<string, unknown>;
+    if (type === 'intent.invoke') return options.intents.handleInvoke(endpoint, env);
+    if (type === 'intent.available') {
+      return ok({ type: 'intent.available.result', id: env.id, availability: options.intents.availability(env.archetype) });
+    }
+    if (type === 'intent.handlers') {
+      return ok({ type: 'intent.handlers.result', id: env.id, handlers: [options.intents.availability('note')] });
+    }
+    if (type === 'inc.emit') return handleIncEmit(endpoint, env, options.queueDelivery);
+
+    const responder = RESPONDERS[type];
+    return responder ? responder(env) : [];
+  };
+}
+
+function getEnvelopeType(envelope: unknown): string | undefined {
+  if (!envelope || typeof envelope !== 'object') return undefined;
+  const type = (envelope as Record<string, unknown>).type;
+  return typeof type === 'string' ? type : undefined;
+}
+
+function handleIncEmit(
+  endpoint: ReferenceEndpoint,
+  env: Record<string, unknown>,
+  queueDelivery: (target: string, delivery: unknown) => void,
+): unknown[] {
+  if (env.topic !== REFERENCE_CONVENTION) return [];
+
+  const event: Record<string, unknown> = {
+    type: 'inc.event',
+    topic: env.topic,
+    sender: endpoint.dTag,
+  };
+  if ('payload' in env) event.payload = env.payload;
+  queueDelivery(REFERENCE_SUBSCRIBER, event);
+  return [];
+}
+
+export { REFERENCE_ENDPOINT };
