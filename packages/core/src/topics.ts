@@ -1,31 +1,4 @@
-/** Topic constants used by the napplet INC event bus. */
-
-/**
- * Built-in topic constants for the napplet INC event bus.
- *
- * @example
- * ```ts
- * import { TOPICS } from '@napplet/core';
- *
- * // Address a profile napplet using its advisory open convention.
- * emit(TOPICS.PROFILE_OPEN);
- * ```
- *
- * ## Topic Prefix Conventions
- *
- * Topic strings follow advisory direction and scope conventions. Convention
- * topic strings are opaque: their names do not prescribe a payload schema or
- * Nostr event kind.
- *
- * | Prefix | Direction | Meaning |
- * |--------|-----------|---------|
- * | `shell:*` | napplet → shell | Commands sent by a napplet to the shell |
- * | `napplet:<archetype>/<intent>` | bidirectional | Advisory convention names between napplets |
- * | `{service}:*` | bidirectional | Service-scoped messages; direction is per-topic |
- *
- * Examples of `{service}:*` prefixes: `auth:*`, `stream:*`, `profile:*`,
- * `wm:*`, `keybinds:*`, `chat:*`, `audio:*`.
- */
+/** Built-in topic constants for the napplet INC event bus. */
 export const TOPICS = {
   STREAM_CHANNEL_SWITCH: 'stream:channel-switch',
   STREAM_CURRENT_CONTEXT_GET: 'stream:current-context-get',
