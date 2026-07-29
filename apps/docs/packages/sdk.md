@@ -30,6 +30,7 @@ Top-level namespaced objects that mirror `window.napplet`:
 - **`dm`** — shell-mediated encrypted direct-message helpers
 - **`relay`** — low-level explicit relay proxy; use only for relay-local escape hatches
 - **`inc`** — `emit`, `on` (plus deprecated `ifc*` migration aliases)
+- **`intent`** — `invoke`, `open`, `available`, `handlers`, `onChanged`
 - **`storage`** — `getItem`, `setItem`, `removeItem`, `keys`, plus `storage.instance.*` (per-instance scope)
 - **`keys`** — `registerAction`, `unregisterAction`, `onAction`
 - **`media`** — `createSession`, `reportState`, `onCommand`, …
@@ -57,7 +58,7 @@ constants from the NAP packages.
 ## Usage
 
 ```ts
-import { outbox, common, inc, storage, keys, config, resource } from '@napplet/sdk';
+import { outbox, common, inc, intent, storage, keys, config, resource } from '@napplet/sdk';
 
 // Read kind 1 notes through outbox-aware routing
 const { events } = await outbox.query(
@@ -82,8 +83,15 @@ if (!published.ok || !published.event) throw new Error(published.error ?? 'publi
 // Common social actions keep consent, event construction, signing, and relay routing in the shell
 await common.react(published.event.id, '+');
 
-// Inter-napplet messaging
-inc.emit('chat:message', [], JSON.stringify({ text: 'hi' }));
+// Inter-napplet messaging: payload is a local convention choice.
+inc.emit('chat:message', { text: 'hi' });
+
+const intentResult = await intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open' },
+);
+if (!intentResult.ok || !intentResult.handled) throw new Error(intentResult.error);
 
 // Scoped storage
 await storage.setItem('theme', 'dark');
@@ -98,6 +106,46 @@ const avatarItems = await resource.bytesMany([
   'blossom:sha256:abc123...',
 ]);
 ```
+
+### INC convention URIs
+
+`inc.emit(topic, payload?)` accepts a queried convention URI at the INC
+developer boundary. The binding transposes a call such as
+`inc.emit('napplet:profile/open?pubkey=abc123')` into the queryless stable topic
+`napplet:profile/open` plus a shallow decoded text payload. `pubkey` is a local
+convention choice; receiving code owns payload validation.
+
+Subscribe using the stable topic, not the queried developer-facing URI:
+
+```ts
+inc.emit('napplet:profile/open?pubkey=abc123');
+const profileOpen = inc.on('napplet:profile/open', (event) => {
+  validateProfileOpenPayload(event.payload);
+});
+```
+
+Routing remains exact after transposition, with no query-aware, prefix, or
+wildcard matching. Fragments, malformed percent encoding, repeated decoded
+names, and a query combined with an explicit payload reject before emission.
+Manifest convention values and normalized wire identities stay queryless.
+
+### Intent dispatch
+
+Use `intent.invoke(request)` or `intent.open(archetype, payload?, opts?)`.
+
+```ts
+const result = await intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) throw new Error(result.error);
+```
+
+Results contain required `ok`, `archetype`, `action`, and `handled` fields plus
+optional handler, window, convention, and error details.
+
+These APIs defer to the living [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) documents.
 
 ### Typed config with `FromSchema`
 

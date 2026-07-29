@@ -8,8 +8,8 @@
  * {@link validateEnvelope}.
  *
  * Each entry records the envelope's **direction** (`out` = napplet→shell, `in` =
- * shell→napplet) and the required fields a *napplet-emitted* (outbound) envelope
- * must carry. A drift test (envelope.drift.test.ts) cross-checks this map against
+ * shell→napplet) and any required carrier fields. A drift test
+ * (envelope.drift.test.ts) cross-checks this map against
  * the `type:` discriminants declared in `@napplet/nap` source so a newly added
  * message type cannot ship without a matching spec here.
  *
@@ -32,8 +32,10 @@ export type FieldKind = 'string' | 'number' | 'boolean' | 'array' | 'object' | '
 export interface EnvelopeSpec {
   /** `out` = sent by the napplet to the shell; `in` = sent by the shell to the napplet. */
   dir: EnvelopeDirection;
-  /** Required fields (name → kind) for an outbound envelope. Optional fields are omitted. */
+  /** Required carrier fields (name → kind). Optional fields are omitted. */
   fields?: Record<string, FieldKind>;
+  /** Fields a napplet-emitted carrier must never supply. */
+  forbiddenFields?: readonly string[];
 }
 
 const ID = { id: 'string' } as const;
@@ -88,7 +90,7 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
   'storage.keys.result': { dir: 'in' },
 
   // ── inc (inter-napplet communication) ─────────────────────────────────────
-  'inc.emit': { dir: 'out', fields: { topic: 'string' } },
+  'inc.emit': { dir: 'out', fields: { topic: 'string' }, forbiddenFields: ['sender'] },
   'inc.subscribe': { dir: 'out', fields: { ...ID, topic: 'string' } },
   'inc.unsubscribe': { dir: 'out', fields: { topic: 'string' } },
   'inc.channel.open': { dir: 'out', fields: { ...ID, target: 'string' } },
@@ -97,8 +99,9 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
   'inc.channel.list': { dir: 'out', fields: { ...ID } },
   'inc.channel.close': { dir: 'out', fields: { channelId: 'string' } },
   'inc.subscribe.result': { dir: 'in' },
-  'inc.event': { dir: 'in' },
+  'inc.event': { dir: 'in', fields: { topic: 'string', sender: 'string' } },
   'inc.channel.open.result': { dir: 'in' },
+  'inc.channel.opened': { dir: 'in', fields: { channelId: 'string', peer: 'string' } },
   'inc.channel.event': { dir: 'in' },
   'inc.channel.list.result': { dir: 'in' },
   'inc.channel.closed': { dir: 'in' },
@@ -278,6 +281,37 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
   'serial.close.result': { dir: 'in' },
   'serial.event': { dir: 'in' },
 
+  // ── fs ───────────────────────────────────────────────────────────────────
+  'fs.info': { dir: 'out', fields: { ...ID } },
+  'fs.pickFile': { dir: 'out', fields: { ...ID } },
+  'fs.pickFiles': { dir: 'out', fields: { ...ID } },
+  'fs.pickDirectory': { dir: 'out', fields: { ...ID } },
+  'fs.pickSaveFile': { dir: 'out', fields: { ...ID } },
+  'fs.stat': { dir: 'out', fields: { ...ID, path: 'string' } },
+  'fs.list': { dir: 'out', fields: { ...ID, path: 'string' } },
+  'fs.read': { dir: 'out', fields: { ...ID, path: 'string' } },
+  'fs.write': { dir: 'out', fields: { ...ID, path: 'string', data: 'string' } },
+  'fs.mkdir': { dir: 'out', fields: { ...ID, path: 'string' } },
+  'fs.remove': { dir: 'out', fields: { ...ID, path: 'string' } },
+  'fs.move': { dir: 'out', fields: { ...ID, fromPath: 'string', toPath: 'string' } },
+  'fs.watch': { dir: 'out', fields: { ...ID, path: 'string' } },
+  'fs.unwatch': { dir: 'out', fields: { ...ID, watchId: 'string' } },
+  'fs.info.result': { dir: 'in' },
+  'fs.pickFile.result': { dir: 'in' },
+  'fs.pickFiles.result': { dir: 'in' },
+  'fs.pickDirectory.result': { dir: 'in' },
+  'fs.pickSaveFile.result': { dir: 'in' },
+  'fs.stat.result': { dir: 'in' },
+  'fs.list.result': { dir: 'in' },
+  'fs.read.result': { dir: 'in' },
+  'fs.write.result': { dir: 'in' },
+  'fs.mkdir.result': { dir: 'in' },
+  'fs.remove.result': { dir: 'in' },
+  'fs.move.result': { dir: 'in' },
+  'fs.watch.result': { dir: 'in' },
+  'fs.unwatch.result': { dir: 'in' },
+  'fs.changed': { dir: 'in' },
+
   // ── dm ───────────────────────────────────────────────────────────────────
   'dm.status': { dir: 'out', fields: { ...ID } },
   'dm.conversations': { dir: 'out', fields: { ...ID } },
@@ -296,7 +330,7 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
 
 /** A single problem found while validating an envelope. */
 export interface EnvelopeError {
-  /** Machine-readable code: not-an-object | missing-type | malformed-type | unknown-domain | unknown-type | inbound-type-emitted | missing-field | wrong-type */
+  /** Machine-readable code: not-an-object | missing-type | malformed-type | unknown-domain | unknown-type | inbound-type-emitted | missing-field | wrong-type | invalid-intent-request */
   code:
     | 'not-an-object'
     | 'missing-type'
@@ -305,7 +339,9 @@ export interface EnvelopeError {
     | 'unknown-type'
     | 'inbound-type-emitted'
     | 'missing-field'
-    | 'wrong-type';
+    | 'wrong-type'
+    | 'forbidden-field'
+    | 'invalid-intent-request';
   /** Human-readable explanation. */
   message: string;
   /** Field name, when the error concerns a specific field. */
@@ -339,6 +375,37 @@ function kindOf(value: unknown): FieldKind | 'undefined' | 'null' {
 function matchesKind(value: unknown, kind: FieldKind): boolean {
   if (kind === 'present') return value !== undefined && value !== null;
   return kindOf(value) === kind;
+}
+
+/** Validate the merged NAP-INTENT request shape. */
+function validateIntentInvokeRequest(request: unknown, errors: EnvelopeError[]): void {
+  if (typeof request !== 'object' || request === null || Array.isArray(request)) return;
+
+  const intent = request as Record<string, unknown>;
+  if (typeof intent.archetype !== 'string') {
+    errors.push({
+      code: intent.archetype === undefined ? 'missing-field' : 'wrong-type',
+      message: 'Intent request requires a string "archetype" field',
+      field: 'request.archetype',
+    });
+  }
+  for (const field of ['action', 'convention'] as const) {
+    if (intent[field] !== undefined && typeof intent[field] !== 'string') {
+      errors.push({
+        code: 'wrong-type',
+        message: `Intent request field "${field}" must be a string`,
+        field: `request.${field}`,
+      });
+    }
+  }
+
+  if ('sender' in intent) {
+    errors.push({
+      code: 'forbidden-field',
+      message: 'Intent request does not define a caller-supplied sender field',
+      field: 'request.sender',
+    });
+  }
 }
 
 /**
@@ -389,16 +456,6 @@ export function validateEnvelope(message: unknown): EnvelopeVerdict {
     return { ok: false, type, domain, errors: [{ code: 'unknown-type', message: `"${type}" is not a known ${domain} message type` }] };
   }
 
-  if (spec.dir === 'in') {
-    return {
-      ok: false,
-      type,
-      domain,
-      direction: 'in',
-      errors: [{ code: 'inbound-type-emitted', message: `"${type}" is a shell→napplet message; a napplet must not emit it` }],
-    };
-  }
-
   for (const [field, kind] of Object.entries(spec.fields ?? {})) {
     if (!(field in record) || record[field] === undefined) {
       errors.push({ code: 'missing-field', message: `Required field "${field}" is missing`, field });
@@ -411,6 +468,33 @@ export function validateEnvelope(message: unknown): EnvelopeVerdict {
         field,
       });
     }
+  }
+
+  if (spec.dir === 'in') {
+    return {
+      ok: false,
+      type,
+      domain,
+      direction: 'in',
+      errors: [
+        { code: 'inbound-type-emitted', message: `"${type}" is a shell→napplet message; a napplet must not emit it` },
+        ...errors,
+      ],
+    };
+  }
+
+  for (const field of spec.forbiddenFields ?? []) {
+    if (field in record) {
+      errors.push({
+        code: 'forbidden-field',
+        message: `Field "${field}" must be runtime-derived and cannot be emitted by a napplet`,
+        field,
+      });
+    }
+  }
+
+  if (type === 'intent.invoke') {
+    validateIntentInvokeRequest(record.request, errors);
   }
 
   return { ok: errors.length === 0, type, domain, direction: 'out', errors };

@@ -106,15 +106,32 @@ for (const domain of NAP_DOMAINS) {
 
 #### `NappletGlobal`
 
-Type for the runtime-injected `window.napplet` namespace. Domain properties are
-optional: presence means the runtime exposes that NAP, absence means it is
-unavailable.
+Type for the runtime-injected `window.napplet` namespace. Domain properties are optional: presence means the runtime exposes that NAP, absence means it is unavailable.
 
 ```ts
 if (window.napplet?.relay) {
   await window.napplet.relay.query([{ kinds: [1], limit: 1 }]);
 }
 ```
+
+#### `IntentApi`
+
+NAP-INTENT targets an archetype rather than a specific running surface. `invoke(request)` accepts the canonical `IntentRequest`; `open(archetype, payload?, opts?)` is action-`"open"` sugar. Archetype and optional convention are orthogonal.
+
+```ts
+const result = await window.napplet.intent?.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (result?.handled) {
+  console.log(`Handled by ${result.handler} in ${result.windowId}`);
+} else {
+  throw new Error(result?.error ?? 'intent not handled');
+}
+```
+
+Results include required `ok`, `archetype`, `action`, and `handled` fields. `IntentBehavior` includes `focus`, `newWindow`, and `reuse`; availability candidates expose supported actions and conventions. See the living [NAP-INTENT document](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ---
 
@@ -309,18 +326,19 @@ interface EventTemplate {
 
 ### Topic Constants
 
-The `TOPICS` object contains string constants for INC topic-based routing. These are legacy constants from the pre-envelope era — with JSON envelope messages, topic strings are passed directly in `inc.emit` and `inc.subscribe` payloads.
+The `TOPICS` object contains string constants for INC topic-based routing. Its archetype-open entries use the current advisory convention names; topic strings are passed directly in `inc.emit` and `inc.subscribe` payloads.
 
 ```ts
 import { TOPICS } from '@napplet/core';
 
-TOPICS.STATE_GET                // 'shell:state-get'
-TOPICS.SHELL_CONFIG_GET         // 'shell:config-get'
+TOPICS.NOTE_OPEN                // 'napplet:note/open'
+TOPICS.PROFILE_OPEN             // 'napplet:profile/open'
+TOPICS.DM_OPEN                  // 'napplet:dm/open'
 TOPICS.WM_FOCUSED_WINDOW_CHANGED // 'wm:focused-window-changed'
 // ... see source for full list
 ```
 
-> **Note:** With JSON envelope wire format (v0.16.0+), state operations use `storage.*` messages directly rather than INC topic routing. These constants are retained for backward compatibility with shell runtime implementations.
+Convention topic strings are opaque and route only when the sender and subscriber use the same string. They do not define a payload schema, Nostr event kind, query, wildcard, prefix, or canonicalization rule; receivers validate any local payload choice themselves.
 
 ---
 
@@ -349,12 +367,7 @@ import type {
 
 ## Boundary Helpers (clone-safety)
 
-NAP shims cross the napplet ⇄ shell boundary by structured-cloning a JSON
-envelope through `postMessage`. Framework reactive values — Svelte 5 `$state`,
-Vue `reactive`, Solid stores — are `Proxy` objects that are **not** structured-
-cloneable, so a naive `postMessage` throws `DataCloneError`, which gets silently
-swallowed in async paths (the envelope never crosses the boundary). These
-helpers make that loud or transparent.
+NAP shims cross the napplet ⇄ shell boundary by structured-cloning a JSON envelope through `postMessage`. Framework reactive values — Svelte 5 `$state`, Vue `reactive`, Solid stores — are `Proxy` objects that are **not** structured- cloneable, so a naive `postMessage` throws `DataCloneError`, which gets silently swallowed in async paths (the envelope never crosses the boundary). These helpers make that loud or transparent.
 
 | Export | Description |
 |--------|-------------|
@@ -373,8 +386,7 @@ napplet.outbox.subscribe(toCloneableSnapshot(filters), { relays });
 setCloneMode('snapshot');
 ```
 
-These are SDK plumbing only — identical plain envelopes reach the wire, so they
-add no protocol surface.
+These are SDK plumbing only — identical plain envelopes reach the wire, so they add no protocol surface.
 
 ## Integration Note
 

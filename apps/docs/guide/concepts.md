@@ -44,6 +44,38 @@ dispatcher routes inbound messages to the right handler by domain prefix via
 
 See the [NAP domain reference](/naps/) for the full list.
 
+## Convention identities and URI bindings
+
+`napplet:<archetype>/<intent>` is the stable convention identity. Manifest
+contracts, subscriptions, handler metadata, discovery, normalized wire messages, and routing use the complete queryless string with exact equality.
+
+INC `emit(topic, payload?)` is the developer-facing convention URI boundary. A queried URI such as
+`napplet:profile/open?pubkey=abc123` is normalized before `postMessage`: unique
+percent-decoded pairs become text payload fields, while literal `+` remains
+`+`. Fragments, malformed encoding, repeated decoded names, and a query
+combined with an explicit payload reject. Structured data uses an explicit
+payload with a queryless URI.
+
+INC subscribers use the normalized topic with exact matching. NAP-INTENT invocation returns a structured result containing both dispatch success and `handled`:
+
+```ts
+const result = await window.napplet.intent.open('profile', { pubkey: 'abc123' }, {
+  convention: 'napplet:profile/open',
+});
+console.log(result.ok, result.handled);
+```
+
+Delivery does not depend on the source staying alive or on NAP-INC. Target
+startup/reuse, overlap, replacement, retry, and persistence remain runtime
+policy.
+
+This is a non-normative orientation following the exact draft heads of
+[NAP-INC PR #89
+(`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
+[the governance/web projection PR #90
+(`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
+
 ## The shell
 
 The **shell** is the trusted host application. It brokers signing — to a remote

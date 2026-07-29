@@ -40,6 +40,24 @@ npx @napplet/boilerplate ./my-napplet --yes
 
 By default the CLI clones `https://github.com/napplet/boilerplate.git`.
 
+## Deployment metadata boundary
+
+The generated project leaves archetype metadata to `napplet init`. Each
+manifest archetype tag advertises one complete queryless
+`napplet:<archetype>/<intent>` identity:
+
+```json
+["archetype", "profile", "napplet:profile/open"]
+```
+
+URI queries are per-invocation payload sugar at INC `emit`. They never appear in manifest discovery or subscriptions. Intent dispatch uses `invoke(request)` or `open(archetype, payload?, opts?)` and returns the canonical result with `handled`, handler, and window information.
+
+This guidance follows the exact draft heads of [NAP-INC PR #89
+(`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
+[the governance/web projection PR #90
+(`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
+
 ## See also
 
 - [Getting started](/guide/getting-started) — scaffold and run your first napplet

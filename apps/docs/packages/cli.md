@@ -67,7 +67,7 @@ napplet deploy
 ```
 
 - `napplet create` delegates to the maintained starter generator without setting deploy metadata.
-- `napplet init` owns name, title, optional description, canonical archetype contracts, and network
+- `napplet init` owns name, title, optional description, canonical archetype conventions, and network
   targets in `.napplet/config.json`. In an interactive terminal it guides setup and shows live suggestions from
   relays such as `wss://relaypag.es`, and suggests Blossom servers from kind
   `10063` server-list events.
@@ -90,7 +90,7 @@ napplet deploy
 ```bash
 napplet guide
 napplet create <directory> [--template <path-or-url>] [--force]
-napplet init [--force] [--root] [--source-dir <dir>] [--name <dtag>] [--title <title>] [--description <text>] [--archetype <slug:NAP-N>] [--relay <url>] [--server <url>]
+napplet init [--force] [--root] [--source-dir <dir>] [--name <dtag>] [--title <title>] [--description <text>] [--archetype <slug:napplet:archetype/intent>] [--relay <url>] [--server <url>]
 napplet skills <list|print|install> [args]
 napplet discover [--config <file>] [--all]
 napplet debug [--config <file>] [--all] [--root] [--name <dtag>] [--snapshot] [--sec <secret>]
@@ -112,6 +112,43 @@ For a single napplet repository, discovery checks `sourceDir` and prefers
 
 For workspaces, set `discover.roots` and use `--all`. Each discovered napplet
 deploys under its own folder name as the named `d` tag.
+
+## Archetype conventions
+
+Pass each `--archetype` option as `slug:napplet:<archetype>/<intent>`, for
+example `profile:napplet:profile/open`. The resulting configuration preserves
+the queryless convention:
+
+```json
+{
+  "metadata": {
+    "archetypes": [
+      {
+        "slug": "profile",
+        "convention": "napplet:profile/open"
+      }
+    ]
+  }
+}
+```
+
+```json
+["archetype", "profile", "napplet:profile/open"]
+```
+
+Each tag advertises one stable convention identity. Query parameters are rejected in metadata.
+
+`--archetype` and the interactive wizard remain convention-only. Use object-form `.napplet/config.json` metadata
+when event-kind discovery is needed. URI query transposition occurs only in the
+runtime bindings for INC emission and intent invocation, never in manifest
+discovery or handler matching.
+
+This shape follows [NAP-INC PR #89
+(`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
+[the web projection PR #90
+(`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md)
+at those exact draft heads.
 
 ## See also
 

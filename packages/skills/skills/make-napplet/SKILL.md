@@ -108,18 +108,48 @@ Default social/event boundary:
 - User pubkey/current-user snapshots use `identity`.
 - Local app state uses `storage`.
 - External bytes use `resource`; uploads use `upload`.
-- Cross-napplet handoff uses `inc` or `intent`.
+- Cross-napplet handoff uses `inc` or `intent`. Record one stable, queryless
+  convention identity such as `napplet:note/open`, `napplet:profile/open`, or
+  `napplet:dm/open`; archetype metadata emits one stable, queryless convention
+  identity in `['archetype', slug, convention]`.
 - Keyboard shortcuts/action keybindings use `keys`.
 - Playback/now-playing uses `media`; notifications/badges use `notify`.
 - Settings/theme use `config` and `theme`.
 - Native bridge/device/session features use `cvm`, `ble`, `serial`, or `webrtc`
   only when the user story needs that exact shell-mediated boundary.
+- File browsing, directory listing, byte reads/writes, and change watching use
+  `fs` — shell-mediated virtual filesystem access.
 - External URL opening uses `link`.
 - `relay` is only for an explicit relay-local escape hatch such as group relay
   protocols, diagnostics, or raw relay tooling outside the outbox model.
 
 Record every relay escape hatch in the build brief. If no exact reason exists,
 using `relay` is wrong.
+
+For cross-napplet features, payloads are local choices and inbound values are
+untrusted. Validate each received payload against a real upstream convention
+when one exists; do not recreate numbered payload contracts or infer a payload
+schema from an opaque convention name. `inc.on` receives one `IncEvent` with a
+runtime-attested sender and optional payload. NAP-INC `emit(topic, payload?)` may send
+`napplet:profile/open?pubkey=abc123`; the runtime transposes that shallow text
+query into payload and routes the stable queryless topic
+`napplet:profile/open`, which subscribers use exactly.
+
+This is outbound emit preprocessing, not a routing rule. Literal `+` stays
+plus after percent decoding. Fragments, malformed percent encoding, repeated
+decoded names, and a query with explicit payload throw synchronously; use a
+queryless topic with explicit payload for structured or non-text data.
+
+NAP-INTENT dispatches through `invoke(request)` or
+`open(archetype, payload?, opts?)`. Archetype routing and optional
+convention-based payload interpretation are orthogonal. Results contain required
+`ok`, `archetype`, `action`, and `handled` fields.
+
+Never put query text in manifest metadata. Subscriptions, manifest discovery,
+and routing keep exact matching without query parsing, prefix, wildcard,
+canonicalization, or multi-convention behavior. See [NAP-INC draft PR #89](https://github.com/napplet/naps/pull/89)
+and the living [NAP-INTENT document](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) for the
+living normative contract.
 
 ## Step 3 - Run The Specialized Skills
 
@@ -154,7 +184,7 @@ package domains are:
 
 `relay`, `identity`, `storage`, `inc`, `theme`, `keys`, `media`, `notify`,
 `config`, `resource`, `cvm`, `outbox`, `upload`, `intent`, `ble`, `webrtc`,
-`link`, `count`, `lists`, `serial`, `common`, `dm`.
+`link`, `count`, `lists`, `serial`, `fs`, `common`, `dm`.
 
 The deprecated `ifc` subpath is only an INC compatibility alias; new work uses
 `inc`. If a NAP is not in the package-domain list above, do not implement

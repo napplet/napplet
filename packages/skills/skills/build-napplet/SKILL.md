@@ -36,7 +36,7 @@ domains are:
 
 `relay`, `identity`, `storage`, `inc`, `theme`, `keys`, `media`, `notify`,
 `config`, `resource`, `cvm`, `outbox`, `upload`, `intent`, `ble`, `webrtc`,
-`link`, `count`, `lists`, `serial`, `common`, and `dm`.
+`link`, `count`, `lists`, `serial`, `fs`, `common`, and `dm`.
 
 The deprecated `ifc` subpath is only an INC compatibility alias; new napplets use
 `inc`. If a NAP is not in the list above, do not implement against it as usable
@@ -50,7 +50,7 @@ first-party installer. Current packages do not expose `window.napplet.shell`,
 `shell.ready()`, or `shell.supports(...)`; do not add a napplet-owned readiness
 handshake, generic capability probe, or synthetic shell namespace. A missing
 optional domain means "feature unavailable for this load"; a missing hard
-requirement should have been handled by the manifest load gate.
+requirement belongs to the manifest load gate.
 
 Napplet implementation code is **SDK-first**. Use `@napplet/sdk` wrappers for
 calls: import named, typed wrappers from `@napplet/sdk` for every domain call
@@ -75,7 +75,7 @@ For a new napplet, scaffold and initialize through the primary CLI. `create`
 delegates to the canonical `github.com/napplet/boilerplate` template and
 preserves the package manager pin, Vite config, single-file build plumbing, scripts,
 conformance wiring, docs layout, and starter source structure. `init` owns the
-deployment d-tag, title, optional description, and canonical archetype contracts.
+deployment d-tag, title, optional description, and canonical archetype metadata.
 
 ```bash
 napplet create my-napplet
@@ -145,6 +145,20 @@ export default defineConfig({
 ```
 
 The aggregate hash is computed into the manifest (`.nip5a-manifest.json`) and the signed event — it is **not** injected as a meta tag. Set `VITE_DEV_PRIVKEY_HEX` (hex 32-byte key) to produce a signed manifest in CI; dev builds work without it.
+
+### Describe archetypes with stable conventions
+
+When the napplet fulfills an archetype role, use the current `archetypes` option
+and one stable, queryless convention identity per entry. The convention must use
+`napplet:<archetype>/<intent>` and its archetype segment must match `slug`.
+
+```ts
+archetypes: [
+  { slug: 'note', convention: 'napplet:note/open' },
+]
+```
+
+This emits `["archetype", "note", "napplet:note/open"]`. Never put a query in manifest discovery metadata or invent payload, version, or negotiation fields.
 
 ## Step 4 — Read And Publish Nostr Events Through Outbox First
 
@@ -268,22 +282,59 @@ sub.close();
 
 Also available: `getProfile()`, `getFollows()`, `getList(type)`, `getRelays()`, `getMutes()`, `getBlocked()`, `getBadges()`, `getZaps()`. Use `common` for profile lookup and social actions when available; `identity` is for the current shell user snapshot.
 
-## Step 9 — Inter-napplet events
+## Step 9 — Inter-napplet events and intents
 
-`inc.emit` broadcasts to topic subscribers; `inc.on` subscribes. `emit(topic, extraTags?, content?)` returns nothing and does not confirm delivery.
+`inc.emit` broadcasts to topic subscribers; `inc.on` receives one `IncEvent`
+containing the exact topic, runtime-attested sender, and optional payload. Use exact,
+opaque convention topics such as `napplet:note/open`, `napplet:profile/open`,
+or `napplet:dm/open`. A topic is an identifier, not a payload schema.
 
 ```ts
 import { inc } from '@napplet/sdk';
 
-inc.emit('profile:open', [], JSON.stringify({ pubkey: '3bf0c63…' }));
+inc.emit('napplet:profile/open?pubkey=abc123');
+// Runtime emits { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }.
 
-const sub = inc.on('profile:open', (payload: unknown, event) => {
-  const { pubkey } = payload as { pubkey: string };
+const sub = inc.on('napplet:profile/open', (event) => {
+  if (!isValidProfileOpenPayload(event.payload)) return;
+  openProfile(event.payload);
 });
 sub.close();
 ```
 
-Always type-check `payload` (it is `unknown`).
+NAP-INC `emit(topic, payload?)` may use a queried convention URI. The runtime
+turns its shallow text query into payload and routes the stable queryless topic;
+subscribe to that stable queryless topic. Literal `+` stays plus and
+percent-decoding applies only to the emitted query text. A fragment, malformed
+percent encoding, repeated decoded name, or query plus explicit payload throws
+synchronously; use a queryless topic plus explicit payload for structured or
+non-text data.
+
+NAP-INTENT dispatches by archetype through `invoke(request)` or
+`open(archetype, payload?, opts?)`:
+
+```ts
+import { intent } from '@napplet/sdk';
+
+const result = await intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) showIntentError(result.error);
+```
+
+Results contain required `ok`, `archetype`, `action`, and `handled` fields.
+Archetype routing and optional convention-based payload interpretation are
+orthogonal.
+
+Payload choices remain local to a real upstream convention, so validate every
+received value. Subscriptions, manifest discovery, and routing stay exact on the
+stable, queryless convention identity: do not parse queries there or add prefix,
+wildcard, canonicalization, or multi-convention matching. See the living
+[NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and
+[NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md)
+documents for the normative contract.
 
 ## Step 10 — Domain availability
 
@@ -439,6 +490,7 @@ their exact boundary:
 | `cvm` | The napplet needs a shell-mediated ContextVM/MCP bridge. |
 | `ble` | The napplet needs Bluetooth LE/GATT access. |
 | `serial` | The napplet needs serial-port access. |
+| `fs` | The napplet needs shell-mediated virtual filesystem access, including virtual file selection, metadata, byte reads/writes, directory operations, or change watching. |
 | `webrtc` | The napplet needs shell-mediated WebRTC signaling/session setup. |
 
 Use `window.napplet?.domain` only for optional-domain fallback checks after

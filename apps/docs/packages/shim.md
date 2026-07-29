@@ -69,6 +69,7 @@ After runtime injection, the global may be populated with these sub-objects:
 | `dm` | Shell-mediated encrypted direct-message helpers |
 | `relay` | Low-level explicit relay proxy for relay-local escape hatches |
 | `inc` | Inter-napplet communication: `emit`, `on` |
+| `intent` | Archetype-based intent invocation, discovery, and availability changes |
 | `storage` | Scoped key-value storage: `getItem`, `setItem`, `removeItem`, `keys` (512 KB quota), plus `storage.instance.*` for per-instance scope |
 | `keys` | Keyboard forwarding + action keybindings: `registerAction`, `unregisterAction`, `onAction` |
 | `media` | Ownership-aware media sessions: `createSession`, `reportState`, `onCommand`, … |
@@ -84,7 +85,7 @@ After runtime injection, the global may be populated with these sub-objects:
 import { installNappletGlobal } from '@napplet/shim';
 
 installNappletGlobal({
-  domains: ['outbox', 'storage', 'identity'],
+  domains: ['outbox', 'storage', 'identity', 'inc', 'intent'],
 });
 ```
 
@@ -113,6 +114,19 @@ const published = await window.napplet.outbox.publish({
 });
 if (!published.ok) throw new Error(published.error ?? 'publish failed');
 
+// NAP-INC convention URI emission: the runtime sends the stable topic with
+// a shallow text payload. `pubkey` is a local convention choice.
+window.napplet.inc.emit('napplet:profile/open?pubkey=abc123');
+const profileOpen = window.napplet.inc.on('napplet:profile/open', (event) => {
+  validateProfileOpenPayload(event.payload);
+});
+
+const intentResult = await window.napplet.intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+
 // Scoped storage, proxied through the shell
 await window.napplet.storage.setItem('theme', 'dark');
 const theme = await window.napplet.storage.getItem('theme'); // 'dark'
@@ -129,7 +143,29 @@ if (window.napplet?.media) {
 }
 
 sub.close();
+profileOpen.close();
 ```
+
+### INC convention URIs
+
+The NAP-INC shim accepts a queried `napplet:<archetype>/<intent>` URI only at
+`emit(topic, payload?)`. It transposes the query before posting `inc.emit`, so
+the shell and consumers see the exact queryless stable topic and a shallow
+decoded text payload. Subscriptions and routing never parse, normalize,
+prefix-match, or wildcard-match topics after that boundary.
+
+Fragments, malformed percent escapes, repeated decoded names, and a queried URI
+with an explicit payload reject before emission. Use a queryless topic and its
+explicit payload for structured data.
+
+### Intent dispatch injection
+
+The intent shim exposes `invoke(request)` and
+`open(archetype, payload?, opts?)`. Results contain required `ok`, `archetype`,
+`action`, and `handled` fields plus optional handler, window, convention, and
+error details.
+
+This behavior defers to the living [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) documents.
 
 ## TypeScript support
 

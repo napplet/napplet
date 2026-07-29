@@ -64,9 +64,63 @@ describe('validateEnvelope — outbound field checks', () => {
     expect(v.errors.some((e) => e.code === 'wrong-type' && e.field === 'filters')).toBe(true);
   });
 
-  it('accepts a fire-and-forget inc.emit with only a topic', () => {
+  it('accepts a fire-and-forget inc.emit with only a topic and rejects caller sender data', () => {
     const v = validateEnvelope({ type: 'inc.emit', topic: 'room' });
     expect(v.ok).toBe(true);
+
+    const forged = validateEnvelope({ type: 'inc.emit', topic: 'room', sender: 'forged-source' });
+    expect(forged.ok).toBe(false);
+    expect(forged.errors).toContainEqual(expect.objectContaining({
+      code: 'forbidden-field',
+      field: 'sender',
+    }));
+  });
+
+  it('accepts the merged intent request while leaving convention and payload values opaque', () => {
+    const v = validateEnvelope({
+      type: 'intent.invoke',
+      id: 'intent-1',
+      request: {
+        archetype: 'note',
+        action: 'open',
+        convention: 'napplet:note/open',
+        payload: { nested: ['opaque', { values: true }] },
+      },
+    });
+    expect(v.ok).toBe(true);
+
+    const malformed = validateEnvelope({ type: 'intent.invoke', id: 'intent-2', request: [] });
+    expect(malformed.ok).toBe(false);
+    expect(malformed.errors).toContainEqual(expect.objectContaining({
+      code: 'wrong-type',
+      field: 'request',
+    }));
+  });
+
+  it('requires archetype, type-checks optional fields, and rejects invented sender data', () => {
+    const base = {
+      type: 'intent.invoke',
+      id: 'intent-3',
+      request: { archetype: 'note' },
+    };
+    const invalidRequests = [
+      {},
+      { ...base.request, action: 1 },
+      { ...base.request, convention: false },
+      { ...base.request, sender: 'forged-source' },
+    ];
+
+    for (const request of invalidRequests) {
+      expect(validateEnvelope({ ...base, request }).ok).toBe(false);
+    }
+  });
+
+  it('requires runtime-attested sender on inbound INC events', () => {
+    const missingSender = validateEnvelope({ type: 'inc.event', topic: 'room' });
+    expect(missingSender.errors).toContainEqual(expect.objectContaining({
+      code: 'missing-field',
+      field: 'sender',
+    }));
   });
 
   it('treats `present` fields as required-but-untyped (outbox.query filters union)', () => {
@@ -114,6 +168,8 @@ describe('validateEnvelope — outbound field checks', () => {
       },
       common: { type: 'common.react', id: 'a', targetEventId: 'e'.repeat(64), reaction: '+' },
       serial: { type: 'serial.write', id: 'a', sessionId: 's', data: [1, 2, 3] },
+      // `recursive` is a top-level field on fs.remove, never nested in options
+      fs: { type: 'fs.remove', id: 'a', path: '/shared/projects', recursive: true },
     };
     for (const [domain, msg] of Object.entries(samples)) {
       const v = validateEnvelope(msg);
@@ -132,20 +188,23 @@ describe('validateEnvelope — no generic shell domain', () => {
 });
 
 describe('ENVELOPE_SPECS invariants', () => {
-  it('has 207 discriminants split 100 outbound / 107 inbound', () => {
+  it('has 237 discriminants split 114 outbound / 123 inbound', () => {
     const all = knownEnvelopeTypes();
-    expect(all).toHaveLength(207);
+    expect(all).toHaveLength(237);
     const out = all.filter((t) => ENVELOPE_SPECS[t].dir === 'out');
     const inbound = all.filter((t) => ENVELOPE_SPECS[t].dir === 'in');
-    expect(out).toHaveLength(100);
-    expect(inbound).toHaveLength(107);
+    expect(out).toHaveLength(114);
+    expect(inbound).toHaveLength(123);
   });
 
-  it('only outbound specs declare required fields', () => {
-    for (const [type, spec] of Object.entries(ENVELOPE_SPECS)) {
-      if (spec.dir === 'in') {
-        expect(spec.fields, `${type} is inbound and should not declare fields`).toBeUndefined();
-      }
-    }
+  it('declares canonical inbound INC carrier fields', () => {
+    expect(ENVELOPE_SPECS['inc.event']).toEqual({
+      dir: 'in',
+      fields: { topic: 'string', sender: 'string' },
+    });
+    expect(ENVELOPE_SPECS['inc.channel.opened']).toEqual({
+      dir: 'in',
+      fields: { channelId: 'string', peer: 'string' },
+    });
   });
 });

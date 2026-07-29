@@ -1,0 +1,143 @@
+/**
+ * Napplet NAP fs domain entrypoint.
+ *
+ * @module
+ */
+
+/**
+ * @napplet/nap/fs -- Shell-mediated virtual filesystem module (NAP-FS).
+ *
+ * A napplet discovers visible roots, asks the runtime to mediate file and
+ * directory selection, inspects and lists entries, creates, removes and moves
+ * them, reads and writes base64-encoded file bytes, and subscribes to advisory
+ * change events. The runtime owns host paths, mounts, backing store,
+ * normalization, policy, and authorization of every operation -- the napplet
+ * sees only virtual paths.
+ *
+ * Exports typed message definitions for the fs domain, shim installer, SDK
+ * helpers, and registers the `fs` domain with core dispatch on import.
+ *
+ * @example
+ * ```ts
+ * import { fsPickFile, fsRead, fsWrite, fsList, fsMkdir, fsWatch, fsOnChanged } from '@napplet/nap/fs';
+ *
+ * const picked = await fsPickFile({ accept: [{ extension: '.md' }] });
+ * const bytes = await fsRead(picked.entries[0].path);
+ * await fsWrite('/shared/copy.txt', bytes.data, { mode: 'replace' });
+ * const entries = await fsList('/shared');
+ * await fsMkdir('/shared/projects/new', { recursive: true });
+ * const watchId = await fsWatch('/shared', { recursive: true });
+ * const sub = fsOnChanged((change) => console.log(change.path, change.kind));
+ * ```
+ *
+ * @packageDocumentation
+ */
+
+export { DOMAIN } from './types.js';
+
+export type {
+  FsPermission,
+  FsEntryKind,
+  FsChangeKind,
+  FsWriteMode,
+  FsError,
+  FsRoot,
+  FsLimits,
+  FsAcceptRule,
+  FsPickOptions,
+  FsPickedEntry,
+  FsPickResult,
+  FsInfo,
+  FsMetadata,
+  FsDirectoryEntry,
+  FsReadOptions,
+  FsReadResult,
+  FsWriteOptions,
+  FsWriteResult,
+  FsMkdirOptions,
+  FsWatchOptions,
+  FsChange,
+  FsMessage,
+  FsInfoMessage,
+  FsInfoResultMessage,
+  FsPickFileMessage,
+  FsPickFileResultMessage,
+  FsPickFilesMessage,
+  FsPickFilesResultMessage,
+  FsPickDirectoryMessage,
+  FsPickDirectoryResultMessage,
+  FsPickSaveFileMessage,
+  FsPickSaveFileResultMessage,
+  FsStatMessage,
+  FsStatResultMessage,
+  FsListMessage,
+  FsListResultMessage,
+  FsReadMessage,
+  FsReadResultMessage,
+  FsWriteMessage,
+  FsWriteResultMessage,
+  FsMkdirMessage,
+  FsMkdirResultMessage,
+  FsRemoveMessage,
+  FsRemoveResultMessage,
+  FsMoveMessage,
+  FsMoveResultMessage,
+  FsWatchMessage,
+  FsWatchResultMessage,
+  FsUnwatchMessage,
+  FsUnwatchResultMessage,
+  FsChangedMessage,
+  FsOutboundMessage,
+  FsInboundMessage,
+  FsNapMessage,
+} from './types.js';
+
+export {
+  installFsShim,
+  handleFsMessage,
+  info,
+  pickFile,
+  pickFiles,
+  pickDirectory,
+  pickSaveFile,
+  stat,
+  list,
+  read,
+  write,
+  mkdir,
+  remove,
+  move,
+  watch,
+  unwatch,
+  onChanged,
+} from './shim.js';
+
+export {
+  fsInfo,
+  fsPickFile,
+  fsPickFiles,
+  fsPickDirectory,
+  fsPickSaveFile,
+  fsStat,
+  fsList,
+  fsRead,
+  fsWrite,
+  fsMkdir,
+  fsRemove,
+  fsMove,
+  fsWatch,
+  fsUnwatch,
+  fsOnChanged,
+} from './sdk.js';
+
+import { registerNap } from '@napplet/core';
+import { DOMAIN } from './types.js';
+
+/**
+ * Register the fs domain with the core dispatch singleton.
+ * Handler is a no-op placeholder -- the shell/shim provide real handlers.
+ * Registration ensures dispatch.getRegisteredDomains() includes 'fs'.
+ */
+registerNap(DOMAIN, (_msg) => {
+  /* Shell or shim replaces this handler at runtime */
+});

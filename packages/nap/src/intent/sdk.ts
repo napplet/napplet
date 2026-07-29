@@ -1,42 +1,34 @@
 /**
- * Napplet NAP intent sdk entrypoint.
+ * Napplet NAP intent SDK entrypoint.
  *
  * @module
  */
 
-/**
- * @napplet/nap/intent -- SDK helpers wrapping window.napplet.intent.
- *
- * These convenience functions delegate to `window.napplet.intent.*` at call time.
- * The shim must be imported somewhere to install the global.
- */
-
 import type { NappletGlobal, Subscription } from '@napplet/core';
 import type {
+  IntentAvailability,
+  IntentOpenOptions,
   IntentRequest,
   IntentResult,
-  IntentAvailability,
 } from './types.js';
 
 function requireIntent(): NonNullable<NappletGlobal['intent']> {
-  const w = window as Window & { napplet?: NappletGlobal };
-  if (!w.napplet?.intent) {
+  const target = window as Window & { napplet?: NappletGlobal };
+  if (!target.napplet?.intent) {
     throw new Error('window.napplet.intent is unavailable -- runtime did not inject this domain');
   }
-  return w.napplet.intent;
+  return target.napplet.intent;
 }
 
 /**
  * Invoke a napplet by archetype.
  *
- * @param request  The intent request (archetype + action + payload + routing)
- * @returns Promise resolving to the invocation result
+ * @param request Archetype dispatch request
+ * @returns Promise resolving to the dispatch result
  *
  * @example
  * ```ts
- * import { intentInvoke } from '@napplet/nap/intent';
- *
- * const r = await intentInvoke({ archetype: 'note', payload: { target: { type: 'event', id } } });
+ * await intentInvoke({ archetype: 'note', payload: { id: 'abc' } });
  * ```
  */
 export function intentInvoke(request: IntentRequest): Promise<IntentResult> {
@@ -44,52 +36,50 @@ export function intentInvoke(request: IntentRequest): Promise<IntentResult> {
 }
 
 /**
- * Open a napplet by archetype (sugar for `action: "open"`).
+ * Open a napplet by archetype.
  *
- * @param archetype  Role slug to open
- * @param payload    Opaque payload (typed by the resolved protocol)
- * @param opts       Extra request fields (protocol, handler, behavior)
- * @returns Promise resolving to the invocation result
+ * @param archetype Role slug to open
+ * @param payload Optional opaque payload
+ * @param opts Optional convention, handler selection, and behavior hints
+ * @returns Promise resolving to the dispatch result
  *
  * @example
  * ```ts
- * import { intentOpen } from '@napplet/nap/intent';
- *
- * await intentOpen('emoji-list', { seed: ['🤙'] });
+ * await intentOpen('note', { id: 'abc' }, { convention: 'napplet:note/open' });
  * ```
  */
 export function intentOpen(
   archetype: string,
   payload?: unknown,
-  opts?: Omit<IntentRequest, 'archetype' | 'action' | 'payload'>,
+  opts?: IntentOpenOptions,
 ): Promise<IntentResult> {
   return requireIntent().open(archetype, payload, opts);
 }
 
 /**
- * Check whether the runtime can currently satisfy an archetype.
+ * Check whether the runtime can satisfy an archetype.
  *
- * @param archetype  Role slug to check
- * @returns Promise resolving to the archetype availability
+ * @param archetype Role slug to inspect
+ * @returns Installed-catalog availability
  */
 export function intentAvailable(archetype: string): Promise<IntentAvailability> {
   return requireIntent().available(archetype);
 }
 
 /**
- * Get availability for every archetype the runtime can satisfy.
+ * List every archetype the runtime can satisfy.
  *
- * @returns Promise resolving to availability for each satisfiable archetype
+ * @returns Installed-catalog availability records
  */
 export function intentHandlers(): Promise<IntentAvailability[]> {
   return requireIntent().handlers();
 }
 
 /**
- * Register for shell-pushed availability updates.
+ * Subscribe to runtime-pushed availability changes.
  *
- * @param handler  Called with each updated IntentAvailability
- * @returns A Subscription with `close()` to stop listening
+ * @param handler Callback for each availability update
+ * @returns Subscription handle
  */
 export function intentOnChanged(handler: (availability: IntentAvailability) => void): Subscription {
   return requireIntent().onChanged(handler);

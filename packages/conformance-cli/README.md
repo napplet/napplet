@@ -1,9 +1,10 @@
 # @napplet/conformance-cli
 
-The headless `napplet-conformance` runner. It drives the
-[`@napplet/conformance`](../conformance) engine against a napplet in real headless
-Chromium (via Playwright), so a napplet can prove it conforms to the NAP protocol
-**before** publishing — locally and in CI.
+The headless `napplet-conformance` runner. It drives the [`@napplet/conformance`](../conformance) engine against a napplet in real headless Chromium (via Playwright), so a napplet can prove it conforms to the NAP protocol **before** publishing — locally and in CI.
+
+The runner validates NIP-5D/NAP envelope and manifest carriers. It does not define payload schemas or matching behavior for an archetype convention. The reference shell returns the canonical structured intent result. Payloads remain untrusted.
+
+Archetype metadata is one queryless convention per tag. This non-normative description follows [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md), [the archetype registry](https://github.com/napplet/naps/blob/master/ARCHETYPES.md), and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ```bash
 # Build your napplet first, then:
@@ -35,25 +36,13 @@ pnpm test:conformance   # npm / yarn / bun all work — the bin is PM-agnostic
 napplet-conformance --ui . --exec "vite build --watch"
 ```
 
-`--ui` serves the standalone conformance web runtime (bundled with this package) plus
-the napplet, opens your browser, and **re-runs conformance live every time the napplet
-changes**. The optional `--exec` runs your build in watch mode so source edits rebuild
-the served `./dist`; the CLI's file watcher then triggers a fresh run — edit, save, see
-the verdict update. Useful flags: `--port <n>`, `--no-open`. (Headless mode is
-unchanged — `--ui` is purely additive.)
+`--ui` serves the standalone conformance web runtime (bundled with this package) plus the napplet, opens your browser, and **re-runs conformance live every time the napplet changes**. The optional `--exec` runs your build in watch mode so source edits rebuild the served `./dist`; the CLI's file watcher then triggers a fresh run — edit, save, see the verdict update. Useful flags: `--port <n>`, `--no-open`. (Headless mode is unchanged — `--ui` is purely additive.)
 
 ## How it works
 
-1. Serves your built napplet on loopback alongside a host harness page and the
-   bundled engine. Every response sends `Access-Control-Allow-Origin: *` so the
-   sandboxed napplet's module scripts load across its opaque origin.
-2. Launches headless Chromium, loads the napplet into a `sandbox="allow-scripts"`
-   iframe (no `allow-same-origin`), attaches a reference shell, and records every
-   envelope the napplet emits — plus a second no-capability pass to prove graceful
-   degradation.
-3. Assembles the conformance context (manifest + static `window.nostr` scan), runs
-   the check catalog, prints the report, and exits non-zero on any error-severity
-   failure.
+1. Serves your built napplet on loopback alongside a host harness page and the bundled engine. Every response sends `Access-Control-Allow-Origin: *` so the sandboxed napplet's module scripts load across its opaque origin.
+2. Launches headless Chromium, loads the napplet into a `sandbox="allow-scripts"` iframe (no `allow-same-origin`), attaches a reference shell, and records every envelope the napplet emits — plus a second no-capability pass to prove graceful degradation.
+3. Assembles the conformance context (manifest + static `window.nostr` scan), runs the check catalog, prints the report, and exits non-zero on any error-severity failure.
 
 ## Options
 

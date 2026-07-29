@@ -1,5 +1,36 @@
 # @napplet/skills
 
+## 0.3.0
+
+### Minor Changes
+
+- d201bd0: Add the `fs` NAP domain — shell-mediated virtual filesystem access ([NAP-FS](https://github.com/napplet/naps/pull/88)).
+
+  Ships the virtual filesystem operations — `info`, `pickFile`, `pickFiles`, `pickDirectory`, `pickSaveFile`, `stat`, `list`, `read`, `write`, `mkdir`, `remove`, `move`, `watch`, `unwatch` — plus the runtime-pushed `fs.changed` event, reachable through `window.napplet.fs`, `@napplet/nap/fs`, and `@napplet/sdk`. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization; the napplet sees only virtual paths.
+
+  Byte transfer uses RFC 4648 standard padded base64 text for `fs.write.data` and `FsReadResult.data` on the JSON wire. `FsLimits.maxReadBytes`, `FsLimits.maxWriteBytes`, byte range options, and read/write result counts refer to decoded bytes.
+
+## 0.2.12
+
+### Patch Changes
+
+- 7b67562: Align INC and INTENT with their merged canonical contracts.
+
+  INC topic subscriptions now receive one `IncEvent` containing the exact topic, runtime-attested sender, and optional payload. The runtime no longer fabricates a Nostr event. INC also exposes the symmetric channel API through `channel.open`, `channel.onOpened`, `channel.list`, and `channel.broadcast`; channel handles support `emit`, `on`, `onClosed`, and `close`, including bounded early-notification replay and terminal close retention.
+
+  INTENT now accepts `invoke(request)` and `open(archetype, payload?, opts?)`, supports `behavior.newWindow`, and returns the canonical structured result with required `ok`, `archetype`, `action`, and `handled` fields. Remove the unmerged URI invocation, `onDelivery`, `intent.deliver`, and acceptance-only result model.
+
+  Archetype metadata now emits only the canonical `["archetype", slug, convention]` shape. Remove the draft-only `eventKinds` option and trailing `kind:<number>` fields.
+
+## 0.2.11
+
+### Patch Changes
+
+- dd7b3a7: Update shipped generator, conformance CLI, and agent-skill guidance for
+  queryless convention identities, optional same-tag event kinds, authoritative
+  intent URIs, acceptance-before-delivery, runtime-attested sender, and
+  carrier-neutral delivery without a public NAP-INC dependency.
+
 ## 0.2.10
 
 ### Patch Changes

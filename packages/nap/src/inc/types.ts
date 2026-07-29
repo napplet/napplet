@@ -44,16 +44,20 @@ export interface IncMessage extends NappletMessage {
  * ```ts
  * const msg: IncEmitMessage = {
  *   type: 'inc.emit',
- *   topic: 'profile:open',
- *   payload: { pubkey: 'abc123...' },
+ *   topic: 'napplet:profile/open',
+ *   // Payload choices are local to the receiving convention.
+ *   payload: { localSelection: 'example' },
  * };
  * ```
  */
 export interface IncEmitMessage extends IncMessage {
   type: 'inc.emit';
-  /** Topic string for the message. */
+  /**
+   * Stable opaque topic routed on the wire. A developer-facing queried
+   * convention URI is transposed by `emit` before this envelope is created.
+   */
   topic: string;
-  /** Optional payload data. */
+  /** Optional opaque payload; receiving handlers validate their local convention. */
   payload?: unknown;
 }
 
@@ -64,7 +68,7 @@ export interface IncSubscribeMessage extends IncMessage {
   type: 'inc.subscribe';
   /** Correlation ID. */
   id: string;
-  /** Topic to subscribe to. */
+  /** Opaque topic to subscribe to. */
   topic: string;
 }
 
@@ -84,7 +88,7 @@ export interface IncSubscribeResultMessage extends IncMessage {
  */
 export interface IncUnsubscribeMessage extends IncMessage {
   type: 'inc.unsubscribe';
-  /** Topic to unsubscribe from. */
+  /** Opaque topic to unsubscribe from. */
   topic: string;
 }
 
@@ -94,11 +98,11 @@ export interface IncUnsubscribeMessage extends IncMessage {
  */
 export interface IncEventMessage extends IncMessage {
   type: 'inc.event';
-  /** Topic the event was emitted on. */
+  /** Stable opaque topic emitted by the shell after any client-side transposition. */
   topic: string;
   /** Identity of the sending napplet. */
   sender: string;
-  /** Optional payload data. */
+  /** Optional opaque payload; receiving handlers validate their local convention. */
   payload?: unknown;
 }
 
@@ -127,6 +131,15 @@ export interface IncChannelOpenResultMessage extends IncMessage {
   peer?: string;
   /** Error message if channel open failed. */
   error?: string;
+}
+
+/** Notification that a peer opened a channel to this napplet. */
+export interface IncChannelOpenedMessage extends IncMessage {
+  type: 'inc.channel.opened';
+  /** Shell-assigned opaque channel identifier. */
+  channelId: string;
+  /** Runtime-attested opener dTag. */
+  peer: string;
 }
 
 /**
@@ -215,6 +228,7 @@ export type IncTopicMessage =
 export type IncChannelMessage =
   | IncChannelOpenMessage
   | IncChannelOpenResultMessage
+  | IncChannelOpenedMessage
   | IncChannelEmitMessage
   | IncChannelEventMessage
   | IncChannelBroadcastMessage
@@ -239,6 +253,7 @@ export type IncInboundMessage =
   | IncSubscribeResultMessage
   | IncEventMessage
   | IncChannelOpenResultMessage
+  | IncChannelOpenedMessage
   | IncChannelEventMessage
   | IncChannelListResultMessage
   | IncChannelClosedMessage;

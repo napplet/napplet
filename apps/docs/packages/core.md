@@ -23,6 +23,7 @@ npm install @napplet/core
 import {
   type NappletMessage, type NapDomain, type NappletGlobal,
   type NapHandler, type NapDispatch,
+  type IntentOpenOptions, type IntentRequest, type IntentResult,
   NAP_DOMAINS, SHELL_BRIDGE_URI, PROTOCOL_VERSION,
   createDispatch, registerNap, dispatch, getRegisteredDomains,
   ALL_CAPABILITIES, TOPICS,
@@ -34,7 +35,7 @@ import {
 - **`NappletMessage`** — base interface for every message: `{ type: string }` in
   `domain.action` format. Concrete message types extend it with payload fields.
 - **`NapDomain`** — string literal union of the NAP capability domains
-  (`'relay' | 'identity' | 'storage' | 'inc' | 'theme' | 'keys' | 'media' | 'notify' | 'config' | 'resource' | 'cvm' | 'outbox' | 'upload' | 'intent' | 'ble' | 'webrtc' | 'link' | 'count' | 'lists' | 'serial' | 'common' | 'dm'`).
+  (`'relay' | 'identity' | 'storage' | 'inc' | 'theme' | 'keys' | 'media' | 'notify' | 'config' | 'resource' | 'cvm' | 'outbox' | 'upload' | 'intent' | 'ble' | 'webrtc' | 'link' | 'count' | 'lists' | 'serial' | 'fs' | 'common' | 'dm'`).
 - **`NappletGlobal`** — the runtime-injected `window.napplet` namespace with
   optional domain properties.
 - **`NAP_DOMAINS`** — runtime constant array of all domain strings, for iteration
@@ -98,6 +99,29 @@ plain envelopes, so they add no protocol surface.
   (`relay:read`, `relay:write`, `sign:event`, `sign:nip44`, `state:read`, …).
 - **`PROTOCOL_VERSION`** (`'4.0.0'`), **`SHELL_BRIDGE_URI`** (`'napplet://shell'`),
   **`REPLAY_WINDOW_SECONDS`** (`30`), and the legacy **`TOPICS`** routing constants.
+
+### Convention boundaries
+
+The stable identity is the complete, queryless `napplet:<archetype>/<intent>` string. Archetype manifest tags advertise accepted queryless convention identities. Routing and handler resolution use exact equality.
+
+INC `emit(topic, payload?)` accepts a convention URI. Unique percent-decoded query pairs become a shallow string-to-string payload before `postMessage`; literal `+` remains `+`. The normalized topic is queryless:
+
+```ts
+napplet.inc.emit('napplet:profile/open?pubkey=abc123');
+napplet.inc.on('napplet:profile/open', (event) => validateLocally(event.payload));
+
+const result = await napplet.intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) throw new Error(result.error);
+```
+
+INTENT results expose required `ok`, `archetype`, `action`, and `handled`
+fields. INC convention URI transposition remains an `emit`-only rule.
+
+This package defers to the living [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md) and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) documents.
 
 ## Usage
 

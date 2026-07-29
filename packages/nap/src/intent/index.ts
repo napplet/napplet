@@ -7,13 +7,8 @@
 /**
  * @napplet/nap/intent -- Archetype intent dispatcher NAP module (NAP-INTENT).
  *
- * Invoke another napplet by its archetype (role) without addressing it directly.
- * A napplet names a role + action + payload; the shell resolves the role to an
- * installed napplet (honoring the user's default-handler preference), creates or
- * focuses the window, and delivers the payload using the named NAP-N protocol.
- * The shell owns archetype resolution, default handling, window lifecycle, and
- * payload delivery; routing (`archetype`) and payload format (`protocol`) are
- * orthogonal.
+ * Invoke another napplet by archetype while the runtime resolves an installed
+ * handler and owns target lifecycle and payload delivery.
  *
  * Exports typed message definitions for the intent domain, shim installer,
  * SDK helpers, and registers the 'intent' domain with core dispatch on import.
@@ -32,8 +27,8 @@ export { DOMAIN } from './types.js';
 export type {
   IntentHandlerPreference,
   IntentBehavior,
+  IntentOpenOptions,
   IntentRequest,
-  IntentContract,
   IntentCandidate,
   IntentAvailability,
   IntentResult,

@@ -25,6 +25,7 @@ export type {
   IncEventMessage,
   IncChannelOpenMessage,
   IncChannelOpenResultMessage,
+  IncChannelOpenedMessage,
   IncChannelEmitMessage,
   IncChannelEventMessage,
   IncChannelBroadcastMessage,
@@ -39,9 +40,27 @@ export type {
   IncNapMessage,
 } from './types.js';
 
-export { installIncShim, emit, on, handleIncEvent } from './shim.js';
+export {
+  broadcast,
+  channel,
+  emit,
+  handleIncEvent,
+  handleIncMessage,
+  installIncShim,
+  list,
+  on,
+  onOpened,
+  open,
+} from './shim.js';
 
-export { incEmit, incOn } from './sdk.js';
+export {
+  incBroadcast,
+  incEmit,
+  incListChannels,
+  incOn,
+  incOnChannelOpened,
+  incOpenChannel,
+} from './sdk.js';
 
 import { registerNap } from '@napplet/core';
 import { DOMAIN } from './types.js';

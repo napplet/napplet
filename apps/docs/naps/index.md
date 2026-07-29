@@ -7,6 +7,14 @@ each NAP to a **message domain**: a NAP named `foo` owns all `foo.*` JSON envelo
 messages, their payload shapes, and the expected shell behavior. NAP contracts are
 proposed and maintained in the [NAPs track](https://github.com/napplet/naps).
 
+The convention and intent examples on this page adopt the exact draft heads of
+[NAP-INC PR #89
+(`4593ce9`)](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
+[the governance/web projection PR #90
+(`896c32c`)](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
+They remain draft upstream contracts.
+
 The protocol is modular by design. A NAP must be **independently implementable**,
 and shells may support **any subset** of NAPs. That's why napplets feature-gate
 with injected domain property presence before using a domain and degrade
@@ -55,14 +63,24 @@ const keys = await window.napplet.storage.keys();
 Inter-napplet communication — topic-based publish/subscribe between napplets.
 
 ```ts
-// One napplet broadcasts:
-window.napplet.inc.emit('profile:open', [['p', pubkey]]);
+// The INC binding accepts a developer-facing convention URI when emitting:
+window.napplet.inc.emit('napplet:profile/open?pubkey=abc123');
 
-// Another napplet listens:
-const sub = window.napplet.inc.on('profile:open', (payload, event) => {
-  const target = event.tags.find((t) => t[0] === 'p')?.[1];
+// The runtime sends topic `napplet:profile/open` with { pubkey: 'abc123' }.
+// Another napplet subscribes to that exact stable topic:
+const sub = window.napplet.inc.on('napplet:profile/open', (event) => {
+  // `event.sender` is supplied by the runtime from the authenticated source endpoint.
+  const target = (event.payload as { pubkey?: string }).pubkey;
 });
 ```
+
+`emit(topic, payload?)` transposes unique percent-decoded query pairs into a
+shallow text payload before posting the normalized message. Literal `+` stays
+`+`. Consumers subscribe to the stable queryless topic, and routing then uses
+exact equality with no query-aware, wildcard, or prefix matching. Fragments,
+malformed percent encoding, duplicate decoded names, and query plus explicit
+payload reject. Use a queryless topic with an explicit payload for structured
+or non-text data.
 
 ### keys
 
@@ -205,15 +223,25 @@ if (window.napplet?.upload) {
 
 ### intent
 
-Archetype intent dispatch — invoke another napplet by role, with the shell resolving the
-default handler, window lifecycle, and trust boundary.
+Archetype intent dispatch. The runtime resolves an installed handler from the
+requested role; convention-based payload interpretation remains orthogonal.
 
 ```ts
 if (window.napplet?.intent) {
-  const { available } = await window.napplet.intent.available('note');
-  if (available) await window.napplet.intent.open('note', { target: { type: 'event', id } });
+  const { available } = await window.napplet.intent.available('profile');
+  if (available) {
+    const result = await window.napplet.intent.open(
+      'profile',
+      { pubkey: 'abc123' },
+      { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+    );
+    if (!result.handled) console.error(result.error);
+  }
 }
 ```
+
+Results contain required `ok`, `archetype`, `action`, and `handled` fields plus
+optional handler, window, convention, and error details.
 
 ### ble
 
@@ -269,12 +297,31 @@ if (window.napplet?.common) {
 }
 ```
 
+### fs
+
+Shell-mediated virtual filesystem access. Napplets discover visible roots, ask the runtime to mediate file and directory selection, inspect and list entries, read and write base64-encoded file bytes, create, remove and move them, and subscribe to advisory change events. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization — the napplet sees only virtual paths.
+
+`info()` is advisory discovery, not an authorization token: permissions can change mid-session and any operation can still fail.
+
+```ts
+if (window.napplet?.fs) {
+  const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+  const bytes = await window.napplet.fs.read(picked.entries[0].path);
+  await window.napplet.fs.write('/shared/copy.md', bytes.data, { mode: 'replace' });
+  const entries = await window.napplet.fs.list('/shared');
+  const watchId = await window.napplet.fs.watch('/shared', { recursive: true });
+  window.napplet.fs.onChanged((change) => refresh(change.path));
+}
+```
+
+`fs.write.data` and `FsReadResult.data` carry bytes as RFC 4648 standard padded base64 text on the JSON wire. Byte limits and result counts are decoded-byte counts.
+
 ## Core domain union
 
 [`@napplet/core`](/packages/core) exports a `NapDomain` string union for the
 foundational domains — `relay`, `identity`, `storage`, `inc`, `theme`,
 `keys`, `media`, `notify`, `config`, `resource`, `cvm`, `outbox`,
-`upload`, `intent`, `ble`, `webrtc`, `link`, `lists`, `serial`, `common` — used as the discriminant for envelope routing and
+`upload`, `intent`, `ble`, `webrtc`, `link`, `lists`, `serial`, `fs`, `common` — used as the discriminant for envelope routing and
 domain presence.
 
 ## Where to go next

@@ -4,53 +4,43 @@
  * @module
  */
 
-// @napplet/nap/intent -- Archetype intent dispatcher shim (invoke / open / available / handlers / changed push).
-// Correlates intent.* request/result envelopes; routes intent.changed pushes to listeners.
-// The shell owns archetype resolution, default handling, window lifecycle, and payload delivery.
-
 import { postToShell } from '../boundary.js';
 import type { Subscription } from '@napplet/core';
 import type {
+  IntentAvailability,
+  IntentAvailableMessage,
+  IntentAvailableResultMessage,
+  IntentChangedMessage,
+  IntentHandlersMessage,
+  IntentHandlersResultMessage,
+  IntentInvokeMessage,
+  IntentInvokeResultMessage,
+  IntentOpenOptions,
   IntentRequest,
   IntentResult,
-  IntentAvailability,
-  IntentInvokeMessage,
-  IntentAvailableMessage,
-  IntentHandlersMessage,
-  IntentInvokeResultMessage,
-  IntentAvailableResultMessage,
-  IntentHandlersResultMessage,
-  IntentChangedMessage,
 } from './types.js';
 
-/** Default timeout for intent request-responses (30s; aligns with other NAPs). */
 const REQUEST_TIMEOUT_MS = 30_000;
 
-/** Pending invoke requests: correlation id -> resolver record. */
 const pendingInvoke = new Map<string, {
   resolve: (result: IntentResult) => void;
   reject: (reason: Error) => void;
   timeout: ReturnType<typeof setTimeout>;
 }>();
 
-/** Pending available requests: correlation id -> resolver record. */
 const pendingAvailable = new Map<string, {
   resolve: (availability: IntentAvailability) => void;
   reject: (reason: Error) => void;
   timeout: ReturnType<typeof setTimeout>;
 }>();
 
-/** Pending handlers requests: correlation id -> resolver record. */
 const pendingHandlers = new Map<string, {
   resolve: (handlers: IntentAvailability[]) => void;
   reject: (reason: Error) => void;
   timeout: ReturnType<typeof setTimeout>;
 }>();
 
-/** Availability-change listeners (each receives every intent.changed). */
 const changedHandlers = new Set<(availability: IntentAvailability) => void>();
-
-/** Guard against double-install. */
 let installed = false;
 
 function isMessageType<T extends { type: string }>(
@@ -61,49 +51,51 @@ function isMessageType<T extends { type: string }>(
 }
 
 function handleInvokeResult(msg: IntentInvokeResultMessage): void {
-  const p = pendingInvoke.get(msg.id);
-  if (!p) return;
+  const pending = pendingInvoke.get(msg.id);
+  if (!pending) return;
   pendingInvoke.delete(msg.id);
-  clearTimeout(p.timeout);
+  clearTimeout(pending.timeout);
   if (msg.result !== undefined) {
-    p.resolve(msg.result);
+    pending.resolve(msg.result);
     return;
   }
-  p.reject(new Error(msg.error ?? 'invoke failed'));
+  pending.reject(new Error(msg.error ?? 'invoke failed'));
 }
 
 function handleAvailableResult(msg: IntentAvailableResultMessage): void {
-  const p = pendingAvailable.get(msg.id);
-  if (!p) return;
+  const pending = pendingAvailable.get(msg.id);
+  if (!pending) return;
   pendingAvailable.delete(msg.id);
-  clearTimeout(p.timeout);
+  clearTimeout(pending.timeout);
   if (msg.availability !== undefined) {
-    p.resolve(msg.availability);
+    pending.resolve(msg.availability);
     return;
   }
-  p.reject(new Error(msg.error ?? 'intent availability unavailable'));
+  pending.reject(new Error(msg.error ?? 'intent availability unavailable'));
 }
 
 function handleHandlersResult(msg: IntentHandlersResultMessage): void {
-  const p = pendingHandlers.get(msg.id);
-  if (!p) return;
+  const pending = pendingHandlers.get(msg.id);
+  if (!pending) return;
   pendingHandlers.delete(msg.id);
-  clearTimeout(p.timeout);
+  clearTimeout(pending.timeout);
   if (msg.handlers !== undefined) {
-    p.resolve(msg.handlers);
+    pending.resolve(msg.handlers);
     return;
   }
-  p.reject(new Error(msg.error ?? 'intent handlers unavailable'));
+  pending.reject(new Error(msg.error ?? 'intent handlers unavailable'));
 }
 
 function handleChanged(msg: IntentChangedMessage): void {
   if (!msg.availability) return;
-  for (const cb of changedHandlers) cb(msg.availability);
+  for (const callback of changedHandlers) callback(msg.availability);
 }
 
 /**
- * Handle intent.* messages from the shell via the central message listener.
- * Covers invoke/available/handlers results plus the changed push.
+ * Route an INTENT envelope received from the runtime.
+ *
+ * @param msg Runtime-delivered INTENT envelope
+ * @returns Nothing
  */
 export function handleIntentMessage(msg: { type: string; [key: string]: unknown }): void {
   if (isMessageType<IntentInvokeResultMessage>(msg, 'intent.invoke.result')) {
@@ -118,20 +110,19 @@ export function handleIntentMessage(msg: { type: string; [key: string]: unknown 
 }
 
 /**
- * Invoke a napplet by archetype. The shell resolves the archetype to a handler
- * (the user's default, the napplet named in `request.handler`, or a user choice
- * when `handler: "choose"`), creates or focuses its window, and delivers the
- * payload using `request.protocol` (or the archetype's default). Resolves with
- * the structured result (including `ok: false` / `handled: false` on resolution
- * or delivery failure); rejects only when the shell returns a top-level error.
+ * Dispatch an intent request by archetype.
  *
- * @param request  The intent request (archetype + action + payload + routing)
- * @returns Promise resolving to the invocation result
+ * @param request Archetype dispatch request
+ * @returns Promise resolving to the structured dispatch result
  *
  * @example
  * ```ts
- * const r = await invoke({ archetype: 'note', action: 'open', payload: { target: { type: 'event', id } } });
- * if (!r.handled) showFallback(r.error);
+ * const result = await invoke({
+ *   archetype: 'note',
+ *   action: 'open',
+ *   convention: 'napplet:note/open',
+ *   payload: { id: 'abc' },
+ * });
  * ```
  */
 export function invoke(request: IntentRequest): Promise<IntentResult> {
@@ -141,7 +132,6 @@ export function invoke(request: IntentRequest): Promise<IntentResult> {
       if (pendingInvoke.delete(id)) reject(new Error('intent.invoke timed out'));
     }, REQUEST_TIMEOUT_MS);
     pendingInvoke.set(id, { resolve, reject, timeout });
-
     const msg: IntentInvokeMessage = {
       type: 'intent.invoke',
       id,
@@ -152,35 +142,31 @@ export function invoke(request: IntentRequest): Promise<IntentResult> {
 }
 
 /**
- * Convenience sugar for the common `action: "open"` case.
- * Equivalent to `invoke({ archetype, action: 'open', payload, ...opts })`.
+ * Open a napplet by archetype.
  *
- * @param archetype  Role slug to open
- * @param payload    Opaque payload (typed by the resolved protocol)
- * @param opts       Extra request fields (protocol, handler, behavior)
- * @returns Promise resolving to the invocation result
+ * @param archetype Role slug to open
+ * @param payload Optional opaque payload
+ * @param opts Optional convention, handler selection, and behavior hints
+ * @returns Promise resolving to the structured dispatch result
  *
  * @example
  * ```ts
- * await open('emoji-list', { seed: ['🤙', '⚡'] }, { behavior: { focus: true } });
+ * await open('note', { id: 'abc' }, { convention: 'napplet:note/open' });
  * ```
  */
 export function open(
   archetype: string,
   payload?: unknown,
-  opts?: Omit<IntentRequest, 'archetype' | 'action' | 'payload'>,
+  opts?: IntentOpenOptions,
 ): Promise<IntentResult> {
   return invoke({ archetype, action: 'open', payload, ...opts });
 }
 
 /**
- * Check whether the runtime can currently satisfy `archetype`, with the
- * candidate napplets and the actions/protocols/contracts each supports. Sourced
- * from the installed catalog, so it reports `true` for an installed handler that
- * is not yet running. Use as a pre-flight guardrail before showing an affordance.
+ * Check whether the runtime can satisfy an archetype.
  *
- * @param archetype  Role slug to check
- * @returns Promise resolving to the archetype availability
+ * @param archetype Role slug to inspect
+ * @returns Installed-catalog availability
  */
 export function available(archetype: string): Promise<IntentAvailability> {
   const id = crypto.randomUUID();
@@ -189,7 +175,6 @@ export function available(archetype: string): Promise<IntentAvailability> {
       if (pendingAvailable.delete(id)) reject(new Error('intent.available timed out'));
     }, REQUEST_TIMEOUT_MS);
     pendingAvailable.set(id, { resolve, reject, timeout });
-
     const msg: IntentAvailableMessage = {
       type: 'intent.available',
       id,
@@ -200,10 +185,9 @@ export function available(archetype: string): Promise<IntentAvailability> {
 }
 
 /**
- * Get availability for every archetype the runtime can currently satisfy.
- * Useful for menus and capability surfaces.
+ * List every archetype the runtime can satisfy.
  *
- * @returns Promise resolving to availability for each satisfiable archetype
+ * @returns Installed-catalog availability records
  */
 export function handlers(): Promise<IntentAvailability[]> {
   const id = crypto.randomUUID();
@@ -212,7 +196,6 @@ export function handlers(): Promise<IntentAvailability[]> {
       if (pendingHandlers.delete(id)) reject(new Error('intent.handlers timed out'));
     }, REQUEST_TIMEOUT_MS);
     pendingHandlers.set(id, { resolve, reject, timeout });
-
     const msg: IntentHandlersMessage = {
       type: 'intent.handlers',
       id,
@@ -222,12 +205,10 @@ export function handlers(): Promise<IntentAvailability[]> {
 }
 
 /**
- * Register for shell-pushed availability updates (`intent.changed`) -- fired when
- * a napplet is installed/removed or a default handler changes. The handler
- * receives every change; filter on `availability.archetype` to scope.
+ * Subscribe to runtime-pushed availability changes.
  *
- * @param handler  Called with each updated IntentAvailability
- * @returns A Subscription with `close()` to stop listening
+ * @param handler Callback for each availability update
+ * @returns Subscription handle
  */
 export function onChanged(handler: (availability: IntentAvailability) => void): Subscription {
   changedHandlers.add(handler);
@@ -239,20 +220,17 @@ export function onChanged(handler: (availability: IntentAvailability) => void): 
 }
 
 /**
- * Install the intent shim. Registration-only -- intents are issued on demand,
- * not at install time.
+ * Install the INTENT shim state.
  *
- * @returns cleanup function that rejects pending requests and clears all state
+ * @returns Cleanup function
  */
 export function installIntentShim(): () => void {
-  if (installed) {
-    return () => undefined; // already installed: no-op cleanup
-  }
+  if (installed) return () => undefined;
   installed = true;
   return () => {
-    for (const p of pendingInvoke.values()) clearTimeout(p.timeout);
-    for (const p of pendingAvailable.values()) clearTimeout(p.timeout);
-    for (const p of pendingHandlers.values()) clearTimeout(p.timeout);
+    for (const pending of pendingInvoke.values()) clearTimeout(pending.timeout);
+    for (const pending of pendingAvailable.values()) clearTimeout(pending.timeout);
+    for (const pending of pendingHandlers.values()) clearTimeout(pending.timeout);
     pendingInvoke.clear();
     pendingAvailable.clear();
     pendingHandlers.clear();

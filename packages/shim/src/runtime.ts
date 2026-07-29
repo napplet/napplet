@@ -19,7 +19,7 @@ import { installStorageShim, nappletStorage } from '@napplet/nap/storage/shim';
 import { subscribe, publish, publishEncrypted, query } from '@napplet/nap/relay/shim';
 import * as identityShim from '@napplet/nap/identity/shim';
 import * as themeShim from '@napplet/nap/theme/shim';
-import { installIncShim, emit, on, handleIncEvent } from '@napplet/nap/inc/shim';
+import { channel as incChannel, installIncShim, emit, on, handleIncMessage } from '@napplet/nap/inc/shim';
 import {
   installConfigShim,
   handleConfigMessage,
@@ -137,6 +137,25 @@ import {
   onEvent as serialOnEvent,
 } from '@napplet/nap/serial/shim';
 import {
+  installFsShim,
+  handleFsMessage,
+  info as fsInfo,
+  pickFile as fsPickFile,
+  pickFiles as fsPickFiles,
+  pickDirectory as fsPickDirectory,
+  pickSaveFile as fsPickSaveFile,
+  stat as fsStat,
+  list as fsList,
+  read as fsRead,
+  write as fsWrite,
+  mkdir as fsMkdir,
+  remove as fsRemove,
+  move as fsMove,
+  watch as fsWatch,
+  unwatch as fsUnwatch,
+  onChanged as fsOnChanged,
+} from '@napplet/nap/fs/shim';
+import {
   installDmShim,
   handleDmMessage,
   status as dmStatus,
@@ -147,8 +166,6 @@ import {
   unsubscribe as dmUnsubscribe,
   onMessage as dmOnMessage,
 } from '@napplet/nap/dm/shim';
-import type { IncEventMessage } from '@napplet/nap/inc/types';
-
 export interface NappletShimInstallOptions {
   /** Domains the runtime exposes to this napplet. Omit to install every bundled domain. */
   domains?: readonly NapDomain[];
@@ -169,6 +186,7 @@ const DOMAIN_ROUTERS: ReadonlyArray<readonly [string, DomainHandler]> = [
   ['outbox.', handleOutboxMessage],
   ['upload.', handleUploadMessage],
   ['intent.', handleIntentMessage],
+  ['inc.', handleIncMessage],
   ['ble.', handleBleMessage],
   ['webrtc.', handleWebrtcMessage],
   ['link.', handleLinkMessage],
@@ -176,6 +194,7 @@ const DOMAIN_ROUTERS: ReadonlyArray<readonly [string, DomainHandler]> = [
   ['lists.', handleListsMessage],
   ['common.', handleCommonMessage],
   ['serial.', handleSerialMessage],
+  ['fs.', handleFsMessage],
   ['dm.', handleDmMessage],
   ['identity.', identityShim.handleIdentityMessage],
   ['theme.', themeShim.handleThemeMessage],
@@ -187,14 +206,8 @@ function handleEnvelopeMessage(event: MessageEvent): void {
   const msg = event.data;
   if (typeof msg !== 'object' || msg === null || typeof msg.type !== 'string') return;
 
-  const type = msg.type as string;
-
-  if (type === 'inc.event') {
-    handleIncEvent(msg as IncEventMessage);
-    return;
-  }
-
   const typed = msg as { type: string; [key: string]: unknown };
+  const type = typed.type;
   for (const [prefix, route] of DOMAIN_ROUTERS) {
     if (type.startsWith(prefix)) {
       route(typed);
@@ -219,6 +232,7 @@ function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
     napplet.inc = {
       emit,
       on,
+      channel: incChannel,
     };
   }
 
@@ -428,6 +442,26 @@ function createNappletGlobal(domains: ReadonlySet<NapDomain>): NappletGlobal {
     };
   }
 
+  if (domains.has('fs')) {
+    napplet.fs = {
+      info: fsInfo,
+      pickFile: fsPickFile,
+      pickFiles: fsPickFiles,
+      pickDirectory: fsPickDirectory,
+      pickSaveFile: fsPickSaveFile,
+      stat: fsStat,
+      list: fsList,
+      read: fsRead,
+      write: fsWrite,
+      mkdir: fsMkdir,
+      remove: fsRemove,
+      move: fsMove,
+      watch: fsWatch,
+      unwatch: fsUnwatch,
+      onChanged: fsOnChanged,
+    };
+  }
+
   if (domains.has('dm')) {
     napplet.dm = {
       status: dmStatus,
@@ -511,6 +545,9 @@ function installDomainShim(domain: NapDomain): void {
       return;
     case 'serial':
       installSerialShim();
+      return;
+    case 'fs':
+      installFsShim();
       return;
     case 'common':
       installCommonShim();

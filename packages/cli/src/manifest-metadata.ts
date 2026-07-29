@@ -20,6 +20,7 @@ const NAP_DOMAINS = new Set([
   "link",
   "lists",
   "serial",
+  "fs",
   "common",
   "dm",
 ]);
@@ -74,13 +75,8 @@ function mergeConfigMetadataTags(tags: readonly string[][], config: NappletConfi
   const result = tags.filter((tag) => !replaced.has(tag[0]));
   if (metadata.title) result.push(["title", metadata.title]);
   if (metadata.description) result.push(["description", metadata.description]);
-  for (const contract of metadata.archetypes ?? []) {
-    result.push([
-      "archetype",
-      contract.slug,
-      contract.protocol,
-      ...(contract.eventKinds ?? []).map((kind) => `kind:${kind}`),
-    ]);
+  for (const convention of metadata.archetypes ?? []) {
+    result.push(["archetype", convention.slug, convention.convention]);
   }
   return dedupeTags(result);
 }
@@ -91,13 +87,14 @@ function isCanonicalArchetypeTag(tag: unknown[]): tag is string[] {
     typeof tag[2] !== "string"
   ) return false;
   const slug = tag[1].trim();
-  const protocol = tag[2].trim();
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug) || !/^NAP-[1-9][0-9]*$/.test(protocol)) {
-    return false;
-  }
-  return tag.slice(3).every((value) =>
-    typeof value === "string" && /^kind:(0|[1-9][0-9]*)$/.test(value.trim())
-  );
+  const convention = tag[2].trim();
+  const conventionMatch = /^napplet:([^/?#\s]+)\/([^/?#\s]+)$/.exec(convention);
+  if (
+    !/^[a-z0-9][a-z0-9-]*$/.test(slug) ||
+    !conventionMatch ||
+    conventionMatch[1] !== slug
+  ) return false;
+  return tag.length === 3;
 }
 
 async function readIndexHtmlMetadataTags(indexHtmlPath: string | undefined): Promise<string[][]> {

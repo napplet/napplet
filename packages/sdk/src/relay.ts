@@ -8,6 +8,7 @@ import type {
   NostrEvent,
   NostrFilter,
   NappletGlobal,
+  IncEvent,
   RelayEventResult,
   Subscription,
   EventTemplate,
@@ -90,41 +91,55 @@ export const relay: SdkDomain<'relay'> = {
 };
 
 /**
- * Inter-napplet pubsub: broadcast and receive INC-PEER events through the shell.
+ * Inter-napplet pubsub: broadcast and receive INC events through the shell.
  *
  * @example
  * ```ts
  * import { inc } from '@napplet/sdk';
  *
- * inc.emit('profile:open', [], JSON.stringify({ pubkey: '...' }));
+ * inc.emit('napplet:profile/open', { pubkey: '...' });
  *
- * const sub = inc.on('profile:open', (payload) => {
- *   console.log('Profile requested:', payload);
+ * const sub = inc.on('napplet:profile/open', (event) => {
+ *   console.log('Profile requested:', event.payload);
  * });
  * ```
  */
 export const inc: SdkDomain<'inc'> = {
   /**
-   * Broadcast an INC-PEER event to other napplets via the shell.
-   * @param topic      The 't' tag value (e.g., 'profile:open')
-   * @param extraTags  Additional NIP-01 tags beyond the 't' tag (default: [])
-   * @param content    Event content (default: empty string)
+   * Broadcast an INC message to other napplets via the shell.
+   * @param topic    An opaque stable topic or convention URI
+   * @param payload  Optional opaque payload for a queryless topic
    */
-  emit(topic: string, extraTags?: string[][], content?: string): void {
-    requireDomain('inc').emit(topic, extraTags, content);
+  emit(topic: string, payload?: unknown): void {
+    requireDomain('inc').emit(topic, payload);
   },
 
   /**
-   * Subscribe to INC-PEER events on a specific topic.
-   * @param topic     The 't' tag value to listen for
-   * @param callback  Called with `(payload, event)` for each matching event
+   * Subscribe to INC events on a specific topic.
+   * @param topic     Exact topic value to listen for
+   * @param callback  Called with one runtime-attested INC event
    * @returns A Subscription handle with a `close()` method
    */
   on(
     topic: string,
-    callback: (payload: unknown, event: NostrEvent) => void,
+    callback: (event: IncEvent) => void,
   ): Subscription {
     return requireDomain('inc').on(topic, callback);
+  },
+
+  channel: {
+    open(target) {
+      return requireDomain('inc').channel.open(target);
+    },
+    onOpened(callback) {
+      return requireDomain('inc').channel.onOpened(callback);
+    },
+    list() {
+      return requireDomain('inc').channel.list();
+    },
+    broadcast(payload) {
+      requireDomain('inc').channel.broadcast(payload);
+    },
   },
 };
 

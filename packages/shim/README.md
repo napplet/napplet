@@ -25,10 +25,7 @@ npm install @napplet/shim
 
 ### Host-injected srcdoc prelude
 
-Shells that construct `iframe.srcdoc` should use the npm package's browser
-prelude artifact instead of requiring each napplet bundle to import the shim.
-The prelude requires an explicit domain allowlist and installs only those
-callable `window.napplet.<domain>` objects.
+Shells that construct `iframe.srcdoc` should use the npm package's browser prelude artifact instead of requiring each napplet bundle to import the shim. The prelude requires an explicit domain allowlist and installs only those callable `window.napplet.<domain>` objects.
 
 ```ts
 import { readFileSync } from 'node:fs';
@@ -48,22 +45,17 @@ const srcdoc = html.replace(
 );
 ```
 
-The global artifact exposes `globalThis.NappletShimPrelude.install({ domains })`.
-`@napplet/shim/prelude` also exports `installNappletRuntimePrelude()` for
-bundled host runtimes that can import ESM directly. JSR publishes the source ESM
-helpers under `@napplet/shim/prelude`; the generated `prelude.global` artifact
-is npm-only.
+The global artifact exposes `globalThis.NappletShimPrelude.install({ domains })`. `@napplet/shim/prelude` also exports `installNappletRuntimePrelude()` for bundled host runtimes that can import ESM directly. JSR publishes the source ESM helpers under `@napplet/shim/prelude`; the generated `prelude.global` artifact is npm-only.
 
 ### Module import compatibility
 
-The root `@napplet/shim` entry still keeps the older side-effect behavior for
-tests and runtimes that already bundle the shim module.
+The root `@napplet/shim` entry still keeps the older side-effect behavior for tests and runtimes that already bundle the shim module.
 
 ```ts
 import { installNappletGlobal } from '@napplet/shim';
 
 // Runtime-side injection before napplet scripts execute.
-installNappletGlobal({ domains: ['relay', 'storage', 'identity', 'inc'] });
+installNappletGlobal({ domains: ['relay', 'storage', 'identity', 'inc', 'intent'] });
 
 // Subscribe to kind 1 notes
 const sub = window.napplet.relay.subscribe(
@@ -80,9 +72,9 @@ const signed = await window.napplet.relay.publish({
   created_at: Math.floor(Date.now() / 1000),
 });
 
-// Listen for inter-napplet events from other napplets
-const incSub = window.napplet.inc.on('profile:open', (payload) => {
-  console.log('Profile requested:', payload);
+// Listen for a local profile-open convention payload from other napplets
+const incSub = window.napplet.inc.on('napplet:profile/open', (event) => {
+  console.log('Local profile-open payload:', event.payload);
 });
 
 // Use scoped storage (proxied through the shell)
@@ -178,6 +170,7 @@ const serialSub = window.napplet.serial.onEvent((event) => {
 // Clean up
 sub.close();
 incSub.close();
+intentSub.close();
 identitySub.close();
 keySub.close();
 mediaSub.close();
@@ -192,12 +185,7 @@ The shim communicates with the shell using JSON envelope messages (`{ type: "dom
 
 ### Outbound (napplet → shell)
 
-Messages are posted to the shell through `@napplet/core`'s clone-safe
-`sendEnvelope(window.parent, msg)` boundary. Framework reactive values (Svelte 5
-`$state`, Vue `reactive`, Solid stores) that aren't structured-cloneable are
-snapshotted on the failure path instead of throwing a swallowed `DataCloneError`
-— see [`@napplet/core` boundary helpers](../core/README.md#boundary-helpers-clone-safety).
-The wire payloads are unchanged plain envelopes:
+Messages are posted to the shell through `@napplet/core`'s clone-safe `sendEnvelope(window.parent, msg)` boundary. Framework reactive values (Svelte 5 `$state`, Vue `reactive`, Solid stores) that aren't structured-cloneable are snapshotted on the failure path instead of throwing a swallowed `DataCloneError` — see [`@napplet/core` boundary helpers](../core/README.md#boundary-helpers-clone-safety). The wire payloads are unchanged plain envelopes:
 
 ```ts
 { type: 'relay.subscribe', id: string, subId: string, filters: NostrFilter[] }
@@ -220,6 +208,8 @@ The wire payloads are unchanged plain envelopes:
 { type: 'inc.emit', topic: string, payload?: unknown }
 { type: 'inc.subscribe', id: string, topic: string }
 { type: 'inc.unsubscribe', topic: string }
+
+{ type: 'intent.invoke', id: string, request: { archetype: string, action: string, convention: string, payload?: unknown } }
 
 { type: 'storage.get', id: string, key: string, scope?: 'shared' | 'instance' }
 { type: 'storage.set', id: string, key: string, value: string, scope?: 'shared' | 'instance' }
@@ -284,6 +274,9 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'identity.getBadges.result', id: string, badges: object[], error?: string }
 
 { type: 'inc.event', topic: string, payload?: unknown, sender: string }
+{ type: 'inc.channel.opened', channelId: string, peer: string }
+
+{ type: 'intent.invoke.result', id: string, result: { ok: boolean, archetype: string, action: string, handled: boolean, convention?: string, handler?: string, windowId?: string, error?: string } }
 
 { type: 'storage.get.result', id: string, value?: string | null, error?: string }
 { type: 'storage.set.result', id: string, error?: string }
@@ -337,8 +330,21 @@ window.napplet = {
     query(filters): Promise<RelayEventResult[]>;
   },
   inc: {
-    emit(topic, extraTags?, content?): void;
+    emit(topic, payload?): void;
     on(topic, callback): { close(): void };
+    channel: {
+      open(target): Promise<ChannelHandle>;
+      onOpened(callback): { close(): void };
+      list(): Promise<ChannelInfo[]>;
+      broadcast(payload?): void;
+    };
+  },
+  intent: {
+    invoke(request): Promise<IntentResult>;
+    open(archetype, payload?, options?): Promise<IntentResult>;
+    available(archetype): Promise<IntentAvailability>;
+    handlers(): Promise<IntentAvailability[]>;
+    onChanged(callback): { close(): void };
   },
   storage: {
     getItem(key): Promise<string | null>;
@@ -416,8 +422,7 @@ window.napplet = {
 };
 ```
 
-No generic `shell` object is installed. Runtime capability is represented by
-which NAP domain properties the host injects.
+No generic `shell` object is installed. Runtime capability is represented by which NAP domain properties the host injects.
 
 ### `window.napplet.relay`
 
@@ -432,12 +437,44 @@ Relay operations through the shell's relay pool via JSON envelope (relay.subscri
 
 ### `window.napplet.inc`
 
-Inter-napplet communication between napplets via the shell.
+Inter-napplet communication between napplets via the shell. Topics are opaque strings, so delivery uses the complete value supplied by the sender and subscriber. A topic such as `napplet:profile/open` names a local convention; the shim does not define its payload schema or add wildcard, prefix, or canonicalization behavior.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `emit(topic, extraTags?, content?)` | `void` | Send an `inc.emit` JSON envelope to the shell for delivery to matching topic subscribers. |
-| `on(topic, callback)` | `{ close(): void }` | Subscribe to `inc.event` JSON envelopes on a topic. Callback receives `(payload, event)`. |
+| `emit(topic, payload?)` | `void` | Send an `inc.emit` JSON envelope to the shell for delivery to subscribers using the same topic string. |
+| `on(topic, callback)` | `{ close(): void }` | Subscribe to `inc.event` JSON envelopes. Callback receives one `IncEvent`. |
+| `channel.open(target)` | `Promise<ChannelHandle>` | Open a symmetric point-to-point channel. |
+| `channel.onOpened(callback)` | `{ close(): void }` | Receive inbound channel handles. |
+| `channel.list()` | `Promise<ChannelInfo[]>` | List active channel snapshots. |
+| `channel.broadcast(payload?)` | `void` | Broadcast to every open channel peer. |
+
+This non-normative shim reference follows [NAP-INC draft PR #89 at its adopted head](https://github.com/napplet/naps/blob/4593ce9e301ce098fd3dad64206fcd6f144fa7af/naps/NAP-INC.md). The injected runtime preprocesses a queried convention URI only when it is sent through `emit`:
+
+```ts
+window.napplet.inc.emit('napplet:profile/open?pubkey=abc123');
+// -> { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }
+
+window.napplet.inc.on('napplet:profile/open', (event) => {
+  console.log(event.sender, event.payload);
+});
+```
+
+Query values are shallow percent-decoded text (`+` remains a literal plus) before exact routing. Fragments, malformed percent encoding, repeated decoded names, and a query combined with an explicit payload throw before postMessage. Use a queryless topic plus the explicit payload argument for structured or non-text data. This is an `emit` input rule: subscriptions and shell routing never parse query text or add wildcard, prefix, or normalization matching.
+
+### `window.napplet.intent`
+
+NAP-INTENT dispatches by archetype. Use `invoke(request)` or the `open(archetype, payload?, opts?)` convenience operation.
+
+```ts
+const result = await window.napplet.intent.open(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) throw new Error(result.error);
+```
+
+Results include required `ok`, `archetype`, `action`, and `handled` fields and optional handler, window, convention, and error details. See the living [NAP-INTENT document](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md).
 
 ### `window.napplet.storage`
 
@@ -547,10 +584,7 @@ if (!window.napplet?.media) { /* render fallback */ }
 
 ## TypeScript Support
 
-The runtime installs `window.napplet` before napplet code runs. The package does
-not modify global `Window` types in its published source so it can be accepted by
-JSR. For direct `window.napplet` access, use `NappletGlobal` from
-`@napplet/core` in a local cast or ambient declaration:
+The runtime installs `window.napplet` before napplet code runs. The package does not modify global `Window` types in its published source so it can be accepted by JSR. For direct `window.napplet` access, use `NappletGlobal` from `@napplet/core` in a local cast or ambient declaration:
 
 ```ts
 import type { NappletGlobal } from '@napplet/core';
@@ -566,8 +600,7 @@ if (napplet.identity) {
 }
 ```
 
-For named typed helpers, prefer `@napplet/sdk`; it wraps `window.napplet` without
-requiring global type augmentation.
+For named typed helpers, prefer `@napplet/sdk`; it wraps `window.napplet` without requiring global type augmentation.
 
 For napplet-side named imports, use `@napplet/sdk`.
 

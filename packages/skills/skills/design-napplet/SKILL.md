@@ -77,11 +77,46 @@ usable API — flag a package/spec gap.
 | ContextVM / MCP-style native tool bridge | `cvm` |
 | Bluetooth LE / GATT access through shell policy | `ble` |
 | Serial-port access through shell policy | `serial` |
+| Virtual filesystem access through shell policy, including byte reads/writes | `fs` |
 | WebRTC signaling/session mediation | `webrtc` |
 
 The deprecated `ifc` package subpath is an INC compatibility alias; choose
 `inc` for new work. Every NAP is **voluntary**: assume a domain may be absent and
 degrade gracefully unless it is a hard manifest requirement.
+
+### Cross-napplet roles and messages
+
+For an `intent` feature, record the role slug and stable, queryless convention
+identity that callers use: `napplet:<archetype>/<intent>`. A published archetype
+advertises one contract in an `['archetype', slug, convention]` manifest tag, for example `['archetype', 'note', 'napplet:note/open']`.
+
+For `inc`, name the exact opaque topic the feature emits or subscribes to. Each
+subscription receives one `IncEvent` containing a runtime-attested sender and
+optional payload. Use topics such
+as `napplet:note/open`, `napplet:profile/open`, or `napplet:dm/open`. NAP-INC
+`emit(topic, payload?)` may use `napplet:profile/open?pubkey=abc123` as
+developer-facing shorthand: the runtime transposes its shallow text query into
+payload and routes the stable queryless topic `napplet:profile/open`. Specify
+subscriptions against that stable queryless topic. The build must treat incoming
+payloads as untrusted and validate them against a real upstream convention when
+one exists.
+
+This query rule applies only to outbound NAP-INC `emit(topic, payload?)`.
+Literal `+` remains a plus after percent decoding; fragments, malformed percent
+encoding, repeated decoded names, and query plus explicit payload reject
+synchronously. Plan a queryless topic with explicit payload for structured or
+non-text data.
+
+For NAP-INTENT, plan `invoke(request)` or
+`open(archetype, payload?, opts?)`. Archetype routing and optional
+convention-based payload interpretation are orthogonal. Results expose required
+`ok`, `archetype`, `action`, and `handled` fields.
+
+Subscriptions, manifest discovery, and routing retain exact matching without
+query parsing, prefix, wildcard, canonicalization, payload-schema, or
+multi-convention behavior. Defer to the living [NAP-INC](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md)
+and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md) documents for the
+living normative contract.
 
 ### NAP-THEME is a whole-surface concern
 
@@ -145,6 +180,9 @@ requires: []        # hard requirements only; keep optional enhancements out
 optional domains and fallbacks: resource -> show initials when avatar fetch unavailable; keys -> use buttons/menu when shell key reservation is absent
 SDK helpers: outbox.query, outbox.subscribe, common.getProfile, storage.getItem, resource.bytes
 config schema: <fields or "none">
+archetype metadata: <none, or slug + stable queryless convention identity>
+INC topics and payload validation: <none, or exact opaque topic + upstream convention/local validation boundary>
+intent dispatch: <none, or invoke/open request + handling-result behavior>
 layout: <tiny state> / <large state>, responsive strategy
 theme: NAP-THEME optional/required; root background, text, surface, border, primary, muted mappings; fallback palette; change subscription
 data flow: <outbox queries/subscriptions/publishes, social actions, stored keys>

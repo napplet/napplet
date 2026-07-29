@@ -1,6 +1,14 @@
 import type { RelayApi, IncApi, StorageApi, KeysApi } from './global/nostr-api.js';
 
-export type { NappletInstanceStorage } from './global/nostr-api.js';
+export type {
+  ChannelClosed,
+  ChannelEvent,
+  ChannelHandle,
+  ChannelInfo,
+  IncChannelApi,
+  IncEvent,
+  NappletInstanceStorage,
+} from './global/nostr-api.js';
 import type { MediaApi, NotifyApi } from './global/media-api.js';
 import type {
   IdentityApi,
@@ -19,6 +27,7 @@ import type {
   CountApi,
   ListsApi,
   SerialApi,
+  FsApi,
   CommonApi,
   DmApi,
 } from './global/service-api.js';
@@ -45,7 +54,7 @@ export interface NappletGlobal {
    */
   relay?: RelayApi;
   /**
-   * Inter-napplet pubsub: broadcast and receive INC-PEER events through the shell.
+   * Inter-napplet topic and channel communication through the runtime.
    */
   inc?: IncApi;
   /**
@@ -273,23 +282,9 @@ export interface NappletGlobal {
    */
   upload?: UploadApi;
   /**
-   * Archetype intent dispatch (NAP-INTENT): invoke another napplet by its role
-   * (archetype) without addressing it directly. The napplet names a role +
-   * action + payload; the shell resolves the role to an installed napplet
-   * (honoring the user's default-handler preference), creates or focuses the
-   * window, and delivers the payload using the named NAP-N protocol. Routing
-   * (`archetype`) and payload format (`protocol`) are orthogonal. The shell owns
-   * resolution, default handling, window lifecycle, and the trust boundary —
-   * napplets never learn or address other napplets except through this resolution.
-   *
-   * @example
-   * ```ts
-   * if (window.napplet.intent) {
-   *   const { available } = await window.napplet.intent.available('note');
-   *   if (available) await window.napplet.intent.open('note', { target: { type: 'event', id } });
-   * }
-   * ```
-  */
+   * Archetype intent dispatch (NAP-INTENT): the runtime resolves a role to an
+   * installed handler and owns target lifecycle and payload delivery.
+   */
   intent?: IntentApi;
   /**
    * Runtime-mediated Bluetooth LE/GATT sessions (NAP-BLE): the napplet asks
@@ -376,6 +371,25 @@ export interface NappletGlobal {
    * ```
    */
   serial?: SerialApi;
+  /**
+   * Shell-mediated virtual filesystem access (NAP-FS): the napplet sees only
+   * virtual paths, directory entries, coarse metadata, base64-encoded file
+   * bytes, user-mediated picker results, and advisory change events. The runtime
+   * owns host paths, mounts, backing store, policy, and authorization of every
+   * operation.
+   *
+   * @example
+   * ```ts
+   * if (window.napplet.fs) {
+   *   const picked = await window.napplet.fs.pickFile({ accept: [{ extension: '.md' }] });
+   *   const bytes = await window.napplet.fs.read(picked.entries[0].path);
+   *   await window.napplet.fs.write('/shared/copy.md', bytes.data, { mode: 'replace' });
+   *   const entries = await window.napplet.fs.list('/shared');
+   *   await window.napplet.fs.mkdir('/shared/projects/new', { recursive: true });
+   * }
+   * ```
+   */
+  fs?: FsApi;
   /**
    * Runtime-mediated direct messages (NAP-DM): napplets can request DM status,
    * conversations, history, send, and live delivery while the runtime owns

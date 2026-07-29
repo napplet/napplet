@@ -1,6 +1,6 @@
 {
   "name": "@napplet/nap",
-  "version": "0.28.0",
+  "version": "0.31.0",
   "license": "MIT",
   "exports": {
     "./relay": "./src/relay/index.ts",
@@ -91,13 +91,17 @@
     "./serial/types": "./src/serial/types.ts",
     "./serial/shim": "./src/serial/shim.ts",
     "./serial/sdk": "./src/serial/sdk.ts",
+    "./fs": "./src/fs/index.ts",
+    "./fs/types": "./src/fs/types.ts",
+    "./fs/shim": "./src/fs/shim.ts",
+    "./fs/sdk": "./src/fs/sdk.ts",
     "./dm": "./src/dm/index.ts",
     "./dm/types": "./src/dm/types.ts",
     "./dm/shim": "./src/dm/shim.ts",
     "./dm/sdk": "./src/dm/sdk.ts"
   },
   "imports": {
-    "@napplet/core": "jsr:@napplet/core@^0.28.0"
+    "@napplet/core": "jsr:@napplet/core@^0.31.0"
   },
   "publish": {
     "include": [

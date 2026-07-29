@@ -1,5 +1,59 @@
 # @napplet/sdk
 
+## 0.27.0
+
+### Minor Changes
+
+- d201bd0: Add the `fs` NAP domain — shell-mediated virtual filesystem access ([NAP-FS](https://github.com/napplet/naps/pull/88)).
+
+  Ships the virtual filesystem operations — `info`, `pickFile`, `pickFiles`, `pickDirectory`, `pickSaveFile`, `stat`, `list`, `read`, `write`, `mkdir`, `remove`, `move`, `watch`, `unwatch` — plus the runtime-pushed `fs.changed` event, reachable through `window.napplet.fs`, `@napplet/nap/fs`, and `@napplet/sdk`. The runtime owns host paths, mounts, backing store, normalization, policy, and authorization; the napplet sees only virtual paths.
+
+  Byte transfer uses RFC 4648 standard padded base64 text for `fs.write.data` and `FsReadResult.data` on the JSON wire. `FsLimits.maxReadBytes`, `FsLimits.maxWriteBytes`, byte range options, and read/write result counts refer to decoded bytes.
+
+- d201bd0: Add NAP-FS picker support for `pickFile`, `pickFiles`, `pickDirectory`, and `pickSaveFile`, including typed picker result shapes, shim and SDK helpers, injected `window.napplet.fs` methods, and conformance coverage for the new `fs.pick*` envelopes.
+
+### Patch Changes
+
+- Updated dependencies [d201bd0]
+- Updated dependencies [d201bd0]
+  - @napplet/core@0.31.0
+  - @napplet/nap@0.31.0
+
+## 0.26.0
+
+### Minor Changes
+
+- 7b67562: Align INC and INTENT with their merged canonical contracts.
+
+  INC topic subscriptions now receive one `IncEvent` containing the exact topic, runtime-attested sender, and optional payload. The runtime no longer fabricates a Nostr event. INC also exposes the symmetric channel API through `channel.open`, `channel.onOpened`, `channel.list`, and `channel.broadcast`; channel handles support `emit`, `on`, `onClosed`, and `close`, including bounded early-notification replay and terminal close retention.
+
+  INTENT now accepts `invoke(request)` and `open(archetype, payload?, opts?)`, supports `behavior.newWindow`, and returns the canonical structured result with required `ok`, `archetype`, `action`, and `handled` fields. Remove the unmerged URI invocation, `onDelivery`, `intent.deliver`, and acceptance-only result model.
+
+  Archetype metadata now emits only the canonical `["archetype", slug, convention]` shape. Remove the draft-only `eventKinds` option and trailing `kind:<number>` fields.
+
+### Patch Changes
+
+- Updated dependencies [7b67562]
+  - @napplet/core@0.30.0
+  - @napplet/nap@0.30.0
+
+## 0.25.0
+
+### Minor Changes
+
+- dd7b3a7: Adopt the draft PR #89-#91 convention and intent contracts across the public
+  types, bindings, runtime injection, manifest tooling, CLI, and reference shell:
+  queryless exact identities with URI-to-text-payload transposition at `emit` and
+  `invoke`/`open`, runtime-attested sender, immediate acceptance followed by
+  source-independent no-ID target delivery, and optional same-tag event-kind
+  discovery metadata.
+
+### Patch Changes
+
+- Updated dependencies [dd7b3a7]
+  - @napplet/core@0.29.0
+  - @napplet/nap@0.29.0
+
 ## 0.24.4
 
 ### Patch Changes

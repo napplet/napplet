@@ -1,6 +1,6 @@
 # @napplet/nap
 
-> Every active napplet NAP domain (relay, storage, inc, keys, theme, media, notify, identity, config, resource, cvm, outbox, upload, intent, ble, webrtc, link, count, lists, serial, common, dm) as layered subpath exports. The package name remains `@napplet/nap` for compatibility.
+> Every active napplet NAP domain (relay, storage, inc, keys, theme, media, notify, identity, config, resource, cvm, outbox, upload, intent, ble, webrtc, link, count, lists, serial, fs, common, dm) as layered subpath exports. The package name remains `@napplet/nap` for compatibility.
 
 ## Install
 
@@ -22,10 +22,7 @@ import { installOutboxShim, outboxQuery, OutboxQueryMessage } from '@napplet/nap
 import type { IncEventMessage } from '@napplet/nap/inc/types';
 ```
 
-Runtime code that needs only a domain shim imports the shim subpath directly.
-Napplet application code should not call shim installers; it consumes the
-runtime-injected `window.napplet.<domain>` object through `@napplet/sdk` or the
-domain SDK helpers.
+Runtime code that needs only a domain shim imports the shim subpath directly. Napplet application code should not call shim installers; it consumes the runtime-injected `window.napplet.<domain>` object through `@napplet/sdk` or the domain SDK helpers.
 
 ```ts
 // Granular — shim installer only (no SDK helpers bundled)
@@ -39,9 +36,7 @@ Napplet authors that want a typed wrapper over `window.napplet` without the inst
 import { notifySend } from '@napplet/nap/notify/sdk';
 ```
 
-End-to-end: a napplet queries outbox-aware event data using the SDK helper. The
-runtime must inject `window.napplet.outbox` before app code runs; the napplet does
-not construct that object itself.
+End-to-end: a napplet queries outbox-aware event data using the SDK helper. The runtime must inject `window.napplet.outbox` before app code runs; the napplet does not construct that object itself.
 
 ```ts
 // In the napplet (runs inside the sandboxed iframe)
@@ -85,13 +80,58 @@ Each domain is an independent subpath. Barrel imports bundle types + shim instal
 | lists | `@napplet/nap/lists` | `@napplet/nap/lists/types` | `@napplet/nap/lists/shim` | `@napplet/nap/lists/sdk` | Runtime-mediated NIP-51 list mutations — `supported`/`add`/`remove`; runtime owns lookup, merge, encryption, signing, and publishing |
 | common | `@napplet/nap/common` | `@napplet/nap/common/types` | `@napplet/nap/common/shim` | `@napplet/nap/common/sdk` | Common social actions — public NIP-19 helpers, profile lookup returning `RelayEventResult`, follows, follow/unfollow, reactions, and reports; shell owns identity/signing/publishing |
 | serial | `@napplet/nap/serial` | `@napplet/nap/serial/types` | `@napplet/nap/serial/shim` | `@napplet/nap/serial/sdk` | Runtime-mediated serial device access — `open`/`write`/`close`/`onEvent`; shell owns permissions, port handles, streams, and lifecycle |
+| fs | `@napplet/nap/fs` | `@napplet/nap/fs/types` | `@napplet/nap/fs/shim` | `@napplet/nap/fs/sdk` | Shell-mediated virtual filesystem access — `info`/`pickFile`/`pickFiles`/`pickDirectory`/`pickSaveFile`/`stat`/`list`/`read`/`write`/`mkdir`/`remove`/`move`/`watch`/`unwatch`/`onChanged`; runtime owns host paths, mounts, backing store, policy, and authorization. Byte payloads use standard padded base64 text on the JSON wire |
 | dm | `@napplet/nap/dm` | `@napplet/nap/dm/types` | `@napplet/nap/dm/shim` | `@napplet/nap/dm/sdk` | Runtime-mediated direct messages — `status`/`conversations`/`messages`/`send`/`subscribe`/`unsubscribe`/`onMessage`; shell owns signing, encryption, relay routing, storage, and policy |
+
+### NAP-FS byte transfer
+
+`@napplet/nap/fs` ships the NAP-FS operations plus the runtime-pushed change event, including user-mediated picker operations (`pickFile`, `pickFiles`, `pickDirectory`, and `pickSaveFile`) that return virtual paths only.
+
+`fs.write.data` and `FsReadResult.data` carry file bytes as RFC 4648 standard padded base64 text in the JSON wire envelope. `FsLimits.maxReadBytes`, `FsLimits.maxWriteBytes`, byte range options, and read/write result counts refer to decoded bytes.
 
 ### Deprecated IFC Compatibility
 
 NAP-IFC was renamed to NAP-INC because the surface is inter-napplet communication, not generic inter-frame communication. New code must use `@napplet/nap/inc`, `window.napplet.inc`, the `inc.*` wire messages, and the `Inc*` TypeScript names.
 
 The old `@napplet/nap/ifc`, `@napplet/nap/ifc/types`, `@napplet/nap/ifc/shim`, and `@napplet/nap/ifc/sdk` subpaths remain as deprecated thin wrappers. They re-export the INC implementation and aliases only; they do not define a separate `ifc` domain or `ifc.*` wire protocol.
+
+### Intent and INC
+
+NAP-INTENT routes to an archetype role. `invoke(request)` accepts a canonical request object; `open(archetype, payload?, opts?)` supplies the common action-`"open"` form. The runtime selects an installed handler.
+
+```ts
+import { intentOpen } from '@napplet/nap/intent';
+
+const result = await intentOpen(
+  'profile',
+  { pubkey: 'abc123' },
+  { convention: 'napplet:profile/open', behavior: { newWindow: true } },
+);
+if (!result.handled) throw new Error(result.error);
+```
+
+Results include required `ok`, `archetype`, `action`, and `handled` fields and optional handler, window, convention, and error details. Archetype resolution and convention-based payload interpretation remain orthogonal.
+
+NAP-INC topics use the same opaque-string boundary. Use the current advisory open names such as `napplet:note/open`, `napplet:profile/open`, and `napplet:dm/open` when they fit the receiving napplet's documented local choice.
+
+### NAP-INC convention URI emission
+
+This non-normative package guide follows the living [NAP-INC document](https://github.com/napplet/naps/blob/master/naps/NAP-INC.md). `emit(topic, payload?)` accepts a stable topic and optional opaque payload. It also accepts a queried `napplet:<archetype>/<intent>` convention URI as developer-facing shorthand:
+
+```ts
+import { emit, on } from '@napplet/nap/inc';
+
+emit('napplet:profile/open?pubkey=abc123');
+// -> { type: 'inc.emit', topic: 'napplet:profile/open', payload: { pubkey: 'abc123' } }
+
+on('napplet:profile/open', (event) => {
+  console.log(event.sender, event.payload);
+});
+```
+
+The runtime preprocesses that query before routing: it percent-decodes shallow text pairs (`+` remains a literal plus) and emits the queryless stable topic. Fragments, malformed percent encoding, repeated decoded names, and a query with an explicit payload throw synchronously before emission. Use a queryless topic with the explicit payload argument for structured or non-text data.
+
+This rule applies to the adopted URI input boundaries only: outbound NAP-INC `emit` and NAP-INTENT `invoke`/`open`. Manifest conventions remain queryless, and subscriptions and shell delivery keep exact complete-string routing with no query, wildcard, prefix, or canonicalization matching.
 
 ## Subpath Patterns
 
@@ -114,21 +154,17 @@ The `exports` map in `package.json` declares 92 entry points:
 - 22 granular types entries (`@napplet/nap/<domain>/types`)
 - 22 granular shim entries (`@napplet/nap/<domain>/shim`)
 - 22 granular sdk entries (`@napplet/nap/<domain>/sdk`)
-- 1 deprecated compatibility wrapper (`ifc`) with matching `types`, `shim`,
-  and `sdk` entries
+- 1 deprecated compatibility wrapper (`ifc`) with matching `types`, `shim`, and `sdk` entries
 
 Each entry maps to its own pre-built `.js` + `.d.ts` pair under `dist/<domain>/<surface>.{js,d.ts}`. No root `.` key exists, and there is no top-level `main`/`module`/`types` field — attempting `import '@napplet/nap'` fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` by design.
 
 ## Compatibility Subpaths
 
-`ifc` is a deprecated compatibility wrapper for `inc`. It remains exported so
-older consumers keep working, but new napplet capability checks should use the
-active NAP domains.
+`ifc` is a deprecated compatibility wrapper for `inc`. It remains exported so older consumers keep working, but new napplet capability checks should use the active NAP domains.
 
 ## Resource NAP (v0.28.0)
 
-The `resource` domain ships in v0.28.0 alongside the milestone of browser-enforced
-resource isolation. It defines scheme-pluggable byte-fetching primitives:
+The `resource` domain ships in v0.28.0 alongside the milestone of browser-enforced resource isolation. It defines scheme-pluggable byte-fetching primitives:
 
 ```ts
 import { info, bytes, bytesMany, bytesAsObjectURL } from '@napplet/nap/resource/sdk';
@@ -160,18 +196,13 @@ Canonical schemes are defined in the spec:
 - `htree:` — Hashtree reference; shell verifies every Hashtree hash before delivery
 - `nostr:<bech32>` — single-hop NIP-19 resolution against the shell's relay pool
 
-Errors arrive as one of 8 typed codes: `not-found`, `blocked-by-policy`, `timeout`,
-`too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`.
+Errors arrive as one of 8 typed codes: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`.
 
-See [NAP-RESOURCE](https://github.com/napplet/naps) for the normative spec, the
-default shell resource policy, and the SVG rasterization MUSTs.
+See [NAP-RESOURCE](https://github.com/napplet/naps) for the normative spec, the default shell resource policy, and the SVG rasterization MUSTs.
 
 ## Identity NAP
 
-The `identity` domain is read-only. It exposes the shell-user pubkey and public
-identity data, but it does not sign, encrypt, or decrypt. Startup code should
-take one snapshot with `getPublicKey()` and then subscribe to shell-pushed
-`identity.changed` updates instead of polling while a signer connects.
+The `identity` domain is read-only. It exposes the shell-user pubkey and public identity data, but it does not sign, encrypt, or decrypt. Startup code should take one snapshot with `getPublicKey()` and then subscribe to shell-pushed `identity.changed` updates instead of polling while a signer connects.
 
 ```ts
 const pubkey = await window.napplet.identity.getPublicKey(); // "" when signed out
@@ -185,13 +216,9 @@ const sub = window.napplet.identity.onChanged((nextPubkey) => {
 });
 ```
 
-The wire surface includes `identity.changed` as a shell-to-napplet push message
-with `{ pubkey }` and no correlation `id`. The public key shape matches
-`identity.getPublicKey.result`: a hex pubkey when connected, or `""` when no
-user/signer is connected.
+The wire surface includes `identity.changed` as a shell-to-napplet push message with `{ pubkey }` and no correlation `id`. The public key shape matches `identity.getPublicKey.result`: a hex pubkey when connected, or `""` when no user/signer is connected.
 
-See the [NAP-IDENTITY](https://github.com/napplet/naps/pull/12) draft spec for
-the current read-only contract.
+See the [NAP-IDENTITY](https://github.com/napplet/naps/pull/12) draft spec for the current read-only contract.
 
 ## Package Surface
 
@@ -202,7 +229,7 @@ import { mediaCreateSession } from '@napplet/nap/media/sdk';
 import type { MediaNapMessage } from '@napplet/nap/media/types';
 ```
 
-Domain barrels are also available at `@napplet/nap/relay`, `@napplet/nap/storage`, `@napplet/nap/inc`, `@napplet/nap/keys`, `@napplet/nap/theme`, `@napplet/nap/media`, `@napplet/nap/notify`, `@napplet/nap/identity`, `@napplet/nap/config`, `@napplet/nap/resource`, `@napplet/nap/cvm`, `@napplet/nap/outbox`, `@napplet/nap/upload`, `@napplet/nap/intent`, `@napplet/nap/ble`, `@napplet/nap/webrtc`, `@napplet/nap/link`, `@napplet/nap/count`, `@napplet/nap/lists`, `@napplet/nap/common`, `@napplet/nap/serial`, and `@napplet/nap/dm`.
+Domain barrels are also available at `@napplet/nap/relay`, `@napplet/nap/storage`, `@napplet/nap/inc`, `@napplet/nap/keys`, `@napplet/nap/theme`, `@napplet/nap/media`, `@napplet/nap/notify`, `@napplet/nap/identity`, `@napplet/nap/config`, `@napplet/nap/resource`, `@napplet/nap/cvm`, `@napplet/nap/outbox`, `@napplet/nap/upload`, `@napplet/nap/intent`, `@napplet/nap/ble`, `@napplet/nap/webrtc`, `@napplet/nap/link`, `@napplet/nap/count`, `@napplet/nap/lists`, `@napplet/nap/common`, `@napplet/nap/serial`, `@napplet/nap/fs`, and `@napplet/nap/dm`.
 
 ## Optional Peer Dependency
 

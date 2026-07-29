@@ -19,6 +19,10 @@ Protocol references used here:
   manifest and aggregate-hash model
 - [NAPs](https://github.com/napplet/naps), the capability-domain specs for
   `identity`, `storage`, and `outbox`
+- [NAP-INC PR #89 at `4593ce9`](https://github.com/napplet/naps/pull/89/commits/4593ce9e301ce098fd3dad64206fcd6f144fa7af),
+  [governance/web PR #90 at `896c32c`](https://github.com/napplet/naps/pull/90/commits/896c32c92deee68dc4d10fc1132b62df20cccb6f),
+  and [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md),
+  the exact draft heads adopted for convention URI and intent semantics
 
 ## 1. Scaffold the starter
 
@@ -29,7 +33,7 @@ napplet create note-drafts
 cd note-drafts
 napplet init --name notedrafts --title "Note Drafts" \
   --description "Draft and publish short Nostr notes from a sandboxed napplet." \
-  --archetype note:NAP-4
+  --archetype note:napplet:note/open
 pnpm install
 ```
 
@@ -37,6 +41,12 @@ The generated repository includes broad starter examples and context docs. For
 this tutorial, treat them as a substrate, not as app requirements. The Note
 Drafts app does not need direct relay queries, notifications, config settings,
 resource loading, or a napplet-side shell probe.
+
+This tutorial's queryless convention emits `['archetype', 'note', 'napplet:note/open']`. The runtime never infers a kind or payload schema from payload content.
+
+If a future feature adds INC `emit` or intent `invoke/open`, those two bindings
+may transpose a queried URI to its stable queryless identity plus a shallow text
+payload. Subscriptions, manifest discovery, and handler resolution still use exact equality on the queryless identity. Intent invocation uses an explicit request object and reports whether the selected handler accepted the dispatch.
 
 ## 2. Tighten package metadata
 
@@ -60,11 +70,11 @@ surface. The napplet app imports `@napplet/sdk`; the shell/runtime injects
     "test:conformance:ui": "napplet-conformance --ui . --exec \"vite build --watch\""
   },
   "dependencies": {
-    "@napplet/sdk": "^0.24.4"
+    "@napplet/sdk": "^0.26.0"
   },
   "devDependencies": {
-    "@napplet/conformance-cli": "^0.2.15",
-    "@napplet/vite-plugin": "^0.11.2",
+    "@napplet/conformance-cli": "^0.2.17",
+    "@napplet/vite-plugin": "^0.13.0",
     "typescript": "^5.9.3",
     "vite": "^6.4.3",
     "vite-plugin-singlefile": "^2.3.3"
@@ -531,22 +541,23 @@ pnpm build
 pnpm test:conformance
 ```
 
-Inspect the emitted metadata:
+Inspect the generated signed manifest tags:
 
 ```bash
-grep -n "napplet-type\\|napplet-requires" dist/index.html
+grep -n '"d"\\|"requires"' dist/.nip5a-manifest.json
 ```
 
-Expected metadata:
+Expected manifest tags include:
 
-```html
-<meta name="napplet-type" content="my-napplet">
-<meta name="napplet-requires" content="identity,outbox,storage">
+```json
+["d", "my-napplet"]
+["requires", "identity"]
+["requires", "outbox"]
+["requires", "storage"]
 ```
 
-`napplet-type` is the template's build-local fallback. The following deploy
-preview must show the CLI-owned `notedrafts` d-tag and the title, description,
-and archetype from `.napplet/config.json`.
+The deploy preview must show the CLI-owned `notedrafts` d-tag and the title,
+description, and archetype from `.napplet/config.json`.
 
 Open the app in your target shell or Paja runtime and verify:
 

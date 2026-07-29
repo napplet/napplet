@@ -1,5 +1,31 @@
 # @napplet/conformance-cli
 
+## 0.2.18
+
+### Patch Changes
+
+- Updated dependencies [d201bd0]
+- Updated dependencies [d201bd0]
+  - @napplet/conformance@0.16.0
+
+## 0.2.17
+
+### Patch Changes
+
+- Updated dependencies [7b67562]
+  - @napplet/conformance@0.15.0
+
+## 0.2.16
+
+### Patch Changes
+
+- dd7b3a7: Update shipped generator, conformance CLI, and agent-skill guidance for
+  queryless convention identities, optional same-tag event kinds, authoritative
+  intent URIs, acceptance-before-delivery, runtime-attested sender, and
+  carrier-neutral delivery without a public NAP-INC dependency.
+- Updated dependencies [dd7b3a7]
+  - @napplet/conformance@0.14.0
+
 ## 0.2.15
 
 ### Patch Changes
