@@ -1,19 +1,11 @@
 # @napplet/vite-plugin
 
-> Vite plugin for napplet local development that generates NIP-5A manifests for testing.
+> Vite build plugin that generates NIP-5A manifest sidecars for verification and deploy metadata handoff.
 
-`@napplet/vite-plugin` is a **development tool**. At build time (with a test private key) it
-walks `dist/`, computes per-file SHA-256 hashes and the NIP-5A aggregate hash,
-signs a NIP-5D **kind 35129** named-napplet manifest event (NIP-5A tag schema:
-`path` tags + one aggregate `x` tag), and emits the `requires` / `config`
-tags. It runs at build/dev time only — it is **not** a runtime
-dependency.
+`@napplet/vite-plugin` runs at build time and is **not** a runtime dependency. It walks `dist/`, computes per-file SHA-256 hashes and the NIP-5A aggregate hash, and writes a NIP-5D **kind 35129** named-napplet manifest sidecar containing the `path`, aggregate `x`, `requires`, `config`, and `archetype` tags. A development key may sign that sidecar for local verification, but signing is not required for metadata handoff.
 
 ::: tip
-For production deployment of napplets to nsites, use community deploy tools like
-[nsyte](https://github.com/nicefarm/nsyte), which handle NIP-5A event creation and
-relay publishing. The build-time manifest here is for verifying the hash workflow
-locally.
+Use `napplet deploy` for production signing, Blossom upload, and relay publication. It reads build-owned metadata from `.nip5a-manifest.json` and constructs the event it publishes; the sidecar itself is not published as-is.
 :::
 
 - **npm:** [`@napplet/vite-plugin`](https://www.npmjs.com/package/@napplet/vite-plugin)
@@ -53,8 +45,7 @@ export default defineConfig({
 
 ## Generated manifest
 
-At **build time** (with `VITE_DEV_PRIVKEY_HEX` set), the plugin walks `dist/`,
-computes hashes, signs the kind 35129 event, and writes `.nip5a-manifest.json`:
+At **build time**, the plugin walks `dist/`, computes hashes, and writes `.nip5a-manifest.json`. With `VITE_DEV_PRIVKEY_HEX` set it also signs the kind 35129 event; without a key it writes the unsigned template so deploy tooling can preserve its metadata:
 
 ```json
 {
@@ -82,9 +73,7 @@ computes hashes, signs the kind 35129 event, and writes `.nip5a-manifest.json`:
 
 ## Environment
 
-- **`VITE_DEV_PRIVKEY_HEX`** — hex-encoded 32-byte test private key. If set, the
-  plugin signs the manifest at build time; if unset, manifest generation is
-  gracefully skipped. **Never use a real key** — generate a dedicated test key.
+- **`VITE_DEV_PRIVKEY_HEX`** — hex-encoded 32-byte test private key. If set, the plugin signs the manifest at build time; if unset, the plugin still writes the unsigned manifest template. **Never use a real key** — generate a dedicated test key.
 
 ## See also
 
