@@ -50,9 +50,9 @@ function validateResolvedSchema(schema: NappletConfigSchema | null, source: stri
 }
 
 /**
- * Build-only entry point: rewrite dist artifacts as configured, then (when a
- * signing key is present) compute the NIP-5A aggregateHash, sign the NIP-5D
- * kind `35129` manifest, and write `.nip5a-manifest.json`.
+ * Build-only entry point: rewrite dist artifacts as configured, compute the
+ * NIP-5A aggregateHash, and write `.nip5a-manifest.json`. When a signing key is
+ * present, the NIP-5D kind `35129` manifest is signed before it is written.
  *
  * The aggregate hash is written ONLY to the external manifest file — never back
  * into index.html (a file cannot advertise a hash that covers itself).
@@ -70,8 +70,6 @@ export async function writeBundleManifest(options: Nip5aManifestOptions, state: 
   prepareDistIndexHtml(distPath, state);
 
   const privkeyHex = process.env.VITE_DEV_PRIVKEY_HEX;
-  if (!privkeyHex) return;
-
   const manifest = buildManifestTemplate(options, distPath, state);
   await writeManifestFile(distPath, manifest, privkeyHex);
 }
@@ -176,8 +174,14 @@ function buildPathPairs(distPath: string): Array<[string, string]> {
 async function writeManifestFile(
   distPath: string,
   manifest: ManifestTemplate,
-  privkeyHex: string,
+  privkeyHex: string | undefined,
 ): Promise<void> {
+  const manifestPath = path.join(distPath, '.nip5a-manifest.json');
+  if (!privkeyHex) {
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    return;
+  }
+
   try {
     const { finalizeEvent, getPublicKey } = await import('nostr-tools/pure');
     const { hexToBytes } = await import('nostr-tools/utils');
@@ -191,8 +195,8 @@ async function writeManifestFile(
     }, privkeyBytes);
 
     const manifestWithMeta = { ...signedEvent, aggregateHash: manifest.aggregateHash, pubkey };
-    fs.writeFileSync(path.join(distPath, '.nip5a-manifest.json'), JSON.stringify(manifestWithMeta, null, 2));
+    fs.writeFileSync(manifestPath, JSON.stringify(manifestWithMeta, null, 2));
   } catch {
-    fs.writeFileSync(path.join(distPath, '.nip5a-manifest.json'), JSON.stringify(manifest, null, 2));
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   }
 }

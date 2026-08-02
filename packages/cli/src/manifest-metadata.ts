@@ -18,6 +18,7 @@ const NAP_DOMAINS = new Set([
   "ble",
   "webrtc",
   "link",
+  "count",
   "lists",
   "serial",
   "fs",

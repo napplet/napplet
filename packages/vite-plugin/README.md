@@ -1,33 +1,33 @@
 # @napplet/vite-plugin
 
-> Vite plugin for napplet local development that optionally generates NIP-5A manifests for testing.
+> Vite plugin for napplet local development that generates NIP-5A manifests for testing and deploy metadata handoff.
 
-**This is a development tool.** For production deployment of napplets to nsites, use community deploy tools like [nsyte](https://github.com/nicefarm/nsyte) which handle NIP-5A event creation and relay publishing.
+**This is a build tool, not a runtime dependency or deploy signer.** It writes the metadata sidecar that `napplet deploy` reads when constructing and signing production manifest events.
 
 ## Getting Started
 
 ### What This Plugin Does
 
-At **build time** (with `VITE_DEV_PRIVKEY_HEX` set), the plugin:
+At **build time**, the plugin:
 
 1. Optionally rewrites local JS/CSS build assets into `index.html` when `artifactMode: 'single-file'` is enabled
 2. Walks the final `dist/` artifact set and computes SHA-256 of each file
 3. Computes the aggregate hash per the NIP-5A algorithm (over the `path` tags alone)
-4. Creates a NIP-5D **kind 35129** named-napplet manifest event — NIP-5A tag schema: one `['path', '/abs/path', '<sha256>']` per file plus one aggregate `['x', '<aggregateHash>', 'aggregate']` tag — and signs it
+4. Creates a NIP-5D **kind 35129** named-napplet manifest template — NIP-5A tag schema: one `['path', '/abs/path', '<sha256>']` per file plus one aggregate `['x', '<aggregateHash>', 'aggregate']` tag
 5. Writes `.nip5a-manifest.json` to `dist/`
 6. Embeds an optional schema as a `['config', ...]` tag on the manifest (NOT folded into `aggregateHash` — the aggregate is `path` tags only, per NIP-5D §Identity)
 
-The build-time manifest is for verifying the hash computation workflow locally, not for deploying to relays.
+The build-time sidecar supports local verification and carries build-owned metadata into `napplet deploy`. The deploy command constructs and signs the event that is published to relays; it does not publish the sidecar as-is.
 
 ### When to Use This
 
 - You are building a napplet and testing locally with a shell implementation
 - You want to verify aggregate hash computation before deploying
+- You want `napplet deploy` to preserve build-owned `requires`, `config`, and `archetype` metadata
 
 ### When NOT to Use This
 
-- Deploying napplets to production (use [nsyte](https://github.com/nicefarm/nsyte) or similar)
-- Creating NIP-5A events for relay publishing (use dedicated deploy tools)
+- Signing or publishing manifest events directly (use `napplet deploy`)
 - Runtime dependencies -- this plugin runs at build/dev time only
 
 ## Installation
@@ -266,7 +266,7 @@ The walk recurses into `properties`, `items`, `additionalProperties`, `patternPr
 
 **Type:** `string` (hex-encoded 32-byte private key)
 
-If set, the plugin signs the manifest event at build time. If not set, manifest generation is gracefully skipped (dev mode works without it).
+If set, the plugin signs the manifest event at build time. If not set, it writes the unsigned manifest template, including `requires`, `config`, and `archetype` metadata, for verification and `napplet deploy` to consume.
 
 **Security:** NEVER use a real private key here. Use a dedicated test key generated for local development only:
 
@@ -354,7 +354,7 @@ The shell resolves napplet identity and capability metadata from the signed mani
 
 ### Build Mode (`closeBundle`)
 
-Only runs if `VITE_DEV_PRIVKEY_HEX` is set:
+Runs after every build; `VITE_DEV_PRIVKEY_HEX` controls only whether the generated manifest is signed:
 
 1. If `artifactMode: 'single-file'` is set, rewrites local JS/CSS references into `index.html` before hashing
 2. Walks `dist/` directory recursively
@@ -362,7 +362,7 @@ Only runs if `VITE_DEV_PRIVKEY_HEX` is set:
 4. Creates sorted hash lines: `<sha256hex> <absolutePath>\n` (NIP-5A: absolute paths, leading `/`)
 5. Computes aggregate hash (SHA-256 of sorted concatenation of the `path`-tag lines)
 6. Creates a kind 35129 manifest event with one `['path', '/abs/path', <sha256>]` tag per file, one aggregate `['x', <aggregateHash>, 'aggregate']` tag, and `requires` tags if configured
-7. Signs with the test private key
+7. Signs with the test private key when `VITE_DEV_PRIVKEY_HEX` is set; otherwise keeps the template unsigned
 8. Writes `.nip5a-manifest.json` to `dist/`
 
 ## API Reference

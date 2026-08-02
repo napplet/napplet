@@ -191,7 +191,7 @@ Signing can come from:
 
 The human deploy report includes each signed manifest event's short event id plus a copyable `nevent` pointer. Addressable root and named manifests also include copyable `naddr` pointers using the configured relay hints.
 
-When a built napplet includes a plugin-generated `.nip5a-manifest.json`, deploy preserves canonical `requires` tags from that sidecar on root, named, and companion snapshot manifests.
+When a built napplet includes a plugin-generated `.nip5a-manifest.json`, signed or unsigned, deploy preserves canonical `requires` and `archetype` tags from that sidecar on root, named, and companion snapshot manifests.
 
 Deploy also reads the built `index.html` and emits single `title` and `description` manifest tags from its plain HTML `<title>` and `<meta name="description">` values when present.
 

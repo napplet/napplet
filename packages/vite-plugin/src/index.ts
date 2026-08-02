@@ -28,14 +28,12 @@
  *
  * - rewrite local JS/CSS assets into `index.html` for single-file artifacts
  * - compute per-file SHA-256 hashes and the NIP-5A aggregate hash
- * - write `.nip5a-manifest.json` containing a signed NIP-5D kind 35129 manifest
+ * - write `.nip5a-manifest.json` containing a NIP-5D kind 35129 manifest template
  * - inject optional plain-HTML title and description metadata
  * - record required domains, config schema, and archetype metadata in the
- *   signed manifest event
+ *   manifest template or signed event
  *
- * Set `VITE_DEV_PRIVKEY_HEX` to a hex-encoded 32-byte private key when you want
- * the build-time manifest signed. Without it, manifest signing is skipped while
- * the requested artifact rewrites still run.
+ * Set `VITE_DEV_PRIVKEY_HEX` to a hex-encoded 32-byte private key when you want the build-time manifest signed. Without it, the plugin writes an unsigned manifest template so deploy tooling can still consume its metadata.
  *
  * This plugin is a local development and verification tool. Production deploy
  * flows should use a deploy tool that publishes the built artifact and signed
@@ -66,7 +64,7 @@ export type { Nip5aArtifactMode, Nip5aManifestOptions, Nip5aRequiresOptions } fr
  * @param options - manifest options (napplet type, requires, artifact mode,
  *                   config schema).
  * @returns A Vite {@link Plugin} that optionally updates plain HTML metadata
- *          and generates the signed NIP-5A manifest at build time.
+ *          and generates the NIP-5A manifest template at build time.
  * @example
  * import { nip5aManifest } from '@napplet/vite-plugin';
  *
