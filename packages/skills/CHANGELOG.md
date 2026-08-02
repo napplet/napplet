@@ -1,5 +1,11 @@
 # @napplet/skills
 
+## 0.3.1
+
+### Patch Changes
+
+- b3f0007: Accept independent NAP-INTENT archetype roles and payload conventions, and require structured invoke results.
+
 ## 0.3.0
 
 ### Minor Changes

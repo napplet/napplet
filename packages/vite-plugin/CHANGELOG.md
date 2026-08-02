@@ -1,5 +1,12 @@
 # @napplet/vite-plugin
 
+## 0.14.1
+
+### Patch Changes
+
+- b3f0007: Accept independent NAP-INTENT archetype roles and payload conventions, and require structured invoke results.
+- 2e25f92: Write the build manifest template even without a development signing key, and preserve `count` requirements during CLI deploys.
+
 ## 0.14.0
 
 ### Minor Changes
