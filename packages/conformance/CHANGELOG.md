@@ -1,5 +1,14 @@
 # @napplet/conformance
 
+## 0.16.1
+
+### Patch Changes
+
+- 1861f4d: Restore maintainable module boundaries without changing protocol behavior.
+- Updated dependencies [1861f4d]
+  - @napplet/core@0.31.1
+  - @napplet/nap@0.31.1
+
 ## 0.16.0
 
 ### Minor Changes
