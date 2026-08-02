@@ -27,9 +27,14 @@ async function runCloseBundle(
   fixture: { root: string; dist: string },
   viteConfig: Record<string, unknown> = {},
   sources: Array<{ id: string; code: string }> = [],
+  signingKey: string | null = TEST_PRIVKEY,
 ): Promise<{ warnings: string[] }> {
   const previousPrivkey = process.env.VITE_DEV_PRIVKEY_HEX;
-  process.env.VITE_DEV_PRIVKEY_HEX = TEST_PRIVKEY;
+  if (signingKey === null) {
+    delete process.env.VITE_DEV_PRIVKEY_HEX;
+  } else {
+    process.env.VITE_DEV_PRIVKEY_HEX = signingKey;
+  }
   const warnings: string[] = [];
   try {
     const plugin = nip5aManifest(options);
@@ -93,6 +98,35 @@ describe('NIP-5A aggregate hash', () => {
 });
 
 describe('nip5aManifest artifact modes', () => {
+  it('writes unsigned requires and archetype metadata when no development key is set', async () => {
+    const fixture = makeFixture();
+    fs.writeFileSync(path.join(fixture.dist, 'index.html'), '<!doctype html>');
+
+    await runCloseBundle(
+      {
+        nappletType: 'unsigned-metadata',
+        requires: ['outbox', 'count'],
+        archetypes: [{ slug: 'note', convention: 'napplet:note/open' }],
+      },
+      fixture,
+      {},
+      [],
+      null,
+    );
+
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixture.dist, '.nip5a-manifest.json'), 'utf-8'),
+    ) as Record<string, unknown> & { tags: string[][] };
+    expect(manifest.tags.filter((tag) => tag[0] === 'requires')).toEqual([
+      ['requires', 'count'],
+      ['requires', 'outbox'],
+    ]);
+    expect(manifest.tags).toContainEqual(['archetype', 'note', 'napplet:note/open']);
+    expect(manifest).not.toHaveProperty('id');
+    expect(manifest).not.toHaveProperty('sig');
+    expect(manifest).not.toHaveProperty('pubkey');
+  });
+
   it('preserves inline executable scripts in the default external-assets mode', async () => {
     // NIP-5D loads a napplet as a single self-contained `/index.html` via
     // `iframe.srcdoc` with `sandbox="allow-scripts"` (opaque origin), so inline

@@ -202,6 +202,7 @@ Deno.test("createDeployManifestTemplates preserves plugin-emitted requires tags"
         tags: [
           ["requires", "relay"],
           ["requires", "storage"],
+          ["requires", "count"],
           ["server", "https://ignored.example"],
         ],
       }),
@@ -228,6 +229,7 @@ Deno.test("createDeployManifestTemplates preserves plugin-emitted requires tags"
       assertEquals(manifest.template?.tags.filter((tag) => tag[0] === "requires"), [
         ["requires", "relay"],
         ["requires", "storage"],
+        ["requires", "count"],
       ]);
       assertEquals(
         manifest.template?.tags.some((tag) =>
@@ -236,6 +238,40 @@ Deno.test("createDeployManifestTemplates preserves plugin-emitted requires tags"
         false,
       );
     }
+  });
+});
+
+Deno.test("plugin manifest requirements cover every active @napplet/nap domain", async () => {
+  await withTempDir(async (dir) => {
+    const napPackage = JSON.parse(
+      await Deno.readTextFile(new URL("../../nap/package.json", import.meta.url)),
+    ) as { exports: Record<string, unknown> };
+    const activeDomains = Object.keys(napPackage.exports)
+      .filter((subpath) => /^\.\/[^/]+$/.test(subpath) && subpath !== "./ifc")
+      .map((subpath) => subpath.slice(2))
+      .sort();
+    await Deno.writeTextFile(`${dir}/index.html`, "index");
+    await Deno.writeTextFile(
+      `${dir}/.nip5a-manifest.json`,
+      JSON.stringify({ tags: activeDomains.map((domain) => ["requires", domain]) }),
+    );
+    const candidate: NappletCandidate = {
+      name: "domain-audit",
+      dir,
+      indexHtml: `${dir}/index.html`,
+      manifestPath: `${dir}/.nip5a-manifest.json`,
+    };
+    const config = defaultConfig({ named: ["domain-audit"] });
+    const plan = createDeployPlan(config, [candidate], {});
+    const manifests = await createDeployManifestTemplates(plan, config, { createdAt: 123 });
+
+    assertEquals(
+      manifests[0].template?.tags
+        .filter((tag) => tag[0] === "requires")
+        .map((tag) => tag[1])
+        .sort(),
+      activeDomains,
+    );
   });
 });
 
