@@ -1,5 +1,13 @@
 # @napplet/conformance
 
+## 0.16.2
+
+### Patch Changes
+
+- b3f0007: Accept independent NAP-INTENT archetype roles and payload conventions, and require structured invoke results.
+- Updated dependencies [b3f0007]
+  - @napplet/nap@0.31.2
+
 ## 0.16.1
 
 ### Patch Changes
