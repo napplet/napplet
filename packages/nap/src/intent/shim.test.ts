@@ -162,7 +162,7 @@ describe('@napplet/nap/intent shim', () => {
     });
   });
 
-  it('rejects a top-level invoke error', async () => {
+  it('rejects an error-only invoke result because NAP-INTENT requires a structured result', async () => {
     const { handleIntentMessage, invoke } = await import('./shim.js');
     const promise = invoke({ archetype: 'note' });
     const sent = lastPosted('intent.invoke');

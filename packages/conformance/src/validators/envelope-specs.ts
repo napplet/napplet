@@ -173,7 +173,7 @@ export const ENVELOPE_SPECS: Record<string, EnvelopeSpec> = {
   'intent.invoke': { dir: 'out', fields: { ...ID, request: 'object' } },
   'intent.available': { dir: 'out', fields: { ...ID, archetype: 'string' } },
   'intent.handlers': { dir: 'out', fields: { ...ID } },
-  'intent.invoke.result': { dir: 'in' },
+  'intent.invoke.result': { dir: 'in', fields: { ...ID, result: 'object' } },
   'intent.available.result': { dir: 'in' },
   'intent.handlers.result': { dir: 'in' },
   'intent.changed': { dir: 'in' },

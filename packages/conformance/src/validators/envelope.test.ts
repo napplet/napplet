@@ -123,6 +123,13 @@ describe('validateEnvelope — outbound field checks', () => {
     }));
   });
 
+  it('declares the required NAP-INTENT invoke result carrier fields', () => {
+    expect(ENVELOPE_SPECS['intent.invoke.result']).toEqual({
+      dir: 'in',
+      fields: { id: 'string', result: 'object' },
+    });
+  });
+
   it('treats `present` fields as required-but-untyped (outbox.query filters union)', () => {
     expect(validateEnvelope({ type: 'outbox.query', id: 'a', filters: { kinds: [1] } }).ok).toBe(true);
     expect(validateEnvelope({ type: 'outbox.query', id: 'a', filters: [{ kinds: [1] }] }).ok).toBe(true);

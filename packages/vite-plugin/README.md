@@ -134,7 +134,7 @@ If none of the three paths resolve a schema, manifest emission for the config ta
 
 **Type:** `Array<{ slug: string; convention: string }>`
 
-Declares the NAAT archetype roles this napplet fulfills ([living archetype registry](https://github.com/napplet/naps/blob/master/ARCHETYPES.md)). Each entry emits **one** `['archetype', slug, convention]` tag on the kind 35129 manifest event. `convention` is a queryless stable identity. A napplet may declare several archetype roles; a napplet with no archetype tag is fully valid.
+Declares the NAAT archetype roles this napplet fulfills ([living archetype registry](https://github.com/napplet/naps/blob/master/ARCHETYPES.md)). Each entry emits **one** `['archetype', slug, convention]` tag on the kind 35129 manifest event. `convention` is a queryless stable identity. The role slug and the convention's own archetype segment are independent, as defined by [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md). A napplet may declare several archetype roles; a napplet with no archetype tag is fully valid.
 
 ```ts
 nip5aManifest({

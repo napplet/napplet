@@ -440,6 +440,7 @@ Deno.test("template metadata preserves only canonical archetype tags", async () 
         tags: [
           ["archetype", "note", "napplet:note/open"],
           ["archetype", "profile", "napplet:profile/open"],
+          ["archetype", "profile", "napplet:note/open"],
           ["archetype", "note", "napplet:note/open?kind=1", "kind:1"],
           ["archetype", "note", "napplet:note/open", "kind:-1"],
           ["archetype", "note", "napplet:note/open", "kind:1.5"],
@@ -463,6 +464,7 @@ Deno.test("template metadata preserves only canonical archetype tags", async () 
       [
         ["archetype", "note", "napplet:note/open"],
         ["archetype", "profile", "napplet:profile/open"],
+        ["archetype", "profile", "napplet:note/open"],
       ],
     );
   });

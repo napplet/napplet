@@ -99,7 +99,6 @@ Deno.test("parseArchetypeConventions accepts stable identities and rejects disco
     "note:NAP-4",
     "feed:napplet:feed/open?source=following",
     "feed:napplet:feed/open#fragment",
-    "feed:napplet:profile/open",
   ]) {
     let message = "";
     try {
@@ -119,6 +118,7 @@ Deno.test("normalizeConfig preserves canonical archetype conventions", () => {
         { slug: "note", convention: "napplet:note/open" },
         { slug: "article", convention: "napplet:article/open" },
         { slug: "profile", convention: "napplet:profile/open" },
+        { slug: "profile", convention: "napplet:note/open" },
       ],
     },
   });
@@ -127,6 +127,7 @@ Deno.test("normalizeConfig preserves canonical archetype conventions", () => {
     { slug: "note", convention: "napplet:note/open" },
     { slug: "article", convention: "napplet:article/open" },
     { slug: "profile", convention: "napplet:profile/open" },
+    { slug: "profile", convention: "napplet:note/open" },
   ]);
 });
 

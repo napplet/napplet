@@ -148,9 +148,7 @@ The aggregate hash is computed into the manifest (`.nip5a-manifest.json`) and th
 
 ### Describe archetypes with stable conventions
 
-When the napplet fulfills an archetype role, use the current `archetypes` option
-and one stable, queryless convention identity per entry. The convention must use
-`napplet:<archetype>/<intent>` and its archetype segment must match `slug`.
+When the napplet fulfills an archetype role, use the current `archetypes` option and one stable, queryless convention identity per entry. The convention must use `napplet:<archetype>/<intent>`, while its archetype segment remains independent from the role `slug` under the living NAP-INTENT specification.
 
 ```ts
 archetypes: [

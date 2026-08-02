@@ -136,7 +136,7 @@ the queryless convention:
 ["archetype", "profile", "napplet:profile/open"]
 ```
 
-Each tag advertises one stable convention identity. Query parameters are rejected in metadata.
+Each tag advertises one stable convention identity. The role slug and convention's own archetype segment are independent under [NAP-INTENT](https://github.com/napplet/naps/blob/master/naps/NAP-INTENT.md). Query parameters are rejected in metadata.
 
 `--archetype` and the interactive wizard remain convention-only. Use object-form `.napplet/config.json` metadata
 when event-kind discovery is needed. URI query transposition occurs only in the
