@@ -148,9 +148,6 @@ function buildArchetypeTags(
     if (!conventionMatch) {
       throw new Error('[nip5a-manifest] archetype convention must be a queryless napplet:<archetype>/<intent> identity');
     }
-    if (conventionMatch[1] !== slug) {
-      throw new Error('[nip5a-manifest] archetype slug must match the convention archetype');
-    }
     tags.push(['archetype', slug, convention]);
   }
   return tags;

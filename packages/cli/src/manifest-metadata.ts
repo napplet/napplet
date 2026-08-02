@@ -92,8 +92,7 @@ function isCanonicalArchetypeTag(tag: unknown[]): tag is string[] {
   const conventionMatch = /^napplet:([^/?#\s]+)\/([^/?#\s]+)$/.exec(convention);
   if (
     !/^[a-z0-9][a-z0-9-]*$/.test(slug) ||
-    !conventionMatch ||
-    conventionMatch[1] !== slug
+    !conventionMatch
   ) return false;
   return tag.length === 3;
 }

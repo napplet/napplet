@@ -393,6 +393,7 @@ describe('nip5aManifest artifact modes', () => {
         archetypes: [
           { slug: 'note', convention: 'napplet:note/open' },
           { slug: 'note', convention: 'napplet:note/edit' },
+          { slug: 'profile', convention: 'napplet:note/open' },
         ],
       },
       fixture,
@@ -402,6 +403,7 @@ describe('nip5aManifest artifact modes', () => {
     expect(archetypeTags).toEqual([
       ['archetype', 'note', 'napplet:note/open'],
       ['archetype', 'note', 'napplet:note/edit'],
+      ['archetype', 'profile', 'napplet:note/open'],
     ]);
   });
 
@@ -415,11 +417,6 @@ describe('nip5aManifest artifact modes', () => {
       name: 'fragment-bearing convention metadata',
       entry: { slug: 'note', convention: 'napplet:note/open#fragment' },
       error: /queryless/i,
-    },
-    {
-      name: 'convention whose archetype conflicts with the tag slug',
-      entry: { slug: 'profile', convention: 'napplet:note/open' },
-      error: /must match/i,
     },
   ])('rejects $name', async ({ entry, error }) => {
     const fixture = makeFixture();

@@ -50,16 +50,25 @@ function isMessageType<T extends { type: string }>(
   return msg.type === type;
 }
 
+function isIntentResult(value: unknown): value is IntentResult {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const result = value as Record<string, unknown>;
+  return typeof result.ok === 'boolean'
+    && typeof result.archetype === 'string'
+    && typeof result.action === 'string'
+    && typeof result.handled === 'boolean';
+}
+
 function handleInvokeResult(msg: IntentInvokeResultMessage): void {
   const pending = pendingInvoke.get(msg.id);
   if (!pending) return;
   pendingInvoke.delete(msg.id);
   clearTimeout(pending.timeout);
-  if (msg.result !== undefined) {
+  if (isIntentResult(msg.result)) {
     pending.resolve(msg.result);
     return;
   }
-  pending.reject(new Error(msg.error ?? 'invoke failed'));
+  pending.reject(new Error(msg.error ?? 'invalid intent.invoke.result'));
 }
 
 function handleAvailableResult(msg: IntentAvailableResultMessage): void {

@@ -110,8 +110,9 @@ export interface Nip5aManifestOptions {
    * `convention` is a stable, queryless convention identity. A napplet may
    * declare several archetype roles; a napplet with no archetype tag is valid.
    *
-   * Each entry requires both a slug and convention. The convention archetype
-   * must equal the slug.
+   * Each entry requires both a role slug and convention. NAP-INTENT defines
+   * those dimensions independently, so the convention's archetype segment
+   * need not equal the role slug.
    *
    * Like the `config` tag, archetype tags are excluded from the aggregate `x`
    * hash (NIP-5D §Identity: the aggregate is recomputed from `path` tags

@@ -239,14 +239,12 @@ function normalizeArchetypeConvention(
   if (convention && /^NAP-[1-9][0-9]*$/.test(convention)) {
     throw new Error(`${field} convention must use napplet:<archetype>/<intent>, not a numbered NAP identifier`);
   }
-  if (!convention || !/^napplet:[^/\s]+\/[^\s]+$/.test(convention)) {
-    throw new Error(`${field} convention must use napplet:<archetype>/<intent>`);
+  if (!convention) {
+    throw new Error(`${field} convention must use queryless napplet:<archetype>/<intent>`);
   }
   const conventionMatch = /^napplet:([^/?#\s]+)\/([^/?#\s]+)$/.exec(convention);
-  if (!conventionMatch || conventionMatch[1] !== slug) {
-    throw new Error(
-      `${field} convention must use napplet:<archetype>/<intent> with an archetype matching its slug`,
-    );
+  if (!conventionMatch) {
+    throw new Error(`${field} convention must use queryless napplet:<archetype>/<intent>`);
   }
   return { slug, convention };
 }

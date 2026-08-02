@@ -48,8 +48,8 @@ export interface IntentInvokeResultMessage extends IntentMessage {
   type: 'intent.invoke.result';
   /** Correlation identifier matching the request. */
   id: string;
-  /** Structured dispatch result. */
-  result?: IntentResult;
+  /** Structured dispatch result required by NAP-INTENT. */
+  result: IntentResult;
   /** Top-level processing error. */
   error?: string;
 }
