@@ -29,6 +29,10 @@ Deno.test("compiled napplet creates and installs skills without a package resolv
 
     const compiled = await run(Deno.execPath(), [
       "compile",
+      "--no-check",
+      "--node-modules-dir=none",
+      "--include",
+      "../skills/skills",
       "--allow-read",
       "--allow-write",
       "--allow-run",
