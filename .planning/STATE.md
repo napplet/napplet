@@ -6,9 +6,9 @@ current_phase: 161
 current_phase_name: ad-hoc-convention-package-contracts
 status: complete
 stopped_at: Quick task 260728-nbn complete; PR #189 conflicts resolved
-last_updated: "2026-07-28T15:57:07.000Z"
+last_updated: "2026-08-03T16:46:32Z"
 last_activity: 2026-07-28
-last_activity_desc: Resolved PR #189 conflicts and restored the tutorial version contract
+last_activity_desc: Completed quick task 260803-ogn — release synchronization preserves npm wildcard asset exports
 progress:
   total_phases: 8
   completed_phases: 4
@@ -34,7 +34,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 Phase: 161 (ad-hoc-convention-package-contracts) — COMPLETE
 Plan: 26 of 26
 Status: Verified; PR #186 open
-Last activity: 2026-08-03 — Completed quick task 260803-f6z: resolver-free standalone napplet CLI package dispatch
+Last activity: 2026-08-03 — Completed quick task 260803-ogn: release synchronization preserves npm wildcard asset exports
 community/group-chat invite linked from the SPA and docs.
 
 ### Quick task 260726-ft1 — COMPLETE
@@ -511,6 +511,7 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 | Quick ID | Task | Date | Commit | Artifacts |
 |----------|------|------|--------|-----------|
+| 260803-ogn | Fix release version synchronization to preserve wildcard package exports and unblock the official CLI release | 2026-08-03 | 15783676 | [260803-ogn-fix-release-version-synchronization-to-p](./quick/260803-ogn-fix-release-version-synchronization-to-p/) |
 | 260803-f6z | Make the standalone napplet CLI resolver-free with direct boilerplate and skills package dispatch | 2026-08-03 | 37509d77 | [260803-f6z-make-the-standalone-napplet-cli-resolver](./quick/260803-f6z-make-the-standalone-napplet-cli-resolver/) |
 | 260728-nbn | Resolve conflicts in PR #189 | 2026-07-28 | 3984600b | [260728-nbn-resolve-conflicts-in-pr-189](./quick/260728-nbn-resolve-conflicts-in-pr-189/) |
 | 260726-ici | Implement the first MVP of NAP-FS — the `fs` domain, 8 byte-free operations (`read`/`write` deferred on an upstream spec gap) | 2026-07-26 | df55c625 | [260726-ici-lets-implement-the-first-mvp-of-nap-fs](./quick/260726-ici-lets-implement-the-first-mvp-of-nap-fs/) |
