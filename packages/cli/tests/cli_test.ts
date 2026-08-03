@@ -3,6 +3,7 @@ import {
   main,
   resolveConformanceCommand,
   resolvePajaArgs,
+  runPackageCli,
 } from "../src/cli.ts";
 import { defaultConfig } from "../src/config.ts";
 import { collectFlags } from "../src/flags.ts";
@@ -126,9 +127,90 @@ Deno.test("loadDeployConfig returns an existing config without initializing", as
   assertEquals(result, config);
 });
 
-Deno.test("main dispatches create and skills through the imported package CLIs", async () => {
-  assertEquals(await main(["create", "--help"]), 0);
-  assertEquals(await main(["skills", "--unknown"]), 2);
+Deno.test("runPackageCli preserves create arguments as an explicit argv array", async () => {
+  const calls: Array<{ command: string; args: string[] }> = [];
+  const stdout: string[] = [];
+  const code = await runPackageCli(
+    "@napplet/boilerplate",
+    ["project with spaces", "--template", "./local template", "--force"],
+    {
+      runner(command, args) {
+        calls.push({ command, args });
+        return Promise.resolve({ code: 0, stdout: "created\n", stderr: "" });
+      },
+      writeStdout: (value) => stdout.push(value),
+      os: "darwin",
+    },
+  );
+
+  assertEquals(code, 0);
+  assertEquals(calls, [{
+    command: "npx",
+    args: [
+      "--yes",
+      "@napplet/boilerplate",
+      "project with spaces",
+      "--template",
+      "./local template",
+      "--force",
+    ],
+  }]);
+  assertEquals(stdout, ["created"]);
+});
+
+Deno.test("runPackageCli preserves skills target passthrough on Windows", async () => {
+  const calls: Array<{ command: string; args: string[] }> = [];
+  const code = await runPackageCli("@napplet/skills", ["install", "--to", "agents"], {
+    runner(command, args) {
+      calls.push({ command, args });
+      return Promise.resolve({ code: 3, stdout: "", stderr: "failed\n" });
+    },
+    writeStderr: () => {},
+    os: "windows",
+  });
+
+  assertEquals(code, 3);
+  assertEquals(calls, [{
+    command: "npx.cmd",
+    args: ["--yes", "@napplet/skills", "install", "--to", "agents"],
+  }]);
+});
+
+Deno.test("main accepts standalone package runner injection without changing default dispatch", async () => {
+  const calls: Array<{ command: string; args: readonly string[] }> = [];
+  const options = {
+    runCreate(args: readonly string[]) {
+      calls.push({ command: "create", args });
+      return Promise.resolve(7);
+    },
+    runSkills(args: readonly string[]) {
+      calls.push({ command: "skills", args });
+      return 8;
+    },
+  };
+
+  assertEquals(await main(["create", "project", "--force"], options), 7);
+  assertEquals(await main(["skills", "install", "--to", "codex"], options), 8);
+  assertEquals(calls, [
+    { command: "create", args: ["project", "--force"] },
+    { command: "skills", args: ["install", "--to", "codex"] },
+  ]);
+});
+
+Deno.test("published CLI entrypoint excludes standalone-only workspace imports", async () => {
+  const cliSource = await Deno.readTextFile(new URL("../src/cli.ts", import.meta.url));
+  const standaloneSource = await Deno.readTextFile(
+    new URL("../src/standalone.ts", import.meta.url),
+  );
+  const config = JSON.parse(
+    await Deno.readTextFile(new URL("../deno.json", import.meta.url)),
+  ) as { publish?: { exclude?: string[] } };
+
+  assert(!cliSource.includes("@napplet/boilerplate"));
+  assert(!cliSource.includes("@napplet/skills/cli"));
+  assert(standaloneSource.includes('from "@napplet/boilerplate"'));
+  assert(standaloneSource.includes('from "@napplet/skills/cli"'));
+  assert(config.publish?.exclude?.includes("src/standalone.ts"));
 });
 
 Deno.test("resolveConformanceCommand runs the package-backed CLI without a global binary", () => {

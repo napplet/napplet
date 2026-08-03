@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runCli } from './cli.js';
+import { runCli as runDenoCli } from './deno-cli.js';
 
 describe('runCli', () => {
   afterEach(() => {
@@ -32,5 +33,21 @@ describe('runCli', () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  it('keeps Node and standalone Deno help output identical', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    expect(runCli(['--help'])).toBe(0);
+    const nodeHelp = String(log.mock.calls.at(-1)?.[0]);
+    log.mockClear();
+
+    expect(runDenoCli(['--help'])).toBe(0);
+    const denoHelp = String(log.mock.calls.at(-1)?.[0]);
+
+    expect(denoHelp).toBe(nodeHelp);
+    expect(denoHelp).toContain('Install options:');
+    expect(denoHelp).toContain('Targets (--to):');
+    expect(denoHelp).toContain('Examples:');
   });
 });

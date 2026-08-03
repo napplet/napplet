@@ -40,7 +40,7 @@ Deno.test("compiled napplet creates and installs skills without a package resolv
       "--allow-net",
       "--output",
       binary,
-      "src/cli.ts",
+      "src/standalone.ts",
     ], { cwd: new URL(".", CLI_DIR) });
     assertEquals(compiled.code, 0, text(compiled.stderr));
 
@@ -60,6 +60,12 @@ Deno.test("compiled napplet creates and installs skills without a package resolv
     const listed = await run(binary, ["skills", "list"], { env: environment, cwd: root });
     assertEquals(listed.code, 0, text(listed.stderr));
     assert(text(listed.stdout).includes("make-napplet"));
+
+    const skillsHelp = await run(binary, ["skills", "--help"], { env: environment, cwd: root });
+    assertEquals(skillsHelp.code, 0, text(skillsHelp.stderr));
+    assert(text(skillsHelp.stdout).includes("Install options:"));
+    assert(text(skillsHelp.stdout).includes("Targets (--to):"));
+    assert(text(skillsHelp.stdout).includes("Examples:"));
 
     const install = await run(binary, ["skills", "install", "make-napplet", "--dir", installed], { env: environment, cwd: root });
     assertEquals(install.code, 0, text(install.stderr));
