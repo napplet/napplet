@@ -1,5 +1,5 @@
 /** Deno workspace entry point for the skills CLI. */
-import { install, listSkills, readSkill, TARGETS, type InstallOptions } from "./index.ts";
+import { install, listSkills, readSkill, type InstallOptions } from "./index.ts";
 
 const HELP = `napplet-skills — install napplet build skills into your agent
 
