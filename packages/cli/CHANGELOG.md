@@ -1,5 +1,14 @@
 # @napplet/cli
 
+## 0.5.2
+
+### Patch Changes
+
+- b17e944: Make the standalone CLI dispatch bundled create and skills package code without a runtime Node.js or package-resolver dependency, and expose import-safe callable CLI entry points from the maintained packages.
+- Updated dependencies [b17e944]
+  - @napplet/boilerplate@0.3.2
+  - @napplet/skills@0.3.2
+
 ## 0.5.1
 
 ### Patch Changes
