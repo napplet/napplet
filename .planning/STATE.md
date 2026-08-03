@@ -34,7 +34,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 Phase: 161 (ad-hoc-convention-package-contracts) — COMPLETE
 Plan: 26 of 26
 Status: Verified; PR #186 open
-Last activity: 2026-07-28 — Quick task 260728-nbn resolved PR #189 conflicts and restored the tutorial version contract
+Last activity: 2026-08-03 — Completed quick task 260803-f6z: resolver-free standalone napplet CLI package dispatch
 community/group-chat invite linked from the SPA and docs.
 
 ### Quick task 260726-ft1 — COMPLETE
@@ -511,6 +511,7 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 | Quick ID | Task | Date | Commit | Artifacts |
 |----------|------|------|--------|-----------|
+| 260803-f6z | Make the standalone napplet CLI resolver-free with direct boilerplate and skills package dispatch | 2026-08-03 | 37509d77 | [260803-f6z-make-the-standalone-napplet-cli-resolver](./quick/260803-f6z-make-the-standalone-napplet-cli-resolver/) |
 | 260728-nbn | Resolve conflicts in PR #189 | 2026-07-28 | 3984600b | [260728-nbn-resolve-conflicts-in-pr-189](./quick/260728-nbn-resolve-conflicts-in-pr-189/) |
 | 260726-ici | Implement the first MVP of NAP-FS — the `fs` domain, 8 byte-free operations (`read`/`write` deferred on an upstream spec gap) | 2026-07-26 | df55c625 | [260726-ici-lets-implement-the-first-mvp-of-nap-fs](./quick/260726-ici-lets-implement-the-first-mvp-of-nap-fs/) |
 | 260723-kgz | Remove the invented 13-character length cap on napplet `d` tags in @napplet/cli | 2026-07-23 | 5d798639 | [260723-kgz-remove-cli-d-tag-length-limit](./quick/260723-kgz-remove-cli-d-tag-length-limit/) |

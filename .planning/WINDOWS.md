@@ -2,9 +2,9 @@
 schema_version: 1
 open_count: 6
 waived_count: 0
-fixed_count: 0
-total_count: 6
-last_updated: 2026-07-23T15:10:55.730Z
+fixed_count: 1
+total_count: 7
+last_updated: 2026-08-03T10:32:22.997Z
 ---
 
 # Broken Windows Ledger
@@ -21,6 +21,7 @@ last_updated: 2026-07-23T15:10:55.730Z
 | 4 | 161 | deviation | packages/skills/README.md |  | Phase-wide convention guard remains red on active CLI/docs/SDK surfaces outside Plan 161-09 ownership. | open |  | 2026-07-23T14:17:38.934Z |  |
 | 5 | 161 | deviation | .planning/phases/161-ad-hoc-convention-package-contracts/161-11-PLAN.md |  | Plan-wide convention guard was deferred from tracer verification until Task 2 migrated its scanned tutorial files. | open |  | 2026-07-23T15:08:40.729Z |  |
 | 6 | 161 | deviation | .planning/STATE.md |  | Corrected stale twelve-plan counter that marked Phase 161 ready for verification before Plan 161-10 completed. | open |  | 2026-07-23T15:10:55.730Z |  |
+| 7 | quick-260803-f6z | unrun-verify | .github/workflows/ai-slop.yml |  | Local AI-slop scan is unavailable; the repository defines it only as a GitHub Actions composite action. | fixed |  | 2026-08-03T10:31:16.170Z | 2026-08-03T10:32:22.997Z |
 
 ````json
 [
@@ -95,6 +96,18 @@ last_updated: 2026-07-23T15:10:55.730Z
     "reason": "",
     "recorded_at": "2026-07-23T15:10:55.730Z",
     "resolved_at": null
+  },
+  {
+    "id": 7,
+    "kind": "unrun-verify",
+    "phase": "quick-260803-f6z",
+    "file": ".github/workflows/ai-slop.yml",
+    "line": null,
+    "description": "Local AI-slop scan is unavailable; the repository defines it only as a GitHub Actions composite action.",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-08-03T10:31:16.170Z",
+    "resolved_at": "2026-08-03T10:32:22.997Z"
   }
 ]
 ````
