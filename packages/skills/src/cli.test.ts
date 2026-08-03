@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { renderCliHelp } from './cli-help.js';
 import { runCli } from './cli.js';
+import { TARGETS } from './index.js';
 
 describe('runCli', () => {
   afterEach(() => {
@@ -32,5 +34,17 @@ describe('runCli', () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  it('renders the complete shared help contract', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    expect(runCli(['--help'])).toBe(0);
+    const help = String(log.mock.calls.at(-1)?.[0]);
+
+    expect(help).toBe(renderCliHelp(Object.values(TARGETS)));
+    expect(help).toContain('Install options:');
+    expect(help).toContain('Targets (--to):');
+    expect(help).toContain('Examples:');
   });
 });

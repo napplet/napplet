@@ -4,4 +4,4 @@
 "@napplet/cli": patch
 ---
 
-Make the standalone CLI dispatch bundled create and skills package code without a runtime Node.js or package-resolver dependency, and expose import-safe callable CLI entry points from the maintained packages.
+Make standalone release binaries dispatch bundled create and skills package code without a runtime Node.js or package-resolver dependency, preserve the JSR CLI's package-runner compatibility API, and expose import-safe callable CLI entry points from the maintained packages.
