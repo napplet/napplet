@@ -1859,6 +1859,7 @@
         "packageJson": {
           "dependencies": [
             "npm:@scure/base@^1.2.6",
+            "npm:@types/node@^22.15.0",
             "npm:applesauce-relay@^5.2.0",
             "npm:applesauce-signers@^5.2.0",
             "npm:nostr-tools@^2.23.3"

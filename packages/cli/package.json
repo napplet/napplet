@@ -25,6 +25,9 @@
     "applesauce-signers": "^5.2.0",
     "nostr-tools": "^2.23.3"
   },
+  "devDependencies": {
+    "@types/node": "^22.15.0"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",

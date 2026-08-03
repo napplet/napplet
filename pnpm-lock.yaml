@@ -118,6 +118,10 @@ importers:
       nostr-tools:
         specifier: ^2.23.3
         version: 2.23.3(typescript@5.9.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.19.15
 
   packages/conformance:
     dependencies:
