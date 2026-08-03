@@ -11,6 +11,11 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function writeText(path, value) {
+  mkdirSync(join(path, '..'), { recursive: true });
+  writeFileSync(path, value);
+}
+
 function createFixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'sync-jsr-versions-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -44,9 +49,9 @@ test('syncs concrete exports while preserving npm-only wildcard assets', (t) => 
     exports: { '.': './src/stale.ts' },
     imports: { '@napplet/core': 'jsr:@napplet/core@^0.0.1' },
   });
-  writeFileSync(packagePath(root, 'skills', 'src/index.ts'), 'export {};\n', { flag: 'w' });
-  writeFileSync(packagePath(root, 'skills', 'src/cli.ts'), 'export {};\n', { flag: 'w' });
-  writeFileSync(packagePath(root, 'skills', 'skills/make-napplet/SKILL.md'), '# Skill\n', { flag: 'w' });
+  writeText(packagePath(root, 'skills', 'src/index.ts'), 'export {};\n');
+  writeText(packagePath(root, 'skills', 'src/cli.ts'), 'export {};\n');
+  writeText(packagePath(root, 'skills', 'skills/make-napplet/SKILL.md'), '# Skill\n');
 
   writeJson(packagePath(root, 'cli', 'package.json'), {
     name: '@napplet/cli',
