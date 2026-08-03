@@ -224,23 +224,57 @@
     }
   },
   "workspace": {
-    "dependencies": [
-      "jsr:@libs/qrcode@^3.0.1",
-      "jsr:@std/encoding@1",
-      "jsr:@std/media-types@1",
-      "jsr:@std/path@1",
-      "jsr:@std/streams@1",
-      "npm:@scure/base@^1.2.6",
-      "npm:applesauce-relay@^5.2.0",
-      "npm:applesauce-signers@^5.2.0",
-      "npm:nostr-tools@^2.23.3"
-    ],
     "packageJson": {
       "dependencies": [
-        "npm:applesauce-relay@^5.2.0",
-        "npm:applesauce-signers@^5.2.0",
-        "npm:nostr-tools@^2.23.3"
+        "npm:@changesets/cli@^2.30.0",
+        "npm:@types/node@22.15.0",
+        "npm:happy-dom@^20.10.3",
+        "npm:nostr-tools@^2.23.3",
+        "npm:playwright@^1.59.1",
+        "npm:turbo@^2.9.14",
+        "npm:typescript@^5.9.3",
+        "npm:vite@^6.4.3",
+        "npm:vitest@^4.1.2"
       ]
+    },
+    "members": {
+      "packages/boilerplate": {
+        "packageJson": {
+          "dependencies": [
+            "npm:tsup@^8.5.0",
+            "npm:typescript@^5.9.3"
+          ]
+        }
+      },
+      "packages/cli": {
+        "dependencies": [
+          "jsr:@libs/qrcode@^3.0.1",
+          "jsr:@std/encoding@1",
+          "jsr:@std/media-types@1",
+          "jsr:@std/path@1",
+          "jsr:@std/streams@1",
+          "npm:@scure/base@^1.2.6",
+          "npm:applesauce-relay@^5.2.0",
+          "npm:applesauce-signers@^5.2.0",
+          "npm:nostr-tools@^2.23.3"
+        ],
+        "packageJson": {
+          "dependencies": [
+            "npm:applesauce-relay@^5.2.0",
+            "npm:applesauce-signers@^5.2.0",
+            "npm:nostr-tools@^2.23.3"
+          ]
+        }
+      },
+      "packages/skills": {
+        "packageJson": {
+          "dependencies": [
+            "npm:tsup@^8.5.0",
+            "npm:typescript@^5.9.3",
+            "npm:vitest@^4.1.2"
+          ]
+        }
+      }
     }
   }
 }

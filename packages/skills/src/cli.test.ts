@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runCli } from './cli.js';
@@ -19,11 +22,15 @@ describe('runCli', () => {
   });
 
   it('retains print and install behavior through the callable entry point', () => {
-    const root = '/tmp/napplet-skills-cli-test';
+    const root = mkdtempSync(path.join(os.tmpdir(), 'napplet-skills-cli-test-'));
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
-    expect(runCli(['print', 'make-napplet'])).toBe(0);
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('Make a napplet'));
-    expect(runCli(['install', 'make-napplet', '--dir', root])).toBe(0);
+    try {
+      expect(runCli(['print', 'make-napplet'])).toBe(0);
+      expect(log).toHaveBeenCalledWith(expect.stringContaining('Making A Napplet'));
+      expect(runCli(['install', 'make-napplet', '--dir', root])).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

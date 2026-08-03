@@ -131,6 +131,23 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
   printSuccess(config);
 }
 
+/**
+ * Run the boilerplate CLI without terminating the importing process.
+ *
+ * @param argv Command-line arguments, excluding the executable name.
+ * @returns Numeric process exit status.
+ */
+export async function runCli(argv = process.argv.slice(2)): Promise<number> {
+  try {
+    await main(argv);
+    return 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`@napplet/boilerplate: ${message}`);
+    return 1;
+  }
+}
+
 export async function resolveConfig(options: CliOptions): Promise<GeneratorConfig> {
   const canPrompt = Boolean(input.isTTY && output.isTTY && !options.yes);
   const rl = canPrompt ? createInterface({ input, output }) : null;
@@ -249,7 +266,7 @@ async function run(command: string, args: string[]): Promise<void> {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stderr = '';
-    child.stderr.on('data', (chunk: Buffer) => {
+    child.stderr.on('data', (chunk: Uint8Array) => {
       stderr += chunk.toString();
     });
     child.on('error', reject);
@@ -352,9 +369,7 @@ function shellEscape(value: string): string {
 
 const entrypoint = process.argv[1] ? path.resolve(process.argv[1]) : undefined;
 if (entrypoint === fileURLToPath(import.meta.url)) {
-  main().catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`@napplet/boilerplate: ${message}`);
-    process.exitCode = 1;
+  void runCli().then((status) => {
+    process.exitCode = status;
   });
 }

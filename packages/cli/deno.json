@@ -1,4 +1,5 @@
 {
+  "extends": "../../deno.json",
   "name": "@napplet/cli",
   "version": "0.5.1",
   "description": "Standalone CLI for creating, configuring, testing, and deploying napplets",
@@ -7,7 +8,6 @@
     ".": "./src/mod.ts",
     "./cli": "./src/cli.ts"
   },
-  "nodeModulesDir": "none",
   "imports": {
     "applesauce-relay": "npm:applesauce-relay@^5.2.0",
     "applesauce-signers": "npm:applesauce-signers@^5.2.0",

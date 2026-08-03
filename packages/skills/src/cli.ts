@@ -8,6 +8,8 @@
  */
 
 import { listSkills, readSkill, install, TARGETS, type InstallOptions } from './index.js';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const HELP = `napplet-skills — install napplet build skills into your agent
 
@@ -51,7 +53,13 @@ function parse(argv: string[]): { cmd?: string; positional: string[]; opts: Inst
   return { cmd: positional.shift(), positional, opts };
 }
 
-function main(argv: string[]): number {
+/**
+ * Run the skills CLI without terminating the importing process.
+ *
+ * @param argv Command-line arguments, excluding the executable name.
+ * @returns Numeric process exit status.
+ */
+export function runCli(argv: string[]): number {
   let parsed;
   try {
     parsed = parse(argv);
@@ -93,4 +101,7 @@ function main(argv: string[]): number {
   }
 }
 
-process.exit(main(process.argv.slice(2)));
+const entrypoint = process.argv[1] ? path.resolve(process.argv[1]) : undefined;
+if (entrypoint === fileURLToPath(import.meta.url)) {
+  process.exitCode = runCli(process.argv.slice(2));
+}
