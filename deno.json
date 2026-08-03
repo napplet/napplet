@@ -1,0 +1,8 @@
+{
+  "workspace": [
+    "./packages/boilerplate",
+    "./packages/skills",
+    "./packages/cli"
+  ],
+  "nodeModulesDir": "manual"
+}

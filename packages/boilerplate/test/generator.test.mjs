@@ -4,7 +4,22 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { generate, parseArgs, renderSuccess, resolveConfig } from '../dist/index.js';
+import { generate, parseArgs, renderSuccess, resolveConfig, runCli } from '../dist/index.js';
+
+test('runCli returns the maintained binary exit statuses without terminating its importer', async () => {
+  assert.equal(await runCli(['--help']), 0);
+
+  const errors = [];
+  const originalError = console.error;
+  console.error = (value) => errors.push(String(value));
+  try {
+    assert.equal(await runCli(['--variant', 'unsupported', '--yes']), 1);
+  } finally {
+    console.error = originalError;
+  }
+
+  assert.match(errors.join('\n'), /^@napplet\/boilerplate: Unsupported variant/);
+});
 
 test('accepts only project-location and scaffold options', () => {
   assert.deepEqual(parseArgs(['my-app', '--template', './template', '--force']), {

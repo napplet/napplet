@@ -18,6 +18,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.30.0
         version: 2.30.0(@types/node@22.19.15)
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.19.15
       happy-dom:
         specifier: ^20.10.3
         version: 20.10.3
@@ -100,6 +103,15 @@ importers:
 
   packages/cli:
     dependencies:
+      '@napplet/boilerplate':
+        specifier: workspace:^
+        version: link:../boilerplate
+      '@napplet/skills':
+        specifier: workspace:^
+        version: link:../skills
+      '@scure/base':
+        specifier: ^1.2.6
+        version: 1.2.6
       applesauce-relay:
         specifier: ^5.2.0
         version: 5.2.0(typescript@5.9.3)
@@ -109,6 +121,10 @@ importers:
       nostr-tools:
         specifier: ^2.23.3
         version: 2.23.3(typescript@5.9.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.19.15
 
   packages/conformance:
     dependencies:
@@ -957,6 +973,9 @@ packages:
 
   '@scure/base@1.1.1':
     resolution: {integrity: sha512-ZxOhsSyxYwLJj3pLZCefNitxsj093tb2vq90mp2txoYeBqbcjDjqFhyM8eUjq/uFm6zJ+mUuqxlS2FkuSY1MTA==}
+
+  '@scure/base@1.2.6':
+    resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
 
   '@scure/base@2.0.0':
     resolution: {integrity: sha512-3E1kpuZginKkek01ovG8krQ0Z44E3DHPjc5S2rjJw9lZn3KSQOs8S7wqikF/AH7iRanHypj85uGyxk0XAyC37w==}
@@ -2826,6 +2845,8 @@ snapshots:
     optional: true
 
   '@scure/base@1.1.1': {}
+
+  '@scure/base@1.2.6': {}
 
   '@scure/base@2.0.0': {}
 

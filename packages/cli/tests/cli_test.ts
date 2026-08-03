@@ -1,8 +1,8 @@
 import {
   loadDeployConfig,
+  main,
   resolveConformanceCommand,
   resolvePajaArgs,
-  runPackageCli,
 } from "../src/cli.ts";
 import { defaultConfig } from "../src/config.ts";
 import { collectFlags } from "../src/flags.ts";
@@ -126,53 +126,9 @@ Deno.test("loadDeployConfig returns an existing config without initializing", as
   assertEquals(result, config);
 });
 
-Deno.test("runPackageCli preserves create arguments as an explicit argv array", async () => {
-  const calls: Array<{ command: string; args: string[] }> = [];
-  const stdout: string[] = [];
-  const code = await runPackageCli(
-    "@napplet/boilerplate",
-    ["project with spaces", "--template", "./local template", "--force"],
-    {
-      runner(command, args) {
-        calls.push({ command, args });
-        return Promise.resolve({ code: 0, stdout: "created\n", stderr: "" });
-      },
-      writeStdout: (value) => stdout.push(value),
-      os: "darwin",
-    },
-  );
-
-  assertEquals(code, 0);
-  assertEquals(calls, [{
-    command: "npx",
-    args: [
-      "--yes",
-      "@napplet/boilerplate",
-      "project with spaces",
-      "--template",
-      "./local template",
-      "--force",
-    ],
-  }]);
-  assertEquals(stdout, ["created"]);
-});
-
-Deno.test("runPackageCli preserves skills target passthrough on Windows", async () => {
-  const calls: Array<{ command: string; args: string[] }> = [];
-  const code = await runPackageCli("@napplet/skills", ["install", "--to", "agents"], {
-    runner(command, args) {
-      calls.push({ command, args });
-      return Promise.resolve({ code: 3, stdout: "", stderr: "failed\n" });
-    },
-    writeStderr: () => {},
-    os: "windows",
-  });
-
-  assertEquals(code, 3);
-  assertEquals(calls, [{
-    command: "npx.cmd",
-    args: ["--yes", "@napplet/skills", "install", "--to", "agents"],
-  }]);
+Deno.test("main dispatches create and skills through the imported package CLIs", async () => {
+  assertEquals(await main(["create", "--help"]), 0);
+  assertEquals(await main(["skills", "--unknown"]), 2);
 });
 
 Deno.test("resolveConformanceCommand runs the package-backed CLI without a global binary", () => {

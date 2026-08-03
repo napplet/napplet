@@ -93,6 +93,16 @@ readSkill('build-napplet');        // full SKILL.md source
 install({ to: 'claude' });         // → InstallResult[]
 ```
 
+### Import-safe CLI API
+
+Import `runCli(argv)` from `@napplet/skills/cli` to use the maintained `list`, `print`, and `install` command behavior without ending the importing process. It returns `0` on success, `2` for parsing or command errors, and `1` for operational errors.
+
+```ts
+import { runCli } from '@napplet/skills/cli';
+
+const status = runCli(['install', 'make-napplet', '--dir', 'vendor/skills']);
+```
+
 ## See also
 
 - [Getting started](/guide/getting-started) — scaffold and run your first napplet

@@ -34,6 +34,16 @@ By default, the CLI clones:
 
 `https://github.com/napplet/boilerplate.git`
 
+## Programmatic CLI API
+
+`runCli(argv)` runs the same generator command contract without terminating its importer. It resolves to `0` on success and `1` after writing the maintained `@napplet/boilerplate:` diagnostic.
+
+```ts
+import { runCli } from '@napplet/boilerplate';
+
+const status = await runCli(['my-napplet', '--template', './template']);
+```
+
 ## Agent guidance
 
 The template intentionally does not vendor independent agent skill bodies. Initialize deployment metadata, then install the current skills in the project:

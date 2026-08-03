@@ -226,7 +226,7 @@ async function awaitPaste(
   onReader: (reader: ReadableStreamDefaultReader<string>) => void,
 ): Promise<RemoteSession> {
   const lines = source
-    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new TextDecoderStream() as unknown as TransformStream<Uint8Array, string>)
     .pipeThrough(new TextLineStream());
   const reader = lines.getReader();
   onReader(reader);

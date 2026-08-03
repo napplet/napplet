@@ -29,6 +29,16 @@ template testing:
 npx @napplet/boilerplate ./my-napplet --yes
 ```
 
+## Programmatic CLI API
+
+`runCli(argv)` is the import-safe generator entry point used by the standalone CLI. It returns `0` on success or `1` after emitting the same `@napplet/boilerplate:` diagnostic as the package binary.
+
+```ts
+import { runCli } from '@napplet/boilerplate';
+
+const status = await runCli(['my-napplet', '--template', './template']);
+```
+
 ## Options
 
 | Option | Purpose |

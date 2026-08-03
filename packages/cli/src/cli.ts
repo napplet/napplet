@@ -30,10 +30,12 @@ import {
   renderInitReport,
 } from "./output.ts";
 import { isTerminalInput } from "./prompt.ts";
-import { type CommandRunner, runCommand, splitCommand } from "./process.ts";
+import { runCommand, splitCommand } from "./process.ts";
 import { resolveSigningMethod, signDeployManifestTemplates } from "./signing.ts";
 import { getBlossomServerSuggestions, getRelaySuggestions } from "./suggestions.ts";
 import type { DeploySelection, NappletConfig } from "./types.ts";
+import { runCli as runBoilerplateCli } from "@napplet/boilerplate";
+import { runCli as runSkillsCli } from "@napplet/skills/cli";
 
 const HELP = `@napplet/cli
 
@@ -82,9 +84,9 @@ export async function main(argv = Deno.args): Promise<number> {
       case "guide":
         return commandGuide();
       case "create":
-        return await runPackageCli("@napplet/boilerplate", parsed.rest);
+        return await runBoilerplateCli(parsed.rest);
       case "skills":
-        return await runPackageCli("@napplet/skills", parsed.rest);
+        return runSkillsCli(parsed.rest);
       case "discover":
         return await commandDiscover(parsed.rest);
       case "deploy":
@@ -108,39 +110,9 @@ export async function main(argv = Deno.args): Promise<number> {
   }
 }
 
-export interface PackageCliRunOptions {
-  runner?: CommandRunner;
-  writeStdout?: (value: string) => void;
-  writeStderr?: (value: string) => void;
-  os?: typeof Deno.build.os;
-}
-
 export interface ResolvedCommand {
   command: string;
   args: string[];
-}
-
-/** Run one maintained package CLI without interpreting user arguments as shell source. */
-export async function runPackageCli(
-  packageName: "@napplet/boilerplate" | "@napplet/skills",
-  args: readonly string[],
-  options: PackageCliRunOptions = {},
-): Promise<number> {
-  const executable = (options.os ?? Deno.build.os) === "windows" ? "npx.cmd" : "npx";
-  let result;
-  try {
-    result = await (options.runner ?? runCommand)(executable, ["--yes", packageName, ...args]);
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      throw new Error(
-        `Cannot run ${packageName}: install Node.js 20+ so the bundled npm package runner is available.`,
-      );
-    }
-    throw error;
-  }
-  if (result.stdout) (options.writeStdout ?? console.log)(result.stdout.replace(/\n$/, ""));
-  if (result.stderr) (options.writeStderr ?? console.error)(result.stderr.replace(/\n$/, ""));
-  return result.code;
 }
 
 /** Resolve the default conformance runner through npm instead of requiring a global binary. */
