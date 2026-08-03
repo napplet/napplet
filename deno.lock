@@ -1825,6 +1825,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@changesets/cli@^2.30.0",
+        "npm:@types/node@^22.15.0",
         "npm:happy-dom@^20.10.3",
         "npm:nostr-tools@^2.23.3",
         "npm:playwright@^1.59.1",
@@ -1852,6 +1853,7 @@
           "jsr:@std/path@1",
           "jsr:@std/streams@1",
           "npm:@scure/base@^1.2.6",
+          "npm:@types/node@^22.15.0",
           "npm:applesauce-relay@^5.2.0",
           "npm:applesauce-signers@^5.2.0",
           "npm:nostr-tools@^2.23.3"

@@ -14,6 +14,7 @@
     "nostr-tools": "npm:nostr-tools@^2.23.3",
     "@libs/qrcode": "jsr:@libs/qrcode@^3.0.1",
     "@scure/base": "npm:@scure/base@^1.2.6",
+    "@types/node": "npm:@types/node@^22.15.0",
     "@std/encoding": "jsr:@std/encoding@^1",
     "@std/media-types": "jsr:@std/media-types@^1",
     "@std/path": "jsr:@std/path@^1",
