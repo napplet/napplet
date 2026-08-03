@@ -30,12 +30,10 @@ import {
   renderInitReport,
 } from "./output.ts";
 import { isTerminalInput } from "./prompt.ts";
-import { runCommand, splitCommand } from "./process.ts";
+import { type CommandRunner, runCommand, splitCommand } from "./process.ts";
 import { resolveSigningMethod, signDeployManifestTemplates } from "./signing.ts";
 import { getBlossomServerSuggestions, getRelaySuggestions } from "./suggestions.ts";
 import type { DeploySelection, NappletConfig } from "./types.ts";
-import { runCli as runBoilerplateCli } from "@napplet/boilerplate";
-import { runCli as runSkillsCli } from "@napplet/skills/cli";
 
 const HELP = `@napplet/cli
 
@@ -64,13 +62,23 @@ interface ParsedArgs {
   rest: string[];
 }
 
+/** Callable adapter for a maintained package CLI. */
+export type PackageCliRunner = (args: readonly string[]) => number | Promise<number>;
+
+/** Optional maintained-package runners used by standalone builds. */
+export interface CliMainOptions {
+  runCreate?: PackageCliRunner;
+  runSkills?: PackageCliRunner;
+}
+
 /**
  * Run the CLI command dispatcher.
  *
  * @param argv Command-line arguments, excluding executable name.
+ * @param options Maintained-package runner overrides for standalone builds.
  * @returns Process exit code.
  */
-export async function main(argv = Deno.args): Promise<number> {
+export async function main(argv = Deno.args, options: CliMainOptions = {}): Promise<number> {
   const parsed = parseCommand(argv);
   try {
     switch (parsed.command) {
@@ -84,9 +92,13 @@ export async function main(argv = Deno.args): Promise<number> {
       case "guide":
         return commandGuide();
       case "create":
-        return await runBoilerplateCli(parsed.rest);
+        return await (options.runCreate ?? ((args) => runPackageCli("@napplet/boilerplate", args)))(
+          parsed.rest,
+        );
       case "skills":
-        return runSkillsCli(parsed.rest);
+        return await (options.runSkills ?? ((args) => runPackageCli("@napplet/skills", args)))(
+          parsed.rest,
+        );
       case "discover":
         return await commandDiscover(parsed.rest);
       case "deploy":
@@ -108,6 +120,44 @@ export async function main(argv = Deno.args): Promise<number> {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
+}
+
+/** Process and output adapters used to invoke a maintained package CLI. */
+export interface PackageCliRunOptions {
+  runner?: CommandRunner;
+  writeStdout?: (value: string) => void;
+  writeStderr?: (value: string) => void;
+  os?: typeof Deno.build.os;
+}
+
+/**
+ * Run one maintained package CLI without interpreting user arguments as shell source.
+ *
+ * @param packageName Maintained npm package that owns the requested command.
+ * @param args Arguments passed to the package CLI without shell interpolation.
+ * @param options Process and output adapters, primarily for tests.
+ * @returns Process exit code from the maintained package CLI.
+ */
+export async function runPackageCli(
+  packageName: "@napplet/boilerplate" | "@napplet/skills",
+  args: readonly string[],
+  options: PackageCliRunOptions = {},
+): Promise<number> {
+  const executable = (options.os ?? Deno.build.os) === "windows" ? "npx.cmd" : "npx";
+  let result;
+  try {
+    result = await (options.runner ?? runCommand)(executable, ["--yes", packageName, ...args]);
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      throw new Error(
+        `Cannot run ${packageName}: install Node.js 20+ so the bundled npm package runner is available.`,
+      );
+    }
+    throw error;
+  }
+  if (result.stdout) (options.writeStdout ?? console.log)(result.stdout.replace(/\n$/, ""));
+  if (result.stderr) (options.writeStderr ?? console.error)(result.stderr.replace(/\n$/, ""));
+  return result.code;
 }
 
 export interface ResolvedCommand {

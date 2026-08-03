@@ -206,8 +206,8 @@ Deno.test("published CLI entrypoint excludes standalone-only workspace imports",
     await Deno.readTextFile(new URL("../deno.json", import.meta.url)),
   ) as { publish?: { exclude?: string[] } };
 
-  assert(!cliSource.includes("@napplet/boilerplate"));
-  assert(!cliSource.includes("@napplet/skills/cli"));
+  assert(!cliSource.includes('from "@napplet/boilerplate"'));
+  assert(!cliSource.includes('from "@napplet/skills/cli"'));
   assert(standaloneSource.includes('from "@napplet/boilerplate"'));
   assert(standaloneSource.includes('from "@napplet/skills/cli"'));
   assert(config.publish?.exclude?.includes("src/standalone.ts"));

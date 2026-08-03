@@ -3,8 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { renderCliHelp } from './cli-help.js';
 import { runCli } from './cli.js';
-import { runCli as runDenoCli } from './deno-cli.js';
+import { TARGETS } from './index.js';
 
 describe('runCli', () => {
   afterEach(() => {
@@ -35,19 +36,15 @@ describe('runCli', () => {
     }
   });
 
-  it('keeps Node and standalone Deno help output identical', () => {
+  it('renders the complete shared help contract', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     expect(runCli(['--help'])).toBe(0);
-    const nodeHelp = String(log.mock.calls.at(-1)?.[0]);
-    log.mockClear();
+    const help = String(log.mock.calls.at(-1)?.[0]);
 
-    expect(runDenoCli(['--help'])).toBe(0);
-    const denoHelp = String(log.mock.calls.at(-1)?.[0]);
-
-    expect(denoHelp).toBe(nodeHelp);
-    expect(denoHelp).toContain('Install options:');
-    expect(denoHelp).toContain('Targets (--to):');
-    expect(denoHelp).toContain('Examples:');
+    expect(help).toBe(renderCliHelp(Object.values(TARGETS)));
+    expect(help).toContain('Install options:');
+    expect(help).toContain('Targets (--to):');
+    expect(help).toContain('Examples:');
   });
 });

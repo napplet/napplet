@@ -50,7 +50,10 @@ Deno.test("compiled napplet creates and installs skills without a package resolv
       HTTPS_PROXY: "http://127.0.0.1:9",
       NO_PROXY: "",
     };
-    const create = await run(binary, ["create", created, "--template", template], { env: environment, cwd: root });
+    const create = await run(binary, ["create", created, "--template", template], {
+      env: environment,
+      cwd: root,
+    });
     assertEquals(create.code, 0, text(create.stderr));
     assertEquals(JSON.parse(await Deno.readTextFile(`${created}/package.json`)), {
       name: "created",
@@ -67,15 +70,26 @@ Deno.test("compiled napplet creates and installs skills without a package resolv
     assert(text(skillsHelp.stdout).includes("Targets (--to):"));
     assert(text(skillsHelp.stdout).includes("Examples:"));
 
-    const install = await run(binary, ["skills", "install", "make-napplet", "--dir", installed], { env: environment, cwd: root });
+    const install = await run(binary, ["skills", "install", "make-napplet", "--dir", installed], {
+      env: environment,
+      cwd: root,
+    });
     assertEquals(install.code, 0, text(install.stderr));
-    assert((await Deno.readTextFile(`${installed}/make-napplet/SKILL.md`)).includes("Making A Napplet"));
+    assert(
+      (await Deno.readTextFile(`${installed}/make-napplet/SKILL.md`)).includes("Making A Napplet"),
+    );
 
-    const invalidSkills = await run(binary, ["skills", "--unknown"], { env: environment, cwd: root });
+    const invalidSkills = await run(binary, ["skills", "--unknown"], {
+      env: environment,
+      cwd: root,
+    });
     assertEquals(invalidSkills.code, 2);
     assert(text(invalidSkills.stderr).includes("unknown option: --unknown"));
 
-    const invalidCreate = await run(binary, ["create", "--variant", "unsupported", "--yes"], { env: environment, cwd: root });
+    const invalidCreate = await run(binary, ["create", "--variant", "unsupported", "--yes"], {
+      env: environment,
+      cwd: root,
+    });
     assertEquals(invalidCreate.code, 1);
     assert(text(invalidCreate.stderr).includes("@napplet/boilerplate: Unsupported variant"));
   } finally {
