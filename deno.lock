@@ -1838,6 +1838,7 @@
       "packages/boilerplate": {
         "packageJson": {
           "dependencies": [
+            "npm:@types/node@^22.15.0",
             "npm:tsup@^8.5.0",
             "npm:typescript@^5.9.3"
           ]
