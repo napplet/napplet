@@ -1,6 +1,6 @@
 # @napplet/cli
 
-Standalone CLI for creating, configuring, building with agents, inspecting, testing, and deploying napplets. The binary does not require Deno.
+Standalone CLI for creating, configuring, building with agents, inspecting, testing, and deploying napplets. The binary does not require Deno, Node.js, or an npm package resolver for `napplet create` and `napplet skills`: those commands call bundled package code directly.
 
 Use it to create a `.napplet/config.json`, find built `index.html` artifacts, inspect the deploy plan, sign manifest events, upload files to Blossom servers, publish to relays, and run local napplet tooling such as conformance and Paja.
 

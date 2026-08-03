@@ -101,6 +101,14 @@ napplet skills print [skill]              Print SKILL.md to stdout (all, or one)
 napplet skills install [skill] [options]  Install into an agent location
 ```
 
+`runCli(argv)` is available from `@napplet/skills/cli` for callers that need the maintained command behavior without process termination. It returns `0` for success, `2` for parsing or command errors, and `1` for operational errors.
+
+```ts
+import { runCli } from '@napplet/skills/cli';
+
+const status = runCli(['install', 'make-napplet', '--dir', 'vendor/skills']);
+```
+
 ## Programmatic API
 
 ```ts

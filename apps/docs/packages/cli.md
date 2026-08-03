@@ -8,6 +8,8 @@ artifacts, inspects deploy plans, signs manifest events, uploads files to
 Blossom servers, publishes to relays, and runs local napplet tooling such as
 conformance and Paja.
 
+The standalone binary runs `napplet create` and `napplet skills` through bundled package code, so those onboarding commands do not need Node.js or an npm package resolver at runtime.
+
 - **npm:** [`@napplet/cli`](https://www.npmjs.com/package/@napplet/cli)
 - **JSR:** [`@napplet/cli`](https://jsr.io/@napplet/cli)
 - **Source:** [packages/cli](https://github.com/napplet/napplet/tree/main/packages/cli)
