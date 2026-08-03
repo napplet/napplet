@@ -94,6 +94,17 @@ jobs:
             asset: napplet-windows-x86_64.exe
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build standalone CLI package dependencies
+        run: pnpm --filter @napplet/boilerplate build && pnpm --filter @napplet/skills build
       - uses: denoland/setup-deno@v2
       - name: Compile ${{ matrix.asset }}
         run: deno task --config packages/cli/deno.json ${{ matrix.task }}

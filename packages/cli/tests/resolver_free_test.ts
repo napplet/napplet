@@ -48,7 +48,10 @@ Deno.test("compiled napplet creates and installs skills without a package resolv
     };
     const create = await run(binary, ["create", created, "--template", template], { env: environment, cwd: root });
     assertEquals(create.code, 0, text(create.stderr));
-    assertEquals(await Deno.readTextFile(`${created}/package.json`), '{"name":"created","private":true}\n');
+    assertEquals(JSON.parse(await Deno.readTextFile(`${created}/package.json`)), {
+      name: "created",
+      private: true,
+    });
 
     const listed = await run(binary, ["skills", "list"], { env: environment, cwd: root });
     assertEquals(listed.code, 0, text(listed.stderr));
