@@ -11,7 +11,6 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import * as vm from 'node:vm';
 import { createNetworkPolicy, uploadExactBlobs } from '@napplet/build-tools';
 import type { BuildSigner, DiscoveryFilter, DiscoveryServices, SignedEvent } from '@napplet/build-tools';
 import { finalizeEvent, getPublicKey, verifyEvent } from 'nostr-tools/pure';
@@ -20,6 +19,7 @@ import { nip5aManifest } from '../index.js';
 import { registerTestOptimizationHarness } from '../manifest.js';
 import { computeAggregateHash } from '../hashing.js';
 import { ResourceRuntime, type ResourceTableEntry } from './loader.js';
+import { executeFinalArtifact } from './large-fixture-runtime.js';
 import { createLiveOptimizationServices, OPTIMIZATION_TARGET_BYTES } from './pipeline.js';
 import type { OptimizationServices } from './pipeline.js';
 import type { NodeOptimizationServices as ViteNodeOptimizationServices } from './node-services.js';
@@ -297,69 +297,13 @@ async function recoverFixtureResources(
   return recovery;
 }
 
-async function executeFinalArtifact(
-  finalHtml: string,
-  entries: ResourceTableEntry[],
-  uploaded: Map<string, Uint8Array>,
-): Promise<string[]> {
-  const scripts = [...finalHtml.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)]
-    .map((match) => ({ attributes: match[1] ?? '', source: match[2] ?? '' }));
-  const loaderScript = scripts.find((script) => script.source.includes('window.__nappletPrivateResourceLoader ='))?.source;
-  const applicationScript = scripts.find((script) => /type=["']module["']/.test(script.attributes) && script.source.includes('__nappletPrivateResourceLoader.response'))?.source;
-  if (!loaderScript || !applicationScript) throw new Error('fixture final HTML is missing executable optimized scripts');
-
-  const requestedUris: string[] = [];
-  const executedSources: string[] = [];
-  const pending: Promise<Response>[] = [];
-  const runtimeWindow = {
-    napplet: { resource: {
-      bytes: async (uri: string) => {
-        requestedUris.push(uri);
-        const bytes = uploaded.get(uri);
-        if (!bytes) throw new Error(`final artifact requested an unknown URI: ${uri}`);
-        return new Blob([bytes]);
-      },
-      bytesMany: async () => { throw new Error('final callsites must execute the generated single-resource path'); },
-    } },
-  } as { napplet: object; __nappletPrivateResourceLoader?: { response(source: string): Promise<Response> } };
-  const document = { createElement: () => ({ relList: { supports: () => true } }) };
-  const context = vm.createContext({
-    window: runtimeWindow,
-    document,
-    crypto: crypto.webcrypto,
-    Blob,
-    Response,
-    URL,
-    Uint8Array,
-  });
-  vm.runInContext(loaderScript, context);
-  const loader = runtimeWindow.__nappletPrivateResourceLoader;
-  if (!loader) throw new Error('fixture final loader did not install');
-  const realResponse = loader.response.bind(loader);
-  loader.response = (source: string) => {
-    executedSources.push(source);
-    const response = realResponse(source);
-    pending.push(response);
-    return response;
-  };
-  vm.runInContext(applicationScript, context);
-  const responses = await Promise.all(pending);
-  for (let index = 0; index < responses.length; index += 1) {
-    const digest = sha256(new Uint8Array(await responses[index]!.arrayBuffer()));
-    if (digest !== entries.find((entry) => entry.source === executedSources[index])?.sha256) throw new Error('final callsite received unverified bytes');
-  }
-  if (executedSources.length !== entries.length || requestedUris.length !== entries.length) throw new Error('fixture did not execute every final resource callsite');
-  if (requestedUris.some((uri, index) => uri !== entries.find((entry) => entry.source === executedSources[index])?.uri)) throw new Error('final artifact requested the wrong Blossom URI');
-  return executedSources;
-}
-
 async function collectFixtureEvidence(
   built: BuiltFixture,
   fixture: LargeAssetFixture,
 ): Promise<LargeFixtureEvidence> {
   const output = readFixtureOutput(built, fixture);
   const recovery = await recoverFixtureResources(output.entries, output.selected, built.uploaded);
-  const executedResourceCalls = await executeFinalArtifact(output.finalHtml, output.entries, built.uploaded);
+  const executedResourceCalls = await executeFinalArtifact(output.finalHtml, output.entries, built.uploaded, sha256);
   const finalIndexHash = sha256(fs.readFileSync(path.join(built.dist, 'index.html')));
   if (output.manifest.aggregateHash !== computeAggregateHash([[finalIndexHash, '/index.html']])) throw new Error('fixture aggregate hash does not match final output');
   return {
