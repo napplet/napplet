@@ -72,54 +72,7 @@ export function createBuildSigner(services: BuildSignerServices): BuildSigner {
   const active = new Set<ActiveRequest>();
   let closed = false;
   let publicKey: Promise<string> | undefined;
-
-  async function request(method: Nip46Request["method"], params: string[]): Promise<Nip46Response> {
-    if (closed) throw safeError(services, "signer-closed", "Build signer is closed");
-
-    const controller = new AbortController();
-    const activeRequest: ActiveRequest = { abort: () => controller.abort() };
-    active.add(activeRequest);
-    let pending: RelayRequest | undefined;
-    let timeout: unknown;
-    let timedOut = false;
-
-    try {
-      const request: Nip46Request = {
-        id: services.requestId(),
-        method,
-        params,
-        remotePubkey: services.remotePubkey,
-      };
-      pending = services.relay.openRequest(request, controller.signal);
-      const timeoutResponse = new Promise<never>((_, reject) => {
-        timeout = services.clock.setTimeout(() => {
-          timedOut = true;
-          controller.abort();
-          reject(safeError(services, "signer-timeout", "Remote signer request timed out"));
-        }, services.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS);
-      });
-      const aborted = new Promise<never>((_, reject) => {
-        controller.signal.addEventListener("abort", () => {
-          if (!timedOut) reject(safeError(services, "signer-aborted", "Build signer request aborted"));
-        }, { once: true });
-      });
-      const response = await Promise.race([pending.response, timeoutResponse, aborted]);
-      if (response.id !== request.id) {
-        throw safeError(services, "signer-response-id", "Remote signer response verification failed");
-      }
-      if (response.error !== undefined) {
-        throw safeError(services, "signer-rejected", "Remote signer rejected request");
-      }
-      if (response.result === undefined) {
-        throw safeError(services, "signer-malformed-response", "Remote signer response verification failed");
-      }
-      return response;
-    } finally {
-      if (timeout !== undefined) services.clock.clearTimeout(timeout);
-      active.delete(activeRequest);
-      if (!controller.signal.aborted) await pending?.close();
-    }
-  }
+  const request = createRequest(services, active, () => closed);
 
   async function getPublicKey(): Promise<string> {
     if (!publicKey) {
@@ -162,5 +115,47 @@ export function createBuildSigner(services: BuildSignerServices): BuildSigner {
       active.clear();
       await services.relay.close();
     },
+  };
+}
+
+function createRequest(
+  services: BuildSignerServices,
+  active: Set<ActiveRequest>,
+  isClosed: () => boolean,
+): (method: Nip46Request["method"], params: string[]) => Promise<Nip46Response> {
+  return async (method, params) => {
+    if (isClosed()) throw safeError(services, "signer-closed", "Build signer is closed");
+    const controller = new AbortController();
+    const activeRequest: ActiveRequest = { abort: () => controller.abort() };
+    active.add(activeRequest);
+    let pending: RelayRequest | undefined;
+    let timeout: unknown;
+    let timedOut = false;
+    try {
+      const request: Nip46Request = { id: services.requestId(), method, params, remotePubkey: services.remotePubkey };
+      pending = services.relay.openRequest(request, controller.signal);
+      const timeoutResponse = new Promise<never>((_resolve, reject) => {
+        timeout = services.clock.setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+          reject(safeError(services, "signer-timeout", "Remote signer request timed out"));
+        }, services.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS);
+      });
+      const aborted = new Promise<never>((_resolve, reject) => {
+        controller.signal.addEventListener("abort", () => {
+          if (!timedOut) reject(safeError(services, "signer-aborted", "Build signer request aborted"));
+        }, { once: true });
+      });
+      const response = await Promise.race([pending.response, timeoutResponse, aborted]);
+      if (response.id !== request.id || response.result === undefined) {
+        throw safeError(services, "signer-response", "Remote signer response verification failed");
+      }
+      if (response.error !== undefined) throw safeError(services, "signer-rejected", "Remote signer rejected request");
+      return response;
+    } finally {
+      if (timeout !== undefined) services.clock.clearTimeout(timeout);
+      active.delete(activeRequest);
+      if (!controller.signal.aborted) await pending?.close();
+    }
   };
 }

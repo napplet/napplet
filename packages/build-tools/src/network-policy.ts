@@ -1,10 +1,3 @@
-/**
- * Non-normative network hardening for build-time Blossom HTTP requests.
- *
- * These checks protect the developer's build process from SSRF and DNS rebinding.
- * They are deliberately tooling policy, not Blossom conformance requirements.
- */
-
 /** A DNS resolver injected by the host runtime. */
 export interface PublicAddressResolver {
   /** Resolve a hostname to literal IP addresses without making an HTTP request. */
@@ -21,7 +14,6 @@ export interface ValidatedEndpoint {
   addresses: readonly string[];
 }
 
-/** Public HTTPS validation and redirect revalidation used by Blossom operations. */
 export interface NetworkPolicy {
   /**
    * Validate one HTTPS endpoint against the injected public-address policy.

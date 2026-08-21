@@ -1,10 +1,3 @@
-/**
- * Exact-byte Blossom existence checks and direct uploads.
- *
- * Implements BUD-01 HEAD, BUD-02 PUT /upload, and BUD-11 authorization without
- * invoking BUD-04 remote mirroring. Network restrictions are build-tool policy.
- */
-
 import { verifyEvent } from "nostr-tools/pure";
 import type { BuildSigner, SafeStatus, SignedEvent, UnsignedEvent } from "./contracts.ts";
 import type { NetworkPolicy, ValidatedEndpoint } from "./network-policy.ts";
@@ -94,7 +87,6 @@ export interface UploadBatchInput {
   signer: BuildSigner;
 }
 
-/** Outcome used by callers to decide whether emitted files may be removed. */
 export type UploadBatchResult =
   | { status: "complete"; deletionAuthorized: true; evidence: UploadEvidence[] }
   | { status: "failed"; deletionAuthorized: false; evidence: UploadEvidence[]; reason: SafeStatus };
