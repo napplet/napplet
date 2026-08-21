@@ -15,6 +15,19 @@
 
 import { qrcode } from "@libs/qrcode";
 import { TextLineStream } from "@std/streams";
+import {
+  type BuildSignerSession,
+  type Clock,
+  createBuildSigner,
+  type Nip46Request,
+  pairBuildSigner,
+  type QrPairing,
+  RedactedSecret,
+  type RelayClient,
+  type RelayRequest,
+  type SafeStatus,
+  type TerminalAdapter,
+} from "@napplet/build-tools";
 import { NostrConnectSigner, PrivateKeySigner } from "applesauce-signers";
 import type { AbstractSimplePool } from "nostr-tools/abstract-pool";
 import { generateSecretKey } from "nostr-tools/pure";
@@ -22,6 +35,7 @@ import { bytesToHex } from "nostr-tools/utils";
 import { createApplesaucePool } from "./applesauce-pool.ts";
 import { closeNostrConnectPool, ensureNostrConnectPool } from "./nostr-connect-pool.ts";
 import { encodeNbunksec, type NbunksecInfo } from "./signing.ts";
+import type { NostrEventTemplate } from "./types.ts";
 
 /** Default relays used to reach a remote signer when none are supplied. */
 export const DEFAULT_CONNECT_RELAYS = [
@@ -165,29 +179,6 @@ function clearLines(count: number, write: (bytes: Uint8Array) => void): void {
   write(encoder.encode(`\x1b[${count}A`));
 }
 
-/** A connected remote-signer session produced by either race branch. */
-interface RemoteSession {
-  signer: NostrConnectSigner;
-  pubkey: string;
-  remotePubkey: string;
-  relays: string[];
-  secret?: string;
-}
-
-interface ConnectCleanupOptions {
-  abort: AbortController;
-  clearOnDone?: boolean;
-  injectedPool?: AbstractSimplePool;
-  linesPrinted: number;
-  pasteTask: Promise<RemoteSession>;
-  qrTask: Promise<RemoteSession>;
-  reader?: ReadableStreamDefaultReader<string>;
-  relays: string[];
-  timer?: ReturnType<typeof setTimeout>;
-  winner?: RemoteSession;
-  writeStdout: (bytes: Uint8Array) => void;
-}
-
 /** Print the QR + prompt block; returns the number of terminal lines written. */
 function printConnectPrompt(
   uri: string,
@@ -201,62 +192,6 @@ function printConnectPrompt(
   print(uri);
   print(`Waiting for a remote signer (timeout ${Math.round(timeoutMs / 1000)}s)...`);
   return qrLines.length + 4;
-}
-
-/** QR branch: resolve once a remote signer scans the nostrconnect:// URI. */
-async function awaitScan(
-  signer: NostrConnectSigner,
-  abort: AbortSignal,
-): Promise<RemoteSession> {
-  await signer.waitForSigner(abort);
-  const remotePubkey = signer.remote;
-  if (!remotePubkey) throw new Error("Remote signer did not identify itself");
-  const pubkey = await signer.getPublicKey();
-  return { signer, pubkey, remotePubkey, relays: signer.relays, secret: signer.secret };
-}
-
-/** Paste branch: resolve once a bunker:// URL is pasted on stdin. */
-async function awaitPaste(
-  clientSk: Uint8Array,
-  pool: AbstractSimplePool | undefined,
-  abort: AbortController,
-  source: ReadableStream<Uint8Array>,
-  relays: string[],
-  permissions: string[],
-  onReader: (reader: ReadableStreamDefaultReader<string>) => void,
-): Promise<RemoteSession> {
-  const lines = source
-    .pipeThrough(new TextDecoderStream() as unknown as TransformStream<Uint8Array, string>)
-    .pipeThrough(new TextLineStream());
-  const reader = lines.getReader();
-  onReader(reader);
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) return await new Promise<never>(() => {});
-    if (value === undefined) continue;
-    const bunker = detectBunkerLine(value);
-    if (!bunker) continue;
-    let pointer: { remote: string; relays: string[]; secret?: string };
-    try {
-      pointer = NostrConnectSigner.parseBunkerURI(bunker);
-    } catch {
-      continue;
-    }
-    abort.abort();
-    const signer = await NostrConnectSigner.fromBunkerURI(bunker, {
-      signer: new PrivateKeySigner(clientSk),
-      permissions,
-      ...(pool ? { pool: createApplesaucePool(pool) } : {}),
-    });
-    const pubkey = await signer.getPublicKey();
-    return {
-      signer,
-      pubkey,
-      remotePubkey: pointer.remote,
-      relays: pointer.relays.length > 0 ? pointer.relays : relays,
-      secret: pointer.secret ?? undefined,
-    };
-  }
 }
 
 /**
@@ -287,97 +222,235 @@ export async function connectRemoteSigner(options: ConnectOptions): Promise<Conn
 
   const clientSk = generateSecretKey();
   const permissions = buildPerms(kinds);
-  const qrSigner = new NostrConnectSigner({
-    relays,
-    signer: new PrivateKeySigner(clientSk),
-    ...(injectedPool ? { pool: createApplesaucePool(injectedPool) } : {}),
+  const terminal = createDenoTerminalAdapter({
+    input: options.stdin ?? Deno.stdin.readable,
+    print,
+    timeoutMs,
   });
-
-  const uri = qrSigner.getNostrConnectURI({
-    name: options.appName ?? "napplet CLI",
-    permissions,
-  });
-
-  const qrLines = renderQrLines(uri);
-  const linesPrinted = printConnectPrompt(uri, qrLines, timeoutMs, print);
-
-  const abort = new AbortController();
-  let reader: ReadableStreamDefaultReader<string> | undefined;
-  let winner: RemoteSession | undefined;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
-  const qrTask = awaitScan(qrSigner, abort.signal);
-  const pasteTask = awaitPaste(
-    clientSk,
-    injectedPool,
-    abort,
-    options.stdin ?? Deno.stdin.readable,
-    relays,
-    permissions,
-    (r) => {
-      reader = r;
-    },
-  );
-  const ignoredQrTask = qrTask.catch(() => new Promise<never>(() => {}));
-  const ignoredPasteTask = pasteTask.catch((error) => {
-    if (abort.signal.aborted) return new Promise<never>(() => {});
-    throw error;
-  });
-
-  const timeoutTask = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      abort.abort();
-      reject(new Error("Remote signer connection timed out"));
-    }, timeoutMs);
-  });
-
+  let closeQrPairing = (): void => {};
+  let session: BuildSignerSession | undefined;
   try {
-    winner = await Promise.race([ignoredQrTask, ignoredPasteTask, timeoutTask]);
-    const info: NbunksecInfo = {
-      pubkey: winner.remotePubkey,
-      localKey: bytesToHex(clientSk),
-      relays: winner.relays,
-      secret: winner.secret,
-    };
+    session = await pairBuildSigner({
+      terminal,
+      clock: denoClock,
+      timeoutMs,
+      createQrPairing: (signal) => {
+        const pairing = createDenoQrPairing({
+          appName: options.appName ?? "napplet CLI",
+          clientSk,
+          injectedPool,
+          permissions,
+          relays,
+          signal,
+        });
+        closeQrPairing = () => {
+          void pairing.close();
+        };
+        return pairing;
+      },
+      connectBunker: (bunker, signal) =>
+        connectDenoBunker({
+          bunker,
+          closeQrPairing,
+          clientSk,
+          injectedPool,
+          permissions,
+          relays,
+          signal,
+        }),
+    });
+    const nbunksec = session.clientSecret.withValue((value) => value);
     return {
-      nbunksec: encodeNbunksec(info),
-      pubkey: winner.pubkey,
-      relays: winner.relays,
+      nbunksec,
+      pubkey: await session.signer.getPublicKey(),
+      relays: [...session.relays],
     };
   } finally {
-    await cleanupConnectFlow({
-      abort,
-      clearOnDone: options.clearOnDone,
-      injectedPool,
-      linesPrinted,
-      pasteTask,
-      qrTask,
-      reader,
-      relays,
-      timer,
-      winner,
-      writeStdout,
-    });
+    await session?.signer.close();
+    await terminal.close();
+    if (options.clearOnDone) clearLines(terminal.linesPrinted, writeStdout);
+    if (injectedPool) injectedPool.close(relays);
+    else closeNostrConnectPool();
   }
 }
 
-async function cleanupConnectFlow(options: ConnectCleanupOptions): Promise<void> {
-  if (options.timer !== undefined) clearTimeout(options.timer);
-  options.abort.abort();
-  // Swallow the losing task so it never surfaces as an unhandled rejection.
-  options.qrTask.then((r) => {
-    if (r !== options.winner) void r.signer.close().catch(() => {});
-  }).catch(() => {});
-  options.pasteTask.catch(() => {});
-  try {
-    await options.reader?.cancel();
-  } catch { /* best-effort */ }
-  if (options.clearOnDone) clearLines(options.linesPrinted, options.writeStdout);
-  try {
-    await options.winner?.signer.close();
-  } catch { /* best-effort */ }
-  try {
-    if (options.injectedPool) options.injectedPool.close(options.relays);
-    else closeNostrConnectPool();
-  } catch { /* best-effort */ }
+const denoClock: Clock = {
+  now: () => Date.now(),
+  setTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
+  clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+};
+
+function createDenoTerminalAdapter(options: {
+  input: ReadableStream<Uint8Array>;
+  print: (line: string) => void;
+  timeoutMs: number;
+}): TerminalAdapter & { close(): Promise<void>; linesPrinted: number } {
+  let reader: ReadableStreamDefaultReader<string> | undefined;
+  let linesPrinted = 0;
+  return {
+    get linesPrinted(): number {
+      return linesPrinted;
+    },
+    async showQr(uri: string): Promise<void> {
+      const qrLines = renderQrLines(uri);
+      linesPrinted = printConnectPrompt(uri, qrLines, options.timeoutMs, options.print);
+    },
+    async readLine(_prompt: string, signal: AbortSignal): Promise<string> {
+      const lines = options.input
+        .pipeThrough(new TextDecoderStream() as unknown as TransformStream<Uint8Array, string>)
+        .pipeThrough(new TextLineStream());
+      reader = lines.getReader();
+      signal.addEventListener("abort", () => {
+        void reader?.cancel();
+      }, { once: true });
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) return await new Promise<never>(() => {});
+        const bunker = value === undefined ? null : detectBunkerLine(value);
+        if (bunker) return bunker;
+      }
+    },
+    writeStatus(_status: SafeStatus): void {
+      // The existing CLI prompt owns these stable status lines.
+    },
+    async close(): Promise<void> {
+      try {
+        await reader?.cancel();
+      } catch { /* best-effort */ }
+    },
+  };
+}
+
+function createDenoQrPairing(options: {
+  appName: string;
+  clientSk: Uint8Array;
+  injectedPool?: AbstractSimplePool;
+  permissions: string[];
+  relays: string[];
+  signal: AbortSignal;
+}): QrPairing {
+  const signer = new NostrConnectSigner({
+    relays: options.relays,
+    signer: new PrivateKeySigner(options.clientSk),
+    ...(options.injectedPool ? { pool: createApplesaucePool(options.injectedPool) } : {}),
+  });
+  return {
+    uri: signer.getNostrConnectURI({ name: options.appName, permissions: options.permissions }),
+    waitForSession: async (signal) => {
+      await signer.waitForSigner(signal);
+      if (!signer.remote) throw new Error("Remote signer did not identify itself");
+      return createDenoBuildSignerSession(
+        signer,
+        signer.remote,
+        signer.relays,
+        options.clientSk,
+        signer.secret,
+      );
+    },
+    close: () => signer.close(),
+  };
+}
+
+async function connectDenoBunker(options: {
+  bunker: RedactedSecret;
+  closeQrPairing(): void;
+  clientSk: Uint8Array;
+  injectedPool?: AbstractSimplePool;
+  permissions: string[];
+  relays: string[];
+  signal: AbortSignal;
+}): Promise<BuildSignerSession> {
+  return await options.bunker.withValue(async (bunker) => {
+    const pointer = NostrConnectSigner.parseBunkerURI(bunker);
+    // A valid pasted bunker URI chooses the legacy paste path before it emits
+    // its own `connect` acknowledgement on the shared client public key.
+    options.closeQrPairing();
+    const signer = await NostrConnectSigner.fromBunkerURI(bunker, {
+      signer: new PrivateKeySigner(options.clientSk),
+      permissions: options.permissions,
+      ...(options.injectedPool ? { pool: createApplesaucePool(options.injectedPool) } : {}),
+    });
+    if (options.signal.aborted) {
+      await signer.close();
+      throw new Error("Remote signer pairing cancelled");
+    }
+    return createDenoBuildSignerSession(
+      signer,
+      pointer.remote,
+      pointer.relays.length > 0 ? pointer.relays : options.relays,
+      options.clientSk,
+      pointer.secret,
+    );
+  });
+}
+
+function createDenoBuildSignerSession(
+  signer: NostrConnectSigner,
+  remotePubkey: string,
+  relays: string[],
+  clientSk: Uint8Array,
+  secret?: string,
+): BuildSignerSession {
+  const clientSecret = new RedactedSecret(encodeNbunksec(
+    {
+      pubkey: remotePubkey,
+      localKey: bytesToHex(clientSk),
+      relays,
+      secret,
+    } satisfies NbunksecInfo,
+  ));
+  return {
+    clientSecret,
+    remotePubkey,
+    relays,
+    signer: createBuildSigner({
+      clock: denoClock,
+      relay: createDenoRelayClient(signer),
+      remotePubkey,
+      requestId: () => crypto.randomUUID(),
+    }),
+  };
+}
+
+function createDenoRelayClient(signer: NostrConnectSigner): RelayClient {
+  let closed = false;
+  const close = async (): Promise<void> => {
+    if (closed) return;
+    closed = true;
+    await signer.close();
+  };
+  return {
+    openRequest(request, signal): RelayRequest {
+      const response = runDenoRequest(signer, request).then(
+        (result) => ({ id: request.id, result }),
+        () => Promise.reject(new Error("Remote signer request failed")),
+      );
+      signal.addEventListener("abort", () => {
+        void close();
+      }, { once: true });
+      return { response, close };
+    },
+    close,
+  };
+}
+
+async function runDenoRequest(
+  signer: NostrConnectSigner,
+  request: Nip46Request,
+): Promise<string> {
+  if (request.method === "get_public_key") return await signer.getPublicKey();
+  if (request.method !== "sign_event") throw new Error("Unsupported signer request");
+  const template: unknown = JSON.parse(request.params[0] ?? "");
+  if (!isNostrEventTemplate(template)) throw new Error("Invalid signer request");
+  return JSON.stringify(await signer.signEvent(template));
+}
+
+function isNostrEventTemplate(value: unknown): value is NostrEventTemplate {
+  if (!value || typeof value !== "object") return false;
+  const template = value as Partial<NostrEventTemplate>;
+  return typeof template.kind === "number" && typeof template.created_at === "number" &&
+    typeof template.content === "string" && Array.isArray(template.tags) &&
+    template.tags.every((tag) =>
+      Array.isArray(tag) && tag.every((part) => typeof part === "string")
+    );
 }
