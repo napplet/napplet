@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v0.34.0
 milestone_name: NIP-5D Runtime Injection
-current_phase: 161
-current_phase_name: ad-hoc-convention-package-contracts
-status: complete
-stopped_at: Quick task 260728-nbn complete; PR #189 conflicts resolved
-last_updated: "2026-08-26T13:09:09Z"
-last_activity: 2026-09-04
-last_activity_desc: Completed quick task 260904-g1f — add the MIT license and open a pull request
+current_phase: 162
+current_phase_name: blossom-backed-large-asset-optimization
+status: executing
+stopped_at: Completed 162-01-PLAN.md
+last_updated: "2026-08-21T15:18:23.270Z"
+last_activity: 2026-08-21
+last_activity_desc: Phase 162 execution started
 progress:
   total_phases: 8
-  completed_phases: 4
-  total_plans: 42
-  completed_plans: 32
-  percent: 76
+  completed_phases: 3
+  total_plans: 16
+  completed_plans: 6
+  percent: 38
 ---
 
 # Project State
@@ -25,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-**Current focus:** Phase 161 — ad-hoc-convention-package-contracts
+**Current focus:** Phase 162 — blossom-backed-large-asset-optimization
 
 > **Provenance note:** The "Accumulated Context" section below preserves bullet records from BOTH branches' STATE.md histories. Records tagged "v0.29.0" from main's lineage refer to the milestone NOW renumbered as v0.30.0 (Class-Gated Decrypt — Phases 135-138). Records tagged "v0.29.0" from feat/strict-model refer to NUB-CONNECT (Phases 135-142). Phase number alone is not a unique identifier across the two; cross-reference the topic (decrypt/identity/NIP-07 → v0.30.0; connect/class/CSP-authority → v0.29.0).
 
 ## Current Position
 
-Phase: 161 (ad-hoc-convention-package-contracts) — COMPLETE
-Plan: 26 of 26
-Status: Verified; PR #186 open
-Last activity: 2026-09-04 — Completed quick task 260904-g1f: add the MIT license and open a pull request
+Phase: 162 (blossom-backed-large-asset-optimization) — EXECUTING
+Plan: 2 of 11
+Status: Ready to execute
+Last activity: 2026-08-21 — Phase 162 execution started
 community/group-chat invite linked from the SPA and docs.
 
 ### Quick task 260726-ft1 — COMPLETE
@@ -479,6 +479,8 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase ?]: Keep INC query parsing outbound-only and preserve exact opaque receive routing.
 - [Phase ?]: IntentResult now distinguishes immediate runtime acceptance from pre-acceptance rejection; post-acceptance delivery remains runtime policy.
 - [Phase ?]: IntentApi derives identity from convention URIs and exposes no-ID runtime-attested target delivery through onDelivery.
+- [Phase ?]: Retain Vite asset boundaries only while evaluating; commit a verified resource-backed artifact or ordinary all-inline output.
+- [Phase ?]: Emit requires:resource only after a verified transaction and keep the mapping private to index.html.
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -578,8 +580,8 @@ Items acknowledged and deferred at v0.31.0 milestone close on 2026-05-24:
 
 **Resume file:** None
 
-Last session: 2026-07-23T15:44:08.781Z
-Stopped at: Completed 161-16-PLAN.md
+Last session: 2026-08-21T15:18:23.261Z
+Stopped at: Completed 162-01-PLAN.md
 Resume: Phase 155 COMPLETE. All v0.33.0 SHELL requirements satisfied; both phases (154, 155) done. Next: orchestrator verify_phase_goal for Phase 155, then `/gsd:audit-milestone v0.33.0` → `/gsd:ship`.
 
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
@@ -678,3 +680,4 @@ Resume: Phase 142 TERMINAL-COMPLETE — all 13 VER-IDs (VER-01..13) verified PAS
 | Phase 161 P12 | 4min | 1 tasks | 5 files |
 | Phase 161-ad-hoc-convention-package-contracts P15 | 2min | 1 tasks | 4 files |
 | Phase 161 P16 | 4 min | 2 tasks | 5 files |
+| Phase 162 P01 | 8 minutes | 1 tasks | 6 files |
