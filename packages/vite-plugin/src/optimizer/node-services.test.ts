@@ -209,6 +209,38 @@ describe('Node optimization services', () => {
     expect(snapshot).not.toContain(BUNKER_URI);
   });
 
+  it('pairs for the current build when protected persistence is unavailable', async () => {
+    const terminal = new FakeTerminal();
+    const statuses: SafeStatus[] = [];
+    const brokenStore: SecretStore = {
+      get: async () => { throw new Error('credential backend unavailable'); },
+      set: async () => { throw new Error('credential backend unavailable'); },
+      delete: async () => {},
+    };
+    const services = createNodeOptimizationServices({
+      clock: new FakeClock(),
+      secretStore: brokenStore,
+      terminal,
+      isInteractive: () => true,
+      logger: { info: () => {}, warn: (status) => statuses.push(status), error: () => {} },
+      pairing: {
+        parseStoredSession: () => ({ remotePubkey: REMOTE_PUBKEY, relays: ['wss://relay.example'] }),
+        reconnect: async () => session(),
+        createQrPairing: () => ({
+          uri: 'nostrconnect://public?secret=not-for-output',
+          waitForSession: () => Promise.resolve(session()),
+          close: () => {},
+        }),
+        connectBunker: async () => session(),
+      },
+    });
+
+    const paired = await services.getSigner();
+    expect(paired.status).toBe('ready');
+    expect(statuses).toContainEqual(expect.objectContaining({ code: 'secret-store-ephemeral' }));
+    await services.dispose();
+  });
+
   it('keeps module import and factory creation pure until an injected boundary is used', async () => {
     let terminalReads = 0;
     let processRuns = 0;

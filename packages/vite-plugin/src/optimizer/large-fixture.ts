@@ -11,18 +11,17 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { createNetworkPolicy, uploadExactBlobs } from '@napplet/build-tools';
+import { createNetworkPolicy, encodeBuildSignerSecret, RedactedSecret, uploadExactBlobs } from '@napplet/build-tools';
 import type { BuildSigner, DiscoveryFilter, DiscoveryServices, SignedEvent } from '@napplet/build-tools';
 import { finalizeEvent, getPublicKey, verifyEvent } from 'nostr-tools/pure';
 import { build as viteBuild } from 'vite';
 import { nip5aManifest } from '../index.js';
-import { registerTestOptimizationHarness } from '../manifest.js';
 import { computeAggregateHash } from '../hashing.js';
 import { ResourceRuntime, type ResourceTableEntry } from './loader.js';
 import { executeFinalArtifact } from './large-fixture-runtime.js';
-import { createLiveOptimizationServices, OPTIMIZATION_TARGET_BYTES } from './pipeline.js';
-import type { OptimizationServices } from './pipeline.js';
-import type { NodeOptimizationServices as ViteNodeOptimizationServices } from './node-services.js';
+import { OPTIMIZATION_TARGET_BYTES } from './pipeline.js';
+import type { OptimizationReport } from './pipeline.js';
+import type { NodeOptimizationOptions } from './node-services.js';
 
 /** Every selected whole Blob stays within the generated loader's portable bound. */
 export const MAX_FIXTURE_ASSET_BYTES = 10 * 1024 * 1024;
@@ -172,19 +171,43 @@ function fakeDiscovery(pubkey: string): { services: DiscoveryServices; queries: 
   };
 }
 
-function fakeNodeServices(
+function fakeNodeOptions(
   signer: BuildSigner,
   discovery: DiscoveryServices,
   fetch: typeof globalThis.fetch,
-): ViteNodeOptimizationServices {
-  const networkPolicy = createNetworkPolicy({ resolve: async () => ['93.184.216.34'] });
+): NodeOptimizationOptions {
+  const remotePubkey = 'a'.repeat(64);
+  const storedSession = encodeBuildSignerSecret({
+    remotePubkey,
+    clientSecretKey: 'c'.repeat(64),
+    relays: ['wss://signer.fixture.test'],
+  });
   return {
     discovery,
-    networkPolicy,
-    blossom: { networkPolicy, fetch, now: () => FIXTURE_NOW },
-    getSigner: async () => ({ status: 'ready', signer, remotePubkey: 'a'.repeat(64) }),
-    fetch: async () => ({ status: 'failed', reason: { code: 'not-used', message: 'fixture uses Blossom fetch only' } }),
-    dispose: async () => {},
+    resolve: async () => ['93.184.216.34'],
+    fetchPinned: (endpoint, init) => fetch(endpoint.url, init),
+    isInteractive: () => false,
+    secretStore: {
+      get: async () => new RedactedSecret(storedSession),
+      set: async () => {},
+      delete: async () => {},
+    },
+    pairing: {
+      parseStoredSession: () => ({ remotePubkey, relays: ['wss://signer.fixture.test'] }),
+      reconnect: async () => ({
+        signer,
+        remotePubkey,
+        relays: ['wss://signer.fixture.test'],
+        clientSecret: new RedactedSecret(storedSession),
+      }),
+      createQrPairing: () => { throw new Error('fixture must reconnect without pairing'); },
+      connectBunker: async () => { throw new Error('fixture must reconnect without pairing'); },
+    },
+    clock: {
+      now: () => FIXTURE_NOW * 1_000,
+      setTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
+      clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+    },
   };
 }
 
@@ -246,11 +269,18 @@ async function buildFixtureArtifact(root: string, fixture: LargeAssetFixture): P
   const signer = createFixtureSigner(pubkey);
   const relay = fakeDiscovery(pubkey);
   const fetch = createFixtureFetch(uploaded, uploadEvidence);
-  const services = await createLiveOptimizationServices(fakeNodeServices(signer, relay.services, fetch));
-  const options = { nappletType: 'large-fixture', artifactMode: 'single-file' as const, requires: ['relay'] };
-  const harness = registerTestOptimizationHarness(options, services);
+  let report: OptimizationReport | undefined;
+  const options = {
+    nappletType: 'large-fixture',
+    artifactMode: 'single-file' as const,
+    requires: ['relay'],
+    largeAssetOptimization: {
+      node: fakeNodeOptions(signer, relay.services, fetch),
+      onReport: (value: OptimizationReport) => { report = value; },
+    },
+  };
   await viteBuild({ root, logLevel: 'silent', plugins: [nip5aManifest(options)], build: { outDir: 'dist', emptyOutDir: true } });
-  const initialHtmlBytes = harness.report?.initialBytes;
+  const initialHtmlBytes = report?.initialBytes;
   if (initialHtmlBytes === undefined) throw new Error('fixture did not record the production initial rendered size');
   return { dist, initialHtmlBytes, signer, relay, uploaded, uploadEvidence };
 }
@@ -361,10 +391,17 @@ export async function runWholeBlobPortabilityFallback(): Promise<FallbackEvidenc
     fs.writeFileSync(path.join(root, 'index.html'), '<html><head></head><body><script type="module" src="/src/main.js"></script></body></html>');
     fs.writeFileSync(path.join(root, 'src', 'main.js'), 'fetch(__nappletAssetUrl("assets/oversized.bin"));');
     fs.writeFileSync(path.join(root, 'public', 'assets', 'oversized.bin'), overLimit);
-    const options = { nappletType: 'whole-blob-boundary', artifactMode: 'single-file' as const, requires: ['relay'] };
-    const harness = registerTestOptimizationHarness(options, unavailableServices());
+    let report: OptimizationReport | undefined;
+    const options = {
+      nappletType: 'whole-blob-boundary',
+      artifactMode: 'single-file' as const,
+      requires: ['relay'],
+      largeAssetOptimization: {
+        onReport: (value: OptimizationReport) => { report = value; },
+      },
+    };
     await viteBuild({ root, logLevel: 'silent', plugins: [nip5aManifest(options)], build: { outDir: 'dist', emptyOutDir: true } });
-    if (harness.report?.status !== 'target-not-reached' || harness.report.selected.length !== 0) throw new Error('whole Blob portability boundary did not remain ineligible');
+    if (report?.status !== 'target-not-reached' || report.selected.length !== 0) throw new Error('whole Blob portability boundary did not remain ineligible');
     const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
     const manifest = JSON.parse(fs.readFileSync(path.join(dist, '.nip5a-manifest.json'), 'utf8')) as { tags: string[][] };
     return {
@@ -375,14 +412,6 @@ export async function runWholeBlobPortabilityFallback(): Promise<FallbackEvidenc
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
-}
-
-function unavailableServices(): OptimizationServices {
-  return {
-    authorize: async () => ({ token: 'not-used', expiresAt: Date.now() + 1 }),
-    upload: async () => { throw new Error('no upload should occur for an ineligible whole Blob'); },
-    resourceBytes: async () => { throw new Error('no resource should occur for an ineligible whole Blob'); },
-  };
 }
 
 export const FIXTURE_TARGET_BYTES = OPTIMIZATION_TARGET_BYTES;

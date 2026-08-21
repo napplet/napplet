@@ -26,34 +26,6 @@ import {
 } from './optimizer/pipeline.js';
 import type { RetainedArtifact } from './optimizer/references.js';
 
-interface TestOptimizationHarness {
-  services: OptimizationServices;
-  report?: OptimizationReport | null;
-}
-
-const testOptimizationHarnesses = new WeakMap<Nip5aManifestOptions, TestOptimizationHarness>();
-
-/**
- * Attach fake build boundaries to one plugin-options object for an integration test.
- *
- * This private module helper is intentionally not re-exported from the package
- * entry point. It lets the Vite integration fixture exercise the ordinary plugin
- * hooks without introducing a user-facing build configuration field.
- */
-export function registerTestOptimizationHarness(
-  options: Nip5aManifestOptions,
-  services: OptimizationServices,
-): TestOptimizationHarness {
-  const harness = { services };
-  testOptimizationHarnesses.set(options, harness);
-  return harness;
-}
-
-/** @internal Test-only accessor paired with {@link registerTestOptimizationHarness}. */
-export function testOptimizationHarnessFor(options: Nip5aManifestOptions): TestOptimizationHarness | undefined {
-  return testOptimizationHarnesses.get(options);
-}
-
 /**
  * Resolve all per-build plugin state in the `configResolved` hook: out dir,
  * project root, base, and config schema (discovered + validated).
@@ -134,7 +106,7 @@ async function prepareDistIndexHtml(
       files,
       state,
       optimizationServices,
-      plan.triggered,
+      plan.triggered && plan.selected.length > 0,
     );
     state.optimizationReport = report;
     if (report.committedResourceCount > 0 && report.status !== 'rolled-back') {
@@ -155,9 +127,9 @@ async function runOptimization(
   files: Map<string, Uint8Array>,
   state: ManifestPluginState,
   injected: OptimizationServices | undefined,
-  triggered: boolean,
+  liveServicesRequired: boolean,
 ): Promise<OptimizationReport> {
-  if (!triggered || state.largeAssetOptimization === false) {
+  if (!liveServicesRequired || state.largeAssetOptimization === false) {
     return optimizeSingleFileArtifact({ build: retained, files }, unavailableOptimizationServices());
   }
   if (state.optimizationCallbackConflict) {
@@ -169,7 +141,10 @@ async function runOptimization(
   let node: import('./optimizer/node-services.js').NodeOptimizationServices | undefined;
   try {
     const { createNodeOptimizationServices } = await import('./optimizer/node-services.js');
-    node = createNodeOptimizationServices();
+    const configured = typeof state.largeAssetOptimization === 'object'
+      ? state.largeAssetOptimization.node
+      : undefined;
+    node = createNodeOptimizationServices(configured);
     const services = await createLiveOptimizationServices(node);
     return await optimizeSingleFileArtifact({ build: retained, files }, services);
   } catch (error) {
