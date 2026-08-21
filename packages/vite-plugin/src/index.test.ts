@@ -6,6 +6,7 @@ import * as path from 'path';
 import type { IndexHtmlTransformResult } from 'vite';
 import { nip5aManifest, NAPPLET_KIND_NAMED, type Nip5aManifestOptions } from './index';
 import { computeAggregateHash } from './hashing';
+import { effectiveRequirements } from './requirements';
 
 const TEST_PRIVKEY = '01'.repeat(32);
 const tempRoots: string[] = [];
@@ -94,6 +95,13 @@ describe('NIP-5A aggregate hash', () => {
     const a: [string, string] = ['aa'.repeat(32), '/a.html'];
     const b: [string, string] = ['bb'.repeat(32), '/b.html'];
     expect(computeAggregateHash([a, b])).toBe(computeAggregateHash([b, a]));
+  });
+});
+
+describe('effective manifest requirements', () => {
+  it('adds resource exactly once only after a resource transaction commits', () => {
+    expect(effectiveRequirements(['relay', 'resource', 'relay'], 0)).toEqual(['relay']);
+    expect(effectiveRequirements(['relay', 'resource', 'relay'], 2)).toEqual(['relay', 'resource']);
   });
 });
 
