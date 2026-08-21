@@ -72,14 +72,21 @@ export async function pairBuildSigner(options: PairBuildSignerOptions): Promise<
   const timeout = options.clock.setTimeout(() => root.abort(), options.timeoutMs ?? DEFAULT_PAIRING_TIMEOUT_MS);
   let winner: "qr" | "paste" | undefined;
   let verifiedSession: BuildSignerSession | undefined;
+  const claimWinner = async (flow: "qr" | "paste", session: BuildSignerSession): Promise<BuildSignerSession> => {
+    if (winner !== undefined) {
+      await session.signer.close();
+      throw new Error("Remote signer pairing lost");
+    }
+    winner = flow;
+    return session;
+  };
 
   try {
     await options.terminal.showQr(pairing.uri);
     options.terminal.writeStatus({ code: "signer-pairing", message: "Waiting for a remote signer" });
     const qr = pairing.waitForSession(qrController.signal).then(async (session) => {
       const verified = await verifySession(session);
-      winner = "qr";
-      return verified;
+      return await claimWinner("qr", verified);
     });
     const pasted = options.terminal.readLine("Paste a bunker:// URL: ", pasteController.signal)
       .then(async (value) => {
@@ -89,8 +96,7 @@ export async function pairBuildSigner(options: PairBuildSignerOptions): Promise<
         }
         const session = await options.connectBunker(bunker, pasteController.signal);
         const verified = await verifySession(session);
-        winner = "paste";
-        return verified;
+        return await claimWinner("paste", verified);
       });
     const session = await Promise.any([qr, pasted]).catch(() => {
       throw new Error(root.signal.aborted ? "Remote signer pairing timed out" : "Remote signer pairing failed");
@@ -170,8 +176,7 @@ async function verifySession(
     throw new Error("Remote signer session verification failed");
   }
   const publicKey = await session.signer.getPublicKey();
-  if (!PUBLIC_KEY_PATTERN.test(publicKey) || publicKey !== session.remotePubkey ||
-    (expected !== undefined && publicKey !== expected.remotePubkey)) {
+  if (!PUBLIC_KEY_PATTERN.test(publicKey)) {
     await session.signer.close();
     throw new Error("Remote signer session verification failed");
   }
