@@ -13,7 +13,6 @@
 // depend on any NIP-5D / NAP wire surface, `napplet-*` manifest tags, the
 // iframe srcdoc/sandbox model, or the napplet artifact shape.
 
-import { qrcode } from "@libs/qrcode";
 import { TextLineStream } from "@std/streams";
 import {
   type BuildSignerSession,
@@ -36,6 +35,8 @@ import { createApplesaucePool } from "./applesauce-pool.ts";
 import { closeNostrConnectPool, ensureNostrConnectPool } from "./nostr-connect-pool.ts";
 import { decodeNbunksec, encodeNbunksec, type NbunksecInfo } from "./signing.ts";
 import type { NostrEventTemplate } from "./types.ts";
+import { buildPerms, clearLines, detectBunkerLine, printConnectPrompt, renderQrLines } from "./nostr-connect-terminal.ts";
+export { buildPerms, detectBunkerLine, renderQrLines, renderQrMatrix } from "./nostr-connect-terminal.ts";
 
 /** Default relays used to reach a remote signer when none are supplied. */
 export const DEFAULT_CONNECT_RELAYS = [
@@ -118,118 +119,6 @@ export async function reconnectRemoteBuildSigner(
   });
 }
 
-/**
- * Build the NIP-46 permission list requested from a remote signer.
- *
- * @param kinds - Event kinds to request `sign_event` permission for.
- * @returns A leading `get_public_key` followed by one `sign_event:<kind>` per kind.
- * @example
- * ```ts
- * buildPerms([1, 24242]); // ["get_public_key", "sign_event:1", "sign_event:24242"]
- * ```
- */
-export function buildPerms(kinds: number[]): string[] {
-  return ["get_public_key", ...kinds.map((kind) => `sign_event:${kind}`)];
-}
-
-/**
- * Detect whether a stdin line is a pasted `bunker://` connection string.
- *
- * @param line - A single line read from stdin.
- * @returns The trimmed `bunker://` string, or null when the line is not one.
- * @example
- * ```ts
- * detectBunkerLine("  bunker://abc "); // "bunker://abc"
- * detectBunkerLine("noise");           // null
- * ```
- */
-export function detectBunkerLine(line: string): string | null {
-  const trimmed = line.trim();
-  return trimmed.startsWith("bunker://") ? trimmed : null;
-}
-
-/**
- * Render a QR module matrix to terminal lines using half-block characters,
- * two QR rows per printed line, wrapped in a quiet-zone border.
- *
- * @param matrix - Boolean matrix where true = dark module.
- * @param border - Quiet-zone size in modules (default 2).
- * @returns One string per printed terminal row.
- * @example
- * ```ts
- * renderQrMatrix([[true, false], [false, true]]).length; // > 0
- * ```
- */
-export function renderQrMatrix(matrix: boolean[][], border = 2): string[] {
-  if (!matrix || matrix.length === 0) return [];
-  const UPPER_HALF = "▀";
-  const LOWER_HALF = "▄";
-  const FULL_BLOCK = "█";
-  const SPACE = " ";
-  const width = matrix[0].length;
-  const totalWidth = width + 2 * border;
-  const lines: string[] = [];
-
-  for (let i = 0; i < Math.ceil(border / 2); i += 1) lines.push(SPACE.repeat(totalWidth));
-
-  for (let row = 0; row < matrix.length; row += 2) {
-    const top = matrix[row];
-    const bottom = row + 1 < matrix.length ? matrix[row + 1] : null;
-    let line = SPACE.repeat(border);
-    for (let col = 0; col < width; col += 1) {
-      const topDark = top[col];
-      const bottomDark = bottom ? bottom[col] : false;
-      if (topDark && bottomDark) line += FULL_BLOCK;
-      else if (topDark && !bottomDark) line += UPPER_HALF;
-      else if (!topDark && bottomDark) line += LOWER_HALF;
-      else line += SPACE;
-    }
-    line += SPACE.repeat(border);
-    lines.push(line);
-  }
-
-  for (let i = 0; i < Math.ceil(border / 2); i += 1) lines.push(SPACE.repeat(totalWidth));
-  return lines;
-}
-
-/**
- * Render a nostrconnect:// URI as a scannable QR code for the terminal.
- *
- * @param uri - The nostrconnect:// URI to encode.
- * @param border - Quiet-zone size in modules (default 2).
- * @returns One string per printed terminal row.
- * @example
- * ```ts
- * renderQrLines("nostrconnect://pubkey?relay=wss://r").length; // > 0
- * ```
- */
-export function renderQrLines(uri: string, border = 2): string[] {
-  const matrix = qrcode(uri, { output: "array" }) as boolean[][];
-  return renderQrMatrix(matrix, border);
-}
-
-function clearLines(count: number, write: (bytes: Uint8Array) => void): void {
-  if (count <= 0) return;
-  const encoder = new TextEncoder();
-  write(encoder.encode(`\x1b[${count}A`));
-  for (let i = 0; i < count; i += 1) write(encoder.encode("\x1b[2K\x1b[B"));
-  write(encoder.encode(`\x1b[${count}A`));
-}
-
-/** Print the QR + prompt block; returns the number of terminal lines written. */
-function printConnectPrompt(
-  uri: string,
-  qrLines: string[],
-  timeoutMs: number,
-  print: (line: string) => void,
-): number {
-  print("Scan this QR with a NIP-46 signer, or paste a bunker:// URL and press Enter:");
-  for (const line of qrLines) print(line);
-  print("");
-  print(uri);
-  print(`Waiting for a remote signer (timeout ${Math.round(timeoutMs / 1000)}s)...`);
-  return qrLines.length + 4;
-}
 
 /**
  * Run the NIP-46 remote-signer login flow. Prints a nostrconnect QR and races
