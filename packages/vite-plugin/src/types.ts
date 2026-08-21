@@ -11,6 +11,7 @@
  */
 
 import type { NappletConfigSchema } from '@napplet/nap/config/types';
+import type { OptimizationReport } from './optimizer/pipeline.js';
 
 /**
  * NIP-5D napplet manifest kinds. Deliberately distinct from NIP-5A's nsite
@@ -119,6 +120,15 @@ export interface Nip5aManifestOptions {
    * alone). Non-normative summary — defer to `ARCHETYPES.md` (napplet/naps).
    */
   archetypes?: Array<{ slug: string; convention: string }>;
+  /**
+   * Automatically externalize eligible retained build assets only when the
+   * measured would-be single-file HTML exceeds 2 MiB. This is build-tool
+   * behavior; it neither creates a protocol capability nor changes the
+   * NIP-5D/NIP-5A manifest schema.
+   *
+   * Defaults to `'auto'`. Set `false` to keep the normal all-inline artifact.
+   */
+  largeAssetOptimization?: 'auto' | false;
 }
 
 /** Internal: resolved per-plugin-instance build state shared across hooks. */
@@ -127,6 +137,9 @@ export interface ManifestPluginState {
   projectRoot: string;
   base: string;
   artifactMode: Nip5aArtifactMode;
+  largeAssetOptimization?: 'auto' | false;
+  optimizationCallbackConflict?: boolean;
+  optimizationReport?: OptimizationReport | null;
   resolvedSchema: NappletConfigSchema | null;
   resolvedSchemaSource: string | null;
   inferredRequires: Set<string>;

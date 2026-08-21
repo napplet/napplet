@@ -7,6 +7,8 @@
  */
 
 import * as crypto from 'crypto';
+import { discoverBlossomServers, uploadExactBlobs } from '@napplet/build-tools';
+import type { NodeOptimizationServices } from './node-services.js';
 import {
   renderPrivateResourceTable,
   renderResourceLoader,
@@ -108,6 +110,12 @@ export interface OptimizationReport {
   reason?: string;
 }
 
+/** Injectable shared-operation overrides used only by deterministic tests. */
+export interface LiveOptimizationDependencies {
+  discover?: typeof discoverBlossomServers;
+  upload?: typeof uploadExactBlobs;
+}
+
 function normalizedPath(value: string): string {
   return value.replace(/\\/g, '/');
 }
@@ -118,6 +126,59 @@ function sha256(bytes: Uint8Array): string {
 
 function canonicalUri(sha256Hex: string): string {
   return `blossom:sha256:${sha256Hex}`;
+}
+
+/**
+ * Adapt already-lazy Node boundaries to the retained-artifact transaction.
+ *
+ * This is private build plumbing: discovery and exact upload remain owned by
+ * @napplet/build-tools, while `resourceBytes` is limited to just-uploaded
+ * exact bytes for local transaction verification. Runtime recovery still uses
+ * only the generated NAP-RESOURCE loader.
+ */
+export async function createLiveOptimizationServices(
+  node: NodeOptimizationServices,
+  dependencies: LiveOptimizationDependencies = {},
+): Promise<OptimizationServices> {
+  const signer = await node.getSigner();
+  if (signer.status !== 'ready') throw new Error(signer.reason.message);
+
+  const discovery = await (dependencies.discover ?? discoverBlossomServers)(
+    { pubkey: signer.remotePubkey },
+    node.discovery,
+  );
+  if (discovery.status !== 'found') throw new Error(discovery.reason.message);
+
+  const primary = await node.networkPolicy.validate(
+    discovery.servers[0]!,
+    node.blossom.signal ?? new AbortController().signal,
+  );
+  const uploaded = new Map<string, Uint8Array>();
+  return {
+    async authorize(): Promise<UploadAuthorization> {
+      return { token: 'verified-live-upload', expiresAt: Date.now() + 60_000 };
+    },
+    async upload(input): Promise<BlossomDescriptor> {
+      const result = await (dependencies.upload ?? uploadExactBlobs)(
+        {
+          primary,
+          blobs: [{ bytes: input.bytes, contentType: input.mime }],
+          signer: signer.signer,
+        },
+        node.blossom,
+      );
+      if (result.status !== 'complete' || !result.deletionAuthorized) {
+        throw new Error(result.reason.message);
+      }
+      uploaded.set(canonicalUri(input.sha256), input.bytes);
+      return { sha256: input.sha256, bytes: input.bytes.byteLength };
+    },
+    async resourceBytes(uri): Promise<Blob> {
+      const bytes = uploaded.get(uri);
+      if (!bytes) throw new Error('verified uploaded resource is unavailable');
+      return new Blob([bytes]);
+    },
+  };
 }
 
 function isCanonicalDescriptor(descriptor: BlossomDescriptor, expectedHash: string, expectedBytes: number): boolean {

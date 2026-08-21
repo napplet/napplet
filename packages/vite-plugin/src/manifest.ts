@@ -16,8 +16,11 @@ import { discoverConfigSchema, validateConfigSchema } from './config-schema.js';
 import { renderSingleFileBuildAssets } from './html.js';
 import { resolvedRequirements } from './requirements.js';
 import {
+  createLiveOptimizationServices,
   optimizeSingleFileArtifact,
+  planExternalAssets,
   renderOptimizedHtml,
+  type OptimizationReport,
   type OptimizationServices,
   type RetainedAsset,
 } from './optimizer/pipeline.js';
@@ -96,10 +99,15 @@ async function prepareDistIndexHtml(
   if (state.artifactMode === 'single-file') {
     const retained = collectRetainedBuild(distPath, html, state.base);
     const files = collectRetainedFiles(distPath, retained.assets, html);
-    const report = await optimizeSingleFileArtifact(
-      { build: retained, files },
-      optimizationServices ?? unavailableOptimizationServices(),
+    const plan = planExternalAssets(retained);
+    const report = await runOptimization(
+      retained,
+      files,
+      state,
+      optimizationServices,
+      plan.triggered,
     );
+    state.optimizationReport = report;
     if (report.committedResourceCount > 0 && report.status !== 'rolled-back') {
       commitRetainedFiles(distPath, files, retained.emittedPaths, html);
       return report.committedResourceCount;
@@ -111,6 +119,46 @@ async function prepareDistIndexHtml(
     commitRetainedFiles(distPath, files, retained.emittedPaths, html);
   }
   return 0;
+}
+
+async function runOptimization(
+  retained: { html: string; assets: RetainedAsset[]; emittedPaths: string[] },
+  files: Map<string, Uint8Array>,
+  state: ManifestPluginState,
+  injected: OptimizationServices | undefined,
+  triggered: boolean,
+): Promise<OptimizationReport> {
+  if (!triggered || state.largeAssetOptimization === false) {
+    return optimizeSingleFileArtifact({ build: retained, files }, unavailableOptimizationServices());
+  }
+  if (state.optimizationCallbackConflict) {
+    console.warn('[nip5a-manifest] large-asset optimization skipped: existing experimental.renderBuiltUrl callback preserved');
+    return optimizeSingleFileArtifact({ build: retained, files }, unavailableOptimizationServices());
+  }
+  if (injected) return await optimizeSingleFileArtifact({ build: retained, files }, injected);
+
+  let node: import('./optimizer/node-services.js').NodeOptimizationServices | undefined;
+  try {
+    const { createNodeOptimizationServices } = await import('./optimizer/node-services.js');
+    node = createNodeOptimizationServices();
+    const services = await createLiveOptimizationServices(node);
+    return await optimizeSingleFileArtifact({ build: retained, files }, services);
+  } catch (error) {
+    const initial = renderOptimizedHtml({ build: retained, selected: [] });
+    const reason = error instanceof Error ? error.message : 'live optimization is unavailable';
+    console.warn(`[nip5a-manifest] large-asset optimization skipped: ${reason}`);
+    return {
+      status: 'rolled-back',
+      initialBytes: initial.bytes,
+      finalBytes: initial.bytes,
+      selected: [],
+      entries: [],
+      committedResourceCount: 0,
+      reason,
+    };
+  } finally {
+    await node?.dispose();
+  }
 }
 
 function collectRetainedBuild(
