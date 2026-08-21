@@ -137,6 +137,17 @@ Deno.test("ensureNostrConnectPool wires applesauce signer static pool fallback",
   assertEquals(NostrConnectSigner.pool, undefined);
 });
 
+Deno.test("CLI pairing delegates first-success coordination to the shared build tools", async () => {
+  const source = await Deno.readTextFile(
+    new URL("../src/nostr-connect.ts", import.meta.url),
+  );
+
+  assert(
+    source.includes("pairBuildSigner"),
+    "CLI pairing must use the shared QR/pasted-bunker coordinator",
+  );
+});
+
 Deno.test("connectRemoteSigner completes via a pasted bunker:// URL", async () => {
   const remoteSk = generateSecretKey();
   const remotePubkey = getPublicKey(remoteSk);
