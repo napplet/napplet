@@ -98,6 +98,18 @@ describe('NIP-5A aggregate hash', () => {
 });
 
 describe('nip5aManifest artifact modes', () => {
+  it('accepts disabled automatic large-asset optimization without adding a resource requirement', async () => {
+    const fixture = makeFixture();
+    fs.writeFileSync(path.join(fixture.dist, 'index.html'), '<!doctype html>');
+
+    await runCloseBundle(
+      { nappletType: 'optimization-disabled', largeAssetOptimization: false },
+      fixture,
+    );
+
+    expect(readManifest(fixture.dist).tags.filter((tag) => tag[0] === 'requires')).toEqual([]);
+  });
+
   it('writes unsigned requires and archetype metadata when no development key is set', async () => {
     const fixture = makeFixture();
     fs.writeFileSync(path.join(fixture.dist, 'index.html'), '<!doctype html>');
