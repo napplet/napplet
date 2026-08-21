@@ -212,7 +212,8 @@ function normalizeRelay(value: string | undefined): string | undefined {
   try {
     const url = new URL(value);
     if (url.protocol !== "wss:" || url.username || url.password || url.search || url.hash) return undefined;
-    return url.origin;
+    // NIP-65 relay URLs can legitimately include a websocket path.
+    return url.toString();
   } catch {
     return undefined;
   }
