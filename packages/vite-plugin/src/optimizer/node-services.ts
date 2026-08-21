@@ -129,16 +129,9 @@ export function createNodeOptimizationServices(options: NodeOptimizationOptions 
   return {
     discovery,
     networkPolicy,
-    blossom: {
-      networkPolicy,
-      now: () => Math.floor(clock.now() / 1_000),
-      signal,
-      fetch: async (input, init) => {
-        const result = await fetch(input, init);
-        if (result.status === 'complete') return result.response;
-        throw new Error(result.reason.message);
-      },
-    },
+    // Node's global fetch resolves after policy validation. Do not enable the
+    // automatic network path until this adapter has a pinned HTTPS transport.
+    blossom: { networkPolicy, now: () => Math.floor(clock.now() / 1_000), signal },
     getSigner,
     fetch,
     async dispose(): Promise<void> {

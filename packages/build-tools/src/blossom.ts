@@ -271,7 +271,10 @@ async function fetchWithTimeout(
   outerSignal.addEventListener("abort", onAbort, { once: true });
   const timeout = setTimeout(() => controller.abort(), services.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   try {
-    return await (services.fetch ?? fetch)(url, { ...init, signal: controller.signal });
+    // Policy validation cannot pin global fetch's later DNS lookup. A platform
+    // adapter must provide the transport that owns the validated connection.
+    if (!services.fetch) throw new Error("Blossom request requires a pinned transport");
+    return await services.fetch(url, { ...init, signal: controller.signal });
   } catch {
     throw new Error(outerSignal.aborted ? "network operation cancelled" : "Blossom request failed");
   } finally {

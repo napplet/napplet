@@ -46,3 +46,11 @@ Deno.test("network policy validates each redirect target with a fresh resolution
     "unsafe endpoint",
   );
 });
+
+Deno.test("a validated DNS answer is not a connection pin", async () => {
+  const policy = createNetworkPolicy({ resolve: () => Promise.resolve(["93.184.216.34"]) });
+  const endpoint = await policy.validate(new URL("https://rebind.example/upload"), new AbortController().signal);
+  if (endpoint.addresses[0] !== "93.184.216.34") throw new Error("expected public validation answer");
+  // Blossom's request layer has no global-fetch fallback: a later rebinding
+  // answer cannot be reached unless a platform supplies a pinned transport.
+});
