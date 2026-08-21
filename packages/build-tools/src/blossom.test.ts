@@ -85,6 +85,10 @@ Deno.test("head and upload use the exact bytes, hash, BUD-11 authorization, and 
   assertEquals(headers.get("x-sha-256"), SHA256);
   assertEquals(headers.get("content-type"), "text/plain");
   assertEquals(headers.get("content-length"), "5");
+  assertEquals(
+    [...new Uint8Array(await (put.init.body as Blob).arrayBuffer())],
+    [...BYTES],
+  );
   const event = decodeAuthorization(headers.get("authorization") ?? "");
   assertEquals(event.kind, 24242);
   assertEquals(event.content, "Upload blob to Blossom");
@@ -122,8 +126,10 @@ Deno.test("batch uploads primary then secondary directly with recorded evidence"
 
 Deno.test("upload retries one authorization challenge but rejects descriptor substitution and redirects", async () => {
   let attempts = 0;
+  const authorization: string[] = [];
   const challengeFetcher = ((_: string | URL | Request, init?: RequestInit) => {
     if (init?.method === "HEAD") return Promise.resolve(new Response(null, { status: 404 }));
+    authorization.push(new Headers(init?.headers).get("authorization") ?? "");
     attempts += 1;
     return Promise.resolve(attempts === 1
       ? new Response(null, { status: 401 })
@@ -131,6 +137,7 @@ Deno.test("upload retries one authorization challenge but rejects descriptor sub
   }) as typeof fetch;
   await uploadBlob(endpoint("https://primary.example"), { bytes: BYTES, contentType: "text/plain" }, signer(), services(challengeFetcher));
   assertEquals(attempts, 2);
+  assert(authorization[0] !== authorization[1], "retry must use a fresh authorization event");
 
   const substitutedFetcher = ((_: string | URL | Request, init?: RequestInit) => {
     if (init?.method === "HEAD") return Promise.resolve(new Response(null, { status: 404 }));
@@ -150,4 +157,46 @@ Deno.test("upload retries one authorization challenge but rejects descriptor sub
   }, services(redirectFetcher));
   assertEquals(failed.status, "failed");
   assertEquals(failed.deletionAuthorized, false);
+});
+
+Deno.test("batch rejects descriptor mismatches, partial secondaries, and cancellation without deletion authority", async () => {
+  const mismatchFetcher = ((_: string | URL | Request, init?: RequestInit) => {
+    if (init?.method === "HEAD") return Promise.resolve(new Response(null, { status: 404 }));
+    return Promise.resolve(new Response(JSON.stringify({ ...descriptor(), size: 6 }), {
+      status: 201,
+      headers: { "content-type": "application/json" },
+    }));
+  }) as typeof fetch;
+  const mismatch = await uploadExactBlobs({
+    primary: endpoint("https://primary.example"),
+    blobs: [{ bytes: BYTES, contentType: "text/plain" }],
+    signer: signer(),
+  }, services(mismatchFetcher));
+  assertEquals(mismatch.status, "failed");
+  assertEquals(mismatch.deletionAuthorized, false);
+
+  const partialFetcher = ((url: string | URL | Request, init?: RequestInit) => {
+    if (init?.method === "HEAD") return Promise.resolve(new Response(null, { status: 404 }));
+    return Promise.resolve(String(url).startsWith("https://secondary.example")
+      ? new Response(null, { status: 500 })
+      : new Response(JSON.stringify(descriptor()), { status: 201, headers: { "content-type": "application/json" } }));
+  }) as typeof fetch;
+  const partial = await uploadExactBlobs({
+    primary: endpoint("https://primary.example"),
+    secondary: [endpoint("https://secondary.example")],
+    blobs: [{ bytes: BYTES, contentType: "text/plain" }],
+    signer: signer(),
+  }, services(partialFetcher));
+  assertEquals(partial.status, "failed");
+  assertEquals(partial.evidence.length, 2);
+
+  const controller = new AbortController();
+  controller.abort();
+  const cancelled = await uploadExactBlobs({
+    primary: endpoint("https://primary.example"),
+    blobs: [{ bytes: BYTES, contentType: "text/plain" }],
+    signer: signer(),
+  }, { ...services(partialFetcher), signal: controller.signal });
+  assertEquals(cancelled.status, "failed");
+  assertEquals(cancelled.deletionAuthorized, false);
 });
