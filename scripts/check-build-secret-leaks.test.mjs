@@ -54,6 +54,15 @@ test('permits public identifiers, hashes, invalid examples, and redacted sentine
   assert.ok(result.scannedBytes > 0);
 });
 
+test('does not let a redacted sentinel hide a separate secret', async () => {
+  const root = await fixture({
+    'out/mixed.txt': '{"secret":"[REDACTED]"}\nAuthorization: Nostr eyJhbGciOiJub25lIn0.eyJzdWIiOiJzaWduZXIifQ.signature',
+  });
+  const result = await scanOutwardArtifacts({ root, paths: ['out'] });
+
+  assert.deepEqual(result.findings, [{ path: 'out/mixed.txt', rule: 'blossom-authorization' }]);
+});
+
 test('scans generated files, evidence, staged diff, and PR-body input', async () => {
   const root = await fixture({
     'dist/index.html': '<script src="main.js"></script>',
