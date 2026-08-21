@@ -1,11 +1,15 @@
 import {
+  createKeyStore,
   getKeyStoreProvider,
   KEY_SERVICE_NAME,
   LinuxSecretService,
   MacOSKeychain,
   requireKeyStoreProvider,
   WindowsCredentialManager,
+  type KeyStoreProvider,
+  type StoredSecret,
 } from "../src/key-store.ts";
+import { RedactedSecret } from "@napplet/build-tools";
 import type { CommandResult, CommandRunner } from "../src/process.ts";
 import { assert, assertEquals } from "./assert.ts";
 
@@ -114,4 +118,32 @@ Deno.test("WindowsCredentialManager stores, lists, and deletes targets", async (
   await provider.store({ service: KEY_SERVICE_NAME, account: "default", secret: "nsec1secret" });
   assertEquals(await provider.list(KEY_SERVICE_NAME), ["default"]);
   assertEquals(await provider.delete(KEY_SERVICE_NAME, "default"), true);
+});
+
+Deno.test("createKeyStore adapts an existing provider to the shared opaque SecretStore", async () => {
+  const stored: StoredSecret[] = [];
+  const provider: KeyStoreProvider = {
+    name: "test key store",
+    isAvailable: () => Promise.resolve(true),
+    store: (secret) => {
+      stored.push(secret);
+      return Promise.resolve();
+    },
+    retrieve: (_service, account) => Promise.resolve(account === "remote" ? "nbunksec1secret" : null),
+    delete: () => Promise.resolve(true),
+    list: () => Promise.resolve([]),
+  };
+  const store = createKeyStore(provider);
+
+  const retrieved = await store.get("remote");
+  assertEquals(retrieved?.withValue((value) => value), "nbunksec1secret");
+  assertEquals(String(retrieved), "[REDACTED]");
+  await store.set("remote", new RedactedSecret("nbunksec1replacement"));
+  await store.delete("remote");
+
+  assertEquals(stored, [{
+    service: KEY_SERVICE_NAME,
+    account: "remote",
+    secret: "nbunksec1replacement",
+  }]);
 });
