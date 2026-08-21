@@ -31,7 +31,7 @@ The real Vite plugin build now proves a deterministic 55 MiB multi-asset offload
 ## Delivered
 
 - Runtime-generated seven-asset fixture: 57,671,680 candidate bytes, every Blob 6–9 MiB; actual `vite.build()` invokes the public `nip5aManifest()` hooks.
-- Compact machine-readable evidence pins 76,896,853 would-be HTML bytes, 8,366 final bytes, seven exact upload/recovery hashes, final index hash `f8b7dcd993e2b24bdb64d93b8243e724c8cfc655d50f98f29823d76cb9afee85`, and aggregate `3c1bb2a41a24abcd50d7f30372bae32f7ca56c6715114a06c947040490afdeeb`.
+- Compact machine-readable evidence pins 76,896,853 would-be HTML bytes, 8,366 final bytes, seven exact upload/recovery hashes, final index hash `cc6719e89c46acee49dc0a67d44e35286f2943db3103490dda719ade560db716`, and aggregate `deca44de168d770648d7049d86ca5dfb45f7bc1420bd019815e1184ae3a5436f`.
 - Valid fake 10002 → write/unmarked relays → 10063 discovery, kind-24242 authorization, verified descriptors, secondary failure, corrupt resource rejection, and complete-Blob portability fallback.
 - Public docs distinguish canonical NIP/NAP/BUD sources from private loader/mapping and other non-normative implementation behavior.
 

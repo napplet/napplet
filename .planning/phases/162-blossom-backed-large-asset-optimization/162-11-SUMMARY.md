@@ -86,11 +86,11 @@ status: complete
 ## Verification
 
 - `node --test scripts/check-build-secret-leaks.test.mjs && node scripts/check-build-secret-leaks.mjs` — pass.
-- `deno check --config packages/cli/deno.json packages/build-tools/src/index.ts` and `deno test --allow-all packages/cli/tests` — pass; 120 CLI tests.
+- `deno check --config packages/cli/deno.json packages/build-tools/src/index.ts` and `deno test --allow-all packages/cli/tests` — pass; 122 CLI tests.
 - `pnpm build`, `pnpm type-check`, `pnpm -r test:unit`, and `npm test` — pass.
 - Assembled static site link crawl with `LINK_CHECK_BASE=http://127.0.0.1:8099 pnpm check:links` — 23 internal URLs, zero broken links. The environment routes `localhost:8099` to an unrelated 426 service, so the supported base override reached the prescribed local server.
 - `pnpm check:jsr`, `pnpm test:release-tooling`, and `pnpm audit --prod` — pass; audit reports no known vulnerabilities.
-- `pnpm --filter @napplet/vite-plugin test:unit -- optimizer/large-fixture.test.ts` — 75 tests pass.
+- `pnpm --filter @napplet/vite-plugin test:unit -- optimizer/large-fixture.test.ts` — 79 tests pass.
 - `npx --yes aislop@0.12.0 scan --changes --base origin/main` — 100/100, zero diagnostics.
 - `git diff --check` — pass; branch diff excludes user-owned root package/lock/config changes and untracked cache, generated-binary, and workshop paths.
 
