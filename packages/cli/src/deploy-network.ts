@@ -154,7 +154,8 @@ function summarizeUploads(
   }
   const requiredEvidence = new Set(files.map((file) => `${file.path}\0${file.sha256}`));
   const serversFullyUploaded = servers.filter((server) => {
-    const evidence = uploaded.filter((result) => result.server === server && result.success);
+    const endpoint = new URL(server).toString();
+    const evidence = uploaded.filter((result) => result.server === endpoint && result.success);
     return evidence.length === requiredEvidence.size &&
       new Set(evidence.map((result) => `${result.file}\0${result.sha256}`)).size === requiredEvidence.size &&
       evidence.every((result) => requiredEvidence.has(`${result.file}\0${result.sha256}`));
