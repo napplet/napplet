@@ -219,16 +219,19 @@ function injectPrivateMetadata(html: string, entries: readonly ResourceTableEntr
 export function renderOptimizedHtml(input: RenderInput): RenderedArtifact {
   const selectedBySource = new Map(input.selected.map((asset) => [normalizedPath(asset.source), asset]));
   const entries = input.entries ? [...input.entries] : tableEntries(input.selected);
-  const entriesBySource = new Map(entries.map((entry) => [entry.source, entry]));
   let html = input.build.html;
 
   for (const asset of input.build.assets) {
     const source = normalizedPath(asset.source);
-    const replacement = selectedBySource.has(source)
-      ? entriesBySource.get(source)?.uri
-      : dataUri(asset);
+    const replacement = selectedBySource.has(source) ? undefined : dataUri(asset);
     if (!replacement) continue;
     html = html.split(asset.reference).join(replacement);
+  }
+
+  for (const source of selectedBySource.keys()) {
+    const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const call = new RegExp(`fetch\\(\\s*__nappletAssetUrl\\(\\s*(["'])${escaped}\\1\\s*\\)\\s*\\)`, 'g');
+    html = html.replace(call, `window.__nappletPrivateResourceLoader.response("${source}")`);
   }
 
   html = injectPrivateMetadata(html, entries);

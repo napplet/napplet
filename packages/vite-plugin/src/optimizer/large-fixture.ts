@@ -69,6 +69,7 @@ export interface LargeFixtureEvidence {
   discovery: { directoryRelays: string[]; writeRelays: string[]; servers: string[]; ignoredForgedEvent: boolean; ignoredOlderEvent: boolean };
   secondaryUploadFailed: boolean;
   corruptResourceRejected: boolean;
+  executedResourceCalls: string[];
 }
 
 export interface FallbackEvidence {
@@ -271,6 +272,16 @@ export async function runLargeAssetFixture(fixture: LargeAssetFixture): Promise<
     }
     runtime.teardown();
     if (byteCalls.length === 0) throw new Error('fixture did not use NAP-RESOURCE bytesMany');
+    const executedResourceCalls: string[] = [];
+    const response = async (source: string): Promise<Response> => {
+      const entry = entries.find((candidate) => candidate.source === source);
+      if (!entry) throw new Error(`final page requested an unknown resource: ${source}`);
+      executedResourceCalls.push(source);
+      return new Response(uploaded.get(entry.uri), { headers: { 'content-type': entry.mime } });
+    };
+    const finalCalls = [...finalHtml.matchAll(/window\.__nappletPrivateResourceLoader\.response\("([^"]+)"\)/g)].map((match) => match[1]!);
+    await Promise.all(finalCalls.map((source) => response(source)));
+    if (executedResourceCalls.length !== entries.length) throw new Error('fixture did not execute every final resource callsite');
 
     const initialHtmlBytes = harness.report?.initialBytes;
     if (initialHtmlBytes === undefined) throw new Error('fixture did not record the production initial rendered size');
@@ -299,6 +310,7 @@ export async function runLargeAssetFixture(fixture: LargeAssetFixture): Promise<
       },
       secondaryUploadFailed,
       corruptResourceRejected,
+      executedResourceCalls,
     };
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
