@@ -924,7 +924,7 @@ Plans:
 **Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
 **Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
 **Depends on:** Phase 161
-**Plans:** 4/11 plans executed
+**Plans:** 5/11 plans executed
 
 **Success Criteria:**
 
@@ -951,7 +951,7 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 162-04-PLAN.md — Migrate CLI pairing, key stores, and deploy signing to shared build services
-- [ ] 162-05-PLAN.md — Implement verified write-relay server discovery and hardened exact-byte Blossom upload
+- [x] 162-05-PLAN.md — Implement verified write-relay server discovery and hardened exact-byte Blossom upload
 - [ ] 162-07-PLAN.md — Bound browser reference rewriting and whole-Blob NAP-RESOURCE loading with parser-backed tests
 
 **Wave 5** *(blocked on Wave 4 completion)*

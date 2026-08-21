@@ -5,8 +5,8 @@ milestone_name: NIP-5D Runtime Injection
 current_phase: 162
 current_phase_name: blossom-backed-large-asset-optimization
 status: executing
-stopped_at: Completed 162-04-PLAN.md
-last_updated: "2026-08-21T15:53:17.875Z"
+stopped_at: Completed 162-05-PLAN.md
+last_updated: "2026-08-21T16:29:44.277Z"
 last_activity: 2026-08-21
 last_activity_desc: Phase 162 execution started
 progress:
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 ## Current Position
 
 Phase: 162 (blossom-backed-large-asset-optimization) — EXECUTING
-Plan: 5 of 11
+Plan: 6 of 11
 Status: Ready to execute
 Last activity: 2026-08-21 — Phase 162 execution started
 community/group-chat invite linked from the SPA and docs.
@@ -489,6 +489,8 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase ?]: Deno member import maps are validated with --no-lock because workspace lock configuration is root-only.
 - [Phase ?]: Keep the public NappletSigner for generic deployment events; use the verified shared BuildSigner only for Blossom kind 24242 authorization.
 - [Phase ?]: Wrap legacy CLI credential providers in RedactedSecret at the boundary so persisted remote-session secrets stay opaque.
+- [Phase ?]: Discover kind-10063 only through the newest verified kind-10002 event's write or unmarked relays; never treat relay URLs as Blossom servers.
+- [Phase ?]: Use direct primary-first BUD uploads and never call BUD-04 remote mirroring from the build process.
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -586,8 +588,8 @@ Items acknowledged and deferred at v0.31.0 milestone close on 2026-05-24:
 
 **Resume file:** None
 
-Last session: 2026-08-21T15:53:17.866Z
-Stopped at: Completed 162-04-PLAN.md
+Last session: 2026-08-21T16:29:44.268Z
+Stopped at: Completed 162-05-PLAN.md
 Resume: Phase 155 COMPLETE. All v0.33.0 SHELL requirements satisfied; both phases (154, 155) done. Next: orchestrator verify_phase_goal for Phase 155, then `/gsd:audit-milestone v0.33.0` → `/gsd:ship`.
 
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
@@ -690,3 +692,4 @@ Resume: Phase 142 TERMINAL-COMPLETE — all 13 VER-IDs (VER-01..13) verified PAS
 | Phase 162 P02 | 3 min | 2 tasks | 8 files |
 | Phase 162-blossom-backed-large-asset-optimization P03 | 9m | 3 tasks | 9 files |
 | Phase 162 P04 | 24m | 2 tasks | 11 files |
+| Phase 162 P05 | 33m | 2 tasks | 7 files |
