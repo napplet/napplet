@@ -1,22 +1,11 @@
-import {
-  type BuildSigner,
-  type BuildSignerSession,
-  reconnectBuildSigner,
-  type RedactedSecret,
-} from "@napplet/build-tools";
+import { type BuildSignerSession, type RedactedSecret } from "@napplet/build-tools";
 import { bunkerRelayDefaults, promptBunkerRelays } from "./bunker-relays.ts";
 import { setSigningRemote, writeConfig as writeNappletConfig } from "./config.ts";
-import {
-  createKeyStore,
-  getKeyStoreProvider,
-  KEY_SERVICE_NAME,
-  type KeyStoreProvider,
-} from "./key-store.ts";
+import { KEY_SERVICE_NAME, type KeyStoreProvider } from "./key-store.ts";
 import {
   type ConnectOptions,
   connectRemoteSigner as connectSigner,
   type ConnectResult,
-  reconnectRemoteBuildSigner,
 } from "./nostr-connect.ts";
 import {
   type PromptInput,
@@ -33,6 +22,7 @@ import {
   normalizePublicKey,
 } from "./signing.ts";
 import type { NappletConfig, SigningMethod } from "./types.ts";
+import { createRemoteDeploySigner, formatPubkey, getOptionalKeyStore, getStoredBuildSigner, message } from "./deploy-signer-remote.ts";
 
 export interface DeploySignerResult {
   signer: NappletSigner | null;
@@ -273,47 +263,6 @@ async function retrieveBunkerSecret(
   return null;
 }
 
-function createRemoteDeploySigner(
-  signer: NappletSigner,
-  getBuildSigner: () => Promise<BuildSigner>,
-): NappletSigner {
-  let buildSigner: Promise<BuildSigner> | undefined;
-  return {
-    pubkey: signer.pubkey,
-    async sign(template) {
-      if (template.kind !== 24242) return await signer.sign(template);
-      buildSigner ??= getBuildSigner();
-      return await (await buildSigner).signEvent(template);
-    },
-    async close() {
-      try {
-        await signer.close?.();
-      } finally {
-        await buildSigner?.then((shared) => shared.close()).catch(() => {});
-      }
-    },
-  };
-}
-
-async function getStoredBuildSigner(
-  account: string,
-  provider: KeyStoreProvider,
-  options: DeploySignerOptions,
-): Promise<BuildSigner> {
-  const session = await reconnectBuildSigner({
-    secretStore: createKeyStore(provider),
-    sessionKey: account,
-    parseStoredSession: (stored) =>
-      stored.withValue((value) => {
-        const info = decodeNbunksec(value);
-        return { remotePubkey: info.pubkey, relays: info.relays };
-      }),
-    reconnect: (stored, _identity, signal) =>
-      (options.reconnectRemoteBuildSigner ?? reconnectRemoteBuildSigner)(stored, signal),
-  });
-  if (!session) throw new Error("Remote signer session could not be reconnected");
-  return session.signer;
-}
 
 async function recoverMissingStoredSigner(
   signing: { type: "stored"; source: "config"; keyReference: string },
@@ -435,27 +384,7 @@ async function storeConnectedSigner(
   }
 }
 
-async function getOptionalKeyStore(
-  options: DeploySignerOptions,
-): Promise<KeyStoreProvider | null> {
-  const load = options.getKeyStoreProvider ?? getKeyStoreProvider;
-  return await load();
-}
-
 function requireSec(sec: string | undefined): string {
   if (!sec) throw new Error("Missing --sec");
   return sec;
-}
-
-function formatPubkey(pubkey: string): string {
-  try {
-    const npub = encodePublicKey(pubkey);
-    return `${npub.slice(0, 12)}...${npub.slice(-8)}`;
-  } catch {
-    return `${pubkey.slice(0, 8)}...${pubkey.slice(-8)}`;
-  }
-}
-
-function message(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
