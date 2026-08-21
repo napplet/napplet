@@ -91,7 +91,7 @@ export async function executeNetworkDeploy(
     totalUploads: files.length * config.blossomServers.length,
   });
   const uploaded = await uploadFilesToServers(files, config.blossomServers, signer, options);
-  const uploadSummary = summarizeUploads(uploaded, config.blossomServers);
+  const uploadSummary = summarizeUploads(uploaded, config.blossomServers, files);
   options.onProgress?.({ type: "upload:complete", summary: uploadSummary });
   if (uploadSummary.serversFullyUploaded !== config.blossomServers.length) {
     // A shared partial batch never establishes complete verified evidence; relay
@@ -139,6 +139,7 @@ export async function executeNetworkDeploy(
 function summarizeUploads(
   uploaded: readonly ServerUploadResult[],
   servers: readonly string[],
+  files: readonly { path: string; sha256: string }[],
 ): UploadSummary {
   const failedUploads = uploaded.filter((result) => !result.success).length;
   // uploadExactBlobs stops at the first failed evidence. No individual server
@@ -151,11 +152,13 @@ function summarizeUploads(
       failedUploads,
     };
   }
-  const serversFullyUploaded =
-    servers.filter((server) =>
-      uploaded.some((result) => result.server === server) &&
-      uploaded.every((result) => result.server !== server || result.success)
-    ).length;
+  const requiredEvidence = new Set(files.map((file) => `${file.path}\0${file.sha256}`));
+  const serversFullyUploaded = servers.filter((server) => {
+    const evidence = uploaded.filter((result) => result.server === server && result.success);
+    return evidence.length === requiredEvidence.size &&
+      new Set(evidence.map((result) => `${result.file}\0${result.sha256}`)).size === requiredEvidence.size &&
+      evidence.every((result) => requiredEvidence.has(`${result.file}\0${result.sha256}`));
+  }).length;
   return {
     servers: servers.length,
     serversFullyUploaded,
