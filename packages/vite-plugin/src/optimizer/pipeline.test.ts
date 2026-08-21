@@ -17,6 +17,7 @@ import {
   type RetainedAsset,
   type RetainedBuild,
 } from './pipeline.js';
+import type { RetainedArtifact } from './references.js';
 
 const tempArtifacts: Array<Map<string, Uint8Array>> = [];
 const tempRoots: string[] = [];
@@ -38,6 +39,13 @@ function build(assets: RetainedAsset[], targetBytes = OPTIMIZATION_TARGET_BYTES)
     html: `<html><head></head><body>${assets.map((entry) => `<img src="${entry.reference}">`).join('')}</body></html>`,
     assets,
     targetBytes,
+  };
+}
+
+function buildWithArtifacts(assets: RetainedAsset[], artifacts: RetainedArtifact[], targetBytes: number): RetainedBuild & { artifacts: RetainedArtifact[] } {
+  return {
+    ...build(assets, targetBytes),
+    artifacts,
   };
 }
 
@@ -67,6 +75,60 @@ afterEach(() => {
 });
 
 describe('large single-file artifact optimizer', () => {
+  it('selects only fully supported assets without changing eligible ordering and records ineligibility reasons', () => {
+    const first = asset('assets/a.bin', 20_000);
+    const mixed = asset('assets/b.bin', 30_000);
+    const retained = buildWithArtifacts([mixed, first], [
+      { path: 'assets/entry.js', kind: 'javascript', content: 'fetch(__nappletAssetUrl("assets/a.bin")); fetch(__nappletAssetUrl("assets/b.bin"));' },
+      { path: 'index.html', kind: 'html', content: '<img src="assets/b.bin">' },
+    ], 10_000);
+    const plan = planExternalAssets(retained);
+
+    expect(plan.selected.map((candidate) => candidate.source)).toEqual(['assets/a.bin']);
+    expect(plan.ineligible).toEqual([{ source: 'assets/b.bin', reasons: ['html-attribute'] }]);
+  });
+
+  it('keeps unsupported bytes inline in every measurement and reports nonfatal target exhaustion', () => {
+    const unsupported = asset('assets/inline.bin', 20_000);
+    const retained = buildWithArtifacts([unsupported], [
+      { path: 'index.html', kind: 'html', content: '<img src="assets/inline.bin">' },
+    ], 100);
+    const plan = planExternalAssets(retained);
+
+    expect(plan.status).toBe('target-not-reached');
+    expect(plan.selected).toEqual([]);
+    expect(plan.initialBytes).toBe(plan.finalBytes);
+    expect(renderOptimizedHtml({ build: retained, selected: plan.selected }).html).toContain('data:application/octet-stream;base64');
+  });
+
+  it('emits private entries only for selected supported resources and never commits an ineligible transaction', async () => {
+    const supported = asset('assets/supported.bin', 20_000);
+    const unsupported = asset('assets/unsupported.bin', 20_000);
+    const retained = buildWithArtifacts([supported, unsupported], [
+      { path: 'assets/entry.js', kind: 'javascript', content: 'fetch(__nappletAssetUrl("assets/supported.bin"));' },
+      { path: 'index.html', kind: 'html', content: '<img src="assets/unsupported.bin">' },
+    ], 10_000);
+    const store = artifactStore(retained.html, retained.assets);
+    const report = await optimizeSingleFileArtifact({ build: retained, files: store }, fakeServices());
+
+    expect(report.entries.map((candidate) => candidate.source)).toEqual(['assets/supported.bin']);
+    expect(report.selected).toEqual(['assets/supported.bin']);
+    expect(report.committedResourceCount).toBe(1);
+  });
+
+  it('exposes zero committed resources for disabled, ineligible, and rolled-back optimizer attempts', async () => {
+    const unsupported = asset('assets/unsupported.bin', 20_000);
+    const retained = buildWithArtifacts([unsupported], [
+      { path: 'index.html', kind: 'html', content: '<img src="assets/unsupported.bin">' },
+    ], 10_000);
+    const store = artifactStore(retained.html, retained.assets);
+    const report = await optimizeSingleFileArtifact({ build: retained, files: store }, fakeServices());
+
+    expect(report.committedResourceCount).toBe(0);
+    expect(report.entries).toEqual([]);
+    expect(store.get('index.html')).toBeDefined();
+  });
+
   it('does not trigger at 2 MiB and does trigger at one byte above it', () => {
     expect(planExternalAssets({ html: 'x'.repeat(OPTIMIZATION_TARGET_BYTES), assets: [] }).triggered).toBe(false);
     expect(planExternalAssets({ html: 'x'.repeat(OPTIMIZATION_TARGET_BYTES + 1), assets: [] }).triggered).toBe(true);
