@@ -113,25 +113,12 @@ export class MacOSKeychain implements KeyStoreProvider {
   constructor(private readonly run: CommandRunner = runCommand) {}
 
   async isAvailable(): Promise<boolean> {
-    const result = await this.run("which", ["security"]);
-    return result.code === 0;
+    return false;
   }
 
   async store(secret: StoredSecret): Promise<void> {
-    await this.delete(secret.service, secret.account);
-    const result = await this.run("security", [
-      "add-generic-password",
-      "-a",
-      secret.account,
-      "-s",
-      secret.service,
-      "-w",
-      secret.secret,
-      "-U",
-    ]);
-    if (result.code !== 0) {
-      throw new Error(`macOS Keychain store failed: ${result.stderr.trim() || result.code}`);
-    }
+    void secret;
+    throw new Error("macOS Keychain writes require an in-memory provider");
   }
 
   async retrieve(service: string, account: string): Promise<string | null> {
@@ -170,23 +157,12 @@ export class WindowsCredentialManager implements KeyStoreProvider {
   constructor(private readonly run: CommandRunner = runCommand) {}
 
   async isAvailable(): Promise<boolean> {
-    const result = await this.run("where", ["cmdkey"]);
-    return result.code === 0;
+    return false;
   }
 
   async store(secret: StoredSecret): Promise<void> {
-    const target = this.target(secret.service, secret.account);
-    await this.delete(secret.service, secret.account);
-    const result = await this.run("cmdkey", [
-      `/add:${target}`,
-      `/user:${secret.account}`,
-      `/pass:${secret.secret}`,
-    ]);
-    if (result.code !== 0) {
-      throw new Error(
-        `Windows Credential Manager store failed: ${result.stderr.trim() || result.code}`,
-      );
-    }
+    void secret;
+    throw new Error("Windows Credential Manager writes require an in-memory provider");
   }
 
   async retrieve(service: string, account: string): Promise<string | null> {

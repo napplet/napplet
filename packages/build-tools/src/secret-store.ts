@@ -73,7 +73,7 @@ class MacOSKeychainStore implements PlatformProvider, SecretStore {
   constructor(private readonly process: ProcessAdapter, private readonly service: string) {}
 
   async available(): Promise<boolean> {
-    return (await this.process.run("which", ["security"])).code === 0;
+    return false;
   }
 
   async get(key: string): Promise<RedactedSecret | undefined> {
@@ -84,10 +84,8 @@ class MacOSKeychainStore implements PlatformProvider, SecretStore {
   }
 
   async set(key: string, value: RedactedSecret): Promise<void> {
-    const result = await this.process.run("security", [
-      "add-generic-password", "-a", key, "-s", this.service, "-w", value, "-U",
-    ]);
-    if (result.code !== 0) throw new Error("macOS Keychain store failed");
+    void key; void value;
+    throw new Error("macOS Keychain writes require an in-memory provider");
   }
 
   async delete(key: string): Promise<void> {
