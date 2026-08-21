@@ -278,6 +278,9 @@ importers:
       nostr-tools:
         specifier: ^2.23.3
         version: 2.23.3(typescript@5.9.3)
+      postcss-value-parser:
+        specifier: 4.2.0
+        version: 4.2.0
     devDependencies:
       '@napplet/nap':
         specifier: workspace:*
@@ -1830,6 +1833,9 @@ packages:
         optional: true
       yaml:
         optional: true
+
+  postcss-value-parser@4.2.0:
+    resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
   postcss@8.5.22:
     resolution: {integrity: sha512-KBDEIpLrvpv16pp3K0Fw+UCoZfopFjjgeB+0tA/aaThfEE74kKDLrgg603YvOWJyg3+WYtyq3xYsQWsIyZlPqQ==}
@@ -3727,6 +3733,8 @@ snapshots:
     optionalDependencies:
       jiti: 2.6.1
       postcss: 8.5.22
+
+  postcss-value-parser@4.2.0: {}
 
   postcss@8.5.22:
     dependencies:

@@ -23,7 +23,8 @@
     "vite": ">=5.0.0"
   },
   "dependencies": {
-    "nostr-tools": "^2.23.3"
+    "nostr-tools": "^2.23.3",
+    "postcss-value-parser": "4.2.0"
   },
   "devDependencies": {
     "@napplet/nap": "workspace:*",
