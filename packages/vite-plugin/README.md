@@ -54,6 +54,16 @@ export default defineConfig({
 
 ## Configuration
 
+### Large asset optimization (implementation behavior)
+
+`largeAssetOptimization` defaults to `'auto'` for `artifactMode: 'single-file'`; set it to `false` to keep the normal all-inline result. This non-normative build-tool behavior measures rendered inline HTML and attempts verified offloads only above exactly 2 MiB. The target is nonfatal: unavailable signer/discovery/upload evidence, unsupported references, or insufficient eligible bytes leave a valid inline artifact and safe report rather than declaring a protocol failure.
+
+The tool reuses the protected NIP-46 pairing session (QR or pasted `bunker://` fallback), reads the newest valid kind `10002` only to locate NIP-65 write/unmarked relays, then reads the newest valid kind `10063` Blossom list there. It uploads exact bytes with existing BUD authorization, records private implementation mapping data in `index.html`, and adds exactly one `['requires', 'resource']` tag only after an offload commits. The private mapping and loader are not NIP-5A tags or NIP-5D/NAP protocol surface.
+
+Supported build-owned references are documented JavaScript resource sentinels and parser-proven stylesheet URLs; direct HTML attributes, `srcset`, worker/module URLs, streaming WASM, arbitrary computed URLs, and unsupported consumers remain inline. Each resource is a complete Blob bounded to 10 MiB by this implementation; one 50 MiB Blob, streaming, ranges, progress, BUD-04 mirroring, BUD-10 URI syntax, deletion, listing, media transforms, payment, and reports are not delivered.
+
+Canonical behavior belongs to [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md), [NIP-5D](https://github.com/nostr-protocol/nips/pull/2303), [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md), [NIP-65](https://github.com/nostr-protocol/nips/blob/master/65.md), [NAP-RESOURCE](https://github.com/napplet/naps/pull/80), and [Blossom BUDs](https://github.com/hzrd149/blossom). Thresholds, selection, URL hardening, browser support, and private metadata here are implementation behavior, not protocol law.
+
 ### Plugin Options
 
 #### nappletType (required)
