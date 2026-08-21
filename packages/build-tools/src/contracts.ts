@@ -157,8 +157,11 @@ export interface SecretStore {
 
 /** Command execution supplied by a platform adapter. */
 export interface ProcessAdapter {
-  run(command: string, args: readonly string[], input?: Uint8Array): Promise<ProcessResult>;
+  run(command: string, args: readonly ProcessArgument[], input?: RedactedSecret): Promise<ProcessResult>;
 }
+
+/** One process argument, with sensitive values kept opaque to diagnostics. */
+export type ProcessArgument = string | RedactedSecret;
 
 /** The safe, bounded result of one platform command. */
 export interface ProcessResult {

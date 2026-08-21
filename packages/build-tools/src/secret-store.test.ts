@@ -16,12 +16,12 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 class FakeProcess implements ProcessAdapter {
-  readonly calls: Array<{ command: string; args: readonly string[]; input?: Uint8Array }> = [];
+  readonly calls: Array<{ command: string; args: readonly (string | RedactedSecret)[]; input?: RedactedSecret }> = [];
   readonly responses = new Map<string, ProcessResult>();
 
-  async run(command: string, args: readonly string[], input?: Uint8Array): Promise<ProcessResult> {
+  async run(command: string, args: readonly (string | RedactedSecret)[], input?: RedactedSecret): Promise<ProcessResult> {
     this.calls.push({ command, args, input });
-    return this.responses.get(`${command} ${args.join(" ")}`) ?? { code: 0, stdout: "", stderr: "" };
+    return this.responses.get(`${command} ${args.map(String).join(" ")}`) ?? { code: 0, stdout: "", stderr: "" };
   }
 }
 

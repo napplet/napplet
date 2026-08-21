@@ -2,6 +2,7 @@
 
 export { RedactedSecret } from "./contracts.js";
 export { createBuildSigner } from "./signer.js";
+export { createPlatformSecretStore } from "./secret-store.js";
 export type {
   BuildSigner,
   BuildSignerServices,
@@ -11,6 +12,7 @@ export type {
   Nip46Request,
   Nip46Response,
   ProcessAdapter,
+  ProcessArgument,
   ProcessResult,
   RelayClient,
   RelayRequest,
@@ -21,3 +23,4 @@ export type {
   TerminalAdapter,
   UnsignedEvent,
 } from "./contracts.js";
+export type { PlatformSecretStoreOptions } from "./secret-store.js";
