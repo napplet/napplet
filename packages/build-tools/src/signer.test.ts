@@ -192,14 +192,14 @@ Deno.test("rejects tampered, wrong-author, and wrong-kind signed results", async
   }
 });
 
-Deno.test("rejects a signer identity that differs from the configured remote", async () => {
+Deno.test("uses get_public_key as the user signing identity, not the transport peer", async () => {
   const relay = new FakeRelay();
   const signer = createBuildSigner(createServices(relay));
   const otherSecret = generateSecretKey();
   const publicKey = signer.getPublicKey();
 
   relay.respond({ id: "request-0", result: getPublicKey(otherSecret) });
-  await assertRejects(() => publicKey, "verification");
+  assert(await publicKey === getPublicKey(otherSecret), "user signing key should be accepted");
 
   const signing = signer.signEvent({
     kind: 24242,
@@ -210,7 +210,6 @@ Deno.test("rejects a signer identity that differs from the configured remote", a
   await requestAt(relay, 1);
   relay.respond({ id: "request-1", result: getPublicKey(otherSecret) });
   await assertRejects(() => signing, "verification");
-  assert(relay.requests.every((request) => request.method === "get_public_key"), "identity mismatch must prevent signing");
 });
 
 Deno.test("closes subscriptions after remote errors, malformed responses, wrong IDs, timeouts, and explicit close", async () => {

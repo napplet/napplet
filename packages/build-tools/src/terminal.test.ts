@@ -108,7 +108,7 @@ function session(secret = NBUNKSEC, onClose: () => void = () => {}): BuildSigner
   return { signer, clientSecret: new RedactedSecret(secret), remotePubkey: REMOTE_PUBKEY, relays: ["wss://relay.test"] };
 }
 
-Deno.test("pairing rejects a signer whose reported key differs from its remote identity", async () => {
+Deno.test("pairing accepts a distinct user signing key for its remote transport peer", async () => {
   const terminal = new FakeTerminal();
   const mismatched = session();
   mismatched.signer.getPublicKey = () => Promise.resolve(USER_PUBKEY);
@@ -121,11 +121,9 @@ Deno.test("pairing rejects a signer whose reported key differs from its remote i
     connectBunker: () => Promise.reject(new Error("not used")),
   });
   terminal.input.reject(new Error("terminal input closed"));
-  await pending.then(
-    () => { throw new Error("mismatched signer identity must reject"); },
-    () => {},
-  );
-  assert(closed, "mismatched signer must be closed");
+  const paired = await pending;
+  assert(paired.signer === mismatched.signer, "distinct signing key should remain usable");
+  assert(!closed, "accepted signer must not be closed");
 });
 
 Deno.test("QR and pasted bunker pairing race to one verified stored session", async () => {
