@@ -41,7 +41,8 @@ The real Vite plugin build now proves a deterministic 55 MiB multi-asset offload
 - `pnpm --filter @napplet/vite-plugin type-check` — passed.
 - `pnpm --filter @napplet/vite-plugin build` — passed.
 - `pnpm --filter @napplet/build-tools build` — passed.
-- `pnpm check:links` — not runnable standalone because its configured localhost docs server was not running; it reported only `http://localhost:8099/` unavailable.
+- `pnpm build`, `pnpm --filter @napplet/web build`, and `pnpm --filter @napplet/docs build` — passed; the CI-equivalent temporary static artifact contained 97 files.
+- `pnpm check:links http://localhost:8100` — passed against that artifact: 23 internal URLs checked with no broken links. Port 8099 was occupied by the environment's browser-control service, so the checker received the equivalent explicit localhost base URL on port 8100.
 
 ## Deviations from Plan
 
@@ -56,4 +57,4 @@ None.
 
 ## Self-Check: PASSED
 
-Verified task commits `83a3f588`, `63419be2`, and `8a76dbbf` exist; all generated fixture bytes remain in temporary directories only.
+Verified task commits `83a3f588`, `63419be2`, `8a76dbbf`, and `c26059f5` exist; all generated fixture bytes remain in temporary directories only, and the assembled docs site passes the internal-link crawl.

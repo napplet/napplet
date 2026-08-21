@@ -924,7 +924,7 @@ Plans:
 **Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
 **Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
 **Depends on:** Phase 161
-**Plans:** 9/11 plans executed
+**Plans:** 10/11 plans executed
 
 **Success Criteria:**
 
@@ -965,7 +965,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [ ] 162-10-PLAN.md — Prove the generated 50 MiB+ demonstration and synchronize canonical-boundary docs
+- [x] 162-10-PLAN.md — Prove the generated 50 MiB+ demonstration and synchronize canonical-boundary docs
 
 **Wave 8** *(blocked on Wave 7 completion)*
 
