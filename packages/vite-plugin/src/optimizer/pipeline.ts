@@ -1,9 +1,11 @@
 /**
  * @napplet/vite-plugin — deterministic retained-asset optimization pipeline.
  *
- * The pipeline is build-tool plumbing. It keeps generated Vite assets intact
- * until exact-byte upload, rewritten HTML, and NAP-RESOURCE byte recovery have
- * all succeeded, then commits the single-file artifact as one transaction.
+ * Selection, upload, and rewriting are build-tool plumbing. A committed output
+ * explicitly depends on the resource capability defined by the published
+ * NAP-RESOURCE proposal: https://github.com/napplet/naps/pull/80.
+ * Generated Vite assets remain intact until exact-byte upload, rewritten HTML,
+ * and NAP-RESOURCE byte recovery have all succeeded.
  */
 
 import * as crypto from 'crypto';
@@ -133,10 +135,9 @@ function canonicalUri(sha256Hex: string): string {
 /**
  * Adapt already-lazy Node boundaries to the retained-artifact transaction.
  *
- * This is private build plumbing: discovery and exact upload remain owned by
- * @napplet/build-tools, while `resourceBytes` is limited to just-uploaded
- * exact bytes for local transaction verification. Runtime recovery still uses
- * only the generated NAP-RESOURCE loader.
+ * Discovery, upload orchestration, and local transaction verification are
+ * private build plumbing. The committed runtime dependency is the proposed
+ * NAP-RESOURCE `resource.bytes`/`resource.bytesMany` protocol surface.
  */
 export async function createLiveOptimizationServices(
   node: NodeOptimizationServices,
@@ -144,9 +145,10 @@ export async function createLiveOptimizationServices(
 ): Promise<OptimizationServices> {
   const signer = await node.getSigner();
   if (signer.status !== 'ready') throw new Error(signer.reason.message);
+  const userPubkey = await signer.signer.getPublicKey();
 
   const discovery = await (dependencies.discover ?? discoverBlossomServers)(
-    { pubkey: signer.remotePubkey },
+    { pubkey: userPubkey },
     node.discovery,
   );
   if (discovery.status !== 'found') throw new Error(discovery.reason.message);

@@ -157,6 +157,37 @@ Deno.test("QR and pasted bunker pairing race to one verified stored session", as
   void qr;
 });
 
+Deno.test("a late pairing loser that ignores abort closes once without replacing the winner", async () => {
+  const terminal = new FakeTerminal();
+  const lateQr = deferred<BuildSignerSession>();
+  let winnerCloses = 0;
+  let loserCloses = 0;
+  const winner = session(NBUNKSEC, () => { winnerCloses += 1; });
+  const loser = session("nbunksec1late-loser", () => { loserCloses += 1; });
+  const pending = pairBuildSigner({
+    clock: new FakeClock(),
+    terminal,
+    createQrPairing: () => ({
+      uri: "nostrconnect://public",
+      waitForSession: () => lateQr.promise,
+      close: () => {},
+    }),
+    connectBunker: () => Promise.resolve(winner),
+  });
+  terminal.input.resolve(BUNKER_URI);
+
+  const selected = await pending;
+  assert(selected.signer === winner.signer, "the pasted winner must remain selected");
+  assert(await selected.signer.getPublicKey() === REMOTE_PUBKEY, "the selected winner must remain usable");
+
+  lateQr.resolve(loser);
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  assert(loserCloses === 1, "the late QR loser must close exactly once");
+  assert(winnerCloses === 0, "the late loser must not close or replace the winner");
+});
+
 Deno.test("failed pairing paths preserve a stored session and redact every safe surface", async () => {
   const clock = new FakeClock();
   const terminal = new FakeTerminal();

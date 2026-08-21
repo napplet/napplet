@@ -87,11 +87,14 @@ describe('large single-file artifact optimizer', () => {
     const retained = build([selected], 5_000);
     const store = artifactStore(retained.html, retained.assets);
     const uploads: Uint8Array[] = [];
+    const remotePubkey = 'a'.repeat(64);
+    const userPubkey = 'b'.repeat(64);
+    let discoveredPubkey: string | undefined;
     const live: NodeOptimizationServices = {
       getSigner: async () => ({
         status: 'ready',
-        remotePubkey: 'a'.repeat(64),
-        signer: { getPublicKey: async () => 'a'.repeat(64), signEvent: async () => { throw new Error('not used by test'); }, close: async () => {} },
+        remotePubkey,
+        signer: { getPublicKey: async () => userPubkey, signEvent: async () => { throw new Error('not used by test'); }, close: async () => {} },
       }),
       discovery: { query: async () => [] },
       networkPolicy: { validate: async (url: URL) => ({ url, hostname: url.hostname, addresses: ['93.184.216.34'] }) } as never,
@@ -100,7 +103,10 @@ describe('large single-file artifact optimizer', () => {
       dispose: async () => {},
     };
     const services = await createLiveOptimizationServices(live, {
-      discover: async () => ({ status: 'found', servers: [new URL('https://blossom.example')] } as never),
+      discover: async ({ pubkey }) => {
+        discoveredPubkey = pubkey;
+        return { status: 'found', servers: [new URL('https://blossom.example')] } as never;
+      },
       upload: async ({ blobs }) => {
         uploads.push(...blobs.map((blob) => blob.bytes));
         return { status: 'complete', deletionAuthorized: true, evidence: [] };
@@ -110,6 +116,8 @@ describe('large single-file artifact optimizer', () => {
     const report = await optimizeSingleFileArtifact({ build: retained, files: store }, services);
 
     expect(uploads).toEqual([selected.bytes]);
+    expect(discoveredPubkey).toBe(userPubkey);
+    expect(discoveredPubkey).not.toBe(remotePubkey);
     expect(report.committedResourceCount).toBe(1);
     expect(report.entries[0]?.uri).toBe(`blossom:sha256:${digest(selected.bytes)}`);
     await expect(services.resourceBytes(report.entries[0]!.uri)).resolves.toBeInstanceOf(Blob);

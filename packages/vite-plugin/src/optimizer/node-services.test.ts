@@ -92,7 +92,7 @@ class FakeStore implements SecretStore {
 
 function session(secret = NBUNKSEC): BuildSignerSession {
   const signer: BuildSigner = {
-    getPublicKey: () => Promise.resolve(REMOTE_PUBKEY),
+    getPublicKey: () => Promise.resolve(USER_PUBKEY),
     signEvent: () => Promise.reject(new Error('not used')),
     close: () => Promise.resolve(),
   };
@@ -131,6 +131,10 @@ describe('Node optimization services', () => {
 
     const reused = await restored.getSigner();
     expect(reused.status).toBe('ready');
+    if (reused.status === 'ready') {
+      expect(reused.remotePubkey).toBe(REMOTE_PUBKEY);
+      await expect(reused.signer.getPublicKey()).resolves.toBe(USER_PUBKEY);
+    }
     expect(reconnects).toBe(1);
     expect(terminal.qr).toEqual([]);
 
@@ -156,6 +160,10 @@ describe('Node optimization services', () => {
 
     const paired = await fresh.getSigner();
     expect(paired.status).toBe('ready');
+    if (paired.status === 'ready') {
+      expect(paired.remotePubkey).toBe(REMOTE_PUBKEY);
+      await expect(paired.signer.getPublicKey()).resolves.toBe(USER_PUBKEY);
+    }
     expect(freshStore.writes).toBe(1);
     expect(freshTerminal.qr).toEqual(['nostrconnect://public?secret=not-for-output']);
     expect(qrClosed).toBe(1);

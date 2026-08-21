@@ -68,11 +68,12 @@ export function resolvedRequirements(
 }
 
 /**
- * Merge configured requirements with a completed private resource transaction.
+ * Merge configured requirements with a completed resource transaction.
  *
- * `resource` is an existing NIP-5A/NIP-5D capability declaration. It is
- * included only when the final artifact actually committed one or more private
- * resource mappings; candidate and failed uploads cannot change the manifest.
+ * `resource` is protocol surface defined by the published NAP-RESOURCE proposal
+ * at https://github.com/napplet/naps/pull/80. It is included only when the final
+ * artifact actually committed one or more private resource mappings; candidate
+ * and failed uploads cannot change the manifest.
  */
 export function effectiveRequirements(
   configured: readonly string[],
