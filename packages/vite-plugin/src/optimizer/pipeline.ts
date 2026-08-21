@@ -156,7 +156,7 @@ export async function createLiveOptimizationServices(
   const uploaded = new Map<string, Uint8Array>();
   return {
     async authorize(): Promise<UploadAuthorization> {
-      return { token: 'verified-live-upload', expiresAt: Date.now() + 60_000 };
+      return { token: 'ok', expiresAt: Date.now() + 60_000 };
     },
     async upload(input): Promise<BlossomDescriptor> {
       const result = await (dependencies.upload ?? uploadExactBlobs)(
