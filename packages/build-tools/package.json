@@ -28,7 +28,8 @@
   },
   "scripts": {
     "build": "tsup",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:unit": "deno test --no-lock --allow-env --allow-read --allow-write --allow-run src/*.test.ts"
   },
   "license": "MIT",
   "repository": {
