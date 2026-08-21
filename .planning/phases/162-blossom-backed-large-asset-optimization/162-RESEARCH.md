@@ -64,7 +64,7 @@
 None — the phase covers the complete requested optimization path. Unsupported browser URL-consumer shapes must be documented as limitations rather than silently deferred.
 </user_constraints>
 
-> **Required correction before planning:** The copied CONTEXT.md line that selects the user's "read/both" relays for kind `10063` conflicts with NIP-65's relay-direction guidance: a client retrieving events *from* a user uses that user's write relays (including unmarked `r` tags). This research preserves the line above only because the research workflow requires verbatim context capture; it is not a decision the planner may execute. Correct the context to query the user's write/unmarked relays for kind `10063` before producing plans. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md]
+> **Resolution recorded after the verbatim constraint:** CONTEXT.md was corrected in commit `b9bcd32a`. The implementation plans query the user's write/unmarked relays for signer-authored kind `10063`, because NIP-65 directs clients retrieving events from a user to that user's write relays, including unmarked `r` tags. The stale line above remains only as the research workflow's verbatim historical capture and is not executable or canonical guidance. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md]
 
 ## Project Constraints (from AGENTS.md)
 
@@ -247,7 +247,7 @@ This is intentionally a bounded compatibility contract. NAP-RESOURCE returns com
 
 **What:** Reconnect a stored `nbunksec` first. If it fails or is absent, present a `nostrconnect://` QR and pasteable `bunker://` fallback, requesting only `get_public_key` and `sign_event:24242`; validate the NIP-46 connect secret and obtain the user key before discovery. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/46.md]
 
-Then query bounded index relays for valid signer-authored kind `10002` events, deterministically choose the newest, derive the user's write/unmarked relay set, and query that set for valid signer-authored kind `10063` events. Choose the newest valid server list, normalize/dedupe server URLs while preserving first-occurrence order, and attempt the first listed server before optional mirrors. NIP-65 requires the write-relay direction for retrieving a user's events; correct the contrary CONTEXT.md line before planning. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md] [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/B7.md] [CITED: https://raw.githubusercontent.com/hzrd149/blossom/master/buds/03.md]
+Then query bounded index relays for valid signer-authored kind `10002` events, deterministically choose the newest, derive the user's write/unmarked relay set, and query that set for valid signer-authored kind `10063` events. Choose the newest valid server list, normalize/dedupe server URLs while preserving first-occurrence order, and attempt the first listed server before optional mirrors. CONTEXT.md was corrected in commit `b9bcd32a`, and the plans follow NIP-65's write-relay direction for retrieving the user's authored event. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md] [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/B7.md] [CITED: https://raw.githubusercontent.com/hzrd149/blossom/master/buds/03.md]
 
 For each candidate, compute SHA-256 from the exact `Buffer`, upload those bytes with BUD-11 kind `24242` authorization (`t=upload`, expiring `expiration`, lowercase `x` hash, server-domain scope), provide `X-SHA-256`, and accept success only after the BUD-02 descriptor repeats the expected lowercase hash. [CITED: https://raw.githubusercontent.com/hzrd149/blossom/master/buds/02.md] [CITED: https://raw.githubusercontent.com/hzrd149/blossom/master/buds/11.md]
 
@@ -292,11 +292,11 @@ No asset is deleted until every selected hash succeeds on at least one server an
 
 **How to avoid:** Kind 10002 provides relay metadata; kind 10063 `server` tags provide the ordered Blossom list. Verify signatures, pubkey, kind, timestamp, event id, tag shape, and URL policy before selection. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/B7.md] [CITED: https://raw.githubusercontent.com/hzrd149/blossom/master/buds/03.md]
 
-### Pitfall 3: Executing a context decision that conflicts with NIP-65
+### Pitfall 3: Reintroducing the superseded relay-direction decision
 
-**What goes wrong:** The copied context requires read/both relays for kind 10063 lookup, whereas NIP-65 says clients downloading events *from* a user should use the user's write/unmarked relays. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md]
+**What goes wrong:** A consumer mistakes the verbatim historical constraint for current guidance and queries read/both relays for kind `10063`, whereas NIP-65 says clients downloading events *from* a user should use the user's write/unmarked relays. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md]
 
-**How to avoid:** Do not implement the contrary locked line. Correct CONTEXT.md before planning, query the user's write/unmarked relays, and retain a visible no-server result if no valid kind `10063` is found. Canonical protocol text overrides a planning decision that conflicts with it. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md] [VERIFIED: AGENTS.md]
+**How to avoid:** Follow corrected CONTEXT.md commit `b9bcd32a` and the Phase 162 plans: query the user's write/unmarked relays and retain a visible no-server result if no valid kind `10063` is found. Canonical protocol text overrides the preserved historical line. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md] [VERIFIED: AGENTS.md]
 
 ### Pitfall 4: Calling browser `fetch` on `blossom:`
 
@@ -323,19 +323,16 @@ No asset is deleted until every selected hash succeeds on at least one server an
 | A1 | An internal shared package is the least disruptive extraction location for cross-runtime services. | Code Touchpoints | The planner may instead need a smaller shared module layout. |
 | A2 | Automated uploads should require HTTPS and deny private targets even though BUD-03 accepts full `http://` or `https://` server URLs. | Common Pitfalls | Could exclude a developer's self-hosted HTTP Blossom server; a documented explicit test adapter is needed. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Correct the invalid context relay direction before planning**
-   - What we know: the copied context requires read/both, while NIP-65 directs a client retrieving events from a user to that user's write/unmarked relays. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md]
-   - Recommendation: amend CONTEXT.md and every prospective plan to use write/unmarked relays for kind `10063`; no alternative protocol choice remains open.
+1. **RESOLVED — Relay direction for kind `10063`**
+   - CONTEXT.md was corrected in commit `b9bcd32a`; implementation and plans use NIP-65 write/unmarked relays to retrieve the signer's authored kind `10063`. The verbatim historical constraint above is not current guidance. [CITED: https://raw.githubusercontent.com/nostr-protocol/nips/master/65.md]
 
-2. **Runtime limit for individual game assets**
-   - What we know: NAP-RESOURCE has no stream/range contract and describes 10 MiB per URL only as a recommendation. [CITED: https://raw.githubusercontent.com/napplet/naps/nub-resource/naps/NAP-RESOURCE.md]
-   - Recommendation: define the feature promise as 50 MiB total generated fixture with chunks at or below 10 MiB, not universal playback of a 50 MiB one-piece video/blob.
+2. **RESOLVED — Runtime limit for individual game assets**
+   - The final demonstration uses multiple individually bounded generated assets totaling more than 50 MiB. It does not claim portable recovery of one 50 MiB Blob or invent stream/range support; NAP-RESOURCE remains whole-Blob and its per-URL bound is advisory. [CITED: https://raw.githubusercontent.com/napplet/naps/nub-resource/naps/NAP-RESOURCE.md]
 
-3. **User `renderBuiltUrl` callback collision**
-   - What we know: Vite marks `experimental.renderBuiltUrl` experimental and the plugin supports a broad Vite peer range. [CITED: https://vite.dev/guide/build.html]
-   - Recommendation: add a fixture with an existing user callback, compose it when safe, and otherwise retain ordinary inline output with a visible optimization-skipped report; do not introduce a private hard rejection.
+3. **RESOLVED — User `renderBuiltUrl` callback collision**
+   - Tests cover the existing callback. The optimizer composes only when semantics are demonstrably safe; otherwise it visibly skips optimization and preserves the ordinary inline artifact without a private hard rejection. [CITED: https://vite.dev/guide/build.html]
 
 ## Environment Availability
 
