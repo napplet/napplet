@@ -924,7 +924,7 @@ Plans:
 **Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
 **Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
 **Depends on:** Phase 161
-**Plans:** 2/11 plans executed
+**Plans:** 3/11 plans executed
 
 **Success Criteria:**
 
@@ -946,7 +946,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 162-03-PLAN.md — Add QR/paste pairing, protected stores, and dirty-safe workspace integration
+- [x] 162-03-PLAN.md — Add QR/paste pairing, protected stores, and dirty-safe workspace integration
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
