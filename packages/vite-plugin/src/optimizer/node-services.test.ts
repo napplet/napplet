@@ -59,6 +59,8 @@ class FakeTerminal implements TerminalAdapter {
 
   readLine(_prompt: string, signal: AbortSignal): Promise<string> {
     this.inputs.push(signal);
+    if (signal.aborted) return Promise.reject(new Error('cancelled'));
+    signal.addEventListener('abort', () => this.input.reject(new Error('cancelled')), { once: true });
     return this.input.promise;
   }
 
@@ -139,6 +141,7 @@ describe('Node optimization services', () => {
       clock: new FakeClock(),
       secretStore: freshStore,
       terminal: freshTerminal,
+      isInteractive: () => true,
       pairing: {
         parseStoredSession: () => ({ remotePubkey: REMOTE_PUBKEY, relays: ['wss://relay.example'] }),
         reconnect: async () => session(),
@@ -164,7 +167,9 @@ describe('Node optimization services', () => {
     const unavailable = createNodeOptimizationServices({
       clock: new FakeClock(),
       terminal: new FakeTerminal(),
+      secretStore: new FakeStore(),
       isInteractive: () => false,
+      resolve: async () => { throw new Error('DNS resolution failed'); },
       logger: { info: () => {}, warn: (status) => statuses.push(status), error: (status) => statuses.push(status) },
     });
     const noTerminal = await unavailable.getSigner();
@@ -239,10 +244,11 @@ describe('Node optimization services', () => {
       clock: new FakeClock(),
       secretStore: new FakeStore(),
       terminal,
+      isInteractive: () => true,
       pairing: {
         parseStoredSession: () => ({ remotePubkey: REMOTE_PUBKEY, relays: ['wss://relay.example'] }),
         reconnect: async () => { throw new Error('no session'); },
-        createQrPairing: () => ({ uri: 'nostrconnect://public?secret=not-for-output', waitForSession: () => pending.promise, close: () => { qrClosed += 1; } }),
+        createQrPairing: () => ({ uri: 'nostrconnect://public?secret=not-for-output', waitForSession: (signal) => new Promise<BuildSignerSession>((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('cancelled')), { once: true })), close: () => { qrClosed += 1; } }),
         connectBunker: async () => pending.promise,
       },
     });
