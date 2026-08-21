@@ -4,8 +4,8 @@
   "maximumWholeBlobBytes": 10485760,
   "initialHtmlBytes": 76896853,
   "finalHtmlBytes": 8366,
-  "aggregateHash": "3c1bb2a41a24abcd50d7f30372bae32f7ca56c6715114a06c947040490afdeeb",
-  "finalIndexSha256": "f8b7dcd993e2b24bdb64d93b8243e724c8cfc655d50f98f29823d76cb9afee85",
+  "aggregateHash": "deca44de168d770648d7049d86ca5dfb45f7bc1420bd019815e1184ae3a5436f",
+  "finalIndexSha256": "cc6719e89c46acee49dc0a67d44e35286f2943db3103490dda719ade560db716",
   "selected": [
     { "source": "assets/fixture-01.bin", "bytes": 9437184, "sha256": "2a5f3e710787fef2cab50c7f38ea6f8ed9d16b500e75e6855a7bf79f2dd5dcff" },
     { "source": "assets/fixture-02.bin", "bytes": 9437184, "sha256": "133519935dff60330e25fb2b96c3526f0a00d116a7abe80d28611c5b42f5b35a" },
