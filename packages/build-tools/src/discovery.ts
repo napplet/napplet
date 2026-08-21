@@ -212,8 +212,9 @@ function normalizeRelay(value: string | undefined): string | undefined {
   try {
     const url = new URL(value);
     if (url.protocol !== "wss:" || url.username || url.password || url.search || url.hash) return undefined;
-    // NIP-65 relay URLs can legitimately include a websocket path.
-    return url.toString();
+    // NIP-65 relay URLs can legitimately include a websocket path. Preserve
+    // it while keeping root relay normalization compatible with existing URLs.
+    return url.pathname === "/" ? url.origin : url.toString();
   } catch {
     return undefined;
   }
