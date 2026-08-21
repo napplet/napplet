@@ -11,6 +11,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as vm from 'node:vm';
 import { createNetworkPolicy, uploadExactBlobs } from '@napplet/build-tools';
 import type { BuildSigner, DiscoveryFilter, DiscoveryServices, SignedEvent } from '@napplet/build-tools';
 import { finalizeEvent, getPublicKey, verifyEvent } from 'nostr-tools/pure';
@@ -76,6 +77,22 @@ export interface FallbackEvidence {
   wholeBlobPreserved: boolean;
   reason: string;
   resourceRequirementPresent: boolean;
+}
+
+interface BuiltFixture {
+  dist: string;
+  initialHtmlBytes: number;
+  signer: BuildSigner;
+  relay: ReturnType<typeof fakeDiscovery>;
+  uploaded: Map<string, Uint8Array>;
+  uploadEvidence: FixtureUploadEvidence[];
+}
+
+interface FixtureOutput {
+  finalHtml: string;
+  manifest: { aggregateHash: string; tags: string[][] };
+  entries: ResourceTableEntry[];
+  selected: Array<{ source: string; bytes: number; sha256: string }>;
 }
 
 function sha256(bytes: Uint8Array): string {
@@ -221,97 +238,160 @@ function createFixtureFetch(
   };
 }
 
-/** Run actual manifest orchestration against signed and exact-byte local fakes. */
+async function buildFixtureArtifact(root: string, fixture: LargeAssetFixture): Promise<BuiltFixture> {
+  const dist = writeFixture(root, fixture);
+  const pubkey = getPublicKey(FIXTURE_PRIVATE_KEY);
+  const uploaded = new Map<string, Uint8Array>();
+  const uploadEvidence: FixtureUploadEvidence[] = [];
+  const signer = createFixtureSigner(pubkey);
+  const relay = fakeDiscovery(pubkey);
+  const fetch = createFixtureFetch(uploaded, uploadEvidence);
+  const services = await createLiveOptimizationServices(fakeNodeServices(signer, relay.services, fetch));
+  const options = { nappletType: 'large-fixture', artifactMode: 'single-file' as const, requires: ['relay'] };
+  const harness = registerTestOptimizationHarness(options, services);
+  await viteBuild({ root, logLevel: 'silent', plugins: [nip5aManifest(options)], build: { outDir: 'dist', emptyOutDir: true } });
+  const initialHtmlBytes = harness.report?.initialBytes;
+  if (initialHtmlBytes === undefined) throw new Error('fixture did not record the production initial rendered size');
+  return { dist, initialHtmlBytes, signer, relay, uploaded, uploadEvidence };
+}
+
+function readFixtureOutput(built: BuiltFixture, fixture: LargeAssetFixture): FixtureOutput {
+  const finalHtml = fs.readFileSync(path.join(built.dist, 'index.html'), 'utf8');
+  const manifest = JSON.parse(fs.readFileSync(path.join(built.dist, '.nip5a-manifest.json'), 'utf8')) as FixtureOutput['manifest'];
+  const entries = extractPrivateTable(finalHtml);
+  const selected = entries.map((entry) => ({ source: entry.source, bytes: entry.bytes, sha256: entry.sha256 }));
+  const sourceByDigest = new Map(fixture.assets.map((asset) => [sha256(asset.bytes), asset.source]));
+  for (const evidence of built.uploadEvidence) evidence.source = sourceByDigest.get(evidence.sha256) ?? '';
+  return { finalHtml, manifest, entries, selected };
+}
+
+async function recoverFixtureResources(
+  entries: ResourceTableEntry[],
+  selected: FixtureOutput['selected'],
+  uploaded: Map<string, Uint8Array>,
+): Promise<Array<{ source: string; sha256: string; exact: boolean }>> {
+  const byteCalls: string[][] = [];
+  const runtime = new ResourceRuntime({
+    entries,
+    maxLiveBytes: 50 * MEBIBYTE,
+    window: { napplet: { resource: {
+      bytes: async () => { throw new Error('single bytes path is not the batch fixture proof'); },
+      bytesMany: async (uris: string[]) => {
+        byteCalls.push([...uris]);
+        return uris.map((uri) => ({ url: uri, ok: true, blob: new Blob([uploaded.get(uri)!]) }));
+      },
+    } } } as never,
+    digest: async (blob) => sha256(new Uint8Array(await blob.arrayBuffer())),
+  });
+  const recovery: Array<{ source: string; sha256: string; exact: boolean }> = [];
+  for (const sources of [selected.slice(0, 5), selected.slice(5)].filter((group) => group.length > 0)) {
+    const blobs = await runtime.resolveMany(sources.map((entry) => entry.source));
+    for (let index = 0; index < sources.length; index += 1) {
+      const digest = sha256(new Uint8Array(await blobs[index]!.arrayBuffer()));
+      recovery.push({ source: sources[index]!.source, sha256: digest, exact: digest === sources[index]!.sha256 });
+      runtime.release(sources[index]!.source);
+    }
+  }
+  runtime.teardown();
+  if (byteCalls.length === 0) throw new Error('fixture did not use NAP-RESOURCE bytesMany');
+  return recovery;
+}
+
+async function executeFinalArtifact(
+  finalHtml: string,
+  entries: ResourceTableEntry[],
+  uploaded: Map<string, Uint8Array>,
+): Promise<string[]> {
+  const scripts = [...finalHtml.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)]
+    .map((match) => ({ attributes: match[1] ?? '', source: match[2] ?? '' }));
+  const loaderScript = scripts.find((script) => script.source.includes('window.__nappletPrivateResourceLoader ='))?.source;
+  const applicationScript = scripts.find((script) => /type=["']module["']/.test(script.attributes) && script.source.includes('__nappletPrivateResourceLoader.response'))?.source;
+  if (!loaderScript || !applicationScript) throw new Error('fixture final HTML is missing executable optimized scripts');
+
+  const requestedUris: string[] = [];
+  const executedSources: string[] = [];
+  const pending: Promise<Response>[] = [];
+  const runtimeWindow = {
+    napplet: { resource: {
+      bytes: async (uri: string) => {
+        requestedUris.push(uri);
+        const bytes = uploaded.get(uri);
+        if (!bytes) throw new Error(`final artifact requested an unknown URI: ${uri}`);
+        return new Blob([bytes]);
+      },
+      bytesMany: async () => { throw new Error('final callsites must execute the generated single-resource path'); },
+    } },
+  } as { napplet: object; __nappletPrivateResourceLoader?: { response(source: string): Promise<Response> } };
+  const document = { createElement: () => ({ relList: { supports: () => true } }) };
+  const context = vm.createContext({
+    window: runtimeWindow,
+    document,
+    crypto: crypto.webcrypto,
+    Blob,
+    Response,
+    URL,
+    Uint8Array,
+  });
+  vm.runInContext(loaderScript, context);
+  const loader = runtimeWindow.__nappletPrivateResourceLoader;
+  if (!loader) throw new Error('fixture final loader did not install');
+  const realResponse = loader.response.bind(loader);
+  loader.response = (source: string) => {
+    executedSources.push(source);
+    const response = realResponse(source);
+    pending.push(response);
+    return response;
+  };
+  vm.runInContext(applicationScript, context);
+  const responses = await Promise.all(pending);
+  for (let index = 0; index < responses.length; index += 1) {
+    const digest = sha256(new Uint8Array(await responses[index]!.arrayBuffer()));
+    if (digest !== entries.find((entry) => entry.source === executedSources[index])?.sha256) throw new Error('final callsite received unverified bytes');
+  }
+  if (executedSources.length !== entries.length || requestedUris.length !== entries.length) throw new Error('fixture did not execute every final resource callsite');
+  if (requestedUris.some((uri, index) => uri !== entries.find((entry) => entry.source === executedSources[index])?.uri)) throw new Error('final artifact requested the wrong Blossom URI');
+  return executedSources;
+}
+
+async function collectFixtureEvidence(
+  built: BuiltFixture,
+  fixture: LargeAssetFixture,
+): Promise<LargeFixtureEvidence> {
+  const output = readFixtureOutput(built, fixture);
+  const recovery = await recoverFixtureResources(output.entries, output.selected, built.uploaded);
+  const executedResourceCalls = await executeFinalArtifact(output.finalHtml, output.entries, built.uploaded);
+  const finalIndexHash = sha256(fs.readFileSync(path.join(built.dist, 'index.html')));
+  if (output.manifest.aggregateHash !== computeAggregateHash([[finalIndexHash, '/index.html']])) throw new Error('fixture aggregate hash does not match final output');
+  return {
+    initialHtmlBytes: built.initialHtmlBytes,
+    finalHtmlBytes: Buffer.byteLength(output.finalHtml),
+    selected: output.selected,
+    uploads: built.uploadEvidence,
+    recovery,
+    aggregateHash: output.manifest.aggregateHash,
+    finalIndexHash,
+    manifestTags: output.manifest.tags,
+    privateMappingCount: output.entries.length,
+    removedCandidateSources: fixture.assets.filter((asset) => !fs.existsSync(path.join(built.dist, asset.source))).map((asset) => asset.source),
+    preservedCandidateSources: fixture.assets.filter((asset) => fs.existsSync(path.join(built.dist, asset.source))).map((asset) => asset.source),
+    discovery: {
+      directoryRelays: built.relay.queries[0]?.relays ?? [],
+      writeRelays: built.relay.queries[1]?.relays ?? [],
+      servers: [PRIMARY_SERVER, SECONDARY_SERVER],
+      ignoredForgedEvent: built.relay.ignoredForgedEvent,
+      ignoredOlderEvent: built.relay.ignoredOlderEvent,
+    },
+    secondaryUploadFailed: await proveSecondaryFailure(built.signer),
+    corruptResourceRejected: await corruptResourceIsRejected(output.entries[0]!),
+    executedResourceCalls,
+  };
+}
+
+/** Run actual manifest orchestration and execute the rewritten final artifact against exact-byte local fakes. */
 export async function runLargeAssetFixture(fixture: LargeAssetFixture): Promise<LargeFixtureEvidence> {
   const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'napplet-large-fixture-'));
   try {
-    const dist = writeFixture(root, fixture);
-    const pubkey = getPublicKey(FIXTURE_PRIVATE_KEY);
-    const uploaded = new Map<string, Uint8Array>();
-    const uploadEvidence: FixtureUploadEvidence[] = [];
-    const signer = createFixtureSigner(pubkey);
-    const relay = fakeDiscovery(pubkey);
-    const fetch = createFixtureFetch(uploaded, uploadEvidence);
-    const services = await createLiveOptimizationServices(fakeNodeServices(signer, relay.services, fetch));
-    const options = { nappletType: 'large-fixture', artifactMode: 'single-file' as const, requires: ['relay'] };
-    const harness = registerTestOptimizationHarness(options, services);
-    await viteBuild({ root, logLevel: 'silent', plugins: [nip5aManifest(options)], build: { outDir: 'dist', emptyOutDir: true } });
-
-    const finalHtml = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
-    const manifest = JSON.parse(fs.readFileSync(path.join(dist, '.nip5a-manifest.json'), 'utf8')) as { aggregateHash: string; tags: string[][] };
-    const entries = extractPrivateTable(finalHtml);
-    const selected = entries.map((entry) => ({ source: entry.source, bytes: entry.bytes, sha256: entry.sha256 }));
-    const sourceByDigest = new Map(fixture.assets.map((asset) => [sha256(asset.bytes), asset.source]));
-    for (const evidence of uploadEvidence) evidence.source = sourceByDigest.get(evidence.sha256) ?? '';
-
-    const byteCalls: string[][] = [];
-    const runtime = new ResourceRuntime({
-      entries,
-      maxLiveBytes: 50 * MEBIBYTE,
-      window: {
-        napplet: {
-          resource: {
-            bytes: async () => { throw new Error('single bytes path is not the fixture proof'); },
-            bytesMany: async (uris: string[]) => {
-              byteCalls.push([...uris]);
-              return uris.map((uri) => ({ url: uri, ok: true, blob: new Blob([uploaded.get(uri)!]) }));
-            },
-          },
-        },
-      } as never,
-      digest: async (blob) => sha256(new Uint8Array(await blob.arrayBuffer())),
-    });
-    const recovery: Array<{ source: string; sha256: string; exact: boolean }> = [];
-    for (const sources of [selected.slice(0, 5), selected.slice(5)].filter((group) => group.length > 0)) {
-      const blobs = await runtime.resolveMany(sources.map((entry) => entry.source));
-      for (let index = 0; index < sources.length; index += 1) {
-        const bytes = new Uint8Array(await blobs[index]!.arrayBuffer());
-        recovery.push({ source: sources[index]!.source, sha256: sha256(bytes), exact: sha256(bytes) === sources[index]!.sha256 });
-        runtime.release(sources[index]!.source);
-      }
-    }
-    runtime.teardown();
-    if (byteCalls.length === 0) throw new Error('fixture did not use NAP-RESOURCE bytesMany');
-    const executedResourceCalls: string[] = [];
-    const response = async (source: string): Promise<Response> => {
-      const entry = entries.find((candidate) => candidate.source === source);
-      if (!entry) throw new Error(`final page requested an unknown resource: ${source}`);
-      executedResourceCalls.push(source);
-      return new Response(uploaded.get(entry.uri), { headers: { 'content-type': entry.mime } });
-    };
-    const finalCalls = [...finalHtml.matchAll(/window\.__nappletPrivateResourceLoader\.response\("([^"]+)"\)/g)].map((match) => match[1]!);
-    await Promise.all(finalCalls.map((source) => response(source)));
-    if (executedResourceCalls.length !== entries.length) throw new Error('fixture did not execute every final resource callsite');
-
-    const initialHtmlBytes = harness.report?.initialBytes;
-    if (initialHtmlBytes === undefined) throw new Error('fixture did not record the production initial rendered size');
-    const finalIndexHash = sha256(fs.readFileSync(path.join(dist, 'index.html')));
-    if (manifest.aggregateHash !== computeAggregateHash([[finalIndexHash, '/index.html']])) throw new Error('fixture aggregate hash does not match final output');
-    const secondaryUploadFailed = await proveSecondaryFailure(signer);
-    const corruptResourceRejected = await corruptResourceIsRejected(entries[0]!);
-    return {
-      initialHtmlBytes,
-      finalHtmlBytes: Buffer.byteLength(finalHtml),
-      selected,
-      uploads: uploadEvidence,
-      recovery,
-      aggregateHash: manifest.aggregateHash,
-      finalIndexHash,
-      manifestTags: manifest.tags,
-      privateMappingCount: entries.length,
-      removedCandidateSources: fixture.assets.filter((asset) => !fs.existsSync(path.join(dist, asset.source))).map((asset) => asset.source),
-      preservedCandidateSources: fixture.assets.filter((asset) => fs.existsSync(path.join(dist, asset.source))).map((asset) => asset.source),
-      discovery: {
-        directoryRelays: relay.queries[0]?.relays ?? [],
-        writeRelays: relay.queries[1]?.relays ?? [],
-        servers: [PRIMARY_SERVER, SECONDARY_SERVER],
-        ignoredForgedEvent: relay.ignoredForgedEvent,
-        ignoredOlderEvent: relay.ignoredOlderEvent,
-      },
-      secondaryUploadFailed,
-      corruptResourceRejected,
-      executedResourceCalls,
-    };
+    return await collectFixtureEvidence(await buildFixtureArtifact(root, fixture), fixture);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
