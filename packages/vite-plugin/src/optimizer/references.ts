@@ -1,0 +1,236 @@
+/**
+ * @napplet/vite-plugin — bounded retained-reference inventory and rewrites.
+ *
+ * This is build-private classifier plumbing. It describes only the emitted
+ * forms that the generated resource loader owns; it does not add protocol
+ * metadata, a browser fetch path, or a universal URL interception layer.
+ */
+
+import valueParser from 'postcss-value-parser';
+import type { RetainedAsset } from './pipeline.js';
+
+export type RetainedArtifactKind = 'html' | 'inline-css' | 'javascript' | 'stylesheet';
+
+export interface RetainedArtifact {
+  path: string;
+  kind: RetainedArtifactKind;
+  content: string;
+}
+
+export interface ReferenceBuild {
+  assets: readonly RetainedAsset[];
+  artifacts: readonly RetainedArtifact[];
+}
+
+export type ReferenceForm =
+  | 'computed-url'
+  | 'html-attribute'
+  | 'html-srcset'
+  | 'inline-css'
+  | 'js-fetch-sentinel'
+  | 'js-media-sentinel'
+  | 'js-sentinel'
+  | 'module-url'
+  | 'stylesheet-url'
+  | 'wasm-streaming-url'
+  | 'worker-url';
+
+export interface ArtifactReference {
+  source: string;
+  form: ReferenceForm;
+  supported: boolean;
+  location: string;
+}
+
+export interface ReferenceInventory {
+  artifacts: RetainedArtifact[];
+  references: ArtifactReference[];
+}
+
+export interface AssetEligibility {
+  eligible: boolean;
+  reasons: string[];
+  references: ArtifactReference[];
+}
+
+export interface RewriteInput {
+  artifact: RetainedArtifact;
+  inventory: ReferenceInventory;
+  replacements: ReadonlyMap<string, string>;
+}
+
+export interface RewrittenArtifact {
+  content: string;
+  rewrittenSources: string[];
+}
+
+function normalizedPath(value: string): string {
+  return value.replace(/\\/g, '/').replace(/^\.\//, '');
+}
+
+function escapePattern(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function location(path: string, offset: number): string {
+  return `${path}:${offset}`;
+}
+
+function reasonFor(form: ReferenceForm): string {
+  switch (form) {
+    case 'html-attribute':
+      return 'html-attribute';
+    case 'html-srcset':
+      return 'html-srcset';
+    case 'inline-css':
+      return 'inline-css';
+    case 'computed-url':
+      return 'computed-url';
+    case 'worker-url':
+      return 'worker-url';
+    case 'module-url':
+      return 'module-url';
+    case 'wasm-streaming-url':
+      return 'wasm-streaming-url';
+    default:
+      return '';
+  }
+}
+
+function pushReference(
+  references: ArtifactReference[],
+  source: string,
+  form: ReferenceForm,
+  supported: boolean,
+  path: string,
+  offset: number,
+): void {
+  references.push({ source: normalizedPath(source), form, supported, location: location(path, offset) });
+}
+
+function splitFragment(value: string): { path: string; fragment: string } {
+  const hash = value.indexOf('#');
+  return hash < 0 ? { path: value, fragment: '' } : { path: value.slice(0, hash), fragment: value.slice(hash) };
+}
+
+function decodeCssEscapes(value: string): string {
+  return value
+    .replace(/\\([0-9a-f]{1,6})\s?/gi, (_match, hex: string) => String.fromCodePoint(Number.parseInt(hex, 16)))
+    .replace(/\\(.)/g, '$1');
+}
+
+function cssUrlValues(content: string): Array<{ source: string; fragment: string; offset: number }> {
+  const parsed = valueParser(content);
+  const values: Array<{ source: string; fragment: string; offset: number }> = [];
+  parsed.walk((node) => {
+    if (node.type !== 'function' || node.value.toLowerCase() !== 'url' || node.unclosed) return false;
+    const argument = node.nodes.filter((candidate) => candidate.type !== 'space' && candidate.type !== 'comment');
+    if (argument.length !== 1) return false;
+    const target = argument[0]!;
+    if ((target.type !== 'word' && target.type !== 'string') || (target.type === 'string' && target.unclosed) || target.value.startsWith('data:')) return false;
+    const value = splitFragment(target.value);
+    values.push({ source: normalizedPath(decodeCssEscapes(value.path)), fragment: value.fragment, offset: target.sourceIndex });
+    return false;
+  });
+  return values;
+}
+
+function hasSource(value: string, source: string): boolean {
+  return value.includes(source) || value.includes(`./${source}`);
+}
+
+function recordJavaScriptReferences(artifact: RetainedArtifact, sources: readonly string[], references: ArtifactReference[]): void {
+  for (const source of sources) {
+    const escaped = escapePattern(source);
+    const sentinel = new RegExp(`__nappletAssetUrl\\(\\s*(["'])${escaped}\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`, 'g');
+    for (const match of artifact.content.matchAll(sentinel)) {
+      const offset = match.index ?? 0;
+      const before = artifact.content.slice(Math.max(0, offset - 48), offset);
+      if (/new\s+(?:Shared)?Worker\(\s*$/.test(before)) {
+        pushReference(references, source, 'worker-url', false, artifact.path, offset);
+      } else if (/import\(\s*$/.test(before)) {
+        pushReference(references, source, 'module-url', false, artifact.path, offset);
+      } else if (/WebAssembly\.instantiateStreaming\(\s*fetch\(\s*$/.test(before)) {
+        pushReference(references, source, 'wasm-streaming-url', false, artifact.path, offset);
+      } else if (/fetch\(\s*$/.test(before)) {
+        pushReference(references, source, 'js-fetch-sentinel', true, artifact.path, offset);
+      } else if (/,\s*["']media["']\s*\)$/.test(match[0])) {
+        pushReference(references, source, 'js-media-sentinel', true, artifact.path, offset);
+      } else {
+        pushReference(references, source, 'js-sentinel', true, artifact.path, offset);
+      }
+    }
+
+    const computed = new RegExp(`(["'])${escaped}\\1\\s*\\+`, 'g');
+    for (const match of artifact.content.matchAll(computed)) {
+      pushReference(references, source, 'computed-url', false, artifact.path, match.index ?? 0);
+    }
+  }
+}
+
+/** Inventory exactly the build-owned static forms present in retained output. */
+export function inventoryArtifactReferences(input: ReferenceBuild): ReferenceInventory {
+  const artifacts = [...input.artifacts];
+  const sources = input.assets.map((asset) => normalizedPath(asset.source));
+  const references: ArtifactReference[] = [];
+
+  for (const artifact of artifacts) {
+    if (artifact.kind === 'stylesheet' || artifact.kind === 'inline-css') {
+      for (const value of cssUrlValues(artifact.content)) {
+        if (!sources.includes(value.source)) continue;
+        pushReference(references, value.source, artifact.kind === 'stylesheet' ? 'stylesheet-url' : 'inline-css', artifact.kind === 'stylesheet', artifact.path, value.offset);
+      }
+      continue;
+    }
+
+    for (const source of sources) {
+      const escaped = escapePattern(source);
+      if (artifact.kind === 'html') {
+        for (const match of artifact.content.matchAll(new RegExp(`\\bsrcset\\s*=\\s*(["'])[^"']*${escaped}[^"']*\\1`, 'gi'))) {
+          pushReference(references, source, 'html-srcset', false, artifact.path, (match.index ?? 0) + match[0].indexOf(source));
+        }
+        for (const match of artifact.content.matchAll(new RegExp(`\\b(?:src|href)\\s*=\\s*(["'])${escaped}\\1`, 'gi'))) {
+          pushReference(references, source, 'html-attribute', false, artifact.path, (match.index ?? 0) + match[0].indexOf(source));
+        }
+      } else if (artifact.kind === 'javascript' && hasSource(artifact.content, source)) {
+        recordJavaScriptReferences(artifact, [source], references);
+      }
+    }
+  }
+
+  return { artifacts, references: references.sort((left, right) => left.source.localeCompare(right.source) || left.location.localeCompare(right.location) || left.form.localeCompare(right.form)) };
+}
+
+/** Classify an asset as eligible only when its complete reference set is supported. */
+export function classifyAssetReferences(asset: RetainedAsset, inventory: ReferenceInventory): AssetEligibility {
+  const source = normalizedPath(asset.source);
+  const references = inventory.references.filter((reference) => reference.source === source);
+  const reasons = [...new Set(references.filter((reference) => !reference.supported).map((reference) => reasonFor(reference.form)).filter(Boolean))].sort();
+  if (references.length === 0) reasons.push('unreferenced');
+  return { eligible: reasons.length === 0, reasons, references };
+}
+
+/** Rewrite only parser-proven stylesheet values; every other form remains byte-preserved. */
+export function rewriteSupportedReferences(input: RewriteInput): RewrittenArtifact {
+  if (input.artifact.kind !== 'stylesheet') return { content: input.artifact.content, rewrittenSources: [] };
+  const supported = new Set(input.inventory.references
+    .filter((reference) => reference.location.startsWith(`${input.artifact.path}:`) && reference.supported)
+    .map((reference) => reference.source));
+  const parsed = valueParser(input.artifact.content);
+  const rewrittenSources = new Set<string>();
+  parsed.walk((node) => {
+    if (node.type !== 'function' || node.value.toLowerCase() !== 'url' || node.unclosed) return false;
+    const argument = node.nodes.filter((candidate) => candidate.type !== 'space' && candidate.type !== 'comment');
+    if (argument.length !== 1) return false;
+    const target = argument[0]!;
+    if ((target.type !== 'word' && target.type !== 'string') || (target.type === 'string' && target.unclosed)) return false;
+    const value = splitFragment(target.value);
+    const source = normalizedPath(decodeCssEscapes(value.path));
+    const replacement = supported.has(source) ? input.replacements.get(source) : undefined;
+    if (!replacement) return false;
+    target.value = `${replacement}${value.fragment}`;
+    rewrittenSources.add(source);
+    return false;
+  });
+  return { content: parsed.toString(), rewrittenSources: [...rewrittenSources].sort() };
+}
