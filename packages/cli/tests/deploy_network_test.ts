@@ -191,6 +191,26 @@ Deno.test("executeNetworkDeploy fails when the server stores a mismatched blob",
   });
 });
 
+Deno.test("executeNetworkDeploy rejects files changed after manifest creation before uploading", async () => {
+  await withTempDir(async (dir) => {
+    await Deno.writeTextFile(`${dir}/index.html`, "index");
+    const manifests = await manifestsFor(dir);
+    await Deno.writeTextFile(`${dir}/index.html`, "changed after manifest");
+    const calls: FetchCall[] = [];
+
+    await executeNetworkDeploy(
+      manifests,
+      { relays: ["wss://relay.example"], blossomServers: ["https://blob.example"] },
+      signer,
+      { fetch: createFakeFetch(calls), publish: fakePublish().publish, resolve: resolvePublicDns },
+    ).then(
+      () => { throw new Error("changed deploy input must reject"); },
+      (error) => assert(String(error).includes("Deploy input changed after manifest creation")),
+    );
+    assertEquals(calls.length, 0);
+  });
+});
+
 Deno.test("executeNetworkDeploy still uploads when HEAD preflight errors", async () => {
   await withTempDir(async (dir) => {
     await Deno.writeTextFile(`${dir}/index.html`, "index");

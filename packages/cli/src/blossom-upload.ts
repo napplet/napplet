@@ -66,15 +66,24 @@ export async function collectDeployFilePayloads(
   }
   const payloads: DeployFilePayload[] = [];
   for (const { candidateDir, file } of unique.values()) {
+    const data = await Deno.readFile(joinPath(candidateDir, file.path.slice(1)));
+    if (await sha256Hex(data) !== file.sha256) {
+      throw new Error(`Deploy input changed after manifest creation: ${file.path}`);
+    }
     payloads.push({
       candidateDir,
       path: file.path,
       sha256: file.sha256,
-      data: await Deno.readFile(joinPath(candidateDir, file.path.slice(1))),
+      data,
       contentType: contentTypeForPath(file.path),
     });
   }
   return payloads;
+}
+
+async function sha256Hex(data: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /**
