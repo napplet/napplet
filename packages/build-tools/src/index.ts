@@ -6,6 +6,7 @@ export { createPlatformSecretStore } from "./secret-store.ts";
 export { BUILD_SIGNER_SESSION_KEY, pairBuildSigner, reconnectBuildSigner } from "./terminal.ts";
 export { discoverBlossomServers, DEFAULT_DIRECTORY_RELAYS } from "./discovery.ts";
 export { createNetworkPolicy } from "./network-policy.ts";
+export { headBlob, uploadBlob, uploadExactBlobs } from "./blossom.ts";
 export type {
   BuildSigner,
   BuildSignerServices,
@@ -46,3 +47,12 @@ export type {
   PublicAddressResolver,
   ValidatedEndpoint,
 } from "./network-policy.ts";
+export type {
+  BlobDescriptor,
+  BlossomServices,
+  UploadBatchInput,
+  UploadBatchResult,
+  UploadBlob,
+  UploadEvidence,
+  VerifiedBlobDescriptor,
+} from "./blossom.ts";
