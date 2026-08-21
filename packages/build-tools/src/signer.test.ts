@@ -37,6 +37,15 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
+async function requestAt(relay: FakeRelay, index: number): Promise<Nip46Request> {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const request = relay.requests[index];
+    if (request) return request;
+    await Promise.resolve();
+  }
+  throw new Error(`expected relay request ${index}`);
+}
+
 async function assertRejects(action: () => Promise<unknown>, includes: string): Promise<void> {
   try {
     await action();
@@ -148,8 +157,7 @@ Deno.test("requests only public-key access and kind-24242 signing", async () => 
     tags: [["t", "upload"]],
     content: "authorization",
   });
-  const request = relay.requests[1];
-  assert(request, "expected one signing request");
+  const request = await requestAt(relay, 1);
   assert(request.method === "sign_event", "expected sign_event");
   assert(JSON.parse(request.params[0]).kind === 24242, "expected a kind-24242 request payload");
   relay.respond({ id: "request-1", result: JSON.stringify(signedAuthorization(userSecret)) });
@@ -172,6 +180,7 @@ Deno.test("rejects tampered, wrong-author, and wrong-kind signed results", async
     relay.respond({ id: "request-0", result: getPublicKey(userSecret) });
     await publicKey;
     const signed = signer.signEvent({ kind: 24242, created_at: 1_700_000_000, tags: [], content: "upload" });
+    await requestAt(relay, 1);
     relay.respond({ id: "request-1", result: JSON.stringify(vector.event) });
     await assertRejects(() => signed, "verification");
     assert(relay.closedRequests === 2, `${vector.label} must close the request`);

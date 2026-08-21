@@ -1,6 +1,7 @@
 /** Public platform-neutral build-tool contracts. */
 
 export { RedactedSecret } from "./contracts.js";
+export { createBuildSigner } from "./signer.js";
 export type {
   BuildSigner,
   BuildSignerServices,
