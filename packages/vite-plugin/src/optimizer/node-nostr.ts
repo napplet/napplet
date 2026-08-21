@@ -19,13 +19,16 @@ import {
   type RelayRequest,
 } from '@napplet/build-tools';
 import { BunkerSigner, createNostrConnectURI, parseBunkerInput } from 'nostr-tools/nip46';
-import { SimplePool } from 'nostr-tools/pool';
+import { SimplePool, useWebSocketImplementation as configureWebSocketImplementation } from 'nostr-tools/pool';
 import { generateSecretKey, getPublicKey, verifyEvent } from 'nostr-tools/pure';
 import { bytesToHex, hexToBytes } from 'nostr-tools/utils';
+import WebSocket from 'ws';
 import type { NodePairingAdapter } from './node-services.js';
 
 const DEFAULT_CONNECT_RELAYS = ['wss://bucket.coracle.social'] as const;
 const RELAY_QUERY_TIMEOUT_MS = 5_000;
+
+configureWebSocketImplementation(WebSocket);
 
 /**
  * Create the verified relay-query adapter used by automatic discovery.
