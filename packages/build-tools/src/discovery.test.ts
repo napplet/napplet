@@ -49,16 +49,17 @@ Deno.test("discovery selects the newest verified kind-10002 from bounded directo
   const newest = signedEvent(owner, 10002, NOW, [["r", "wss://write.example", "write"]]);
   const forged = { ...signedEvent(owner, 10002, NOW + 1, [["r", "wss://forged.example", "write"]]), content: "forged" };
   const wrongAuthor = signedEvent(attacker, 10002, NOW + 2, [["r", "wss://attacker.example", "write"]]);
-  const service = new FakeDirectory([old, newest, forged, wrongAuthor], [
-    signedEvent(owner, 10063, NOW, [["server", "https://blossom.example"]]),
-  ]);
-
+  const serverList = signedEvent(owner, 10063, NOW, [["server", "https://blossom.example"]]);
+  const service = new FakeDirectory(
+    [old, newest, forged, wrongAuthor],
+    [serverList],
+  );
   const result = await discoverBlossomServers({ pubkey, now: () => NOW }, service);
 
   assert(result.status === "found", "expected a discovered server list");
   assertEquals(service.calls[0].relays.includes("wss://purplepag.es"), true);
   assertEquals(service.calls[1].relays, ["wss://write.example"]);
-  assertEquals(result.sourceEvent.id, newest.id);
+  assertEquals(result.sourceEvent.id, serverList.id);
   assertEquals(result.servers.map((server) => server.toString()), ["https://blossom.example/"]);
 });
 
