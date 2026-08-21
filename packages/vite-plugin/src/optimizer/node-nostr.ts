@@ -96,7 +96,7 @@ export function createNodePairingAdapter(clock: Clock): NodePairingAdapter {
         }
       });
     },
-    createQrPairing(signal) {
+    createQrPairing(_signal) {
       pairingClientKey = generateSecretKey();
       const pool = new SimplePool();
       const relays = [...DEFAULT_CONNECT_RELAYS];
