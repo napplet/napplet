@@ -5,8 +5,8 @@ milestone_name: NIP-5D Runtime Injection
 current_phase: 162
 current_phase_name: blossom-backed-large-asset-optimization
 status: executing
-stopped_at: Completed 162-06-PLAN.md
-last_updated: "2026-08-21T16:51:48.024Z"
+stopped_at: Completed 162-08-PLAN.md
+last_updated: "2026-08-21T17:06:27.784Z"
 last_activity: 2026-08-21
 last_activity_desc: Phase 162 execution started
 progress:
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 ## Current Position
 
 Phase: 162 (blossom-backed-large-asset-optimization) — EXECUTING
-Plan: 8 of 11
+Plan: 9 of 11
 Status: Ready to execute
 Last activity: 2026-08-21 — Phase 162 execution started
 community/group-chat invite linked from the SPA and docs.
@@ -496,6 +496,8 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase ?]: Use only resource.bytes and resource.bytesMany with whole-Blob integrity checks, bounded lifetime, and no browser network fallback.
 - [Phase ?]: CLI Blossom discovery uses verified kind-10002 write relays and never substitutes a default server.
 - [Phase ?]: CLI upload success requires complete shared exact-byte evidence across configured direct servers.
+- [Phase ?]: Keep Node-only platform capabilities in the Vite adapter while shared build-tools stays environment-neutral.
+- [Phase ?]: Use typed redaction-safe unavailable statuses and lazy injected Node boundaries for live optimization.
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -593,8 +595,8 @@ Items acknowledged and deferred at v0.31.0 milestone close on 2026-05-24:
 
 **Resume file:** None
 
-Last session: 2026-08-21T16:51:48.015Z
-Stopped at: Completed 162-06-PLAN.md
+Last session: 2026-08-21T17:06:27.775Z
+Stopped at: Completed 162-08-PLAN.md
 Resume: Phase 155 COMPLETE. All v0.33.0 SHELL requirements satisfied; both phases (154, 155) done. Next: orchestrator verify_phase_goal for Phase 155, then `/gsd:audit-milestone v0.33.0` → `/gsd:ship`.
 
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
@@ -700,3 +702,4 @@ Resume: Phase 142 TERMINAL-COMPLETE — all 13 VER-IDs (VER-01..13) verified PAS
 | Phase 162 P05 | 33m | 2 tasks | 7 files |
 | Phase 162 P07 | 8min | 3 tasks | 8 files |
 | Phase 162 P06 | 8min | 2 tasks | 7 files |
+| Phase 162 P08 | 13 min | 2 tasks | 4 files |
