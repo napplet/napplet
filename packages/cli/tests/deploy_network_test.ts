@@ -20,6 +20,7 @@ const privateKeyHex = "01".padStart(64, "0");
 const signer = createPrivateKeySigner(privateKeyHex);
 const sha256 = "1bc04b5291c26a46d918139138b992d2de976d6851d0893b0476b85bfbdfc6e6";
 const secondSha256 = "a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333";
+const resolvePublicDns = () => Promise.resolve(["93.184.216.34"]);
 
 interface FetchCall {
   url: string;
@@ -48,6 +49,16 @@ interface FakeFetchOptions {
   putResponse?: (url: string) => Response;
 }
 
+function descriptorResponse(hash: string, size = 5): Response {
+  return new Response(JSON.stringify({
+    url: "https://blob.example/blob",
+    sha256: hash,
+    size,
+    type: "text/html",
+    uploaded: 123,
+  }), { status: 201, headers: { "content-type": "application/json" } });
+}
+
 function createFakeFetch(
   calls: FetchCall[],
   options: FakeFetchOptions = {},
@@ -55,10 +66,7 @@ function createFakeFetch(
   const headStatus = options.headStatus ?? (() => 404);
   const putResponse = options.putResponse ??
     (() =>
-      new Response(JSON.stringify({ url: "https://blob.example", sha256, size: 5 }), {
-        status: 201,
-        headers: { "content-type": "application/json" },
-      }));
+      descriptorResponse(sha256));
   return (async (input, init) => {
     const url = String(input);
     const headers = new Headers(init?.headers);
@@ -107,6 +115,7 @@ Deno.test("executeNetworkDeploy uploads unique files and publishes signed manife
         fetch: createFakeFetch(calls),
         publish,
         now: () => 123,
+        resolve: resolvePublicDns,
         onProgress: (event) => progress.push(event),
       },
     );
@@ -167,18 +176,16 @@ Deno.test("executeNetworkDeploy fails when the server stores a mismatched blob",
       {
         fetch: createFakeFetch(calls, {
           putResponse: () =>
-            new Response(JSON.stringify({ sha256: "0".repeat(64) }), {
-              status: 201,
-              headers: { "content-type": "application/json" },
-            }),
+            descriptorResponse("0".repeat(64)),
         }),
         publish,
         now: () => 123,
+        resolve: resolvePublicDns,
       },
     );
 
     assertEquals(result.uploaded[0].success, false);
-    assert(result.uploaded[0].error?.includes("does not match expected"));
+    assertEquals(result.uploaded[0].error, "Upload did not produce verified evidence");
     assertEquals(result.published.length, 0);
     assertEquals(events.length, 0);
   });
@@ -195,7 +202,12 @@ Deno.test("executeNetworkDeploy still uploads when HEAD preflight errors", async
       manifests,
       { relays: ["wss://relay.example"], blossomServers: ["https://blob.example"] },
       signer,
-      { fetch: createFakeFetch(calls, { headStatus: () => 500 }), publish, now: () => 123 },
+      {
+        fetch: createFakeFetch(calls, { headStatus: () => 500 }),
+        publish,
+        now: () => 123,
+        resolve: resolvePublicDns,
+      },
     );
 
     assertEquals(calls.map((call) => call.method), ["HEAD", "PUT"]);
@@ -218,7 +230,7 @@ Deno.test("executeNetworkDeploy directly uploads the primary and secondary serve
         blossomServers: ["https://a.example", "https://b.example"],
       },
       signer,
-      { fetch: createFakeFetch(calls), publish, now: () => 123 },
+      { fetch: createFakeFetch(calls), publish, now: () => 123, resolve: resolvePublicDns },
     );
 
     const puts = calls.filter((call) => call.method === "PUT");
@@ -250,14 +262,12 @@ Deno.test("executeNetworkDeploy retries a bounded fresh shared authorization aft
                 headers: { "content-type": "application/json" },
               });
             }
-            return new Response(JSON.stringify({ sha256 }), {
-              status: 201,
-              headers: { "content-type": "application/json" },
-            });
+            return descriptorResponse(sha256);
           },
         }),
         publish,
         now: () => 123,
+        resolve: resolvePublicDns,
       },
     );
 
@@ -294,13 +304,11 @@ Deno.test("executeNetworkDeploy fails the deployment when any direct upload is p
           putResponse: (url) =>
             url.startsWith("https://b.example")
               ? new Response("nope", { status: 500 })
-              : new Response(JSON.stringify({ sha256 }), {
-                status: 201,
-                headers: { "content-type": "application/json" },
-              }),
+              : descriptorResponse(sha256),
         }),
         publish,
         now: () => 123,
+        resolve: resolvePublicDns,
       },
     );
 
@@ -342,22 +350,20 @@ Deno.test("executeNetworkDeploy skips publish when uploads are split across inco
             uploads += 1;
             if (upload === 1 || upload === 2) return new Response("nope", { status: 500 });
             const storedSha256 = upload === 0 ? sha256 : secondSha256;
-            return new Response(JSON.stringify({ sha256: storedSha256 }), {
-              status: 201,
-              headers: { "content-type": "application/json" },
-            });
+            return descriptorResponse(storedSha256, upload === 0 ? 5 : 3);
           },
         }),
         publish,
         now: () => 123,
+        resolve: resolvePublicDns,
       },
     );
 
     assertEquals(result.uploadSummary, {
       servers: 2,
       serversFullyUploaded: 0,
-      totalUploads: 4,
-      failedUploads: 2,
+      totalUploads: 2,
+      failedUploads: 1,
     });
     assertEquals(result.published.length, 0);
     assertEquals(events.length, 0);
