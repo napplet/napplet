@@ -110,6 +110,9 @@ export function createNodeOptimizationServices(options: NodeOptimizationOptions 
   const networkPolicy = createNetworkPolicy({ resolve: options.resolve ?? nodeResolver() });
   const discovery = options.discovery ?? unavailableDiscovery();
   let activeSigner: BuildSigner | undefined;
+  const getSigner = createGetSigner(options, signal, clock, (signer) => {
+    activeSigner = signer;
+  });
 
   const fetch = async (input: NodeFetchInput, init?: RequestInit): Promise<NodeFetchResult> => {
     if (isAborted(signal) || isAborted(init?.signal)) return fetchFailed('network-cancelled', 'Network request was cancelled');
@@ -136,61 +139,7 @@ export function createNodeOptimizationServices(options: NodeOptimizationOptions 
         throw new Error(result.reason.message);
       },
     },
-    async getSigner(): Promise<NodeSignerResult> {
-      if (isAborted(signal)) return report(options.logger, failed('cancelled', 'Signer operation was cancelled'));
-
-      const store = await getStore(options).catch(() => undefined);
-      if (!store) return report(options.logger, failed('secret-store-unavailable', 'No protected signer store is available'));
-
-      const pairing = options.pairing;
-      let stored: RedactedSecret | undefined;
-      try {
-        stored = await store.get(BUILD_SIGNER_SESSION_KEY);
-      } catch {
-        return report(options.logger, failed('secret-store-unavailable', 'Stored signer session is unavailable'));
-      }
-
-      if (stored && pairing) {
-        const reused = await reconnectBuildSigner({
-          secretStore: cachedStore(store, stored),
-          parseStoredSession: pairing.parseStoredSession,
-          reconnect: (secret, identity, operationSignal) => pairing.reconnect(secret, identity, combinedSignal(operationSignal, signal), options.relay),
-        });
-        if (reused) {
-          activeSigner = reused.signer;
-          return { status: 'ready', signer: reused.signer, remotePubkey: reused.remotePubkey };
-        }
-      }
-
-      if (!(options.isInteractive ?? defaultInteractive)()) {
-        return report(options.logger, failed('noninteractive', 'Interactive signer pairing is unavailable'));
-      }
-      if (!pairing) return report(options.logger, failed('pairing-unavailable', 'Interactive signer pairing is unavailable'));
-
-      const terminal = options.terminal ?? nodeTerminal(options.qrRenderer ?? renderTerminalQr);
-      try {
-        const paired = await pairBuildSigner({
-          terminal: abortableTerminal(terminal, signal),
-          clock,
-          secretStore: store,
-          createQrPairing: async (operationSignal) => {
-            const qr = await pairing.createQrPairing(combinedSignal(operationSignal, signal), options.relay);
-            return {
-              ...qr,
-              waitForSession: (waitSignal) => {
-                const joined = combinedSignal(waitSignal, signal);
-                return joined.aborted ? Promise.reject(new Error('signer pairing cancelled')) : qr.waitForSession(joined);
-              },
-            };
-          },
-          connectBunker: (bunker, operationSignal) => pairing.connectBunker(bunker, combinedSignal(operationSignal, signal), options.relay),
-        });
-        activeSigner = paired.signer;
-        return { status: 'ready', signer: paired.signer, remotePubkey: paired.remotePubkey };
-      } catch {
-        return report(options.logger, failed('signer-unavailable', 'Remote signer pairing was unavailable'));
-      }
-    },
+    getSigner,
     fetch,
     async dispose(): Promise<void> {
       try {
@@ -201,6 +150,77 @@ export function createNodeOptimizationServices(options: NodeOptimizationOptions 
       }
     },
   };
+}
+
+function createGetSigner(
+  options: NodeOptimizationOptions,
+  signal: AbortSignal | undefined,
+  clock: Clock,
+  setActive: (signer: BuildSigner) => void,
+): () => Promise<NodeSignerResult> {
+  return async () => {
+    if (isAborted(signal)) return report(options.logger, failed('cancelled', 'Signer operation was cancelled'));
+    let store: SecretStore;
+    try {
+      store = await getStore(options);
+    } catch {
+      return report(options.logger, failed('secret-store-unavailable', 'No protected signer store is available'));
+    }
+    const pairing = options.pairing;
+    let stored: RedactedSecret | undefined;
+    try {
+      stored = await store.get(BUILD_SIGNER_SESSION_KEY);
+    } catch {
+      return report(options.logger, failed('secret-store-unavailable', 'Stored signer session is unavailable'));
+    }
+    if (!stored && !pairing && !(options.isInteractive ?? defaultInteractive)()) {
+      return report(options.logger, failed('noninteractive', 'Interactive signer pairing is unavailable'));
+    }
+    if (stored && pairing) {
+      const reused = await reconnectBuildSigner({
+        secretStore: cachedStore(store, stored),
+        parseStoredSession: pairing.parseStoredSession,
+        reconnect: (secret, identity, operationSignal) => pairing.reconnect(secret, identity, combinedSignal(operationSignal, signal), options.relay),
+      });
+      if (reused) {
+        setActive(reused.signer);
+        return { status: 'ready', signer: reused.signer, remotePubkey: reused.remotePubkey };
+      }
+    }
+    if (!(options.isInteractive ?? defaultInteractive)()) return report(options.logger, failed('noninteractive', 'Interactive signer pairing is unavailable'));
+    if (!pairing) return report(options.logger, failed('pairing-unavailable', 'Interactive signer pairing is unavailable'));
+    return await pairFreshSigner(options, signal, clock, store, pairing, setActive);
+  };
+}
+
+async function pairFreshSigner(
+  options: NodeOptimizationOptions,
+  signal: AbortSignal | undefined,
+  clock: Clock,
+  store: SecretStore,
+  pairing: NonNullable<NodeOptimizationOptions['pairing']>,
+  setActive: (signer: BuildSigner) => void,
+): Promise<NodeSignerResult> {
+  const terminal = options.terminal ?? nodeTerminal(options.qrRenderer ?? renderTerminalQr);
+  try {
+    const paired = await pairBuildSigner({
+      terminal: abortableTerminal(terminal, signal),
+      clock,
+      secretStore: store,
+      createQrPairing: async (operationSignal) => {
+        const qr = await pairing.createQrPairing(combinedSignal(operationSignal, signal), options.relay);
+        return { ...qr, waitForSession: (waitSignal) => {
+          const joined = combinedSignal(waitSignal, signal);
+          return joined.aborted ? Promise.reject(new Error('signer pairing cancelled')) : qr.waitForSession(joined);
+        } };
+      },
+      connectBunker: (bunker, operationSignal) => pairing.connectBunker(bunker, combinedSignal(operationSignal, signal), options.relay),
+    });
+    setActive(paired.signer);
+    return { status: 'ready', signer: paired.signer, remotePubkey: paired.remotePubkey };
+  } catch {
+    return report(options.logger, failed('signer-unavailable', 'Remote signer pairing was unavailable'));
+  }
 }
 
 function failed(code: string, message: string): Extract<NodeSignerResult, { status: 'unavailable' | 'failed' }> {

@@ -189,6 +189,37 @@ async function proveSecondaryFailure(signer: BuildSigner): Promise<boolean> {
   return result.status === 'failed' && !result.deletionAuthorized && result.evidence.some((entry) => entry.server === `${SECONDARY_SERVER}/` && !entry.accepted);
 }
 
+function createFixtureSigner(pubkey: string): BuildSigner {
+  return {
+    async signEvent(template) {
+      if (template.kind !== 24_242) throw new Error('fixture signer permits only kind 24242');
+      return finalizeEvent(template, FIXTURE_PRIVATE_KEY);
+    },
+    async getPublicKey() { return pubkey; },
+    async close() {},
+  };
+}
+
+function createFixtureFetch(
+  uploaded: Map<string, Uint8Array>,
+  uploadEvidence: FixtureUploadEvidence[],
+): typeof globalThis.fetch {
+  return async (input, init) => {
+    const url = new URL(input.toString());
+    if (init?.method === 'HEAD') return new Response(null, { status: 404 });
+    if (init?.method !== 'PUT') return new Response('method not allowed', { status: 405 });
+    const authorization = decodeAuthorization(new Headers(init.headers).get('authorization'));
+    const digest = new Headers(init.headers).get('x-sha-256');
+    const body = init.body;
+    if (!(body instanceof Blob) || !digest || authorization.kind !== 24_242 || !verifyEvent(authorization)) return new Response('unauthorized', { status: 401 });
+    const bytes = new Uint8Array(await body.arrayBuffer());
+    if (sha256(bytes) !== digest || !authorization.tags.some((tag) => tag[0] === 'x' && tag[1] === digest)) return new Response('invalid descriptor', { status: 400 });
+    uploaded.set(`blossom:sha256:${digest}`, bytes);
+    uploadEvidence.push({ source: '', sha256: digest, bytes: bytes.byteLength, authorizationKind: authorization.kind, authorizationVerified: true, descriptorVerified: true });
+    return new Response(JSON.stringify({ url: `${url.origin}/${digest}`, sha256: digest, size: bytes.byteLength, type: new Headers(init.headers).get('content-type') ?? 'application/octet-stream', uploaded: FIXTURE_NOW }), { status: 201 });
+  };
+}
+
 /** Run actual manifest orchestration against signed and exact-byte local fakes. */
 export async function runLargeAssetFixture(fixture: LargeAssetFixture): Promise<LargeFixtureEvidence> {
   const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'napplet-large-fixture-'));
@@ -197,29 +228,9 @@ export async function runLargeAssetFixture(fixture: LargeAssetFixture): Promise<
     const pubkey = getPublicKey(FIXTURE_PRIVATE_KEY);
     const uploaded = new Map<string, Uint8Array>();
     const uploadEvidence: FixtureUploadEvidence[] = [];
-    const signer: BuildSigner = {
-      async signEvent(template) {
-        if (template.kind !== 24_242) throw new Error('fixture signer permits only kind 24242');
-        return finalizeEvent(template, FIXTURE_PRIVATE_KEY);
-      },
-      async getPublicKey() { return pubkey; },
-      async close() {},
-    };
+    const signer = createFixtureSigner(pubkey);
     const relay = fakeDiscovery(pubkey);
-    const fetch: typeof globalThis.fetch = async (input, init) => {
-      const url = new URL(input.toString());
-      if (init?.method === 'HEAD') return new Response(null, { status: 404 });
-      if (init?.method !== 'PUT') return new Response('method not allowed', { status: 405 });
-      const authorization = decodeAuthorization(new Headers(init.headers).get('authorization'));
-      const digest = new Headers(init.headers).get('x-sha-256');
-      const body = init.body;
-      if (!(body instanceof Blob) || !digest || authorization.kind !== 24_242 || !verifyEvent(authorization)) return new Response('unauthorized', { status: 401 });
-      const bytes = new Uint8Array(await body.arrayBuffer());
-      if (sha256(bytes) !== digest || !authorization.tags.some((tag) => tag[0] === 'x' && tag[1] === digest)) return new Response('invalid descriptor', { status: 400 });
-      uploaded.set(`blossom:sha256:${digest}`, bytes);
-      uploadEvidence.push({ source: '', sha256: digest, bytes: bytes.byteLength, authorizationKind: authorization.kind, authorizationVerified: true, descriptorVerified: true });
-      return new Response(JSON.stringify({ url: `${url.origin}/${digest}`, sha256: digest, size: bytes.byteLength, type: new Headers(init.headers).get('content-type') ?? 'application/octet-stream', uploaded: FIXTURE_NOW }), { status: 201 });
-    };
+    const fetch = createFixtureFetch(uploaded, uploadEvidence);
     const services = await createLiveOptimizationServices(fakeNodeServices(signer, relay.services, fetch));
     const options = { nappletType: 'large-fixture', artifactMode: 'single-file' as const, requires: ['relay'] };
     const harness = registerTestOptimizationHarness(options, services);

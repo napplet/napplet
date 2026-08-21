@@ -264,7 +264,7 @@ export async function connectRemoteSigner(options: ConnectOptions): Promise<Conn
     print,
     timeoutMs,
   });
-  let closeQrPairing = (): void => {};
+  let closeQrPairing = (): undefined => undefined;
   let session: BuildSignerSession | undefined;
   try {
     session = await pairBuildSigner({

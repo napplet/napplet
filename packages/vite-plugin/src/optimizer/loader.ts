@@ -97,7 +97,7 @@ async function mapWithConcurrency<T, R>(
   concurrency: number,
   operation: (value: T, index: number) => Promise<R>,
 ): Promise<R[]> {
-  const results = new Array<R>(values.length);
+  const results = Array.from({ length: values.length }) as R[];
   let next = 0;
   async function worker(): Promise<void> {
     for (;;) {
