@@ -12,4 +12,4 @@ Protocol boundary: NIP-5D and NIP-5A retain authority over sandboxing, manifest,
 
 The Deno workspace validation uses `deno check --config packages/cli/deno.json packages/build-tools/src/index.ts`; it deliberately avoids regenerating the user-owned root `deno.lock`. The unrelated modified root `package.json`, root `deno.lock`, `.planning/config.json`, caches, generated CLI binaries, and workshop directory remain unstaged and are not part of the release commit or PR.
 
-PR: pending creation after the final gate commit.
+PR: https://github.com/napplet/web/pull/205
