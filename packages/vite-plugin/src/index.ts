@@ -47,6 +47,7 @@ import type { ManifestPluginState, Nip5aManifestOptions } from './types.js';
 import { applyHtmlMetadata, singleFileBuildConfig } from './html.js';
 import {
   resolvePluginConfig,
+  testOptimizationHarnessFor,
   writeBundleManifest,
 } from './manifest.js';
 import {
@@ -130,7 +131,9 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
 
     async closeBundle() {
       reportRequirementDiagnostics(options.requires, state, (message) => this.warn(message));
-      await writeBundleManifest(options, state);
+      const harness = testOptimizationHarnessFor(options);
+      await writeBundleManifest(options, state, harness?.services);
+      if (harness) harness.report = state.optimizationReport;
     },
   };
 }

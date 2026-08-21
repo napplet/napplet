@@ -23,6 +23,8 @@ import {
 export { renderPrivateResourceTable, renderResourceLoader, type ResourceTableEntry } from './loader.js';
 
 export const OPTIMIZATION_TARGET_BYTES = 2 * 1024 * 1024;
+/** Private loader portability bound for each complete resource Blob. */
+export const MAX_WHOLE_RESOURCE_BYTES = 10 * 1024 * 1024;
 
 export interface RetainedAsset {
   source: string;
@@ -244,10 +246,14 @@ export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
   const eligibility = new Map(input.assets.map((asset) => [asset, classifyAssetReferences(asset, inventory)]));
   const ineligible = input.assets
     .map((asset) => ({ asset, result: eligibility.get(asset)! }))
-    .filter(({ asset, result }) => asset.eligible === false || !result.eligible)
+    .filter(({ asset, result }) => asset.eligible === false || asset.bytes.byteLength > MAX_WHOLE_RESOURCE_BYTES || !result.eligible)
     .map(({ asset, result }) => ({
       source: normalizedPath(asset.source),
-      reasons: asset.eligible === false ? ['manual-ineligible'] : result.reasons,
+      reasons: asset.eligible === false
+        ? ['manual-ineligible']
+        : asset.bytes.byteLength > MAX_WHOLE_RESOURCE_BYTES
+          ? ['whole-blob-portability-limit']
+          : result.reasons,
     }))
     .sort((left, right) => left.source.localeCompare(right.source));
   if (initial.bytes <= targetBytes) {
@@ -263,7 +269,7 @@ export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
   }
 
   const candidates = input.assets
-    .filter((asset) => asset.eligible !== false && eligibility.get(asset)!.eligible)
+    .filter((asset) => asset.eligible !== false && asset.bytes.byteLength <= MAX_WHOLE_RESOURCE_BYTES && eligibility.get(asset)!.eligible)
     .sort((left, right) => right.bytes.byteLength - left.bytes.byteLength || normalizedPath(left.source).localeCompare(normalizedPath(right.source)));
   const selected: RetainedAsset[] = [];
   const measurements: Array<{ source: string; bytes: number }> = [];
