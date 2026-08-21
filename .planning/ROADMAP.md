@@ -924,7 +924,7 @@ Plans:
 **Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
 **Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
 **Depends on:** Phase 161
-**Plans:** 1/11 plans executed
+**Plans:** 2/11 plans executed
 
 **Success Criteria:**
 
@@ -942,7 +942,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 162-02-PLAN.md — Establish the platform-neutral build-tools package and isolated least-authority signer core
+- [x] 162-02-PLAN.md — Establish the platform-neutral build-tools package and isolated least-authority signer core
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

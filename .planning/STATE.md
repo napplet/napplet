@@ -5,8 +5,8 @@ milestone_name: NIP-5D Runtime Injection
 current_phase: 162
 current_phase_name: blossom-backed-large-asset-optimization
 status: executing
-stopped_at: Completed 162-01-PLAN.md
-last_updated: "2026-08-21T15:18:23.270Z"
+stopped_at: Completed 162-02-PLAN.md
+last_updated: "2026-08-21T15:29:19.726Z"
 last_activity: 2026-08-21
 last_activity_desc: Phase 162 execution started
 progress:
@@ -32,7 +32,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 ## Current Position
 
 Phase: 162 (blossom-backed-large-asset-optimization) — EXECUTING
-Plan: 2 of 11
+Plan: 3 of 11
 Status: Ready to execute
 Last activity: 2026-08-21 — Phase 162 execution started
 community/group-chat invite linked from the SPA and docs.
@@ -481,6 +481,8 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase ?]: IntentApi derives identity from convention URIs and exposes no-ID runtime-attested target delivery through onDelivery.
 - [Phase ?]: Retain Vite asset boundaries only while evaluating; commit a verified resource-backed artifact or ordinary all-inline output.
 - [Phase ?]: Emit requires:resource only after a verified transaction and keep the mapping private to index.html.
+- [Phase ?]: Keep encrypted kind-24133 relay transport behind an injected adapter; shared signer owns canonical correlation, verification, and cleanup.
+- [Phase ?]: Restrict BuildSigner to get_public_key and kind-24242 sign_event, with local signed-event verification and redaction-safe errors.
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -580,8 +582,8 @@ Items acknowledged and deferred at v0.31.0 milestone close on 2026-05-24:
 
 **Resume file:** None
 
-Last session: 2026-08-21T15:18:23.261Z
-Stopped at: Completed 162-01-PLAN.md
+Last session: 2026-08-21T15:29:19.717Z
+Stopped at: Completed 162-02-PLAN.md
 Resume: Phase 155 COMPLETE. All v0.33.0 SHELL requirements satisfied; both phases (154, 155) done. Next: orchestrator verify_phase_goal for Phase 155, then `/gsd:audit-milestone v0.33.0` → `/gsd:ship`.
 
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
@@ -681,3 +683,4 @@ Resume: Phase 142 TERMINAL-COMPLETE — all 13 VER-IDs (VER-01..13) verified PAS
 | Phase 161-ad-hoc-convention-package-contracts P15 | 2min | 1 tasks | 4 files |
 | Phase 161 P16 | 4 min | 2 tasks | 5 files |
 | Phase 162 P01 | 8 minutes | 1 tasks | 6 files |
+| Phase 162 P02 | 3 min | 2 tasks | 8 files |
