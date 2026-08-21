@@ -924,7 +924,7 @@ Plans:
 **Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
 **Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
 **Depends on:** Phase 161
-**Plans:** 8 plans
+**Plans:** 11 plans
 
 **Success Criteria:**
 
@@ -938,10 +938,13 @@ Plans:
 Plans:
 
 - [ ] 162-01-PLAN.md — Trace retained asset selection through fake upload, private rewrite, reversible commit, and fake resource recovery
-- [ ] 162-02-PLAN.md — Extract cross-runtime least-authority signer, QR/paste pairing, and protected session services
-- [ ] 162-03-PLAN.md — Migrate CLI pairing, key stores, and deploy signing to the shared build services
-- [ ] 162-04-PLAN.md — Implement verified write-relay server discovery and hardened exact-byte Blossom upload
-- [ ] 162-05-PLAN.md — Migrate CLI suggestions and deployment networking to shared discovery/upload services
-- [ ] 162-06-PLAN.md — Bound browser reference rewriting and whole-Blob NAP-RESOURCE loading with parser-backed tests
-- [ ] 162-07-PLAN.md — Wire live Node services into the automatic transactional Vite optimization path
-- [ ] 162-08-PLAN.md — Prove the 50 MiB+ demonstration, synchronize docs/releases, pass gates, and open the PR
+- [ ] 162-02-PLAN.md — Establish the platform-neutral build-tools package and isolated least-authority signer core
+- [ ] 162-03-PLAN.md — Add QR/paste pairing, protected stores, and dirty-safe workspace integration
+- [ ] 162-04-PLAN.md — Migrate CLI pairing, key stores, and deploy signing to shared build services
+- [ ] 162-05-PLAN.md — Implement verified write-relay server discovery and hardened exact-byte Blossom upload
+- [ ] 162-06-PLAN.md — Migrate CLI suggestions and deployment networking to shared discovery/upload services
+- [ ] 162-07-PLAN.md — Bound browser reference rewriting and whole-Blob NAP-RESOURCE loading with parser-backed tests
+- [ ] 162-08-PLAN.md — Add audited dependencies and lazy fakeable Node platform adapters
+- [ ] 162-09-PLAN.md — Wire live optimization with exact conditional resource requirement and final aggregate hashing
+- [ ] 162-10-PLAN.md — Prove the generated 50 MiB+ demonstration and synchronize canonical-boundary docs
+- [ ] 162-11-PLAN.md — Scan secrets, record evidence, run release gates, push, and open the PR

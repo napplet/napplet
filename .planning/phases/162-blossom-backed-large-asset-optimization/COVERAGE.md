@@ -15,35 +15,35 @@ The source CONTEXT has no numbered decision labels, so this phase-local ledger a
 
 | ID | Locked decision | Planned coverage |
 |----|-----------------|------------------|
-| D-01 | Measure the would-be `/index.html`; activate only when bytes are greater than exactly `2 * 1024 * 1024`. | 162-01, 162-06, 162-07 |
-| D-02 | Preserve emitted asset boundaries and sort eligible blobs by bytes descending with an emitted-identity ascending tie-break. | 162-01, 162-06 |
-| D-03 | Re-render after each selection and stop once final HTML including private metadata is below the target. | 162-01, 162-06, 162-07 |
-| D-04 | Exhaustion above target is successful and visibly reported; the threshold is not conformance or a build hard error. | 162-01, 162-06, 162-07 |
-| D-05 | Pair through terminal `nostrconnect://` QR with the existing pasted `bunker://` race. | 162-02, 162-03, 162-07 |
-| D-06 | Request only NIP-46 public-key access and signing scoped to Blossom authorization kind `24242`. | 162-02, 162-03, 162-07 |
-| D-07 | Persist/reuse `nbunksec` through protected platform stores while keeping it, the client private key, and signer secrets out of artifacts, logs, cache, and config. | 162-02, 162-03, 162-07, 162-08 |
-| D-08 | Extract/reuse tested CLI signer and key-store behavior rather than reimplementing NIP-46 in Vite. | 162-02, 162-03 |
-| D-09 | Query a bounded directory set including `wss://purplepag.es` for the signer-authored replaceable kind `10002`. | 162-04, 162-05, 162-07 |
-| D-10 | Verify events and select newest kind `10002` by `created_at` with a deterministic tie-break. | 162-04, 162-05, 162-07 |
-| D-11 | Query write/unmarked relays from kind `10002` for signer-authored kind `10063`, select newest valid, and preserve normalized/deduplicated `server` tag order. | 162-04, 162-05, 162-07 |
-| D-12 | Never treat kind `10002` relay tags as Blossom servers. | 162-04, 162-05, 162-07 |
-| D-13 | If no valid user server list remains, use a deliberate visible fallback/error path and never impersonate an unrelated server as user preference. | 162-04, 162-05, 162-07 |
-| D-14 | Hash and upload exact emitted bytes using the existing BUD authorization/upload compatibility behavior. | 162-01, 162-04, 162-05, 162-07 |
-| D-15 | Emit selected references only as `blossom:sha256:<64 lowercase hex>` from the published NAP-RESOURCE proposal. | 162-01, 162-04, 162-07 |
-| D-16 | Embed deterministic private JSON mapping emitted identity to URI, hash, bytes, and MIME. | 162-01, 162-07 |
-| D-17 | Present the mapping only as tool-owned signed-artifact plumbing, never as a NIP-5A/NIP-5D/NAP field, message, handshake, or conformance rule. | 162-01, 162-07 |
-| D-18 | Remove emitted files only after required uploads succeed on at least one selected server and final references/hashes verify. | 162-01, 162-07 |
-| D-19 | Resolve browser resources through existing `window.napplet.resource.bytes`/`bytesMany`, never raw network or a new protocol message. | 162-01, 162-06, 162-07 |
-| D-20 | Automatically replace only explicitly supported game-oriented consumers; preserve/skip other reference shapes and document them. | 162-06, 162-07, 162-08 |
-| D-21 | Retain runtime hash verification at the NAP-RESOURCE boundary. | 162-01, 162-06, 162-07 |
-| D-22 | Generate a deterministic fixture totaling at least 50 MiB without committing large binaries. | 162-08 |
-| D-23 | Demonstrate measured input, selection order, final size, metadata, authenticated upload, replacements, and byte-identical recovery. | 162-08 |
-| D-24 | Update package docs and changesets for every changed shipped package. | 162-08 |
-| D-25 | Run full repository gates, commit atomically, push the branch, and open a PR. | 162-08 |
-| D-26 | Choose a clear public option/type while preserving automatic exact-threshold behavior. | 162-07 |
-| D-27 | Use the smallest cross-runtime extraction that avoids package cycles and Deno-only imports in Vite. | 162-02, 162-03, 162-07 |
-| D-28 | Choose a deterministic private JSON/loader shape that never impersonates protocol surface. | 162-01, 162-07 |
-| D-29 | Choose bounded concurrency, retry, timeout, and secondary-server behavior while remaining fail-closed before local file deletion. | 162-04, 162-05, 162-06, 162-07 |
+| D-01 | Measure the would-be `/index.html`; activate only when bytes are greater than exactly `2 * 1024 * 1024`. | 162-01, 162-07, 162-09 |
+| D-02 | Preserve emitted asset boundaries and sort eligible blobs by bytes descending with an emitted-identity ascending tie-break. | 162-01, 162-07 |
+| D-03 | Re-render after each selection and stop once final HTML including private metadata is below the target. | 162-01, 162-07, 162-09 |
+| D-04 | Exhaustion above target is successful and visibly reported; the threshold is not conformance or a build hard error. | 162-01, 162-07, 162-09 |
+| D-05 | Pair through terminal `nostrconnect://` QR with the existing pasted `bunker://` race. | 162-03, 162-04, 162-08, 162-09 |
+| D-06 | Request only NIP-46 public-key access and signing scoped to Blossom authorization kind `24242`. | 162-02, 162-04, 162-09 |
+| D-07 | Persist/reuse `nbunksec` through protected platform stores while keeping it, the client private key, and signer secrets out of artifacts, logs, cache, and config. | 162-03, 162-04, 162-08, 162-09, 162-11 |
+| D-08 | Extract/reuse tested CLI signer and key-store behavior rather than reimplementing NIP-46 in Vite. | 162-02, 162-03, 162-04 |
+| D-09 | Query a bounded directory set including `wss://purplepag.es` for the signer-authored replaceable kind `10002`. | 162-05, 162-06, 162-08, 162-09 |
+| D-10 | Verify events and select newest kind `10002` by `created_at` with a deterministic tie-break. | 162-05, 162-06, 162-08, 162-09 |
+| D-11 | Query write/unmarked relays from kind `10002` for signer-authored kind `10063`, select newest valid, and preserve normalized/deduplicated `server` tag order. | 162-05, 162-06, 162-08, 162-09 |
+| D-12 | Never treat kind `10002` relay tags as Blossom servers. | 162-05, 162-06, 162-09 |
+| D-13 | If no valid user server list remains, use a deliberate visible fallback/error path and never impersonate an unrelated server as user preference. | 162-05, 162-06, 162-09 |
+| D-14 | Hash and upload exact emitted bytes using the existing BUD authorization/upload compatibility behavior. | 162-01, 162-05, 162-06, 162-09 |
+| D-15 | Emit selected references only as `blossom:sha256:<64 lowercase hex>` from the published NAP-RESOURCE proposal. | 162-01, 162-05, 162-09 |
+| D-16 | Embed deterministic private JSON mapping emitted identity to URI, hash, bytes, and MIME. | 162-01, 162-09 |
+| D-17 | Present the mapping only as tool-owned signed-artifact plumbing, never as a NIP-5A/NIP-5D/NAP field, message, handshake, or conformance rule. | 162-01, 162-09 |
+| D-18 | Remove emitted files only after required uploads succeed on at least one selected server and final references/hashes verify. | 162-01, 162-09 |
+| D-19 | Resolve browser resources through existing `window.napplet.resource.bytes`/`bytesMany`, never raw network or a new protocol message. | 162-01, 162-07, 162-09 |
+| D-20 | Automatically replace only explicitly supported game-oriented consumers; preserve/skip other reference shapes and document them. | 162-07, 162-09, 162-10 |
+| D-21 | Retain runtime hash verification at the NAP-RESOURCE boundary. | 162-01, 162-07, 162-09 |
+| D-22 | Generate a deterministic fixture totaling at least 50 MiB without committing large binaries. | 162-10 |
+| D-23 | Demonstrate measured input, selection order, final size, metadata, authenticated upload, replacements, and byte-identical recovery. | 162-10, 162-11 |
+| D-24 | Update package docs and changesets for every changed shipped package. | 162-10, 162-11 |
+| D-25 | Run full repository gates, commit atomically, push the branch, and open a PR. | 162-11 |
+| D-26 | Choose a clear public option/type while preserving automatic exact-threshold behavior. | 162-09 |
+| D-27 | Use the smallest cross-runtime extraction that avoids package cycles and Deno-only imports in Vite. | 162-02, 162-03, 162-04, 162-08 |
+| D-28 | Choose a deterministic private JSON/loader shape that never impersonates protocol surface. | 162-01, 162-09 |
+| D-29 | Choose bounded concurrency, retry, timeout, and secondary-server behavior while remaining fail-closed before local file deletion. | 162-05, 162-06, 162-07, 162-08, 162-09 |
 
 ## External API Capability Matrix
 
@@ -166,22 +166,22 @@ Canonical source: [NAP-RESOURCE proposal](https://github.com/napplet/naps/pull/8
 
 | Source | ID | Feature / constraint | Plan | Status | Notes |
 |--------|----|----------------------|------|--------|-------|
-| GOAL | — | Large single-file napplets target sub-2 MiB HTML by offloading eligible assets to user-selected Blossom and recover them through NAP-RESOURCE. | 162-01 through 162-08 | COVERED | Goal is finalized in ROADMAP by this planning pass. |
+| GOAL | — | Large single-file napplets target sub-2 MiB HTML by offloading eligible assets to user-selected Blossom and recover them through NAP-RESOURCE. | 162-01 through 162-11 | COVERED | Goal is finalized in ROADMAP by this planning pass. |
 | REQ | — | Phase requirement IDs | — | EXCLUDED | ROADMAP says TBD; no IDs or probe predicates exist, and none are invented. |
-| RESEARCH | R-01 | Preserve Vite boundaries, pure render/plan, transactional commit before manifest hashing. | 162-01, 162-07 | COVERED | Includes rollback and callback conflict paths. |
-| RESEARCH | R-02 | Controlled Vite JS sentinels and parser-backed CSS references; safe optimization bypass on callback conflict. | 162-01, 162-06, 162-07 | COVERED | No arbitrary bundle string rewriting. |
-| RESEARCH | R-03 | Private bounded loader over existing NAP-RESOURCE with explicit supported/unsupported consumers. | 162-01, 162-06, 162-08 | COVERED | Complete-Blob limitation remains visible. |
-| RESEARCH | R-04 | Cross-runtime signer/key-store/discovery/upload extraction with Node and Deno adapters and no package cycle. | 162-02 through 162-05, 162-07 | COVERED | Existing CLI tests remain regression gates. |
-| RESEARCH | R-05 | Verified Nostr discovery, BUD exact-byte upload, SSRF/redirect bounds, descriptor validation, and fail-closed local mutation. | 162-04, 162-05, 162-07 | COVERED | Security hardening is explicitly non-normative. |
-| RESEARCH | R-06 | Audited `qrcode`, `@types/qrcode`, and `postcss-value-parser`; do not hand-roll terminal QR/CSS grammar. | 162-06, 162-07 | COVERED | Package legitimacy audit contains no ASSUMED/SUS/SLOP dependency. |
-| RESEARCH | R-07 | Deterministic generated 50 MiB+ multi-asset proof with local Blossom and fake NAP-RESOURCE. | 162-08 | COVERED | No binaries committed. |
-| RESEARCH | R-08 | Docs, changesets, secret scan, Deno regressions, full repository and AI-slop gates. | 162-03, 162-05, 162-08 | COVERED | Push and PR are in the final execution task. |
-| CONTEXT | D-01..D-04 | Exact trigger, deterministic selection, stop rule, nonfatal exhaustion. | 162-01, 162-06, 162-07 | COVERED | — |
-| CONTEXT | D-05..D-08 | NIP-46 QR/paste, least authority, secret persistence/redaction, tested extraction. | 162-02, 162-03, 162-07, 162-08 | COVERED | — |
-| CONTEXT | D-09..D-13 | Correct kind `10002` then write/unmarked-relay kind `10063` discovery and no unrelated fallback. | 162-04, 162-05, 162-07 | COVERED | Corrected CONTEXT overrides stale spike/research copied wording. |
-| CONTEXT | D-14..D-18 | Exact-byte upload, canonical URI, private mapping, verified destructive commit. | 162-01, 162-04, 162-05, 162-07 | COVERED | — |
-| CONTEXT | D-19..D-21 | Existing NAP-RESOURCE only, bounded browser consumers, runtime hash boundary. | 162-01, 162-06, 162-07 | COVERED | — |
-| CONTEXT | D-22..D-25 | 50 MiB+ demo, evidence, docs, changesets, full gates and ship. | 162-08 | COVERED | — |
-| CONTEXT | D-26..D-29 | Clear option, smallest cross-runtime seam, private loader shape, bounded fail-closed network behavior. | 162-01 through 162-07 | COVERED | Discretion is resolved in task actions. |
+| RESEARCH | R-01 | Preserve Vite boundaries, pure render/plan, transactional commit before manifest hashing. | 162-01, 162-09 | COVERED | Includes rollback, conditional requirement, and callback conflict paths. |
+| RESEARCH | R-02 | Controlled Vite JS sentinels and parser-backed CSS references; safe optimization bypass on callback conflict. | 162-01, 162-07, 162-09 | COVERED | No arbitrary bundle string rewriting. |
+| RESEARCH | R-03 | Private bounded loader over existing NAP-RESOURCE with explicit supported/unsupported consumers. | 162-01, 162-07, 162-10 | COVERED | Complete-Blob limitation remains visible. |
+| RESEARCH | R-04 | Cross-runtime signer/key-store/discovery/upload extraction with Node and Deno adapters and no package cycle. | 162-02 through 162-06, 162-08 | COVERED | Existing CLI tests remain regression gates. |
+| RESEARCH | R-05 | Verified Nostr discovery, BUD exact-byte upload, SSRF/redirect bounds, descriptor validation, and fail-closed local mutation. | 162-05, 162-06, 162-09 | COVERED | Security hardening is explicitly non-normative. |
+| RESEARCH | R-06 | Audited `qrcode`, `@types/qrcode`, and `postcss-value-parser`; do not hand-roll terminal QR/CSS grammar. | 162-07, 162-08 | COVERED | Package legitimacy audit contains no ASSUMED/SUS/SLOP dependency. |
+| RESEARCH | R-07 | Deterministic generated 50 MiB+ multi-asset proof with local Blossom and fake NAP-RESOURCE. | 162-10 | COVERED | No binaries committed. |
+| RESEARCH | R-08 | Docs, changesets, secret scan, Deno regressions, full repository and AI-slop gates. | 162-04, 162-06, 162-10, 162-11 | COVERED | Outward actions occur only in Plan 11 after durable evidence. |
+| CONTEXT | D-01..D-04 | Exact trigger, deterministic selection, stop rule, nonfatal exhaustion. | 162-01, 162-07, 162-09 | COVERED | — |
+| CONTEXT | D-05..D-08 | NIP-46 QR/paste, least authority, secret persistence/redaction, tested extraction. | 162-02 through 162-04, 162-08, 162-11 | COVERED | — |
+| CONTEXT | D-09..D-13 | Correct kind `10002` then write/unmarked-relay kind `10063` discovery and no unrelated fallback. | 162-05, 162-06, 162-08, 162-09 | COVERED | Corrected CONTEXT overrides stale spike/research copied wording. |
+| CONTEXT | D-14..D-18 | Exact-byte upload, canonical URI, private mapping, verified destructive commit. | 162-01, 162-05, 162-06, 162-09 | COVERED | — |
+| CONTEXT | D-19..D-21 | Existing NAP-RESOURCE only, bounded browser consumers, runtime hash boundary. | 162-01, 162-07, 162-09 | COVERED | Conditional resource requirement is existing NIP-5A surface. |
+| CONTEXT | D-22..D-25 | 50 MiB+ demo, evidence, docs, changesets, full gates and ship. | 162-10, 162-11 | COVERED | Outward actions follow durable demonstration/docs commits. |
+| CONTEXT | D-26..D-29 | Clear option, smallest cross-runtime seam, private loader shape, bounded fail-closed network behavior. | 162-01 through 162-09 | COVERED | Discretion is resolved in task actions. |
 
 **Audit result:** all in-scope source items are covered; no phase split or developer decision is required before execution.
