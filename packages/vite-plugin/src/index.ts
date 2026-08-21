@@ -89,7 +89,16 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
 
     config(config) {
       if (state.artifactMode !== 'single-file') return undefined;
-      return singleFileBuildConfig(config);
+      const singleFileConfig = singleFileBuildConfig(config);
+      // Keep emitted assets until closeBundle can measure the actual would-be
+      // inline artifact and make a reversible externalization decision.
+      return {
+        ...singleFileConfig,
+        build: {
+          ...singleFileConfig.build,
+          assetsInlineLimit: 0,
+        },
+      };
     },
 
     async configResolved(config) {
