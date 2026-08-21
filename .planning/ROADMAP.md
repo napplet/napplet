@@ -924,7 +924,7 @@ Plans:
 **Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
 **Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
 **Depends on:** Phase 161
-**Plans:** 8/11 plans executed
+**Plans:** 9/11 plans executed
 
 **Success Criteria:**
 
@@ -961,7 +961,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 162-09-PLAN.md — Wire live optimization with exact conditional resource requirement and final aggregate hashing
+- [x] 162-09-PLAN.md — Wire live optimization with exact conditional resource requirement and final aggregate hashing
 
 **Wave 7** *(blocked on Wave 6 completion)*
 

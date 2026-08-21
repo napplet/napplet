@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 7
+open_count: 8
 waived_count: 0
 fixed_count: 2
-total_count: 9
-last_updated: 2026-08-21T16:51:53.639Z
+total_count: 10
+last_updated: 2026-08-21T17:15:06.095Z
 ---
 
 # Broken Windows Ledger
@@ -24,6 +24,7 @@ last_updated: 2026-08-21T16:51:53.639Z
 | 7 | quick-260803-f6z | unrun-verify | .github/workflows/ai-slop.yml |  | Local AI-slop scan is unavailable; the repository defines it only as a GitHub Actions composite action. | fixed |  | 2026-08-03T10:31:16.170Z | 2026-08-03T10:32:22.997Z |
 | 8 | 162 | unrun-verify | packages/build-tools/package.json |  | Plan command pnpm --filter @napplet/build-tools test:unit could not run because the package declares no test:unit script; equivalent scoped Deno tests passed. | fixed |  | 2026-08-21T16:29:43.919Z | 2026-08-21T16:32:07.449Z |
 | 9 | 162 | deviation | packages/cli/src/output.ts |  | Incomplete direct-upload batches now fail CLI deployment reporting | open |  | 2026-08-21T16:51:53.639Z |  |
+| 10 | 162 | lint-warning | packages/vite-plugin/src/optimizer/node-services.ts | 107 | Pre-existing style-only function-length warning in Plan 162-08 file; not modified by Plan 162-09. | open |  | 2026-08-21T17:15:06.095Z |  |
 
 ````json
 [
@@ -133,6 +134,18 @@ last_updated: 2026-08-21T16:51:53.639Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-08-21T16:51:53.639Z",
+    "resolved_at": null
+  },
+  {
+    "id": 10,
+    "kind": "lint-warning",
+    "phase": "162",
+    "file": "packages/vite-plugin/src/optimizer/node-services.ts",
+    "line": 107,
+    "description": "Pre-existing style-only function-length warning in Plan 162-08 file; not modified by Plan 162-09.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-21T17:15:06.095Z",
     "resolved_at": null
   }
 ]
