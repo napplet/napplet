@@ -5,6 +5,8 @@ export { createBuildSigner } from "./signer.ts";
 export { createPlatformSecretStore } from "./secret-store.ts";
 export { BUILD_SIGNER_SESSION_KEY, pairBuildSigner, reconnectBuildSigner } from "./terminal.ts";
 export { discoverBlossomServers, DEFAULT_DIRECTORY_RELAYS } from "./discovery.ts";
+export { decodeBuildSignerSecret, encodeBuildSignerSecret } from "./session-secret.ts";
+export type { BuildSignerSecret } from "./session-secret.ts";
 export { createNetworkPolicy } from "./network-policy.ts";
 export { headBlob, uploadBlob, uploadExactBlobs } from "./blossom.ts";
 export type {

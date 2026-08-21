@@ -95,6 +95,30 @@ Deno.test("head and upload use the exact bytes, hash, BUD-11 authorization, and 
   assertEquals(event.tags, [["t", "upload"], ["expiration", "400"], ["x", SHA256], ["server", "primary.example"]]);
 });
 
+Deno.test("Blossom requests prefer the validated-address transport", async () => {
+  const calls: ValidatedEndpoint[] = [];
+  const server = endpoint("https://primary.example");
+  const result = await headBlob(server, SHA256, {
+    networkPolicy: createNetworkPolicy({ resolve: () => Promise.resolve(server.addresses) }),
+    fetch: (() => Promise.reject(new Error("global fetch must not be used"))) as typeof fetch,
+    fetchPinned: (validated, init) => {
+      calls.push(validated);
+      assertEquals(init.method, "HEAD");
+      return Promise.resolve(new Response(null, {
+        status: 200,
+        headers: { "content-length": String(BYTES.byteLength), "content-type": "text/plain" },
+      }));
+    },
+  });
+
+  assertEquals(calls.length, 1);
+  assertEquals(calls[0]?.hostname, server.hostname);
+  assertEquals(calls[0]?.addresses, server.addresses);
+  assertEquals(calls[0]?.url.pathname, `/${SHA256}`);
+  assertEquals(result?.sha256, SHA256);
+  assertEquals(result?.size, BYTES.byteLength);
+});
+
 Deno.test("batch uploads primary then secondary directly with recorded evidence", async () => {
   const calls: string[] = [];
   const fetcher = ((url: string | URL | Request, init?: RequestInit) => {

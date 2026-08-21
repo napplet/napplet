@@ -45,6 +45,8 @@ export interface VerifiedBlobDescriptor extends BlobDescriptor {
 export interface BlossomServices {
   /** Fetch implementation injected by Node or Deno. */
   fetch?: typeof fetch;
+  /** Transport that connects to an address from the already validated endpoint. */
+  fetchPinned?: (endpoint: ValidatedEndpoint, init: RequestInit) => Promise<Response>;
   /** Non-normative policy that resolves and validates every request hop. */
   networkPolicy: NetworkPolicy;
   /** Deterministic Unix-seconds clock used for short-lived authorization. */
@@ -249,7 +251,7 @@ async function request(
     const endpoint = await services.networkPolicy.validate(target, signal);
     const headers = new Headers(init.headers);
     if (endpoint.url.origin !== originalOrigin) headers.delete("authorization");
-    const response = await fetchWithTimeout(endpoint.url, { ...init, headers, redirect: "manual" }, services, signal);
+    const response = await fetchWithTimeout(endpoint, { ...init, headers, redirect: "manual" }, services, signal);
     if (response.status < 300 || response.status >= 400) return { response, endpoint };
     const location = response.headers.get("location");
     if (!location || redirects === maxRedirects || (response.status !== 307 && response.status !== 308)) {
@@ -261,7 +263,7 @@ async function request(
 }
 
 async function fetchWithTimeout(
-  url: URL,
+  endpoint: ValidatedEndpoint,
   init: RequestInit,
   services: BlossomServices,
   outerSignal: AbortSignal,
@@ -273,8 +275,11 @@ async function fetchWithTimeout(
   try {
     // Policy validation cannot pin global fetch's later DNS lookup. A platform
     // adapter must provide the transport that owns the validated connection.
+    if (services.fetchPinned) {
+      return await services.fetchPinned(endpoint, { ...init, signal: controller.signal });
+    }
     if (!services.fetch) throw new Error("Blossom request requires a pinned transport");
-    return await services.fetch(url, { ...init, signal: controller.signal });
+    return await services.fetch(endpoint.url, { ...init, signal: controller.signal });
   } catch {
     throw new Error(outerSignal.aborted ? "network operation cancelled" : "Blossom request failed");
   } finally {
