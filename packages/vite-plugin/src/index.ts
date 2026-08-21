@@ -45,11 +45,7 @@
 import type { Plugin, IndexHtmlTransformResult } from 'vite';
 import type { ManifestPluginState, Nip5aManifestOptions } from './types.js';
 import { applyHtmlMetadata, singleFileBuildConfig } from './html.js';
-import {
-  resolvePluginConfig,
-  testOptimizationHarnessFor,
-  writeBundleManifest,
-} from './manifest.js';
+import { resolvePluginConfig, writeBundleManifest } from './manifest.js';
 import {
   addInferredRequirements,
   inferRequirementsFromSource,
@@ -57,7 +53,14 @@ import {
 } from './requirements.js';
 
 export { NAPPLET_KIND_NAMED, NAPPLET_KIND_ROOT, NAPPLET_KIND_SNAPSHOT } from './types.js';
-export type { Nip5aArtifactMode, Nip5aManifestOptions, Nip5aRequiresOptions } from './types.js';
+export type {
+  Nip5aArtifactMode,
+  Nip5aLargeAssetOptimization,
+  Nip5aLargeAssetOptimizationOptions,
+  Nip5aManifestOptions,
+  Nip5aRequiresOptions,
+} from './types.js';
+export type { NodeOptimizationOptions, NodePairingAdapter } from './optimizer/node-services.js';
 
 /**
  * Create the NIP-5A manifest Vite plugin.
@@ -131,9 +134,11 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
 
     async closeBundle() {
       reportRequirementDiagnostics(options.requires, state, (message) => this.warn(message));
-      const harness = testOptimizationHarnessFor(options);
-      await writeBundleManifest(options, state, harness?.services);
-      if (harness) harness.report = state.optimizationReport;
+      const optimization = typeof options.largeAssetOptimization === 'object'
+        ? options.largeAssetOptimization
+        : undefined;
+      await writeBundleManifest(options, state);
+      if (state.optimizationReport) optimization?.onReport?.(state.optimizationReport);
     },
   };
 }

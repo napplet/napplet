@@ -10,6 +10,7 @@ import {
   BUILD_SIGNER_SESSION_KEY,
   createNetworkPolicy,
   createPlatformSecretStore,
+  decodeBuildSignerSecret,
   pairBuildSigner,
   RedactedSecret,
   reconnectBuildSigner,
@@ -31,6 +32,7 @@ import type {
   SecretStore,
   StoredSessionIdentity,
   TerminalAdapter,
+  ValidatedEndpoint,
 } from '@napplet/build-tools';
 
 /** The safe outcome of requesting a reusable or interactive build signer. */
@@ -47,14 +49,18 @@ type NodeFetchInput = Parameters<typeof fetch>[0];
 
 /** Node-specific pairing operations that preserve the shared NIP-46 contract. */
 export interface NodePairingAdapter {
+  /** Decode the public identity binding without exposing stored secret material. */
   parseStoredSession(secret: RedactedSecret): StoredSessionIdentity;
+  /** Reconnect one decoded protected session. */
   reconnect(
     secret: RedactedSecret,
     identity: StoredSessionIdentity,
     signal: AbortSignal,
     relay: RelayClient | undefined,
   ): Promise<BuildSignerSession>;
+  /** Create one QR pairing whose relay work can be cancelled and closed. */
   createQrPairing(signal: AbortSignal, relay: RelayClient | undefined): QrPairing | Promise<QrPairing>;
+  /** Connect one pasted bunker pointer using the same ephemeral client key. */
   connectBunker(
     bunker: RedactedSecret,
     signal: AbortSignal,
@@ -64,21 +70,39 @@ export interface NodePairingAdapter {
 
 /** Injectable Node boundaries required by live optimization after an over-target build. */
 export interface NodeOptimizationOptions {
+  /** Interactive terminal boundary used by QR and pasted bunker pairing. */
   terminal?: TerminalAdapter;
+  /** Terminal QR renderer; defaults to the bundled `qrcode` adapter. */
   qrRenderer?: (uri: string) => Promise<string>;
+  /** Interactive-session detector; defaults to Node stdin/stdout TTY checks. */
   isInteractive?: () => boolean;
+  /** Protected NIP-46 session store; defaults to the supported platform credential service. */
   secretStore?: SecretStore;
+  /** Platform command boundary used only for protected credential-store access. */
   process?: ProcessAdapter;
+  /** Filesystem boundary reserved for explicitly configured platform storage. */
   fileSystem?: FileSystemAdapter;
+  /** Platform identifier used for protected-store selection. */
   os?: string;
+  /** Environment view used for protected-store availability checks. */
   env?: Readonly<Record<string, string | undefined>>;
+  /** Optional externally owned relay boundary for custom NIP-46 adapters. */
   relay?: RelayClient;
+  /** Verified Nostr query adapter; defaults to a lazy `nostr-tools` pool. */
   discovery?: DiscoveryServices;
+  /** DNS resolver used by the non-normative public-address policy. */
   resolve?: PublicAddressResolver['resolve'];
+  /** General Node fetch override for caller-owned integrations. */
   fetch?: typeof fetch;
+  /** Optional validated-address HTTPS transport; defaults to Node TLS with pinned lookup. */
+  fetchPinned?: BlossomServices['fetchPinned'];
+  /** Clock used for pairing timeouts and short-lived upload authorization. */
   clock?: Clock;
+  /** Cancellation signal for the complete optimization attempt. */
   signal?: AbortSignal;
+  /** Redaction-safe status logger. */
   logger?: SafeLogger;
+  /** NIP-46 pairing adapter; defaults to a lazy `nostr-tools` implementation. */
   pairing?: NodePairingAdapter;
 }
 
@@ -108,9 +132,10 @@ export function createNodeOptimizationServices(options: NodeOptimizationOptions 
   const signal = options.signal;
   const clock = options.clock ?? nodeClock();
   const networkPolicy = createNetworkPolicy({ resolve: options.resolve ?? nodeResolver() });
-  const discovery = options.discovery ?? unavailableDiscovery();
+  const discovery = options.discovery ?? lazyNodeDiscovery();
+  const resolvedOptions = options.pairing ? options : { ...options, pairing: lazyNodePairing(clock) };
   let activeSigner: BuildSigner | undefined;
-  const getSigner = createGetSigner(options, signal, clock, (signer) => {
+  const getSigner = createGetSigner(resolvedOptions, signal, clock, (signer) => {
     activeSigner = signer;
   });
 
@@ -129,9 +154,12 @@ export function createNodeOptimizationServices(options: NodeOptimizationOptions 
   return {
     discovery,
     networkPolicy,
-    // Node's global fetch resolves after policy validation. Do not enable the
-    // automatic network path until this adapter has a pinned HTTPS transport.
-    blossom: { networkPolicy, now: () => Math.floor(clock.now() / 1_000), signal },
+    blossom: {
+      networkPolicy,
+      fetchPinned: options.fetchPinned ?? nodePinnedFetch,
+      now: () => Math.floor(clock.now() / 1_000),
+      signal,
+    },
     getSigner,
     fetch,
     async dispose(): Promise<void> {
@@ -157,14 +185,28 @@ function createGetSigner(
     try {
       store = await getStore(options);
     } catch {
-      return report(options.logger, failed('secret-store-unavailable', 'No protected signer store is available'));
+      if (!(options.isInteractive ?? defaultInteractive)()) {
+        return report(options.logger, failed('secret-store-unavailable', 'No protected signer store is available'));
+      }
+      store = ephemeralSecretStore();
+      options.logger?.warn({
+        code: 'secret-store-ephemeral',
+        message: 'No protected signer store is available; this pairing will be kept in memory for this build only',
+      });
     }
     const pairing = options.pairing;
     let stored: RedactedSecret | undefined;
     try {
       stored = await store.get(BUILD_SIGNER_SESSION_KEY);
     } catch {
-      return report(options.logger, failed('secret-store-unavailable', 'Stored signer session is unavailable'));
+      if (!(options.isInteractive ?? defaultInteractive)()) {
+        return report(options.logger, failed('secret-store-unavailable', 'Stored signer session is unavailable'));
+      }
+      store = ephemeralSecretStore();
+      options.logger?.warn({
+        code: 'secret-store-ephemeral',
+        message: 'Protected signer storage is unavailable; this pairing will be kept in memory for this build only',
+      });
     }
     if (!stored && !pairing && !(options.isInteractive ?? defaultInteractive)()) {
       return report(options.logger, failed('noninteractive', 'Interactive signer pairing is unavailable'));
@@ -183,6 +225,15 @@ function createGetSigner(
     if (!(options.isInteractive ?? defaultInteractive)()) return report(options.logger, failed('noninteractive', 'Interactive signer pairing is unavailable'));
     if (!pairing) return report(options.logger, failed('pairing-unavailable', 'Interactive signer pairing is unavailable'));
     return await pairFreshSigner(options, signal, clock, store, pairing, setActive);
+  };
+}
+
+function ephemeralSecretStore(): SecretStore {
+  let value: RedactedSecret | undefined;
+  return {
+    get: async () => value,
+    set: async (_key, next) => { value = next; },
+    delete: async () => { value = undefined; },
   };
 }
 
@@ -361,12 +412,102 @@ function nodeResolver(): PublicAddressResolver['resolve'] {
   };
 }
 
-function unavailableDiscovery(): DiscoveryServices {
+function lazyNodeDiscovery(): DiscoveryServices {
+  let adapter: Promise<DiscoveryServices> | undefined;
   return {
-    async query(): Promise<readonly unknown[]> {
-      throw new Error('Nostr relay discovery is unavailable');
+    async query(relays, filter, signal): Promise<readonly unknown[]> {
+      adapter ??= import('./node-nostr.js').then(({ createNodeDiscoveryServices }) => createNodeDiscoveryServices());
+      return await (await adapter).query(relays, filter, signal);
     },
   };
+}
+
+function lazyNodePairing(clock: Clock): NodePairingAdapter {
+  let adapter: Promise<NodePairingAdapter> | undefined;
+  const get = (): Promise<NodePairingAdapter> => {
+    adapter ??= import('./node-nostr.js').then(({ createNodePairingAdapter }) => createNodePairingAdapter(clock));
+    return adapter;
+  };
+  return {
+    parseStoredSession(secret): StoredSessionIdentity {
+      return secret.withValue((raw) => {
+        const value = decodeBuildSignerSecret(raw);
+        return { remotePubkey: value.remotePubkey, relays: value.relays };
+      });
+    },
+    async reconnect(secret, identity, signal, relay): Promise<BuildSignerSession> {
+      return await (await get()).reconnect(secret, identity, signal, relay);
+    },
+    async createQrPairing(signal, relay): Promise<QrPairing> {
+      return await (await get()).createQrPairing(signal, relay);
+    },
+    async connectBunker(bunker, signal, relay): Promise<BuildSignerSession> {
+      return await (await get()).connectBunker(bunker, signal, relay);
+    },
+  };
+}
+
+const MAX_PINNED_RESPONSE_BYTES = 64 * 1024;
+
+async function nodePinnedFetch(endpoint: ValidatedEndpoint, init: RequestInit): Promise<Response> {
+  const { request } = await import('node:https');
+  const address = endpoint.addresses[0];
+  if (!address) throw new Error('Pinned HTTPS endpoint has no address');
+  const headers = Object.fromEntries(new Headers(init.headers).entries());
+  return await new Promise<Response>((resolve, reject) => {
+    const operation = request(endpoint.url, {
+      method: init.method,
+      headers,
+      signal: init.signal ?? undefined,
+      servername: endpoint.hostname,
+      lookup: (_hostname, _options, callback) => callback(null, address, address.includes(':') ? 6 : 4),
+    }, (incoming) => {
+      const chunks: Uint8Array[] = [];
+      let total = 0;
+      incoming.on('data', (chunk: Uint8Array) => {
+        total += chunk.byteLength;
+        if (total > MAX_PINNED_RESPONSE_BYTES) {
+          operation.destroy(new Error('Pinned HTTPS response exceeded limit'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      incoming.once('error', reject);
+      incoming.once('end', () => {
+        const responseHeaders = new Headers();
+        for (const [name, value] of Object.entries(incoming.headers)) {
+          if (Array.isArray(value)) value.forEach((item) => responseHeaders.append(name, item));
+          else if (value !== undefined) responseHeaders.set(name, value);
+        }
+        const status = incoming.statusCode ?? 500;
+        const body = init.method === 'HEAD' || status === 204 || status === 304
+          ? null
+          : Buffer.concat(chunks);
+        resolve(new Response(body, { status, statusText: incoming.statusMessage, headers: responseHeaders }));
+      });
+    });
+    operation.once('error', reject);
+    void writeRequestBody(operation, init.body).catch((error) => operation.destroy(error as Error));
+  });
+}
+
+async function writeRequestBody(
+  request: import('node:http').ClientRequest,
+  body: RequestInit['body'],
+): Promise<void> {
+  if (body === undefined || body === null) {
+    request.end();
+    return;
+  }
+  if (body instanceof Blob) {
+    request.end(Buffer.from(await body.arrayBuffer()));
+    return;
+  }
+  if (typeof body === 'string' || body instanceof Uint8Array) {
+    request.end(body);
+    return;
+  }
+  throw new Error('Pinned HTTPS transport received an unsupported request body');
 }
 
 function abortableTerminal(terminal: TerminalAdapter, outer: AbortSignal | undefined): TerminalAdapter {
