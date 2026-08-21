@@ -936,15 +936,37 @@ Plans:
 6. Node/Deno regressions, full repository gates, docs, changesets, secret scan, AI-slop, durable demo evidence, push, and PR all complete.
 
 Plans:
+**Wave 1**
 
 - [ ] 162-01-PLAN.md — Trace retained asset selection through fake upload, private rewrite, reversible commit, and fake resource recovery
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 162-02-PLAN.md — Establish the platform-neutral build-tools package and isolated least-authority signer core
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 162-03-PLAN.md — Add QR/paste pairing, protected stores, and dirty-safe workspace integration
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 162-04-PLAN.md — Migrate CLI pairing, key stores, and deploy signing to shared build services
 - [ ] 162-05-PLAN.md — Implement verified write-relay server discovery and hardened exact-byte Blossom upload
-- [ ] 162-06-PLAN.md — Migrate CLI suggestions and deployment networking to shared discovery/upload services
 - [ ] 162-07-PLAN.md — Bound browser reference rewriting and whole-Blob NAP-RESOURCE loading with parser-backed tests
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 162-06-PLAN.md — Migrate CLI suggestions and deployment networking to shared discovery/upload services
 - [ ] 162-08-PLAN.md — Add audited dependencies and lazy fakeable Node platform adapters
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 162-09-PLAN.md — Wire live optimization with exact conditional resource requirement and final aggregate hashing
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 162-10-PLAN.md — Prove the generated 50 MiB+ demonstration and synchronize canonical-boundary docs
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [ ] 162-11-PLAN.md — Scan secrets, record evidence, run release gates, push, and open the PR
