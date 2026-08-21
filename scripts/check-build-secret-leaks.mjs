@@ -4,7 +4,7 @@
  */
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname, relative, resolve, sep } from 'node:path';
+import { resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const DEFAULT_PATHS = ['dist', 'coverage', 'reports', 'logs', 'tmp', '.planning/phases'];
