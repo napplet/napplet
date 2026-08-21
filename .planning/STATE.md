@@ -5,8 +5,8 @@ milestone_name: NIP-5D Runtime Injection
 current_phase: 162
 current_phase_name: blossom-backed-large-asset-optimization
 status: executing
-stopped_at: Completed 162-05-PLAN.md
-last_updated: "2026-08-21T16:29:44.277Z"
+stopped_at: Completed 162-05 test-discovery correction
+last_updated: "2026-08-21T16:33:20.947Z"
 last_activity: 2026-08-21
 last_activity_desc: Phase 162 execution started
 progress:
@@ -588,8 +588,8 @@ Items acknowledged and deferred at v0.31.0 milestone close on 2026-05-24:
 
 **Resume file:** None
 
-Last session: 2026-08-21T16:29:44.268Z
-Stopped at: Completed 162-05-PLAN.md
+Last session: 2026-08-21T16:33:20.937Z
+Stopped at: Completed 162-05 test-discovery correction
 Resume: Phase 155 COMPLETE. All v0.33.0 SHELL requirements satisfied; both phases (154, 155) done. Next: orchestrator verify_phase_goal for Phase 155, then `/gsd:audit-milestone v0.33.0` → `/gsd:ship`.
 
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
