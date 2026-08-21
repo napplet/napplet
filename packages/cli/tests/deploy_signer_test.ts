@@ -468,9 +468,7 @@ Deno.test("createDeploySigner fails explicitly for non-interactive deploy withou
 });
 
 Deno.test("remote deploy authorization is delegated to the shared BuildSigner contract", async () => {
-  const source = await Deno.readTextFile(
-    new URL("../src/deploy-signer.ts", import.meta.url),
-  );
+  const source = await Deno.readTextFile(new URL("../src/deploy-signer-remote.ts", import.meta.url));
 
   assert(source.includes("reconnectBuildSigner"));
   assert(source.includes("createKeyStore"));
