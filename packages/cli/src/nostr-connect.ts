@@ -31,10 +31,10 @@ import {
 import { NostrConnectSigner, PrivateKeySigner } from "applesauce-signers";
 import type { AbstractSimplePool } from "nostr-tools/abstract-pool";
 import { generateSecretKey } from "nostr-tools/pure";
-import { bytesToHex } from "nostr-tools/utils";
+import { bytesToHex, hexToBytes } from "nostr-tools/utils";
 import { createApplesaucePool } from "./applesauce-pool.ts";
 import { closeNostrConnectPool, ensureNostrConnectPool } from "./nostr-connect-pool.ts";
-import { encodeNbunksec, type NbunksecInfo } from "./signing.ts";
+import { decodeNbunksec, encodeNbunksec, type NbunksecInfo } from "./signing.ts";
 import type { NostrEventTemplate } from "./types.ts";
 
 /** Default relays used to reach a remote signer when none are supplied. */
@@ -79,6 +79,43 @@ export interface ConnectResult {
   pubkey: string;
   /** Relays the session was established on. */
   relays: string[];
+}
+
+/**
+ * Reconnect an opaque stored `nbunksec` as a narrow verified build signer.
+ *
+ * @param secret - Opaque stored session material.
+ * @param signal - Cancels the reconnect before the session is returned.
+ * @returns A build signer session for kind-24242 authorization only.
+ */
+export async function reconnectRemoteBuildSigner(
+  secret: RedactedSecret,
+  signal: AbortSignal,
+): Promise<BuildSignerSession> {
+  return await secret.withValue(async (value) => {
+    const info = decodeNbunksec(value);
+    ensureNostrConnectPool();
+    const signer = new NostrConnectSigner({
+      remote: info.pubkey,
+      relays: info.relays,
+      signer: new PrivateKeySigner(hexToBytes(info.localKey)),
+    });
+    try {
+      await signer.connect();
+      if (signal.aborted) throw new Error("Remote signer reconnect cancelled");
+      return createDenoBuildSignerSession(
+        signer,
+        info.pubkey,
+        info.relays,
+        hexToBytes(info.localKey),
+        info.secret,
+      );
+    } catch {
+      await signer.close();
+      closeNostrConnectPool();
+      throw new Error("Remote signer reconnect failed");
+    }
+  });
 }
 
 /**
@@ -417,7 +454,11 @@ function createDenoRelayClient(signer: NostrConnectSigner): RelayClient {
   const close = async (): Promise<void> => {
     if (closed) return;
     closed = true;
-    await signer.close();
+    try {
+      await signer.close();
+    } finally {
+      closeNostrConnectPool();
+    }
   };
   return {
     openRequest(request, signal): RelayRequest {

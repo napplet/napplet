@@ -1,3 +1,4 @@
+import { RedactedSecret, type SecretStore } from "@napplet/build-tools";
 import { type CommandRunner, runCommand } from "./process.ts";
 
 /** KEY_SERVICE_NAME constant used by native key storage helpers. */
@@ -25,6 +26,37 @@ export interface KeyStoreOptions {
   os?: typeof Deno.build.os;
   env?: Record<string, string | undefined>;
   run?: CommandRunner;
+}
+
+/**
+ * Adapt an existing CLI credential provider to the shared opaque SecretStore
+ * contract without changing its service namespace or account names.
+ *
+ * @param provider - A selected native CLI credential provider.
+ * @param service - Credential service namespace, defaulting to `napplet`.
+ * @returns A secret store that never renders retrieved values directly.
+ * @example
+ * ```ts
+ * const store = createKeyStore(provider);
+ * await store.set("remote-pubkey", new RedactedSecret("nbunksec1..."));
+ * ```
+ */
+export function createKeyStore(
+  provider: KeyStoreProvider,
+  service: string = KEY_SERVICE_NAME,
+): SecretStore {
+  return {
+    async get(key: string): Promise<RedactedSecret | undefined> {
+      const value = await provider.retrieve(service, key);
+      return value ? new RedactedSecret(value) : undefined;
+    },
+    async set(key: string, value: RedactedSecret): Promise<void> {
+      await value.withValue((secret) => provider.store({ service, account: key, secret }));
+    },
+    async delete(key: string): Promise<void> {
+      await provider.delete(service, key);
+    },
+  };
 }
 
 /** get key store provider helper for native key storage. */

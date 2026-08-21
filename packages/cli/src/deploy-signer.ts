@@ -1,10 +1,22 @@
+import {
+  type BuildSigner,
+  type BuildSignerSession,
+  reconnectBuildSigner,
+  type RedactedSecret,
+} from "@napplet/build-tools";
 import { bunkerRelayDefaults, promptBunkerRelays } from "./bunker-relays.ts";
 import { setSigningRemote, writeConfig as writeNappletConfig } from "./config.ts";
-import { getKeyStoreProvider, KEY_SERVICE_NAME, type KeyStoreProvider } from "./key-store.ts";
+import {
+  createKeyStore,
+  getKeyStoreProvider,
+  KEY_SERVICE_NAME,
+  type KeyStoreProvider,
+} from "./key-store.ts";
 import {
   type ConnectOptions,
   connectRemoteSigner as connectSigner,
   type ConnectResult,
+  reconnectRemoteBuildSigner,
 } from "./nostr-connect.ts";
 import {
   type PromptInput,
@@ -38,6 +50,10 @@ export interface DeploySignerOptions {
   connectRemoteSigner?: (options: ConnectOptions) => Promise<ConnectResult>;
   createSigner?: (secret: string) => Promise<NappletSigner>;
   confirmSignerMismatch?: (actualPubkey: string, expectedPubkey: string) => Promise<boolean>;
+  reconnectRemoteBuildSigner?: (
+    secret: RedactedSecret,
+    signal: AbortSignal,
+  ) => Promise<BuildSignerSession>;
   promptConnectRelays?: (defaults: readonly string[]) => Promise<string[]>;
   promptInput?: PromptInput;
   promptOutput?: PromptOutput;
@@ -79,6 +95,7 @@ export async function createDeploySigner(
       account: signing.keyReference,
       config,
       options,
+      provider,
       preferredRelays: config.signing?.relays,
       secret,
       signing,
@@ -99,6 +116,7 @@ export async function createDeploySigner(
         config,
         expectedPubkey: signing.pubkey,
         options,
+        provider: found.provider,
         preferredRelays: signing.relays,
         secret: found.secret,
         signing: { type: "stored", source: "config", keyReference: found.account },
@@ -131,6 +149,7 @@ async function createStoredDeploySigner(args: {
   config: NappletConfig;
   expectedPubkey?: string;
   options: DeploySignerOptions;
+  provider: KeyStoreProvider;
   preferredRelays?: readonly string[];
   secret: string;
   signing: SigningMethod;
@@ -141,7 +160,14 @@ async function createStoredDeploySigner(args: {
   printStoredSignerMetadata(args.secret, print);
   print("Waiting for stored remote signer response (timeout 30s)...");
   try {
-    return { signer: await createSigner(args.secret), signing: args.signing };
+    const signer = await createSigner(args.secret);
+    return {
+      signer: createRemoteDeploySigner(
+        signer,
+        () => getStoredBuildSigner(args.account, args.provider, args.options),
+      ),
+      signing: args.signing,
+    };
   } catch (error) {
     return await recoverFailedStoredSigner(error, args);
   }
@@ -237,14 +263,56 @@ async function confirmSignerMismatch(
 async function retrieveBunkerSecret(
   pubkey: string,
   options: DeploySignerOptions,
-): Promise<{ account: string; secret: string } | null> {
+): Promise<{ account: string; provider: KeyStoreProvider; secret: string } | null> {
   const provider = await getOptionalKeyStore(options);
   if (!provider) return null;
   for (const account of [pubkey, encodePublicKey(pubkey)]) {
     const secret = await provider.retrieve(KEY_SERVICE_NAME, account);
-    if (secret) return { account, secret };
+    if (secret) return { account, provider, secret };
   }
   return null;
+}
+
+function createRemoteDeploySigner(
+  signer: NappletSigner,
+  getBuildSigner: () => Promise<BuildSigner>,
+): NappletSigner {
+  let buildSigner: Promise<BuildSigner> | undefined;
+  return {
+    pubkey: signer.pubkey,
+    async sign(template) {
+      if (template.kind !== 24242) return await signer.sign(template);
+      buildSigner ??= getBuildSigner();
+      return await (await buildSigner).signEvent(template);
+    },
+    async close() {
+      try {
+        await signer.close?.();
+      } finally {
+        await buildSigner?.then((shared) => shared.close()).catch(() => {});
+      }
+    },
+  };
+}
+
+async function getStoredBuildSigner(
+  account: string,
+  provider: KeyStoreProvider,
+  options: DeploySignerOptions,
+): Promise<BuildSigner> {
+  const session = await reconnectBuildSigner({
+    secretStore: createKeyStore(provider),
+    sessionKey: account,
+    parseStoredSession: (stored) =>
+      stored.withValue((value) => {
+        const info = decodeNbunksec(value);
+        return { remotePubkey: info.pubkey, relays: info.relays };
+      }),
+    reconnect: (stored, _identity, signal) =>
+      (options.reconnectRemoteBuildSigner ?? reconnectRemoteBuildSigner)(stored, signal),
+  });
+  if (!session) throw new Error("Remote signer session could not be reconnected");
+  return session.signer;
 }
 
 async function recoverMissingStoredSigner(
