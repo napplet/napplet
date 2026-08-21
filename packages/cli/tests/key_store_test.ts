@@ -2,12 +2,12 @@ import {
   createKeyStore,
   getKeyStoreProvider,
   KEY_SERVICE_NAME,
+  type KeyStoreProvider,
   LinuxSecretService,
   MacOSKeychain,
   requireKeyStoreProvider,
-  WindowsCredentialManager,
-  type KeyStoreProvider,
   type StoredSecret,
+  WindowsCredentialManager,
 } from "../src/key-store.ts";
 import { RedactedSecret } from "@napplet/build-tools";
 import type { CommandResult, CommandRunner } from "../src/process.ts";
@@ -129,7 +129,8 @@ Deno.test("createKeyStore adapts an existing provider to the shared opaque Secre
       stored.push(secret);
       return Promise.resolve();
     },
-    retrieve: (_service, account) => Promise.resolve(account === "remote" ? "nbunksec1secret" : null),
+    retrieve: (_service, account) =>
+      Promise.resolve(account === "remote" ? "nbunksec1secret" : null),
     delete: () => Promise.resolve(true),
     list: () => Promise.resolve([]),
   };

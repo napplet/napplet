@@ -5,8 +5,8 @@
  * invokes native credential tools without importing Node or Deno globals.
  */
 
-import { RedactedSecret } from "./contracts.js";
-import type { FileSystemAdapter, ProcessAdapter, SecretStore } from "./contracts.js";
+import { RedactedSecret } from "./contracts.ts";
+import type { FileSystemAdapter, ProcessAdapter, SecretStore } from "./contracts.ts";
 
 const DEFAULT_SERVICE = "napplet";
 

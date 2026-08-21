@@ -1,9 +1,9 @@
 /** Public platform-neutral build-tool contracts. */
 
-export { RedactedSecret } from "./contracts.js";
-export { createBuildSigner } from "./signer.js";
-export { createPlatformSecretStore } from "./secret-store.js";
-export { BUILD_SIGNER_SESSION_KEY, pairBuildSigner, reconnectBuildSigner } from "./terminal.js";
+export { RedactedSecret } from "./contracts.ts";
+export { createBuildSigner } from "./signer.ts";
+export { createPlatformSecretStore } from "./secret-store.ts";
+export { BUILD_SIGNER_SESSION_KEY, pairBuildSigner, reconnectBuildSigner } from "./terminal.ts";
 export type {
   BuildSigner,
   BuildSignerServices,
@@ -23,11 +23,11 @@ export type {
   SignedEvent,
   TerminalAdapter,
   UnsignedEvent,
-} from "./contracts.js";
-export type { PlatformSecretStoreOptions } from "./secret-store.js";
+} from "./contracts.ts";
+export type { PlatformSecretStoreOptions } from "./secret-store.ts";
 export type {
   PairBuildSignerOptions,
   QrPairing,
   ReconnectBuildSignerOptions,
   StoredSessionIdentity,
-} from "./terminal.js";
+} from "./terminal.ts";

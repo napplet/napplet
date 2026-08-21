@@ -15,7 +15,7 @@ import type {
   RelayRequest,
   SignedEvent,
   UnsignedEvent,
-} from "./contracts.js";
+} from "./contracts.ts";
 
 const BLOSSOM_AUTHORIZATION_KIND = 24242;
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
