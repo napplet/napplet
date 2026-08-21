@@ -1,6 +1,6 @@
 ---
 phase: 162-blossom-backed-large-asset-optimization
-reviewed: 2026-08-21T18:29:51Z
+reviewed: 2026-08-21T18:43:30Z
 depth: standard
 files_reviewed: 49
 files_reviewed_list:
@@ -54,87 +54,80 @@ files_reviewed_list:
   - scripts/check-build-secret-leaks.mjs
   - scripts/check-build-secret-leaks.test.mjs
 findings:
-  critical: 5
-  warning: 2
+  critical: 2
+  warning: 3
   info: 0
-  total: 7
+  total: 5
 status: issues_found
 ---
 
 # Phase 162: Code Review Report
 
-**Reviewed:** 2026-08-21T18:29:51Z
+**Reviewed:** 2026-08-21T18:43:30Z
 **Depth:** standard
 **Files Reviewed:** 49
 **Status:** issues_found
 
 ## Summary
 
-The reviewed build, deployment, signer, and optimizer paths contain release-blocking integrity, SSRF, secret-exposure, lifecycle, and runtime-correctness defects. In particular, the optimizer’s rendered output does not route rewritten resource references through the generated NAP-RESOURCE loader, and the deploy path can publish a manifest for bytes it never verified or uploaded. The NIP-5D/NAP-RESOURCE contract was consulted for the runtime-capability boundary; no new shell message is needed to fix the defects below.
+This re-review verified the original findings against the repaired implementation. The deploy input is now hashed before upload, the automatic Node/global-fetch path is disabled without a connection-pinning adapter, and the private resource loader is limited to the existing resource domain rather than adding a wire protocol surface. EOF now rejects terminal input, and relay URL normalization preserves non-root paths. However, deployment can still always reject valid BUD-03 suggestions because it compares incompatible server spellings, and secrets are still sent in process argument vectors on supported macOS and CLI Windows paths. The phase also retains three robustness/test-reliability defects below.
+
+The scoped unit suites were executed successfully:
+
+- `pnpm --filter @napplet/build-tools test:unit` (23 passed)
+- `pnpm --filter @napplet/vite-plugin test:unit` (75 passed)
+- `pnpm --filter @napplet/cli test:unit` (122 passed)
+
+## Narrative Findings (AI reviewer)
+
+The earlier CR-01, CR-02, and relay-path portion of WR-02 are resolved in the reviewed code. CR-03's final output rewrite is present and does not invent NIP-5D/NAP protocol surface, but its claimed end-to-end fixture proof is not real execution. CR-04 is only partially addressed: Windows was disabled in the build-tools store, while secrets remain exposed by macOS build tooling and the actual CLI providers. The prior signer identity check exists in the terminal pairing path, but the separately exported build signer still does not bind its response to the configured remote public key.
 
 ## Critical Issues
 
-### CR-01: Deployment can publish a manifest whose referenced bytes were never uploaded
+### CR-01: [BLOCKER] Valid Blossom server URLs never satisfy upload completeness
 
-**File:** `packages/cli/src/blossom-upload.ts:67-76`, `packages/cli/src/blossom-upload.ts:105-113`, `packages/cli/src/deploy-network.ts:93-96`
-**Issue:** `collectDeployFilePayloads` reads each file but trusts the old `ManifestFileMapping.sha256` without hashing the bytes it just read. `uploadExactBlobs` correctly hashes the current bytes, but the CLI then maps that actual hash back to a path using the manifest hash. A file changed after manifest creation is therefore reported as `[unknown-file]` while still counted as a successful upload; `summarizeUploads` can mark every server complete and `executeNetworkDeploy` publishes the stale manifest. Runtimes will then resolve the manifest’s hash, not the uploaded replacement bytes.
-**Fix:** Hash every file immediately after reading it and fail the deploy before any upload when it differs from `file.sha256`. Also make upload completion require evidence for every `(server, manifest hash)` pair, not merely a successful result count.
+**File:** `packages/cli/src/blossom-upload.ts:116-123,186-192`; `packages/cli/src/deploy-network.ts:155-161`; `packages/cli/src/suggestions.ts:98-107`
 
-```ts
-const data = await Deno.readFile(joinPath(candidateDir, file.path.slice(1)));
-if (await sha256Hex(data) !== file.sha256) {
-  throw new Error(`Deploy input changed after manifest creation: ${file.path}`);
-}
-payloads.push({ candidateDir, path: file.path, sha256: file.sha256, data, contentType: contentTypeForPath(file.path) });
-```
+**Issue:** Upload evidence is converted to `new URL(server).origin`, while completion compares that value with the original configured string. The normal BUD-03 discovery/suggestion path returns a URL serialization such as `https://one.example/`, but evidence becomes `https://one.example`; therefore no successful evidence matches that server and `serversFullyUploaded` remains zero. Relay publication is then skipped for a fully successful batch. This also loses any configured endpoint path before reporting/evidence matching, contrary to the per-server/path/hash completeness requirement.
 
-### CR-02: The DNS policy is bypassable through DNS rebinding
+**Fix:** Define one canonical endpoint identity that retains the full URL (for example, `new URL(value).toString()`) and apply it consistently when accepting config, validating endpoints, recording evidence, and summarizing it. Add a deployment test using a trailing-slash discovery suggestion and a non-root endpoint path when those are supported by the uploader; verify every required `file + sha256` is counted once for each server and publishing proceeds.
 
-**File:** `packages/build-tools/src/network-policy.ts:58-70`, `packages/build-tools/src/blossom.ts:247-252`, `packages/vite-plugin/src/optimizer/node-services.ts:348-368`
-**Issue:** The policy checks an independently resolved list of public addresses, then calls `fetch()` with the hostname URL. Fetch performs a second, unpinned DNS resolution when opening the connection. An attacker controlling DNS can return a public address to `resolve()` and a loopback/link-local address to fetch, bypassing the claimed SSRF protection; validating redirects does not close this TOCTOU gap.
-**Fix:** Use a transport that connects only to one of the vetted IP addresses while preserving the original HTTPS hostname for SNI/certificate validation (for example an Undici dispatcher with a custom lookup/connection policy), and reject if that pinned connection cannot be made. Add a rebinding test that gives validation and connection different answers.
+### CR-02: [BLOCKER] NIP-46 session secrets are still exposed through process arguments
 
-### CR-03: Optimized artifacts replace usable URLs with an unhandled custom URI
+**File:** `packages/build-tools/src/secret-store.ts:86-90`; `packages/vite-plugin/src/optimizer/node-services.ts:300-318`; `packages/cli/src/key-store.ts:120-131,177-184`
 
-**File:** `packages/vite-plugin/src/optimizer/pipeline.ts:225-232`, `packages/vite-plugin/src/optimizer/loader.ts:271-273`
-**Issue:** `renderOptimizedHtml` globally replaces eligible asset references with `blossom:sha256:…`. Native consumers such as CSS `url(...)` and `fetch(...)` do not invoke `window.napplet.resource`; browsers cannot fetch that URI directly. The injected loader only exposes `window.__nappletPrivateResourceLoader` and defines neither `__nappletAssetUrl` nor any rewrite/interception that routes these references through `resource.bytes`/`bytesMany`. Consequently the test fixture’s `fetch(__nappletAssetUrl(...))` is not executable in a browser, and ordinary selected CSS/fetch references fail after the original files are deleted.
-**Fix:** Restrict externalization to reference forms that are rewritten to an actually implemented asynchronous loader call, or emit a defined build-private helper and rewrite each supported call site to it (for example `await window.__nappletPrivateResourceLoader.response(source)`). Do not substitute `blossom:` into native URL positions until there is a conforming loader path. Add an integration test that executes the final built page against a resource-capable shell stub and proves CSS/JS resource resolution succeeds.
+**Issue:** The macOS build-tools provider passes the `RedactedSecret` to `security ... -w`; the Node adapter then unwraps it into the spawned argument list. Independently, the CLI’s macOS provider passes `secret.secret` to `security -w`, and its Windows provider passes it as `cmdkey /pass:<secret>`. Those command-line arguments are observable by other local processes. Disabling only the build-tools Windows provider did not resolve the cross-platform secret/process-argv vulnerability.
 
-### CR-04: Windows build-tool credential writes expose the session secret in the process list
-
-**File:** `packages/build-tools/src/secret-store.ts:141-145`, `packages/vite-plugin/src/optimizer/node-services.ts:307-325`
-**Issue:** The Windows provider supplies the `RedactedSecret` as `/pass:<secret>` to `cmdkey`; the Node adapter turns it into an ordinary child-process argument. Redaction only affects diagnostics—local users and process-monitoring software can read command-line arguments, exposing the reusable NIP-46 `nbunksec` session secret.
-**Fix:** Do not use `cmdkey` for secret writes. Use a native Credential Manager API binding/FFI that passes the credential blob in memory, or mark this provider unavailable until such a boundary exists. Retain secrets only on stdin when the selected native tool explicitly supports it, and add a test asserting no secret reaches `args`.
-
-### CR-05: Closed stdin can permanently hang Nostr Connect pairing
-
-**File:** `packages/cli/src/nostr-connect.ts:224-237`
-**Issue:** On EOF, `readLine` returns a never-settling promise. In `pairBuildSigner`, that is one operand of `Promise.any`; aborting on the pairing timeout does not reject this promise after EOF. If the QR flow also rejects, `Promise.any` remains pending forever instead of reporting the advertised timeout/failure, leaving a non-interactive or closed-stdin CLI stuck.
-**Fix:** Treat EOF as a rejection, and ensure the abort signal races every terminal read.
-
-```ts
-const { value, done } = await reader.read();
-if (done) throw new Error("terminal input closed");
-```
-
-Add a test with a closed `ReadableStream` and a rejected QR pairing that asserts `connectRemoteSigner` settles within its timeout.
+**Fix:** Do not invoke `security -w` or `cmdkey /pass:` with a secret in argv. Use a native credential/keychain API that accepts a protected input channel, or mark the affected write providers unavailable until one exists. Add tests that inspect the actual command adapter calls and assert no argument contains the session secret for every supported platform.
 
 ## Warnings
 
-### WR-01: Pairing verifies a syntactically valid signer key but not the claimed remote identity
+### WR-01: [WARNING] The large fixture does not execute the final rewritten application
 
-**File:** `packages/build-tools/src/terminal.ts:152-173`
-**Issue:** `verifySession` checks that `session.signer.getPublicKey()` is a valid hex key, but never compares it to `session.remotePubkey` (or, on reconnect, to the stored identity). This permits a mismatched session to be persisted and later used under misleading discovery/configuration identity metadata.
-**Fix:** After `getPublicKey`, require equality with `session.remotePubkey` and with `expected.remotePubkey` when present; close the signer and reject on mismatch. Add mismatch vectors to the terminal tests.
+**File:** `packages/vite-plugin/src/optimizer/large-fixture.ts:275-284`
 
-### WR-02: NIP-65 relay normalization drops valid relay paths
+**Issue:** The fixture extracts private-loader callsites from `finalHtml` using a regular expression and invokes a local `response` stub. It never runs the generated final script, `window.__nappletPrivateResourceLoader.response`, or `window.napplet.resource.bytes`. A broken rewrite, missing loader injection, or runtime mismatch can therefore pass while the assertion claims every final resource callsite executed.
 
-**File:** `packages/build-tools/src/discovery.ts:210-217`
-**Issue:** `normalizeRelay` returns `url.origin`, discarding any pathname in a signed kind-10002 relay tag. WebSocket relay URLs can be hosted below a path, so discovery queries the wrong endpoint and cannot discover the author’s BUD-03 list for those configurations.
-**Fix:** Preserve the normalized pathname while still rejecting credentials, query, and fragment (for example return `url.toString()` after normalizing a trailing slash according to the relay URL convention). Add a signed relay-list test using `wss://relay.example/nostr`.
+**Fix:** Execute the final inline module/script in a browser-like or VM harness with a fake `window.napplet.resource`, then assert that the generated loader requested every expected Blossom URI and that the real rewritten callsites received verified responses. Keep the source/hash assertions as a separate structural test.
+
+### WR-02: [WARNING] A verified signer session leaks when persistence or status output fails
+
+**File:** `packages/build-tools/src/terminal.ts:94-117`
+
+**Issue:** After `Promise.any` returns a verified session, a failure in `secretStore.set` or `terminal.writeStatus` is converted to a generic failure. The session has no reference available to the `finally` block, so it is not closed. For a QR winner, `pairing.close()` is intentionally skipped; for a pasted winner, only the QR pairing is closed. The user receives no signer but its remote connection can remain live.
+
+**Fix:** Retain the verified session in an outer variable and, when any post-pairing step fails before return, close that session exactly once before throwing the redacted error. Add tests for a failing secret store and failing status writer for both QR and pasted flows.
+
+### WR-03: [WARNING] The exported build signer accepts an identity different from its configured remote signer
+
+**File:** `packages/build-tools/src/signer.ts:77-107`
+
+**Issue:** `createBuildSigner` validates that a `get_public_key` response looks like a hex public key, then uses that returned key as the expected signing key. It never compares it with `services.remotePubkey`. Callers that use this public API directly can bind uploads to an arbitrary responding signer even though they supplied the intended remote identity. The terminal pairing wrapper checks this separately, but it does not protect other callers.
+
+**Fix:** Require `response.result === services.remotePubkey` in `getPublicKey()` and reject mismatches with the existing safe error path. Add a signer test where a syntactically valid but different key is returned and ensure both `getPublicKey` and `signEvent` fail.
 
 ---
 
-_Reviewed: 2026-08-21T18:29:51Z_
+_Reviewed: 2026-08-21T18:43:30Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
