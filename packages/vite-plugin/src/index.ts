@@ -78,6 +78,9 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
     projectRoot: process.cwd(),
     base: '/',
     artifactMode: options.artifactMode ?? 'external-assets',
+    largeAssetOptimization: options.largeAssetOptimization ?? 'auto',
+    optimizationCallbackConflict: false,
+    optimizationReport: null,
     resolvedSchema: null,
     resolvedSchemaSource: null,
     inferredRequires: new Set(),
@@ -89,6 +92,7 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
 
     config(config) {
       if (state.artifactMode !== 'single-file') return undefined;
+      state.optimizationCallbackConflict = typeof config.experimental?.renderBuiltUrl === 'function';
       const singleFileConfig = singleFileBuildConfig(config);
       // Keep emitted assets until closeBundle can measure the actual would-be
       // inline artifact and make a reversible externalization decision.
