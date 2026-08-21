@@ -36,8 +36,8 @@ describe('generated large-asset optimizer fixture', () => {
     expect(evidence.discovery.ignoredOlderEvent).toBe(true);
     expect(evidence.secondaryUploadFailed).toBe(true);
     expect(evidence.corruptResourceRejected).toBe(true);
-    expect(evidence.aggregateHash).toMatch(/^[a-f0-9]{64}$/);
-    expect(evidence.finalIndexHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(evidence.finalIndexHash).toBe(expectedEvidence.finalIndexSha256);
+    expect(evidence.aggregateHash).toBe(expectedEvidence.aggregateHash);
     expect(evidence.recovery.every((entry) => entry.exact)).toBe(true);
     expect(evidence.executedResourceCalls.sort()).toEqual(evidence.selected.map((entry) => entry.source).sort());
   });
