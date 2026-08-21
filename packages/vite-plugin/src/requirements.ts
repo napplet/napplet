@@ -67,6 +67,23 @@ export function resolvedRequirements(
   return dedupeRequirements([...explicit, ...inferred]);
 }
 
+/**
+ * Merge configured requirements with a completed private resource transaction.
+ *
+ * `resource` is an existing NIP-5A/NIP-5D capability declaration. It is
+ * included only when the final artifact actually committed one or more private
+ * resource mappings; candidate and failed uploads cannot change the manifest.
+ */
+export function effectiveRequirements(
+  configured: readonly string[],
+  committedResourceCount: number,
+): string[] {
+  const withoutResource = configured.filter((domain) => domain.trim() !== 'resource');
+  return dedupeRequirements(
+    committedResourceCount > 0 ? [...withoutResource, 'resource'] : withoutResource,
+  );
+}
+
 export function reportRequirementDiagnostics(
   option: Nip5aRequiresOption | undefined,
   state: ManifestPluginState,
