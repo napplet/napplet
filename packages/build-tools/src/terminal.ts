@@ -166,7 +166,8 @@ async function verifySession(
     throw new Error("Remote signer session verification failed");
   }
   const publicKey = await session.signer.getPublicKey();
-  if (!PUBLIC_KEY_PATTERN.test(publicKey)) {
+  if (!PUBLIC_KEY_PATTERN.test(publicKey) || publicKey !== session.remotePubkey ||
+    (expected !== undefined && publicKey !== expected.remotePubkey)) {
     await session.signer.close();
     throw new Error("Remote signer session verification failed");
   }

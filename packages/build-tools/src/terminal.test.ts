@@ -92,12 +92,32 @@ class FakeStore implements SecretStore {
 
 function session(secret = NBUNKSEC): BuildSignerSession {
   const signer: BuildSigner = {
-    getPublicKey: () => Promise.resolve(USER_PUBKEY),
+    getPublicKey: () => Promise.resolve(REMOTE_PUBKEY),
     signEvent: () => Promise.reject(new Error("not used")),
     close: () => Promise.resolve(),
   };
   return { signer, clientSecret: new RedactedSecret(secret), remotePubkey: REMOTE_PUBKEY, relays: ["wss://relay.test"] };
 }
+
+Deno.test("pairing rejects a signer whose reported key differs from its remote identity", async () => {
+  const terminal = new FakeTerminal();
+  const mismatched = session();
+  mismatched.signer.getPublicKey = () => Promise.resolve(USER_PUBKEY);
+  let closed = false;
+  mismatched.signer.close = () => { closed = true; return Promise.resolve(); };
+  const pending = pairBuildSigner({
+    clock: new FakeClock(),
+    terminal,
+    createQrPairing: () => ({ uri: "nostrconnect://test", waitForSession: () => Promise.resolve(mismatched), close: () => {} }),
+    connectBunker: () => Promise.reject(new Error("not used")),
+  });
+  terminal.input.reject(new Error("terminal input closed"));
+  await pending.then(
+    () => { throw new Error("mismatched signer identity must reject"); },
+    () => {},
+  );
+  assert(closed, "mismatched signer must be closed");
+});
 
 Deno.test("QR and pasted bunker pairing race to one verified stored session", async () => {
   const clock = new FakeClock();
