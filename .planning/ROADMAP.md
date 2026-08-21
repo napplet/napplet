@@ -918,3 +918,30 @@ Plans:
 - [x] 161-24-PLAN.md — Correct active docs, tutorials, and examples
 - [x] 161-25-PLAN.md — Correct shipped skill guidance and mirror assertions
 - [x] 161-26-PLAN.md — Reverse stale guard rules and enforce adopted intent boundaries
+
+### Phase 162: Blossom-backed large-asset optimization
+
+**Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
+**Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
+**Depends on:** Phase 161
+**Plans:** 8 plans
+
+**Success Criteria:**
+
+1. Retained Vite asset boundaries, exact threshold measurement, deterministic selection, and nonfatal exhaustion are test-proven.
+2. Shared Node/Deno build services provide least-authority NIP-46 pairing/session reuse, verified two-stage kind-10002/kind-10063 discovery, and exact authenticated Blossom uploads without leaking secrets.
+3. Private artifact metadata and loader code use only `blossom:sha256:<lowercase-hash>` plus existing `resource.bytes`/`bytesMany`, with bounded, enumerated browser reference support and runtime integrity checks.
+4. Every partial upload, unsafe URL/redirect, descriptor mismatch, resource substitution, unsupported reference, and destructive commit failure preserves/restores a conformant artifact and emits safe evidence.
+5. A deterministic generated fixture totaling more than 50 MiB across individually modest assets proves upload, final size, aggregate hash, and byte-identical fake NAP-RESOURCE recovery.
+6. Node/Deno regressions, full repository gates, docs, changesets, secret scan, AI-slop, durable demo evidence, push, and PR all complete.
+
+Plans:
+
+- [ ] 162-01-PLAN.md — Trace retained asset selection through fake upload, private rewrite, reversible commit, and fake resource recovery
+- [ ] 162-02-PLAN.md — Extract cross-runtime least-authority signer, QR/paste pairing, and protected session services
+- [ ] 162-03-PLAN.md — Migrate CLI pairing, key stores, and deploy signing to the shared build services
+- [ ] 162-04-PLAN.md — Implement verified write-relay server discovery and hardened exact-byte Blossom upload
+- [ ] 162-05-PLAN.md — Migrate CLI suggestions and deployment networking to shared discovery/upload services
+- [ ] 162-06-PLAN.md — Bound browser reference rewriting and whole-Blob NAP-RESOURCE loading with parser-backed tests
+- [ ] 162-07-PLAN.md — Wire live Node services into the automatic transactional Vite optimization path
+- [ ] 162-08-PLAN.md — Prove the 50 MiB+ demonstration, synchronize docs/releases, pass gates, and open the PR
