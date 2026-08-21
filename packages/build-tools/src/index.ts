@@ -3,6 +3,7 @@
 export { RedactedSecret } from "./contracts.js";
 export { createBuildSigner } from "./signer.js";
 export { createPlatformSecretStore } from "./secret-store.js";
+export { BUILD_SIGNER_SESSION_KEY, pairBuildSigner, reconnectBuildSigner } from "./terminal.js";
 export type {
   BuildSigner,
   BuildSignerServices,
@@ -24,3 +25,9 @@ export type {
   UnsignedEvent,
 } from "./contracts.js";
 export type { PlatformSecretStoreOptions } from "./secret-store.js";
+export type {
+  PairBuildSignerOptions,
+  QrPairing,
+  ReconnectBuildSignerOptions,
+  StoredSessionIdentity,
+} from "./terminal.js";
