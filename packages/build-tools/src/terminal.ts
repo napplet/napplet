@@ -1,12 +1,12 @@
 /** Abortable terminal coordination for NIP-46 QR and bunker pairing. */
 
-import { RedactedSecret } from "./contracts.js";
+import { RedactedSecret } from "./contracts.ts";
 import type {
   BuildSignerSession,
   Clock,
   SecretStore,
   TerminalAdapter,
-} from "./contracts.js";
+} from "./contracts.ts";
 
 /** Stable secret-store key shared by reconnect and fresh pairing. */
 export const BUILD_SIGNER_SESSION_KEY = "napplet-build-signer";
