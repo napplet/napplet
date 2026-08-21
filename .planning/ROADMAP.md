@@ -924,7 +924,7 @@ Plans:
 **Goal:** Vite builds that would inline more than 2 MiB can safely move eligible large assets to user-discovered Blossom servers and recover them through existing NAP-RESOURCE methods, while preserving a valid inline artifact whenever optimization cannot complete.
 **Requirements:** None assigned (no requirement IDs; decisions, canonical boundaries, and validation predicates are carried in the phase plans)
 **Depends on:** Phase 161
-**Plans:** 11 plans
+**Plans:** 1/11 plans executed
 
 **Success Criteria:**
 
@@ -938,7 +938,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 162-01-PLAN.md — Trace retained asset selection through fake upload, private rewrite, reversible commit, and fake resource recovery
+- [x] 162-01-PLAN.md — Trace retained asset selection through fake upload, private rewrite, reversible commit, and fake resource recovery
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
