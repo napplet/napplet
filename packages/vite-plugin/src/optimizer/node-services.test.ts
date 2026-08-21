@@ -92,7 +92,7 @@ class FakeStore implements SecretStore {
 
 function session(secret = NBUNKSEC): BuildSignerSession {
   const signer: BuildSigner = {
-    getPublicKey: () => Promise.resolve(USER_PUBKEY),
+    getPublicKey: () => Promise.resolve(REMOTE_PUBKEY),
     signEvent: () => Promise.reject(new Error('not used')),
     close: () => Promise.resolve(),
   };

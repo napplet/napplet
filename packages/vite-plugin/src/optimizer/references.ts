@@ -93,7 +93,7 @@ function reasonFor(form: ReferenceForm): string {
     case 'wasm-streaming-url':
       return 'wasm-streaming-url';
     default:
-      return '';
+      return form;
   }
 }
 
@@ -155,9 +155,9 @@ function recordJavaScriptReferences(artifact: RetainedArtifact, sources: readonl
       } else if (/fetch\(\s*$/.test(before)) {
         pushReference(references, source, 'js-fetch-sentinel', true, artifact.path, offset);
       } else if (/,\s*["']media["']\s*\)$/.test(match[0])) {
-        pushReference(references, source, 'js-media-sentinel', true, artifact.path, offset);
+        pushReference(references, source, 'js-media-sentinel', false, artifact.path, offset);
       } else {
-        pushReference(references, source, 'js-sentinel', true, artifact.path, offset);
+        pushReference(references, source, 'js-sentinel', false, artifact.path, offset);
       }
     }
 

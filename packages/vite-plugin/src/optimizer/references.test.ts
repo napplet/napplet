@@ -22,7 +22,7 @@ function build(assets: RetainedAsset[], artifacts: RetainedArtifact[]): Referenc
 }
 
 describe('optimizer reference inventory', () => {
-  it('classifies controlled JavaScript sentinels and generated media owners as eligible', () => {
+  it('externalizes only the supported asynchronous fetch sentinel', () => {
     const image = asset('assets/image.png');
     const artifacts: RetainedArtifact[] = [{
       path: 'assets/entry.js',
@@ -35,15 +35,10 @@ describe('optimizer reference inventory', () => {
     }];
     const inventory = inventoryArtifactReferences(build([image], artifacts));
 
-    expect(classifyAssetReferences(image, inventory)).toEqual({
-      eligible: true,
-      reasons: [],
-      references: expect.arrayContaining([
-        expect.objectContaining({ form: 'js-sentinel', supported: true }),
-        expect.objectContaining({ form: 'js-fetch-sentinel', supported: true }),
-        expect.objectContaining({ form: 'js-media-sentinel', supported: true }),
-      ]),
-    });
+    const classification = classifyAssetReferences(image, inventory);
+    expect(classification.eligible).toBe(false);
+    expect(classification.reasons).toEqual(['js-media-sentinel', 'js-sentinel']);
+    expect(classification.references).toContainEqual(expect.objectContaining({ form: 'js-fetch-sentinel', supported: true }));
   });
 
   it('uses a CSS value parser for static url and font references without corrupting values', () => {
