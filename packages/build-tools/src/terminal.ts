@@ -71,6 +71,7 @@ export async function pairBuildSigner(options: PairBuildSignerOptions): Promise<
   const pairing = await options.createQrPairing(qrController.signal);
   const timeout = options.clock.setTimeout(() => root.abort(), options.timeoutMs ?? DEFAULT_PAIRING_TIMEOUT_MS);
   let winner: "qr" | "paste" | undefined;
+  let verifiedSession: BuildSignerSession | undefined;
 
   try {
     await options.terminal.showQr(pairing.uri);
@@ -94,6 +95,7 @@ export async function pairBuildSigner(options: PairBuildSignerOptions): Promise<
     const session = await Promise.any([qr, pasted]).catch(() => {
       throw new Error(root.signal.aborted ? "Remote signer pairing timed out" : "Remote signer pairing failed");
     });
+    verifiedSession = session;
     root.abort();
     if (options.secretStore) await options.secretStore.set(options.sessionKey ?? BUILD_SIGNER_SESSION_KEY, session.clientSecret);
     options.terminal.writeStatus({
@@ -103,6 +105,8 @@ export async function pairBuildSigner(options: PairBuildSignerOptions): Promise<
     return session;
   } catch (error) {
     if (winner === "qr" || winner === "paste") {
+      await verifiedSession?.signer.close();
+      verifiedSession = undefined;
       // A verified session can still fail only during protected persistence.
       // Its secret remains opaque and the caller receives a generic failure.
       throw new Error("Remote signer session could not be saved");
