@@ -78,7 +78,7 @@ export function createBuildSigner(services: BuildSignerServices): BuildSigner {
     if (!publicKey) {
       publicKey = request("get_public_key", []).then((response) => {
         const result = response.result;
-        if (!result || !PUBLIC_KEY_PATTERN.test(result)) {
+        if (!result || !PUBLIC_KEY_PATTERN.test(result) || result !== services.remotePubkey) {
           throw safeError(services, "signer-public-key", "Remote signer response verification failed");
         }
         return result;
