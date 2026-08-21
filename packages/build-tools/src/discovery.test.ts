@@ -57,8 +57,8 @@ Deno.test("discovery selects the newest verified kind-10002 from bounded directo
   const result = await discoverBlossomServers({ pubkey, now: () => NOW }, service);
 
   assert(result.status === "found", "expected a discovered server list");
-  assertEquals(service.calls[0].relays.includes("wss://purplepag.es"), true);
-  assertEquals(service.calls[1].relays, ["wss://write.example"]);
+  assertEquals(service.calls[0].relays.includes("wss://purplepag.es/"), true);
+  assertEquals(service.calls[1].relays, ["wss://write.example/"]);
   assertEquals(result.sourceEvent.id, serverList.id);
   assertEquals(result.servers.map((server) => server.toString()), ["https://blossom.example/"]);
 });
@@ -84,13 +84,24 @@ Deno.test("discovery uses write and unmarked relays only and preserves verified 
   const result = await discoverBlossomServers({ pubkey, now: () => NOW }, service);
 
   assert(result.status === "found", "expected a server list");
-  assertEquals(service.calls[1].relays, ["wss://write.example", "wss://both.example"]);
+  assertEquals(service.calls[1].relays, ["wss://write.example/", "wss://both.example/"]);
   assertEquals(result.sourceEvent.id, selected.id);
   if (selected.id === first.id) {
     assertEquals(result.servers.map((server) => server.toString()), ["https://one.example/", "https://two.example/"]);
   } else {
     assertEquals(result.servers.map((server) => server.toString()), ["https://tie.example/"]);
   }
+});
+
+Deno.test("discovery preserves a valid NIP-65 relay path", async () => {
+  const owner = generateSecretKey();
+  const pubkey = getPublicKey(owner);
+  const relayList = signedEvent(owner, 10002, NOW, [["r", "wss://relay.example/nostr", "write"]]);
+  const serverList = signedEvent(owner, 10063, NOW, [["server", "https://blossom.example"]]);
+  const service = new FakeDirectory([relayList], [serverList]);
+
+  await discoverBlossomServers({ pubkey, now: () => NOW }, service);
+  assertEquals(service.calls[1].relays, ["wss://relay.example/nostr"]);
 });
 
 Deno.test("discovery returns an explicit no-server-list result for missing, stale, and empty data", async () => {
