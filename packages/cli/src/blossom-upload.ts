@@ -185,8 +185,7 @@ function contentTypeForPath(path: string): string {
 
 function safeServer(value: string): string {
   try {
-    const url = new URL(value);
-    return url.origin;
+    return new URL(value).toString();
   } catch {
     return "[invalid-server]";
   }
