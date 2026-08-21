@@ -4,9 +4,9 @@ milestone: v0.34.0
 milestone_name: NIP-5D Runtime Injection
 current_phase: 162
 current_phase_name: blossom-backed-large-asset-optimization
-status: executing
-stopped_at: Completed 162-10-PLAN.md
-last_updated: "2026-08-21T18:08:28.766Z"
+status: verifying
+stopped_at: Completed 162-11-PLAN.md
+last_updated: "2026-08-21T18:25:15.394Z"
 last_activity: 2026-08-21
 last_activity_desc: Phase 162 execution started
 progress:
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 
 Phase: 162 (blossom-backed-large-asset-optimization) — EXECUTING
 Plan: 11 of 11
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-21 — Phase 162 execution started
 community/group-chat invite linked from the SPA and docs.
 
@@ -502,6 +502,8 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase ?]: The resource requirement is derived only from committedResourceCount, and aggregate hashing follows the final artifact commit.
 - [Phase ?]: The Vite integration test injects local boundaries through an internal WeakMap harness, not a public plugin option.
 - [Phase ?]: Assets over 10 MiB are ineligible whole Blobs and retain the nonfatal inline fallback; streaming and ranges are not claimed.
+- [Phase ?]: Kept Blossom loader/mapping as non-normative private artifact bytes and used only existing NAP-RESOURCE whole-Blob operations.
+- [Phase ?]: Released Vite plugin, build tools, and CLI as 0.x minors; transitive security remediation belongs in pnpm workspace overrides and lockfile.
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -599,8 +601,8 @@ Items acknowledged and deferred at v0.31.0 milestone close on 2026-05-24:
 
 **Resume file:** None
 
-Last session: 2026-08-21T18:08:28.757Z
-Stopped at: Completed 162-10-PLAN.md
+Last session: 2026-08-21T18:25:15.384Z
+Stopped at: Completed 162-11-PLAN.md
 Resume: Phase 155 COMPLETE. All v0.33.0 SHELL requirements satisfied; both phases (154, 155) done. Next: orchestrator verify_phase_goal for Phase 155, then `/gsd:audit-milestone v0.33.0` → `/gsd:ship`.
 
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
@@ -709,3 +711,4 @@ Resume: Phase 142 TERMINAL-COMPLETE — all 13 VER-IDs (VER-01..13) verified PAS
 | Phase 162 P08 | 13 min | 2 tasks | 4 files |
 | Phase 162 P09 | 24 minutes | 2 tasks | 8 files |
 | Phase 162 P10 | ~105 minutes | 3 tasks | 11 files |
+| Phase 162 P11 | 15m | 2 tasks | 18 files |
