@@ -19,7 +19,7 @@ function fakeWindow(overrides: Partial<{ bytes: (uri: string) => Promise<Blob>; 
   return {
     napplet: {
       resource: {
-        bytes: overrides.bytes ?? (async () => new Blob()),
+        bytes: overrides.bytes ?? (async () => new Blob([])),
         bytesMany: overrides.bytesMany ?? (async () => []),
       },
     },
@@ -37,7 +37,7 @@ describe('private NAP-RESOURCE runtime', () => {
     await expect(runtime.resolve(one.source)).resolves.toBeInstanceOf(Blob);
     await expect(runtime.resolveMany([one.source, two.source])).resolves.toHaveLength(2);
     expect(bytesCall).toHaveBeenCalledWith(one.uri);
-    expect(manyCall).toHaveBeenCalledWith([one.uri, two.uri], expect.any(Object));
+    expect(manyCall).toHaveBeenCalledWith([two.uri]);
     expect(renderResourceLoader([one, two])).toContain('window.napplet.resource.bytesMany');
     expect(renderResourceLoader([one, two])).not.toContain('fetch(');
   });
