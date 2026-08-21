@@ -38,6 +38,11 @@ function build(assets: RetainedAsset[], targetBytes = OPTIMIZATION_TARGET_BYTES)
   return {
     html: `<html><head></head><body>${assets.map((entry) => `<img src="${entry.reference}">`).join('')}</body></html>`,
     assets,
+    artifacts: [{
+      path: 'assets/entry.js',
+      kind: 'javascript',
+      content: assets.map((entry) => `fetch(__nappletAssetUrl("${entry.source}"));`).join('\n'),
+    }],
     targetBytes,
   };
 }
@@ -226,7 +231,7 @@ describe('large single-file artifact optimizer', () => {
     expect(renderResourceLoader([entry])).not.toContain('fetch(');
   });
 
-  it('emits one resource requirement only after the committed tracer transaction and keeps the private mapping out of tags', async () => {
+  it('keeps direct HTML assets inline and emits no resource requirement or private mapping', async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'napplet-optimizer-'));
     tempRoots.push(root);
     const dist = path.join(root, 'dist');
@@ -234,7 +239,6 @@ describe('large single-file artifact optimizer', () => {
     const emitted = bytes(OPTIMIZATION_TARGET_BYTES + 32, 82);
     fs.writeFileSync(path.join(dist, 'index.html'), '<html><head></head><body><img src="asset.bin"></body></html>');
     fs.writeFileSync(path.join(dist, 'asset.bin'), emitted);
-    const uploaded = new Map<string, Uint8Array>();
     const state: ManifestPluginState = {
       outDir: dist,
       projectRoot: root,
@@ -251,19 +255,16 @@ describe('large single-file artifact optimizer', () => {
       state,
       {
         authorize: async () => ({ token: 'short-lived-test-authorization', expiresAt: Date.now() + 60_000 }),
-        upload: async ({ bytes: value, sha256 }) => {
-          uploaded.set(`blossom:sha256:${sha256}`, value);
-          return { sha256, bytes: value.byteLength };
-        },
-        resourceBytes: async (uri) => new Blob([uploaded.get(uri) ?? new Uint8Array()]),
+        upload: async ({ bytes: value, sha256 }) => ({ sha256, bytes: value.byteLength }),
+        resourceBytes: async () => new Blob([]),
       },
     );
 
     const manifest = JSON.parse(fs.readFileSync(path.join(dist, '.nip5a-manifest.json'), 'utf-8')) as { tags: string[][] };
     const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf-8');
-    expect(manifest.tags.filter((tag) => tag[0] === 'requires')).toEqual([['requires', 'resource']]);
+    expect(manifest.tags.filter((tag) => tag[0] === 'requires')).toEqual([]);
     expect(manifest.tags.flat().join(' ')).not.toContain('data-napplet-private-resource-table');
-    expect(html).toMatch(/blossom:sha256:[a-f0-9]{64}/);
+    expect(html).toContain('data:application/octet-stream;base64');
     expect(fs.existsSync(path.join(dist, 'asset.bin'))).toBe(false);
   });
 
