@@ -55,6 +55,7 @@ class FakeTerminal implements TerminalAdapter {
   readonly qr: string[] = [];
   readonly prompts: AbortSignal[] = [];
   readonly input = deferred<string>();
+  failOnPaired = false;
 
   async showQr(value: string): Promise<void> {
     this.qr.push(value);
@@ -66,6 +67,9 @@ class FakeTerminal implements TerminalAdapter {
   }
 
   writeStatus(message: SafeStatus): void {
+    if (this.failOnPaired && message.code === "signer-paired") {
+      throw new Error("status output failed");
+    }
     this.statuses.push(message);
   }
 }
@@ -73,6 +77,7 @@ class FakeTerminal implements TerminalAdapter {
 class FakeStore implements SecretStore {
   value: RedactedSecret | undefined;
   writes = 0;
+  failWrites = false;
 
   get(_key: string): Promise<RedactedSecret | undefined> {
     return Promise.resolve(this.value);
@@ -80,6 +85,7 @@ class FakeStore implements SecretStore {
 
   set(_key: string, value: RedactedSecret): Promise<void> {
     this.writes += 1;
+    if (this.failWrites) return Promise.reject(new Error("secret store failed"));
     this.value = value;
     return Promise.resolve();
   }
@@ -90,11 +96,14 @@ class FakeStore implements SecretStore {
   }
 }
 
-function session(secret = NBUNKSEC): BuildSignerSession {
+function session(secret = NBUNKSEC, onClose: () => void = () => {}): BuildSignerSession {
   const signer: BuildSigner = {
     getPublicKey: () => Promise.resolve(REMOTE_PUBKEY),
     signEvent: () => Promise.reject(new Error("not used")),
-    close: () => Promise.resolve(),
+    close: () => {
+      onClose();
+      return Promise.resolve();
+    },
   };
   return { signer, clientSecret: new RedactedSecret(secret), remotePubkey: REMOTE_PUBKEY, relays: ["wss://relay.test"] };
 }
@@ -175,6 +184,40 @@ Deno.test("failed pairing paths preserve a stored session and redact every safe 
     assert(!snapshot.includes(BUNKER_URI), "bunker URI must stay out of terminal snapshots");
   }
   assert(store.writes === 0, "failed pairing must not replace prior material");
+});
+
+Deno.test("post-pairing failures close QR and pasted winners exactly once", async () => {
+  for (const flow of ["qr", "paste"] as const) {
+    for (const failure of ["store", "status"] as const) {
+      const terminal = new FakeTerminal();
+      terminal.failOnPaired = failure === "status";
+      const store = new FakeStore();
+      store.failWrites = failure === "store";
+      let closes = 0;
+      const winner = session(NBUNKSEC, () => { closes += 1; });
+      const waitingQr = deferred<BuildSignerSession>();
+      const pending = pairBuildSigner({
+        clock: new FakeClock(),
+        terminal,
+        secretStore: store,
+        createQrPairing: () => ({
+          uri: "nostrconnect://public",
+          waitForSession: () => flow === "qr" ? Promise.resolve(winner) : waitingQr.promise,
+          close: () => {},
+        }),
+        connectBunker: () => flow === "paste"
+          ? Promise.resolve(winner)
+          : Promise.reject(new Error("unused pasted path")),
+      });
+      if (flow === "paste") terminal.input.resolve(BUNKER_URI);
+
+      await pending.then(
+        () => { throw new Error(`${flow} ${failure} failure must reject`); },
+        (error) => assert(error instanceof Error && error.message === "Remote signer session could not be saved", "failure must be safely redacted"),
+      );
+      assert(closes === 1, `${flow} ${failure} failure must close its verified signer exactly once`);
+    }
+  }
 });
 
 Deno.test("reconnect reads the stable key before pairing and validates the returned identity", async () => {

@@ -295,7 +295,7 @@ async function recoverMissingStoredSigner(
 
   if (!providerName) {
     throw new Error(
-      "No native keychain provider is available. Install macOS security, Windows Credential Manager/cmdkey, or Linux libsecret secret-tool with a D-Bus session.",
+      "No protected keychain writer is available. Install Linux libsecret secret-tool with a D-Bus session.",
     );
   }
 
@@ -352,7 +352,7 @@ async function connectAndCreateSigner(
   print(
     stored
       ? `Stored remote signer session as key reference "${result.pubkey}".`
-      : "No native keychain provider is available; using this signer for the current deploy only.",
+      : "No protected keychain writer is available; using this signer for the current deploy only.",
   );
   print("Configured .napplet signing for this remote signer.");
 
