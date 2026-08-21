@@ -14,7 +14,7 @@ import { NAPPLET_KIND_NAMED } from './types.js';
 import { computeAggregateHash, sha256File, walkDir } from './hashing.js';
 import { discoverConfigSchema, validateConfigSchema } from './config-schema.js';
 import { renderSingleFileBuildAssets } from './html.js';
-import { resolvedRequirements } from './requirements.js';
+import { effectiveRequirements, resolvedRequirements } from './requirements.js';
 import {
   createLiveOptimizationServices,
   optimizeSingleFileArtifact,
@@ -24,6 +24,7 @@ import {
   type OptimizationServices,
   type RetainedAsset,
 } from './optimizer/pipeline.js';
+import type { RetainedArtifact } from './optimizer/references.js';
 
 /**
  * Resolve all per-build plugin state in the `configResolved` hook: out dir,
@@ -165,7 +166,7 @@ function collectRetainedBuild(
   distPath: string,
   html: string,
   base: string,
-): { html: string; assets: RetainedAsset[]; emittedPaths: string[] } {
+): { html: string; assets: RetainedAsset[]; emittedPaths: string[]; artifacts: RetainedArtifact[] } {
   const rendered = renderSingleFileBuildAssets(html, distPath, base);
   if (/<link\b(?=[^>]*\brel\s*=\s*(?:"[^"]*\bmodulepreload\b[^"]*"|'[^']*\bmodulepreload\b[^']*'|modulepreload))[^>]*\bhref\s*=/i.test(rendered.html)) {
     throw new Error(
@@ -174,10 +175,15 @@ function collectRetainedBuild(
   }
   const assets: RetainedAsset[] = [];
   const emittedPaths: string[] = [];
+  const artifacts: RetainedArtifact[] = [{ path: 'index.html', kind: 'html', content: rendered.html }];
   for (const relativePath of walkDir(distPath)) {
     if (relativePath === 'index.html' || relativePath === '.nip5a-manifest.json') continue;
     const source = relativePath.split(path.sep).join('/');
     emittedPaths.push(source);
+    const kind = retainedArtifactKind(source);
+    if (kind) {
+      artifacts.push({ path: source, kind, content: fs.readFileSync(path.join(distPath, relativePath), 'utf-8') });
+    }
     const reference = findAssetReference(rendered.html, source);
     if (!reference) continue;
     assets.push({
@@ -187,7 +193,13 @@ function collectRetainedBuild(
       mime: mimeForPath(source),
     });
   }
-  return { html: rendered.html, assets, emittedPaths };
+  return { html: rendered.html, assets, emittedPaths, artifacts };
+}
+
+function retainedArtifactKind(filePath: string): RetainedArtifact['kind'] | null {
+  if (/\.(?:m?js|cjs)$/i.test(filePath)) return 'javascript';
+  if (/\.css$/i.test(filePath)) return 'stylesheet';
+  return null;
 }
 
 function collectRetainedFiles(
@@ -290,9 +302,10 @@ function buildManifestTemplate(
   const pathTags = pathPairs.map(([hash, absPath]) => ['path', absPath, hash]);
   const configTags =
     state.resolvedSchema !== null ? [['config', JSON.stringify(state.resolvedSchema)]] : [];
-  const requires = resolvedRequirements(options.requires, state).filter((name) => name !== 'resource');
-  if (committedResourceCount > 0) requires.push('resource');
-  const requiresTags = [...new Set(requires)].sort().map((name) => ['requires', name]);
+  const requiresTags = effectiveRequirements(
+    resolvedRequirements(options.requires, state),
+    committedResourceCount,
+  ).map((name) => ['requires', name]);
   // Archetype tags (NAAT, napplet/naps `ARCHETYPES.md`): one
   // `['archetype', slug, convention, ...kindFields]` per declared convention. Like
   // config/requires they are NOT passed to computeAggregateHash — only pathPairs
