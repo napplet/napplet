@@ -10,7 +10,6 @@ import { spawnSync } from 'node:child_process';
 const DEFAULT_PATHS = ['dist', 'coverage', 'reports', 'logs', 'tmp', '.planning/phases'];
 const DEFAULT_MAX_FILE_BYTES = 5 * 1024 * 1024;
 const DEFAULT_MAX_TOTAL_BYTES = 25 * 1024 * 1024;
-const REDACTED_SECRET = /(?:secret|private(?:key)?|authorization)\s*[:=]\s*["']?(?:\[?redacted\]?|\*{3,})/i;
 const SECRET_RULES = [
   ['nostr-secret', /\b(?:nsec|nbunksec)1[023456789acdefghjklmnpqrstuvwxyz]{20,}\b/i],
   ['private-key', /\b(?:private(?:[_ -]?key)?|secret)\s*[:=]\s*["']?[0-9a-f]{64}\b/i],
@@ -28,7 +27,6 @@ function diagnostic(path, rule) {
 }
 
 function findSecretRules(content) {
-  if (REDACTED_SECRET.test(content)) return [];
   return SECRET_RULES.filter(([, expression]) => expression.test(content)).map(([rule]) => rule);
 }
 
