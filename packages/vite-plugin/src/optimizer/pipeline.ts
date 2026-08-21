@@ -12,6 +12,11 @@ import {
   renderResourceLoader,
   type ResourceTableEntry,
 } from './loader.js';
+import {
+  classifyAssetReferences,
+  inventoryArtifactReferences,
+  type RetainedArtifact,
+} from './references.js';
 
 export { renderPrivateResourceTable, renderResourceLoader, type ResourceTableEntry } from './loader.js';
 
@@ -28,6 +33,8 @@ export interface RetainedAsset {
 export interface RetainedBuild {
   html: string;
   assets: RetainedAsset[];
+  /** Retained emitted artifacts known to contain asset references. */
+  artifacts?: readonly RetainedArtifact[];
   targetBytes?: number;
 }
 
@@ -71,6 +78,7 @@ export interface OptimizationPlan {
   status: 'at-target' | 'target-reached' | 'target-not-reached';
   selected: RetainedAsset[];
   measurements: Array<{ source: string; bytes: number }>;
+  ineligible: Array<{ source: string; reasons: string[] }>;
   initialBytes: number;
   finalBytes: number;
 }
@@ -168,19 +176,33 @@ export function renderOptimizedHtml(input: RenderInput): RenderedArtifact {
 export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
   const targetBytes = input.targetBytes ?? OPTIMIZATION_TARGET_BYTES;
   const initial = renderOptimizedHtml({ build: input, selected: [] });
+  const inventory = inventoryArtifactReferences({
+    assets: input.assets,
+    artifacts: input.artifacts ?? [{ path: 'index.html', kind: 'html', content: input.html }],
+  });
+  const eligibility = new Map(input.assets.map((asset) => [asset, classifyAssetReferences(asset, inventory)]));
+  const ineligible = input.assets
+    .map((asset) => ({ asset, result: eligibility.get(asset)! }))
+    .filter(({ asset, result }) => asset.eligible === false || !result.eligible)
+    .map(({ asset, result }) => ({
+      source: normalizedPath(asset.source),
+      reasons: asset.eligible === false ? ['manual-ineligible'] : result.reasons,
+    }))
+    .sort((left, right) => left.source.localeCompare(right.source));
   if (initial.bytes <= targetBytes) {
     return {
       triggered: false,
       status: 'at-target',
       selected: [],
       measurements: [],
+      ineligible,
       initialBytes: initial.bytes,
       finalBytes: initial.bytes,
     };
   }
 
   const candidates = input.assets
-    .filter((asset) => asset.eligible !== false)
+    .filter((asset) => asset.eligible !== false && eligibility.get(asset)!.eligible)
     .sort((left, right) => right.bytes.byteLength - left.bytes.byteLength || normalizedPath(left.source).localeCompare(normalizedPath(right.source)));
   const selected: RetainedAsset[] = [];
   const measurements: Array<{ source: string; bytes: number }> = [];
@@ -198,6 +220,7 @@ export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
     status: rendered.bytes <= targetBytes ? 'target-reached' : 'target-not-reached',
     selected,
     measurements,
+    ineligible,
     initialBytes: initial.bytes,
     finalBytes: rendered.bytes,
   };
