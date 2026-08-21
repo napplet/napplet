@@ -260,6 +260,56 @@ Deno.test("executeNetworkDeploy directly uploads the primary and secondary serve
   });
 });
 
+Deno.test("executeNetworkDeploy counts canonical full discovery endpoints before publishing", async () => {
+  await withTempDir(async (dir) => {
+    await Deno.writeTextFile(`${dir}/index.html`, "index");
+    await Deno.writeTextFile(`${dir}/app.js`, "app");
+    const manifests = await manifestsFor(dir, [
+      { path: "/index.html", sha256 },
+      { path: "/app.js", sha256: secondSha256 },
+    ]);
+    const calls: FetchCall[] = [];
+    const { publish, events } = fakePublish();
+    let upload = 0;
+    const servers = ["https://blob.example/", "https://other.example/base/path/"];
+
+    const result = await executeNetworkDeploy(
+      manifests,
+      { relays: ["wss://relay.example"], blossomServers: servers },
+      signer,
+      {
+        fetch: createFakeFetch(calls, {
+          putResponse: () => {
+            const file = upload % 2;
+            upload += 1;
+            return descriptorResponse(file === 0 ? sha256 : secondSha256, file === 0 ? 5 : 3);
+          },
+        }),
+        publish,
+        now: () => 123,
+        resolve: resolvePublicDns,
+      },
+    );
+
+    assertEquals(result.uploadSummary, {
+      servers: 2,
+      serversFullyUploaded: 2,
+      totalUploads: 4,
+      failedUploads: 0,
+    });
+    assertEquals(new Set(result.uploaded.map((entry) => `${entry.server}\0${entry.file}\0${entry.sha256}`)).size, 4);
+    assertEquals(result.uploaded.map((entry) => entry.server), [servers[0], servers[0], servers[1], servers[1]]);
+    assertEquals(calls.filter((call) => call.method === "PUT").map((call) => call.url), [
+      "https://blob.example/upload",
+      "https://blob.example/upload",
+      "https://other.example/upload",
+      "https://other.example/upload",
+    ]);
+    assertEquals(events.length, 2);
+    assertEquals(networkDeploySucceeded(result, manifests), true);
+  });
+});
+
 Deno.test("executeNetworkDeploy retries a bounded fresh shared authorization after 401", async () => {
   await withTempDir(async (dir) => {
     await Deno.writeTextFile(`${dir}/index.html`, "index");

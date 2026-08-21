@@ -83,7 +83,7 @@ export async function requireKeyStoreProvider(
   const provider = await getKeyStoreProvider(options);
   if (!provider) {
     throw new Error(
-      "No native keychain provider is available. Install macOS security, Windows Credential Manager/cmdkey, or Linux libsecret secret-tool with a D-Bus session.",
+      "No protected keychain writer is available. Install Linux libsecret secret-tool with a D-Bus session or configure an in-memory credential provider.",
     );
   }
   return provider;

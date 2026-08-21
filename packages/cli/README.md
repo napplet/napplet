@@ -199,7 +199,7 @@ Deploy also reads the built `index.html` and emits single `title` and `descripti
 
 ## Signing And Keys
 
-Local key storage uses native platform secure storage: macOS Keychain, Windows Credential Manager, or Linux Secret Service through `secret-tool` with a D-Bus session. If no native provider is available, key commands fail closed rather than writing secrets to plaintext.
+Local key storage currently supports Linux Secret Service through `secret-tool` with a D-Bus session. macOS Keychain and Windows Credential Manager writes are disabled because their command-line tools expose secrets through process arguments; those platforms fail closed until an in-memory credential API is available rather than writing secrets to plaintext.
 
 ```sh
 napplet keys doctor

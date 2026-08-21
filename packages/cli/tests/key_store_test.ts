@@ -48,32 +48,23 @@ Deno.test("requireKeyStoreProvider fails closed when no backend is available", a
   } catch (error) {
     message = error instanceof Error ? error.message : String(error);
   }
-  assert(message.includes("No native keychain provider is available"));
+  assert(message.includes("No protected keychain writer is available"));
 });
 
-Deno.test("MacOSKeychain stores and retrieves generic passwords", async () => {
-  const calls: Array<{ command: string; args: string[]; input?: string }> = [];
-  const provider = new MacOSKeychain(mockRunner({
-    "which security": result(0),
-    "security delete-generic-password -a default -s napplet": result(0),
-    "security add-generic-password -a default -s napplet -w nsec1secret -U": result(0),
-    "security find-generic-password -a default -s napplet -w": result(0, "nsec1secret\n"),
-  }, calls));
+Deno.test("argv-only macOS and Windows credential writers remain unavailable", async () => {
+  const secret = "nbunksec1must-not-enter-argv";
+  for (const Provider of [MacOSKeychain, WindowsCredentialManager]) {
+    const calls: Array<{ command: string; args: string[]; input?: string }> = [];
+    const provider = new Provider(mockRunner({}, calls));
 
-  assertEquals(await provider.isAvailable(), true);
-  await provider.store({ service: KEY_SERVICE_NAME, account: "default", secret: "nsec1secret" });
-  assertEquals(await provider.retrieve(KEY_SERVICE_NAME, "default"), "nsec1secret");
-  assertEquals(calls[1].args, ["delete-generic-password", "-a", "default", "-s", "napplet"]);
-  assertEquals(calls[2].args, [
-    "add-generic-password",
-    "-a",
-    "default",
-    "-s",
-    "napplet",
-    "-w",
-    "nsec1secret",
-    "-U",
-  ]);
+    assertEquals(await provider.isAvailable(), false);
+    await provider.store({ service: KEY_SERVICE_NAME, account: "default", secret }).then(
+      () => { throw new Error(`${provider.name} write must be unavailable`); },
+      () => {},
+    );
+    assertEquals(calls.length, 0);
+    assert(!calls.some((call) => call.args.some((arg) => arg.includes(secret))));
+  }
 });
 
 Deno.test("LinuxSecretService requires DBus and writes secret through stdin", async () => {
@@ -98,26 +89,13 @@ Deno.test("LinuxSecretService requires DBus and writes secret through stdin", as
     secret: "nbunksec1secret",
   });
   assertEquals(calls[2].input, "nbunksec1secret");
+  assert(!calls[2].args.some((arg) => arg.includes("nbunksec1secret")));
   assertEquals(await provider.list(KEY_SERVICE_NAME), ["default"]);
 });
 
 Deno.test("LinuxSecretService is unavailable without DBus", async () => {
   const provider = new LinuxSecretService(mockRunner({}), {});
   assertEquals(await provider.isAvailable(), false);
-});
-
-Deno.test("WindowsCredentialManager stores, lists, and deletes targets", async () => {
-  const provider = new WindowsCredentialManager(mockRunner({
-    "where cmdkey": result(0),
-    "cmdkey /delete:napplet:default": result(0),
-    "cmdkey /add:napplet:default /user:default /pass:nsec1secret": result(0),
-    "cmdkey /list": result(0, "Target: napplet:default\nTarget: other:ignored\n"),
-  }));
-
-  assertEquals(await provider.isAvailable(), true);
-  await provider.store({ service: KEY_SERVICE_NAME, account: "default", secret: "nsec1secret" });
-  assertEquals(await provider.list(KEY_SERVICE_NAME), ["default"]);
-  assertEquals(await provider.delete(KEY_SERVICE_NAME, "default"), true);
 });
 
 Deno.test("createKeyStore adapts an existing provider to the shared opaque SecretStore", async () => {

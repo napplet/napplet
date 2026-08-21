@@ -45,23 +45,26 @@ class FakeFileSystem implements FileSystemAdapter {
 
 Deno.test("reconnect lookup leaves a missing stable record untouched", async () => {
   const process = new FakeProcess();
-  process.responses.set("which security", { code: 0, stdout: "/usr/bin/security", stderr: "" });
+  process.responses.set("which secret-tool", { code: 0, stdout: "/usr/bin/secret-tool", stderr: "" });
   process.responses.set(
-    `security find-generic-password -a ${SESSION_KEY} -s napplet -w`,
-    { code: 44, stdout: "", stderr: "not found" },
+    `secret-tool lookup service napplet account ${SESSION_KEY}`,
+    { code: 1, stdout: "", stderr: "not found" },
   );
-  const store = await createPlatformSecretStore({ os: "darwin", process });
+  const store = await createPlatformSecretStore({
+    os: "linux",
+    env: { DBUS_SESSION_BUS_ADDRESS: "session" },
+    process,
+  });
 
   assert(await store.get(SESSION_KEY) === undefined, "missing session should be undefined");
   assert(
-    !process.calls.some(({ command, args }) => command === "security" && args[0] === "add-generic-password"),
+    !process.calls.some(({ command, args }) => command === "secret-tool" && args[0] === "store"),
     "lookup must not write a missing session",
   );
 });
 
 Deno.test("platform stores keep CLI provider commands behind injected adapters", async () => {
   const cases = [
-    { os: "darwin" as const, availabilityCommand: "which", availabilityArg: "security", command: "security" },
     { os: "linux" as const, availabilityCommand: "which", availabilityArg: "secret-tool", command: "secret-tool" },
   ];
 
@@ -74,19 +77,25 @@ Deno.test("platform stores keep CLI provider commands behind injected adapters",
     });
     const store = await createPlatformSecretStore({
       os: testCase.os,
-      env: testCase.os === "linux" ? { DBUS_SESSION_BUS_ADDRESS: "session" } : {},
+      env: { DBUS_SESSION_BUS_ADDRESS: "session" },
       process,
     });
     await store.set(SESSION_KEY, new RedactedSecret(NBUNKSEC));
     assert(process.calls.some((call) => call.command === testCase.command), `${testCase.os} provider should run`);
   }
 
-  const windowsProcess = new FakeProcess();
-  await createPlatformSecretStore({ os: "windows", process: windowsProcess }).then(
-    () => { throw new Error("Windows cmdkey provider must stay unavailable"); },
-    () => {},
-  );
-  assert(!windowsProcess.calls.some((call) => call.args.some((arg) => String(arg).includes(NBUNKSEC))), "Windows secret must never reach process arguments");
+  for (const os of ["darwin", "windows"] as const) {
+    const unavailableProcess = new FakeProcess();
+    await createPlatformSecretStore({ os, process: unavailableProcess }).then(
+      () => { throw new Error(`${os} argv-secret provider must stay unavailable`); },
+      () => {},
+    );
+    assert(unavailableProcess.calls.length === 0, `${os} unavailable provider must not invoke a command`);
+    assert(
+      !unavailableProcess.calls.some((call) => call.args.some((arg) => String(arg).includes(NBUNKSEC))),
+      `${os} secret must never reach process arguments`,
+    );
+  }
 
   const fileSystem = new FakeFileSystem();
   const fallback = await createPlatformSecretStore({
@@ -101,13 +110,17 @@ Deno.test("platform stores keep CLI provider commands behind injected adapters",
 
 Deno.test("provider failures preserve prior secrets and every observable stays redacted", async () => {
   const process = new FakeProcess();
-  process.responses.set("which security", { code: 0, stdout: "available", stderr: "" });
-  process.responses.set("security add-generic-password -a napplet-build-signer -s napplet -w [REDACTED] -U", {
+  process.responses.set("which secret-tool", { code: 0, stdout: "available", stderr: "" });
+  process.responses.set("secret-tool store --label napplet - napplet-build-signer service napplet account napplet-build-signer", {
     code: 1,
     stdout: "",
     stderr: NBUNKSEC,
   });
-  const store = await createPlatformSecretStore({ os: "darwin", process });
+  const store = await createPlatformSecretStore({
+    os: "linux",
+    env: { DBUS_SESSION_BUS_ADDRESS: "session" },
+    process,
+  });
   const prior = new RedactedSecret(NBUNKSEC);
   const snapshots: string[] = [];
   try {
@@ -120,7 +133,7 @@ Deno.test("provider failures preserve prior secrets and every observable stays r
     assert(!snapshot.includes(NBUNKSEC), "secret must not reach errors or snapshots");
   }
   assert(
-    !process.calls.some(({ command, args }) => command === "security" && args[0] === "delete-generic-password"),
+    !process.calls.some(({ command, args }) => command === "secret-tool" && args[0] === "clear"),
     "failed writes must not delete a previous secret",
   );
 });

@@ -110,12 +110,16 @@ class FakeRelay implements RelayClient {
   }
 }
 
-function createServices(relay: FakeRelay, clock = new FakeClock()): BuildSignerServices {
+function createServices(
+  relay: FakeRelay,
+  clock = new FakeClock(),
+  remotePubkey = REMOTE_PUBKEY,
+): BuildSignerServices {
   let id = 0;
   return {
     relay,
     clock,
-    remotePubkey: REMOTE_PUBKEY,
+    remotePubkey,
     requestId: () => `request-${id++}`,
     requestTimeoutMs: 10,
   };
@@ -135,8 +139,8 @@ function signedAuthorization(pubkeySecret: Uint8Array, overrides: Partial<Record
 
 Deno.test("requests only public-key access and kind-24242 signing", async () => {
   const relay = new FakeRelay();
-  const signer = createBuildSigner(createServices(relay));
   const userSecret = generateSecretKey();
+  const signer = createBuildSigner(createServices(relay, new FakeClock(), getPublicKey(userSecret)));
   const publicKey = signer.getPublicKey();
 
   assert(relay.requests.length === 1, "expected one public-key request");
@@ -164,6 +168,7 @@ Deno.test("requests only public-key access and kind-24242 signing", async () => 
   assert((await signed).kind === 24242, "expected verified authorization event");
 });
 
+
 Deno.test("rejects tampered, wrong-author, and wrong-kind signed results", async () => {
   const userSecret = generateSecretKey();
   const attackerSecret = generateSecretKey();
@@ -175,7 +180,7 @@ Deno.test("rejects tampered, wrong-author, and wrong-kind signed results", async
 
   for (const vector of vectors) {
     const relay = new FakeRelay();
-    const signer = createBuildSigner(createServices(relay));
+    const signer = createBuildSigner(createServices(relay, new FakeClock(), getPublicKey(userSecret)));
     const publicKey = signer.getPublicKey();
     relay.respond({ id: "request-0", result: getPublicKey(userSecret) });
     await publicKey;
@@ -185,6 +190,27 @@ Deno.test("rejects tampered, wrong-author, and wrong-kind signed results", async
     await assertRejects(() => signed, "verification");
     assert(relay.closedRequests === 2, `${vector.label} must close the request`);
   }
+});
+
+Deno.test("rejects a signer identity that differs from the configured remote", async () => {
+  const relay = new FakeRelay();
+  const signer = createBuildSigner(createServices(relay));
+  const otherSecret = generateSecretKey();
+  const publicKey = signer.getPublicKey();
+
+  relay.respond({ id: "request-0", result: getPublicKey(otherSecret) });
+  await assertRejects(() => publicKey, "verification");
+
+  const signing = signer.signEvent({
+    kind: 24242,
+    created_at: 1_700_000_000,
+    tags: [["t", "upload"]],
+    content: "authorization",
+  });
+  await requestAt(relay, 1);
+  relay.respond({ id: "request-1", result: getPublicKey(otherSecret) });
+  await assertRejects(() => signing, "verification");
+  assert(relay.requests.every((request) => request.method === "get_public_key"), "identity mismatch must prevent signing");
 });
 
 Deno.test("closes subscriptions after remote errors, malformed responses, wrong IDs, timeouts, and explicit close", async () => {
