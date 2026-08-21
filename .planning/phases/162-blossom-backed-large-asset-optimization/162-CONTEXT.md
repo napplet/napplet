@@ -32,7 +32,7 @@ Add an automatic optimization mode to `@napplet/vite-plugin` for large single-fi
 
 - Query a bounded default set of directory/index relays including `wss://purplepag.es` plus other established public relays for the signer's replaceable kind `10002` event.
 - Verify candidate Nostr events and keep the newest valid replaceable kind `10002` by `created_at` with a deterministic tie-breaker.
-- Query the user's advertised read/both relays for kind `10063`, the NIP-B7/BUD-03 Blossom server-list event; keep the newest valid event found and preserve its valid `server` tag order after URL normalization/deduplication.
+- Query the user's advertised write/unmarked relays for kind `10063`, the NIP-B7/BUD-03 Blossom server-list event; NIP-65 identifies these as the relays from which a user's authored events should be retrieved. Keep the newest valid event found and preserve its valid `server` tag order after URL normalization/deduplication.
 - Kind `10002` is relay discovery only. Do not treat its `r` tags as Blossom servers.
 - Provide a deliberate fallback/error path when no valid user Blossom server list is available; do not silently upload to an unrelated server as if it were the user's preference.
 
