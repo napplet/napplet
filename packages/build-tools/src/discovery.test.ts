@@ -57,8 +57,8 @@ Deno.test("discovery selects the newest verified kind-10002 from bounded directo
   const result = await discoverBlossomServers({ pubkey, now: () => NOW }, service);
 
   assert(result.status === "found", "expected a discovered server list");
-  assertEquals(service.calls[0].relays.includes("wss://purplepag.es/"), true);
-  assertEquals(service.calls[1].relays, ["wss://write.example/"]);
+  assertEquals(service.calls[0].relays.includes("wss://purplepag.es"), true);
+  assertEquals(service.calls[1].relays, ["wss://write.example"]);
   assertEquals(result.sourceEvent.id, serverList.id);
   assertEquals(result.servers.map((server) => server.toString()), ["https://blossom.example/"]);
 });
@@ -84,7 +84,7 @@ Deno.test("discovery uses write and unmarked relays only and preserves verified 
   const result = await discoverBlossomServers({ pubkey, now: () => NOW }, service);
 
   assert(result.status === "found", "expected a server list");
-  assertEquals(service.calls[1].relays, ["wss://write.example/", "wss://both.example/"]);
+  assertEquals(service.calls[1].relays, ["wss://write.example", "wss://both.example"]);
   assertEquals(result.sourceEvent.id, selected.id);
   if (selected.id === first.id) {
     assertEquals(result.servers.map((server) => server.toString()), ["https://one.example/", "https://two.example/"]);

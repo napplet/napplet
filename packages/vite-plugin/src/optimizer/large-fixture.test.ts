@@ -30,7 +30,7 @@ describe('generated large-asset optimizer fixture', () => {
     expect(evidence.privateMappingCount).toBe(evidence.selected.length);
     expect(evidence.removedCandidateSources).toEqual(evidence.selected.map((entry) => entry.source));
     expect(evidence.preservedCandidateSources).toEqual([]);
-    expect(evidence.discovery.writeRelays.map((relay) => relay.replace(/\/$/, ''))).toEqual(expectedEvidence.discovery.writeRelays);
+    expect(evidence.discovery.writeRelays).toEqual(expectedEvidence.discovery.writeRelays);
     expect(evidence.discovery.servers).toEqual(expectedEvidence.discovery.servers);
     expect(evidence.discovery.ignoredForgedEvent).toBe(true);
     expect(evidence.discovery.ignoredOlderEvent).toBe(true);
