@@ -1,8 +1,8 @@
 ---
 phase: 162-blossom-backed-large-asset-optimization
-reviewed: 2026-08-21T19:01:22Z
+reviewed: 2026-08-21T19:26:32Z
 depth: standard
-files_reviewed: 50
+files_reviewed: 55
 files_reviewed_list:
   - packages/build-tools/src/blossom.test.ts
   - packages/build-tools/src/blossom.ts
@@ -14,6 +14,8 @@ files_reviewed_list:
   - packages/build-tools/src/network-policy.ts
   - packages/build-tools/src/secret-store.test.ts
   - packages/build-tools/src/secret-store.ts
+  - packages/build-tools/src/session-secret.test.ts
+  - packages/build-tools/src/session-secret.ts
   - packages/build-tools/src/signer.test.ts
   - packages/build-tools/src/signer.ts
   - packages/build-tools/src/terminal.test.ts
@@ -43,6 +45,9 @@ files_reviewed_list:
   - packages/vite-plugin/src/optimizer/large-fixture-runtime.ts
   - packages/vite-plugin/src/optimizer/loader.test.ts
   - packages/vite-plugin/src/optimizer/loader.ts
+  - packages/vite-plugin/src/optimizer/node-nostr.test.ts
+  - packages/vite-plugin/src/optimizer/node-nostr.ts
+  - packages/vite-plugin/src/optimizer/node-platform.ts
   - packages/vite-plugin/src/optimizer/node-services.test.ts
   - packages/vite-plugin/src/optimizer/node-services.ts
   - packages/vite-plugin/src/optimizer/pipeline.test.ts
@@ -64,23 +69,25 @@ status: clean
 
 # Phase 162: Code Review Report
 
-**Reviewed:** 2026-08-21T19:01:22Z
+**Reviewed:** 2026-08-21T19:26:32Z
 **Depth:** standard
-**Files Reviewed:** 50
+**Files Reviewed:** 55
 **Status:** clean
 
 ## Summary
 
-All reviewed files meet the phase’s correctness, security, and maintainability requirements. The current implementation retains full canonical BUD-03 endpoint evidence while sending BUD-02 uploads to root `/upload`; automatic unpinned build-time transport is safely disabled; and supported secret writers do not pass NIP-46 material through process arguments.
+The Phase 162 source was re-reviewed after the verifier-gap changes, including the ordinary public Vite integration, default Node Nostr discovery, NIP-46 pairing/reconnect, `nbunksec` handling/redaction, protected-store fallback, pinned Blossom TLS transport, and the 50 MiB public-path fixture.
 
-The generated loader/application fixture executes emitted code against exact uploaded bytes. Its response cache release leaves the returned `Response` backed by its Blob, and its resource lifetime test paths are bounded. Pairing now selects the winner once, closes a late successful loser, and closes an unpersisted winner on post-pairing failure.
+The prior integrity fixes remain present: BUD-02 uses root `/upload` while retaining complete BUD-03 endpoint URLs; the production Blossom route uses a freshly validated address-pinned HTTPS lookup; NIP-46 remote transport and returned signing identities remain separate; pairing cleans up late losers and persistence failures; and the generated artifact fixture executes emitted loader and application code against exact uploaded bytes. The live NIP-46 and NAP-RESOURCE sources were consulted; the published proposed NAP-RESOURCE PR #80 defines the committed runtime `resource` dependency, so it is not treated as invented surface.
 
-NIP-46 transport and signing identities are now intentionally separate: the remote signer key remains the encrypted request peer, while `get_public_key` establishes the user signing key used for signed-event verification and BUD-03 discovery. The `resource` capability is declared as a runtime protocol dependency and is defined by the live proposed NAP-RESOURCE specification (PR #80), which is permitted by AGENTS.md rule 1’s accepted/proposed-NAP criterion.
+The final Node transport fix supplies the direct `ws` implementation to `nostr-tools` before any pool is created. Its local relay regression test removes `globalThis.WebSocket` and successfully executes discovery, covering the prior Node 18/20 failure mode. No remaining Critical, Warning, or Info findings were found.
 
 Verification executed:
 
-- `pnpm --filter @napplet/build-tools test:unit` — 26 passed
-- `pnpm --filter @napplet/vite-plugin test:unit` — 75 passed
+- `pnpm --filter @napplet/build-tools test:unit` — 29 passed
+- `pnpm --filter @napplet/vite-plugin test:unit` — 79 passed
+- `pnpm --filter @napplet/vite-plugin type-check` — passed
+- `pnpm --filter @napplet/build-tools build` — passed
 
 ## Narrative Findings (AI reviewer)
 
@@ -88,6 +95,6 @@ No remaining Critical, Warning, or Info findings in the reviewed source scope.
 
 ---
 
-_Reviewed: 2026-08-21T19:01:22Z_
+_Reviewed: 2026-08-21T19:26:32Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
