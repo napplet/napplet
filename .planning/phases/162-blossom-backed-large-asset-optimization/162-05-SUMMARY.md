@@ -9,7 +9,7 @@ dependency_graph:
   affects: [vite-plugin, cli, asset-optimization]
 tech_stack:
   added: []
-  patterns: [verified-two-stage-discovery, injected-dns-policy, bounded-direct-upload]
+  patterns: [verified-two-stage-discovery, injected-dns-policy, bounded-direct-upload, turbo-discovered-deno-tests]
 key_files:
   created:
     - packages/build-tools/src/discovery.ts
@@ -19,6 +19,7 @@ key_files:
     - packages/build-tools/src/network-policy.test.ts
     - packages/build-tools/src/blossom.test.ts
   modified:
+    - packages/build-tools/package.json
     - packages/build-tools/src/index.ts
 decisions:
   - "Discover kind-10063 only through the newest verified kind-10002 event's write or unmarked relay URLs; never use the relay URLs as Blossom servers."
@@ -45,7 +46,7 @@ coverage:
     human_judgment: false
 metrics:
   tasks_completed: 2
-  files_modified: 7
+  files_modified: 8
   completed_date: 2026-08-21
 status: complete
 ---
@@ -60,7 +61,7 @@ status: complete
 - **Started:** 2026-08-21T15:56:36Z
 - **Completed:** 2026-08-21T16:29:03Z
 - **Tasks:** 2/2
-- **Files modified:** 7
+- **Files modified:** 8
 
 ## Accomplishments
 
@@ -72,11 +73,12 @@ status: complete
 
 1. **Task 1: Discover ordered Blossom servers through verified write relays** — `f8f43b4f` (RED tests), `59436443` (implementation).
 2. **Task 2: Upload exact blobs with short-lived authorization and descriptor verification** — `ce7ccf97` (RED tests), `b5dce2c0` (implementation).
+3. **Test-discovery correction** — `4ac55347` (plan correction), `a2a1e834` (package test script), `63541801` (portable test discovery).
 
 ## Verification
 
-- `deno test --no-lock --allow-all packages/build-tools/src/blossom.test.ts packages/build-tools/src/discovery.test.ts packages/build-tools/src/network-policy.test.ts` — 9 passed.
-- `pnpm --filter @napplet/build-tools exec deno test --no-lock --allow-all src/blossom.test.ts` — 3 passed.
+- `pnpm --filter @napplet/build-tools test:unit` — 20 passed across all six build-tools source test files.
+- `pnpm test:unit` — Turbo discovered and ran `@napplet/build-tools#test:unit`; all 25 workspace tasks passed.
 - `pnpm --filter @napplet/build-tools type-check` — passed.
 - `pnpm --filter @napplet/build-tools build` — passed.
 - `git diff --check` — passed.
@@ -86,6 +88,7 @@ status: complete
 - Use canonical NIP-65 direction: query directory relays for the newest verified author kind-10002, then query only that event's write/unmarked relays for the newest verified author kind-10063.
 - Preserve BUD-03's first-occurrence server order after normalization and deduplication; do not invent a default upload server when discovery has no valid list.
 - Scope every BUD-11 upload token to the exact lowercase SHA-256 and lowercase server hostname, and retry a 401 only with a newly signed, human-readable authorization event.
+- Use a package-local lock-free Deno `test:unit` script so Turbo always discovers every build-tools regression vector.
 
 ## Deviations from Plan
 
@@ -103,7 +106,7 @@ status: complete
 
 ## Issues Encountered
 
-- The plan's literal `pnpm --filter @napplet/build-tools test:unit` command cannot execute because this package has no `test:unit` script. The equivalent scoped `pnpm exec deno test` and direct Deno test commands passed; package configuration was left unchanged because it is outside the plan-scoped file list.
+- The original plan named a package test command that did not exist and appended filenames to it. The approved correction added the deterministic package script, changed all plan verification to the full suite, and proved Turbo discovery.
 - `state.update-progress` reported that its legacy progress field was unavailable after the plan counter advanced. `STATE.md` session/metric updates and the Phase 162 ROADMAP plan count were written successfully.
 
 ## Known Stubs
@@ -118,8 +121,9 @@ None - no external service configuration required.
 
 - The Vite-plugin optimizer can consume `discoverBlossomServers`, `createNetworkPolicy`, and `uploadExactBlobs` through Node-specific adapters while keeping relay, DNS, fetch, and signer capabilities injected.
 - Discovery and upload errors are redaction-safe typed outcomes/evidence; no artifact deletion is authorized on partial, malformed, redirected-to-private, or cancelled uploads.
+- All build-tools source tests now run through the package and root Turbo test commands without creating or updating a Deno lockfile.
 
 ## Self-Check: PASSED
 
-- All six new source/test files and the updated public barrel exist.
-- All four TDD task commits resolve in repository history.
+- All six new source/test files, the package test script, and the updated public barrel exist.
+- All eight 162-05 task/correction commits resolve in repository history.
