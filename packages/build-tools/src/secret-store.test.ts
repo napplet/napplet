@@ -63,7 +63,6 @@ Deno.test("platform stores keep CLI provider commands behind injected adapters",
   const cases = [
     { os: "darwin" as const, availabilityCommand: "which", availabilityArg: "security", command: "security" },
     { os: "linux" as const, availabilityCommand: "which", availabilityArg: "secret-tool", command: "secret-tool" },
-    { os: "windows" as const, availabilityCommand: "where", availabilityArg: "cmdkey", command: "cmdkey" },
   ];
 
   for (const testCase of cases) {
@@ -81,6 +80,13 @@ Deno.test("platform stores keep CLI provider commands behind injected adapters",
     await store.set(SESSION_KEY, new RedactedSecret(NBUNKSEC));
     assert(process.calls.some((call) => call.command === testCase.command), `${testCase.os} provider should run`);
   }
+
+  const windowsProcess = new FakeProcess();
+  await createPlatformSecretStore({ os: "windows", process: windowsProcess }).then(
+    () => { throw new Error("Windows cmdkey provider must stay unavailable"); },
+    () => {},
+  );
+  assert(!windowsProcess.calls.some((call) => call.args.some((arg) => String(arg).includes(NBUNKSEC))), "Windows secret must never reach process arguments");
 
   const fileSystem = new FakeFileSystem();
   const fallback = await createPlatformSecretStore({

@@ -130,7 +130,10 @@ class WindowsCredentialStore implements PlatformProvider, SecretStore {
   constructor(private readonly process: ProcessAdapter, private readonly service: string) {}
 
   async available(): Promise<boolean> {
-    return (await this.process.run("where", ["cmdkey"])).code === 0;
+    // cmdkey accepts credentials only on its command line, exposing reusable
+    // NIP-46 material to local process inspection. Keep Windows unavailable
+    // until a native Credential Manager boundary can pass the blob in memory.
+    return false;
   }
 
   async get(key: string): Promise<RedactedSecret | undefined> {
@@ -139,10 +142,9 @@ class WindowsCredentialStore implements PlatformProvider, SecretStore {
   }
 
   async set(key: string, value: RedactedSecret): Promise<void> {
-    const result = await this.process.run("cmdkey", [
-      `/add:${this.target(key)}`, `/user:${key}`, "/pass:", value,
-    ]);
-    if (result.code !== 0) throw new Error("Windows Credential Manager store failed");
+    void key;
+    void value;
+    throw new Error("Windows Credential Manager writes require an in-memory provider");
   }
 
   async delete(key: string): Promise<void> {
