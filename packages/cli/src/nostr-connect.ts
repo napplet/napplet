@@ -231,7 +231,7 @@ function createDenoTerminalAdapter(options: {
       }, { once: true });
       for (;;) {
         const { value, done } = await reader.read();
-        if (done) return await new Promise<never>(() => {});
+        if (done) throw new Error("terminal input closed");
         const bunker = value === undefined ? null : detectBunkerLine(value);
         if (bunker) return bunker;
       }
