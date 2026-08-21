@@ -159,7 +159,7 @@ Deno.test("requests only public-key access and kind-24242 signing", async () => 
     kind: 24242,
     created_at: 1_700_000_000,
     tags: [["t", "upload"]],
-    content: "authorization",
+    content: "upload authorization",
   });
   const request = await requestAt(relay, 1);
   assert(request.method === "sign_event", "expected sign_event");
@@ -208,8 +208,8 @@ Deno.test("uses get_public_key as the user signing identity, not the transport p
     content: "authorization",
   });
   await requestAt(relay, 1);
-  relay.respond({ id: "request-1", result: getPublicKey(otherSecret) });
-  await assertRejects(() => signing, "verification");
+  relay.respond({ id: "request-1", result: JSON.stringify(signedAuthorization(otherSecret)) });
+  assert((await signing).pubkey === getPublicKey(otherSecret), "signed event should bind to the user key");
 });
 
 Deno.test("closes subscriptions after remote errors, malformed responses, wrong IDs, timeouts, and explicit close", async () => {

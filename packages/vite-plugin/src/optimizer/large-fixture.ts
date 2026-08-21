@@ -182,7 +182,7 @@ function fakeNodeServices(
     discovery,
     networkPolicy,
     blossom: { networkPolicy, fetch, now: () => FIXTURE_NOW },
-    getSigner: async () => ({ status: 'ready', signer, remotePubkey: await signer.getPublicKey() }),
+    getSigner: async () => ({ status: 'ready', signer, remotePubkey: 'a'.repeat(64) }),
     fetch: async () => ({ status: 'failed', reason: { code: 'not-used', message: 'fixture uses Blossom fetch only' } }),
     dispose: async () => {},
   };
