@@ -30,3 +30,11 @@ test('versioned and stable CLI releases receive the same verified assets', () =>
   assert.match(workflow, /gh release (?:view|create) napplet-cli/);
   assert.match(workflow, /gh release upload napplet-cli/);
 });
+
+test('skills JSR publish uses its explicit JSR config', () => {
+  assert.match(workflow, /Publish to JSR \(topologically ordered\)[\s\S]*?--filter='!@napplet\/skills'/);
+  assert.match(
+    workflow,
+    /Publish @napplet\/skills to JSR[\s\S]*?working-directory: packages\/skills[\s\S]*?npx jsr publish --config jsr\.json --allow-slow-types --allow-dirty/,
+  );
+});
