@@ -2,7 +2,13 @@
   "workspace": [
     "./packages/boilerplate",
     "./packages/skills",
-    "./packages/cli"
+    "./packages/cli",
+    "./packages/conformance",
+    "./packages/core",
+    "./packages/nap",
+    "./packages/sdk",
+    "./packages/shim",
+    "./packages/vite-plugin"
   ],
   "nodeModulesDir": "manual"
 }
