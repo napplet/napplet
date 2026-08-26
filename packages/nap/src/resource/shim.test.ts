@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResourceBytesItem } from './types.js';
+import type { ResourceBytesItem, ResourceInfo } from './types.js';
 
 const posted: Array<Record<string, unknown>> = [];
 let uuidCounter = 0;
@@ -66,13 +66,14 @@ describe('@napplet/nap/resource shim', () => {
       id: 'resource-test-1',
     });
 
-    const runtimeInfo = {
+    const runtimeInfo: ResourceInfo = {
       schemes: [
         { scheme: 'https', enabled: true },
         { scheme: 'blossom', enabled: false },
       ],
       maxBytes: 10_485_760,
       maxUrls: 100,
+      maxServers: 8,
     };
     handleResourceMessage({ type: 'resource.info.result', id: sent.id, info: runtimeInfo });
 
@@ -113,20 +114,48 @@ describe('@napplet/nap/resource shim', () => {
     await expect(blob.text()).resolves.toBe('hi');
   });
 
-  it('posts resource.bytesMany and resolves ordered per-URL items', async () => {
+  it('posts resource.bytes with advisory Blossom server hints', async () => {
+    const { bytes, handleResourceMessage } = await import('./shim.js');
+
+    const promise = bytes('blossom:sha256:abc123', {
+      servers: ['https://cdn.example', 'https://mirror.example'],
+    });
+    const sent = lastPosted('resource.bytes');
+    expect(sent).toEqual({
+      type: 'resource.bytes',
+      id: 'resource-test-1',
+      url: 'blossom:sha256:abc123',
+      servers: ['https://cdn.example', 'https://mirror.example'],
+    });
+
+    handleResourceMessage({
+      type: 'resource.bytes.result',
+      id: sent.id,
+      blob: new Blob(['ok']),
+      mime: 'application/octet-stream',
+    });
+
+    await expect(promise).resolves.toBeInstanceOf(Blob);
+  });
+
+  it('posts resource.bytesMany with per-resource advisory Blossom server hints', async () => {
     const { bytesMany, handleResourceMessage } = await import('./shim.js');
 
-    const promise = bytesMany(['https://example.com/a.png', 'https://example.com/missing.png']);
+    const requests = [
+      { url: 'blossom:sha256:abc123', servers: ['https://cdn.example'] },
+      { url: 'https://example.com/missing.png' },
+    ];
+    const promise = bytesMany(requests);
     const sent = lastPosted('resource.bytesMany');
     expect(sent).toEqual({
       type: 'resource.bytesMany',
       id: 'resource-test-1',
-      urls: ['https://example.com/a.png', 'https://example.com/missing.png'],
+      requests,
     });
 
     const okBlob = new Blob(['a'], { type: 'image/png' });
     const items: ResourceBytesItem[] = [
-      { url: 'https://example.com/a.png', ok: true, blob: okBlob, mime: 'image/png' },
+      { url: 'blossom:sha256:abc123', ok: true, blob: okBlob, mime: 'image/png' },
       {
         url: 'https://example.com/missing.png',
         ok: false,
@@ -143,7 +172,7 @@ describe('@napplet/nap/resource shim', () => {
   it('rejects top-level resource.bytesMany errors', async () => {
     const { bytesMany, handleResourceMessage } = await import('./shim.js');
 
-    const promise = bytesMany(['https://example.com/a.png']);
+    const promise = bytesMany([{ url: 'https://example.com/a.png' }]);
     const sent = lastPosted('resource.bytesMany');
     handleResourceMessage({
       type: 'resource.bytesMany.error',
@@ -166,7 +195,7 @@ describe('@napplet/nap/resource shim', () => {
     const { bytesMany, handleResourceMessage } = await import('./shim.js');
     const controller = new AbortController();
 
-    const promise = bytesMany(['https://example.com/a.png'], { signal: controller.signal });
+    const promise = bytesMany([{ url: 'https://example.com/a.png' }], { signal: controller.signal });
     const sent = lastPosted('resource.bytesMany');
 
     controller.abort();

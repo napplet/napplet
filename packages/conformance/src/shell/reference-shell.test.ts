@@ -184,6 +184,24 @@ describe('createReferenceShell — record + respond', () => {
     expect(await response.blob.text()).toBe('hi');
   });
 
+  it('accepts per-resource server hints for resource.bytesMany', async () => {
+    const shell = createReferenceShell();
+    const [response] = shell.handle({
+      type: 'resource.bytesMany',
+      id: 'R',
+      requests: [{
+        url: 'data:text/plain;base64,aGk=',
+        servers: ['https://cdn.example'],
+      }],
+    }) as Array<{ type: string; id: string; items: Array<{ url: string; blob: Blob; mime: string }> }>;
+
+    expect(response.type).toBe('resource.bytesMany.result');
+    expect(response.id).toBe('R');
+    expect(response.items[0].url).toBe('data:text/plain;base64,aGk=');
+    expect(response.items[0].mime).toBe('text/plain');
+    expect(await response.items[0].blob.text()).toBe('hi');
+  });
+
   it('returns no response for fire-and-forget and unknown messages', () => {
     const shell = createReferenceShell();
     expect(shell.handle({ type: 'inc.emit', topic: 't' })).toEqual([]);

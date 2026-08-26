@@ -52,6 +52,53 @@ function validateIntentInvokeRequest(request: unknown, errors: EnvelopeError[]):
   }
 }
 
+function validateServerHints(value: unknown, field: string, errors: EnvelopeError[]): void {
+  if (Array.isArray(value) && value.every((server) => typeof server === 'string')) return;
+  errors.push({
+    code: 'wrong-type',
+    message: `Field "${field}" must be an array of strings`,
+    field,
+  });
+}
+
+/** Validate NAP-RESOURCE request metadata without applying shell-owned network policy. */
+function validateResourceRequestFields(record: Record<string, unknown>, errors: EnvelopeError[]): void {
+  if (record.servers !== undefined) validateServerHints(record.servers, 'servers', errors);
+}
+
+function validateResourceBytesManyRequests(requests: unknown, errors: EnvelopeError[]): void {
+  if (!Array.isArray(requests)) return;
+  if (requests.length === 0) {
+    errors.push({
+      code: 'invalid-resource-request',
+      message: 'Field "requests" must contain at least one resource request',
+      field: 'requests',
+    });
+    return;
+  }
+
+  for (const [index, request] of requests.entries()) {
+    const field = `requests[${index}]`;
+    if (typeof request !== 'object' || request === null || Array.isArray(request)) {
+      errors.push({
+        code: 'invalid-resource-request',
+        message: `Field "${field}" must be a resource request object`,
+        field,
+      });
+      continue;
+    }
+    const entry = request as Record<string, unknown>;
+    if (typeof entry.url !== 'string') {
+      errors.push({
+        code: entry.url === undefined ? 'missing-field' : 'wrong-type',
+        message: `Field "${field}.url" must be a string`,
+        field: `${field}.url`,
+      });
+    }
+    if (entry.servers !== undefined) validateServerHints(entry.servers, `${field}.servers`, errors);
+  }
+}
+
 /**
  * Validate a single postMessage envelope as if emitted by a napplet.
  *
@@ -139,6 +186,12 @@ export function validateEnvelope(message: unknown): EnvelopeVerdict {
 
   if (type === 'intent.invoke') {
     validateIntentInvokeRequest(record.request, errors);
+  }
+  if (type === 'resource.bytes') {
+    validateResourceRequestFields(record, errors);
+  }
+  if (type === 'resource.bytesMany') {
+    validateResourceBytesManyRequests(record.requests, errors);
   }
 
   return { ok: errors.length === 0, type, domain, direction: 'out', errors };

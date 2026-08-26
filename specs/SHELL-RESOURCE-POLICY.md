@@ -146,6 +146,18 @@ Coalesce concurrent same-URL fetches.
 - [ ] Aborted entries are removed from the in-flight map for retryability
 
 
+## Blossom Server Hints
+
+The current NAP-RESOURCE proposal defines an ordered advisory `servers` list on `resource.bytes` and per-resource entries in `resource.bytesMany`. Treat the proposal itself as authoritative; this checklist only calls out the shell integration points that are easy to miss.
+
+- [ ] Accept hints only for `blossom:` resources and ignore them for other schemes
+- [ ] Keep `servers` outside the resource URL and cache key
+- [ ] Treat hints as untrusted input that cannot bypass a cache hit, runtime/user policy, or the full network policy
+- [ ] Accept only public HTTPS origins, discard invalid or disallowed entries, deduplicate equivalent origins in first-seen order, and enforce a finite per-resource cap
+- [ ] Try accepted request hints before configured defaults and runtime-selected public fallbacks
+- [ ] Continue after HTTP 404/410, preserve the NAP-defined `not-found` versus `network-error` distinction, and verify the requested SHA-256 before caching or delivery
+
+
 ## Scheme Whitelist (MUST)
 
 Only the canonical schemes plus shell-administrator opt-ins are dispatched. Smuggling-prone schemes are never enabled by default.
@@ -155,6 +167,7 @@ Only the canonical schemes plus shell-administrator opt-ins are dispatched. Smug
 - [ ] `data:` (RFC 2397) — decoded in-shim with zero shell round-trip; size cap still applies on the decoded `Blob`
 - [ ] `https:` — full Default Resource Policy applies
 - [ ] `blossom:sha256:<hex>` — shell verifies hash against the URL's declared digest **before** delivery; mismatch → `code: "decode-failed"`
+- [ ] `htree:` — shell resolves Hashtree references to verified bytes without forwarding fragment keys to relays, storage servers, or peers
 - [ ] `nostr:<bech32>` — single-hop NIP-19 resolution; recursive resolution is **not** the shell's job
 
 ### Never enable by default
@@ -168,11 +181,10 @@ Unknown schemes emit `code: "unsupported-scheme"`.
 
 ## Capability Advertisement
 
-Shells advertise resource-NAP conformance via the standard capability query API:
+Shells advertise the NAP-RESOURCE domain through the discovery operation defined by NAP-SHELL:
 
-- [ ] `shell.supports('nap:resource')` returns `true`
-- [ ] `shell.supports('resource:scheme:<name>')` returns `true` for each supported scheme (e.g., `resource:scheme:blossom`)
-- [ ] `shell.supports('perm:strict-csp')` returns `true` if the shell enforces strict CSP on napplet iframes (orthogonal to `nap:resource` — a permissive dev shell can implement the resource NAP without enforcing strict CSP)
+- [ ] `shell.supports('resource')` returns `true` when the runtime provides NAP-RESOURCE
+- [ ] Optional scheme and coarse-limit introspection uses `resource.info()`; do not invent scheme-specific `shell.supports()` capabilities
 
 
 ## Audit Checklist (one-page summary)
@@ -188,12 +200,12 @@ Use this as a deployment sign-off:
 - [ ] Sidecar bytes obey the same MIME/SVG/size policy as direct calls
 - [ ] Single-flight cache scoped per `(dTag, aggregateHash)`
 - [ ] Scheme dispatch is a whitelist; smuggling-prone schemes blocked
-- [ ] Capability advertisement (`nap:resource`, `resource:scheme:*`, optionally `perm:strict-csp`) wired through `shell.supports()`
+- [ ] Capability discovery uses `shell.supports('resource')`; optional scheme and limit introspection uses `resource.info()`
 - [ ] Resource bytes treated as observable (cleartext over postMessage); deployers document this in user-facing notice if relevant
 
 
 ## References
 
 - [NAP-RESOURCE](https://github.com/napplet/naps) — normative spec for the resource NAP (wire shape, MUST/SHOULD/MAY contract)
-- [NIP-5D](./NIP-5D.md) — napplet-shell protocol; Security Considerations subsection covers strict-CSP posture and `sandbox="allow-scripts"` reaffirmation
+- [NIP-5D](https://github.com/nostr-protocol/nips/pull/2303) — canonical living napplet-shell protocol
 - [WHATWG MIME Sniffing Standard](https://mimesniff.spec.whatwg.org/) — recommended byte-sniffing reference
