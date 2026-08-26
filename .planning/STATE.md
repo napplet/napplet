@@ -536,6 +536,7 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 | Quick ID | Task | Date | Commit | Artifacts |
 |----------|------|------|--------|-----------|
+| 260826-jex | Split NAP-RESOURCE server hints from PR #205 into a dedicated PR | 2026-08-26 | 11fdf896 | [260826-jex-split-nap-resource-server-hints-from-pr-](./quick/260826-jex-split-nap-resource-server-hints-from-pr-/) |
 | 260803-qdc | Preserve CLI JSR and public API compatibility while keeping standalone create and skills resolver-free | 2026-08-03 | 53fc550f | [260803-qdc-preserve-cli-jsr-compatibility-while-kee](./quick/260803-qdc-preserve-cli-jsr-compatibility-while-kee/) |
 | 260803-ogn | Fix release version synchronization to preserve wildcard package exports and unblock the official CLI release | 2026-08-03 | 15783676 | [260803-ogn-fix-release-version-synchronization-to-p](./quick/260803-ogn-fix-release-version-synchronization-to-p/) |
 | 260803-f6z | Make the standalone napplet CLI resolver-free with direct boilerplate and skills package dispatch | 2026-08-03 | 37509d77 | [260803-f6z-make-the-standalone-napplet-cli-resolver](./quick/260803-f6z-make-the-standalone-napplet-cli-resolver/) |

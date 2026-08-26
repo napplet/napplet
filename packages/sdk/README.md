@@ -94,11 +94,13 @@ const configSub = config.subscribe((v) => {
 // Deep-link settings UI
 config.openSettings({ section: 'appearance' });
 
-// Fetch external bytes via the shell (the iframe sandbox + strict CSP block direct fetch)
-const avatarBlob = await resource.bytes('https://example.com/avatar.png');
+// Fetch external bytes through the runtime's NAP-RESOURCE surface
+const avatarBlob = await resource.bytes('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', {
+  servers: ['https://cdn.hzrd149.com'],
+});
 const resourceItems = await resource.bytesMany([
-  'https://example.com/avatar.png',
-  'blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+  { url: 'https://example.com/avatar.png' },
+  { url: 'blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', servers: ['https://cdn.hzrd149.com'] },
 ]);
 const handle = resource.bytesAsObjectURL('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
 imgEl.src = handle.url;
@@ -288,13 +290,13 @@ npm install --save-dev json-schema-to-ts
 
 ### `resource`
 
-Sandboxed byte fetching (NAP-RESOURCE). Mirrors `window.napplet.resource`. Required because the iframe sandbox + strict CSP block direct `fetch()` / `<img src=externalUrl>` / `XMLHttpRequest`.
+Sandboxed byte fetching (NAP-RESOURCE). Mirrors `window.napplet.resource`; loading and transport requirements remain defined by NIP-5D and NAP-RESOURCE rather than by this package.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `info()` | `Promise<ResourceInfo>` | Inspect advisory schemes and coarse policy limits. Not required before fetching. |
-| `bytes(url, opts?)` | `Promise<Blob>` | Fetch bytes through the shell. `opts.signal` accepts an `AbortSignal`. |
-| `bytesMany(urls, opts?)` | `Promise<ResourceBytesItem[]>` | Fetch many URLs through one envelope. Items preserve input order and length. |
+| `bytes(url, opts?)` | `Promise<Blob>` | Fetch bytes through the shell. `opts.servers` carries advisory Blossom locations and `opts.signal` accepts an `AbortSignal`. |
+| `bytesMany(requests, opts?)` | `Promise<ResourceBytesItem[]>` | Fetch many per-resource requests through one envelope. Each request may carry advisory Blossom `servers`; items preserve input order and length. |
 | `bytesAsObjectURL(url)` | `{ url: string; revoke: () => void }` | Synchronous handle whose `url` resolves to a blob URL once the fetch completes. |
 
 Canonical schemes: `data:` (in-shim), `https:` (shell-side under policy), `blossom:sha256:<hex>` (hash-verified), `htree:` (Hashtree-verified), `nostr:<bech32>` (single-hop NIP-19).

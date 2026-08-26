@@ -215,6 +215,14 @@ export interface ResourceBytesErrorItem {
 /** Ordered per-URL item returned by `resource.bytesMany`. */
 export type ResourceBytesItem = ResourceBytesOkItem | ResourceBytesErrorItem;
 
+/** One resource request within a `resource.bytesMany` envelope. */
+export interface ResourceBytesRequest {
+  /** URL identifying the resource (any registered scheme). */
+  url: string;
+  /** Advisory Blossom server locations for this resource only. */
+  servers?: string[];
+}
+
 /** Pre-resolved resource bytes carried by another NAP's event sidecar. */
 export interface ResourceSidecarEntry {
   url: string;
@@ -233,6 +241,7 @@ export interface ResourceInfo {
   schemes: ResourceSchemeInfo[];
   maxBytes?: number;
   maxUrls?: number;
+  maxServers?: number;
 }
 
 /**
@@ -250,13 +259,15 @@ export interface ResourceInfo {
  * @example
  * ```ts
  * // Fetch raw bytes:
- * const blob = await window.napplet.resource.bytes('https://example.com/avatar.png');
+ * const blob = await window.napplet.resource.bytes('blossom:sha256:abc123...', {
+ *   servers: ['https://cdn.hzrd149.com'],
+ * });
  *
  * // Fetch many resources in one envelope:
  * const items = await window.napplet.resource.bytesMany([
- *   'https://example.com/avatar.png',
- *   'blossom:sha256:abc123...',
- *   'htree://example-root/path',
+ *   { url: 'https://example.com/avatar.png' },
+ *   { url: 'blossom:sha256:abc123...', servers: ['https://cdn.hzrd149.com'] },
+ *   { url: 'htree://example-root/path' },
  * ]);
  *
  * // Get a managed object URL (revoke when done to free memory):
@@ -279,18 +290,19 @@ export interface ResourceApi {
    * (private-IP blocks, size caps, timeouts, MIME classification), and
    * returns the bytes as a single Blob. No streaming, no chunking.
    * @param url  URL identifying the resource (any registered scheme)
+   * @param opts  Optional advisory Blossom `servers` and AbortController signal
    * @returns Promise resolving to the fetched bytes as a Blob
    */
-  bytes(url: string, opts?: { signal?: AbortSignal }): Promise<Blob>;
+  bytes(url: string, opts?: { servers?: string[]; signal?: AbortSignal }): Promise<Blob>;
   /**
-   * Fetch the bytes referenced by many URLs through one shell envelope.
+   * Fetch the bytes referenced by many per-resource requests through one shell envelope.
    * The returned items preserve input order and length. Failed URLs are
    * represented as `ok: false` items; successful siblings remain available.
-   * @param urls  Non-empty URL list
+   * @param requests  Non-empty resource request list with optional per-resource Blossom servers
    * @param opts  Optional AbortController signal
    * @returns Promise resolving to ordered per-URL result items
    */
-  bytesMany(urls: string[], opts?: { signal?: AbortSignal }): Promise<ResourceBytesItem[]>;
+  bytesMany(requests: ResourceBytesRequest[], opts?: { signal?: AbortSignal }): Promise<ResourceBytesItem[]>;
   /**
    * Convenience wrapper around `bytes(url)` that returns a managed
    * object URL plus a `revoke` function. Calling `revoke()` invokes

@@ -12,7 +12,7 @@ export type FieldKind = 'string' | 'number' | 'boolean' | 'array' | 'object' | '
 export interface EnvelopeSpec {
   /** `out` = sent by the napplet to the shell; `in` = sent by the shell to the napplet. */
   dir: EnvelopeDirection;
-  /** Required carrier fields (name → kind). Optional fields are omitted. */
+  /** Required carrier fields (name → kind). */
   fields?: Record<string, FieldKind>;
   /** Fields a napplet-emitted carrier must never supply. */
   forbiddenFields?: readonly string[];
@@ -31,7 +31,8 @@ export interface EnvelopeError {
     | 'missing-field'
     | 'wrong-type'
     | 'forbidden-field'
-    | 'invalid-intent-request';
+    | 'invalid-intent-request'
+    | 'invalid-resource-request';
   /** Human-readable explanation. */
   message: string;
   /** Field name, when the error concerns a specific field. */

@@ -1,5 +1,17 @@
 # @napplet/shim
 
+## 0.30.0
+
+### Minor Changes
+
+- 19e0029: Adopt the NAP-RESOURCE server-hint amendment: `bytes` carries optional advisory Blossom `servers`, `bytesMany` accepts per-resource request objects, `ResourceInfo` exposes optional `maxServers`, and conformance emits the amended envelopes.
+
+### Patch Changes
+
+- Updated dependencies [19e0029]
+  - @napplet/core@0.32.0
+  - @napplet/nap@0.32.0
+
 ## 0.29.2
 
 ### Patch Changes

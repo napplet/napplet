@@ -4,7 +4,13 @@
  * @packageDocumentation
  */
 
-import type { NappletGlobal, ResourceBytesItem, ResourceInfo, Subscription } from '@napplet/core';
+import type {
+  NappletGlobal,
+  ResourceBytesItem,
+  ResourceBytesRequest,
+  ResourceInfo,
+  Subscription,
+} from '@napplet/core';
 import { requireDomain } from './require-napplet.js';
 
 type SdkDomain<K extends keyof NappletGlobal> = NonNullable<NappletGlobal[K]>;
@@ -100,10 +106,12 @@ export const config: SdkDomain<'config'> = {
  * ```ts
  * import { resource } from '@napplet/sdk';
  *
- * const blob = await resource.bytes('https://example.com/avatar.png');
+ * const blob = await resource.bytes('blossom:sha256:abc123...', {
+ *   servers: ['https://cdn.hzrd149.com'],
+ * });
  * const items = await resource.bytesMany([
- *   'https://example.com/a.png',
- *   'htree://example-root/path',
+ *   { url: 'https://example.com/a.png' },
+ *   { url: 'htree://example-root/path' },
  * ]);
  * const handle = resource.bytesAsObjectURL('blossom:abc123...');
  * imgEl.src = handle.url;
@@ -124,21 +132,21 @@ export const resource: SdkDomain<'resource'> = {
    * @param url  URL identifying the resource (any registered scheme).
    * @returns Promise resolving to the fetched bytes as a Blob.
    */
-  bytes(url: string, opts?: { signal?: AbortSignal }): Promise<Blob> {
+  bytes(url: string, opts?: { servers?: string[]; signal?: AbortSignal }): Promise<Blob> {
     return requireDomain('resource').bytes(url, opts);
   },
 
   /**
-   * Fetch bytes for many URLs through one shell envelope.
-   * @param urls  Non-empty URL list.
+   * Fetch bytes for many per-resource requests through one shell envelope.
+   * @param requests  Non-empty resource request list with optional per-resource Blossom servers.
    * @param opts  Optional AbortController signal.
    * @returns Promise resolving to ordered per-URL result items.
    */
   bytesMany(
-    urls: string[],
+    requests: ResourceBytesRequest[],
     opts?: { signal?: AbortSignal },
   ): Promise<ResourceBytesItem[]> {
-    return requireDomain('resource').bytesMany(urls, opts);
+    return requireDomain('resource').bytesMany(requests, opts);
   },
 
   /**

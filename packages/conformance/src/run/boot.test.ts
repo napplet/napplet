@@ -40,14 +40,22 @@ describe('bootAndCollect — DOM wiring', () => {
     try {
       Function(runtimePrelude(['resource']))();
       const napplet = (window as unknown as {
-        napplet: { resource: { bytes(url: string): Promise<Blob> } };
+        napplet: {
+          resource: {
+            bytes(url: string, options?: { servers?: string[] }): Promise<Blob>;
+            bytesMany(requests: Array<{ url: string; servers?: string[] }>): Promise<unknown[]>;
+          };
+        };
       }).napplet;
-      const promise = napplet.resource.bytes('data:text/plain;base64,aGk=');
+      const promise = napplet.resource.bytes('data:text/plain;base64,aGk=', {
+        servers: ['https://cdn.example'],
+      });
 
       expect(posted).toEqual([{
         type: 'resource.bytes',
         id: expect.any(String),
         url: 'data:text/plain;base64,aGk=',
+        servers: ['https://cdn.example'],
       }]);
 
       window.dispatchEvent(new MessageEvent('message', {
@@ -60,6 +68,27 @@ describe('bootAndCollect — DOM wiring', () => {
       }));
 
       expect(await (await promise).text()).toBe('hi');
+
+      const many = napplet.resource.bytesMany([{
+        url: 'blossom:sha256:abc',
+        servers: ['https://cdn.example'],
+      }]);
+      expect(posted[1]).toEqual({
+        type: 'resource.bytesMany',
+        id: expect.any(String),
+        requests: [{
+          url: 'blossom:sha256:abc',
+          servers: ['https://cdn.example'],
+        }],
+      });
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'resource.bytesMany.result',
+          id: posted[1].id,
+          items: [],
+        },
+      }));
+      await expect(many).resolves.toEqual([]);
     } finally {
       Object.defineProperty(window, 'parent', { configurable: true, value: previousParent });
       delete (window as unknown as { napplet?: unknown }).napplet;
