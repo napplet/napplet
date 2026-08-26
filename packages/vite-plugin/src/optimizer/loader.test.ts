@@ -15,7 +15,9 @@ function entry(source: string, value: Uint8Array): ResourceTableEntry {
   return { source, uri: `blossom:sha256:${sha256}`, sha256, bytes: value.byteLength, mime: 'application/octet-stream' };
 }
 
-function fakeWindow(overrides: Partial<{ bytes: (uri: string) => Promise<Blob>; bytesMany: (uris: string[]) => Promise<Array<{ url: string; ok: boolean; blob?: Blob }>> }> = {}) {
+type ResourceBytesRequest = { url: string; servers?: string[] };
+
+function fakeWindow(overrides: Partial<{ bytes: (uri: string) => Promise<Blob>; bytesMany: (requests: ResourceBytesRequest[]) => Promise<Array<{ url: string; ok: boolean; blob?: Blob }>> }> = {}) {
   return {
     napplet: {
       resource: {
@@ -27,18 +29,19 @@ function fakeWindow(overrides: Partial<{ bytes: (uri: string) => Promise<Blob>; 
 }
 
 describe('private NAP-RESOURCE runtime', () => {
-  it('uses only existing resource.bytes and bytesMany with canonical Blossom URIs', async () => {
+  it('uses only existing resource.bytes and canonical bytesMany request objects', async () => {
     const one = entry('assets/one.bin', bytes(4, 49));
     const two = entry('assets/two.bin', bytes(4, 50));
     const bytesCall = vi.fn(async (uri: string) => new Blob([uri === one.uri ? bytes(4, 49) : bytes(4, 50)]));
-    const manyCall = vi.fn(async (uris: string[]) => uris.map((uri) => ({ url: uri, ok: true, blob: new Blob([uri === one.uri ? bytes(4, 49) : bytes(4, 50)]) })));
+    const manyCall = vi.fn(async (requests: ResourceBytesRequest[]) => requests.map(({ url }) => ({ url, ok: true, blob: new Blob([url === one.uri ? bytes(4, 49) : bytes(4, 50)]) })));
     const runtime = new ResourceRuntime({ entries: [one, two], window: fakeWindow({ bytes: bytesCall, bytesMany: manyCall }) });
 
     await expect(runtime.resolve(one.source)).resolves.toBeInstanceOf(Blob);
     await expect(runtime.resolveMany([one.source, two.source])).resolves.toHaveLength(2);
     expect(bytesCall).toHaveBeenCalledWith(one.uri);
-    expect(manyCall).toHaveBeenCalledWith([two.uri]);
+    expect(manyCall).toHaveBeenCalledWith([{ url: two.uri }]);
     expect(renderResourceLoader([one, two])).toContain('window.napplet.resource.bytesMany');
+    expect(renderResourceLoader([one, two])).toContain('resourceBytesMany(missing.map((entry) => ({ url: entry.uri })))');
     expect(renderResourceLoader([one, two])).not.toContain('fetch(');
   });
 
@@ -83,7 +86,7 @@ describe('private NAP-RESOURCE runtime', () => {
 
   it('bounds batches, digest work, cached bytes, and timeouts without exposing partial batches', async () => {
     const entries = [entry('assets/one.bin', bytes(4, 49)), entry('assets/two.bin', bytes(4, 50)), entry('assets/three.bin', bytes(4, 51))];
-    const manyCall = vi.fn(async (uris: string[]) => uris.map((uri) => ({ url: uri, ok: true, blob: new Blob([entries.find((candidate) => candidate.uri === uri)!.sha256 === entries[0]!.sha256 ? bytes(4, 49) : entries.find((candidate) => candidate.uri === uri)!.sha256 === entries[1]!.sha256 ? bytes(4, 50) : bytes(4, 51)]) })));
+    const manyCall = vi.fn(async (requests: ResourceBytesRequest[]) => requests.map(({ url }) => ({ url, ok: true, blob: new Blob([entries.find((candidate) => candidate.uri === url)!.sha256 === entries[0]!.sha256 ? bytes(4, 49) : entries.find((candidate) => candidate.uri === url)!.sha256 === entries[1]!.sha256 ? bytes(4, 50) : bytes(4, 51)]) })));
     let concurrent = 0;
     let peak = 0;
     const runtime = new ResourceRuntime({
@@ -102,7 +105,7 @@ describe('private NAP-RESOURCE runtime', () => {
     });
 
     await expect(runtime.resolveMany(entries.map((candidate) => candidate.source))).resolves.toHaveLength(3);
-    expect(manyCall.mock.calls.map(([uris]) => uris)).toEqual([[entries[0]!.uri, entries[1]!.uri], [entries[2]!.uri]]);
+    expect(manyCall.mock.calls.map(([requests]) => requests)).toEqual([[{ url: entries[0]!.uri }, { url: entries[1]!.uri }], [{ url: entries[2]!.uri }]]);
     expect(peak).toBe(1);
 
     const timeout = new ResourceRuntime({ entries: [entries[0]!], window: fakeWindow({ bytes: () => new Promise(() => {}) }), timeoutMs: 1 });
@@ -118,7 +121,7 @@ describe('private NAP-RESOURCE runtime', () => {
     const urls = { createObjectURL: vi.fn(() => 'blob:unsafe'), revokeObjectURL: vi.fn() };
     const window = rows === undefined
       ? {}
-      : fakeWindow({ bytesMany: async (uris) => rows.map((row, index) => ({ ...row, url: row.url || uris[index]! })) });
+      : fakeWindow({ bytesMany: async (requests) => rows.map((row, index) => ({ ...row, url: row.url || requests[index]!.url })) });
     const runtime = new ResourceRuntime({ entries: [resource], window, url: urls });
 
     await expect(runtime.resolveMany([resource.source])).rejects.toThrow();
