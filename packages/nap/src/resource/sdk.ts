@@ -12,7 +12,7 @@
  */
 
 import type { NappletGlobal } from '@napplet/core';
-import type { ResourceBytesItem, ResourceInfo } from './types.js';
+import type { ResourceBytesItem, ResourceBytesRequest, ResourceInfo } from './types.js';
 
 function requireResource(): NonNullable<NappletGlobal['resource']> {
   const w = window as Window & { napplet?: NappletGlobal };
@@ -45,11 +45,16 @@ export const info = resourceInfo;
  * ```ts
  * import { resourceBytes } from '@napplet/nap/resource';
  *
- * const blob = await resourceBytes('https://example.com/avatar.png');
+ * const blob = await resourceBytes('blossom:sha256:abc123...', {
+ *   servers: ['https://cdn.hzrd149.com'],
+ * });
  * const url = URL.createObjectURL(blob);
  * ```
  */
-export function resourceBytes(url: string, opts?: { signal?: AbortSignal }): Promise<Blob> {
+export function resourceBytes(
+  url: string,
+  opts?: { servers?: string[]; signal?: AbortSignal },
+): Promise<Blob> {
   return requireResource().bytes(url, opts);
 }
 
@@ -59,7 +64,7 @@ export const bytes = resourceBytes;
 /**
  * Fetch bytes for many URLs through the shell's resource pipeline.
  *
- * @param urls  Non-empty URL list.
+ * @param requests  Non-empty resource request list with optional per-resource Blossom servers.
  * @param opts  Optional `{ signal }` for AbortController cancellation.
  * @returns Promise resolving to ordered per-URL result items.
  *
@@ -68,17 +73,17 @@ export const bytes = resourceBytes;
  * import { resourceBytesMany } from '@napplet/nap/resource';
  *
  * const items = await resourceBytesMany([
- *   'https://example.com/avatar.png',
- *   'blossom:sha256:...',
- *   'htree://example-root/path',
+ *   { url: 'https://example.com/avatar.png' },
+ *   { url: 'blossom:sha256:...', servers: ['https://cdn.hzrd149.com'] },
+ *   { url: 'htree://example-root/path' },
  * ]);
  * ```
  */
 export function resourceBytesMany(
-  urls: string[],
+  requests: ResourceBytesRequest[],
   opts?: { signal?: AbortSignal },
 ): Promise<ResourceBytesItem[]> {
-  return requireResource().bytesMany(urls, opts);
+  return requireResource().bytesMany(requests, opts);
 }
 
 /** Alias for {@link resourceBytesMany} on the SDK subpath. */

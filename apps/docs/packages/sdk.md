@@ -100,10 +100,12 @@ await storage.setItem('theme', 'dark');
 const configSub = config.subscribe((values) => applyTheme(values.theme));
 
 // Fetch external bytes through the shell
-const avatarBlob = await resource.bytes('https://example.com/avatar.png');
+const avatarBlob = await resource.bytes('blossom:sha256:abc123...', {
+  servers: ['https://cdn.hzrd149.com'],
+});
 const avatarItems = await resource.bytesMany([
-  'https://example.com/avatar.png',
-  'blossom:sha256:abc123...',
+  { url: 'https://example.com/avatar.png' },
+  { url: 'blossom:sha256:abc123...', servers: ['https://cdn.hzrd149.com'] },
 ]);
 ```
 

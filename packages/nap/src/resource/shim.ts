@@ -6,6 +6,7 @@
 
 import type {
   ResourceBytesItem,
+  ResourceBytesRequest,
   ResourceInfo,
   ResourceSidecarEntry,
 } from './types.js';
@@ -43,7 +44,7 @@ export function info(): Promise<ResourceInfo> {
  * - Aborted signals are honored synchronously and via cancel envelope.
  *
  * @param url   URL identifying the resource (any registered scheme)
- * @param opts  Optional `{ signal }` for AbortController cancellation
+ * @param opts  Optional advisory Blossom `servers` and `{ signal }` for cancellation
  * @returns Promise resolving to the fetched bytes as a Blob
  *
  * @example
@@ -56,7 +57,7 @@ export function info(): Promise<ResourceInfo> {
  * ac.abort(); // -> rejects with AbortError, sends resource.cancel envelope
  * ```
  */
-export function bytes(url: string, opts?: { signal?: AbortSignal }): Promise<Blob> {
+export function bytes(url: string, opts?: { servers?: string[]; signal?: AbortSignal }): Promise<Blob> {
   // Synchronous abort check -- reject before any work or envelope dispatch.
   if (opts?.signal?.aborted) {
     return Promise.reject(new DOMException('Aborted', 'AbortError'));
@@ -78,7 +79,7 @@ export function bytes(url: string, opts?: { signal?: AbortSignal }): Promise<Blo
       work = decodeDataUrl(url);
     } else {
       cancelId = crypto.randomUUID();
-      work = sendBytesRequest(url, cancelId);
+      work = sendBytesRequest(url, cancelId, opts?.servers);
     }
   } catch {
     return Promise.reject(new Error(`invalid URL: ${url}`));
@@ -101,28 +102,28 @@ export function bytes(url: string, opts?: { signal?: AbortSignal }): Promise<Blo
 }
 
 /**
- * Fetch bytes for many URLs through one shell envelope.
+ * Fetch bytes for many per-resource requests through one shell envelope.
  *
  * `items` preserves the input order and length. Failed URLs are represented as
  * `ok: false` items so successful siblings remain available to the caller.
  *
- * @param urls  Non-empty URL list.
+ * @param requests  Non-empty resource request list with optional per-resource Blossom servers.
  * @param opts  Optional `{ signal }` for AbortController cancellation.
  * @returns Promise resolving to ordered per-URL resource result items.
  */
 export function bytesMany(
-  urls: string[],
+  requests: ResourceBytesRequest[],
   opts?: { signal?: AbortSignal },
 ): Promise<ResourceBytesItem[]> {
-  if (urls.length === 0) {
-    return Promise.reject(new Error('invalid-request: urls must be non-empty'));
+  if (requests.length === 0) {
+    return Promise.reject(new Error('invalid-request: requests must be non-empty'));
   }
   if (opts?.signal?.aborted) {
     return Promise.reject(new DOMException('Aborted', 'AbortError'));
   }
 
   const id = crypto.randomUUID();
-  const work = sendBytesManyRequest(urls, id);
+  const work = sendBytesManyRequest(requests, id);
   return wireManySignal(work, opts?.signal, id);
 }
 

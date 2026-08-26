@@ -136,11 +136,13 @@ const configSub = window.napplet.config.subscribe((values) => {
 // Deep-link the shell's settings UI to a named section
 window.napplet.config.openSettings({ section: 'appearance' });
 
-// Fetch external bytes via the shell (CSP blocks direct <img src=externalUrl> / fetch())
-const avatarBlob = await window.napplet.resource.bytes('https://example.com/avatar.png');
+// Fetch external bytes through the runtime's NAP-RESOURCE surface
+const avatarBlob = await window.napplet.resource.bytes('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', {
+  servers: ['https://cdn.hzrd149.com'],
+});
 const resourceItems = await window.napplet.resource.bytesMany([
-  'https://example.com/avatar.png',
-  'blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+  { url: 'https://example.com/avatar.png' },
+  { url: 'blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', servers: ['https://cdn.hzrd149.com'] },
 ]);
 const handle = window.napplet.resource.bytesAsObjectURL('blossom:sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
 imgEl.src = handle.url;
@@ -239,8 +241,9 @@ Messages are posted to the shell through `@napplet/core`'s clone-safe `sendEnvel
 { type: 'config.unsubscribe' }
 { type: 'config.openSettings', section?: string }
 
-{ type: 'resource.bytes', id: string, url: string }
-{ type: 'resource.bytesMany', id: string, urls: string[] }
+{ type: 'resource.info', id: string }
+{ type: 'resource.bytes', id: string, url: string, servers?: string[] }
+{ type: 'resource.bytesMany', id: string, requests: Array<{ url: string, servers?: string[] }> }
 { type: 'resource.cancel', id: string }
 
 { type: 'link.open', id: string, url: string, options?: { label?: string } }
@@ -304,6 +307,8 @@ Messages received via `window.addEventListener('message', ...)`:
 { type: 'config.values', id?: string, values: object }
 { type: 'config.schemaError', code: string, error: string }
 
+{ type: 'resource.info.result', id: string, info: ResourceInfo }
+{ type: 'resource.info.error', id: string, error: string, message?: string }
 { type: 'resource.bytes.result', id: string, blob: Blob, mime: string }
 { type: 'resource.bytes.error', id: string, error: 'invalid-request' | 'not-found' | 'blocked-by-policy' | 'timeout' | 'too-large' | 'unsupported-scheme' | 'decode-failed' | 'network-error' | 'quota-exceeded', message?: string }
 { type: 'resource.bytesMany.result', id: string, items: ResourceBytesItem[] }
@@ -407,8 +412,9 @@ window.napplet = {
     readonly schema: Record<string, unknown> | null;
   },
   resource: {
+    info(): Promise<ResourceInfo>;
     bytes(url, opts?): Promise<Blob>;
-    bytesMany(urls, opts?): Promise<ResourceBytesItem[]>;
+    bytesMany(requests, opts?): Promise<ResourceBytesItem[]>;
     bytesAsObjectURL(url): { url: string; revoke: () => void };
   },
   link: {
@@ -554,17 +560,18 @@ Per-napplet declarative configuration (NAP-CONFIG). The shell is the sole writer
 
 ### `window.napplet.resource`
 
-Sandboxed byte fetching. The iframe sandbox (no `allow-same-origin`) plus strict CSP (no `connect-src`) means napplets cannot fetch external URLs directly — `<img src="https://...">`, `fetch()`, and `XMLHttpRequest` are all blocked by the browser. Use `resource.bytes(url)` or `resource.bytesMany(urls)` to fetch external resources through the shell.
+Sandboxed byte fetching through the runtime-provided NAP-RESOURCE surface. Use `resource.bytes(url, opts?)` or `resource.bytesMany(requests, opts?)`; loading and transport requirements remain defined by NIP-5D and NAP-RESOURCE rather than by this package.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `bytes(url, opts?)` | `Promise<Blob>` | Fetch bytes for a URL via the shell. `opts.signal` accepts an `AbortSignal` for cancellation. |
-| `bytesMany(urls, opts?)` | `Promise<ResourceBytesItem[]>` | Fetch many URLs through one envelope. Items preserve input order and length. |
+| `info()` | `Promise<ResourceInfo>` | Inspect advisory schemes and coarse policy limits, including optional `maxServers`. A preflight is not required. |
+| `bytes(url, opts?)` | `Promise<Blob>` | Fetch bytes for a URL via the shell. `opts.servers` carries advisory Blossom locations and `opts.signal` accepts an `AbortSignal`. |
+| `bytesMany(requests, opts?)` | `Promise<ResourceBytesItem[]>` | Fetch many per-resource requests through one envelope. Each request may carry advisory Blossom `servers`; items preserve input order and length. |
 | `bytesAsObjectURL(url)` | `{ url: string; revoke: () => void }` | Synchronous handle whose `url` resolves to a blob URL once the underlying fetch completes. Caller MUST `revoke()` when done. |
 
 Canonical schemes: `data:` (decoded in-shim), `https:` (shell-side network with policy), `blossom:sha256:<hex>` (hash-verified), `htree:` (Hashtree-verified), `nostr:<bech32>` (single-hop NIP-19 resolution).
 
-Errors reject the Promise with one of 8 codes: `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, `quota-exceeded`.
+Errors use the NAP-RESOURCE vocabulary: `invalid-request`, `not-found`, `blocked-by-policy`, `timeout`, `too-large`, `unsupported-scheme`, `decode-failed`, `network-error`, or `quota-exceeded`.
 
 Capability detection:
 

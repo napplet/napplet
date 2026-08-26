@@ -6,9 +6,9 @@ current_phase: 161
 current_phase_name: ad-hoc-convention-package-contracts
 status: complete
 stopped_at: Quick task 260728-nbn complete; PR #189 conflicts resolved
-last_updated: "2026-08-03T18:11:42Z"
-last_activity: 2026-08-03
-last_activity_desc: Completed quick task 260803-qdc — preserve CLI JSR and standalone release compatibility
+last_updated: "2026-08-26T13:09:09Z"
+last_activity: 2026-08-26
+last_activity_desc: Completed quick task 260826-jex — split NAP-RESOURCE server hints from PR #205 into a dedicated PR
 progress:
   total_phases: 8
   completed_phases: 4
@@ -34,7 +34,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 Phase: 161 (ad-hoc-convention-package-contracts) — COMPLETE
 Plan: 26 of 26
 Status: Verified; PR #186 open
-Last activity: 2026-08-03 — Completed quick task 260803-qdc: preserve CLI JSR and standalone release compatibility
+Last activity: 2026-08-26 — Completed quick task 260826-jex: split NAP-RESOURCE server hints from PR #205 into a dedicated PR
 community/group-chat invite linked from the SPA and docs.
 
 ### Quick task 260726-ft1 — COMPLETE
@@ -511,6 +511,7 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 | Quick ID | Task | Date | Commit | Artifacts |
 |----------|------|------|--------|-----------|
+| 260826-jex | Split NAP-RESOURCE server hints from PR #205 into a dedicated PR | 2026-08-26 | 11fdf896 | [260826-jex-split-nap-resource-server-hints-from-pr-](./quick/260826-jex-split-nap-resource-server-hints-from-pr-/) |
 | 260803-qdc | Preserve CLI JSR and public API compatibility while keeping standalone create and skills resolver-free | 2026-08-03 | 53fc550f | [260803-qdc-preserve-cli-jsr-compatibility-while-kee](./quick/260803-qdc-preserve-cli-jsr-compatibility-while-kee/) |
 | 260803-ogn | Fix release version synchronization to preserve wildcard package exports and unblock the official CLI release | 2026-08-03 | 15783676 | [260803-ogn-fix-release-version-synchronization-to-p](./quick/260803-ogn-fix-release-version-synchronization-to-p/) |
 | 260803-f6z | Make the standalone napplet CLI resolver-free with direct boilerplate and skills package dispatch | 2026-08-03 | 37509d77 | [260803-f6z-make-the-standalone-napplet-cli-resolver](./quick/260803-f6z-make-the-standalone-napplet-cli-resolver/) |

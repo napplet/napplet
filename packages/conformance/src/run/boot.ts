@@ -110,11 +110,14 @@ export function runtimePrelude(domains: readonly string[]): string {
     napplet.resource.info = () =>
       request({ type: 'resource.info' }, 'resource.info.result', 'resource.info.error')
         .then((msg) => msg.info);
-    napplet.resource.bytes = (url) =>
-      request({ type: 'resource.bytes', url: String(url) }, 'resource.bytes.result', 'resource.bytes.error')
+    napplet.resource.bytes = (url, options) => {
+      const message = { type: 'resource.bytes', url: String(url) };
+      if (options && options.servers !== undefined) message.servers = options.servers;
+      return request(message, 'resource.bytes.result', 'resource.bytes.error')
         .then((msg) => msg.blob);
-    napplet.resource.bytesMany = (urls) =>
-      request({ type: 'resource.bytesMany', urls: Array.from(urls || []) }, 'resource.bytesMany.result', 'resource.bytesMany.error')
+    };
+    napplet.resource.bytesMany = (requests) =>
+      request({ type: 'resource.bytesMany', requests: Array.from(requests || []) }, 'resource.bytesMany.result', 'resource.bytesMany.error')
         .then((msg) => msg.items);
     napplet.resource.bytesAsObjectURL = (url) => {
       const handle = { url: '', revoke: () => {} };
