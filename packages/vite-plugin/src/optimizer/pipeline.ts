@@ -219,15 +219,90 @@ function dataUri(asset: RetainedAsset): string {
   return `data:${asset.mime};base64,${Buffer.from(asset.bytes).toString('base64')}`;
 }
 
+interface DocumentInjectionPoints {
+  headClose: number | undefined;
+  bodyContent: number | undefined;
+}
+
+const RAW_TEXT_ELEMENTS = new Set(['iframe', 'noembed', 'noframes', 'script', 'style', 'textarea', 'title', 'xmp']);
+
+function htmlTagEnd(html: string, start: number): number | undefined {
+  let quote: '"' | "'" | undefined;
+  for (let index = start + 1; index < html.length; index += 1) {
+    const character = html[index];
+    if (quote) {
+      if (character === quote) quote = undefined;
+    } else if (character === '"' || character === "'") {
+      quote = character;
+    } else if (character === '>') {
+      return index;
+    }
+  }
+  return undefined;
+}
+
+function documentInjectionPoints(html: string): DocumentInjectionPoints {
+  const lower = html.toLowerCase();
+  let cursor = 0;
+  let rawText: string | undefined;
+  let templateDepth = 0;
+  let headClose: number | undefined;
+  let bodyContent: number | undefined;
+
+  while (cursor < html.length && (headClose === undefined || bodyContent === undefined)) {
+    const start = rawText
+      ? lower.indexOf(`</${rawText}`, cursor)
+      : html.indexOf('<', cursor);
+    if (start < 0) break;
+    if (!rawText && html.startsWith('<!--', start)) {
+      const commentEnd = html.indexOf('-->', start + 4);
+      cursor = commentEnd < 0 ? html.length : commentEnd + 3;
+      continue;
+    }
+    const end = htmlTagEnd(html, start);
+    if (end === undefined) break;
+    const tag = /^<\s*(\/?)\s*([a-z][a-z0-9:-]*)/i.exec(html.slice(start, end + 1));
+    if (!tag) {
+      cursor = end + 1;
+      continue;
+    }
+    const closing = tag[1] === '/';
+    const name = tag[2]!.toLowerCase();
+    if (rawText) {
+      if (closing && name === rawText) rawText = undefined;
+      cursor = end + 1;
+      continue;
+    }
+    if (name === 'template') {
+      templateDepth = closing ? Math.max(0, templateDepth - 1) : templateDepth + 1;
+      cursor = end + 1;
+      continue;
+    }
+    if (templateDepth === 0) {
+      if (closing && name === 'head' && headClose === undefined) headClose = start;
+      if (!closing && name === 'body' && bodyContent === undefined) bodyContent = end + 1;
+    }
+    if (!closing && RAW_TEXT_ELEMENTS.has(name)) rawText = name;
+    cursor = end + 1;
+  }
+  return { headClose, bodyContent };
+}
+
 function injectPrivateMetadata(html: string, entries: readonly ResourceTableEntry[]): string {
   if (entries.length === 0) return html;
   const table = renderPrivateResourceTable(entries).replace(/<\/script/gi, '<\\/script');
   const metadata = `<style data-napplet-private-loader>${renderLoaderScreenStyle()}</style><script type="application/json" data-napplet-private-resource-table>${table}</script><script>${renderResourceLoader(entries)}</script>`;
-  const withMetadata = /<\/head\s*>/i.test(html) ? html.replace(/<\/head\s*>/i, `${metadata}</head>`) : `${metadata}${html}`;
   const markup = renderLoaderScreenMarkup();
-  return /<body\b[^>]*>/i.test(withMetadata)
-    ? withMetadata.replace(/<body\b[^>]*>/i, (openingTag) => `${openingTag}${markup}`)
-    : `${withMetadata}${markup}`;
+  const points = documentInjectionPoints(html);
+  const insertions = [
+    { index: points.headClose ?? 0, value: metadata },
+    { index: points.bodyContent ?? html.length, value: markup },
+  ].sort((left, right) => right.index - left.index);
+  let result = html;
+  for (const insertion of insertions) {
+    result = `${result.slice(0, insertion.index)}${insertion.value}${result.slice(insertion.index)}`;
+  }
+  return result;
 }
 
 function buildReferenceInventory(build: RetainedBuild): ReferenceInventory {
