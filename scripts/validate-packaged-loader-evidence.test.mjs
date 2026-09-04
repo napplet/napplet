@@ -229,7 +229,16 @@ async function createFixture() {
   const verificationPath = path.join(root, '260904-nm7-VERIFICATION.md');
   fs.writeFileSync(reviewPath, `---\nreviewed_sha: ${H1}\nstatus: passed\n---\n`);
   fs.writeFileSync(verificationPath, `---\nreviewed_sha: ${H1}\nstatus: gaps_found\nrequirements_failed: 0\npublication_pending: true\n---\n`);
-  const metadataPaths = [reviewPath, verificationPath, reviewPath.replace('-REVIEW.md', '-SUMMARY.md'), '.planning/STATE.md'];
+  const planPrefix = reviewPath.replace('-REVIEW.md', '');
+  const metadataPaths = [
+    `${planPrefix}-PLAN.md`,
+    `${planPrefix}-RESEARCH.md`,
+    `${planPrefix}-VALIDATION.md`,
+    reviewPath,
+    verificationPath,
+    `${planPrefix}-SUMMARY.md`,
+    '.planning/STATE.md',
+  ];
   const services = {
     queryRelay: async () => [clone(event)],
     fetchBytes: async (url) => {
@@ -469,6 +478,7 @@ test('accepts complete publication state with pending-aware H1 verification', as
 for (const [name, mutate] of [
   ['rejects different H1 review provenance', (fixture) => fs.writeFileSync(fixture.publication.reviewPath, `reviewed_sha: ${'d'.repeat(40)}\nstatus: passed\n`)],
   ['rejects a verifier that does not preserve pending-aware H1 semantics', (fixture) => fs.writeFileSync(fixture.publication.verificationPath, `reviewed_sha: ${H1}\nstatus: passed\nrequirements_failed: 0\npublication_pending: false\n`)],
+  ['rejects a missing H1-to-H2 metadata path', (fixture) => { fixture.services.git.diffPaths = async () => fixture.metadataPaths.slice(1); }],
   ['rejects extra H1-to-H2 paths', (fixture) => { fixture.services.git.diffPaths = async () => [...fixture.metadataPaths, 'src/unexpected.ts']; }],
   ['rejects H1-to-H2 source or evidence drift', (fixture) => { fixture.services.git.treeHash = async (ref) => ref === H1 ? 'before' : 'after'; }],
   ['rejects a local and remote H2 mismatch', (fixture) => { fixture.services.git.remoteHead = async () => 'd'.repeat(40); }],
