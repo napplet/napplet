@@ -434,7 +434,16 @@ async function validatePublication(publication, services, variants) {
   if (!GIT_SHA.test(h2) || h2 === h1 || await git.remoteHead(publication.head) !== h2) fail('local and remote H2 do not match');
   const baseHead = await git.remoteHead(publication.base);
   if (!GIT_SHA.test(baseHead) || !await git.isAncestor(baseHead, h2)) fail('publication base is not an H2 ancestor');
-  const expectedPaths = [publication.reviewPath, publication.verificationPath, publication.reviewPath.replace('-REVIEW.md', '-SUMMARY.md'), '.planning/STATE.md'];
+  const planPrefix = publication.reviewPath.replace('-REVIEW.md', '');
+  const expectedPaths = [
+    `${planPrefix}-PLAN.md`,
+    `${planPrefix}-RESEARCH.md`,
+    `${planPrefix}-VALIDATION.md`,
+    publication.reviewPath,
+    publication.verificationPath,
+    `${planPrefix}-SUMMARY.md`,
+    '.planning/STATE.md',
+  ];
   const changedPaths = await git.diffPaths(h1, h2);
   if (!sameStrings(changedPaths, expectedPaths) || new Set(changedPaths).size !== expectedPaths.length) fail('H1-to-H2 diff is not metadata-only');
   if (await git.treeHash(h1, expectedPaths) !== await git.treeHash(h2, expectedPaths)) fail('source or evidence changed between H1 and H2');
