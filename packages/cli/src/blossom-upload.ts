@@ -111,7 +111,7 @@ export async function uploadFilesToServers(
     secondary: endpoints.slice(1),
     blobs: files.map((file) => ({ bytes: file.data, contentType: file.contentType })),
     signer: asBuildSigner(signer),
-  }, { fetch: options.fetch, networkPolicy: policy, now: options.now });
+  }, { fetch: options.fetch ?? globalThis.fetch, networkPolicy: policy, now: options.now });
   const pathForHash = new Map(files.map((file) => [file.sha256, file.path]));
   const uploads = result.evidence.map((evidence) => ({
     server: safeServer(evidence.server),

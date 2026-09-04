@@ -37,21 +37,28 @@ function asset(source: string, length: number, mime = 'application/octet-stream'
 }
 
 function build(assets: RetainedAsset[], targetBytes = OPTIMIZATION_TARGET_BYTES): RetainedBuild {
+  const script = assets.map((entry) => `fetch(__nappletAssetUrl("${entry.source}"));`).join('\n');
   return {
-    html: `<html><head></head><body>${assets.map((entry) => `<img src="${entry.reference}">`).join('')}</body></html>`,
+    html: `<html><head></head><body><script>${script}</script></body></html>`,
     assets,
     artifacts: [{
       path: 'assets/entry.js',
       kind: 'javascript',
-      content: assets.map((entry) => `fetch(__nappletAssetUrl("${entry.source}"));`).join('\n'),
+      content: script,
     }],
     targetBytes,
   };
 }
 
 function buildWithArtifacts(assets: RetainedAsset[], artifacts: RetainedArtifact[], targetBytes: number): RetainedBuild & { artifacts: RetainedArtifact[] } {
+  const embedded = artifacts.map((artifact) => {
+    if (artifact.kind === 'javascript') return `<script>${artifact.content}</script>`;
+    if (artifact.kind === 'stylesheet' || artifact.kind === 'inline-css') return `<style>${artifact.content}</style>`;
+    return artifact.content;
+  }).join('');
   return {
     ...build(assets, targetBytes),
+    html: `<html><head></head><body>${embedded}</body></html>`,
     artifacts,
   };
 }
@@ -82,6 +89,152 @@ afterEach(() => {
 });
 
 describe('large single-file artifact optimizer', () => {
+  it('measures and rewrites only parser-proven references when equal path text collides', () => {
+    const source = 'chunks/part-00.bin';
+    const retainedAsset: RetainedAsset = {
+      source,
+      reference: source,
+      bytes: Uint8Array.of(1, 2, 3),
+      mime: 'application/octet-stream',
+    };
+    const script = [
+      `const response = fetch(__nappletAssetUrl("${source}"));`,
+      `const unrelated = "${source}";`,
+      `// ${source}`,
+    ].join('\n');
+    const html = `<html><head></head><body><script>${script}</script></body></html>`;
+    const replacement = 'data:application/octet-stream;base64,AQID';
+    const expected = html.replace(
+      `fetch(__nappletAssetUrl("${source}"))`,
+      `fetch(__nappletAssetUrl("${replacement}"))`,
+    );
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/entry.js', kind: 'javascript', content: script },
+    ], Buffer.byteLength(expected));
+    retained.html = html;
+
+    const rendered = renderOptimizedHtml({ build: retained, selected: [] });
+    const plan = planExternalAssets(retained);
+    const overTarget = { ...retained, targetBytes: Buffer.byteLength(expected) - 1 };
+    const selectedRendered = renderOptimizedHtml({ build: overTarget, selected: [retainedAsset] });
+    const selectedPlan = planExternalAssets(overTarget);
+
+    expect(rendered.html).toBe(expected);
+    expect(rendered.html.match(/data:application\/octet-stream;base64,AQID/g)).toHaveLength(1);
+    expect(rendered.bytes).toBe(Buffer.byteLength(expected));
+    expect(plan).toMatchObject({
+      triggered: false,
+      status: 'at-target',
+      selected: [],
+      measurements: [],
+      initialBytes: Buffer.byteLength(expected),
+      finalBytes: Buffer.byteLength(expected),
+    });
+    expect(selectedPlan.measurements).toEqual([{ source, bytes: selectedRendered.bytes }]);
+    expect(selectedPlan.finalBytes).toBe(selectedRendered.bytes);
+    expect(selectedRendered.html).toContain(`window.__nappletPrivateResourceLoader.response("${source}")`);
+    expect(selectedRendered.html).toContain(`const unrelated = "${source}";\n// ${source}`);
+  });
+
+  it('renders embedded stylesheet URLs through their inventoried locations', () => {
+    const source = 'assets/image.png';
+    const retainedAsset: RetainedAsset = {
+      source,
+      reference: source,
+      bytes: Uint8Array.of(1, 2, 3),
+      mime: 'image/png',
+    };
+    const stylesheet = `.hero { background: url("${source}#cover"); } /* ${source} */`;
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/site.css', kind: 'stylesheet', content: stylesheet },
+    ], 10_000);
+
+    const rendered = renderOptimizedHtml({ build: retained, selected: [] });
+
+    expect(rendered.html).toContain('url("data:image/png;base64,AQID#cover")');
+    expect(rendered.html).toContain(`/* ${source} */`);
+    expect(rendered.html.match(/data:image\/png;base64,AQID/g)).toHaveLength(1);
+  });
+
+  it('does not treat an identical inline style as an external stylesheet reference', () => {
+    const source = 'assets/image.png';
+    const retainedAsset = asset(source, 20_000, 'image/png');
+    const stylesheet = `.hero { background: url("${source}"); }`;
+    const html = `<html><head><style>${stylesheet}</style><style>${stylesheet}</style></head><body></body></html>`;
+    const retained: RetainedBuild = {
+      html,
+      assets: [retainedAsset],
+      artifacts: [
+        { path: 'index.html', kind: 'html', content: html },
+        { path: 'assets/site.css', kind: 'stylesheet', content: stylesheet },
+      ],
+      targetBytes: 100,
+    };
+
+    const plan = planExternalAssets(retained);
+
+    expect(plan.selected).toEqual([]);
+    expect(plan.ineligible).toEqual([{ source, reasons: ['inline-css'] }]);
+    expect(renderOptimizedHtml({ build: retained, selected: [] }).html.match(/data:image\/png;base64/g)).toHaveLength(2);
+  });
+
+  it('keeps fetch sentinels with request init arguments ineligible for deletion', () => {
+    const retainedAsset = asset('assets/image.png', 20_000, 'image/png');
+    const script = 'fetch(__nappletAssetUrl("assets/image.png"), { cache: "reload" });';
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/entry.js', kind: 'javascript', content: script },
+    ], 100);
+
+    const plan = planExternalAssets(retained);
+
+    expect(plan.selected).toEqual([]);
+    expect(plan.ineligible).toEqual([{ source: 'assets/image.png', reasons: ['js-fetch-sentinel'] }]);
+    expect(renderOptimizedHtml({ build: retained, selected: [] }).html).toContain(
+      'fetch(__nappletAssetUrl("data:image/png;base64,',
+    );
+  });
+
+  it('externalizes a supported fetch sentinel carrying an emitted alias suffix', () => {
+    const retainedAsset = {
+      ...asset('assets/image.png', 20_000, 'image/png'),
+      reference: '/assets/image.png',
+    };
+    const script = 'fetch(__nappletAssetUrl("/assets/image.png?v=1#cover"));';
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/entry.js', kind: 'javascript', content: script },
+    ], 100);
+
+    const plan = planExternalAssets(retained);
+    const rendered = renderOptimizedHtml({ build: retained, selected: plan.selected });
+
+    expect(plan.selected).toEqual([retainedAsset]);
+    expect(rendered.html).toContain('window.__nappletPrivateResourceLoader.response("assets/image.png")');
+    expect(rendered.html).not.toContain('/assets/image.png?v=1#cover');
+  });
+
+  it('keeps aliased repeated HTML references inline instead of deleting their asset', () => {
+    const retainedAsset = {
+      ...asset('assets/image.png', 20_000, 'image/png'),
+      reference: '/assets/image.png',
+    };
+    const html = '<html><head></head><body><img src="/assets/image.png"><img srcset="/assets/image.png 1x, /assets/image.png 2x"></body></html>';
+    const retained: RetainedBuild = {
+      html,
+      assets: [retainedAsset],
+      artifacts: [{ path: 'index.html', kind: 'html', content: html }],
+      targetBytes: 100,
+    };
+
+    const plan = planExternalAssets(retained);
+    const rendered = renderOptimizedHtml({ build: retained, selected: plan.selected });
+
+    expect(plan.selected).toEqual([]);
+    expect(plan.ineligible).toEqual([{ source: 'assets/image.png', reasons: ['html-attribute', 'html-srcset'] }]);
+    expect(rendered.html.match(/data:image\/png;base64/g)).toHaveLength(3);
+    expect(rendered.html).not.toContain('src="/assets/image.png"');
+    expect(rendered.html).not.toContain('srcset="/assets/image.png');
+  });
+
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
     const selected = asset('/asset.bin', 10_000);
     const retained = build([selected], 5_000);

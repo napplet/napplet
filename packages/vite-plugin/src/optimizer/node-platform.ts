@@ -1,6 +1,7 @@
 /** Node terminal, credential-process, DNS, filesystem, and pinned HTTPS adapters. */
 
 import { RedactedSecret } from '@napplet/build-tools';
+import { isIP, type LookupFunction } from 'node:net';
 import type {
   Clock,
   FileSystemAdapter,
@@ -127,10 +128,36 @@ export function nodeResolver(): PublicAddressResolver['resolve'] {
   };
 }
 
+/**
+ * Create a fail-closed Node lookup backed only by validated addresses.
+ *
+ * @param addresses - Addresses previously accepted by the endpoint network policy.
+ * @returns A Node lookup callback that supports single-result and all-result callers.
+ * @example
+ * const lookup = _createPinnedLookup(['192.0.2.1']);
+ * @internal
+ */
+export function _createPinnedLookup(addresses: readonly string[]): LookupFunction {
+  if (addresses.length === 0) throw new Error('Pinned HTTPS endpoint has no address');
+  const records = addresses.map((address) => {
+    const family = isIP(address);
+    if (family === 0) throw new Error('Pinned HTTPS endpoint has an invalid address');
+    return { address, family };
+  });
+
+  return (_hostname, options, callback) => {
+    if (options.all === true) {
+      callback(null, records);
+      return;
+    }
+    const first = records[0];
+    callback(null, first.address, first.family);
+  };
+}
+
 export async function nodePinnedFetch(endpoint: ValidatedEndpoint, init: RequestInit): Promise<Response> {
   const { request } = await import('node:https');
-  const address = endpoint.addresses[0];
-  if (!address) throw new Error('Pinned HTTPS endpoint has no address');
+  const lookup = _createPinnedLookup(endpoint.addresses);
   const headers = Object.fromEntries(new Headers(init.headers).entries());
   return await new Promise<Response>((resolve, reject) => {
     let settled = false;
@@ -144,7 +171,7 @@ export async function nodePinnedFetch(endpoint: ValidatedEndpoint, init: Request
       headers,
       signal: init.signal ?? undefined,
       servername: endpoint.hostname,
-      lookup: (_hostname, _options, callback) => callback(null, address, address.includes(':') ? 6 : 4),
+      lookup,
     }, (incoming) => {
       const chunks: Uint8Array[] = [];
       let total = 0;

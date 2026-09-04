@@ -162,6 +162,37 @@ Deno.test("executeNetworkDeploy uploads unique files and publishes signed manife
   });
 });
 
+Deno.test("executeNetworkDeploy defaults uploads to the runtime fetch", async () => {
+  await withTempDir(async (dir) => {
+    await Deno.writeTextFile(`${dir}/index.html`, "index");
+    const manifests = await manifestsFor(dir);
+    const calls: FetchCall[] = [];
+    const { publish, events } = fakePublish();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = createFakeFetch(calls);
+
+    try {
+      const result = await executeNetworkDeploy(
+        manifests,
+        { relays: ["wss://relay.example"], blossomServers: ["https://blob.example"] },
+        signer,
+        {
+          publish,
+          now: () => 123,
+          resolve: resolvePublicDns,
+        },
+      );
+
+      assertEquals(calls.map((call) => call.method), ["HEAD", "PUT"]);
+      assertEquals(result.uploaded[0].success, true);
+      assertEquals(result.published.length, 2);
+      assertEquals(events.length, 2);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
 Deno.test("executeNetworkDeploy fails when the server stores a mismatched blob", async () => {
   await withTempDir(async (dir) => {
     await Deno.writeTextFile(`${dir}/index.html`, "index");
