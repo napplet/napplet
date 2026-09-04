@@ -42,6 +42,44 @@ describe('optimizer reference inventory', () => {
     expect(rewritten.content).toBe('<img src="data:image/png;base64,AQID"><img srcset="data:image/png;base64,AQID 1x, data:image/png;base64,AQID 2x"><p>/assets/image.png</p>');
   });
 
+  it('matches query and fragment suffixes while preserving them in scoped rewrites', () => {
+    const image = { ...asset('assets/image.png'), reference: '/assets/image.png' };
+    const html: RetainedArtifact = {
+      path: 'index.html',
+      kind: 'html',
+      content: '<img src="/assets/image.png?v=1#cover"><img srcset="/assets/image.png?v=1#one 1x, /assets/image.png?v=2#two 2x"><p>/assets/image.png?v=1#cover</p>',
+    };
+    const css: RetainedArtifact = {
+      path: 'assets/site.css',
+      kind: 'stylesheet',
+      content: 'background: url("/assets/image.png?v=1#cover");',
+    };
+    const javascript: RetainedArtifact = {
+      path: 'assets/entry.js',
+      kind: 'javascript',
+      content: 'fetch(__nappletAssetUrl("/assets/image.png?v=1#cover"));',
+    };
+    const inventory = inventoryArtifactReferences(build([image], [html, css, javascript]));
+    const replacements = new Map([['assets/image.png', 'data:image/png;base64,AQID']]);
+
+    expect(inventory.references).toHaveLength(5);
+    expect(rewriteArtifactReferences({ artifact: html, inventory, replacements }).content).toBe(
+      '<img src="data:image/png;base64,AQID?v=1#cover"><img srcset="data:image/png;base64,AQID?v=1#one 1x, data:image/png;base64,AQID?v=2#two 2x"><p>/assets/image.png?v=1#cover</p>',
+    );
+    expect(rewriteArtifactReferences({ artifact: css, inventory, replacements }).content).toBe(
+      'background: url("data:image/png;base64,AQID?v=1#cover");',
+    );
+    expect(rewriteArtifactReferences({ artifact: javascript, inventory, replacements }).content).toBe(
+      'fetch(__nappletAssetUrl("data:image/png;base64,AQID?v=1#cover"));',
+    );
+    expect(rewriteArtifactReferences({
+      artifact: javascript,
+      inventory,
+      replacements: new Map(),
+      fetchCallReplacements: new Map([['assets/image.png', 'window.__nappletPrivateResourceLoader.response("assets/image.png")']]),
+    }).content).toBe('window.__nappletPrivateResourceLoader.response("assets/image.png");');
+  });
+
   it('rewrites recognized HTML attributes and srcset entries without touching equal text', () => {
     const image = asset('assets/image.png');
     const artifact: RetainedArtifact = {

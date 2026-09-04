@@ -194,6 +194,24 @@ describe('large single-file artifact optimizer', () => {
     );
   });
 
+  it('externalizes a supported fetch sentinel carrying an emitted alias suffix', () => {
+    const retainedAsset = {
+      ...asset('assets/image.png', 20_000, 'image/png'),
+      reference: '/assets/image.png',
+    };
+    const script = 'fetch(__nappletAssetUrl("/assets/image.png?v=1#cover"));';
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/entry.js', kind: 'javascript', content: script },
+    ], 100);
+
+    const plan = planExternalAssets(retained);
+    const rendered = renderOptimizedHtml({ build: retained, selected: plan.selected });
+
+    expect(plan.selected).toEqual([retainedAsset]);
+    expect(rendered.html).toContain('window.__nappletPrivateResourceLoader.response("assets/image.png")');
+    expect(rendered.html).not.toContain('/assets/image.png?v=1#cover');
+  });
+
   it('keeps aliased repeated HTML references inline instead of deleting their asset', () => {
     const retainedAsset = {
       ...asset('assets/image.png', 20_000, 'image/png'),
