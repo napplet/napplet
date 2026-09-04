@@ -20,6 +20,7 @@ import {
 } from './pipeline.js';
 import type { NodeOptimizationServices } from './node-services.js';
 import type { RetainedArtifact } from './references.js';
+import { renderLoaderScreenMarkup, renderLoaderScreenStyle } from './loader-screen.js';
 
 const tempArtifacts: Array<Map<string, Uint8Array>> = [];
 const tempRoots: string[] = [];
@@ -89,6 +90,102 @@ afterEach(() => {
 });
 
 describe('large single-file artifact optimizer', () => {
+  it('injects measured self-contained loader assets in exact head and body order', () => {
+    const first = asset('assets/z.bin', 20_000);
+    const second = asset('assets/a.bin', 20_000);
+    const retained = build([first, second], 5_000);
+    retained.html = retained.html.replace('<body>', '<body class="packaged" data-shell="fixture">');
+    const entries = [first, second].map((candidate) => ({
+      source: candidate.source,
+      uri: `blossom:sha256:${digest(candidate.bytes)}`,
+      sha256: digest(candidate.bytes),
+      bytes: candidate.bytes.byteLength,
+      mime: candidate.mime,
+    }));
+
+    const rendered = renderOptimizedHtml({ build: retained, selected: [first, second], entries });
+    const style = `<style data-napplet-private-loader>${renderLoaderScreenStyle()}</style>`;
+    const markup = renderLoaderScreenMarkup();
+    const styleIndex = rendered.html.indexOf(style);
+    const tableIndex = rendered.html.indexOf('data-napplet-private-resource-table');
+    const runtimeIndex = rendered.html.indexOf('window.__nappletPrivateResourceLoader =');
+    const headEnd = rendered.html.indexOf('</head>');
+    const bodyStart = rendered.html.indexOf('<body class="packaged" data-shell="fixture">');
+    const bodyContent = bodyStart + '<body class="packaged" data-shell="fixture">'.length;
+    const applicationIndex = rendered.html.indexOf('window.__nappletPrivateResourceLoader.response');
+
+    expect(styleIndex).toBeGreaterThan(-1);
+    expect(styleIndex).toBeLessThan(tableIndex);
+    expect(tableIndex).toBeLessThan(runtimeIndex);
+    expect(runtimeIndex).toBeLessThan(headEnd);
+    expect(headEnd).toBeLessThan(bodyStart);
+    expect(rendered.html.slice(bodyContent).startsWith(markup)).toBe(true);
+    expect(bodyContent).toBeLessThan(applicationIndex);
+    expect(rendered.bytes).toBe(Buffer.byteLength(rendered.html));
+    expect(JSON.parse(rendered.html.match(/data-napplet-private-resource-table>([\s\S]*?)<\/script>/)![1]!))
+      .toEqual([...entries].sort((left, right) => left.source.localeCompare(right.source)));
+    expect(style).not.toMatch(/@import|url\(|gradient/i);
+  });
+
+  it('ignores head and body text inside scripts, comments, styles, and templates when injecting the loader', () => {
+    const retainedAsset = asset('assets/value.bin', 30_000);
+    const script = [
+      'const documentText = "</head><body data-fake=\\"script\\">";',
+      '// </head><body data-fake="comment">',
+      'fetch(__nappletAssetUrl("assets/value.bin"));',
+    ].join('\n');
+    const html = `<html><head><!-- </head><body data-fake="html-comment"> --><style>.copy::after{content:"</head><body data-fake=style>"}</style><template></head><body data-fake="template"></template><script type="module">${script}</script></head><body id="real"><p>Application</p></body></html>`;
+    const retained: RetainedBuild = {
+      html,
+      assets: [retainedAsset],
+      artifacts: [{ path: 'assets/entry.js', kind: 'javascript', content: script }],
+      targetBytes: 1,
+    };
+
+    const rendered = renderOptimizedHtml({ build: retained, selected: [retainedAsset] });
+    const scriptEnd = rendered.html.indexOf('</script>');
+    const styleIndex = rendered.html.indexOf('<style data-napplet-private-loader>');
+    const realHeadEnd = rendered.html.indexOf('</head>', scriptEnd);
+    const realBody = rendered.html.indexOf('<body id="real">');
+    const loaderMarkup = rendered.html.indexOf('<main id="napplet-loader"');
+
+    expect(rendered.html).toContain('const documentText = "</head><body data-fake=\\"script\\">";');
+    expect(rendered.html).toContain('// </head><body data-fake="comment">');
+    expect(rendered.html).toContain('<!-- </head><body data-fake="html-comment"> -->');
+    expect(rendered.html).toContain('<template></head><body data-fake="template"></template>');
+    expect(scriptEnd).toBeGreaterThan(-1);
+    expect(styleIndex).toBeGreaterThan(scriptEnd);
+    expect(styleIndex).toBeLessThan(realHeadEnd);
+    expect(loaderMarkup).toBe(realBody + '<body id="real">'.length);
+  });
+
+  it('omits every loader marker from zero-entry, at-target, ineligible, and rolled-back output', async () => {
+    const marker = /data-napplet-private-loader|data-napplet-private-resource-table|id="napplet-loader"/;
+    const atTarget = build([asset('assets/small.bin', 12)], 100_000);
+    const atTargetStore = artifactStore(atTarget.html, atTarget.assets);
+    const atTargetReport = await optimizeSingleFileArtifact({ build: atTarget, files: atTargetStore }, fakeServices());
+    const unsupported = asset('assets/unsupported.bin', 20_000);
+    const ineligible = buildWithArtifacts([unsupported], [
+      { path: 'index.html', kind: 'html', content: '<img src="assets/unsupported.bin">' },
+    ], 100);
+    const rollback = build([asset('assets/fail.bin', 20_000)], 5_000);
+    const rollbackStore = artifactStore(rollback.html, rollback.assets);
+    const original = Buffer.from(rollbackStore.get('index.html')!).toString('utf8');
+    const rollbackReport = await optimizeSingleFileArtifact(
+      { build: rollback, files: rollbackStore },
+      fakeServices({ upload: async () => { throw new Error('expected rollback'); } }),
+    );
+
+    expect(renderOptimizedHtml({ build: atTarget, selected: [], entries: [] }).html).not.toMatch(marker);
+    expect(Buffer.from(atTargetStore.get('index.html')!).toString('utf8')).not.toMatch(marker);
+    expect(atTargetReport.committedResourceCount).toBe(0);
+    expect(renderOptimizedHtml({ build: ineligible, selected: [], entries: [] }).html).not.toMatch(marker);
+    expect(planExternalAssets(ineligible).selected).toEqual([]);
+    expect(rollbackReport).toMatchObject({ status: 'rolled-back', committedResourceCount: 0, entries: [] });
+    expect(Buffer.from(rollbackStore.get('index.html')!).toString('utf8')).toBe(original);
+    expect(original).not.toMatch(marker);
+  });
+
   it('measures and rewrites only parser-proven references when equal path text collides', () => {
     const source = 'chunks/part-00.bin';
     const retainedAsset: RetainedAsset = {
@@ -236,7 +333,7 @@ describe('large single-file artifact optimizer', () => {
   });
 
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
-    const selected = asset('/asset.bin', 10_000);
+    const selected = asset('/asset.bin', 30_000);
     const retained = build([selected], 5_000);
     const store = artifactStore(retained.html, retained.assets);
     const uploads: Uint8Array[] = [];
@@ -352,7 +449,7 @@ describe('large single-file artifact optimizer', () => {
   });
 
   it('commits verified selected resources even when exhaustion remains above the target', async () => {
-    const selected = asset('/large.bin', 10_000);
+    const selected = asset('/large.bin', 30_000);
     const retained = build([selected], 200);
     const store = artifactStore(retained.html, retained.assets);
     const report = await optimizeSingleFileArtifact({ build: retained, files: store }, fakeServices());
@@ -363,7 +460,7 @@ describe('large single-file artifact optimizer', () => {
   });
 
   it('uploads the exact selected bytes with short-lived authorization and emits only a canonical lowercase Blossom URI', async () => {
-    const selected = asset('/asset.bin', 10_000);
+    const selected = asset('/asset.bin', 30_000);
     const retained = build([selected], 5_000);
     const store = artifactStore(retained.html, retained.assets);
     let uploaded: Uint8Array | undefined;

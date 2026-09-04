@@ -3,28 +3,62 @@
   "assetCount": 7,
   "maximumWholeBlobBytes": 10485760,
   "initialHtmlBytes": 76896853,
-  "finalHtmlBytes": 8366,
-  "aggregateHash": "3a9efaaa78cff87376b383e4a6fe7fd3cf4fba4f0995ebe84bce35d2b93d411e",
-  "finalIndexSha256": "d6bf5a684431d50d9c4d141c8c259bcca7558d0584cd0cfe19bf013ac54eb5e1",
+  "finalHtmlBytes": 25528,
+  "aggregateHash": "745dc3a7720fcb313170f514f28471be2bf55f44c03d81fcfd9fb0e9c8c1ec5c",
+  "finalIndexSha256": "e0dc07045b28d94ff19cd67c1dfd4e8e3b9485bc215e9fd3166931d63de5ec0c",
   "selected": [
-    { "source": "assets/fixture-01.bin", "bytes": 9437184, "sha256": "2a5f3e710787fef2cab50c7f38ea6f8ed9d16b500e75e6855a7bf79f2dd5dcff" },
-    { "source": "assets/fixture-02.bin", "bytes": 9437184, "sha256": "133519935dff60330e25fb2b96c3526f0a00d116a7abe80d28611c5b42f5b35a" },
-    { "source": "assets/fixture-03.bin", "bytes": 8388608, "sha256": "4c81a80c532327a49f423a7d27bcfeacea9e3d36e3b803d0fdff1cb2267492cc" },
-    { "source": "assets/fixture-04.bin", "bytes": 8388608, "sha256": "3df06c1fd8db4c6b62c79a22c2a1fa03b14df29c07095e6f623389626263ded5" },
-    { "source": "assets/fixture-05.bin", "bytes": 8388608, "sha256": "05e2c5e3dc114de65c2df4031549658b8126f79923850d381bdbe9ed54c2909f" },
-    { "source": "assets/fixture-06.bin", "bytes": 7340032, "sha256": "16582a67d3df7d2be1514161c219c9d151fb8f0518ab041bcd6f5f6eeadb3b03" },
-    { "source": "assets/fixture-07.bin", "bytes": 6291456, "sha256": "a4daecdb071f24cce8bae4a760a156939d30badb21f785b716377199e88acdd2" }
+    {
+      "source": "assets/fixture-01.bin",
+      "bytes": 9437184,
+      "sha256": "2a5f3e710787fef2cab50c7f38ea6f8ed9d16b500e75e6855a7bf79f2dd5dcff"
+    },
+    {
+      "source": "assets/fixture-02.bin",
+      "bytes": 9437184,
+      "sha256": "133519935dff60330e25fb2b96c3526f0a00d116a7abe80d28611c5b42f5b35a"
+    },
+    {
+      "source": "assets/fixture-03.bin",
+      "bytes": 8388608,
+      "sha256": "4c81a80c532327a49f423a7d27bcfeacea9e3d36e3b803d0fdff1cb2267492cc"
+    },
+    {
+      "source": "assets/fixture-04.bin",
+      "bytes": 8388608,
+      "sha256": "3df06c1fd8db4c6b62c79a22c2a1fa03b14df29c07095e6f623389626263ded5"
+    },
+    {
+      "source": "assets/fixture-05.bin",
+      "bytes": 8388608,
+      "sha256": "05e2c5e3dc114de65c2df4031549658b8126f79923850d381bdbe9ed54c2909f"
+    },
+    {
+      "source": "assets/fixture-06.bin",
+      "bytes": 7340032,
+      "sha256": "16582a67d3df7d2be1514161c219c9d151fb8f0518ab041bcd6f5f6eeadb3b03"
+    },
+    {
+      "source": "assets/fixture-07.bin",
+      "bytes": 6291456,
+      "sha256": "a4daecdb071f24cce8bae4a760a156939d30badb21f785b716377199e88acdd2"
+    }
   ],
   "discovery": {
-    "writeRelays": ["wss://write.fixture.test", "wss://unmarked.fixture.test"],
-    "servers": ["https://primary.blossom.fixture.test", "https://secondary.blossom.fixture.test"]
+    "writeRelays": [
+      "wss://write.fixture.test",
+      "wss://unmarked.fixture.test"
+    ],
+    "servers": [
+      "https://primary.blossom.fixture.test",
+      "https://secondary.blossom.fixture.test"
+    ]
   },
   "assertions": [
     "all seven exact-byte uploads carry verified kind 24242 authorization",
     "only uploaded candidate files are removed after the transaction commits",
     "the private mapping stays in index.html, not NIP-5A tags",
     "resource.bytesMany recovers all selected bounded Blobs byte-for-byte",
-    "a failing direct secondary upload and corrupt resource Blob are noncommittable",
+    "a failing direct secondary upload is noncommittable and corrupt bytes recover only after verified retry",
     "the over-limit whole-Blob fallback remains inline without streaming or ranges"
   ]
 }

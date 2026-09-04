@@ -11,28 +11,27 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { createNetworkPolicy, encodeBuildSignerSecret, RedactedSecret, uploadExactBlobs } from '@napplet/build-tools';
-import type { BuildSigner, DiscoveryFilter, DiscoveryServices, SignedEvent } from '@napplet/build-tools';
-import { finalizeEvent, getPublicKey, verifyEvent } from 'nostr-tools/pure';
 import { build as viteBuild } from 'vite';
 import { nip5aManifest } from '../index.js';
 import { computeAggregateHash } from '../hashing.js';
 import { ResourceRuntime, type ResourceTableEntry } from './loader.js';
 import { executeFinalArtifact } from './large-fixture-runtime.js';
+import {
+  createFixtureBuildServices,
+  createFixtureNodeOptions,
+  PRIMARY_SERVER,
+  proveSecondaryFailure,
+  SECONDARY_SERVER,
+  type FixtureBuildServices,
+  type FixtureRelay,
+  type FixtureUploadEvidence,
+} from './large-fixture-services.js';
 import { OPTIMIZATION_TARGET_BYTES } from './pipeline.js';
 import type { OptimizationReport } from './pipeline.js';
-import type { NodeOptimizationOptions } from './node-services.js';
 
 /** Every selected whole Blob stays within the generated loader's portable bound. */
 export const MAX_FIXTURE_ASSET_BYTES = 10 * 1024 * 1024;
 const MEBIBYTE = 1024 * 1024;
-const FIXTURE_PRIVATE_KEY = new Uint8Array(32).fill(23);
-// Fresh timestamps keep the signed test vectors inside production stale-event bounds.
-const FIXTURE_NOW = Math.floor(Date.now() / 1_000);
-const FIXTURE_HTTPS = 'https:';
-const fixtureServer = (hostname: string): string => new URL(`${FIXTURE_HTTPS}//${hostname}`).origin;
-const PRIMARY_SERVER = fixtureServer('primary.blossom.fixture.test');
-const SECONDARY_SERVER = fixtureServer('secondary.blossom.fixture.test');
 
 export interface LargeFixtureAsset {
   source: string;
@@ -45,14 +44,7 @@ export interface LargeAssetFixture {
   totalCandidateBytes: number;
 }
 
-export interface FixtureUploadEvidence {
-  source: string;
-  sha256: string;
-  bytes: number;
-  authorizationKind: number;
-  authorizationVerified: boolean;
-  descriptorVerified: boolean;
-}
+export type { FixtureUploadEvidence } from './large-fixture-services.js';
 
 export interface LargeFixtureEvidence {
   initialHtmlBytes: number;
@@ -68,7 +60,7 @@ export interface LargeFixtureEvidence {
   preservedCandidateSources: string[];
   discovery: { directoryRelays: string[]; writeRelays: string[]; servers: string[]; ignoredForgedEvent: boolean; ignoredOlderEvent: boolean };
   secondaryUploadFailed: boolean;
-  corruptResourceRejected: boolean;
+  corruptResourceRecovered: boolean;
   executedResourceCalls: string[];
 }
 
@@ -81,8 +73,8 @@ export interface FallbackEvidence {
 interface BuiltFixture {
   dist: string;
   initialHtmlBytes: number;
-  signer: BuildSigner;
-  relay: ReturnType<typeof fakeDiscovery>;
+  relay: FixtureRelay;
+  signer: FixtureBuildServices['signer'];
   uploaded: Map<string, Uint8Array>;
   uploadEvidence: FixtureUploadEvidence[];
 }
@@ -96,10 +88,6 @@ interface FixtureOutput {
 
 function sha256(bytes: Uint8Array): string {
   return crypto.createHash('sha256').update(bytes).digest('hex');
-}
-
-function signedEvent(kind: number, createdAt: number, tags: string[][]): SignedEvent {
-  return finalizeEvent({ kind, created_at: createdAt, tags, content: '' }, FIXTURE_PRIVATE_KEY);
 }
 
 /** Generate seven deterministic candidate assets without checking binary data into git. */
@@ -124,165 +112,37 @@ function writeFixture(root: string, fixture: LargeAssetFixture): string {
   return dist;
 }
 
-function decodeAuthorization(value: string | null): SignedEvent {
-  if (!value?.startsWith('Nostr ')) throw new Error('fixture upload missing Nostr authorization');
-  const encoded = value.slice('Nostr '.length).replace(/-/g, '+').replace(/_/g, '/');
-  return JSON.parse(Buffer.from(encoded, 'base64').toString('utf8')) as SignedEvent;
-}
-
 function extractPrivateTable(html: string): ResourceTableEntry[] {
   const match = /<script type="application\/json" data-napplet-private-resource-table>([\s\S]*?)<\/script>/.exec(html);
   if (!match) throw new Error('fixture final HTML does not contain the private resource table');
   return JSON.parse(match[1]!) as ResourceTableEntry[];
 }
 
-function fakeDiscovery(pubkey: string): { services: DiscoveryServices; queries: Array<{ relays: string[]; filter: DiscoveryFilter }>; ignoredForgedEvent: boolean; ignoredOlderEvent: boolean } {
-  const oldRelayList = signedEvent(10_002, FIXTURE_NOW - 10, [['r', 'wss://old-directory.fixture.test', 'read']]);
-  const latestRelayList = signedEvent(10_002, FIXTURE_NOW, [
-    ['r', 'wss://read-only.fixture.test', 'read'],
-    ['r', 'wss://write.fixture.test', 'write'],
-    ['r', 'wss://unmarked.fixture.test'],
-  ]);
-  const forgedRelayList = { ...latestRelayList, sig: '0'.repeat(128) };
-  const oldServerList = signedEvent(10_063, FIXTURE_NOW - 10, [['server', fixtureServer('old.blossom.fixture.test')]]);
-  const latestServerList = signedEvent(10_063, FIXTURE_NOW, [
-    ['server', PRIMARY_SERVER],
-    ['server', SECONDARY_SERVER],
-    ['server', PRIMARY_SERVER],
-  ]);
-  const forgedServerList = { ...latestServerList, sig: '0'.repeat(128) };
-  const queries: Array<{ relays: string[]; filter: DiscoveryFilter }> = [];
-  return {
-    queries,
-    ignoredForgedEvent: true,
-    ignoredOlderEvent: oldRelayList.created_at < latestRelayList.created_at && oldServerList.created_at < latestServerList.created_at,
-    services: {
-      verifyEvent(event) {
-        const candidate = event as SignedEvent;
-        return candidate.sig !== '0'.repeat(128) && verifyEvent(candidate);
-      },
-      async query(relays, filter) {
-        queries.push({ relays: [...relays], filter });
-        if (filter.kinds[0] === 10_002 && filter.authors[0] === pubkey) return [oldRelayList, forgedRelayList, latestRelayList];
-        if (filter.kinds[0] === 10_063 && filter.authors[0] === pubkey) return [oldServerList, forgedServerList, latestServerList];
-        return [];
-      },
-    },
-  };
-}
-
-function fakeNodeOptions(
-  signer: BuildSigner,
-  discovery: DiscoveryServices,
-  fetch: typeof globalThis.fetch,
-): NodeOptimizationOptions {
-  const remotePubkey = 'a'.repeat(64);
-  const storedSession = encodeBuildSignerSecret({
-    remotePubkey,
-    clientSecretKey: 'c'.repeat(64),
-    relays: ['wss://signer.fixture.test'],
-  });
-  return {
-    discovery,
-    resolve: async () => ['93.184.216.34'],
-    fetchPinned: (endpoint, init) => fetch(endpoint.url, init),
-    isInteractive: () => false,
-    secretStore: {
-      get: async () => new RedactedSecret(storedSession),
-      set: async () => {},
-      delete: async () => {},
-    },
-    pairing: {
-      parseStoredSession: () => ({ remotePubkey, relays: ['wss://signer.fixture.test'] }),
-      reconnect: async () => ({
-        signer,
-        remotePubkey,
-        relays: ['wss://signer.fixture.test'],
-        clientSecret: new RedactedSecret(storedSession),
-      }),
-      createQrPairing: () => { throw new Error('fixture must reconnect without pairing'); },
-      connectBunker: async () => { throw new Error('fixture must reconnect without pairing'); },
-    },
-    clock: {
-      now: () => FIXTURE_NOW * 1_000,
-      setTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
-      clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
-    },
-  };
-}
-
-async function proveSecondaryFailure(signer: BuildSigner): Promise<boolean> {
-  const networkPolicy = createNetworkPolicy({ resolve: async () => ['93.184.216.34'] });
-  const primary = await networkPolicy.validate(new URL(PRIMARY_SERVER), new AbortController().signal);
-  const secondary = await networkPolicy.validate(new URL(SECONDARY_SERVER), new AbortController().signal);
-  const bytes = Uint8Array.of(1, 2, 3, 4);
-  const result = await uploadExactBlobs({ primary, secondary: [secondary], blobs: [{ bytes, contentType: 'application/octet-stream' }], signer }, {
-    networkPolicy,
-    now: () => FIXTURE_NOW,
-    fetch: async (input, init) => {
-      const url = new URL(input.toString());
-      if (init?.method === 'HEAD') return new Response(null, { status: 404 });
-      if (url.hostname === new URL(SECONDARY_SERVER).hostname) return new Response('secondary failed', { status: 500 });
-      const digest = String(init?.headers instanceof Headers ? init.headers.get('x-sha-256') : new Headers(init?.headers).get('x-sha-256'));
-      return new Response(JSON.stringify({ url: `${PRIMARY_SERVER}/${digest}`, sha256: digest, size: bytes.byteLength, type: 'application/octet-stream', uploaded: FIXTURE_NOW }), { status: 201 });
-    },
-  });
-  return result.status === 'failed' && !result.deletionAuthorized && result.evidence.some((entry) => entry.server === `${SECONDARY_SERVER}/` && !entry.accepted);
-}
-
-function createFixtureSigner(pubkey: string): BuildSigner {
-  return {
-    async signEvent(template) {
-      if (template.kind !== 24_242) throw new Error('fixture signer permits only kind 24242');
-      return finalizeEvent(template, FIXTURE_PRIVATE_KEY);
-    },
-    async getPublicKey() { return pubkey; },
-    async close() {},
-  };
-}
-
-function createFixtureFetch(
-  uploaded: Map<string, Uint8Array>,
-  uploadEvidence: FixtureUploadEvidence[],
-): typeof globalThis.fetch {
-  return async (input, init) => {
-    const url = new URL(input.toString());
-    if (init?.method === 'HEAD') return new Response(null, { status: 404 });
-    if (init?.method !== 'PUT') return new Response('method not allowed', { status: 405 });
-    const authorization = decodeAuthorization(new Headers(init.headers).get('authorization'));
-    const digest = new Headers(init.headers).get('x-sha-256');
-    const body = init.body;
-    if (!(body instanceof Blob) || !digest || authorization.kind !== 24_242 || !verifyEvent(authorization)) return new Response('unauthorized', { status: 401 });
-    const bytes = new Uint8Array(await body.arrayBuffer());
-    if (sha256(bytes) !== digest || !authorization.tags.some((tag) => tag[0] === 'x' && tag[1] === digest)) return new Response('invalid descriptor', { status: 400 });
-    uploaded.set(`blossom:sha256:${digest}`, bytes);
-    uploadEvidence.push({ source: '', sha256: digest, bytes: bytes.byteLength, authorizationKind: authorization.kind, authorizationVerified: true, descriptorVerified: true });
-    return new Response(JSON.stringify({ url: `${url.origin}/${digest}`, sha256: digest, size: bytes.byteLength, type: new Headers(init.headers).get('content-type') ?? 'application/octet-stream', uploaded: FIXTURE_NOW }), { status: 201 });
-  };
-}
-
 async function buildFixtureArtifact(root: string, fixture: LargeAssetFixture): Promise<BuiltFixture> {
   const dist = writeFixture(root, fixture);
-  const pubkey = getPublicKey(FIXTURE_PRIVATE_KEY);
-  const uploaded = new Map<string, Uint8Array>();
   const uploadEvidence: FixtureUploadEvidence[] = [];
-  const signer = createFixtureSigner(pubkey);
-  const relay = fakeDiscovery(pubkey);
-  const fetch = createFixtureFetch(uploaded, uploadEvidence);
+  const services = createFixtureBuildServices(uploadEvidence, sha256);
   let report: OptimizationReport | undefined;
   const options = {
     nappletType: 'large-fixture',
     artifactMode: 'single-file' as const,
     requires: ['relay'],
     largeAssetOptimization: {
-      node: fakeNodeOptions(signer, relay.services, fetch),
+      node: createFixtureNodeOptions(services.signer, services.relay.services, services.fetch),
       onReport: (value: OptimizationReport) => { report = value; },
     },
   };
   await viteBuild({ root, logLevel: 'silent', plugins: [nip5aManifest(options)], build: { outDir: 'dist', emptyOutDir: true } });
   const initialHtmlBytes = report?.initialBytes;
   if (initialHtmlBytes === undefined) throw new Error('fixture did not record the production initial rendered size');
-  return { dist, initialHtmlBytes, signer, relay, uploaded, uploadEvidence };
+  return {
+    dist,
+    initialHtmlBytes,
+    signer: services.signer,
+    relay: services.relay,
+    uploaded: services.uploaded,
+    uploadEvidence,
+  };
 }
 
 function readFixtureOutput(built: BuiltFixture, fixture: LargeAssetFixture): FixtureOutput {
@@ -358,7 +218,7 @@ async function collectFixtureEvidence(
       ignoredOlderEvent: built.relay.ignoredOlderEvent,
     },
     secondaryUploadFailed: await proveSecondaryFailure(built.signer),
-    corruptResourceRejected: await corruptResourceIsRejected(output.entries[0]!),
+    corruptResourceRecovered: await corruptResourceRecovers(output.entries[0]!, built.uploaded.get(output.entries[0]!.uri)!),
     executedResourceCalls,
   };
 }
@@ -373,13 +233,36 @@ export async function runLargeAssetFixture(fixture: LargeAssetFixture): Promise<
   }
 }
 
-async function corruptResourceIsRejected(entry: ResourceTableEntry): Promise<boolean> {
+async function corruptResourceRecovers(entry: ResourceTableEntry, expected: Uint8Array): Promise<boolean> {
+  let attempts = 0;
+  let failureSeen!: () => void;
+  const failed = new Promise<void>((resolve) => { failureSeen = resolve; });
   const runtime = new ResourceRuntime({
     entries: [entry],
-    window: { napplet: { resource: { bytes: async () => new Blob([Uint8Array.of(0)]), bytesMany: async () => [] } } } as never,
+    window: { napplet: { resource: {
+      bytes: async () => {
+        attempts += 1;
+        return new Blob([attempts === 1 ? new Uint8Array(entry.bytes) : expected]);
+      },
+      bytesMany: async () => [],
+    } } } as never,
     digest: async (blob) => sha256(new Uint8Array(await blob.arrayBuffer())),
+    onState: (state) => {
+      if (state.phase === 'error') failureSeen();
+    },
   });
-  return await runtime.resolve(entry.source).then(() => false, () => true);
+  const original = runtime.resolve(entry.source);
+  let settled = false;
+  void original.then(
+    () => { settled = true; },
+    () => { settled = true; },
+  );
+  await failed;
+  if (settled) return false;
+  await runtime.retry();
+  const recovered = new Uint8Array(await (await original).arrayBuffer());
+  runtime.teardown();
+  return attempts === 2 && sha256(recovered) === entry.sha256;
 }
 
 /** Prove a whole Blob beyond the implementation limit remains a nonfatal inline fallback. */

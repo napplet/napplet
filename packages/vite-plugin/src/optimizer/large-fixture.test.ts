@@ -35,7 +35,7 @@ describe('generated large-asset optimizer fixture', () => {
     expect(evidence.discovery.ignoredForgedEvent).toBe(true);
     expect(evidence.discovery.ignoredOlderEvent).toBe(true);
     expect(evidence.secondaryUploadFailed).toBe(true);
-    expect(evidence.corruptResourceRejected).toBe(true);
+    expect(evidence.corruptResourceRecovered).toBe(true);
     expect(evidence.finalIndexHash).toBe(expectedEvidence.finalIndexSha256);
     expect(evidence.aggregateHash).toBe(expectedEvidence.aggregateHash);
     expect(evidence.recovery.every((entry) => entry.exact)).toBe(true);
