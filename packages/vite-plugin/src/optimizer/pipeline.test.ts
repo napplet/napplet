@@ -156,6 +156,22 @@ describe('large single-file artifact optimizer', () => {
     expect(rendered.html.match(/data:image\/png;base64,AQID/g)).toHaveLength(1);
   });
 
+  it('keeps fetch sentinels with request init arguments ineligible for deletion', () => {
+    const retainedAsset = asset('assets/image.png', 20_000, 'image/png');
+    const script = 'fetch(__nappletAssetUrl("assets/image.png"), { cache: "reload" });';
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/entry.js', kind: 'javascript', content: script },
+    ], 100);
+
+    const plan = planExternalAssets(retained);
+
+    expect(plan.selected).toEqual([]);
+    expect(plan.ineligible).toEqual([{ source: 'assets/image.png', reasons: ['js-fetch-sentinel'] }]);
+    expect(renderOptimizedHtml({ build: retained, selected: [] }).html).toContain(
+      'fetch(__nappletAssetUrl("data:image/png;base64,',
+    );
+  });
+
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
     const selected = asset('/asset.bin', 10_000);
     const retained = build([selected], 5_000);
