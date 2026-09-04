@@ -137,8 +137,12 @@ function targetForNormalizedValue(targets: readonly ReferenceTarget[], value: st
 }
 
 function splitFragment(value: string): { path: string; fragment: string } {
+  const query = value.indexOf('?');
   const hash = value.indexOf('#');
-  return hash < 0 ? { path: value, fragment: '' } : { path: value.slice(0, hash), fragment: value.slice(hash) };
+  const suffix = [query, hash].filter((offset) => offset >= 0).sort((left, right) => left - right)[0];
+  return suffix === undefined
+    ? { path: value, fragment: '' }
+    : { path: value.slice(0, suffix), fragment: value.slice(suffix) };
 }
 
 function decodeCssEscapes(value: string): string {
@@ -210,14 +214,14 @@ function sourceValueEdit(
 
   const suffix = artifact.content.slice(offset);
   if (reference.form === 'computed-url') {
-    const match = suffix.match(new RegExp(`^(["'])${escapePattern(value)}\\1\\s*\\+`));
+    const match = suffix.match(new RegExp(`^(["'])${escapePattern(value)}(?:[?#][^"']*)?\\1\\s*\\+`));
     const relativeStart = match?.[0].indexOf(value) ?? -1;
     return relativeStart < 0
       ? null
       : { start: offset + relativeStart, end: offset + relativeStart + value.length, replacement, sources: [reference.source] };
   }
 
-  const match = suffix.match(new RegExp(`^__nappletAssetUrl\\(\\s*(["'])${escapePattern(value)}\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`));
+  const match = suffix.match(new RegExp(`^__nappletAssetUrl\\(\\s*(["'])${escapePattern(value)}(?:[?#][^"']*)?\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`));
   const relativeStart = match?.[0].indexOf(value) ?? -1;
   return relativeStart < 0
     ? null
@@ -235,7 +239,7 @@ function fetchCallEdit(
   const prefix = before.match(/fetch\(\s*$/);
   if (prefix?.index === undefined) return null;
   const suffix = artifact.content.slice(prefix.index);
-  const call = suffix.match(new RegExp(`^fetch\\(\\s*__nappletAssetUrl\\(\\s*(["'])${escapePattern(reference.value)}\\1\\s*\\)\\s*\\)`));
+  const call = suffix.match(new RegExp(`^fetch\\(\\s*__nappletAssetUrl\\(\\s*(["'])${escapePattern(reference.value)}(?:[?#][^"']*)?\\1\\s*\\)\\s*\\)`));
   if (!call) return null;
   return {
     start: prefix.index,
@@ -307,7 +311,7 @@ function recordJavaScriptReferences(
 ): void {
   for (const target of targets) {
     const escaped = escapePattern(target.value);
-    const sentinel = new RegExp(`__nappletAssetUrl\\(\\s*(["'])${escaped}\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`, 'g');
+    const sentinel = new RegExp(`__nappletAssetUrl\\(\\s*(["'])${escaped}(?:[?#][^"']*)?\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`, 'g');
     for (const match of artifact.content.matchAll(sentinel)) {
       const offset = match.index ?? 0;
       const before = artifact.content.slice(Math.max(0, offset - 48), offset);
@@ -327,7 +331,7 @@ function recordJavaScriptReferences(
       }
     }
 
-    const computed = new RegExp(`(["'])${escaped}\\1\\s*\\+`, 'g');
+    const computed = new RegExp(`(["'])${escaped}(?:[?#][^"']*)?\\1\\s*\\+`, 'g');
     for (const match of artifact.content.matchAll(computed)) {
       pushReference(references, target.source, 'computed-url', false, artifact.path, baseOffset + (match.index ?? 0), target.value);
     }
