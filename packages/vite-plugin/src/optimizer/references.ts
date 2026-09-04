@@ -308,7 +308,7 @@ function recordJavaScriptReferences(
 function recordHtmlReferences(
   artifact: RetainedArtifact,
   sources: readonly string[],
-  stylesheetContents: ReadonlySet<string>,
+  stylesheetCounts: ReadonlyMap<string, number>,
   references: ArtifactReference[],
 ): void {
   for (const source of sources) {
@@ -321,10 +321,13 @@ function recordHtmlReferences(
     }
   }
 
+  const remainingStylesheets = new Map(stylesheetCounts);
   for (const match of artifact.content.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi)) {
     const content = match[1] ?? '';
     const baseOffset = (match.index ?? 0) + match[0].indexOf(content);
-    const external = stylesheetContents.has(content);
+    const remaining = remainingStylesheets.get(content) ?? 0;
+    const external = remaining > 0;
+    if (external) remainingStylesheets.set(content, remaining - 1);
     for (const value of cssUrlValues(content)) {
       if (!sources.includes(value.source)) continue;
       pushReference(references, value.source, external ? 'stylesheet-url' : 'inline-css', external, artifact.path, baseOffset + value.offset);
@@ -343,9 +346,11 @@ function recordHtmlReferences(
 export function inventoryArtifactReferences(input: ReferenceBuild): ReferenceInventory {
   const artifacts = [...input.artifacts];
   const sources = input.assets.map((asset) => normalizedPath(asset.source));
-  const stylesheetContents = new Set(artifacts
-    .filter((artifact) => artifact.kind === 'stylesheet')
-    .map((artifact) => artifact.content));
+  const stylesheetCounts = new Map<string, number>();
+  for (const artifact of artifacts) {
+    if (artifact.kind !== 'stylesheet') continue;
+    stylesheetCounts.set(artifact.content, (stylesheetCounts.get(artifact.content) ?? 0) + 1);
+  }
   const references: ArtifactReference[] = [];
 
   for (const artifact of artifacts) {
@@ -358,7 +363,7 @@ export function inventoryArtifactReferences(input: ReferenceBuild): ReferenceInv
     }
 
     if (artifact.kind === 'html') {
-      recordHtmlReferences(artifact, sources, stylesheetContents, references);
+      recordHtmlReferences(artifact, sources, stylesheetCounts, references);
       continue;
     }
 
