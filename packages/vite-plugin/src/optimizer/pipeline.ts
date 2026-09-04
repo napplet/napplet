@@ -29,6 +29,7 @@ export { renderPrivateResourceTable, renderResourceLoader, type ResourceTableEnt
 export const OPTIMIZATION_TARGET_BYTES = 2 * 1024 * 1024;
 /** Private loader portability bound for each complete resource Blob. */
 export const MAX_WHOLE_RESOURCE_BYTES = 10 * 1024 * 1024;
+const RENDERED_HTML_ARTIFACT_PATH = '<rendered-index.html>';
 
 export interface RetainedAsset {
   source: string;
@@ -224,12 +225,11 @@ function injectPrivateMetadata(html: string, entries: readonly ResourceTableEntr
 function buildReferenceInventory(build: RetainedBuild): ReferenceInventory {
   return inventoryArtifactReferences({
     assets: build.assets,
-    artifacts: build.artifacts ?? [{ path: 'index.html', kind: 'html', content: build.html }],
+    artifacts: [
+      { path: RENDERED_HTML_ARTIFACT_PATH, kind: 'html', content: build.html },
+      ...(build.artifacts ?? []),
+    ],
   });
-}
-
-function embeddedArtifactContent(artifact: RetainedArtifact, content: string): string {
-  return artifact.kind === 'javascript' ? content.replace(/<\/script/gi, '<\\/script') : content;
 }
 
 /** Render the actual candidate HTML for a selected set, then measure its UTF-8 bytes. */
@@ -244,24 +244,14 @@ export function renderOptimizedHtml(input: RenderInput): RenderedArtifact {
     source,
     `window.__nappletPrivateResourceLoader.response("${source}")`,
   ]));
-  let html = input.build.html;
-
-  for (const artifact of inventory.artifacts) {
-    const rewritten = rewriteArtifactReferences({
-      artifact,
-      inventory,
-      replacements,
-      fetchCallReplacements,
-    });
-    if (rewritten.content === artifact.content) continue;
-    if (artifact.kind === 'html' && artifact.content === input.build.html) {
-      html = rewritten.content;
-      continue;
-    }
-    const originalContent = embeddedArtifactContent(artifact, artifact.content);
-    const rewrittenContent = embeddedArtifactContent(artifact, rewritten.content);
-    html = html.replaceAll(originalContent, rewrittenContent);
-  }
+  const artifact = inventory.artifacts.find((candidate) => candidate.path === RENDERED_HTML_ARTIFACT_PATH);
+  if (!artifact) throw new Error('optimizer reference inventory is missing the rendered HTML artifact');
+  let html = rewriteArtifactReferences({
+    artifact,
+    inventory,
+    replacements,
+    fetchCallReplacements,
+  }).content;
 
   html = injectPrivateMetadata(html, entries);
   return { html, bytes: Buffer.byteLength(html), entries };

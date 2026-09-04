@@ -144,7 +144,7 @@ interface TextEdit {
   start: number;
   end: number;
   replacement: string;
-  source: string;
+  sources: readonly string[];
 }
 
 function artifactReferences(artifact: RetainedArtifact, inventory: ReferenceInventory): ArtifactReference[] {
@@ -164,7 +164,7 @@ function applyTextEdits(content: string, edits: readonly TextEdit[]): RewrittenA
     if (edit.start < 0 || edit.end > nextStart || edit.start >= edit.end) continue;
     rewritten = `${rewritten.slice(0, edit.start)}${edit.replacement}${rewritten.slice(edit.end)}`;
     nextStart = edit.start;
-    rewrittenSources.add(edit.source);
+    for (const source of edit.sources) rewrittenSources.add(source);
   }
   return { content: rewritten, rewrittenSources: [...rewrittenSources].sort() };
 }
@@ -177,7 +177,7 @@ function sourceValueEdit(
   const offset = referenceOffset(reference);
   if (reference.form === 'html-attribute' || reference.form === 'html-srcset') {
     if (artifact.content.slice(offset, offset + reference.source.length) !== reference.source) return null;
-    return { start: offset, end: offset + reference.source.length, replacement, source: reference.source };
+    return { start: offset, end: offset + reference.source.length, replacement, sources: [reference.source] };
   }
 
   const suffix = artifact.content.slice(offset);
@@ -186,14 +186,14 @@ function sourceValueEdit(
     const relativeStart = match?.[0].indexOf(reference.source) ?? -1;
     return relativeStart < 0
       ? null
-      : { start: offset + relativeStart, end: offset + relativeStart + reference.source.length, replacement, source: reference.source };
+      : { start: offset + relativeStart, end: offset + relativeStart + reference.source.length, replacement, sources: [reference.source] };
   }
 
   const match = suffix.match(new RegExp(`^__nappletAssetUrl\\(\\s*(["'])${escapePattern(reference.source)}\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`));
   const relativeStart = match?.[0].indexOf(reference.source) ?? -1;
   return relativeStart < 0
     ? null
-    : { start: offset + relativeStart, end: offset + relativeStart + reference.source.length, replacement, source: reference.source };
+    : { start: offset + relativeStart, end: offset + relativeStart + reference.source.length, replacement, sources: [reference.source] };
 }
 
 function fetchCallEdit(
@@ -213,7 +213,7 @@ function fetchCallEdit(
     start: prefix.index,
     end: prefix.index + call[0].length,
     replacement,
-    source: reference.source,
+    sources: [reference.source],
   };
 }
 
@@ -242,7 +242,40 @@ function rewriteCssReferences(
   return { content: parsed.toString(), rewrittenSources: [...rewrittenSources].sort() };
 }
 
-function recordJavaScriptReferences(artifact: RetainedArtifact, sources: readonly string[], references: ArtifactReference[]): void {
+function htmlStyleEdits(
+  artifact: RetainedArtifact,
+  references: readonly ArtifactReference[],
+  replacements: ReadonlyMap<string, string>,
+): TextEdit[] {
+  const cssReferences = references.filter((reference) => reference.form === 'inline-css' || reference.form === 'stylesheet-url');
+  if (cssReferences.length === 0) return [];
+  const edits: TextEdit[] = [];
+  for (const match of artifact.content.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi)) {
+    const content = match[1] ?? '';
+    const start = (match.index ?? 0) + match[0].indexOf(content);
+    const end = start + content.length;
+    const contained = cssReferences.filter((reference) => {
+      const offset = referenceOffset(reference);
+      return offset >= start && offset < end;
+    });
+    if (contained.length === 0) continue;
+    const rewritten = rewriteCssReferences(
+      { path: artifact.path, kind: 'inline-css', content },
+      contained,
+      replacements,
+    );
+    if (rewritten.content === content) continue;
+    edits.push({ start, end, replacement: rewritten.content, sources: rewritten.rewrittenSources });
+  }
+  return edits;
+}
+
+function recordJavaScriptReferences(
+  artifact: RetainedArtifact,
+  sources: readonly string[],
+  references: ArtifactReference[],
+  baseOffset = 0,
+): void {
   for (const source of sources) {
     const escaped = escapePattern(source);
     const sentinel = new RegExp(`__nappletAssetUrl\\(\\s*(["'])${escaped}\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`, 'g');
@@ -250,24 +283,58 @@ function recordJavaScriptReferences(artifact: RetainedArtifact, sources: readonl
       const offset = match.index ?? 0;
       const before = artifact.content.slice(Math.max(0, offset - 48), offset);
       if (/new\s+(?:Shared)?Worker\(\s*$/.test(before)) {
-        pushReference(references, source, 'worker-url', false, artifact.path, offset);
+        pushReference(references, source, 'worker-url', false, artifact.path, baseOffset + offset);
       } else if (/import\(\s*$/.test(before)) {
-        pushReference(references, source, 'module-url', false, artifact.path, offset);
+        pushReference(references, source, 'module-url', false, artifact.path, baseOffset + offset);
       } else if (/WebAssembly\.instantiateStreaming\(\s*fetch\(\s*$/.test(before)) {
-        pushReference(references, source, 'wasm-streaming-url', false, artifact.path, offset);
+        pushReference(references, source, 'wasm-streaming-url', false, artifact.path, baseOffset + offset);
       } else if (/fetch\(\s*$/.test(before)) {
-        pushReference(references, source, 'js-fetch-sentinel', true, artifact.path, offset);
+        pushReference(references, source, 'js-fetch-sentinel', true, artifact.path, baseOffset + offset);
       } else if (/,\s*["']media["']\s*\)$/.test(match[0])) {
-        pushReference(references, source, 'js-media-sentinel', false, artifact.path, offset);
+        pushReference(references, source, 'js-media-sentinel', false, artifact.path, baseOffset + offset);
       } else {
-        pushReference(references, source, 'js-sentinel', false, artifact.path, offset);
+        pushReference(references, source, 'js-sentinel', false, artifact.path, baseOffset + offset);
       }
     }
 
     const computed = new RegExp(`(["'])${escaped}\\1\\s*\\+`, 'g');
     for (const match of artifact.content.matchAll(computed)) {
-      pushReference(references, source, 'computed-url', false, artifact.path, match.index ?? 0);
+      pushReference(references, source, 'computed-url', false, artifact.path, baseOffset + (match.index ?? 0));
     }
+  }
+}
+
+function recordHtmlReferences(
+  artifact: RetainedArtifact,
+  sources: readonly string[],
+  stylesheetContents: ReadonlySet<string>,
+  references: ArtifactReference[],
+): void {
+  for (const source of sources) {
+    const escaped = escapePattern(source);
+    for (const match of artifact.content.matchAll(new RegExp(`\\bsrcset\\s*=\\s*(["'])[^"']*${escaped}[^"']*\\1`, 'gi'))) {
+      pushReference(references, source, 'html-srcset', false, artifact.path, (match.index ?? 0) + match[0].indexOf(source));
+    }
+    for (const match of artifact.content.matchAll(new RegExp(`\\b(?:src|href)\\s*=\\s*(["'])${escaped}\\1`, 'gi'))) {
+      pushReference(references, source, 'html-attribute', false, artifact.path, (match.index ?? 0) + match[0].indexOf(source));
+    }
+  }
+
+  for (const match of artifact.content.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi)) {
+    const content = match[1] ?? '';
+    const baseOffset = (match.index ?? 0) + match[0].indexOf(content);
+    const external = stylesheetContents.has(content);
+    for (const value of cssUrlValues(content)) {
+      if (!sources.includes(value.source)) continue;
+      pushReference(references, value.source, external ? 'stylesheet-url' : 'inline-css', external, artifact.path, baseOffset + value.offset);
+    }
+  }
+
+  for (const match of artifact.content.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)) {
+    const content = match[1] ?? '';
+    if (content.length === 0) continue;
+    const baseOffset = (match.index ?? 0) + match[0].indexOf(content);
+    recordJavaScriptReferences({ path: artifact.path, kind: 'javascript', content }, sources, references, baseOffset);
   }
 }
 
@@ -275,6 +342,9 @@ function recordJavaScriptReferences(artifact: RetainedArtifact, sources: readonl
 export function inventoryArtifactReferences(input: ReferenceBuild): ReferenceInventory {
   const artifacts = [...input.artifacts];
   const sources = input.assets.map((asset) => normalizedPath(asset.source));
+  const stylesheetContents = new Set(artifacts
+    .filter((artifact) => artifact.kind === 'stylesheet')
+    .map((artifact) => artifact.content));
   const references: ArtifactReference[] = [];
 
   for (const artifact of artifacts) {
@@ -286,16 +356,13 @@ export function inventoryArtifactReferences(input: ReferenceBuild): ReferenceInv
       continue;
     }
 
+    if (artifact.kind === 'html') {
+      recordHtmlReferences(artifact, sources, stylesheetContents, references);
+      continue;
+    }
+
     for (const source of sources) {
-      const escaped = escapePattern(source);
-      if (artifact.kind === 'html') {
-        for (const match of artifact.content.matchAll(new RegExp(`\\bsrcset\\s*=\\s*(["'])[^"']*${escaped}[^"']*\\1`, 'gi'))) {
-          pushReference(references, source, 'html-srcset', false, artifact.path, (match.index ?? 0) + match[0].indexOf(source));
-        }
-        for (const match of artifact.content.matchAll(new RegExp(`\\b(?:src|href)\\s*=\\s*(["'])${escaped}\\1`, 'gi'))) {
-          pushReference(references, source, 'html-attribute', false, artifact.path, (match.index ?? 0) + match[0].indexOf(source));
-        }
-      } else if (artifact.kind === 'javascript' && hasSource(artifact.content, source)) {
+      if (artifact.kind === 'javascript' && hasSource(artifact.content, source)) {
         recordJavaScriptReferences(artifact, [source], references);
       }
     }
@@ -327,8 +394,11 @@ export function rewriteArtifactReferences(input: RewriteInput): RewrittenArtifac
     return rewriteCssReferences(input.artifact, references, input.replacements);
   }
 
-  const edits: TextEdit[] = [];
+  const edits = input.artifact.kind === 'html'
+    ? htmlStyleEdits(input.artifact, references, input.replacements)
+    : [];
   for (const reference of references) {
+    if (reference.form === 'inline-css' || reference.form === 'stylesheet-url') continue;
     const callReplacement = input.fetchCallReplacements?.get(reference.source);
     const callEdit = callReplacement ? fetchCallEdit(input.artifact, reference, callReplacement) : null;
     if (callEdit) {

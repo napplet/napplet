@@ -136,6 +136,26 @@ describe('large single-file artifact optimizer', () => {
     expect(selectedRendered.html).toContain(`const unrelated = "${source}";\n// ${source}`);
   });
 
+  it('renders embedded stylesheet URLs through their inventoried locations', () => {
+    const source = 'assets/image.png';
+    const retainedAsset: RetainedAsset = {
+      source,
+      reference: source,
+      bytes: Uint8Array.of(1, 2, 3),
+      mime: 'image/png',
+    };
+    const stylesheet = `.hero { background: url("${source}#cover"); } /* ${source} */`;
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/site.css', kind: 'stylesheet', content: stylesheet },
+    ], 10_000);
+
+    const rendered = renderOptimizedHtml({ build: retained, selected: [] });
+
+    expect(rendered.html).toContain('url("data:image/png;base64,AQID#cover")');
+    expect(rendered.html).toContain(`/* ${source} */`);
+    expect(rendered.html.match(/data:image\/png;base64,AQID/g)).toHaveLength(1);
+  });
+
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
     const selected = asset('/asset.bin', 10_000);
     const retained = build([selected], 5_000);
