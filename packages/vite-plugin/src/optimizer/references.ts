@@ -57,6 +57,7 @@ export interface RewriteInput {
   artifact: RetainedArtifact;
   inventory: ReferenceInventory;
   replacements: ReadonlyMap<string, string>;
+  fetchCallReplacements?: ReadonlyMap<string, string>;
 }
 
 export interface RewrittenArtifact {
@@ -139,6 +140,108 @@ function hasSource(value: string, source: string): boolean {
   return value.includes(source) || value.includes(`./${source}`);
 }
 
+interface TextEdit {
+  start: number;
+  end: number;
+  replacement: string;
+  source: string;
+}
+
+function artifactReferences(artifact: RetainedArtifact, inventory: ReferenceInventory): ArtifactReference[] {
+  const prefix = `${artifact.path}:`;
+  return inventory.references.filter((reference) => reference.location.startsWith(prefix));
+}
+
+function referenceOffset(reference: ArtifactReference): number {
+  return Number.parseInt(reference.location.slice(reference.location.lastIndexOf(':') + 1), 10);
+}
+
+function applyTextEdits(content: string, edits: readonly TextEdit[]): RewrittenArtifact {
+  let rewritten = content;
+  let nextStart = content.length;
+  const rewrittenSources = new Set<string>();
+  for (const edit of [...edits].sort((left, right) => right.start - left.start || right.end - left.end)) {
+    if (edit.start < 0 || edit.end > nextStart || edit.start >= edit.end) continue;
+    rewritten = `${rewritten.slice(0, edit.start)}${edit.replacement}${rewritten.slice(edit.end)}`;
+    nextStart = edit.start;
+    rewrittenSources.add(edit.source);
+  }
+  return { content: rewritten, rewrittenSources: [...rewrittenSources].sort() };
+}
+
+function sourceValueEdit(
+  artifact: RetainedArtifact,
+  reference: ArtifactReference,
+  replacement: string,
+): TextEdit | null {
+  const offset = referenceOffset(reference);
+  if (reference.form === 'html-attribute' || reference.form === 'html-srcset') {
+    if (artifact.content.slice(offset, offset + reference.source.length) !== reference.source) return null;
+    return { start: offset, end: offset + reference.source.length, replacement, source: reference.source };
+  }
+
+  const suffix = artifact.content.slice(offset);
+  if (reference.form === 'computed-url') {
+    const match = suffix.match(new RegExp(`^(["'])${escapePattern(reference.source)}\\1\\s*\\+`));
+    const relativeStart = match?.[0].indexOf(reference.source) ?? -1;
+    return relativeStart < 0
+      ? null
+      : { start: offset + relativeStart, end: offset + relativeStart + reference.source.length, replacement, source: reference.source };
+  }
+
+  const match = suffix.match(new RegExp(`^__nappletAssetUrl\\(\\s*(["'])${escapePattern(reference.source)}\\1(?:\\s*,\\s*(["'])media\\2)?\\s*\\)`));
+  const relativeStart = match?.[0].indexOf(reference.source) ?? -1;
+  return relativeStart < 0
+    ? null
+    : { start: offset + relativeStart, end: offset + relativeStart + reference.source.length, replacement, source: reference.source };
+}
+
+function fetchCallEdit(
+  artifact: RetainedArtifact,
+  reference: ArtifactReference,
+  replacement: string,
+): TextEdit | null {
+  if (reference.form !== 'js-fetch-sentinel' || !reference.supported) return null;
+  const offset = referenceOffset(reference);
+  const before = artifact.content.slice(0, offset);
+  const prefix = before.match(/fetch\(\s*$/);
+  if (prefix?.index === undefined) return null;
+  const suffix = artifact.content.slice(prefix.index);
+  const call = suffix.match(new RegExp(`^fetch\\(\\s*__nappletAssetUrl\\(\\s*(["'])${escapePattern(reference.source)}\\1\\s*\\)\\s*\\)`));
+  if (!call) return null;
+  return {
+    start: prefix.index,
+    end: prefix.index + call[0].length,
+    replacement,
+    source: reference.source,
+  };
+}
+
+function rewriteCssReferences(
+  artifact: RetainedArtifact,
+  references: readonly ArtifactReference[],
+  replacements: ReadonlyMap<string, string>,
+): RewrittenArtifact {
+  const allowed = new Set(references.map((reference) => reference.source));
+  const parsed = valueParser(artifact.content);
+  const rewrittenSources = new Set<string>();
+  parsed.walk((node) => {
+    if (node.type !== 'function' || node.value.toLowerCase() !== 'url' || node.unclosed) return false;
+    const argument = node.nodes.filter((candidate) => candidate.type !== 'space' && candidate.type !== 'comment');
+    if (argument.length !== 1) return false;
+    const target = argument[0]!;
+    if ((target.type !== 'word' && target.type !== 'string') || (target.type === 'string' && target.unclosed)) return false;
+    const value = splitFragment(target.value);
+    const source = normalizedPath(decodeCssEscapes(value.path));
+    const replacement = allowed.has(source) ? replacements.get(source) : undefined;
+    if (!replacement) return false;
+    target.value = `${replacement}${value.fragment}`;
+    rewrittenSources.add(source);
+    return false;
+  });
+  return { content: parsed.toString(), rewrittenSources: [...rewrittenSources].sort() };
+}
+
 function recordJavaScriptReferences(artifact: RetainedArtifact, sources: readonly string[], references: ArtifactReference[]): void {
   for (const source of sources) {
     const escaped = escapePattern(source);
@@ -210,27 +313,42 @@ export function classifyAssetReferences(asset: RetainedAsset, inventory: Referen
   return { eligible: reasons.length === 0, reasons, references };
 }
 
+/**
+ * Rewrite only reference locations and forms recorded by the artifact inventory.
+ *
+ * @param input - The retained artifact, its authoritative inventory, and replacement maps.
+ * @returns Rewritten content plus the sources that changed.
+ * @example
+ * rewriteArtifactReferences({ artifact, inventory, replacements: new Map([['asset.bin', dataUri]]) });
+ */
+export function rewriteArtifactReferences(input: RewriteInput): RewrittenArtifact {
+  const references = artifactReferences(input.artifact, input.inventory);
+  if (input.artifact.kind === 'stylesheet' || input.artifact.kind === 'inline-css') {
+    return rewriteCssReferences(input.artifact, references, input.replacements);
+  }
+
+  const edits: TextEdit[] = [];
+  for (const reference of references) {
+    const callReplacement = input.fetchCallReplacements?.get(reference.source);
+    const callEdit = callReplacement ? fetchCallEdit(input.artifact, reference, callReplacement) : null;
+    if (callEdit) {
+      edits.push(callEdit);
+      continue;
+    }
+    const replacement = input.replacements.get(reference.source);
+    if (!replacement) continue;
+    const edit = sourceValueEdit(input.artifact, reference, replacement);
+    if (edit) edits.push(edit);
+  }
+  return applyTextEdits(input.artifact.content, edits);
+}
+
 /** Rewrite only parser-proven stylesheet values; every other form remains byte-preserved. */
 export function rewriteSupportedReferences(input: RewriteInput): RewrittenArtifact {
   if (input.artifact.kind !== 'stylesheet') return { content: input.artifact.content, rewrittenSources: [] };
-  const supported = new Set(input.inventory.references
-    .filter((reference) => reference.location.startsWith(`${input.artifact.path}:`) && reference.supported)
-    .map((reference) => reference.source));
-  const parsed = valueParser(input.artifact.content);
-  const rewrittenSources = new Set<string>();
-  parsed.walk((node) => {
-    if (node.type !== 'function' || node.value.toLowerCase() !== 'url' || node.unclosed) return false;
-    const argument = node.nodes.filter((candidate) => candidate.type !== 'space' && candidate.type !== 'comment');
-    if (argument.length !== 1) return false;
-    const target = argument[0]!;
-    if ((target.type !== 'word' && target.type !== 'string') || (target.type === 'string' && target.unclosed)) return false;
-    const value = splitFragment(target.value);
-    const source = normalizedPath(decodeCssEscapes(value.path));
-    const replacement = supported.has(source) ? input.replacements.get(source) : undefined;
-    if (!replacement) return false;
-    target.value = `${replacement}${value.fragment}`;
-    rewrittenSources.add(source);
-    return false;
-  });
-  return { content: parsed.toString(), rewrittenSources: [...rewrittenSources].sort() };
+  return rewriteCssReferences(
+    input.artifact,
+    artifactReferences(input.artifact, input.inventory).filter((reference) => reference.supported),
+    input.replacements,
+  );
 }

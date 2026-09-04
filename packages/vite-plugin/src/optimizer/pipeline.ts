@@ -19,6 +19,8 @@ import {
 import {
   classifyAssetReferences,
   inventoryArtifactReferences,
+  rewriteArtifactReferences,
+  type ReferenceInventory,
   type RetainedArtifact,
 } from './references.js';
 
@@ -71,6 +73,7 @@ export interface RenderInput {
   build: RetainedBuild;
   selected: readonly RetainedAsset[];
   entries?: readonly ResourceTableEntry[];
+  inventory?: ReferenceInventory;
 }
 
 export interface RenderedArtifact {
@@ -87,6 +90,7 @@ export interface OptimizationPlan {
   ineligible: Array<{ source: string; reasons: string[] }>;
   initialBytes: number;
   finalBytes: number;
+  inventory: ReferenceInventory;
 }
 
 export interface OptimizeArtifactInput {
@@ -217,23 +221,46 @@ function injectPrivateMetadata(html: string, entries: readonly ResourceTableEntr
   return /<\/head\s*>/i.test(html) ? html.replace(/<\/head\s*>/i, `${metadata}</head>`) : `${metadata}${html}`;
 }
 
+function buildReferenceInventory(build: RetainedBuild): ReferenceInventory {
+  return inventoryArtifactReferences({
+    assets: build.assets,
+    artifacts: build.artifacts ?? [{ path: 'index.html', kind: 'html', content: build.html }],
+  });
+}
+
+function embeddedArtifactContent(artifact: RetainedArtifact, content: string): string {
+  return artifact.kind === 'javascript' ? content.replace(/<\/script/gi, '<\\/script') : content;
+}
+
 /** Render the actual candidate HTML for a selected set, then measure its UTF-8 bytes. */
 export function renderOptimizedHtml(input: RenderInput): RenderedArtifact {
   const selectedBySource = new Map(input.selected.map((asset) => [normalizedPath(asset.source), asset]));
   const entries = input.entries ? [...input.entries] : tableEntries(input.selected);
+  const inventory = input.inventory ?? buildReferenceInventory(input.build);
+  const replacements = new Map(input.build.assets
+    .filter((asset) => !selectedBySource.has(normalizedPath(asset.source)))
+    .map((asset) => [normalizedPath(asset.source), dataUri(asset)]));
+  const fetchCallReplacements = new Map([...selectedBySource.keys()].map((source) => [
+    source,
+    `window.__nappletPrivateResourceLoader.response("${source}")`,
+  ]));
   let html = input.build.html;
 
-  for (const asset of input.build.assets) {
-    const source = normalizedPath(asset.source);
-    const replacement = selectedBySource.has(source) ? undefined : dataUri(asset);
-    if (!replacement) continue;
-    html = html.split(asset.reference).join(replacement);
-  }
-
-  for (const source of selectedBySource.keys()) {
-    const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const call = new RegExp(`fetch\\(\\s*__nappletAssetUrl\\(\\s*(["'])${escaped}\\1\\s*\\)\\s*\\)`, 'g');
-    html = html.replace(call, `window.__nappletPrivateResourceLoader.response("${source}")`);
+  for (const artifact of inventory.artifacts) {
+    const rewritten = rewriteArtifactReferences({
+      artifact,
+      inventory,
+      replacements,
+      fetchCallReplacements,
+    });
+    if (rewritten.content === artifact.content) continue;
+    if (artifact.kind === 'html' && artifact.content === input.build.html) {
+      html = rewritten.content;
+      continue;
+    }
+    const originalContent = embeddedArtifactContent(artifact, artifact.content);
+    const rewrittenContent = embeddedArtifactContent(artifact, rewritten.content);
+    html = html.replaceAll(originalContent, rewrittenContent);
   }
 
   html = injectPrivateMetadata(html, entries);
@@ -243,11 +270,8 @@ export function renderOptimizedHtml(input: RenderInput): RenderedArtifact {
 /** Plan deterministic externalization without mutating emitted output. */
 export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
   const targetBytes = input.targetBytes ?? OPTIMIZATION_TARGET_BYTES;
-  const initial = renderOptimizedHtml({ build: input, selected: [] });
-  const inventory = inventoryArtifactReferences({
-    assets: input.assets,
-    artifacts: input.artifacts ?? [{ path: 'index.html', kind: 'html', content: input.html }],
-  });
+  const inventory = buildReferenceInventory(input);
+  const initial = renderOptimizedHtml({ build: input, selected: [], inventory });
   const eligibility = new Map(input.assets.map((asset) => [asset, classifyAssetReferences(asset, inventory)]));
   const ineligible = input.assets
     .map((asset) => ({ asset, result: eligibility.get(asset)! }))
@@ -270,6 +294,7 @@ export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
       ineligible,
       initialBytes: initial.bytes,
       finalBytes: initial.bytes,
+      inventory,
     };
   }
 
@@ -282,7 +307,7 @@ export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
 
   for (const candidate of candidates) {
     selected.push(candidate);
-    rendered = renderOptimizedHtml({ build: input, selected });
+    rendered = renderOptimizedHtml({ build: input, selected, inventory });
     measurements.push({ source: normalizedPath(candidate.source), bytes: rendered.bytes });
     if (rendered.bytes <= targetBytes) break;
   }
@@ -295,6 +320,7 @@ export function planExternalAssets(input: RetainedBuild): OptimizationPlan {
     ineligible,
     initialBytes: initial.bytes,
     finalBytes: rendered.bytes,
+    inventory,
   };
 }
 
@@ -379,7 +405,7 @@ export async function optimizeSingleFileArtifact(
 
     for (const entry of entries) await loadVerifiedResourceBytes(entry, services.resourceBytes);
     const render = input.render ?? renderOptimizedHtml;
-    const rendered = render({ build: input.build, selected: plan.selected, entries });
+    const rendered = render({ build: input.build, selected: plan.selected, entries, inventory: plan.inventory });
     if (rendered.entries.length !== entries.length || rendered.bytes > plan.initialBytes) {
       throw new Error('rendered optimized artifact failed verification');
     }

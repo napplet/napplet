@@ -37,21 +37,28 @@ function asset(source: string, length: number, mime = 'application/octet-stream'
 }
 
 function build(assets: RetainedAsset[], targetBytes = OPTIMIZATION_TARGET_BYTES): RetainedBuild {
+  const script = assets.map((entry) => `fetch(__nappletAssetUrl("${entry.source}"));`).join('\n');
   return {
-    html: `<html><head></head><body>${assets.map((entry) => `<img src="${entry.reference}">`).join('')}</body></html>`,
+    html: `<html><head></head><body><script>${script}</script></body></html>`,
     assets,
     artifacts: [{
       path: 'assets/entry.js',
       kind: 'javascript',
-      content: assets.map((entry) => `fetch(__nappletAssetUrl("${entry.source}"));`).join('\n'),
+      content: script,
     }],
     targetBytes,
   };
 }
 
 function buildWithArtifacts(assets: RetainedAsset[], artifacts: RetainedArtifact[], targetBytes: number): RetainedBuild & { artifacts: RetainedArtifact[] } {
+  const embedded = artifacts.map((artifact) => {
+    if (artifact.kind === 'javascript') return `<script>${artifact.content}</script>`;
+    if (artifact.kind === 'stylesheet' || artifact.kind === 'inline-css') return `<style>${artifact.content}</style>`;
+    return artifact.content;
+  }).join('');
   return {
     ...build(assets, targetBytes),
+    html: `<html><head></head><body>${embedded}</body></html>`,
     artifacts,
   };
 }
@@ -108,6 +115,9 @@ describe('large single-file artifact optimizer', () => {
 
     const rendered = renderOptimizedHtml({ build: retained, selected: [] });
     const plan = planExternalAssets(retained);
+    const overTarget = { ...retained, targetBytes: Buffer.byteLength(expected) - 1 };
+    const selectedRendered = renderOptimizedHtml({ build: overTarget, selected: [retainedAsset] });
+    const selectedPlan = planExternalAssets(overTarget);
 
     expect(rendered.html).toBe(expected);
     expect(rendered.html.match(/data:application\/octet-stream;base64,AQID/g)).toHaveLength(1);
@@ -120,6 +130,10 @@ describe('large single-file artifact optimizer', () => {
       initialBytes: Buffer.byteLength(expected),
       finalBytes: Buffer.byteLength(expected),
     });
+    expect(selectedPlan.measurements).toEqual([{ source, bytes: selectedRendered.bytes }]);
+    expect(selectedPlan.finalBytes).toBe(selectedRendered.bytes);
+    expect(selectedRendered.html).toContain(`window.__nappletPrivateResourceLoader.response("${source}")`);
+    expect(selectedRendered.html).toContain(`const unrelated = "${source}";\n// ${source}`);
   });
 
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
