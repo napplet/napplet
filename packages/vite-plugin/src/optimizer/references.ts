@@ -289,7 +289,8 @@ function recordJavaScriptReferences(
       } else if (/WebAssembly\.instantiateStreaming\(\s*fetch\(\s*$/.test(before)) {
         pushReference(references, source, 'wasm-streaming-url', false, artifact.path, baseOffset + offset);
       } else if (/fetch\(\s*$/.test(before)) {
-        pushReference(references, source, 'js-fetch-sentinel', true, artifact.path, baseOffset + offset);
+        const after = artifact.content.slice(offset + match[0].length);
+        pushReference(references, source, 'js-fetch-sentinel', /^\s*\)/.test(after), artifact.path, baseOffset + offset);
       } else if (/,\s*["']media["']\s*\)$/.test(match[0])) {
         pushReference(references, source, 'js-media-sentinel', false, artifact.path, baseOffset + offset);
       } else {
