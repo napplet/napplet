@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v0.34.0
 milestone_name: NIP-5D Runtime Injection
-current_phase: 161
-current_phase_name: ad-hoc-convention-package-contracts
-status: complete
-stopped_at: Quick task 260728-nbn complete; PR #189 conflicts resolved
-last_updated: "2026-08-26T13:09:09Z"
+current_phase: 162
+current_phase_name: blossom-backed-large-asset-optimization
+status: verifying
+stopped_at: Completed 162-11-PLAN.md
+last_updated: "2026-09-04T19:52:00Z"
 last_activity: 2026-09-04
-last_activity_desc: Completed quick task 260904-g1f — add the MIT license and open a pull request
+last_activity_desc: "Completed quick task 260904-nm7: Add an accessible recoverable packaged-resource loader in stacked PR #216"
 progress:
   total_phases: 8
-  completed_phases: 4
-  total_plans: 42
-  completed_plans: 32
-  percent: 76
+  completed_phases: 3
+  total_plans: 16
+  completed_plans: 6
+  percent: 38
 ---
 
 # Project State
@@ -25,17 +25,25 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v0.31.0 archive)
 
 **Core value:** Prove that sandboxed Nostr apps can securely delegate to a host shell over a simple, standardized protocol — and ship the spec + SDK so others can build on it.
 
-**Current focus:** Phase 161 — ad-hoc-convention-package-contracts
+**Current focus:** Phase 162 — blossom-backed-large-asset-optimization
 
 > **Provenance note:** The "Accumulated Context" section below preserves bullet records from BOTH branches' STATE.md histories. Records tagged "v0.29.0" from main's lineage refer to the milestone NOW renumbered as v0.30.0 (Class-Gated Decrypt — Phases 135-138). Records tagged "v0.29.0" from feat/strict-model refer to NUB-CONNECT (Phases 135-142). Phase number alone is not a unique identifier across the two; cross-reference the topic (decrypt/identity/NIP-07 → v0.30.0; connect/class/CSP-authority → v0.29.0).
 
 ## Current Position
 
-Phase: 161 (ad-hoc-convention-package-contracts) — COMPLETE
-Plan: 26 of 26
-Status: Verified; PR #186 open
-Last activity: 2026-09-04 — Completed quick task 260904-g1f: add the MIT license and open a pull request
+Phase: 162 (blossom-backed-large-asset-optimization) — EXECUTING
+Plan: 11 of 11
+Status: Phase complete — ready for verification
+Last activity: 2026-09-04 — Completed quick task 260904-nm7: Add an accessible recoverable packaged-resource loader in stacked PR #216
 community/group-chat invite linked from the SPA and docs.
+
+### Quick task 260904-nm7 — COMPLETE
+
+- Added an immediate self-contained packaged-resource loader with honest verified-resource counts, light/dark and reduced-motion treatments, safe diagnostics, native Retry/Cancel controls, and atomic application handoff.
+- Kept concurrent and bulk resource work recoverable: verified siblings remain cached, failed/cancelled rows retry independently, and original aggregate promises retain ordered results.
+- Retained and independently validated ten production Paja screenshots plus a trace for a 35,067 ms active load, failure/retry, cancellation, keyboard focus, and final handoff.
+- Verification: targeted optimizer 67/67; evidence validator 58/58; Vite plugin 113/113; build 14/14; type-check 21/21; workspace units; full test 25/25; audit; AI-slop 100/100; independent H1 review and GSD verification.
+- PR: https://github.com/napplet/web/pull/216, stacked on `feat/vite-plugin-blossom-optimization` so the merged #212, #213, and #214 fixes remain in ancestry.
 
 ### Quick task 260726-ft1 — COMPLETE
 
@@ -479,6 +487,29 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 - [Phase ?]: Keep INC query parsing outbound-only and preserve exact opaque receive routing.
 - [Phase ?]: IntentResult now distinguishes immediate runtime acceptance from pre-acceptance rejection; post-acceptance delivery remains runtime policy.
 - [Phase ?]: IntentApi derives identity from convention URIs and exposes no-ID runtime-attested target delivery through onDelivery.
+- [Phase ?]: Retain Vite asset boundaries only while evaluating; commit a verified resource-backed artifact or ordinary all-inline output.
+- [Phase ?]: Emit requires:resource only after a verified transaction and keep the mapping private to index.html.
+- [Phase ?]: Keep encrypted kind-24133 relay transport behind an injected adapter; shared signer owns canonical correlation, verification, and cleanup.
+- [Phase ?]: Restrict BuildSigner to get_public_key and kind-24242 sign_event, with local signed-event verification and redaction-safe errors.
+- [Phase ?]: Protected credential provider failures remain fail-closed; plaintext fallback is explicit only.
+- [Phase ?]: Deno member import maps are validated with --no-lock because workspace lock configuration is root-only.
+- [Phase ?]: Keep the public NappletSigner for generic deployment events; use the verified shared BuildSigner only for Blossom kind 24242 authorization.
+- [Phase ?]: Wrap legacy CLI credential providers in RedactedSecret at the boundary so persisted remote-session secrets stay opaque.
+- [Phase ?]: Discover kind-10063 only through the newest verified kind-10002 event's write or unmarked relays; never treat relay URLs as Blossom servers.
+- [Phase ?]: Use direct primary-first BUD uploads and never call BUD-04 remote mirroring from the build process.
+- [Phase ?]: Keep the resource table and loader private signed-artifact metadata; they do not create NIP-5A or NIP-5D surface.
+- [Phase ?]: Select assets only when every inventoried reference uses a supported loader-owned form; preserve all other bytes inline.
+- [Phase ?]: Use only resource.bytes and resource.bytesMany with whole-Blob integrity checks, bounded lifetime, and no browser network fallback.
+- [Phase ?]: CLI Blossom discovery uses verified kind-10002 write relays and never substitutes a default server.
+- [Phase ?]: CLI upload success requires complete shared exact-byte evidence across configured direct servers.
+- [Phase ?]: Keep Node-only platform capabilities in the Vite adapter while shared build-tools stays environment-neutral.
+- [Phase ?]: Use typed redaction-safe unavailable statuses and lazy injected Node boundaries for live optimization.
+- [Phase ?]: Large asset optimization measures exact would-be single-file HTML against a fixed 2 MiB threshold before lazy Node services.
+- [Phase ?]: The resource requirement is derived only from committedResourceCount, and aggregate hashing follows the final artifact commit.
+- [Phase ?]: The Vite integration test injects local boundaries through an internal WeakMap harness, not a public plugin option.
+- [Phase ?]: Assets over 10 MiB are ineligible whole Blobs and retain the nonfatal inline fallback; streaming and ranges are not claimed.
+- [Phase ?]: Kept Blossom loader/mapping as non-normative private artifact bytes and used only existing NAP-RESOURCE whole-Blob operations.
+- [Phase ?]: Released Vite plugin, build tools, and CLI as 0.x minors; transitive security remediation belongs in pnpm workspace overrides and lockfile.
 
 ### Decisions (napplet/nubs state snapshot, 2026-04-23)
 
@@ -511,7 +542,10 @@ Full decision log in PROJECT.md Key Decisions table. Recent decisions affecting 
 
 | Quick ID | Task | Date | Commit | Artifacts |
 |----------|------|------|--------|-----------|
+| 260904-nm7 | Add an accessible recoverable packaged-resource loader in stacked PR #216 | 2026-09-04 | a1b6bb0c | [260904-nm7-improve-the-napplet-vite-plugin-packaged](./quick/260904-nm7-improve-the-napplet-vite-plugin-packaged/) |
+| 260904-h0g | Resolve issues #212, #213, and #214 in stacked PR #215 | 2026-09-04 | 1e954edd | [260904-h0g-resolve-github-issues-212-and-213-on-top](./quick/260904-h0g-resolve-github-issues-212-and-213-on-top/) |
 | 260904-g1f | Add the MIT license and open a pull request | 2026-09-04 | 7b82fe08 | [260904-g1f-add-the-mit-license-and-open-a-pull-requ](./quick/260904-g1f-add-the-mit-license-and-open-a-pull-requ/) |
+| 260826-q11 | Integrate NAP-RESOURCE request-object compatibility into PR 205 after server-hint release | 2026-08-26 | aab681d7 | [260826-q11-integrate-nap-resource-request-object-co](./quick/260826-q11-integrate-nap-resource-request-object-co/) |
 | 260826-jex | Split NAP-RESOURCE server hints from PR #205 into a dedicated PR | 2026-08-26 | 11fdf896 | [260826-jex-split-nap-resource-server-hints-from-pr-](./quick/260826-jex-split-nap-resource-server-hints-from-pr-/) |
 | 260803-qdc | Preserve CLI JSR and public API compatibility while keeping standalone create and skills resolver-free | 2026-08-03 | 53fc550f | [260803-qdc-preserve-cli-jsr-compatibility-while-kee](./quick/260803-qdc-preserve-cli-jsr-compatibility-while-kee/) |
 | 260803-ogn | Fix release version synchronization to preserve wildcard package exports and unblock the official CLI release | 2026-08-03 | 15783676 | [260803-ogn-fix-release-version-synchronization-to-p](./quick/260803-ogn-fix-release-version-synchronization-to-p/) |
@@ -578,8 +612,8 @@ Items acknowledged and deferred at v0.31.0 milestone close on 2026-05-24:
 
 **Resume file:** None
 
-Last session: 2026-07-23T15:44:08.781Z
-Stopped at: Completed 161-16-PLAN.md
+Last session: 2026-08-21T18:25:15.384Z
+Stopped at: Completed 162-11-PLAN.md
 Resume: Phase 155 COMPLETE. All v0.33.0 SHELL requirements satisfied; both phases (154, 155) done. Next: orchestrator verify_phase_goal for Phase 155, then `/gsd:audit-milestone v0.33.0` → `/gsd:ship`.
 
 - v0.26.0: Consolidated `@napplet/nub-*` packages into single `@napplet/nub` with 34 subpath exports; deprecated packages ship as 1-line re-export shims for one release cycle
@@ -678,3 +712,14 @@ Resume: Phase 142 TERMINAL-COMPLETE — all 13 VER-IDs (VER-01..13) verified PAS
 | Phase 161 P12 | 4min | 1 tasks | 5 files |
 | Phase 161-ad-hoc-convention-package-contracts P15 | 2min | 1 tasks | 4 files |
 | Phase 161 P16 | 4 min | 2 tasks | 5 files |
+| Phase 162 P01 | 8 minutes | 1 tasks | 6 files |
+| Phase 162 P02 | 3 min | 2 tasks | 8 files |
+| Phase 162-blossom-backed-large-asset-optimization P03 | 9m | 3 tasks | 9 files |
+| Phase 162 P04 | 24m | 2 tasks | 11 files |
+| Phase 162 P05 | 33m | 2 tasks | 7 files |
+| Phase 162 P07 | 8min | 3 tasks | 8 files |
+| Phase 162 P06 | 8min | 2 tasks | 7 files |
+| Phase 162 P08 | 13 min | 2 tasks | 4 files |
+| Phase 162 P09 | 24 minutes | 2 tasks | 8 files |
+| Phase 162 P10 | ~105 minutes | 3 tasks | 11 files |
+| Phase 162 P11 | 15m | 2 tasks | 18 files |

@@ -54,6 +54,30 @@ export default defineConfig({
 
 ## Configuration
 
+### Large asset optimization (implementation behavior)
+
+`largeAssetOptimization` defaults to `'auto'` for `artifactMode: 'single-file'`; set it to `false` to keep the normal all-inline result. This non-normative build-tool behavior measures rendered inline HTML and attempts verified offloads only above exactly 2 MiB. The target is nonfatal: unavailable signer/discovery/upload evidence, unsupported references, or insufficient eligible bytes leave a valid inline artifact and safe report rather than declaring a protocol failure.
+
+The built-in Node path reuses a protected NIP-46 session when the platform credential service is available, or pairs for the current build only when protected persistence is unavailable. Fresh pairing races a terminal QR against pasted `bunker://` input. It reads the newest valid kind `10002` only to locate NIP-65 write/unmarked relays, then reads the newest valid kind `10063` Blossom list there. Exact-byte BUD requests use an HTTPS transport pinned to the address validated by the build's DNS policy. A committed offload records private implementation mapping data in `index.html` and adds exactly one `['requires', 'resource']` tag because the resulting artifact calls the proposed NAP-RESOURCE `bytes`/`bytesMany` API. The mapping and loader are private artifact bytes rather than new protocol fields; the runtime `resource` dependency is protocol surface defined by NAP-RESOURCE.
+
+Pass an object to observe reports or replace controlled Node boundaries. `node` overrides individual adapters while omitted fields retain the lazy production defaults.
+
+```ts
+nip5aManifest({
+  nappletType: 'my-napp',
+  artifactMode: 'single-file',
+  largeAssetOptimization: {
+    onReport(report) {
+      console.log(report.status, report.finalBytes);
+    },
+  },
+});
+```
+
+Supported build-owned references are documented JavaScript resource sentinels and parser-proven stylesheet URLs; direct HTML attributes, `srcset`, worker/module URLs, streaming WASM, arbitrary computed URLs, and unsupported consumers remain inline. Each resource is a complete Blob bounded to 10 MiB by this implementation; one 50 MiB Blob, streaming, ranges, progress, BUD-04 mirroring, BUD-10 URI syntax, deletion, listing, media transforms, payment, and reports are not delivered.
+
+Canonical behavior belongs to [NIP-5A](https://github.com/nostr-protocol/nips/blob/master/5A.md), [NIP-5D](https://github.com/nostr-protocol/nips/pull/2303), [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md), [NIP-65](https://github.com/nostr-protocol/nips/blob/master/65.md), [NAP-RESOURCE](https://github.com/napplet/naps/pull/80), and [Blossom BUDs](https://github.com/hzrd149/blossom). Thresholds, selection, URL hardening, browser support, and private metadata here are implementation behavior, not protocol law.
+
 ### Plugin Options
 
 #### nappletType (required)

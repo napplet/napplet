@@ -1,13 +1,16 @@
 import { SimplePool } from "nostr-tools/pool";
 import type { Event as NostrToolsEvent } from "nostr-tools/core";
 import { collectDeployFilePayloads, uploadFilesToServers } from "./blossom-upload.ts";
-import type { ServerUploadResult, UploadResultProgress } from "./blossom-upload.ts";
+import type {
+  ServerUploadResult,
+  UploadFilesToServersOptions,
+  UploadResultProgress,
+} from "./blossom-upload.ts";
 import type { NappletSigner } from "./signing.ts";
 import type { DeployManifestTemplate, SignedNostrEvent } from "./types.ts";
 
 export {
   collectDeployFilePayloads,
-  createUploadAuthorization,
   uploadFilesToServers,
 } from "./blossom-upload.ts";
 export type { DeployFilePayload, ServerUploadResult } from "./blossom-upload.ts";
@@ -52,7 +55,7 @@ export type NetworkDeployProgress =
   | { type: "publish:skipped"; summary: UploadSummary }
   | { type: "publish:complete"; results: RelayPublishResult[] };
 
-export interface NetworkDeployOptions {
+export interface NetworkDeployOptions extends Pick<UploadFilesToServersOptions, "networkPolicy" | "resolve"> {
   fetch?: typeof fetch;
   publish?: RelayPublisher;
   now?: () => number;
@@ -88,12 +91,11 @@ export async function executeNetworkDeploy(
     totalUploads: files.length * config.blossomServers.length,
   });
   const uploaded = await uploadFilesToServers(files, config.blossomServers, signer, options);
-  const uploadSummary = summarizeUploads(uploaded, config.blossomServers);
+  const uploadSummary = summarizeUploads(uploaded, config.blossomServers, files);
   options.onProgress?.({ type: "upload:complete", summary: uploadSummary });
-  if (uploadSummary.serversFullyUploaded === 0) {
-    // Publish only when at least one server holds every blob referenced by the
-    // manifests. Individual mirror failures reduce redundancy but do not make the
-    // deployed files unavailable.
+  if (uploadSummary.serversFullyUploaded !== config.blossomServers.length) {
+    // A shared partial batch never establishes complete verified evidence; relay
+    // publication must not make an incompletely uploaded manifest look successful.
     console.error(
       `[deploy] skipping relay publish: ${uploadSummary.serversFullyUploaded}/` +
         `${uploadSummary.servers} servers fully uploaded ` +
@@ -137,13 +139,27 @@ export async function executeNetworkDeploy(
 function summarizeUploads(
   uploaded: readonly ServerUploadResult[],
   servers: readonly string[],
+  files: readonly { path: string; sha256: string }[],
 ): UploadSummary {
   const failedUploads = uploaded.filter((result) => !result.success).length;
-  const serversFullyUploaded =
-    servers.filter((server) =>
-      uploaded.some((result) => result.server === server) &&
-      uploaded.every((result) => result.server !== server || result.success)
-    ).length;
+  // uploadExactBlobs stops at the first failed evidence. No individual server
+  // may be reported complete when its containing direct-upload batch failed.
+  if (failedUploads > 0) {
+    return {
+      servers: servers.length,
+      serversFullyUploaded: 0,
+      totalUploads: uploaded.length,
+      failedUploads,
+    };
+  }
+  const requiredEvidence = new Set(files.map((file) => `${file.path}\0${file.sha256}`));
+  const serversFullyUploaded = servers.filter((server) => {
+    const endpoint = new URL(server).toString();
+    const evidence = uploaded.filter((result) => result.server === endpoint && result.success);
+    return evidence.length === requiredEvidence.size &&
+      new Set(evidence.map((result) => `${result.file}\0${result.sha256}`)).size === requiredEvidence.size &&
+      evidence.every((result) => requiredEvidence.has(`${result.file}\0${result.sha256}`));
+  }).length;
   return {
     servers: servers.length,
     serversFullyUploaded,
@@ -157,7 +173,7 @@ export function networkDeploySucceeded(
   manifests: readonly DeployManifestTemplate[],
 ): boolean {
   const eventIds = signedEvents(manifests).map((event) => event.id);
-  return result.uploadSummary.serversFullyUploaded > 0 && eventIds.length > 0 &&
+  return result.uploadSummary.serversFullyUploaded === result.uploadSummary.servers && eventIds.length > 0 &&
     eventIds.every((eventId) =>
       result.published.some((publish) => publish.eventId === eventId && publish.success)
     );

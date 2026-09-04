@@ -2,6 +2,8 @@
 
 Standalone CLI for creating, configuring, building with agents, inspecting, testing, and deploying napplets. The binary does not require Deno, Node.js, or an npm package resolver for `napplet create` and `napplet skills`: those commands call bundled package code directly.
 
+Its protected NIP-46 signer/session and Blossom deployment helpers are reused by the optional Vite large-asset optimizer; that build-tool behavior follows verified kind-10002 write/unmarked relay discovery to kind-10063 servers and remains non-normative implementation plumbing, not a CLI command or protocol addition.
+
 Use it to create a `.napplet/config.json`, find built `index.html` artifacts, inspect the deploy plan, sign manifest events, upload files to Blossom servers, publish to relays, and run local napplet tooling such as conformance and Paja.
 
 ## Install
@@ -197,7 +199,7 @@ Deploy also reads the built `index.html` and emits single `title` and `descripti
 
 ## Signing And Keys
 
-Local key storage uses native platform secure storage: macOS Keychain, Windows Credential Manager, or Linux Secret Service through `secret-tool` with a D-Bus session. If no native provider is available, key commands fail closed rather than writing secrets to plaintext.
+Local key storage currently supports Linux Secret Service through `secret-tool` with a D-Bus session. macOS Keychain and Windows Credential Manager writes are disabled because their command-line tools expose secrets through process arguments; those platforms fail closed until an in-memory credential API is available rather than writing secrets to plaintext.
 
 ```sh
 napplet keys doctor

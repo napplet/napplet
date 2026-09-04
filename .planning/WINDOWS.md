@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 6
+open_count: 7
 waived_count: 0
-fixed_count: 1
-total_count: 7
-last_updated: 2026-08-03T10:32:22.997Z
+fixed_count: 2
+total_count: 9
+last_updated: 2026-08-21T16:51:53.639Z
 ---
 
 # Broken Windows Ledger
@@ -22,6 +22,8 @@ last_updated: 2026-08-03T10:32:22.997Z
 | 5 | 161 | deviation | .planning/phases/161-ad-hoc-convention-package-contracts/161-11-PLAN.md |  | Plan-wide convention guard was deferred from tracer verification until Task 2 migrated its scanned tutorial files. | open |  | 2026-07-23T15:08:40.729Z |  |
 | 6 | 161 | deviation | .planning/STATE.md |  | Corrected stale twelve-plan counter that marked Phase 161 ready for verification before Plan 161-10 completed. | open |  | 2026-07-23T15:10:55.730Z |  |
 | 7 | quick-260803-f6z | unrun-verify | .github/workflows/ai-slop.yml |  | Local AI-slop scan is unavailable; the repository defines it only as a GitHub Actions composite action. | fixed |  | 2026-08-03T10:31:16.170Z | 2026-08-03T10:32:22.997Z |
+| 8 | 162 | unrun-verify | packages/build-tools/package.json |  | Plan command pnpm --filter @napplet/build-tools test:unit could not run because the package declares no test:unit script; equivalent scoped Deno tests passed. | fixed |  | 2026-08-21T16:29:43.919Z | 2026-08-21T16:32:07.449Z |
+| 9 | 162 | deviation | packages/cli/src/output.ts |  | Incomplete direct-upload batches now fail CLI deployment reporting | open |  | 2026-08-21T16:51:53.639Z |  |
 
 ````json
 [
@@ -108,6 +110,30 @@ last_updated: 2026-08-03T10:32:22.997Z
     "reason": "",
     "recorded_at": "2026-08-03T10:31:16.170Z",
     "resolved_at": "2026-08-03T10:32:22.997Z"
+  },
+  {
+    "id": 8,
+    "kind": "unrun-verify",
+    "phase": "162",
+    "file": "packages/build-tools/package.json",
+    "line": null,
+    "description": "Plan command pnpm --filter @napplet/build-tools test:unit could not run because the package declares no test:unit script; equivalent scoped Deno tests passed.",
+    "status": "fixed",
+    "reason": "",
+    "recorded_at": "2026-08-21T16:29:43.919Z",
+    "resolved_at": "2026-08-21T16:32:07.449Z"
+  },
+  {
+    "id": 9,
+    "kind": "deviation",
+    "phase": "162",
+    "file": "packages/cli/src/output.ts",
+    "line": null,
+    "description": "Incomplete direct-upload batches now fail CLI deployment reporting",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-21T16:51:53.639Z",
+    "resolved_at": null
   }
 ]
 ````

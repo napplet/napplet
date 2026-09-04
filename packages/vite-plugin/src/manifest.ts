@@ -13,8 +13,18 @@ import type { ManifestPluginState, ManifestTemplate, Nip5aManifestOptions } from
 import { NAPPLET_KIND_NAMED } from './types.js';
 import { computeAggregateHash, sha256File, walkDir } from './hashing.js';
 import { discoverConfigSchema, validateConfigSchema } from './config-schema.js';
-import { inlineSingleFileBuildAssets } from './html.js';
-import { resolvedRequirements } from './requirements.js';
+import { renderSingleFileBuildAssets } from './html.js';
+import { effectiveRequirements, resolvedRequirements } from './requirements.js';
+import {
+  createLiveOptimizationServices,
+  optimizeSingleFileArtifact,
+  planExternalAssets,
+  renderOptimizedHtml,
+  type OptimizationReport,
+  type OptimizationServices,
+  type RetainedAsset,
+} from './optimizer/pipeline.js';
+import type { RetainedArtifact } from './optimizer/references.js';
 
 /**
  * Resolve all per-build plugin state in the `configResolved` hook: out dir,
@@ -29,7 +39,7 @@ export async function resolvePluginConfig(
   state: ManifestPluginState,
   config: { build?: { outDir?: string }; root: string; base?: string },
 ): Promise<void> {
-  state.outDir = config.build?.outDir ?? 'dist';
+  state.outDir = path.resolve(config.root, config.build?.outDir ?? 'dist');
   state.projectRoot = config.root;
   state.base = config.base ?? '/';
   const result = await discoverConfigSchema(options, state.projectRoot);
@@ -60,28 +70,222 @@ function validateResolvedSchema(schema: NappletConfigSchema | null, source: stri
  * @param options - the plugin options.
  * @param state - resolved plugin state (out dir, schema).
  */
-export async function writeBundleManifest(options: Nip5aManifestOptions, state: ManifestPluginState): Promise<void> {
+export async function writeBundleManifest(
+  options: Nip5aManifestOptions,
+  state: ManifestPluginState,
+  optimizationServices?: OptimizationServices,
+): Promise<void> {
   const distPath = path.resolve(state.outDir);
   if (!fs.existsSync(distPath)) {
     console.error(`[nip5a-manifest] dist directory not found: ${distPath}`);
     return;
   }
 
-  prepareDistIndexHtml(distPath, state);
+  const committedResourceCount = await prepareDistIndexHtml(distPath, state, optimizationServices);
 
   const privkeyHex = process.env.VITE_DEV_PRIVKEY_HEX;
-  const manifest = buildManifestTemplate(options, distPath, state);
+  const manifest = buildManifestTemplate(options, distPath, state, committedResourceCount);
   await writeManifestFile(distPath, manifest, privkeyHex);
 }
 
-function prepareDistIndexHtml(distPath: string, state: ManifestPluginState): void {
+async function prepareDistIndexHtml(
+  distPath: string,
+  state: ManifestPluginState,
+  optimizationServices?: OptimizationServices,
+): Promise<number> {
   const indexPath = path.join(distPath, 'index.html');
-  if (!fs.existsSync(indexPath)) return;
+  if (!fs.existsSync(indexPath)) return 0;
 
-  let html = fs.readFileSync(indexPath, 'utf-8');
+  const html = fs.readFileSync(indexPath, 'utf-8');
   if (state.artifactMode === 'single-file') {
-    html = inlineSingleFileBuildAssets(html, distPath, state.base);
-    fs.writeFileSync(indexPath, html);
+    const retained = collectRetainedBuild(distPath, html, state.base);
+    const files = collectRetainedFiles(distPath, retained.assets, html);
+    const plan = planExternalAssets(retained);
+    const report = await runOptimization(
+      retained,
+      files,
+      state,
+      optimizationServices,
+      plan.triggered && plan.selected.length > 0,
+    );
+    state.optimizationReport = report;
+    if (report.committedResourceCount > 0 && report.status !== 'rolled-back') {
+      commitRetainedFiles(distPath, files, retained.emittedPaths, html);
+      return report.committedResourceCount;
+    }
+    // Retained Vite boundaries exist only during planning. A no-op or failed
+    // optimization must still leave the ordinary all-inline single-file output.
+    const baseline = renderOptimizedHtml({ build: retained, selected: [] });
+    files.set('index.html', Buffer.from(baseline.html));
+    commitRetainedFiles(distPath, files, retained.emittedPaths, html);
+  }
+  return 0;
+}
+
+async function runOptimization(
+  retained: { html: string; assets: RetainedAsset[]; emittedPaths: string[] },
+  files: Map<string, Uint8Array>,
+  state: ManifestPluginState,
+  injected: OptimizationServices | undefined,
+  liveServicesRequired: boolean,
+): Promise<OptimizationReport> {
+  if (!liveServicesRequired || state.largeAssetOptimization === false) {
+    return optimizeSingleFileArtifact({ build: retained, files }, unavailableOptimizationServices());
+  }
+  if (state.optimizationCallbackConflict) {
+    console.warn('[nip5a-manifest] large-asset optimization skipped: existing experimental.renderBuiltUrl callback preserved');
+    return optimizeSingleFileArtifact({ build: retained, files }, unavailableOptimizationServices());
+  }
+  if (injected) return await optimizeSingleFileArtifact({ build: retained, files }, injected);
+
+  let node: import('./optimizer/node-services.js').NodeOptimizationServices | undefined;
+  try {
+    const { createNodeOptimizationServices } = await import('./optimizer/node-services.js');
+    const configured = typeof state.largeAssetOptimization === 'object'
+      ? state.largeAssetOptimization.node
+      : undefined;
+    node = createNodeOptimizationServices(configured);
+    const services = await createLiveOptimizationServices(node);
+    return await optimizeSingleFileArtifact({ build: retained, files }, services);
+  } catch (error) {
+    const initial = renderOptimizedHtml({ build: retained, selected: [] });
+    const reason = error instanceof Error ? error.message : 'live optimization is unavailable';
+    console.warn(`[nip5a-manifest] large-asset optimization skipped: ${reason}`);
+    return {
+      status: 'rolled-back',
+      initialBytes: initial.bytes,
+      finalBytes: initial.bytes,
+      selected: [],
+      entries: [],
+      committedResourceCount: 0,
+      reason,
+    };
+  } finally {
+    await node?.dispose();
+  }
+}
+
+function collectRetainedBuild(
+  distPath: string,
+  html: string,
+  base: string,
+): { html: string; assets: RetainedAsset[]; emittedPaths: string[]; artifacts: RetainedArtifact[] } {
+  const rendered = renderSingleFileBuildAssets(html, distPath, base);
+  if (/<link\b(?=[^>]*\brel\s*=\s*(?:"[^"]*\bmodulepreload\b[^"]*"|'[^']*\bmodulepreload\b[^']*'|modulepreload))[^>]*\bhref\s*=/i.test(rendered.html)) {
+    throw new Error(
+      '[nip5a-manifest] single-file artifact mode expected dist/index.html to be the only served artifact, but local external assets remain',
+    );
+  }
+  const assets: RetainedAsset[] = [];
+  const emittedPaths: string[] = [];
+  const artifacts: RetainedArtifact[] = [{ path: 'index.html', kind: 'html', content: rendered.html }];
+  for (const relativePath of walkDir(distPath)) {
+    if (relativePath === 'index.html' || relativePath === '.nip5a-manifest.json') continue;
+    const source = relativePath.split(path.sep).join('/');
+    emittedPaths.push(source);
+    const kind = retainedArtifactKind(source);
+    if (kind) {
+      artifacts.push({ path: source, kind, content: fs.readFileSync(path.join(distPath, relativePath), 'utf-8') });
+    }
+    const reference = findAssetReference(rendered.html, source);
+    if (!reference) continue;
+    assets.push({
+      source,
+      reference,
+      bytes: fs.readFileSync(path.join(distPath, relativePath)),
+      mime: mimeForPath(source),
+    });
+  }
+  return { html: rendered.html, assets, emittedPaths, artifacts };
+}
+
+function retainedArtifactKind(filePath: string): RetainedArtifact['kind'] | null {
+  if (/\.(?:m?js|cjs)$/i.test(filePath)) return 'javascript';
+  if (/\.css$/i.test(filePath)) return 'stylesheet';
+  return null;
+}
+
+function collectRetainedFiles(
+  distPath: string,
+  assets: readonly RetainedAsset[],
+  html: string,
+): Map<string, Uint8Array> {
+  const files = new Map<string, Uint8Array>([['index.html', Buffer.from(html)]]);
+  for (const asset of assets) files.set(asset.source, asset.bytes);
+  return files;
+}
+
+function findAssetReference(html: string, source: string): string | null {
+  const fileName = path.posix.basename(source);
+  const candidates = [`./${source}`, `/${source}`, source, `./${fileName}`, fileName]
+    .sort((left, right) => right.length - left.length);
+  return candidates.find((candidate) => html.includes(candidate)) ?? null;
+}
+
+function mimeForPath(filePath: string): string {
+  const extension = path.extname(filePath).toLowerCase();
+  const byExtension: Record<string, string> = {
+    '.css': 'text/css',
+    '.js': 'text/javascript',
+    '.mjs': 'text/javascript',
+    '.json': 'application/json',
+    '.svg': 'image/svg+xml',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.woff2': 'font/woff2',
+  };
+  return byExtension[extension] ?? 'application/octet-stream';
+}
+
+function unavailableOptimizationServices(): OptimizationServices {
+  return {
+    authorize: async () => ({ token: 'unavailable', expiresAt: Date.now() + 1 }),
+    upload: async () => { throw new Error('no Blossom upload service is configured'); },
+    resourceBytes: async () => { throw new Error('no NAP-RESOURCE service is configured'); },
+  };
+}
+
+/** Commit the in-memory verified transaction, with a filesystem quarantine for recovery. */
+function commitRetainedFiles(
+  distPath: string,
+  files: Map<string, Uint8Array>,
+  retainedPaths: readonly string[],
+  originalHtml: string,
+): void {
+  const indexPath = path.join(distPath, 'index.html');
+  const quarantinePath = path.join(distPath, `.napplet-optimizer-${process.pid}-${Date.now()}`);
+  const temporaryIndexPath = `${indexPath}.napplet-optimizer`;
+  const moved: Array<{ from: string; to: string }> = [];
+  try {
+    fs.mkdirSync(quarantinePath, { recursive: true });
+    for (const relativePath of retainedPaths) {
+      const from = path.join(distPath, relativePath);
+      if (!fs.existsSync(from)) continue;
+      const to = path.join(quarantinePath, relativePath);
+      fs.mkdirSync(path.dirname(to), { recursive: true });
+      fs.renameSync(from, to);
+      moved.push({ from, to });
+    }
+    const finalHtml = files.get('index.html');
+    if (!finalHtml) throw new Error('verified optimized index.html is missing');
+    fs.writeFileSync(temporaryIndexPath, finalHtml);
+    fs.renameSync(temporaryIndexPath, indexPath);
+    if (!fs.readFileSync(indexPath).equals(Buffer.from(finalHtml)) || moved.some(({ from }) => fs.existsSync(from))) {
+      throw new Error('final optimized artifact verification failed');
+    }
+    fs.rmSync(quarantinePath, { recursive: true, force: true });
+  } catch (error) {
+    if (fs.existsSync(temporaryIndexPath)) fs.rmSync(temporaryIndexPath, { force: true });
+    fs.writeFileSync(indexPath, originalHtml);
+    for (const { from, to } of moved.reverse()) {
+      if (!fs.existsSync(to)) continue;
+      fs.mkdirSync(path.dirname(from), { recursive: true });
+      fs.renameSync(to, from);
+    }
+    fs.rmSync(quarantinePath, { recursive: true, force: true });
+    throw error;
   }
 }
 
@@ -89,6 +293,7 @@ function buildManifestTemplate(
   options: Nip5aManifestOptions,
   distPath: string,
   state: ManifestPluginState,
+  committedResourceCount: number,
 ): ManifestTemplate {
   // pathPairs are `[sha256hex, absolutePath]`, the sole input to the NIP-5A
   // aggregate hash (NIP-5D §Identity: the runtime recomputes the aggregate from
@@ -100,7 +305,10 @@ function buildManifestTemplate(
   const pathTags = pathPairs.map(([hash, absPath]) => ['path', absPath, hash]);
   const configTags =
     state.resolvedSchema !== null ? [['config', JSON.stringify(state.resolvedSchema)]] : [];
-  const requiresTags = resolvedRequirements(options.requires, state).map((name) => ['requires', name]);
+  const requiresTags = effectiveRequirements(
+    resolvedRequirements(options.requires, state),
+    committedResourceCount,
+  ).map((name) => ['requires', name]);
   // Archetype tags (NAAT, napplet/naps `ARCHETYPES.md`): one
   // `['archetype', slug, convention, ...kindFields]` per declared convention. Like
   // config/requires they are NOT passed to computeAggregateHash — only pathPairs

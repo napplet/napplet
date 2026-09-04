@@ -45,10 +45,7 @@
 import type { Plugin, IndexHtmlTransformResult } from 'vite';
 import type { ManifestPluginState, Nip5aManifestOptions } from './types.js';
 import { applyHtmlMetadata, singleFileBuildConfig } from './html.js';
-import {
-  resolvePluginConfig,
-  writeBundleManifest,
-} from './manifest.js';
+import { resolvePluginConfig, writeBundleManifest } from './manifest.js';
 import {
   addInferredRequirements,
   inferRequirementsFromSource,
@@ -56,7 +53,14 @@ import {
 } from './requirements.js';
 
 export { NAPPLET_KIND_NAMED, NAPPLET_KIND_ROOT, NAPPLET_KIND_SNAPSHOT } from './types.js';
-export type { Nip5aArtifactMode, Nip5aManifestOptions, Nip5aRequiresOptions } from './types.js';
+export type {
+  Nip5aArtifactMode,
+  Nip5aLargeAssetOptimization,
+  Nip5aLargeAssetOptimizationOptions,
+  Nip5aManifestOptions,
+  Nip5aRequiresOptions,
+} from './types.js';
+export type { NodeOptimizationOptions, NodePairingAdapter } from './optimizer/node-services.js';
 
 /**
  * Create the NIP-5A manifest Vite plugin.
@@ -78,6 +82,9 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
     projectRoot: process.cwd(),
     base: '/',
     artifactMode: options.artifactMode ?? 'external-assets',
+    largeAssetOptimization: options.largeAssetOptimization ?? 'auto',
+    optimizationCallbackConflict: false,
+    optimizationReport: null,
     resolvedSchema: null,
     resolvedSchemaSource: null,
     inferredRequires: new Set(),
@@ -89,7 +96,17 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
 
     config(config) {
       if (state.artifactMode !== 'single-file') return undefined;
-      return singleFileBuildConfig(config);
+      state.optimizationCallbackConflict = typeof config.experimental?.renderBuiltUrl === 'function';
+      const singleFileConfig = singleFileBuildConfig(config);
+      // Keep emitted assets until closeBundle can measure the actual would-be
+      // inline artifact and make a reversible externalization decision.
+      return {
+        ...singleFileConfig,
+        build: {
+          ...singleFileConfig.build,
+          assetsInlineLimit: 0,
+        },
+      };
     },
 
     async configResolved(config) {
@@ -117,7 +134,11 @@ export function nip5aManifest(options: Nip5aManifestOptions): Plugin {
 
     async closeBundle() {
       reportRequirementDiagnostics(options.requires, state, (message) => this.warn(message));
+      const optimization = typeof options.largeAssetOptimization === 'object'
+        ? options.largeAssetOptimization
+        : undefined;
       await writeBundleManifest(options, state);
+      if (state.optimizationReport) optimization?.onReport?.(state.optimizationReport);
     },
   };
 }
