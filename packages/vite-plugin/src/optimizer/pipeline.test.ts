@@ -127,6 +127,38 @@ describe('large single-file artifact optimizer', () => {
     expect(style).not.toMatch(/@import|url\(|gradient/i);
   });
 
+  it('ignores head and body text inside scripts, comments, styles, and templates when injecting the loader', () => {
+    const retainedAsset = asset('assets/value.bin', 30_000);
+    const script = [
+      'const documentText = "</head><body data-fake=\\"script\\">";',
+      '// </head><body data-fake="comment">',
+      'fetch(__nappletAssetUrl("assets/value.bin"));',
+    ].join('\n');
+    const html = `<html><head><!-- </head><body data-fake="html-comment"> --><style>.copy::after{content:"</head><body data-fake=style>"}</style><template></head><body data-fake="template"></template><script type="module">${script}</script></head><body id="real"><p>Application</p></body></html>`;
+    const retained: RetainedBuild = {
+      html,
+      assets: [retainedAsset],
+      artifacts: [{ path: 'assets/entry.js', kind: 'javascript', content: script }],
+      targetBytes: 1,
+    };
+
+    const rendered = renderOptimizedHtml({ build: retained, selected: [retainedAsset] });
+    const scriptEnd = rendered.html.indexOf('</script>');
+    const styleIndex = rendered.html.indexOf('<style data-napplet-private-loader>');
+    const realHeadEnd = rendered.html.indexOf('</head>', scriptEnd);
+    const realBody = rendered.html.indexOf('<body id="real">');
+    const loaderMarkup = rendered.html.indexOf('<main id="napplet-loader"');
+
+    expect(rendered.html).toContain('const documentText = "</head><body data-fake=\\"script\\">";');
+    expect(rendered.html).toContain('// </head><body data-fake="comment">');
+    expect(rendered.html).toContain('<!-- </head><body data-fake="html-comment"> -->');
+    expect(rendered.html).toContain('<template></head><body data-fake="template"></template>');
+    expect(scriptEnd).toBeGreaterThan(-1);
+    expect(styleIndex).toBeGreaterThan(scriptEnd);
+    expect(styleIndex).toBeLessThan(realHeadEnd);
+    expect(loaderMarkup).toBe(realBody + '<body id="real">'.length);
+  });
+
   it('omits every loader marker from zero-entry, at-target, ineligible, and rolled-back output', async () => {
     const marker = /data-napplet-private-loader|data-napplet-private-resource-table|id="napplet-loader"/;
     const atTarget = build([asset('assets/small.bin', 12)], 100_000);
