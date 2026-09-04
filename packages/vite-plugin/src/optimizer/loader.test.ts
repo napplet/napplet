@@ -27,9 +27,11 @@ interface LoaderState {
   source?: string;
 }
 
+type FrameCallback = (timestamp: number) => void;
+
 interface ExtendedRuntimeOptions extends Omit<ResourceRuntimeOptions, 'timeoutMs'> {
   onState?: (state: LoaderState) => void;
-  scheduleFrame?: (callback: FrameRequestCallback) => number;
+  scheduleFrame?: (callback: FrameCallback) => number;
 }
 
 interface ExtendedRuntime extends ResourceRuntime {
@@ -120,6 +122,14 @@ async function screenModule(): Promise<LoaderScreenModule> {
 
 async function flushPromises(): Promise<void> {
   for (let index = 0; index < 8; index += 1) await Promise.resolve();
+}
+
+async function waitFor(predicate: () => boolean): Promise<void> {
+  for (let index = 0; index < 20; index += 1) {
+    if (predicate()) return;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+  expect(predicate()).toBe(true);
 }
 
 async function expectPending<T>(promise: Promise<T>): Promise<void> {
@@ -220,7 +230,7 @@ describe('private NAP-RESOURCE runtime', () => {
     const two = entry('assets/two.bin', twoBytes);
     const work = new Map([[one.uri, deferred<Blob>()], [two.uri, deferred<Blob>()]]);
     const states: LoaderState[] = [];
-    let closeCohort!: FrameRequestCallback;
+    let closeCohort!: FrameCallback;
     const instance = runtime({
       entries: [one, two],
       window: fakeWindow({ bytes: (uri) => work.get(uri)!.promise }),
@@ -336,7 +346,7 @@ describe('private NAP-RESOURCE runtime', () => {
     });
 
     const aggregate = instance.resolveMany(entries.map(({ source }) => source));
-    await flushPromises();
+    await waitFor(() => states.at(-1)?.phase === 'error');
     await expectPending(aggregate);
     expect(states.at(-1)).toMatchObject({ phase: 'error', completed: 2, total: 3, source: entries[1]!.source });
     expect(manyCall).toHaveBeenCalledTimes(1);
@@ -464,6 +474,7 @@ describe('private NAP-RESOURCE runtime', () => {
     expect(source).toContain('{ signal:');
     expect(source).toContain('textContent');
     expect(source).toContain('requestAnimationFrame');
+    expect(() => new Function(source)).not.toThrow();
     expect(source).not.toContain('fetch(');
     expect(source).not.toMatch(/timeout|setTimeout/i);
     expect(source).not.toMatch(/postMessage|resource\.cancel/);
