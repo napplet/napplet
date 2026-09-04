@@ -124,14 +124,6 @@ async function flushPromises(): Promise<void> {
   for (let index = 0; index < 8; index += 1) await Promise.resolve();
 }
 
-async function waitFor(predicate: () => boolean): Promise<void> {
-  for (let index = 0; index < 20; index += 1) {
-    if (predicate()) return;
-    await new Promise<void>((resolve) => setImmediate(resolve));
-  }
-  expect(predicate()).toBe(true);
-}
-
 async function expectPending<T>(promise: Promise<T>): Promise<void> {
   let settled = false;
   void promise.then(
@@ -344,6 +336,8 @@ describe('private NAP-RESOURCE runtime', () => {
     const entries = values.map((value, index) => entry(`assets/${String.fromCharCode(97 + index)}.bin`, value));
     const blobs = values.map((value) => new Blob([value]));
     const states: LoaderState[] = [];
+    const errorState = deferred<LoaderState>();
+    let errorSeen = false;
     const signals: AbortSignal[] = [];
     const manyCall = vi.fn(async (requests: ResourceBytesRequest[], options?: { signal?: AbortSignal }) => {
       signals.push(options!.signal!);
@@ -359,14 +353,20 @@ describe('private NAP-RESOURCE runtime', () => {
     const instance = runtime({
       entries,
       window: fakeWindow({ bytesMany: manyCall }),
-      onState: (state) => states.push(state),
+      onState: (state) => {
+        states.push(state);
+        if (!errorSeen && state.phase === 'error') {
+          errorSeen = true;
+          errorState.resolve(state);
+        }
+      },
       scheduleFrame: (callback) => { callback(16); return 1; },
     });
 
     const aggregate = instance.resolveMany(entries.map(({ source }) => source));
-    await waitFor(() => states.at(-1)?.phase === 'error');
+    const failed = await errorState.promise;
     await expectPending(aggregate);
-    expect(states.at(-1)).toMatchObject({ phase: 'error', completed: 2, total: 3, source: entries[1]!.source });
+    expect(failed).toMatchObject({ phase: 'error', completed: 2, total: 3, source: entries[1]!.source });
     expect(manyCall).toHaveBeenCalledTimes(1);
 
     await instance.retry();
