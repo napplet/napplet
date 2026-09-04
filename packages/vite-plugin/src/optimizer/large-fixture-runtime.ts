@@ -49,8 +49,25 @@ export async function executeFinalArtifact(
       bytesMany: async () => { throw new Error('final callsites must execute the generated single-resource path'); },
     } },
   };
-  const document = { createElement: () => ({ relList: { supports: () => true } }) };
-  const context = vm.createContext({ window: runtimeWindow, document, crypto: crypto.webcrypto, Blob, Response, URL, Uint8Array });
+  const document = {
+    createElement: () => ({ relList: { supports: () => true } }),
+    getElementById: () => null,
+  };
+  const context = vm.createContext({
+    window: runtimeWindow,
+    document,
+    crypto: crypto.webcrypto,
+    Blob,
+    Response,
+    URL,
+    Uint8Array,
+    AbortController,
+    DOMException,
+    requestAnimationFrame: (callback: (timestamp: number) => void) => {
+      queueMicrotask(() => callback(0));
+      return 1;
+    },
+  });
   vm.runInContext(loaderScript, context);
   const loader = runtimeWindow.__nappletPrivateResourceLoader;
   if (!loader) throw new Error('fixture final loader did not install');

@@ -172,11 +172,17 @@ describe('packaged loader screen', () => {
     const { applyLoaderScreenState } = await screenModule();
     const document = new FakeDocument();
 
-    applyLoaderScreenState(document, { phase: 'active', active: true, cohortClosed: true, completed: 1, total: 3 });
+    applyLoaderScreenState(document, { phase: 'active', active: true, cohortClosed: true, completed: 2, total: 5 });
     expect(document.getElementById('napplet-loader').attributes.get('aria-busy')).toBe('true');
+    expect(document.getElementById('napplet-loader-progress-panel').hidden).toBe(false);
     expect(document.getElementById('napplet-loader-progress').hidden).toBe(false);
     expect(document.getElementById('napplet-loader-progress').attributes.has('value')).toBe(false);
-    expect(document.getElementById('napplet-loader-status').textContent).toBe('Loading resources 1 of 3');
+    expect(document.getElementById('napplet-loader-title').textContent).toBe('Loading packaged resources');
+    expect(document.getElementById('napplet-loader-status').textContent).toBe('Loading resources 2 of 5.');
+
+    applyLoaderScreenState(document, { phase: 'active', active: true, cohortClosed: true, completed: 3, total: 10 });
+    expect(document.getElementById('napplet-loader-title').textContent).toBe('Loading resources 3 of 10');
+    expect(document.getElementById('napplet-loader-status').textContent).toBe('3 of 10 resources ready.');
 
     applyLoaderScreenState(document, { phase: 'success', active: false, cohortClosed: true, completed: 3, total: 3 });
     expect(document.getElementById('napplet-loader').attributes.get('aria-busy')).toBe('false');
@@ -185,7 +191,10 @@ describe('packaged loader screen', () => {
 
     applyLoaderScreenState(document, { phase: 'error', active: false, cohortClosed: true, completed: 1, total: 3, source: 'assets/fail.bin' });
     expect(document.getElementById('napplet-loader-status').textContent).toBe('A packaged resource could not be loaded safely.');
+    expect(document.getElementById('napplet-loader-resource-panel').hidden).toBe(false);
+    expect(document.getElementById('napplet-loader-resource').textContent).toBe('Resource assets/fail.bin could not be loaded safely. Retry only this resource.');
     expect(document.getElementById('napplet-loader-retry').hidden).toBe(false);
+    expect(document.getElementById('napplet-loader-cancel').hidden).toBe(true);
     expect(document.getElementById('napplet-loader-retry').focused).toBe(true);
 
     applyLoaderScreenState(document, { phase: 'cancelled', active: false, cohortClosed: true, completed: 1, total: 3, source: 'assets/fail.bin' });
@@ -200,14 +209,23 @@ describe('packaged loader screen', () => {
 
     applyLoaderScreenState(document, { phase: 'error', active: false, cohortClosed: true, completed: 0, total: 1, source: unsafe });
     expect(sanitizeResourceLabel(unsafe)).toBe('assets/<img src=x>���.bin');
-    expect(document.getElementById('napplet-loader-resource').textContent).toBe('assets/<img src=x>���.bin');
+    expect(document.getElementById('napplet-loader-resource').textContent).toBe('Resource assets/<img src=x>���.bin could not be loaded safely. Retry only this resource.');
 
     const markup = renderLoaderScreenMarkup();
     const style = renderLoaderScreenStyle();
     expect(markup).toMatch(/<button[^>]*id="napplet-loader-retry"[^>]*type="button"/);
     expect(markup).toMatch(/<button[^>]*id="napplet-loader-cancel"[^>]*type="button"/);
     expect(markup).toContain('dir="auto"');
+    expect(markup).toContain('Resources are checked as they arrive.');
+    expect(markup).toContain('<strong>Resource unavailable</strong>');
+    expect(markup.match(/<progress\b/g)).toHaveLength(1);
     expect(style).toContain('min-height: 44px');
+    expect(style).toContain('width: min(760px, 100%)');
+    expect(style).toContain('.napplet-loader-card::after');
+    expect(style).toContain('.napplet-loader-progress-panel');
+    expect(style).toContain('.napplet-loader-progress-panel::before');
+    expect(style).toContain('width: 14%');
+    expect(style).toContain('width: 28%');
     expect(style).toContain(':focus-visible');
     expect(style).toContain('overflow-wrap: anywhere');
     expect(style).toContain('@media (prefers-color-scheme: dark)');

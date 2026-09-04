@@ -68,7 +68,7 @@ export interface LargeFixtureEvidence {
   preservedCandidateSources: string[];
   discovery: { directoryRelays: string[]; writeRelays: string[]; servers: string[]; ignoredForgedEvent: boolean; ignoredOlderEvent: boolean };
   secondaryUploadFailed: boolean;
-  corruptResourceRejected: boolean;
+  corruptResourceRecovered: boolean;
   executedResourceCalls: string[];
 }
 
@@ -358,7 +358,7 @@ async function collectFixtureEvidence(
       ignoredOlderEvent: built.relay.ignoredOlderEvent,
     },
     secondaryUploadFailed: await proveSecondaryFailure(built.signer),
-    corruptResourceRejected: await corruptResourceIsRejected(output.entries[0]!),
+    corruptResourceRecovered: await corruptResourceRecovers(output.entries[0]!, built.uploaded.get(output.entries[0]!.uri)!),
     executedResourceCalls,
   };
 }
@@ -373,13 +373,36 @@ export async function runLargeAssetFixture(fixture: LargeAssetFixture): Promise<
   }
 }
 
-async function corruptResourceIsRejected(entry: ResourceTableEntry): Promise<boolean> {
+async function corruptResourceRecovers(entry: ResourceTableEntry, expected: Uint8Array): Promise<boolean> {
+  let attempts = 0;
+  let failureSeen!: () => void;
+  const failed = new Promise<void>((resolve) => { failureSeen = resolve; });
   const runtime = new ResourceRuntime({
     entries: [entry],
-    window: { napplet: { resource: { bytes: async () => new Blob([Uint8Array.of(0)]), bytesMany: async () => [] } } } as never,
+    window: { napplet: { resource: {
+      bytes: async () => {
+        attempts += 1;
+        return new Blob([attempts === 1 ? new Uint8Array(entry.bytes) : expected]);
+      },
+      bytesMany: async () => [],
+    } } } as never,
     digest: async (blob) => sha256(new Uint8Array(await blob.arrayBuffer())),
+    onState: (state) => {
+      if (state.phase === 'error') failureSeen();
+    },
   });
-  return await runtime.resolve(entry.source).then(() => false, () => true);
+  const original = runtime.resolve(entry.source);
+  let settled = false;
+  void original.then(
+    () => { settled = true; },
+    () => { settled = true; },
+  );
+  await failed;
+  if (settled) return false;
+  await runtime.retry();
+  const recovered = new Uint8Array(await (await original).arrayBuffer());
+  runtime.teardown();
+  return attempts === 2 && sha256(recovered) === entry.sha256;
 }
 
 /** Prove a whole Blob beyond the implementation limit remains a nonfatal inline fallback. */

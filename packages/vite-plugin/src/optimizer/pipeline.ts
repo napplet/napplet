@@ -17,6 +17,10 @@ import {
   type ResourceTableEntry,
 } from './loader.js';
 import {
+  renderLoaderScreenMarkup,
+  renderLoaderScreenStyle,
+} from './loader-screen.js';
+import {
   classifyAssetReferences,
   inventoryArtifactReferences,
   rewriteArtifactReferences,
@@ -218,8 +222,12 @@ function dataUri(asset: RetainedAsset): string {
 function injectPrivateMetadata(html: string, entries: readonly ResourceTableEntry[]): string {
   if (entries.length === 0) return html;
   const table = renderPrivateResourceTable(entries).replace(/<\/script/gi, '<\\/script');
-  const metadata = `<script type="application/json" data-napplet-private-resource-table>${table}</script><script>${renderResourceLoader(entries)}</script>`;
-  return /<\/head\s*>/i.test(html) ? html.replace(/<\/head\s*>/i, `${metadata}</head>`) : `${metadata}${html}`;
+  const metadata = `<style data-napplet-private-loader>${renderLoaderScreenStyle()}</style><script type="application/json" data-napplet-private-resource-table>${table}</script><script>${renderResourceLoader(entries)}</script>`;
+  const withMetadata = /<\/head\s*>/i.test(html) ? html.replace(/<\/head\s*>/i, `${metadata}</head>`) : `${metadata}${html}`;
+  const markup = renderLoaderScreenMarkup();
+  return /<body\b[^>]*>/i.test(withMetadata)
+    ? withMetadata.replace(/<body\b[^>]*>/i, (openingTag) => `${openingTag}${markup}`)
+    : `${withMetadata}${markup}`;
 }
 
 function buildReferenceInventory(build: RetainedBuild): ReferenceInventory {

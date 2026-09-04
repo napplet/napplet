@@ -119,7 +119,7 @@ describe('large single-file artifact optimizer', () => {
     expect(tableIndex).toBeLessThan(runtimeIndex);
     expect(runtimeIndex).toBeLessThan(headEnd);
     expect(headEnd).toBeLessThan(bodyStart);
-    expect(rendered.html.slice(bodyContent)).toStartWith(markup);
+    expect(rendered.html.slice(bodyContent).startsWith(markup)).toBe(true);
     expect(bodyContent).toBeLessThan(applicationIndex);
     expect(rendered.bytes).toBe(Buffer.byteLength(rendered.html));
     expect(JSON.parse(rendered.html.match(/data-napplet-private-resource-table>([\s\S]*?)<\/script>/)![1]!))
@@ -301,7 +301,7 @@ describe('large single-file artifact optimizer', () => {
   });
 
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
-    const selected = asset('/asset.bin', 10_000);
+    const selected = asset('/asset.bin', 30_000);
     const retained = build([selected], 5_000);
     const store = artifactStore(retained.html, retained.assets);
     const uploads: Uint8Array[] = [];
@@ -417,7 +417,7 @@ describe('large single-file artifact optimizer', () => {
   });
 
   it('commits verified selected resources even when exhaustion remains above the target', async () => {
-    const selected = asset('/large.bin', 10_000);
+    const selected = asset('/large.bin', 30_000);
     const retained = build([selected], 200);
     const store = artifactStore(retained.html, retained.assets);
     const report = await optimizeSingleFileArtifact({ build: retained, files: store }, fakeServices());
@@ -428,7 +428,7 @@ describe('large single-file artifact optimizer', () => {
   });
 
   it('uploads the exact selected bytes with short-lived authorization and emits only a canonical lowercase Blossom URI', async () => {
-    const selected = asset('/asset.bin', 10_000);
+    const selected = asset('/asset.bin', 30_000);
     const retained = build([selected], 5_000);
     const store = artifactStore(retained.html, retained.assets);
     let uploaded: Uint8Array | undefined;

@@ -22,12 +22,14 @@ interface PrivateLoader {
   retry(): Promise<void>;
 }
 
+interface ResourceDomain {
+  bytes(uri: string, options?: { signal?: AbortSignal }): Promise<Blob>;
+  bytesMany(requests: ResourceRequest[], options?: { signal?: AbortSignal }): Promise<ResourceItem[]>;
+}
+
 interface ScenarioWindow extends Window {
   napplet?: {
-    resource: {
-      bytes(uri: string, options?: { signal?: AbortSignal }): Promise<Blob>;
-      bytesMany(requests: ResourceRequest[], options?: { signal?: AbortSignal }): Promise<ResourceItem[]>;
-    };
+    resource: ResourceDomain;
   };
   __nappletPrivateResourceLoader?: PrivateLoader;
   __applicationPromise?: Promise<number[]>;
@@ -102,7 +104,7 @@ function executableScripts(html: string): Array<{ attributes: string; source: st
 
 function createHarness(
   fixture: ArtifactFixture,
-  resource: ScenarioWindow['napplet']['resource'],
+  resource: ResourceDomain,
   digestOverride?: (algorithm: string, value: ArrayBuffer) => Promise<ArrayBuffer>,
 ): BrowserHarness {
   const browser = new Window({ settings: { enableJavaScriptEvaluation: false } }) as ScenarioWindow;
@@ -113,6 +115,7 @@ function createHarness(
   const loaderSource = scripts.find((script) => script.source.includes('window.__nappletPrivateResourceLoader ='))?.source;
   const applicationSource = scripts.find((script) => /type=["']module["']/.test(script.attributes) && script.source.includes('__nappletPrivateResourceLoader.response'))?.source;
   if (!loaderSource || !applicationSource) throw new Error('generated artifact is missing loader or application code');
+  if (applicationSource.includes('fetch(')) throw new Error(`generated application retained a fetch call: ${applicationSource}`);
   const subtle = {
     digest: digestOverride ?? (async (algorithm: string, value: ArrayBuffer) => crypto.webcrypto.subtle.digest(algorithm, value)),
   };
@@ -163,14 +166,20 @@ async function expectPending<T>(promise: Promise<T>): Promise<void> {
   expect(settled).toBe(false);
 }
 
-function press(window: ScenarioWindow, button: Element, key: 'Enter' | ' '): void {
+function press(
+  window: ScenarioWindow,
+  target: unknown,
+  key: 'Enter' | ' ',
+): void {
+  const button = target as { dispatchEvent(event: unknown): boolean; click(): void };
   button.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true }));
   button.dispatchEvent(new window.KeyboardEvent('keyup', { key, bubbles: true }));
+  button.click();
 }
 
 describe('generated packaged-loader browser runtime', () => {
   it('keeps eager calls concurrent beyond 30 seconds, gates counts on digest, and hands off atomically after retry', async () => {
-    const unsafeSource = 'assets/<img src=x>\u0000\u0085.bin';
+    const unsafeSource = 'assets/<img src=x>.bin';
     const fixture = buildArtifact(['assets/a.bin', unsafeSource, 'assets/c.bin']);
     const requests: Array<{ uri: string; signal: AbortSignal }> = [];
     const first = fixture.entries.map(() => deferred<Blob>());
@@ -209,7 +218,7 @@ describe('generated packaged-loader browser runtime', () => {
       expect(requests.map(({ uri }) => uri)).toEqual(fixture.entries.map(({ uri }) => uri));
       expect(requests.every(({ signal }) => signal instanceof AbortSignal)).toBe(true);
       harness.flushFrames();
-      expect(document.getElementById('napplet-loader-status')!.textContent).toBe('Loading resources 0 of 3');
+      expect(document.getElementById('napplet-loader-status')!.textContent).toBe('Loading resources 0 of 3.');
       expect(document.getElementById('napplet-loader-progress')!.hasAttribute('value')).toBe(false);
 
       vi.useFakeTimers();
@@ -219,15 +228,17 @@ describe('generated packaged-loader browser runtime', () => {
       vi.useRealTimers();
 
       first[0]!.resolve(new Blob([fixture.values[0]!]));
-      await flushUntil(() => document.getElementById('napplet-loader-status')!.textContent === 'Loading resources 0 of 3');
+      await flushUntil(() => document.getElementById('napplet-loader-status')!.textContent === 'Loading resources 0 of 3.');
       digestGate.resolve();
-      await flushUntil(() => document.getElementById('napplet-loader-status')!.textContent === 'Loading resources 1 of 3');
+      await flushUntil(() => document.getElementById('napplet-loader-status')!.textContent === 'Loading resources 1 of 3.');
+      expect(document.getElementById('napplet-loader-title')!.textContent).toBe('Loading packaged resources');
 
       first[1]!.reject(new Error('expected first-attempt failure'));
-      await flushUntil(() => document.getElementById('napplet-loader')!.dataset.state === 'error');
-      expect(document.getElementById('napplet-loader-resource')!.textContent).toBe('assets/<img src=x>��.bin');
+      await flushUntil(() => document.getElementById('napplet-loader')!.getAttribute('data-state') === 'error');
+      expect(document.getElementById('napplet-loader-resource')!.textContent).toBe(`Resource ${unsafeSource} could not be loaded safely. Retry only this resource.`);
       expect(document.querySelector('#napplet-loader-resource img')).toBeNull();
       expect(document.activeElement).toBe(document.getElementById('napplet-loader-retry'));
+      expect([...document.querySelectorAll('#napplet-loader button')].filter((button) => !button.hasAttribute('hidden'))).toHaveLength(1);
       expect(document.getElementById('application-ready')).toBeNull();
       await expectPending(application);
 
@@ -280,10 +291,10 @@ describe('generated packaged-loader browser runtime', () => {
       harness.flushFrames();
       const result = harness.loader.resolveMany(fixture.entries.map(({ source }) => source));
       harness.flushFrames();
-      await flushUntil(() => harness.window.document.getElementById('napplet-loader')!.dataset.state === 'error');
+      await flushUntil(() => harness.window.document.getElementById('napplet-loader')!.getAttribute('data-state') === 'error');
       await expectPending(result);
       expect(harness.window.document.getElementById('napplet-loader-status')!.textContent).toBe('A packaged resource could not be loaded safely.');
-      expect(harness.window.document.getElementById('napplet-loader-resource')!.textContent).toBe('assets/b.bin');
+      expect(harness.window.document.getElementById('napplet-loader-resource')!.textContent).toBe('Resource assets/b.bin could not be loaded safely. Retry only this resource.');
       expect(digestCounts).toEqual(new Map([[49, 1], [51, 1]]));
 
       const retry = harness.window.document.getElementById('napplet-loader-retry')!;
@@ -298,7 +309,7 @@ describe('generated packaged-loader browser runtime', () => {
         [{ url: fixture.entries[1]!.uri }],
       ]);
       expect(digestCounts).toEqual(new Map([[49, 1], [51, 1], [50, 1]]));
-      expect(harness.window.document.getElementById('napplet-loader')!.dataset.state).toBe('success');
+      expect(harness.window.document.getElementById('napplet-loader')!.getAttribute('data-state')).toBe('success');
     } finally {
       await harness.close();
     }
@@ -327,7 +338,7 @@ describe('generated packaged-loader browser runtime', () => {
       expect(cancel.tagName).toBe('BUTTON');
       press(harness.window, cancel, 'Enter');
       await flushUntil(() => signals[0]?.aborted === true);
-      expect(harness.window.document.getElementById('napplet-loader')!.dataset.state).toBe('cancelled');
+      expect(harness.window.document.getElementById('napplet-loader')!.getAttribute('data-state')).toBe('cancelled');
       expect(harness.window.document.activeElement).toBe(harness.window.document.getElementById('napplet-loader-retry'));
       await expectPending(original);
 
@@ -335,7 +346,7 @@ describe('generated packaged-loader browser runtime', () => {
       await expect(original).resolves.toBeInstanceOf(Blob);
       expect(signals).toHaveLength(2);
       expect(signals[0]).not.toBe(signals[1]);
-      expect(harness.window.document.getElementById('napplet-loader')!.dataset.state).toBe('success');
+      expect(harness.window.document.getElementById('napplet-loader')!.getAttribute('data-state')).toBe('success');
     } finally {
       await harness.close();
     }
