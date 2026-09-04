@@ -82,6 +82,46 @@ afterEach(() => {
 });
 
 describe('large single-file artifact optimizer', () => {
+  it('measures and rewrites only parser-proven references when equal path text collides', () => {
+    const source = 'chunks/part-00.bin';
+    const retainedAsset: RetainedAsset = {
+      source,
+      reference: source,
+      bytes: Uint8Array.of(1, 2, 3),
+      mime: 'application/octet-stream',
+    };
+    const script = [
+      `const response = fetch(__nappletAssetUrl("${source}"));`,
+      `const unrelated = "${source}";`,
+      `// ${source}`,
+    ].join('\n');
+    const html = `<html><head></head><body><script>${script}</script></body></html>`;
+    const replacement = 'data:application/octet-stream;base64,AQID';
+    const expected = html.replace(
+      `fetch(__nappletAssetUrl("${source}"))`,
+      `fetch(__nappletAssetUrl("${replacement}"))`,
+    );
+    const retained = buildWithArtifacts([retainedAsset], [
+      { path: 'assets/entry.js', kind: 'javascript', content: script },
+    ], Buffer.byteLength(expected));
+    retained.html = html;
+
+    const rendered = renderOptimizedHtml({ build: retained, selected: [] });
+    const plan = planExternalAssets(retained);
+
+    expect(rendered.html).toBe(expected);
+    expect(rendered.html.match(/data:application\/octet-stream;base64,AQID/g)).toHaveLength(1);
+    expect(rendered.bytes).toBe(Buffer.byteLength(expected));
+    expect(plan).toMatchObject({
+      triggered: false,
+      status: 'at-target',
+      selected: [],
+      measurements: [],
+      initialBytes: Buffer.byteLength(expected),
+      finalBytes: Buffer.byteLength(expected),
+    });
+  });
+
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
     const selected = asset('/asset.bin', 10_000);
     const retained = build([selected], 5_000);
