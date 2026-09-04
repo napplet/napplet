@@ -194,6 +194,29 @@ describe('large single-file artifact optimizer', () => {
     );
   });
 
+  it('keeps aliased repeated HTML references inline instead of deleting their asset', () => {
+    const retainedAsset = {
+      ...asset('assets/image.png', 20_000, 'image/png'),
+      reference: '/assets/image.png',
+    };
+    const html = '<html><head></head><body><img src="/assets/image.png"><img srcset="/assets/image.png 1x, /assets/image.png 2x"></body></html>';
+    const retained: RetainedBuild = {
+      html,
+      assets: [retainedAsset],
+      artifacts: [{ path: 'index.html', kind: 'html', content: html }],
+      targetBytes: 100,
+    };
+
+    const plan = planExternalAssets(retained);
+    const rendered = renderOptimizedHtml({ build: retained, selected: plan.selected });
+
+    expect(plan.selected).toEqual([]);
+    expect(plan.ineligible).toEqual([{ source: 'assets/image.png', reasons: ['html-attribute', 'html-srcset'] }]);
+    expect(rendered.html.match(/data:image\/png;base64/g)).toHaveLength(3);
+    expect(rendered.html).not.toContain('src="/assets/image.png"');
+    expect(rendered.html).not.toContain('srcset="/assets/image.png');
+  });
+
   it('adapts a verified live signer, discovery result, and exact upload evidence without exposing a network recovery path', async () => {
     const selected = asset('/asset.bin', 10_000);
     const retained = build([selected], 5_000);

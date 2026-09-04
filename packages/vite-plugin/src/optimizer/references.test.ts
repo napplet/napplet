@@ -23,6 +23,25 @@ function build(assets: RetainedAsset[], artifacts: RetainedArtifact[]): Referenc
 }
 
 describe('optimizer reference inventory', () => {
+  it('rewrites root-relative aliases at every parser-proven srcset location', () => {
+    const image = { ...asset('assets/image.png'), reference: '/assets/image.png' };
+    const artifact: RetainedArtifact = {
+      path: 'index.html',
+      kind: 'html',
+      content: '<img src="/assets/image.png"><img srcset="/assets/image.png 1x, /assets/image.png 2x"><p>/assets/image.png</p>',
+    };
+    const inventory = inventoryArtifactReferences(build([image], [artifact]));
+    const rewritten = rewriteArtifactReferences({
+      artifact,
+      inventory,
+      replacements: new Map([['assets/image.png', 'data:image/png;base64,AQID']]),
+    });
+
+    expect(inventory.references).toHaveLength(3);
+    expect(new Set(inventory.references.map((reference) => reference.location)).size).toBe(3);
+    expect(rewritten.content).toBe('<img src="data:image/png;base64,AQID"><img srcset="data:image/png;base64,AQID 1x, data:image/png;base64,AQID 2x"><p>/assets/image.png</p>');
+  });
+
   it('rewrites recognized HTML attributes and srcset entries without touching equal text', () => {
     const image = asset('assets/image.png');
     const artifact: RetainedArtifact = {
