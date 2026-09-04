@@ -156,6 +156,28 @@ describe('large single-file artifact optimizer', () => {
     expect(rendered.html.match(/data:image\/png;base64,AQID/g)).toHaveLength(1);
   });
 
+  it('does not treat an identical inline style as an external stylesheet reference', () => {
+    const source = 'assets/image.png';
+    const retainedAsset = asset(source, 20_000, 'image/png');
+    const stylesheet = `.hero { background: url("${source}"); }`;
+    const html = `<html><head><style>${stylesheet}</style><style>${stylesheet}</style></head><body></body></html>`;
+    const retained: RetainedBuild = {
+      html,
+      assets: [retainedAsset],
+      artifacts: [
+        { path: 'index.html', kind: 'html', content: html },
+        { path: 'assets/site.css', kind: 'stylesheet', content: stylesheet },
+      ],
+      targetBytes: 100,
+    };
+
+    const plan = planExternalAssets(retained);
+
+    expect(plan.selected).toEqual([]);
+    expect(plan.ineligible).toEqual([{ source, reasons: ['inline-css'] }]);
+    expect(renderOptimizedHtml({ build: retained, selected: [] }).html.match(/data:image\/png;base64/g)).toHaveLength(2);
+  });
+
   it('keeps fetch sentinels with request init arguments ineligible for deletion', () => {
     const retainedAsset = asset('assets/image.png', 20_000, 'image/png');
     const script = 'fetch(__nappletAssetUrl("assets/image.png"), { cache: "reload" });';
